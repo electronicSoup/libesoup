@@ -19,7 +19,6 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  *
  */
-
 #ifndef ES_CAN_CORE_H
 #define ES_CAN_CORE_H
 
@@ -29,7 +28,7 @@
 #if defined(MCP)
     #include <GenericTypeDefs.h>
 
-    typedef BOOL     bool;
+//    typedef BOOL     bool;
     typedef UINT8    u8;
     typedef UINT16   u16;
     typedef UINT32   u32;
@@ -86,6 +85,11 @@ typedef enum {
     ERR_L3_PROTOCOL
 } result_t;
 
+#define LOG_DEBUG 0
+#define LOG_INFO 1
+#define LOG_WARNING 2
+#define LOG_ERROR 3
+#define NO_LOGGING 4
 
 /**
  *  This is the maximum string length of a status reported
