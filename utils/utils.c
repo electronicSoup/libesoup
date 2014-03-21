@@ -1,6 +1,5 @@
 /**
  *
- *
  * \file es_can/utils/utils.c
  *
  * General utility functions of the electronicSoup CAN code Library
@@ -29,11 +28,11 @@
 #ifdef HEARTBEAT
 #include "es_can/timers/timer_sys.h"
 #endif
-#include "es_can/interrupts/interrupts.h"
+//#include "es_can/interrupts/interrupts.h"
 
 #if LOG_LEVEL < NO_LOGGING
 #define DEBUG_FILE
-#include "logger/serial.h"
+#include "es_can/logger/serial.h"
 #define TAG "UTILS"
 #endif
 

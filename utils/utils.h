@@ -23,7 +23,7 @@
 #ifndef UTILS_H
 #define UTILS_H
 
-//#include "os_api.h"
+#include "es_can/core.h"
 #include "system.h"
 
 
