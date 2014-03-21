@@ -4,7 +4,7 @@
  *
  * Core definitions required by electronicSoup CAN code
  *
- * Copyright 2014 John Whitmore
+ * Copyright 2014 John Whitmore <jwhitmore@electronicsoup.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 2 of the GNU General Public License
