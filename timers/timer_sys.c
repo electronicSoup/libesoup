@@ -19,6 +19,8 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  *
  */
+#include "es_can/core.h"
+#include "system.h"
 #include <stdio.h>
 
 #if LOG_LEVEL < NO_LOGGING
