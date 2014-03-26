@@ -19,13 +19,14 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  *
  */
+#include "es_can/core.h"
 #include "system.h"
 
-#include "can/es_can.h"
-#include "can/l2_mcp2515.h"
-#include "timers/timer_sys.h"
+#include "es_can/can/es_can.h"
+#include "es_can/can/l2_mcp2515.h"
+#include "es_can/timers/timer_sys.h"
 
-#include "utils/utils.h"
+#include "es_can/utils/utils.h"
 
 #if LOG_LEVEL < NO_LOGGING
     #include <stdio.h>

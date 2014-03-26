@@ -22,12 +22,7 @@
 #ifndef L2_MCP2515_H
 #define L2_MCP2515_H
 
-#include "os_api.h"
-//#include "types.h"
-//#include "p24Fxxxx.h"
-//#include <GenericTypeDefs.h>
-
-#include "can/l2_can_types.h"
+//#include "can/l2_can_types.h"
 
 /*
  *  CAN Chip Registers

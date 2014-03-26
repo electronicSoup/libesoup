@@ -21,7 +21,7 @@
  */
 
 #include "system.h"
-#include "can/es_can.h"
+#include "es_can/can/es_can.h"
 //#include "can/l2_can_types.h"
 //#include "can/l2_can.h"
 ///#include "can/l2_dispatch.h"
@@ -29,7 +29,7 @@
 //#include "can/l3_dispatch.h"
 
 #if DEBUG_LEVEL < NO_LOGGING
-#include "logger/serial.h"
+#include "es_can/logger/serial.h"
 
 #define TAG "CAN"
 #endif
@@ -59,9 +59,7 @@ result_t can_init(baud_rate_t baudRate,
 #endif
         can_status_handler arg_status_handler)
 {
-#if DEBUG_LEVEL <= LOG_DEBUG
-	serial_log(Debug, TAG, "can_init\n\r");
-#endif
+	DEBUG_D("can_init\n\r");
 	l2_status = Uninitialised;
 	app_status_handler = arg_status_handler;
 
@@ -74,9 +72,7 @@ void status_handler(can_status_t status, baud_rate_t baud)
 {
 
 	if((status == Connected && l2_status != Connected)) {
-#if DEBUG_LEVEL <= LOG_DEBUG
-        serial_log(Debug, TAG, "Layer 2 Connected so start DCNCP\n\r");
-#endif
+        DEBUG_D("Layer 2 Connected so start DCNCP\n\r");
         l2_dcncp_init();
         }
 #if defined(CAN_LAYER_3)
