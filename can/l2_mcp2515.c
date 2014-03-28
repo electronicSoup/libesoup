@@ -739,13 +739,13 @@ result_t l2_tx_frame(can_frame  *canMsg)
 #if 0
 	while(CANReadReg(ctrl) & 0x08) {
 #if LOG_LEVEL <= LOG_ERROR
-		serial_log(Error, TAG, "Wait for transmission to complete\n\r");
+		DEBUG_E("Wait for transmission to complete\n\r");
 #endif
 	}
 
 	if(CANReadReg(CANINTF) & MERRE) {
 #if LOG_LEVEL <= LOG_ERROR
-		serial_log(Error, TAG, "MERRE\n\r");
+		DEBUG_E("MERRE\n\r");
 #endif
 		// Clear the error flag
 		CANSetRegMaskValue(CANINTF, MERRE, 0x00);
@@ -754,7 +754,7 @@ result_t l2_tx_frame(can_frame  *canMsg)
 
 	if(CANReadReg(CANINTF) & ERRIE) {
 #if LOG_LEVEL <= LOG_ERROR
-		serial_log(Error, TAG, "ERRIE\n\r");
+		DEBUG_E("ERRIE\n\r");
 #endif
 		// Clear the error flag
 		CANSetRegMaskValue(CANINTF, ERRIE, 0x00);
@@ -1002,10 +1002,10 @@ static void set_can_mode(BYTE mode)
 
 		if(loop == 0) {
 #if LOG_LEVEL <= LOG_ERROR
-//            serial_log(Error, TAG, "Error Failing to set CAN Mode\n\r");
-//            serial_log(Error, TAG, "CANCTRL 0x%x\n\r", result & MODE_MASK);
+//            DEBUG_E("Error Failing to set CAN Mode\n\r");
+//            DEBUG_E("CANCTRL 0x%x\n\r", result & MODE_MASK);
 //            result = CANReadReg(CANSTAT);
-//            serial_log(Error, TAG, "CANSTAT 0x%x\n\r", result & MODE_MASK);
+//            DEBUG_E("CANSTAT 0x%x\n\r", result & MODE_MASK);
 #endif
 			//            stall();
 		}

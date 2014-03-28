@@ -23,6 +23,9 @@
 #include "system.h"
 #include <stdio.h>
 
+#define DEBUG_FILE
+#include "es_can/logger/serial.h"
+
 #if LOG_LEVEL < NO_LOGGING
     #define TAG "TIMER"
 #endif
@@ -183,10 +186,7 @@ static result_t pri_start_timer(UINT16 ticks,
             return(SUCCESS);
         }
     }
-
-#if LOG_LEVEL <= LOG_ERROR
-    serial_log(Error, TAG, "No Timers Free");
-#endif
+    DEBUG_E("No Timers Free");
     /* TODO
      * This error code on a Node tries to send a Net Log Message
      * on the Dongle ????

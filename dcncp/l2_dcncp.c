@@ -26,6 +26,7 @@
 #include "es_can/core.h"
 #include "system.h"
 
+#define DEBUG_FILE
 #if defined(MCP)
 //#include "can/l2_can_types.h"
 #include "es_can/can/es_can.h"
@@ -95,9 +96,7 @@ void l2_dcncp_init(void)
 	target.filter = (u32)NODE_FILTER;
 	target.handler = l2MsgHandler;
 
-#if DEBUG_LEVEL <= LOG_DEBUG
-	serial_log(Debug, TAG, "Node Address Register handler Mask 0x%x, Filter 0x%x\n\r", target.mask, target.filter);
-#endif
+	DEBUG_D("Node Address Register handler Mask 0x%x, Filter 0x%x\n\r", target.mask, target.filter);
 	l2_reg_handler(&target);
 
 #if defined(CAN_LAYER_3)
@@ -107,9 +106,7 @@ void l2_dcncp_init(void)
 	// Create a random timer between 1 and 5 seconds for firing node register message
 	result = start_timer(MILLI_SECONDS_TO_TICKS( (u16)((rand() % 4000) + 1000)), exp_sendAddressRegisterReq, (union sigval)(void *)NULL, &sendRegisterReqTimer);
 	if(result != SUCCESS) {
-#if DEBUG_LEVEL <= LOG_ERROR
-		serial_log(Error, TAG, "Failed to start Register Timer\n\r");
-#endif
+		DEBUG_E("Failed to start Register Timer\n\r");
 	}
 #endif
 }
@@ -132,9 +129,7 @@ void exp_sendAddressRegisterReq(union sigval data)
 
 	if(result == SUCCESS) {
 
-#if DEBUG_LEVEL <= LOG_DEBUG
-		serial_log(Debug, TAG, "sendRegisterReq(%x)\n\r", (u16)address);
-#endif
+		DEBUG_D("sendRegisterReq(%x)\n\r", (u16)address);
 
 		msg.can_id = AddressRegisterReq;
 		msg.can_dlc = 1;
@@ -146,14 +141,10 @@ void exp_sendAddressRegisterReq(union sigval data)
 		// this node shall consider itself registered
 		result = start_timer(SECONDS_TO_TICKS(2), exp_nodeAddressRegistered, (union sigval)(void *)NULL, &nodeRegisteredTimer);
 		if(result != SUCCESS) {
-#if DEBUG_LEVEL <= LOG_ERROR
-			serial_log(Error, TAG, "Failed to start Node Registered Timer\n\r");
-#endif
+			DEBUG_E("Failed to start Node Registered Timer\n\r");
 		}
 	} else {
-#if DEBUG_LEVEL <= LOG_ERROR
-		serial_log(Error, TAG, "Failed to get the system Layer 3 node address\n\r");
-#endif
+		DEBUG_E("Failed to get the system Layer 3 node address\n\r");
 	}
 }
 #endif
@@ -170,9 +161,7 @@ void exp_nodeAddressRegistered(union sigval data)
 	data = data;
 	nodeRegisteredTimer.status = INACTIVE;
 
-#if DEBUG_LEVEL <= LOG_DEBUG
-	serial_log(Debug, TAG, "nodeRegistered()\n\r");
-#endif
+	DEBUG_D("nodeRegistered()\n\r");
 
 	l3_node_registered = TRUE;
 
@@ -184,15 +173,11 @@ void exp_nodeAddressRegistered(union sigval data)
 #ifdef TEST
 		result = start_timer(SECONDS_TO_TICKS(1), sendTestMsg, (union sigval)(void *)NULL, &sendRegisterReqTimer);
 		if(result != SUCCESS) {
-#if DEBUG_LEVEL <= LOG_ERROR
-			serial_log(Error, TAG, "Failed to start Send Register Request Timer\n\r");
-#endif
+			DEBUG_E("Failed to start Send Register Request Timer\n\r");
 		}
 #endif
 	} else {
-#if DEBUG_LEVEL <= LOG_ERROR
-		serial_log(Error, TAG, "Failed to get the system Layer 3 node address\n\r");
-#endif
+		DEBUG_E("Failed to get the system Layer 3 node address\n\r");
 	}
 }
 #endif
@@ -204,27 +189,21 @@ void l2MsgHandler(can_frame *msg)
 	es_timer timer;
 	result_t result;
 
-#if DEBUG_LEVEL <= LOG_DEBUG
-	serial_log(Debug, TAG, "Node Adress message received 0x%lx\n\r", msg->can_id);
-#endif
+	DEBUG_D("Node Adress message received 0x%lx\n\r", msg->can_id);
 	if (msg->can_id == AddressRegisterReq) {
 #if defined(CAN_LAYER_3)
 		get_l3_node_address(&address);
 
 		if(msg->data[0] == address) {
 			if(l3_node_registered){
-#if DEBUG_LEVEL <= LOG_DEBUG
-				serial_log(Debug, TAG, "reject Register Request\n\r");
-#endif
+				DEBUG_D("reject Register Request\n\r");
 				txMsg.can_id = AddressRegisterReject;
 				txMsg.can_dlc = 1;
 				txMsg.data[0] = address;
 
 				l2_tx_frame(&txMsg);
 			} else {
-#if DEBUG_LEVEL <= LOG_DEBUG
-				serial_log(Debug, TAG, "Register Node Address clash\n\r");
-#endif
+				DEBUG_D("Register Node Address clash\n\r");
 				//Have to create a new node address for this node
 				//cancel the timers
 				result = cancel_timer(&sendRegisterReqTimer);
@@ -241,9 +220,7 @@ void l2MsgHandler(can_frame *msg)
 
 		if(msg->data[0] == address) {
 			if(l3_node_registered) {
-#if DEBUG_LEVEL <= LOG_ERROR
-				serial_log(Error, TAG, "Sending Can Error Message\n\r");
-#endif
+				DEBUG_E("Sending Can Error Message\n\r");
 				txMsg.can_id = NodeAddressError;
 				txMsg.can_dlc = 1;
 				txMsg.data[0] = address;
@@ -265,56 +242,38 @@ void l2MsgHandler(can_frame *msg)
 		// Create a random timer between 100 and  1000 miliSeconds for firing node report message
 		result = start_timer(MILLI_SECONDS_TO_TICKS((u16) ((rand() % 900) + 100)), exp_sendNodeAddressReport, (union sigval)(void *)NULL, &timer);
 		if (result != SUCCESS) {
-#if DEBUG_LEVEL <= LOG_ERROR
-			serial_log(Error, TAG, "Failed to start Node Registered Timer\n\r");
-#endif
+			DEBUG_E("Failed to start Node Registered Timer\n\r");
 		}
 #endif
 	} else if (msg->can_id == NodeAddressReporting) {
-#if DEBUG_LEVEL <= LOG_DEBUG
 		if(msg->data[0]) {
-			serial_log(Debug, TAG, "Foreign Node Rep Registered Node Address 0x%x\n\r", msg->data[1]);
+			DEBUG_D("Foreign Node Rep Registered Node Address 0x%x\n\r", msg->data[1]);
 		} else {
-			serial_log(Debug, TAG, "Foreign Node Rep UN-Registered Node Address 0x%x\n\r", msg->data[1]);
+			DEBUG_D("Foreign Node Rep UN-Registered Node Address 0x%x\n\r", msg->data[1]);
 		}
-#endif
 	} else if (msg->can_id == NodeSetBaudRate) {
-#if DEBUG_LEVEL <= LOG_DEBUG
-		serial_log(Debug, TAG, "***Baud Rate Change Request\n\r");
-		printf("New Baud Rate %s\n\r", baud_rate_strings[msg->data[0]]);
-#endif
+		DEBUG_D(Debug, TAG, "***Baud Rate Change Request New Baud Rate %s\n\r", baud_rate_strings[msg->data[0]]);
 //TODO		L2_SetCanNodeBuadRate(msg->data[0]);
 	} else if (msg->can_id == NodePingMessage) {
 #if DEBUG_LEVEL <= LOG_DEBUG
 		printf(".");
-//            serial_log(Debug, TAG, "Node Ping Message Received\n\r");
 #endif
 	} else if (msg->can_id == NetLogger) {
-#if DEBUG_LEVEL <= LOG_DEBUG
-		serial_log(Debug, TAG, "Received NetLogger Message\n\r");
-#endif
+		DEBUG_D("Received NetLogger Message\n\r");
 #if defined(CAN_LAYER_3)
 		net_logger_foreign_register(msg->data[0], msg->data[1]);
 #else
-#if DEBUG_LEVEL <= LOG_DEBUG
-		serial_log(Debug, TAG, "Ignoring NetLogger Message NO LAYER 3!\n\r");
-#endif
+		DEBUG_D("Ignoring NetLogger Message NO LAYER 3!\n\r");
 #endif
 	} else if (msg->can_id == CancelNetLogger) {
-#if DEBUG_LEVEL <= LOG_DEBUG
-		serial_log(Debug, TAG, "Received CancelNetLogger Message\n\r");
-#endif
+		DEBUG_D("Received CancelNetLogger Message\n\r");
 #if defined(CAN_LAYER_3)
 		net_logger_foreign_cancel(msg->data[0]);
 #else
-#if DEBUG_LEVEL <= LOG_DEBUG
-		serial_log(Debug, TAG, "Ignoring NetLogger Message NO LAYER 3!\n\r");
-#endif
+		DEBUG_D("Ignoring NetLogger Message NO LAYER 3!\n\r");
 #endif
 	} else {
-#if DEBUG_LEVEL <= LOG_WARNING
-		serial_log(Warning, TAG, "Node Unrecognised Request %lx \n\r", msg->can_id);
-#endif
+		DEBUG_W("Node Unrecognised Request %lx \n\r", msg->can_id);
 	}
 }
 
@@ -331,9 +290,7 @@ void exp_sendNodeAddressReport(union sigval data)
 
 	get_l3_node_address(&address);
 
-#if DEBUG_LEVEL <= LOG_DEBUG
-	serial_log(Debug, TAG, "exp_sendNodeAddressReport(Address %x)\n\r", address);
-#endif
+	DEBUG_D("exp_sendNodeAddressReport(Address %x)\n\r", address);
 
 	txMsg.can_id = NodeAddressReporting;
 	txMsg.can_dlc = 2;
@@ -361,9 +318,7 @@ result_t register_this_node_net_logger(log_level_t level)
 
 	get_l3_node_address(&address);
 
-#if DEBUG_LEVEL <= LOG_DEBUG
-	serial_log(Debug, TAG, "register_this_node_net_logger()\n\r");
-#endif
+	DEBUG_D("register_this_node_net_logger()\n\r");
 
 	if(l3_node_registered) {
 		local_net_logger_frame.can_id = NetLogger;
@@ -372,16 +327,12 @@ result_t register_this_node_net_logger(log_level_t level)
 		local_net_logger_frame.data[1] = level;
 
 		l2_tx_frame(&local_net_logger_frame);
-#if DEBUG_LEVEL <= LOG_DEBUG
-		serial_log(Debug, TAG, "NetLogger message sent\n\r");
-#endif
+		DEBUG_D("NetLogger message sent\n\r");
 		start_timer(LOCAL_NET_LOGGER_MSG_PERIOD, exp_net_logger_ping, (union sigval)(void *)NULL, &local_net_logger_timer);
 
 		return(SUCCESS);
 	} else {
-#if DEBUG_LEVEL <= LOG_DEBUG
-		serial_log(Debug, TAG, "NetLogger message not sent Node not Registered yet\n\r");
-#endif
+		DEBUG_D("NetLogger message not sent Node not Registered yet\n\r");
 		return(ERR_GENERAL_L3_ERROR);
 	}
 }
@@ -393,9 +344,7 @@ void exp_net_logger_ping(union sigval data)
 	data = data;
 
 	l2_tx_frame(&local_net_logger_frame);
-#if DEBUG_LEVEL <= LOG_DEBUG
-	serial_log(Debug, TAG, "NetLogger message sent\n\r");
-#endif
+	DEBUG_D("NetLogger message sent\n\r");
 	start_timer(LOCAL_NET_LOGGER_MSG_PERIOD, exp_net_logger_ping, (union sigval)(void *)NULL, &local_net_logger_timer);
 }
 #endif
@@ -406,10 +355,7 @@ result_t unregister_this_node_net_logger()
 	u8 address;
 	can_frame txMsg;
 
-#if DEBUG_LEVEL <= LOG_DEBUG
-	serial_log(Debug, TAG, "DeRegAsNetLogger()\n\r");
-#endif
-
+	DEBUG_D("DeRegAsNetLogger()\n\r");
 	get_l3_node_address(&address);
 
 	txMsg.can_id = CancelNetLogger;
@@ -417,9 +363,7 @@ result_t unregister_this_node_net_logger()
 	txMsg.data[0] = address;
 
 	l2_tx_frame(&txMsg);
-#if DEBUG_LEVEL <= LOG_DEBUG
-	serial_log(Debug, TAG, "CancelNetLogger message sent\n\r");
-#endif
+	DEBUG_D("CancelNetLogger message sent\n\r");
 
 	if(local_net_logger_timer.status == ACTIVE)
 		cancel_timer(&local_net_logger_timer);
@@ -436,16 +380,13 @@ void send_ping_message(void)
 	txMsg.can_dlc = 0;
 
 	l2_tx_frame(&txMsg);
-#if DEBUG_LEVEL <= LOG_DEBUG
-//    serial_log(Debug, TAG, "Ping message sent\n\r");
-#endif
+	DEBUG_D("Ping message sent\n\r");
 }
 
 #if defined(CAN_LAYER_3)
 #ifdef TEST
 void sendTestMsg(union sigval data __attribute__((unused)))
 {
-#if 1
 	//L3 Message
 	u8 buffer[70];
 	u8 loop;
@@ -457,9 +398,7 @@ void sendTestMsg(union sigval data __attribute__((unused)))
 	for(loop = 0; loop < 70; loop++)
 		buffer[loop] = loop + 1;
 
-#if DEBUG_LEVEL <= LOG_DEBUG
-	serial_log(Debug, TAG, "\n\r\n\r*** sendTestL3Msg() size %d\n\r", sizeToSend);
-#endif
+	DEBUG_D("\n\r\n\r*** sendTestL3Msg() size %d\n\r", sizeToSend);
 
 	if(otherNode != 0xff) {
 		msg.address = otherNode;
@@ -471,20 +410,11 @@ void sendTestMsg(union sigval data __attribute__((unused)))
 		sizeToSend++;
 		result = start_timer(SECONDS_TO_TICKS(10), sendTestMsg, (union sigval)(void *)NULL, &sendRegisterReqTimer);
 		if (result != SUCCESS) {
-#if DEBUG_LEVEL <= LOG_ERROR
-			serial_log(Error, TAG, "Failed to start Send Register Request Timer\n\r");
-#endif
+			DBEUG_D("Failed to start Send Register Request Timer\n\r");
 		}
 	} else {
-#if DEBUG_LEVEL <= LOG_DEBUG
-		serial_log(Debug, TAG, "No Other Node\n\r");
-#endif
+		DEBUG_D("No Other Node\n\r");
 	}
-#else
-	debug("Send a node Report L1 Message\n\r");
-	nodeSendReport(null);
-	start_timer(SECONDS_TO_TICKS(1), sendTestMsg, (u8 *) null);
-#endif
 }
 #endif
 #endif
