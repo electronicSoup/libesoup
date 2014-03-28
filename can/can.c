@@ -22,28 +22,20 @@
 
 #include "system.h"
 #include "es_can/can/es_can.h"
-//#include "can/l2_can_types.h"
-//#include "can/l2_can.h"
-///#include "can/l2_dispatch.h"
-
-//#include "can/l3_dispatch.h"
-
-#if DEBUG_LEVEL < NO_LOGGING
 #include "es_can/logger/serial.h"
 
-#define TAG "CAN"
-#endif
-
 #if DEBUG_LEVEL < NO_LOGGING
+#define TAG "CAN"
+
 char baud_rate_strings[8][10] = {
-    "baud_10K",
-    "baud_20K",
-    "baud_50K",
-    "baud_125K",
-    "baud_250K",
-    "baud_500K",
-    "baud_800K",
-    "baud_1M"
+	"baud_10K",
+	"baud_20K",
+	"baud_50K",
+	"baud_125K",
+	"baud_250K",
+	"baud_500K",
+	"baud_800K",
+	"baud_1M"
 };
 #endif
 
@@ -57,7 +49,7 @@ result_t can_init(baud_rate_t baudRate,
 #if defined(CAN_LAYER_3)
 		  u8 arg_l3_address,
 #endif
-        can_status_handler arg_status_handler)
+		  can_status_handler arg_status_handler)
 {
 	DEBUG_D("can_init\n\r");
 	l2_status = Uninitialised;
@@ -72,8 +64,8 @@ void status_handler(can_status_t status, baud_rate_t baud)
 {
 
 	if((status == Connected && l2_status != Connected)) {
-        DEBUG_D("Layer 2 Connected so start DCNCP\n\r");
-        l2_dcncp_init();
+		DEBUG_D("Layer 2 Connected so start DCNCP\n\r");
+		l2_dcncp_init();
         }
 #if defined(CAN_LAYER_3)
 	l3_init(arg_l3_handler);
@@ -87,6 +79,6 @@ void status_handler(can_status_t status, baud_rate_t baud)
 #if defined(MCP)
 void canTasks(void)
 {
-    L2_CanTasks();
+	L2_CanTasks();
 }
 #endif

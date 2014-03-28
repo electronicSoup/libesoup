@@ -2,7 +2,7 @@
  *
  * \file es_can/can/es_can.h
  *
- * Core CAN Bus definitions required by electronicSoup CAN code
+ * Core CAN Bus definitions
  *
  * Copyright 2014 John Whitmore <jwhitmore@electronicsoup.com>
  *
@@ -31,23 +31,23 @@
 #endif
 
 typedef enum {
-    Uninitialised,
-    Listening,
-    Connecting,
-    Connected,
-    ChangingBaud
+	Uninitialised,
+	Listening,
+	Connecting,
+	Connected,
+	ChangingBaud
 } can_status_t;
 
 typedef enum {
-    baud_10K = 0,
-    baud_20K = 1,
-    baud_50K = 2,
-    baud_125K = 3,
-    baud_250K = 4,
-    baud_500K = 5,
-    baud_800K  = 6,
-    baud_1M = 7,
-    no_baud = 0xff
+	baud_10K = 0,
+	baud_20K = 1,
+	baud_50K = 2,
+	baud_125K = 3,
+	baud_250K = 4,
+	baud_500K = 5,
+	baud_800K  = 6,
+	baud_1M = 7,
+	no_baud = 0xff
 } baud_rate_t;
 
 typedef void (*can_status_handler)(can_status_t, baud_rate_t);

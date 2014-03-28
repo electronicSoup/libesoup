@@ -1,8 +1,8 @@
 /**
  *
- * \file es_can/can/l2_mcp2515.c
+ * \file es_can/can/l2_mcp2515.h
  *
- * CAN L2 Definitions for MCP2515 for electronicSoup CAN code
+ * CAN L2 Definitions for MCP2515 Chip
  *
  * Copyright 2014 John Whitmore <jwhitmore@electronicsoup.com>
  *
@@ -21,8 +21,6 @@
  */
 #ifndef L2_MCP2515_H
 #define L2_MCP2515_H
-
-//#include "can/l2_can_types.h"
 
 /*
  *  CAN Chip Registers

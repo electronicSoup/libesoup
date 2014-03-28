@@ -2,7 +2,7 @@
  *
  * \file es_can/can/l2_mcp2515.c
  *
- * CAN L2 Functionality for MCP2515 for electronicSoup CAN code
+ * CAN L2 Functionality for MCP2515 Chip
  *
  * Copyright 2014 John Whitmore <jwhitmore@electronicsoup.com>
  *
@@ -22,6 +22,8 @@
 #include "es_can/core.h"
 #include "system.h"
 
+#define DEBUG_FILE
+#include "es_can/logger/serial.h"
 #include "es_can/can/es_can.h"
 #include "es_can/can/l2_mcp2515.h"
 #include "es_can/timers/timer_sys.h"
@@ -29,7 +31,6 @@
 #include "es_can/utils/utils.h"
 
 #if LOG_LEVEL < NO_LOGGING
-    #include <stdio.h>
     #define TAG "MCP2515"
 #endif
 
@@ -47,10 +48,10 @@ typedef struct
 
 #define CAN_RX_CIR_BUFFER_SIZE 5
 
-    canBuffer_t cirBuffer[CAN_RX_CIR_BUFFER_SIZE];
-    BYTE cirBufferNextRead = 0;
-    BYTE cirBufferNextWrite = 0;
-    BYTE cirBufferCount = 0;
+canBuffer_t cirBuffer[CAN_RX_CIR_BUFFER_SIZE];
+BYTE cirBufferNextRead = 0;
+BYTE cirBufferNextWrite = 0;
+BYTE cirBufferCount = 0;
 
 #define REGISTER_ARRAY_SIZE 5
 
@@ -131,10 +132,7 @@ result_t l2_init(baud_rate_t arg_baud_rate,
 	u32 delay;
         result_t result;
 
-#if LOG_LEVEL <= LOG_DEBUG
-	//    printErrorCounts();
-	serial_log(Debug, TAG, "l2_init()\n\r");
-#endif
+	DEBUG_D("l2_init()\n\r");
 
 	listen_timer.status = INACTIVE;
 	ping_timer.status = INACTIVE;
@@ -158,13 +156,9 @@ result_t l2_init(baud_rate_t arg_baud_rate,
 		Nop();
 	}
 
-#if LOG_LEVEL <= LOG_DEBUG
-	serial_log(Debug, TAG, "Set CAN Mode to CONFIG\n\r");
-#endif
+	DEBUG_D("Set CAN Mode to CONFIG\n\r");
 	set_can_mode(CONFIG_MODE);
-#if LOG_LEVEL <= LOG_DEBUG
-	serial_log(Debug, TAG, "Set CAN Mode SET\n\r");
-#endif
+	DEBUG_D("Set CAN Mode SET\n\r");
 
 	CANWriteReg(RXB0CTRL, 0x64);
 	CANWriteReg(RXB1CTRL, 0x60);
@@ -196,39 +190,12 @@ result_t l2_init(baud_rate_t arg_baud_rate,
 
 	CAN_DeSelect();
 #endif
-	/*
-	 * Set up MCP2515 I/O Pins
-	 */
-#ifdef MCP2515_INPUT_0
-	CANSetRegMaskValue(TXRTSCTRL, B0RTSM, 0x00);
-#endif
-#ifdef MCP2515_INPUT_1
-	CANSetRegMaskValue(TXRTSCTRL, B1RTSM, 0x00);
-#endif
-#ifdef MCP2515_INPUT_2
-	CANSetRegMaskValue(TXRTSCTRL, B2RTSM, 0x00);
-#endif
-
-#ifdef MCP2515_OUTPUT_0
-//    CANWriteReg(BFPCTRL, 0x3C);
-//    CANSetRegMaskValue(BFPCTRL, B0BFE | B0BFM | B0BFS, B0BFE);
-#if LOG_LEVEL <= LOG_DEBUG
-	//    printErrorCounts();
-	serial_log(Debug, TAG, "BFPCTRL initialised to 0x%x\n\r", CANReadReg(BFPCTRL));
-#endif
-#endif  // MCP2515_OUTPUT_0
-
-#ifdef MCP2515_OUTPUT_1
-	CANSetRegMaskValue(BFPCTRL, B1BFE | B1BFM | B1BFS, B1BFE);
-#endif
 
 	/**
 	 * Have to set the baud rate if one has been passed into the function
 	 */
 	if(arg_baud_rate <= BAUD_MAX) {
-#if LOG_LEVEL <= LOG_DEBUG
-		serial_log(Debug, TAG, "Valid Baud Rate specified - %s\n\r", baud_rate_strings[arg_baud_rate]);
-#endif
+		DEBUG_D("Valid Baud Rate specified - %s\n\r", baud_rate_strings[arg_baud_rate]);
 		connectedBaudRate = arg_baud_rate;
 		setBitRate(arg_baud_rate);
 		exitMode = NORMAL_MODE;
@@ -243,9 +210,7 @@ result_t l2_init(baud_rate_t arg_baud_rate,
 		 * Have to search for the Networks baud rate. Start at the bottom
 		 */
 		rxMsgCount = 0;
-#if LOG_LEVEL <= LOG_DEBUG
-		serial_log(Debug, TAG, "Before trying 10K REC - %d, rxCount - %d\n\r", CANReadReg(REC), rxMsgCount);
-#endif
+		DEBUG_D("Before trying 10K REC - %d, rxCount - %d\n\r", CANReadReg(REC), rxMsgCount);
 		listenBaudRate = baud_10K;
 		setBitRate(listenBaudRate);
 		exitMode = LISTEN_MODE;
@@ -253,36 +218,28 @@ result_t l2_init(baud_rate_t arg_baud_rate,
 		connectingErrors = 0;
 		status = Listening;
 		baud = listenBaudRate;
-
-#if LOG_LEVEL <= LOG_DEBUG
-		serial_log(Debug, TAG, "Call the status handler\n\r");
-#endif
+		DEBUG_D("Call the status handler\n\r");
 		if(status_handler)
 			status_handler(status, baud);
-#if LOG_LEVEL <= LOG_DEBUG
-		serial_log(Debug, TAG, "Return from status handler\n\r");
-#endif
+		DEBUG_D("Return from status handler\n\r");
 
 		/* Now wait and see if we have errors */
 		start_timer(LISTEN_TIME, exp_checkNetworkConnection, (union sigval)(void *)NULL, &listen_timer);
 	}
 
-#if LOG_LEVEL <= LOG_DEBUG
-	serial_log(Debug, TAG, "Set Exit Mode 0x%x\n\r", exitMode);
-#endif
-
+	DEBUG_D("Set Exit Mode 0x%x\n\r", exitMode);
 	set_can_mode(exitMode);
 
 //        CANWriteReg(CANINTF, 0x00);
 //	CANWriteReg(CANINTE, 0x00);
 #ifdef L2_CAN_INTERRUPT_DRIVEN
-	CANWriteReg(CANINTE, MERRE | ERRIE | TX2IE | TX1IE | TX0IE | RX1IE | RX0IE);
-//	CANWriteReg(CANINTE, MERRE | RX1IE | RX0IE);
+//	CANWriteReg(CANINTE, MERRE | ERRIE | TX2IE | TX1IE | TX0IE | RX1IE | RX0IE);
+	CANWriteReg(CANINTE, MERRE | RX1IE | RX0IE);
 #endif
 
         /*
-     * If we're using an Interrupt driven approach turn on Interrupts
-     */
+	 * If we're using an Interrupt driven approach turn on Interrupts
+	 */
 #ifdef L2_CAN_INTERRUPT_DRIVEN
         INTCON2bits.INT0EP = 1; //Interrupt on Negative edge
         IFS0bits.INT0IF = 0;    // Clear the flag
@@ -293,14 +250,10 @@ result_t l2_init(baud_rate_t arg_baud_rate,
 	 * If we've been given a valid baud rate and connected send a test mesage to Network
 	 */
 	if(status == Connecting) {
-#if LOG_LEVEL <= LOG_DEBUG
-        serial_log(Debug, TAG, "Connecting send a test Ping message!\n\r");
-#endif
+		DEBUG_D("Connecting send a test Ping message!\n\r");
 		result = send_ping();
 		if (result != SUCCESS) {
-#if LOG_LEVEL <= LOG_ERROR
-			serial_log(Error, TAG, "Failed to send a test Ping message!\n\r");
-#endif
+			DEBUG_E("Failed to send a test Ping message!\n\r");
 		}
 	}
 
@@ -311,10 +264,7 @@ result_t l2_init(baud_rate_t arg_baud_rate,
 	start_timer(ping_time, exp_test_ping, (union sigval)(void *)NULL, &ping_timer);
 #endif
 
-#if LOG_LEVEL <= LOG_DEBUG
-	//    printErrorCounts();
-	serial_log(Debug, TAG, "CAN Layer 2 Initialised\n\r");
-#endif
+	DEBUG_D("CAN Layer 2 Initialised\n\r");
 	return(SUCCESS);
 }
 
@@ -334,18 +284,14 @@ void exp_test_ping(union sigval data __attribute__((unused)))
 	result_t result = SUCCESS;
 	BYTE flags;
 
-#if LOG_LEVEL <= LOG_DEBUG
-	serial_log(Debug, TAG, "exp_test_ping()\n\r");
-//    serial_log(Debug, TAG, "CANINTF %x\n\r", CANReadReg(CANINTF));
-#endif
+        DEBUG_D("exp_test_ping()\n\r");
+//    DEBUG_D("CANINTF %x\n\r", CANReadReg(CANINTF));
 	flags = CANReadReg(CANINTF);
 	ping_timer.status = INACTIVE;
-
+	
 //    if((flags != 0x00) && !PORTAbits.RA14)
 	if((flags != 0x00) && !CAN_INTERRUPT) {
-#if LOG_LEVEL <= LOG_DEBUG
-		serial_log(Error, TAG, "-> Interrupt line Low Flags Set!\n\r");
-#endif
+		DEBUG_D("-> Interrupt line Low Flags Set!\n\r");
 //        L2_ISR();
 	}
 
@@ -362,20 +308,16 @@ void exp_checkNetworkConnection(union sigval data __attribute__((unused)))
 
 	listen_timer.status = INACTIVE;
 
-#if LOG_LEVEL <= LOG_DEBUG
-	if(listenBaudRate <= BAUD_MAX)
-		serial_log(Debug, TAG, "After trying %s Errors - %d, rxCount - %ld\n\r", baud_rate_strings[listenBaudRate], connectingErrors, rxMsgCount);
-	else
-		serial_log(Debug, TAG, "After trying %s Errors - %d, rxCount - %ld\n\r", "NO BAUD RATE", connectingErrors, rxMsgCount);
-#endif
-
+	if(listenBaudRate <= BAUD_MAX) {
+		DEBUG_D("After trying %s Errors - %d, rxCount - %ld\n\r", baud_rate_strings[listenBaudRate], connectingErrors, rxMsgCount);
+	} else {
+		DEBUG_D("After trying %s Errors - %d, rxCount - %ld\n\r", "NO BAUD RATE", connectingErrors, rxMsgCount);
+	}
 	/*
 	 * If we heard valid messages with no errors we've found the baud rate.
 	 */
 	if(rxMsgCount > 0 && connectingErrors == 0) {
-#if LOG_LEVEL <= LOG_DEBUG
-		serial_log(Debug, TAG, "*** Network connected ***\n\r");
-#endif
+		DEBUG_D("*** Network connected ***\n\r");
 		connectedBaudRate = listenBaudRate;
 
 		set_can_mode(NORMAL_MODE);
@@ -394,9 +336,7 @@ void exp_checkNetworkConnection(union sigval data __attribute__((unused)))
 			listenBaudRate = baud_10K;
 		else
 			listenBaudRate++;
-#if LOG_LEVEL <= LOG_DEBUG
-		serial_log(Debug, TAG, "No joy try Baud Rate - %s\n\r", baud_rate_strings[listenBaudRate]);
-#endif
+		DEBUG_D("No joy try Baud Rate - %s\n\r", baud_rate_strings[listenBaudRate]);
 		set_can_mode(CONFIG_MODE);
 		setBitRate(listenBaudRate);
 		set_can_mode(LISTEN_MODE);
@@ -409,17 +349,13 @@ void exp_checkNetworkConnection(union sigval data __attribute__((unused)))
 		if(status_handler)
 			status_handler(status, baud);
 
-#if LOG_LEVEL <= LOG_DEBUG
-		serial_log(Debug, TAG, "Restart timer\n\r");
-#endif
+		DEBUG_D("Restart timer\n\r");
 		result = start_timer(LISTEN_TIME,
 				     exp_checkNetworkConnection,
 				     (union sigval)(void *)NULL,
 				     &listen_timer);
 		if(result != SUCCESS) {
-#if LOG_LEVEL <= LOG_ERROR
-			serial_log(Error, TAG, "Failed to start listen timer, result 0x%x\n\r", result);
-#endif
+			DEBUG_E("Failed to start listen timer, result 0x%x\n\r", result);
 		}
 	}
 }
@@ -447,31 +383,23 @@ void L2_ISR(void)
 	flags = CANReadReg(CANINTF);
 
 #ifdef L2_CAN_INTERRUPT_DRIVEN
-#if LOG_LEVEL <= LOG_DEBUG
-    serial_log(Debug, TAG, "*** ISR *** flags 0x%x\n\r", flags);
-#endif
+	DEBUG_D("*** ISR *** flags 0x%x\n\r", flags);
 
-    if(flags == 0x00) {
+	if(flags == 0x00) {
 		canstat = CANReadReg(CANSTAT);
-        CANWriteReg(CANINTF, 0x00);
+		CANWriteReg(CANINTF, 0x00);
 
-#if LOG_LEVEL <= LOG_WARNING
-		serial_log(Warning, TAG, "*** ISR with zero flags! IOCD %x\n\r", canstat & IOCD);
-#endif
+		DEBUG_W("*** ISR with zero flags! IOCD %x\n\r", canstat & IOCD);
 	}
 #endif
 
 	while(flags != 0x00) {
 		canstat = CANReadReg(CANSTAT);
-#if LOG_LEVEL <= LOG_DEBUG
-		serial_log(Debug, TAG, "*** ISR Flag-%x, IOCD-%x\n\r", flags, (canstat & IOCD));
-#endif
+		DEBUG_D("*** ISR Flag-%x, IOCD-%x\n\r", flags, (canstat & IOCD));
 		if (flags & ERRIE) {
 			eflg = CANReadReg(EFLG);
-#if LOG_LEVEL <= LOG_ERROR
-			serial_log(Error, TAG, "*** CAN ERRIR Flag!!!\n\r");
-			serial_log(Error, TAG, "*** CAN EFLG %x\n\r", eflg);
-#endif
+			DEBUG_E("*** CAN ERRIR Flag!!!\n\r");
+			DEBUG_E("*** CAN EFLG %x\n\r", eflg);
 			if(status == Listening)
 				connectingErrors++;
 
@@ -485,9 +413,7 @@ void L2_ISR(void)
 		}
 
 		if (flags & MERRE) {
-#if LOG_LEVEL <= LOG_WARNING
-			serial_log(Warning, TAG, "CAN MERRE Flag\n\r");
-#endif
+			DEBUG_W("CAN MERRE Flag\n\r");
 			if(status == Listening)
 				connectingErrors++;
 
@@ -504,9 +430,7 @@ void L2_ISR(void)
 			txFlags = CANReadReg(ctrl);
 
 			if((txFlags & TXREQ) && (txFlags & TXERR)) {
-#if LOG_LEVEL <= LOG_ERROR
-				serial_log(Error, TAG, "Transmit Buffer Failed to send\n\r");
-#endif
+				DEBUG_E("Transmit Buffer Failed to send\n\r");
 				CANSetRegMaskValue(ctrl, TXREQ, 0x00);
 				if (status == ChangingBaud)
 					ChangingBaudTxError++;
@@ -515,9 +439,7 @@ void L2_ISR(void)
 		}
 
 		if (flags & RX0IE) {
-#if LOG_LEVEL <= LOG_DEBUG
-			serial_log(Debug, TAG, "RX0IE\n\r");
-#endif
+			DEBUG_D("RX0IE\n\r");
 			/*
 			 * Increment the rx count in case we're listening for Baud
 			 * Rate seettings.
@@ -530,9 +452,7 @@ void L2_ISR(void)
 					cirBufferNextWrite = (cirBufferNextWrite + 1) % CAN_RX_CIR_BUFFER_SIZE;
 					cirBufferCount++;
 				} else {
-#if LOG_LEVEL <= LOG_ERROR
-					serial_log(Error, TAG, "Circular Buffer overflow!\n\r");
-#endif
+					DEBUG_E("Circular Buffer overflow!\n\r");
 				}
 			}
 
@@ -540,9 +460,7 @@ void L2_ISR(void)
 		}
 
 		if (flags & RX1IE) {
-#if LOG_LEVEL <= LOG_DEBUG
-			serial_log(Debug, TAG, "RX1IE\n\r");
-#endif
+			DEBUG_D("RX1IE\n\r");
 			/*
 			 * Incrememnt the rx count incase we're listening for Baud
 			 * Rate seettings.
@@ -555,9 +473,7 @@ void L2_ISR(void)
 					cirBufferNextWrite = (cirBufferNextWrite + 1) % CAN_RX_CIR_BUFFER_SIZE;
 					cirBufferCount++;
 				} else {
-#if LOG_LEVEL <= LOG_ERROR
-					serial_log(Error, TAG, "Circular Buffer overflow!\n\r");
-#endif
+					DEBUG_E("Circular Buffer overflow!\n\r");
 				}
 			}
 
@@ -565,9 +481,7 @@ void L2_ISR(void)
 		}
 
 		if (flags & TX2IE) {
-#if LOG_LEVEL <= LOG_DEBUG
-			serial_log(Debug, TAG, "TX2IE\n\r");
-#endif
+			DEBUG_D("TX2IE\n\r");
 			if (status == Connecting) {
 				status == Connected;
 
@@ -579,9 +493,7 @@ void L2_ISR(void)
 		}
 
 		if (flags & TX1IE) {
-#if LOG_LEVEL <= LOG_DEBUG
-			serial_log(Debug, TAG, "TX1IE\n\r");
-#endif
+			DEBUG_D("TX1IE\n\r");
 			if (status == Connecting) {
 				status == Connected;
 
@@ -592,9 +504,7 @@ void L2_ISR(void)
 		}
 
 		if (flags & TX0IE) {
-#if LOG_LEVEL <= LOG_DEBUG
-			serial_log(Debug, TAG, "TX0IE\n\r");
-#endif
+			DEBUG_D("TX0IE\n\r");
 			if (status == Connecting) {
 				status == Connected;
 
@@ -608,9 +518,7 @@ void L2_ISR(void)
 	}
         IFS0bits.INT0IF = 0;
 #if defined(L2_CAN_INTERRUPT_DRIVEN)
-#if LOG_LEVEL <= LOG_DEBUG
-    serial_log(Debug, TAG, "Exit ISR\n\r");
-#endif
+	DEBUG_D("Exit ISR\n\r");
 #endif
 }
 
@@ -622,44 +530,37 @@ void L2_CanTasks(void)
 	BYTE loop;
 	BYTE byte;
         static BYTE last_flags = 0x00;
-    BYTE flags;
-    BYTE eflg;
-
+	BYTE flags;
+	BYTE eflg;
 
 #ifndef L2_CAN_INTERRUPT_DRIVEN
 	L2_ISR();
 #else
-        if(CAN_INTERRUPT) {
-#if LOG_LEVEL <= LOG_DEBUG
-		serial_log(Debug, TAG, "Call ISR from Tasks\n\r");
-#endif
-        _INT0Interrupt();
-        }
+//        if(CAN_INTERRUPT) {
+//		DEBUG_D("Call ISR from Tasks\n\r");
+//        _INT0Interrupt();
+//        }
 #endif
 
 #if 0
 	count++;
 
 	if(count == 0x00) {
-#if LOG_LEVEL <= LOG_DEBUG
-		serial_log(Debug, TAG, "L2_CanTasks()\n\r");
-#endif
+		DEBUG_D("L2_CanTasks()\n\r");
 	}
 #endif
 
-#if 1
+#if 0
 	flags = CANReadReg(CANINTF);
 	if(flags != last_flags) {
             last_flags = flags;
-        serial_log(Debug, TAG, "!!! - TASKS Flags 0x%x\n\r", flags);
-        eflg = CANReadReg(EFLG);
-#if LOG_LEVEL <= LOG_DEBUG
-        serial_log(Debug, TAG, "*** CAN EFLG %x\n\r", eflg);
-#endif
-        if(!CAN_INTERRUPT) {
-		serial_log(Debug, TAG, "Interrupt line Low Flags Set!\n\r");
+	    DEBUG_D("!!! - TASKS Flags 0x%x\n\r", flags);
+	    eflg = CANReadReg(EFLG);
+	    DEBUG_D("*** CAN EFLG %x\n\r", eflg);
+	    if(!CAN_INTERRUPT) {
+		    DEBUG_D("Interrupt line Low Flags Set!\n\r");
 //        L2_ISR();
-	}
+	    }
         }
 #endif
 	while(cirBufferCount > 0) {
@@ -677,15 +578,6 @@ void L2_CanTasks(void)
 
 		// Check if it's an extended
 		if (cirBuffer[cirBufferNextRead].sidl & SIDL_EXIDE) {
-#if 0
-			rxCanMsg.header.extended_id = TRUE;
-			rxCanMsg.header.rnr_frame = cirBuffer[cirBufferNextRead].dcl & DCL_ERTR;
-			rxCanMsg.header.can_id.id = cirBuffer[cirBufferNextRead].sidh;
-			rxCanMsg.header.can_id.id = rxCanMsg.header.can_id.id << 3 | (cirBuffer[cirBufferNextRead].sidl >> 5) & 0x07;
-			rxCanMsg.header.can_id.id = rxCanMsg.header.can_id.id << 2 | cirBuffer[cirBufferNextRead].sidl & 0x03;
-			rxCanMsg.header.can_id.id = rxCanMsg.header.can_id.id << 8 | cirBuffer[cirBufferNextRead].eid8;
-			rxCanMsg.header.can_id.id = rxCanMsg.header.can_id.id << 8 | cirBuffer[cirBufferNextRead].eid0;
-#endif
 			rxCanMsg.can_id = cirBuffer[cirBufferNextRead].sidh;
 			rxCanMsg.can_id = rxCanMsg.can_id << 3 | (cirBuffer[cirBufferNextRead].sidl >> 5) & 0x07;
 			rxCanMsg.can_id = rxCanMsg.can_id << 2 | cirBuffer[cirBufferNextRead].sidl & 0x03;
@@ -696,12 +588,6 @@ void L2_CanTasks(void)
 			if(cirBuffer[cirBufferNextRead].dcl & DCL_ERTR)
 				rxCanMsg.can_id |= CAN_RTR_FLAG;
 		} else {
-#if 0
-			rxCanMsg.header.extended_id = FALSE;
-			rxCanMsg.header.rnr_frame = cirBuffer[cirBufferNextRead].sidl & SIDL_SRTR;
-			rxCanMsg.header.can_id.id = cirBuffer[cirBufferNextRead].sidh;
-			rxCanMsg.header.can_id.id = rxCanMsg.header.can_id.id << 3 | (cirBuffer[cirBufferNextRead].sidl >> 5) & 0x07;
-#endif
 			rxCanMsg.can_id = cirBuffer[cirBufferNextRead].sidh;
 			rxCanMsg.can_id = rxCanMsg.can_id << 3 | (cirBuffer[cirBufferNextRead].sidl >> 5) & 0x07;
 
@@ -718,9 +604,7 @@ void L2_CanTasks(void)
 			rxCanMsg.data[loop] = cirBuffer[cirBufferNextRead].data[loop];
 		}
 
-#if LOG_LEVEL <= LOG_DEBUG
-//        serial_log(Debug, TAG, "Received a message id - %lx\n\r", rxCanMsg.header.can_id.id);
-#endif
+//        DEBUG_D("Received a message id - %lx\n\r", rxCanMsg.header.can_id.id);
 		cirBufferNextRead = (cirBufferNextRead + 1) % CAN_RX_CIR_BUFFER_SIZE;
 		cirBufferCount--;
 		l2_dispatcher_frame_handler(&rxCanMsg);
@@ -736,13 +620,9 @@ void L2_CanTasks(void)
 #ifdef MCP2515_INPUT_2
 		if ((txrtsctrl & B2RTS) != (byte & B2RTS)) {
 			if (byte & B2RTS) {
-#if LOG_LEVEL <= LOG_DEBUG
-				serial_log(Debug, TAG, "MCP2515 Input 2 On\n\r");
-#endif
+				DEBUG_D("MCP2515 Input 2 On\n\r");
 			} else {
-#if LOG_LEVEL <= LOG_DEBUG
-				serial_log(Debug, TAG, "MCP2515 Input 2 Off\n\r");
-#endif
+				DEBUG_D(Debug, TAG, "MCP2515 Input 2 Off\n\r");
 			}
 		}
 #endif
@@ -772,20 +652,10 @@ result_t l2_tx_frame(can_frame  *canMsg)
 	BYTE ctrl;
 	BYTE canBuffer;
 
-#if LOG_LEVEL <= LOG_DEBUG
-	serial_log(Debug, TAG, "L2 => Id %lx\n\r", canMsg->can_id);
-
-//    serial_log(Debug, TAG, "Data:\n\r");
-//    for (loop = 0; loop < canMsg->header.data_length; loop++)
-//    {
-//        serial_log(Debug, TAG, "Byte %d - 0x%x\n\r", loop, canMsg->data[loop]);
-//    }
-#endif
+	DEBUG_D("L2 => Id %lx\n\r", canMsg->can_id);
 
 	if(connectedBaudRate == no_baud) {
-#if LOG_LEVEL <= LOG_ERROR
-		serial_log(Error, TAG, "Can't Transmit network not connected!\n\r");
-#endif
+		DEBUG_E("Can't Transmit network not connected!\n\r");
 		return(ERR_GENERAL_CAN_ERROR);
 	}
 
@@ -818,24 +688,16 @@ result_t l2_tx_frame(can_frame  *canMsg)
 
 	if(ctrl == 0xff) {
 		// Shipment of fail has arrived
-#if LOG_LEVEL <= LOG_ERROR
-		serial_log(Error, TAG, "ERROR No free Tx Buffers\n\r");
-#endif
+		DEBUG_E("ERROR No free Tx Buffers\n\r");
 		return(ERR_CAN_NO_FREE_BUFFER);
 	} else if (ctrl == TXB0CTRL) {
-#if LOG_LEVEL <= LOG_DEBUG
-		serial_log(Debug, TAG, "TXB0CTRL\n\r");
-#endif
+		DEBUG_D("TXB0CTRL\n\r");
 		canBuffer = TXB0SIDH;
 	} else if (ctrl == TXB1CTRL) {
-#if LOG_LEVEL <= LOG_DEBUG
-		serial_log(Debug, TAG, "TXB1CTRL\n\r");
-#endif
+		DEBUG_D("TXB1CTRL\n\r");
 		canBuffer = TXB1SIDH;
 	} else if (ctrl == TXB2CTRL) {
-#if LOG_LEVEL <= LOG_DEBUG
-		serial_log(Debug, TAG, "TXB2CTRL\n\r");
-#endif
+		DEBUG_D("TXB2CTRL\n\r");
 		canBuffer = TXB2SIDH;
 	}
 
@@ -864,9 +726,7 @@ result_t l2_tx_frame(can_frame  *canMsg)
 	 * and send in One Shot Mode if we're unsure of the Network.
 	 */
 	if (status == Connecting) {
-#if LOG_LEVEL <= LOG_DEBUG
-		serial_log(Debug, TAG, "Network not good so sending OSM\n\r");
-#endif
+		DEBUG_D("Network not good so sending OSM\n\r");
 		CANSetRegMaskValue(CANCTRL, OSM, OSM);
 	} else {
 		// Clear One Shot Mode
@@ -912,17 +772,10 @@ BYTE CheckErrors(void)
 {
 	BYTE flags = 0x00;
 
-#if LOG_LEVEL <= LOG_DEBUG
-//    serial_log(Debug, TAG, "CheckErrors()\n\r");
-	//printErrorCounts();
-#endif
-
 	flags = CANReadReg(CANINTF);
 
 	if(flags != 0x00) {
-#if LOG_LEVEL <= LOG_DEBUG
-		serial_log(Debug, TAG, "CheckErrors() Flag set 0x%x\n\r", flags);
-#endif
+		DEBUG_D("CheckErrors() Flag set 0x%x\n\r", flags);
 	}
 
 	if (flags & TX0IE) {
@@ -942,17 +795,13 @@ BYTE CheckErrors(void)
 
 	if (flags & MERRE) {
 		CANSetRegMaskValue(CANINTF, MERRE, 0x00);
-#if LOG_LEVEL <= LOG_ERROR
-		serial_log(Error, TAG, "Message Error Flag set! Flasg now 0x%x\n\r", CANReadReg(CANINTF));
-#endif
+		DEBUG_E("Message Error Flag set! Flasg now 0x%x\n\r", CANReadReg(CANINTF));
 	}
 
 	if (flags & WAKIE) {
 		CANSetRegMaskValue(CANINTF, WAKIE, 0x00);
 		wakeUpCount++;
-#if LOG_LEVEL <= LOG_DEBUG
-		serial_log(Debug, TAG, "Wake Up Count - now %ld\n\r", wakeUpCount);
-#endif
+		DEBUG_D("Wake Up Count - now %ld\n\r", wakeUpCount);
 	}
 
 	if (flags & ERRIE) {
@@ -978,9 +827,7 @@ static void checkSubErrors(void)
 	error = CANReadReg(EFLG);
 
 	if(error != 0x00) {
-#if LOG_LEVEL <= LOG_ERROR
-		serial_log(Error, TAG, "checkSubErrors() errors - %x\n\r", error);
-#endif
+		DEBUG_E("checkSubErrors() errors - %x\n\r", error);
 	}
 
 	/*
@@ -988,9 +835,7 @@ static void checkSubErrors(void)
 	 */
 	if (error & RX1OVR) {
 		g_missedMessageCount++;
-#if LOG_LEVEL <= LOG_DEBUG
-		serial_log(Debug, TAG, "Missed Message Count - %ld\n\r", g_missedMessageCount);
-#endif
+		DEBUG_D("Missed Message Count - %ld\n\r", g_missedMessageCount);
 
 		/*
 		 * Clear this flag
@@ -1000,9 +845,7 @@ static void checkSubErrors(void)
 
 	if (error & RX0OVR) {
 		g_missedMessageCount++;
-#if LOG_LEVEL <= LOG_DEBUG
-		serial_log(Debug, TAG, "Missed Message Count - %ld\n\r", g_missedMessageCount);
-#endif
+		DEBUG_D("Missed Message Count - %ld\n\r", g_missedMessageCount);
 
 		/*
 		 * Clear this flag
@@ -1031,9 +874,7 @@ static void checkSubErrors(void)
 		 * Work out what's changed
 		 */
 		difference = error ^ g_CanErrors;
-#if LOG_LEVEL <= LOG_ERROR
-		serial_log(Error, TAG, "ERRORS Have changed! Difference is %x\n\r", difference);
-#endif
+		DEBUG_E("ERRORS Have changed! Difference is %x\n\r", difference);
 
 		/*
 		 * Loop through the lower 6 bits we're interested in
@@ -1048,74 +889,52 @@ static void checkSubErrors(void)
 					 */
 					if(error & TXBO) {
 						//TODO Must send an error to Android
-#if LOG_LEVEL <= LOG_ERROR
-						serial_log(Error, TAG, "ERROR Bus OFF!\n\r");
-#endif
+						DEBUG_E("ERROR Bus OFF!\n\r");
 					} else {
-#if LOG_LEVEL <= LOG_ERROR
-						serial_log(Error, TAG, "Error Cleared CAN Bus Active again\n\r");
-#endif
+						DEBUG_E("Error Cleared CAN Bus Active again\n\r");
 					}
 				}
 
 				if (mask & TXEP) {
 					if (error & TXEP) {
 						//ToDo Must send an error to Android
-#if LOG_LEVEL <= LOG_ERROR
-						serial_log(Error, TAG, "Transmitter ERROR PASSIVE Error count > 128!\n\r");
-#endif
+						DEBUG_E("Transmitter ERROR PASSIVE Error count > 128!\n\r");
 					} else {
-#if LOG_LEVEL <= LOG_ERROR
-						serial_log(Error, TAG, "Tx Error count < 128 ;-)\n\r");
-#endif
+						DEBUG_E("Tx Error count < 128 ;-)\n\r");
 					}
 				}
 
 				if (mask & RXEP) {
 					if (error & RXEP) {
 						//TODO Must send an error to Android
-#if LOG_LEVEL <= LOG_ERROR
-						serial_log(Error, TAG, "Receiver ERROR PASSIVE Error count > 128!\n\r");
-#endif
+						DEBUG_E("Receiver ERROR PASSIVE Error count > 128!\n\r");
 					} else {
-#if LOG_LEVEL <= LOG_ERROR
-						serial_log(Error, TAG, "Rx Error < 128 :-)\n\r");
-#endif
+						DEBUG_E("Rx Error < 128 :-)\n\r");
 					}
 				}
 
 				if (mask & TXWAR) {
 					if (error & TXWAR) {
 						//TODO Must send an error to Android
-#if LOG_LEVEL <= LOG_ERROR
-						serial_log(Error, TAG, "Transmitter WARNING Error count > 96!\n\r");
-#endif
+						DEBUG_E("Transmitter WARNING Error count > 96!\n\r");
 					} else {
-#if LOG_LEVEL <= LOG_ERROR
-						serial_log(Error, TAG, "Tx Warning cleared Error Count < 96\n\r");
-#endif
+						DEBUG_E("Tx Warning cleared Error Count < 96\n\r");
 					}
 				}
 
 				if (mask & TXBO) {
 					if (error & RXWAR) {
 						//TODO Must send an error to Android
-#if LOG_LEVEL <= LOG_ERROR
-						serial_log(Error, TAG, "Receiver WARNING Error count > 96!\n\r");
-#endif
+						DEBUG_E("Receiver WARNING Error count > 96!\n\r");
 					} else {
-#if LOG_LEVEL <= LOG_ERROR
-						serial_log(Error, TAG, "Rx Warning Cleared Error Count < 96\n\r");
-#endif
+						DEBUG_E("Rx Warning Cleared Error Count < 96\n\r");
 					}
 				}
 			}
 		}
 		g_CanErrors = error;
 	} else {
-#if LOG_LEVEL <= LOG_DEBUG
-		serial_log(Debug, TAG, "Errors Have not changed\n\r");
-#endif
+		DEBUG_D("Errors Have not changed\n\r");
 	}
 }
 
@@ -1130,14 +949,8 @@ static void CANReset(void)
 static void CANSetRegMaskValue(BYTE reg, BYTE mask, BYTE value)
 {
 	BYTE fail;
-#ifdef TEST
-#if LOG_LEVEL <= LOG_DEBUG
-	if(reg == CANCTRL) {
-//        serial_log(Debug, TAG, "Writing to CANTCTRL mask 0x%x\n\r", mask);
-	}
-#endif
-#endif
-//    do {
+
+        //    do {
         CAN_Select();
         SPIWriteByte(CAN_BIT_MODIFY);
         SPIWriteByte(reg);
@@ -1147,10 +960,7 @@ static void CANSetRegMaskValue(BYTE reg, BYTE mask, BYTE value)
        
         fail = (CANReadReg(reg) & mask) != value; 
         if(fail) {
-#if LOG_LEVEL <= LOG_ERROR
-		printf("-");
-//            serial_log(ERROR, TAG, "Bit Modify Failed!\n\r");
-#endif            
+            DEBUG_E("Bit Modify Failed!\n\r");
         }
 //    } while (fail);
 }
@@ -1164,56 +974,44 @@ static void set_can_mode(BYTE mode)
 #endif
 
 #ifdef TEST
-#if LOG_LEVEL <= LOG_DEBUG
-	serial_log(Debug, TAG, "set_can_mode(0x%x)\n\r", mode);
-#endif
+	DEBUG_D("set_can_mode(0x%x)\n\r", mode);
 #endif
 
 	CANSetRegMaskValue(CANCTRL, MODE_MASK, mode);
 #ifdef TEST
 	result = CANReadReg(CANCTRL);
 
-    while((result & MODE_MASK) != mode) {
-#if LOG_LEVEL <= LOG_DEBUG
-	    printf(".");
-//        serial_log(Debug, TAG, "Before write CANCTRL 0x%x\n\r", result & MODE_MASK);
-#endif
-	    CANSetRegMaskValue(CANCTRL, MODE_MASK, mode);
-	    result = CANReadReg(CANCTRL);
-#if LOG_LEVEL <= LOG_DEBUG
-//        serial_log(Debug, TAG, "After Write CANCTRL 0x%x\n\r", result & MODE_MASK);
-#endif
-
+	while((result & MODE_MASK) != mode) {
+		DEBUG_D("Before write CANCTRL 0x%x\n\r", result & MODE_MASK);
+		CANSetRegMaskValue(CANCTRL, MODE_MASK, mode);
+		result = CANReadReg(CANCTRL);
 #ifdef TEST
-	    for (delay = 0; delay < 0x100; delay++) {
-		    Nop();
-	    }
+		for (delay = 0; delay < 0x100; delay++) {
+			Nop();
+		}
 #endif
-    }
+	}
 #endif
 
-    do {
+	do {
 #ifdef TEST
-#if LOG_LEVEL <= LOG_DEBUG
-            printf("*");
-#endif
-	    loop++;
-	    for (delay = 0; delay < 0x100; delay++) {
-		    Nop();
-	    }
+		loop++;
+		for (delay = 0; delay < 0x100; delay++) {
+			Nop();
+		}
 
-	    if(loop == 0) {
+		if(loop == 0) {
 #if LOG_LEVEL <= LOG_ERROR
 //            serial_log(Error, TAG, "Error Failing to set CAN Mode\n\r");
 //            serial_log(Error, TAG, "CANCTRL 0x%x\n\r", result & MODE_MASK);
 //            result = CANReadReg(CANSTAT);
 //            serial_log(Error, TAG, "CANSTAT 0x%x\n\r", result & MODE_MASK);
 #endif
-            //            stall();
-	    }
+			//            stall();
+		}
 #endif
-	    result = CANReadReg(CANSTAT);
-    } while ( (result & MODE_MASK) != mode );
+		result = CANReadReg(CANSTAT);
+	} while ( (result & MODE_MASK) != mode );
 }
 
 /**
@@ -1298,9 +1096,7 @@ static void setBitRate(baud_rate_t baudRate)
 		break;
 
         default:
-#if LOG_LEVEL <= LOG_ERROR
-		serial_log(Error, TAG,  "Invalid Baud Rate Specified\n\r");
-#endif
+		DEBUG_E("Invalid Baud Rate Specified\n\r");
 		break;
 	}
 
@@ -1332,9 +1128,8 @@ baud_rate_t L2_GetCanBuadRate(void)
 void L2_SetCanNodeBuadRate(baud_rate_t baudRate)
 {
 	es_timer timer;
-#if LOG_LEVEL <= LOG_DEBUG
-	serial_log(Debug, TAG, "L2_SetCanNodeBuadRate()\n\r");
-#endif
+
+	DEBUG_D("L2_SetCanNodeBuadRate()\n\r");
 	timer.status = INACTIVE;
 
 	status = ChangingBaud;
@@ -1356,10 +1151,9 @@ void L2_SetCanNodeBuadRate(baud_rate_t baudRate)
 
 static void exp_finaliseBaudRateChange(union sigval data __attribute__((unused)))
 {
-#if LOG_LEVEL <= LOG_DEBUG
-	serial_log(Debug, TAG, "exp_finaliseBaudRateChange()\n\r");
-#endif
-	set_can_mode(NORMAL_MODE);
+	DEBUG_D("exp_finaliseBaudRateChange()\n\r");
+
+        set_can_mode(NORMAL_MODE);
 
 	status = Connected;
 
@@ -1376,9 +1170,7 @@ void L2_SetCanNetworkBuadRate(baud_rate_t rate)
 	can_frame msg;
 	result_t result = SUCCESS;
 
-#if LOG_LEVEL <= LOG_DEBUG
-	serial_log(Debug, TAG, "L2_SetCanNetworkBuadRate()\n\r");
-#endif
+	DEBUG_D("L2_SetCanNetworkBuadRate()\n\r");
 	timer.status = INACTIVE;
 
 	msg.can_id = 0x705;
@@ -1408,14 +1200,10 @@ static void exp_resendBaudRateChange(union sigval data __attribute__((unused)))
 
 	timer.status = INACTIVE;
 
-#if LOG_LEVEL <= LOG_DEBUG
-	serial_log(Debug, TAG, "exp_resendBaudRateChange()\n\r");
-#endif
+	DEBUG_D("exp_resendBaudRateChange()\n\r");
 
 	if(ChangingBaudTxError < 3) {
-#if LOG_LEVEL <= LOG_DEBUG
-		serial_log(Debug, TAG, "resending Baud Rate Change Request %d\n\r", ChangingBaudTxError);
-#endif
+		DEBUG_D("resending Baud Rate Change Request %d\n\r", ChangingBaudTxError);
 		msg.can_id = 0x705;
 		msg.can_dlc = 1;
 
@@ -1424,36 +1212,28 @@ static void exp_resendBaudRateChange(union sigval data __attribute__((unused)))
 		if(l2_tx_frame(&msg) != ERR_CAN_NO_FREE_BUFFER)
 			start_timer(MILLI_SECONDS_TO_TICKS(500), exp_resendBaudRateChange, (union sigval)(void *)NULL, &timer);
 		else {
-#if LOG_LEVEL <= LOG_DEBUG
-			serial_log(Debug, TAG, "No Free Buffers so change the Baud Rate\n\r");
-#endif
+			DEBUG_D("No Free Buffers so change the Baud Rate\n\r");
 			CANSetRegMaskValue(TXB0CTRL, TXREQ, 0x00);
 			CANSetRegMaskValue(TXB1CTRL, TXREQ, 0x00);
 			CANSetRegMaskValue(TXB2CTRL, TXREQ, 0x00);
 			L2_SetCanNodeBuadRate(baud);
 		}
 	} else {
-#if LOG_LEVEL <= LOG_DEBUG
-		serial_log(Debug, TAG, "3 Errors so NOT Resending Baud Rate Change Request\n\r");
-#endif
+		DEBUG_D("3 Errors so NOT Resending Baud Rate Change Request\n\r");
 		L2_SetCanNodeBuadRate(baud);
 	}
 }
 
 static void CANEnableRXInterrupts(void)
 {
-#if LOG_LEVEL <= LOG_DEBUG
-	serial_log(Debug, TAG, "CANEnableRXInterrupts\n\r");
-#endif
+	DEBUG_D("CANEnableRXInterrupts\n\r");
 	CANSetRegMaskValue(CANINTE, RX1IE, RX1IE);
 	CANSetRegMaskValue(CANINTE, RX0IE, RX0IE);
 }
 
 static void CANDisableRXInterrupts(void)
 {
-#if LOG_LEVEL <= LOG_DEBUG
-	serial_log(Debug, TAG, "CANDisableRXInterrupts\n\r");
-#endif
+	DEBUG_D("CANDisableRXInterrupts\n\r");
 	CANSetRegMaskValue(CANINTE, RX1IE, 0x00);
 	CANSetRegMaskValue(CANINTE, RX0IE, 0x00);
 }
@@ -1499,14 +1279,12 @@ static void CANReadRxBuffer(BYTE reg, BYTE *buffer)
 
 	dataLength = buffer[4] & 0x0f;
 	if(dataLength > CAN_DATA_LENGTH) {
-#if LOG_LEVEL <= LOG_ERROR
-		serial_log(Error, TAG, "Invalid %x & 0x0f = %x\n\r", buffer[4], buffer[4] & 0x0f);
-#endif
-	}
-
-	for(loop = 0; loop < dataLength; loop++, ptr++) {
-		*ptr = SPIWriteByte(0x00);
-	}
+		DEBUG_E("Invalid Data Length %x & 0x0f = %x\n\r", buffer[4], buffer[4] & 0x0f);
+	} else {
+		for (loop = 0; loop < dataLength; loop++, ptr++) {
+			*ptr = SPIWriteByte(0x00);
+		}
+        }
 
 	CAN_DeSelect();
 }
@@ -1541,25 +1319,19 @@ void printErrorCounts(void)
 	byte = CANReadReg(TEC);
 	if(byte != tec) {
 		tec = byte;
-#if LOG_LEVEL <= LOG_ERROR
-		serial_log(Error, TAG, "Tx Error (TEC) Count Change - 0x%x\n\r", tec);
-#endif
+		DEBUG_E("Tx Error (TEC) Count Change - 0x%x\n\r", tec);
 	}
 
 	byte = CANReadReg(REC);
 	if(byte != rec) {
 		rec = byte;
-#if LOG_LEVEL <= LOG_ERROR
-		serial_log(Error, TAG, "Rx Error (REC) Count Change - 0x%x\n\r", rec);
-#endif
+		DEBUG_E("Rx Error (REC) Count Change - 0x%x\n\r", rec);
 	}
 
 	byte = CANReadReg(EFLG);
 	if(byte != eflg) {
 		eflg = byte;
-#if LOG_LEVEL <= LOG_ERROR
-		serial_log(Error, TAG, "EFLG Changed - 0x%x\n\r", eflg);
-#endif
+		DEBUG_E("EFLG Changed - 0x%x\n\r", eflg);
 	}
 }
 #endif
@@ -1573,46 +1345,7 @@ void test_can()
 	byte = CANReadReg(CANCTRL);
 	CAN_DeSelect();
 
-#if LOG_LEVEL <= LOG_DEBUG
-	serial_log(Debug, TAG, "Test read of CANCTRL - 0x%x\n\r", byte);
-#endif
-}
-#endif
-
-#ifdef MCP2515_OUTPUT_0
-void set_output_0(BYTE value)
-{
-	if(value) {
-#if LOG_LEVEL <= LOG_DEBUG
-		serial_log(Debug, TAG, "Set Output 0\n\r");
-#endif
-		CANSetRegMaskValue(BFPCTRL, B0BFS, B0BFS);
-	} else {
-#if LOG_LEVEL <= LOG_DEBUG
-		serial_log(Debug, TAG, "Clear Output 0\n\r");
-#endif
-		CANSetRegMaskValue(BFPCTRL, B0BFS, 0x00);
-	}
-}
-#endif
-
-#ifdef MCP2515_OUTPUT_1
-void set_output_1(BYTE value)
-{
-#if LOG_LEVEL <= LOG_DEBUG
-        serial_log(Debug, TAG, "set_output_1(0x%x)\n\r", value);
-#endif
-	if(value) {
-#if LOG_LEVEL <= LOG_DEBUG
-		serial_log(Debug, TAG, "Set Output 1\n\r");
-#endif
-		CANSetRegMaskValue(BFPCTRL, B1BFS, B1BFS);
-	} else {
-#if LOG_LEVEL <= LOG_DEBUG
-		serial_log(Debug, TAG, "Clear Output 0\n\r");
-#endif
-		CANSetRegMaskValue(BFPCTRL, B1BFS, 0x00);
-	}
+	DEBUG_D("Test read of CANCTRL - 0x%x\n\r", byte);
 }
 #endif
 
@@ -1621,9 +1354,7 @@ static void l2_dispatcher_frame_handler(can_frame *message)
 	BYTE loop;
 	BOOL found = FALSE;
 
-#if DEBUG_LEVEL <= LOG_DEBUG
-	serial_log(Debug, TAG, "L2_CanDispatcherL2MsgHandler 0x%lx\n\r", message->can_id);
-#endif
+	DEBUG_D("L2_CanDispatcherL2MsgHandler 0x%lx\n\r", message->can_id);
 
 	for (loop = 0; loop < REGISTER_ARRAY_SIZE; loop++) {
 		if( (registered[loop].used)
@@ -1637,9 +1368,7 @@ static void l2_dispatcher_frame_handler(can_frame *message)
 		/*
 		 * No handler found so pass the received message to the Application
 		 */
-#if DEBUG_LEVEL <= LOG_DEBUG
-		serial_log(Debug, TAG, "No Handler for 0x%lx\n\r", message->can_id);
-#endif
+		DEBUG_D("No Handler for 0x%lx\n\r", message->can_id);
 	}
 }
 
@@ -1651,12 +1380,10 @@ static BYTE l2_can_dispatch_reg_handler(can_target_t *target)
 result_t l2_reg_handler(can_target_t *target)
 {
 	BYTE loop;
-#if DEBUG_LEVEL <= LOG_DEBUG
-	serial_log(Debug, TAG, "sys_l2_can_dispatch_reg_handler mask %lx, filter %lx Handler %lx\n\r",
+	DEBUG_D("sys_l2_can_dispatch_reg_handler mask %lx, filter %lx Handler %lx\n\r",
 		   target->mask,
 		   target->filter,
 		   target->handler);
-#endif
     /*
      * clean up the target in case the caller has included spurious bits
      */
@@ -1669,9 +1396,7 @@ result_t l2_reg_handler(can_target_t *target)
 	// Find a free slot
 	for(loop = 0; loop < REGISTER_ARRAY_SIZE; loop++) {
 		if(registered[loop].used == FALSE) {
-#if DEBUG_LEVEL <= LOG_DEBUG
-			serial_log(Debug, TAG, "Target stored at target %d\n\r", loop);
-#endif
+			DEBUG_D("Target stored at target %d\n\r", loop);
 			registered[loop].used = TRUE;
 			registered[loop].target.mask = target->mask;
 			registered[loop].target.filter = target->filter;

@@ -28,17 +28,18 @@
 
 #if defined(MCP)
 //#include "can/l2_can_types.h"
-#include "can/es_can.h"
-#include "utils/utils.h"
+#include "es_can/can/es_can.h"
+#include "es_can/utils/utils.h"
 #elif defined(ES_LINUX)
 #include "serial.h"
 #endif
 
-#include "dcncp/l2_dcncp.h"
-#include "timers/timer_sys.h"
-#include "can/es_can.h"
-#include "logger/net.h"
-
+#include "es_can/dcncp/l2_dcncp.h"
+#include "es_can/timers/timer_sys.h"
+#include "es_can/can/es_can.h"
+#if defined(CAN_LAYER_3)
+#include "es_can/logger/net.h"
+#endif
 
 #if DEBUG_LEVEL < NO_LOGGING
 #define TAG "NODE_ADDRESS"
