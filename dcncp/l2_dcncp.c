@@ -27,8 +27,9 @@
 #include "system.h"
 
 #define DEBUG_FILE
+
 #if defined(MCP)
-//#include "can/l2_can_types.h"
+#include "es_can/logger/serial.h"
 #include "es_can/can/es_can.h"
 #include "es_can/utils/utils.h"
 #elif defined(ES_LINUX)
