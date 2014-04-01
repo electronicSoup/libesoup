@@ -22,9 +22,7 @@
 #ifndef SERIAL_LOGGER_H
 #define SERIAL_LOGGER_H
 
-#if defined(MCP)
-extern void serial_init(void);
-#endif
+#include "system.h"
 
 #if (defined(DEBUG_FILE) && LOG_LEVEL <= LOG_DEBUG)
 #define DEBUG_D(...) serial_log(Debug, TAG, __VA_ARGS__)
@@ -50,6 +48,11 @@ extern void serial_init(void);
 #define DEBUG_E //
 #endif
 
+#if (LOG_LEVEL < NO_LOGGING)
+#if defined(MCP)
+extern void serial_init(void);
+#endif
+
 #ifdef __C30__
 extern void serial_log(log_level_t level, char* tag, char* fmt, ...);
 #elif defined(__18CXX)
@@ -57,6 +60,6 @@ extern void serial_log(log_level_t level, const rom char* tag, const rom char* f
 #elif defined(ES_LINUX)
 extern void serial_log(log_level_t level, char* tag, char* fmt, ...);
 #endif
-
+#endif //#if (LOG_LEVEL < NO_LOGGING)
 
 #endif // NODE_LOGGER_H
