@@ -114,28 +114,16 @@ typedef enum {
  *
  * A Timer ID is used to identify a timer. When you create a timer this ID type 
  * is returned to the caller so that the timer can be canceled.
- *
- * NB NO_TIMER is defined as 0xff so 0x00 is a valid timer!
  */ 
 #ifdef MCP
-typedef u8 timer_removethis_t;
+typedef u8 timer_t;
 #endif
 
 typedef struct
 {
 	timer_status_t status;
-#ifdef MCP
-	timer_removethis_t        timer_id;
-#else
 	timer_t        timer_id;
-#endif
 } es_timer;
-
-/** 
- * \brief Value for invalid timer identifier.
- */
-//#define NO_TIMER 0xff
-
 
 /**
  * \brief Duration of the system timer tick in MilliSeconds
