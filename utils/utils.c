@@ -29,10 +29,10 @@
 #include "es_can/timers/timer_sys.h"
 #endif
 //#include "es_can/interrupts/interrupts.h"
-
-#if LOG_LEVEL < NO_LOGGING
 #define DEBUG_FILE
 #include "es_can/logger/serial.h"
+
+#if LOG_LEVEL < NO_LOGGING
 #define TAG "UTILS"
 #endif
 
@@ -291,9 +291,6 @@ void flash_write(UINT32 address, BYTE *data)
 #elif defined(__C30__)
 void flash_write(UINT32 address, BYTE *data)
 {
-    // C example using MPLAB C30
-    #define NUM_INSTRUCTION_PER_ROW 64
-
     UINT16 highWord = 0;
     UINT16 lowWord = 0;
     unsigned int offset;
