@@ -2,7 +2,7 @@
  *
  * \file es_can/android/android.c
  *
- * Android device comms Functionality
+ * Functions for communicating with Android Apps 
  *
  * Copyright 2014 John Whitmore <jwhitmore@electronicsoup.com>
  *
@@ -28,7 +28,7 @@
 #include "es_can/logger/serial.h"
 
 #if LOG_LEVEL < NO_LOGGING
-#define TAG "24BootAnd"
+#define TAG "Android"
 #endif
 
 #define TX_BUFFER_SIZE 300

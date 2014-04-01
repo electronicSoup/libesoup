@@ -2,7 +2,7 @@
  *
  * \file es_can/android/android.h
  *
- * Android device comms Definitions
+ * Function prototypes for Android Comms
  *
  * Copyright 2014 John Whitmore <jwhitmore@electronicsoup.com>
  *
