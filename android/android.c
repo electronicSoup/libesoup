@@ -1,13 +1,33 @@
+/**
+ *
+ * \file es_can/android/android.c
+ *
+ * Functions for communicating with Android Apps 
+ *
+ * Copyright 2014 John Whitmore <jwhitmore@electronicsoup.com>
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the version 2 of the GNU General Public License
+ * as published by the Free Software Foundation
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, see <http://www.gnu.org/licenses/>.
+ *
+ */
 #include "system.h"
 
 #include "usb/usb.h"
 #include "usb/usb_host_android.h"
-
-#if LOG_LEVEL < NO_LOGGING
 #define DEBUG_FILE
 #include "es_can/logger/serial.h"
 
-#define TAG "24BootAnd"
+#if LOG_LEVEL < NO_LOGGING
+#define TAG "Android"
 #endif
 
 #define TX_BUFFER_SIZE 300
@@ -39,7 +59,6 @@ BOOL androidReceive(BYTE *buffer, UINT16 *size, BYTE *errorCode)
 
         // The first word to read is a size of the message
         msgSize = rxCircularBuffer[rxReadIndex] << 8 | rxCircularBuffer[(rxReadIndex + 1) % RX_BUFFER_SIZE];
-//        printf("message size expected %d and rxBufferCount %d\n\r", msgSize, rxBufferCount);
 
         if(msgSize + 2 > rxBufferCount) {
             *size = 0;
@@ -124,7 +143,6 @@ BYTE androidTasks(void* device_handle)
 
     if (receiverBusy) {
         if (AndroidAppIsReadComplete(device_handle, &errorCode, &size) == TRUE) {
-//            printf("AndroidAppIsReadComplete size %ld\n\r", size);
             
             //We've received a command over the USB from the Android device.
             if (errorCode == USB_SUCCESS) {
@@ -133,15 +151,6 @@ BYTE androidTasks(void* device_handle)
                 if ((rxBufferCount + size) >= RX_BUFFER_SIZE) {
                     DEBUG_E("Error Receive buffer overflow");
                 }
-
-//                rxCircularBuffer[rxWriteIndex] = (size >> 8) & 0xff;
-//                rxBufferCount++;
-//                rxWriteIndex = ++rxWriteIndex % RX_BUFFER_SIZE;
-//
-//                rxCircularBuffer[rxWriteIndex] = size & 0xff;
-//                rxBufferCount++;
-//                rxWriteIndex = ++rxWriteIndex % RX_BUFFER_SIZE;
-
 
                 for (loop = 0; loop < size; loop++) {
                     rxCircularBuffer[rxWriteIndex] = rxBuffer[loop];
