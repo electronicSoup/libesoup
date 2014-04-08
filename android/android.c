@@ -20,73 +20,78 @@
  *
  */
 #include "system.h"
-
 #include "usb/usb.h"
 #include "usb/usb_host_android.h"
 
 #define DEBUG_FILE
-#include "es_can/logger/serial.h"
+#include "es_lib/logger/serial.h"
 
 #if LOG_LEVEL < NO_LOGGING
 #define TAG "Android"
 #endif
 
+/*
+ * Definitions of the Rx and Tx buffer sizes.
+ */
 #define TX_BUFFER_SIZE 300
 #define RX_BUFFER_SIZE 300
 
-static BYTE rxBuffer[RX_BUFFER_SIZE];
-static BYTE rxCircularBuffer[RX_BUFFER_SIZE];
+/*
+ *
+ */
+static BYTE rx_buffer[RX_BUFFER_SIZE];
+static BYTE rx_circular_buffer[RX_BUFFER_SIZE];
 
-static UINT16 rxWriteIndex = 0;
-static UINT16 rxReadIndex = 0;
-static UINT16 rxBufferCount = 0;
-static BOOL receiverBusy = FALSE;
+static UINT16 rx_write_index = 0;
+static UINT16 rx_read_index = 0;
+static UINT16 rx_buffer_count = 0;
+static BOOL receiver_busy = FALSE;
 
-static BYTE txBuffer[TX_BUFFER_SIZE];
-static BYTE txCircularBuffer[TX_BUFFER_SIZE];
+static BYTE tx_buffer[TX_BUFFER_SIZE];
+static BYTE tx_circular_buffer[TX_BUFFER_SIZE];
 
-static UINT16 txWriteIndex = 0;
-static UINT16 txReadIndex = 0;
-static UINT16 txBufferCount = 0;
-static BOOL transmitterBusy = FALSE;
+static UINT16 tx_write_index = 0;
+static UINT16 tx_read_index = 0;
+static UINT16 tx_buffer_count = 0;
+static BOOL transmitter_busy = FALSE;
 
-BOOL androidReceive(BYTE *buffer, UINT16 *size, BYTE *errorCode)
+BOOL android_receive(BYTE *buffer, UINT16 *size, BYTE *error_code)
 {
-	*errorCode = USB_SUCCESS;
+	*error_code = USB_SUCCESS;
     
-	if (rxBufferCount > 2) {
-		UINT16 msgSize;
+	if (rx_buffer_count > 2) {
+		UINT16 msg_size;
 		UINT16 loop;
 
 		// The first word to read is a size of the message
-		msgSize = rxCircularBuffer[rxReadIndex] << 8 | rxCircularBuffer[(rxReadIndex + 1) % RX_BUFFER_SIZE];
+		msg_size = rx_circular_buffer[rx_read_index] << 8 | rx_circular_buffer[(rx_read_index + 1) % RX_BUFFER_SIZE];
 
-		if(msgSize + 2 > rxBufferCount) {
+		if(msg_size + 2 > rx_buffer_count) {
 			*size = 0;
 			return (FALSE);
 		}
 
-		msgSize = rxCircularBuffer[rxReadIndex];
-		rxBufferCount--;
-		rxReadIndex = ++rxReadIndex % RX_BUFFER_SIZE;
+		msg_size = rx_circular_buffer[rx_read_index];
+		rx_buffer_count--;
+		rx_read_index = ++rx_read_index % RX_BUFFER_SIZE;
 
-		msgSize = msgSize << 8 | rxCircularBuffer[rxReadIndex];
-		rxBufferCount--;
-		rxReadIndex = ++rxReadIndex % RX_BUFFER_SIZE;
+		msg_size = msg_size << 8 | rx_circular_buffer[rx_read_index];
+		rx_buffer_count--;
+		rx_read_index = ++rx_read_index % RX_BUFFER_SIZE;
 
-		if (msgSize > *size) {
-			DEBUG_D("msgSize %d\n\r", msgSize);
-			DEBUG_D("Read received buffer size %d not big enough for %d\n\r",*size, rxBufferCount);
-			*errorCode = USB_ILLEGAL_REQUEST;
+		if (msg_size > *size) {
+			DEBUG_D("msg_size %d\n\r", msg_size);
+			DEBUG_D("Read received buffer size %d not big enough for %d\n\r",*size, rx_buffer_count);
+			*error_code = USB_ILLEGAL_REQUEST;
 			return (FALSE);
 		}
 
-		for (loop = 0; loop < msgSize; loop++) {
-			buffer[loop] = rxCircularBuffer[rxReadIndex];
-			rxReadIndex = ++rxReadIndex % RX_BUFFER_SIZE;
-			rxBufferCount--;
+		for (loop = 0; loop < msg_size; loop++) {
+			buffer[loop] = rx_circular_buffer[rx_read_index];
+			rx_read_index = ++rx_read_index % RX_BUFFER_SIZE;
+			rx_buffer_count--;
 		}
-		*size = msgSize;
+		*size = msg_size;
 		return (TRUE);
 	} else {
 		*size = 0;
@@ -94,73 +99,72 @@ BOOL androidReceive(BYTE *buffer, UINT16 *size, BYTE *errorCode)
 	}
 }
 
-BYTE androidTransmit(BYTE *buffer, BYTE size)
+BYTE android_transmit(BYTE *buffer, BYTE size)
 {
 	UINT16 loop;
-	BYTE *bufferPtr;
+	BYTE *buffer_ptr;
 
-	if ( (txBufferCount + size) >= TX_BUFFER_SIZE) {
+	if ( (tx_buffer_count + size) >= TX_BUFFER_SIZE) {
 		// ERROR Can't accept that much data at present
 		DEBUG_E("Buffer Full\n\r");
 		return (USB_EVENT_QUEUE_FULL);
 	}
 
-	bufferPtr = buffer;
+	buffer_ptr = buffer;
 
 	for(loop = 0; loop < size; loop++) {
-		txCircularBuffer[txWriteIndex] = *bufferPtr++;
-		txBufferCount++;
-		txWriteIndex = (++txWriteIndex % TX_BUFFER_SIZE);
+		tx_circular_buffer[tx_write_index] = *buffer_ptr++;
+		tx_buffer_count++;
+		tx_write_index = (++tx_write_index % TX_BUFFER_SIZE);
 	}
 	return (USB_SUCCESS);
 }
 
-BYTE androidTasks(void* device_handle)
+BYTE android_tasks(void* device_handle)
 {
-	BYTE errorCode = USB_SUCCESS;
+	BYTE error_code = USB_SUCCESS;
 	UINT16 loop = 0;
 	UINT32 size = 0;
 
 	if(device_handle == NULL) {
-		receiverBusy = FALSE;
-		transmitterBusy = FALSE;
+		receiver_busy = FALSE;
+		transmitter_busy = FALSE;
 		return(USB_SUCCESS);
 	}
 	
-	if (!receiverBusy) {
-		errorCode = AndroidAppRead(device_handle, (BYTE*) & rxBuffer, (UINT32)sizeof (rxBuffer));
+	if (!receiver_busy) {
+		error_code = AndroidAppRead(device_handle, (BYTE*) & rx_buffer, (UINT32)sizeof (rx_buffer));
 		//If the device is attached, then lets wait for a command from the application
-		if (errorCode != USB_SUCCESS) {
-			//Error
-			if (errorCode != USB_ENDPOINT_BUSY) {
-				DEBUG_E("Error trying to start read - %x\n\r", errorCode);
+		if (error_code != USB_SUCCESS) {
+			if (error_code != USB_ENDPOINT_BUSY) {
+				DEBUG_E("Error trying to start read - %x\n\r", error_code);
 			}
 		} else {
-			receiverBusy = TRUE;
+			receiver_busy = TRUE;
 		}
 	}
 
 	size = 0;
 
-	if (receiverBusy) {
-		if (AndroidAppIsReadComplete(device_handle, &errorCode, &size) == TRUE) {
+	if (receiver_busy) {
+		if (AndroidAppIsReadComplete(device_handle, &error_code, &size) == TRUE) {
 			//We've received a command over the USB from the Android device.
-			if (errorCode == USB_SUCCESS) {
+			if (error_code == USB_SUCCESS) {
 				// Copy the Received Message into the Circular buffer.
 				// Check if there's space for message
-				if ((rxBufferCount + size) >= RX_BUFFER_SIZE) {
+				if ((rx_buffer_count + size) >= RX_BUFFER_SIZE) {
 					DEBUG_E("Error Receive buffer overflow");
 				}
 				for (loop = 0; loop < size; loop++) {
-					rxCircularBuffer[rxWriteIndex] = rxBuffer[loop];
-					rxBufferCount++;
-					rxWriteIndex = ++rxWriteIndex % RX_BUFFER_SIZE;
+					rx_circular_buffer[rx_write_index] = rx_buffer[loop];
+					rx_buffer_count++;
+					rx_write_index = ++rx_write_index % RX_BUFFER_SIZE;
 				}
-				receiverBusy = FALSE;
+				receiver_busy = FALSE;
 			} else {
 				//Error
-				receiverBusy = FALSE;
-				DEBUG_E("Error trying to complete read request %x\n\r", errorCode);
+				receiver_busy = FALSE;
+				DEBUG_E("Error trying to complete read request %x\n\r", error_code);
 			}
 		}
 	}
@@ -168,26 +172,26 @@ BYTE androidTasks(void* device_handle)
 	/*
 	 * Process the Transmitter
 	 */
-	if (transmitterBusy) {
+	if (transmitter_busy) {
 		// CheckIsTheLastWriteFinished
-		if (AndroidAppIsWriteComplete(device_handle, &errorCode, &size) == TRUE) {
-			transmitterBusy = FALSE;
+		if (AndroidAppIsWriteComplete(device_handle, &error_code, &size) == TRUE) {
+			transmitter_busy = FALSE;
 		} else {
-			errorCode = USB_SUCCESS;
+			error_code = USB_SUCCESS;
 		}
 	}
 
-	if (!transmitterBusy && (txBufferCount > 0)) {
+	if (!transmitter_busy && (tx_buffer_count > 0)) {
 		// send whatever's in the queue
-		UINT16 numberToSend = txBufferCount;
+		UINT16 numberToSend = tx_buffer_count;
 		for (loop = 0; loop < numberToSend; loop++) {
-			txBuffer[loop] = txCircularBuffer[txReadIndex];
-			txReadIndex = (++txReadIndex % TX_BUFFER_SIZE);
-			txBufferCount--;
+			tx_buffer[loop] = tx_circular_buffer[tx_read_index];
+			tx_read_index = (++tx_read_index % TX_BUFFER_SIZE);
+			tx_buffer_count--;
 		}
-		errorCode = AndroidAppWrite(device_handle, txBuffer, numberToSend);
-		transmitterBusy = TRUE;
+		error_code = AndroidAppWrite(device_handle, tx_buffer, numberToSend);
+		transmitter_busy = TRUE;
 	}
 
-	return (errorCode);
+	return (error_code);
 }

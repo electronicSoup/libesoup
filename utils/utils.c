@@ -24,13 +24,13 @@
 #include <string.h>
 #include <stdio.h>
 #include "system.h"
-#include "es_can/utils/utils.h"
+#include "es_lib/utils/utils.h"
 #ifdef HEARTBEAT
 #include "es_can/timers/timer_sys.h"
 #endif
 //#include "es_can/interrupts/interrupts.h"
 #define DEBUG_FILE
-#include "es_can/logger/serial.h"
+#include "es_lib/logger/serial.h"
 
 #if LOG_LEVEL < NO_LOGGING
 #define TAG "UTILS"
@@ -530,7 +530,8 @@ UINT16 strcpypgmtoram(char *dest, const char *source)
 	char *ptr = dest;
 	
 	TBLPAG = ((((UINT32)source) & 0x7F0000)>>16);
-	offset = (((UINT32)source) & 0x00FFFF);
+//        TBLPAG = __builtin_tbloffset(source);
+        offset = (((UINT32)source) & 0x00FFFF);
 
 	do {
 		asm("tblrdh.w [%1], %0" : "=r"(highWord) : "r"(offset));

@@ -22,9 +22,9 @@
 #ifndef ANDROID_H
 #define ANDROID_H
 
-extern BOOL androidReceive(BYTE *buffer, UINT16 *size, BYTE *errorCode);
-extern BYTE androidTransmit(BYTE *buffer, BYTE Size);
-extern BYTE androidTasks(void* device_handle);
+extern BOOL android_receive(BYTE *buffer, UINT16 *size, BYTE *error_code);
+extern BYTE android_transmit(BYTE *buffer, BYTE Size);
+extern BYTE android_tasks(void* device_handle);
 
 
 #endif /* SEND_ANDROID_H */

@@ -62,7 +62,7 @@
 
 /**
  *
- * \enum ty_result
+ * \enum result_t
  *
  * \brief Error codes returned by API Functions.
  */
