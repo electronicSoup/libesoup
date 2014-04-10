@@ -20,6 +20,7 @@
  *
  */
 
+#include <libpic30.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -520,15 +521,35 @@ void initRand(void)
  * @return Function returns the number of characters copied across.
  */
 #if defined( __C30__ )
-UINT16 strcpypgmtoram(char *dest, const char *source)
+UINT16 strcpypgmtoram(char *dest, const char *source, UINT16 len)
 {
+#if 0
 	BOOL exit = FALSE;
 	UINT16 offset;
-	UINT16 numberCopied = 0;
-	volatile UINT16 highWord;
-	volatile UINT16 lowWord;
+	UINT16 number_copied = 0;
+	volatile UINT16 high_word;
+	volatile UINT16 low_word;
+        char single_char;
+#endif
 	char *ptr = dest;
-	
+
+        _strncpy_p2d16(ptr, (_prog_addressT)source, len);
+
+        return(strlen(dest));
+
+#if 0
+        do {
+        _strncpy_p2d16((void *)&single_char, (_prog_addressT)source, 3);
+            *ptr++ = single_char;
+            source++;
+            DEBUG_D("Copied Character %c\n\r", single_char);
+//            number_copied++;
+        } while(single_char != '\0');
+
+        return(strlen(dest));
+#endif
+
+#if 0
 	TBLPAG = ((((UINT32)source) & 0x7F0000)>>16);
 //        TBLPAG = __builtin_tbloffset(source);
         offset = (((UINT32)source) & 0x00FFFF);
@@ -560,8 +581,8 @@ UINT16 strcpypgmtoram(char *dest, const char *source)
 		offset = offset + 2;
 
 	} while (!exit);
-
-	return(numberCopied);
+	return(number_copied);
+#endif
 }
 #endif
 

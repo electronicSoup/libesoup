@@ -74,9 +74,9 @@ extern unsigned char SPIWriteByte(unsigned char write);
 
 extern void initRand(void);
 
-#if defined( __C30__ )
-    extern UINT16 strcpypgmtoram(char *dest, const char *source);
-#endif
+//#if defined( __C30__ )
+    extern UINT16 strcpypgmtoram(char *dest, const char *source, UINT16 len);
+//#endif
 
 #ifdef TEST
     void stall(void);
