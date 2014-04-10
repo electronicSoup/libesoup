@@ -23,6 +23,12 @@
 #define TIMERS_H
 
 #ifdef MCP
+    #define CHECK_TIMERS()  if(timer_tick) tick();
+    #define TIMER_ID_INIT(timer) timer.status = INACTIVE;
+
+
+    extern volatile BOOL timer_tick;
+
     extern void init_timer(void);
     extern void tick(void);
 #endif
@@ -30,7 +36,6 @@
 extern result_t start_timer(u16, expiry_function, union sigval, es_timer *);
 
 extern result_t cancel_timer(es_timer *timer);
-extern void cancel_app_timers(void);
 
 #endif
 
