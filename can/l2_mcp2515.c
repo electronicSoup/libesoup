@@ -19,16 +19,16 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  *
  */
-#include "es_can/core.h"
+#include "es_lib/core.h"
 #include "system.h"
 
 #define DEBUG_FILE
-#include "es_can/logger/serial.h"
-#include "es_can/can/es_can.h"
-#include "es_can/can/l2_mcp2515.h"
-#include "es_can/timers/timer_sys.h"
+#include "es_lib/logger/serial.h"
+#include "es_lib/can/es_can.h"
+#include "es_lib/can/l2_mcp2515.h"
+#include "es_lib/timers/timer_sys.h"
 
-#include "es_can/utils/utils.h"
+#include "es_lib/utils/utils.h"
 
 #if LOG_LEVEL < NO_LOGGING
     #define TAG "MCP2515"

@@ -21,8 +21,8 @@
  */
 
 #include "system.h"
-#include "es_can/can/es_can.h"
-#include "es_can/logger/serial.h"
+#include "es_lib/can/es_can.h"
+#include "es_lib/logger/serial.h"
 
 #if DEBUG_LEVEL < NO_LOGGING
 #define TAG "CAN"

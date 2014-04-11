@@ -23,22 +23,22 @@
 #include <string.h>
 #include <stdio.h>
 
-#include "es_can/core.h"
+#include "es_lib/core.h"
 #include "system.h"
 
 #define DEBUG_FILE
 
 #if defined(MCP)
-#include "es_can/logger/serial.h"
-#include "es_can/can/es_can.h"
-#include "es_can/utils/utils.h"
+#include "es_lib/logger/serial.h"
+#include "es_lib/can/es_can.h"
+#include "es_lib/utils/utils.h"
 #elif defined(ES_LINUX)
 #include "serial.h"
 #endif
 
-#include "es_can/dcncp/l2_dcncp.h"
-#include "es_can/timers/timer_sys.h"
-#include "es_can/can/es_can.h"
+#include "es_lib/dcncp/l2_dcncp.h"
+#include "es_lib/timers/timer_sys.h"
+#include "es_lib/can/es_can.h"
 #if defined(CAN_LAYER_3)
 #include "es_can/logger/net.h"
 #endif

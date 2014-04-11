@@ -22,15 +22,15 @@
 #include <stdio.h>
 #include <string.h>
 #include "system.h"
-#include "es_can/dcncp/l2_dcncp.h"
-#include "es_can/can/es_can.h"
+#include "es_lib/dcncp/l2_dcncp.h"
+#include "es_lib/can/es_can.h"
 
 #define DEBUG_FILE
-#include "es_can/logger/serial.h"
-#include "es_can/logger/net.h"
+#include "es_lib/logger/serial.h"
+#include "es_lib/logger/net.h"
 
 #if defined(MCP)
-#include "es_can/utils/utils.h"
+#include "es_lib/utils/utils.h"
 #endif
 
 #if DEBUG_LEVEL < NO_LOGGING
