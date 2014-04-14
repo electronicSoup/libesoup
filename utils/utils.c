@@ -291,7 +291,7 @@ void flash_write(UINT32 address, BYTE *data)
 	unsigned int offset;
 	unsigned int i;
 
-	DEBUG_D("writeRow %lx\n\r", address);
+	DEBUG_D("writeRow %lx, [0x%x, 0x%x, 0x%x, 0x%x]\n\r", address, data[0], data[1], data[2], data[3]);
 
 	//Set up NVMCON for row programming
 	NVMCON = 0x4001;
@@ -533,7 +533,7 @@ UINT16 strcpypgmtoram(char *dest, const char *source, UINT16 len)
 #endif
 	char *ptr = dest;
 
-        _strncpy_p2d16(ptr, (_prog_addressT)source, len);
+        _strncpy_p2d16(ptr, (_prog_addressT)source, (unsigned int)len);
 
         return(strlen(dest));
 
