@@ -45,9 +45,9 @@ static void transmit_ready(void);
 static void transmit_hardware_info(void);
 static void transmit_bootcode_info(void);
 static void transmit_firmware_info(void);
-
+#ifdef BOOT
 extern void jmp_firmware(void);
-
+#endif //BOOT
 void set_app_connected_state(void)
 {
     DEBUG_D("App Connected State\n\r");
@@ -69,7 +69,9 @@ void app_connected_process_msg(android_command_t cmd, void *data)
     switch(cmd) {
         case COMMAND_BOOT:
             DEBUG_D("COMMAND_BOOT Jump to application\n\r");
+#ifdef BOOT
             jmp_firmware();
+#endif //BOOT
             break;
 
         case COMMAND_BEGIN_FLASH:
