@@ -42,6 +42,7 @@ void app_connected_main(void);
 void app_connected_process_usb_event(USB_EVENT event);
 
 static void transmit_ready(void);
+static void transmit_app_type_info(void);
 static void transmit_hardware_info(void);
 static void transmit_bootcode_info(void);
 static void transmit_firmware_info(void);
@@ -110,6 +111,11 @@ void app_connected_process_msg(android_command_t cmd, void *data)
             }
             break;
 
+        case ANDROID_APP_TYPE_REQ:
+            DEBUG_D("ANDROID_APP_TYPE_REQ\n\r");
+            transmit_app_type_info();
+            break;
+
         case HARDWARE_INFO_REQ:
             DEBUG_D("HARDWARE_INFO_REQ\n\r");
             transmit_hardware_info();
@@ -157,6 +163,18 @@ static void transmit_ready(void)
     android_transmit(buffer, 2);
 }
 
+void transmit_app_type_info(void)
+{
+    char buffer[3];
+
+    DEBUG_D("transmit_app_type_info()\n\r");
+
+    buffer[0] = 2;
+    buffer[1] = ANDROID_APP_TYPE_RESP;
+    buffer[2] = BOOTLOADER_APP;
+
+    android_transmit(buffer, 3);
+}
 void transmit_hardware_info(void)
 {
 //    char string[50];

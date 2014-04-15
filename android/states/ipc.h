@@ -24,20 +24,31 @@
 
 typedef enum android_command_t
 {
-    COMMAND_BOOT           = 0x01,
-    COMMAND_BEGIN_FLASH    = 0x02,
-    COMMAND_ERASE          = 0x03,
-    COMMAND_ROW            = 0x04,
-    COMMAND_READY          = 0x05,
-    HARDWARE_INFO_REQ      = 0x06,
-    HARDWARE_INFO_RESP     = 0x07,
-    BOOTCODE_INFO_REQ      = 0x08,
-    BOOTCODE_INFO_RESP     = 0x09,
-    FIRMWARE_INFO_REQ      = 0x0A,
-    FIRMWARE_INFO_RESP     = 0x0B,
+    ANDROID_APP_TYPE_REQ   = 0x01,
+    ANDROID_APP_TYPE_RESP  = 0x02,
+    HARDWARE_INFO_REQ      = 0x03,
+    HARDWARE_INFO_RESP     = 0x04,
+    BOOTCODE_INFO_REQ      = 0x05,
+    BOOTCODE_INFO_RESP     = 0x06,
+    FIRMWARE_INFO_REQ      = 0x07,
+    FIRMWARE_INFO_RESP     = 0x08,
+    COMMAND_BOOT           = 0x09,
+    COMMAND_BEGIN_FLASH    = 0x0A,
+    COMMAND_ERASE          = 0x0B,
+    COMMAND_ROW            = 0x0C,
+    COMMAND_READY          = 0x0D,
 
     COMMAND_APP_CONNECT    = 0xFE,
     COMMAND_APP_DISCONNECT = 0xFF
 } android_command_t;
+
+	/*
+	 * Android App Types.
+	 */
+typedef enum android_app_t
+{
+    BOOTLOADER_APP   = 0x01,
+    NODE_CONFIG_APP  = 0x02
+} android_app_t;
 
 #endif //IPC_H
