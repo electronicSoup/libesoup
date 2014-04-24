@@ -37,6 +37,9 @@ typedef enum android_command_t
     COMMAND_ERASE          = 0x0B,
     COMMAND_ROW            = 0x0C,
     COMMAND_READY          = 0x0D,
+    NODE_CONFIG_INFO_REQ   = 0x0E,
+    NODE_CONFIG_INFO_RESP  = 0x0F,
+    NODE_CONFIG_UPDATE     = 0x10,
 
     COMMAND_APP_CONNECT    = 0xFE,
     COMMAND_APP_DISCONNECT = 0xFF
