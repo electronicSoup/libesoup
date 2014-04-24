@@ -38,7 +38,9 @@
 #elif defined(__XC8)
     #include <xc.h>
     #include <p18cxxx.h>
-#elif defined( __C30__ )
+#elif defined( __C30__ ) 
+    #include "p24Fxxxx.h"
+#elif defined( __XC16__ )
     #include "p24Fxxxx.h"
 #endif
 
