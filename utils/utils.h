@@ -61,8 +61,8 @@ extern void flash_write(UINT32 address, BYTE *data);
 #ifdef EEPROM
 extern result_t eeprom_read(UINT16 addr, BYTE *data);
 extern result_t eeprom_write(UINT16 addr, BYTE data);
-extern result_t sys_eeprom_read(UINT16 address, BYTE *data);
-extern result_t sys_eeprom_write(UINT16 address, BYTE data);
+extern UINT16   eeprom_str_read(UINT16 addr, char *buffer, BYTE len);
+extern UINT16   eeprom_str_write(UINT16 addr, char *buffer);
 #endif
 
 #ifdef HW_SPI

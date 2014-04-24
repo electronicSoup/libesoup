@@ -281,7 +281,7 @@ void flash_write(UINT32 address, BYTE *data)
 		DEBUG_D("Address Error\n\r");
 	}
 }
-#elif defined(__C30__)
+#elif defined(__C30__) || defined(__XC16__)
 void flash_write(UINT32 address, BYTE *data)
 {
 #define NUM_INSTRUCTION_PER_ROW 64
@@ -355,54 +355,10 @@ void flash_test(UINT32 address)
 }
 #endif
 
-/**
- * \brief Public EEProm Read function
- *
- * \param addr
- * \param data
- * \return
- */
-#ifdef EEPROM
-result_t eeprom_read(UINT16 addr, BYTE *data)
-{
-	UINT16 address = addr + EEPROM_ADDR_MIN;
-
-	if(address > EEPROM_MAX_ADDRESS) {
-		return(ERR_ADDRESS_RANGE);
-	}
-
-	sys_eeprom_read(address, data);
-	return(SUCCESS);
-}
-#endif
-
-/**
- * \brief Public EEprom write Function
- * 
- * \param addr
- * \param data
- * \return
- */
-#ifdef EEPROM
-result_t eeprom_write(UINT16 addr, BYTE data)
-{
-	UINT16 address = addr + EEPROM_ADDR_MIN;
-
-	if(address > EEPROM_MAX_ADDRESS) {
-		return(ERR_ADDRESS_RANGE);
-	}
-
-	sys_eeprom_write(address, data);
-	return(SUCCESS);
-}
-#endif
 
 #ifdef EEPROM
-result_t sys_eeprom_read(UINT16 address, BYTE *data)
+result_t eeprom_read(UINT16 address, BYTE *data)
 {
-	if(address == NODE_ADDRESS) {
-		DEBUG_D("sys_eeprom_read(0x%x)\n\r", address);
-	}
 	if(address < EEPROM_MAX_ADDRESS) {
 #if defined(PIC18F4585)
 		EEADRH = (address >> 8) & 0xff;
@@ -411,7 +367,7 @@ result_t sys_eeprom_read(UINT16 address, BYTE *data)
 		EECON1 = 0x01;
 
 		*data = EEDATA;
-#elif defined(__C30__)
+#elif defined(__C30__) || defined(__XC16__)
 		EEPROM_Select();
 		Nop();
 		SPIWriteByte(EEPROM_READ);
@@ -419,10 +375,6 @@ result_t sys_eeprom_read(UINT16 address, BYTE *data)
 		*data = SPIWriteByte(0x00);
 		EEPROM_DeSelect();
 #endif
-
-		if (address == NODE_ADDRESS) {
-			DEBUG_D("Read back 0x%x\n\r", (UINT16)*data);
-		}
 		return(SUCCESS);
 	}
 	return (ERR_ADDRESS_RANGE);
@@ -430,11 +382,12 @@ result_t sys_eeprom_read(UINT16 address, BYTE *data)
 #endif
 
 #ifdef EEPROM
-result_t sys_eeprom_write(UINT16 address, BYTE data)
+result_t eeprom_write(UINT16 address, BYTE data)
 {
 	BYTE status;
 	BYTE loop;
-    
+
+        DEBUG_D("eeprom_write(0x%x, 0x%x)\n\r", address, data);
 	if(address < EEPROM_MAX_ADDRESS) {
 #if defined(PIC18F4585)
 		EEADRH = (address >> 8) & 0xff;
@@ -459,7 +412,7 @@ result_t sys_eeprom_write(UINT16 address, BYTE data)
 
 		EECON1bits.WREN = 0;  // Disable writes
 
-#elif defined(__C30__)
+#elif defined(__C30__) || defined(__XC16__)
 		EEPROM_Select();
 		Nop();
 
@@ -481,11 +434,60 @@ result_t sys_eeprom_write(UINT16 address, BYTE data)
 		SPIWriteByte(EEPROM_WRITE_DISABLE);
 		EEPROM_DeSelect();
 #endif // C30
+                DEBUG_D("eeprom_write return SUCCESS\n\r");
 		return(SUCCESS);
-	}
+        }
+        DEBUG_E("eeprom_write Address Range Error!\n\r");
 	return (ERR_ADDRESS_RANGE);
 }
 #endif
+
+#ifdef EEPROM
+UINT16 eeprom_str_read(UINT16 addr, char *buffer, BYTE len)
+{
+    BYTE character;
+    char *ptr;
+    BYTE num = 0;
+
+    DEBUG_D("eeprom_str_read()\n\r");
+
+    ptr = buffer;
+
+    eeprom_read(addr++, &character);
+
+    while( (character != 0) && (character != 0xff) && (num < len) ) {
+        *ptr++ = character;
+        num++;
+        eeprom_read(addr++, &character);
+    }
+    *ptr = 0x00;
+    DEBUG_D("eeprom_str_read() read %s\n\r", buffer);
+
+    return(num);
+}
+#endif //EEPROM
+
+#ifdef EEPROM
+UINT16 eeprom_str_write(UINT16 addr, char *buffer)
+{
+    char *ptr;
+    BYTE copied = 0;
+
+    DEBUG_D("eeprom_str_write()\n\r");
+
+    ptr = buffer;
+
+    while(*ptr) {
+        DEBUG_D("Write to location %d value 0x%x\n\r", addr, *ptr);
+        eeprom_write(addr++, *ptr++);
+        copied++;
+    }
+    DEBUG_D("Write loop finished\n\r");
+    eeprom_write(addr, 0x00);
+
+    return(copied);
+}
+#endif //EEPROM
 
 #if defined(PIC18F4585)
 void initRand(void)
