@@ -66,6 +66,7 @@ BOOL android_receive(BYTE *buffer, UINT16 *size, BYTE *error_code)
 		// The first word to read is a size of the message
 		msg_size = rx_circular_buffer[rx_read_index] << 8 | rx_circular_buffer[(rx_read_index + 1) % RX_BUFFER_SIZE];
 
+                DEBUG_D("Receiving message size %d\n\r", msg_size);
 		if(msg_size + 2 > rx_buffer_count) {
 			*size = 0;
 			return (FALSE);
