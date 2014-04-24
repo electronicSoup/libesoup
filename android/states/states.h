@@ -27,7 +27,7 @@
 
 typedef struct state_t
 {
-    void (*process_msg)(android_command_t, void *);
+    void (*process_msg)(android_command_t, void *, UINT16);
     void (*main)(void);
     void (*process_usb_event)(USB_EVENT event);
 } state_t;

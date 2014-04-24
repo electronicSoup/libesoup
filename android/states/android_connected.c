@@ -38,7 +38,7 @@
 /*
  * Forward declatation of functions in the file.
  */
-void android_connected_process_msg(android_command_t, void *);
+void android_connected_process_msg(android_command_t, void *, UINT16);
 void android_connected_main(void);
 void android_connected_process_usb_event(USB_EVENT event);
 
@@ -59,7 +59,7 @@ void set_android_connected_state(void)
  * connected command from the Android Device and moving state accordingly.
  * we're not interested in any other messages from the Connected device.
  */
-void android_connected_process_msg(android_command_t cmd, void *data)
+void android_connected_process_msg(android_command_t cmd, void *data, UINT16 data_len)
 {
     if(cmd == COMMAND_APP_CONNECT) {
         set_app_connected_state();
