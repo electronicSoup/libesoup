@@ -124,7 +124,7 @@ BOOL flash_page_empty(UINT32 address)
 	}
 	return(FALSE);
 }
-#elif defined(__C30__)
+#elif defined(__C30__) || defined(__XC16__)
 BOOL flash_page_empty(UINT32 address)
 {
 	UINT16 loop = 0;
@@ -185,16 +185,16 @@ void flash_erase(UINT32 address)
 		DEBUG_E("erase_page() Address Error\n\r");
 	}
 }
-#elif defined(__C30__)
+#elif defined(__C30__) || defined(__XC16__)
 void flash_erase(UINT32 address)
 {
 	unsigned int offset;
 
-	DEBUG_D("erasePage %lx\n\r", address);
+	DEBUG_D("erasePage %x\n\r", address);
 
-	TBLPAG = address >> 16;
-	// Initialize PM Page Boundary SFR
-	offset = address & 0xFFFF;
+	TBLPAG = ((address & 0x7F0000)>>16);
+	offset = (address & 0x00FFFF);
+        
 	// Initialize lower word of address
 	__builtin_tblwtl(offset, 0x0000); // Set base address of erase block
                                           // with dummy latch write
@@ -291,7 +291,6 @@ void flash_write(UINT32 address, BYTE *data)
 	unsigned int offset;
 	unsigned int i;
 
-	DEBUG_D("writeRow %lx, [0x%x, 0x%x, 0x%x, 0x%x]\n\r", address, data[0], data[1], data[2], data[3]);
 
 	//Set up NVMCON for row programming
 	NVMCON = 0x4001;
