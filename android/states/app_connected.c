@@ -21,6 +21,7 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  *
  */
+#include <stdio.h>
 #include "system.h"
 #include "usb/usb.h"
 #include "usb/usb_host_android.h"
@@ -72,7 +73,7 @@ void app_connected_process_msg(android_command_t cmd, void *data, UINT16 data_le
     UINT8 loop;
     UINT16 len;
 
-    DEBUG_D("app_connected_process_msg data lenght %d\n\r", data_len);
+//    DEBUG_D("app_connected_process_msg data lenght %d\n\r", data_len);
     switch(cmd) {
 #ifdef BOOT
         case COMMAND_BOOT:
@@ -97,9 +98,11 @@ void app_connected_process_msg(android_command_t cmd, void *data, UINT16 data_le
                 for (loop = 0; loop < 4; loop++) {
                     address = (address << 8) | (byte_data[loop] & 0xff);
                 }
-                DEBUG_I("COMMAND_ERASE %lx\n\r", address);
+                DEBUG_I("COMMAND_ERASE 0x%lx ", address);
                 if(!flash_page_empty(address)) {
                     flash_erase(address);
+                } else {
+                    DEBUG_I("Already empty\n\r");
                 }
                 transmit_ready();
             }
@@ -108,7 +111,6 @@ void app_connected_process_msg(android_command_t cmd, void *data, UINT16 data_le
 
 #ifdef BOOT
         case COMMAND_ROW:
-//            DEBUG_D("COMMAND_ROW\n\r");
             if(data != NULL) {
                 byte_data = (BYTE *) data;
 
@@ -117,6 +119,7 @@ void app_connected_process_msg(android_command_t cmd, void *data, UINT16 data_le
                     address = (address << 8) | (byte_data[loop] & 0xff);
                 }
 
+                DEBUG_D("COMMAND_ROW address 0x%lx data length 0x%x\n\r", address, data_len);
                 flash_write(address, &byte_data[4]);
                 transmit_ready();
             }
