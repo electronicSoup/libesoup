@@ -43,8 +43,8 @@
 #if defined(CAN_LAYER_3)
 static void (*net_logger_handler)(u8, log_level_t, char*) = NULL;
 
-static bool net_logger = FALSE;
-static bool net_logger_local = FALSE;
+static BOOL net_logger = FALSE;
+static BOOL net_logger_local = FALSE;
 static u8 net_logger_address;
 static log_level_t net_logger_level = Error;
 #endif
