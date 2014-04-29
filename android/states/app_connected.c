@@ -160,7 +160,7 @@ void app_connected_process_msg(android_command_t cmd, void *data, UINT16 data_le
             DEBUG_D("descrioption String is %s\n\r", &byte_data[3]);
 
             eeprom_write(L3_NODE_ADDRESS, byte_data[0]);
-            eeprom_write(BAUD_RATE, byte_data[1]);
+            eeprom_write(CAN_BAUD_RATE, byte_data[1]);
             eeprom_write(IO_ADDRESS, byte_data[2]);
 
             len = eeprom_str_write(NODE_DESCRIPTION, &byte_data[3]);
@@ -291,7 +291,7 @@ void transmit_node_config_info(void)
     DEBUG_D("Layer 3 Node Address 0x%x\n\r", value);
     buffer[index++] = value;
 
-    eeprom_read(BAUD_RATE, (BYTE *) &value);
+    eeprom_read(CAN_BAUD_RATE, (BYTE *) &value);
     DEBUG_D("CAN Baud Rate 0x%x\n\r", value);
     buffer[index++] = value;
 
