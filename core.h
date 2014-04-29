@@ -78,6 +78,7 @@ typedef enum {
     ERR_CAN_NOT_CONNECTED,
     ERR_CAN_TARGET_OVERLAP,
     ERR_CAN_NO_FREE_BUFFER,
+    ERR_L3_UNINITIALISED,
     ERR_GENERAL_L3_ERROR,
     ERR_L3_NO_ADDRESS,	  
     ERR_L3_NOT_REGISTERED,
@@ -220,7 +221,7 @@ typedef u32 canid_t;
  * and array for the Data Bytes.
  */
 typedef struct
-#ifdef __C30__
+#if defined(__C30__) || defined(__XC16__)
 __attribute__ ((packed))
 #endif
 {
