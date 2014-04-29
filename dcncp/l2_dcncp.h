@@ -22,9 +22,7 @@
 #ifndef NODE_ADDRESS_H
 #define NODE_ADDRESS_H
 
-//#include "can/l2_can_types.h"
-
-//#define NO_NODE_ADDRESS 0xff
+#include "es_lib/can/es_can.h"
 
 // Node module will use standard CAN frames which are 11 bits for Id
 //
@@ -48,7 +46,7 @@
 #define NetLogger  0x707
 #define CancelNetLogger  0x708
 
-extern void l2_dcncp_init(void);
+extern void l2_dcncp_init(void (*arg_status_handler)(u8 mask, can_status_t status, baud_rate_t baud));
 extern void send_ping_message(void);
 #if defined(CAN_LAYER_3)
 extern u8 node_get_net_logger_address(void);

@@ -30,9 +30,7 @@
 
 #include "es_lib/utils/utils.h"
 
-#if LOG_LEVEL < NO_LOGGING
-    #define TAG "MCP2515"
-#endif
+#define TAG "MCP2515"
 
 #define LISTEN_TIME SECONDS_TO_TICKS(10)
 
@@ -106,13 +104,14 @@ static UINT32 messageSentCount = 0;
 static UINT32 wakeUpCount = 0;
 static can_frame rxCanMsg;
 
-static can_status_t status = Uninitialised;
+static can_status_t status;
 static baud_rate_t baud = no_baud;
 
 static es_timer listen_timer;
 static es_timer ping_timer;
 
-static can_status_handler status_handler = (can_status_handler)NULL;
+//static can_status_handler status_handler = (can_status_handler)NULL;
+static void (*status_handler)(u8 mask, can_status_t status, baud_rate_t baud) = NULL;
 
 /**
  * \brief Initialise the CAN Bus.
@@ -125,7 +124,7 @@ static can_status_handler status_handler = (can_status_handler)NULL;
  * Layer 2 Can messages.
  */
 result_t l2_init(baud_rate_t arg_baud_rate,
-                 can_status_handler arg_status_handler)
+                 void (*arg_status_handler)(u8 mask, can_status_t status, baud_rate_t baud))
 {
 	u8 loop = 0x00;
 	u8 exitMode = NORMAL_MODE;
@@ -134,8 +133,11 @@ result_t l2_init(baud_rate_t arg_baud_rate,
 
 	DEBUG_D("l2_init()\n\r");
 
-	listen_timer.status = INACTIVE;
-	ping_timer.status = INACTIVE;
+        status.byte = 0x00;
+        baud = no_baud;
+
+	TIMER_INIT(listen_timer);
+	TIMER_INIT(ping_timer);
 
 	for(loop = 0; loop < REGISTER_ARRAY_SIZE; loop++) {
 		registered[loop].used = FALSE;
@@ -165,32 +167,6 @@ result_t l2_init(baud_rate_t arg_baud_rate,
 	CANWriteReg(TXRTSCTRL, 0x00);
 	CANWriteReg(BFPCTRL, 0x00);
 
-#if 0
-	//
-	// Clear Mask 0
-	//
-	CAN_Select();
-	SPIWriteByte(CAN_WRITE_REG);
-	SPIWriteByte(RXM0SIDH);
-
-	for(loop = 0; loop < 4; loop++)
-		SPIWriteByte(0x00);
-
-	CAN_DeSelect();
-
-	//
-	// Clear Mask 1
-	//
-	CAN_Select();
-	SPIWriteByte(CAN_WRITE_REG);
-	SPIWriteByte(RXM1SIDH);
-
-	for(loop = 0; loop < 4; loop++)
-		SPIWriteByte(0x00);
-
-	CAN_DeSelect();
-#endif
-
 	/**
 	 * Have to set the baud rate if one has been passed into the function
 	 */
@@ -200,11 +176,11 @@ result_t l2_init(baud_rate_t arg_baud_rate,
 		setBitRate(arg_baud_rate);
 		exitMode = NORMAL_MODE;
 
-		status = Connecting;
+		status.bit_field.l2_status = L2_Connecting;
 		baud = arg_baud_rate;
 
 		if(status_handler)
-			status_handler(status, baud);
+			status_handler(L2_STATUS_MASK, status, baud);
 	} else {
 		/*
 		 * Have to search for the Networks baud rate. Start at the bottom
@@ -216,11 +192,11 @@ result_t l2_init(baud_rate_t arg_baud_rate,
 		exitMode = LISTEN_MODE;
 
 		connectingErrors = 0;
-		status = Listening;
+		status.bit_field.l2_status = L2_Listening;
 		baud = listenBaudRate;
 		DEBUG_D("Call the status handler\n\r");
 		if(status_handler)
-			status_handler(status, baud);
+			status_handler(L2_STATUS_MASK, status, baud);
 		DEBUG_D("Return from status handler\n\r");
 
 		/* Now wait and see if we have errors */
@@ -249,7 +225,7 @@ result_t l2_init(baud_rate_t arg_baud_rate,
 	/*
 	 * If we've been given a valid baud rate and connected send a test mesage to Network
 	 */
-	if(status == Connecting) {
+	if(status.bit_field.l2_status == L2_Connecting) {
 		DEBUG_D("Connecting send a test Ping message!\n\r");
 		result = send_ping();
 		if (result != SUCCESS) {
@@ -287,7 +263,7 @@ void exp_test_ping(union sigval data __attribute__((unused)))
         DEBUG_D("exp_test_ping()\n\r");
 //    DEBUG_D("CANINTF %x\n\r", CANReadReg(CANINTF));
 	flags = CANReadReg(CANINTF);
-	ping_timer.status = INACTIVE;
+	TIMER_INIT(ping_timer);
 	
 //    if((flags != 0x00) && !PORTAbits.RA14)
 	if((flags != 0x00) && !CAN_INTERRUPT) {
@@ -306,7 +282,7 @@ void exp_checkNetworkConnection(union sigval data __attribute__((unused)))
 	result_t result;
 	u8 rec = CANReadReg(REC);
 
-	listen_timer.status = INACTIVE;
+	TIMER_INIT(listen_timer);
 
 	if(listenBaudRate <= BAUD_MAX) {
 		DEBUG_D("After trying %s Errors - %d, rxCount - %ld\n\r", baud_rate_strings[listenBaudRate], connectingErrors, rxMsgCount);
@@ -322,11 +298,11 @@ void exp_checkNetworkConnection(union sigval data __attribute__((unused)))
 
 		set_can_mode(NORMAL_MODE);
 
-		status = Connected;
+		status.bit_field.l2_status = L2_Connected;
 		baud = connectedBaudRate;
 
 		if(status_handler)
-			status_handler(status, baud);
+			status_handler(L2_STATUS_MASK, status, baud);
 
 		// Test code to periodically send message
 		// message 708 now used by CancelNetLogger message
@@ -343,11 +319,11 @@ void exp_checkNetworkConnection(union sigval data __attribute__((unused)))
 
                 rxMsgCount = 0;
 		connectingErrors = 0;
-		status = Listening;
+		status.bit_field.l2_status = L2_Listening;
 	        baud = listenBaudRate;
 
 		if(status_handler)
-			status_handler(status, baud);
+			status_handler(L2_STATUS_MASK, status, baud);
 
 		DEBUG_D("Restart timer\n\r");
 		result = start_timer(LISTEN_TIME,
@@ -400,7 +376,7 @@ void L2_ISR(void)
 			eflg = CANReadReg(EFLG);
 			DEBUG_E("*** CAN ERRIR Flag!!!\n\r");
 			DEBUG_E("*** CAN EFLG %x\n\r", eflg);
-			if(status == Listening)
+			if(status.bit_field.l2_status == L2_Listening)
 				connectingErrors++;
 
 			/*
@@ -414,7 +390,7 @@ void L2_ISR(void)
 
 		if (flags & MERRE) {
 			DEBUG_W("CAN MERRE Flag\n\r");
-			if(status == Listening)
+			if(status.bit_field.l2_status == L2_Listening)
 				connectingErrors++;
 
 			/*
@@ -432,7 +408,7 @@ void L2_ISR(void)
 			if((txFlags & TXREQ) && (txFlags & TXERR)) {
 				DEBUG_E("Transmit Buffer Failed to send\n\r");
 				CANSetRegMaskValue(ctrl, TXREQ, 0x00);
-				if (status == ChangingBaud)
+				if (status.bit_field.l2_status == L2_ChangingBaud)
 					ChangingBaudTxError++;
 			}
 			ctrl = ctrl + 0x10;
@@ -444,7 +420,7 @@ void L2_ISR(void)
 			 * Increment the rx count in case we're listening for Baud
 			 * Rate seettings.
 			 */
-			if (status == Listening) {
+			if (status.bit_field.l2_status == L2_Listening) {
 				rxMsgCount++;
 			} else {
 				if (cirBufferCount < CAN_RX_CIR_BUFFER_SIZE) {
@@ -465,7 +441,7 @@ void L2_ISR(void)
 			 * Incrememnt the rx count incase we're listening for Baud
 			 * Rate seettings.
 			 */
-			if (status == Listening) {
+			if (status.bit_field.l2_status == L2_Listening) {
 				rxMsgCount++;
 			} else {
 				if (cirBufferCount < CAN_RX_CIR_BUFFER_SIZE) {
@@ -482,11 +458,11 @@ void L2_ISR(void)
 
 		if (flags & TX2IE) {
 			DEBUG_D("TX2IE\n\r");
-			if (status == Connecting) {
-				status == Connected;
+			if (status.bit_field.l2_status == L2_Connecting) {
+				status.bit_field.l2_status = L2_Connected;
 
 				if (status_handler)
-					status_handler(status, baud);
+					status_handler(L2_STATUS_MASK, status, baud);
 			}
 
 			CANSetRegMaskValue(CANINTF, TX2IE, 0x00);
@@ -494,22 +470,22 @@ void L2_ISR(void)
 
 		if (flags & TX1IE) {
 			DEBUG_D("TX1IE\n\r");
-			if (status == Connecting) {
-				status == Connected;
+			if (status.bit_field.l2_status == L2_Connecting) {
+				status.bit_field.l2_status = L2_Connected;
 
 				if (status_handler)
-					status_handler(status, baud);
+					status_handler(L2_STATUS_MASK, status, baud);
 			}
 			CANSetRegMaskValue(CANINTF, TX1IE, 0x00);
 		}
 
 		if (flags & TX0IE) {
 			DEBUG_D("TX0IE\n\r");
-			if (status == Connecting) {
-				status == Connected;
+			if (status.bit_field.l2_status == L2_Connecting) {
+				status.bit_field.l2_status = L2_Connected;
 
 				if (status_handler)
-					status_handler(status, baud);
+					status_handler(L2_STATUS_MASK, status, baud);
 			}
 
 			CANSetRegMaskValue(CANINTF, TX0IE, 0x00);
@@ -564,11 +540,11 @@ void L2_CanTasks(void)
         }
 #endif
 	while(cirBufferCount > 0) {
-		if (status == Connecting) {
-			status == Connected;
+		if (status.bit_field.l2_status == L2_Connecting) {
+			status.bit_field.l2_status = L2_Connected;
 
 			if (status_handler)
-				status_handler(status, baud);
+				status_handler(L2_STATUS_MASK, status, baud);
 		}
 
 		/*
@@ -725,7 +701,7 @@ result_t l2_tx_frame(can_frame  *canMsg)
 	 * Right all set for Transmission but check the current network status
 	 * and send in One Shot Mode if we're unsure of the Network.
 	 */
-	if (status == Connecting) {
+	if (status.bit_field.l2_status == L2_Connecting) {
 		DEBUG_D("Network not good so sending OSM\n\r");
 		CANSetRegMaskValue(CANCTRL, OSM, OSM);
 	} else {
@@ -1130,13 +1106,13 @@ void L2_SetCanNodeBuadRate(baud_rate_t baudRate)
 	es_timer timer;
 
 	DEBUG_D("L2_SetCanNodeBuadRate()\n\r");
-	timer.status = INACTIVE;
+	TIMER_INIT(timer);
 
-	status = ChangingBaud;
+	status.bit_field.l2_status = L2_ChangingBaud;
 	baud = baudRate;
 
 	if (status_handler)
-		status_handler(status, baud);
+		status_handler(L2_STATUS_MASK, status, baud);
 
 	set_can_mode(CONFIG_MODE);
 
@@ -1155,10 +1131,10 @@ static void exp_finaliseBaudRateChange(union sigval data __attribute__((unused))
 
         set_can_mode(NORMAL_MODE);
 
-	status = Connected;
+	status.bit_field.l2_status = L2_Connected;
 
 	if (status_handler)
-		status_handler(status, baud);
+		status_handler(L2_STATUS_MASK, status, baud);
 }
 
 /*
@@ -1171,7 +1147,7 @@ void L2_SetCanNetworkBuadRate(baud_rate_t rate)
 	result_t result = SUCCESS;
 
 	DEBUG_D("L2_SetCanNetworkBuadRate()\n\r");
-	timer.status = INACTIVE;
+	TIMER_INIT(timer);
 
 	msg.can_id = 0x705;
 	msg.can_dlc = 1;
@@ -1181,12 +1157,12 @@ void L2_SetCanNetworkBuadRate(baud_rate_t rate)
 	result = l2_tx_frame(&msg);
 
 	if (result == SUCCESS) {
-		status = ChangingBaud;
+		status.bit_field.l2_status = L2_ChangingBaud;
 		baud = rate;
 		ChangingBaudTxError = 0;
 
 		if (status_handler)
-			status_handler(status, baud);
+			status_handler(L2_STATUS_MASK, status, baud);
 
         //ToDo
 		start_timer(MILLI_SECONDS_TO_TICKS(500), exp_resendBaudRateChange, (union sigval)(void *)NULL, &timer);
@@ -1198,7 +1174,7 @@ static void exp_resendBaudRateChange(union sigval data __attribute__((unused)))
 	can_frame msg;
 	es_timer timer;
 
-	timer.status = INACTIVE;
+        TIMER_INIT(timer);
 
 	DEBUG_D("exp_resendBaudRateChange()\n\r");
 
@@ -1420,4 +1396,3 @@ result_t l2_can_dispatch_unreg_handler(BYTE id)
 	}
 	return(ERR_GENERAL_ERROR);
 }
-

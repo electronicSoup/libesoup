@@ -30,6 +30,73 @@
 #define NET_LOG_L3_ID   0xc9  // 0x02
 #endif
 
+/*
+ * Have to change this status to cater for L2, DCNCP and L3
+ *
+ * Layer 2 - 5 values so 3 bits L2_STATUS_MASK 0x07
+ *
+ *	L2_Uninitialised 0x00,
+ *	L2_Listening     0x01,
+ *	L2_Connecting    0x02,
+ *	L2_Connected     0x03,
+ *	L2_ChangingBaud  0x04
+ *
+ * DCNCP - 3 Values for status so 2 bits
+ *         Actually use a bit filed for this
+ *
+ *         DCNCP_STATUS_INITIALISED_MASK 0x08
+ *
+ *             DCNCP_Uninitilised 0x00,
+ *             DCNCP_Initialised  0x08,
+ *
+ *         DCNCP_L3_ADDRESS_STATUS_MASK 0x10
+ *
+ *             DCNCP_L3_Address_Not_Final 0x00,
+ *             DCNCP_L3_Address_Finalised 0x10,
+ *
+ * Layer 3 - 2 values Initialised or not. 1 bit
+ *
+ *         L3_STATUS_INITIALISED_MASK 0x20
+ *
+ *             L3_Uninitialised 0x00
+ *             L3_Inititialised 0x20
+ */
+
+#define L2_STATUS_MASK 0x07
+
+#define L2_Uninitialised 0x00
+#define L2_Listening     0x01
+#define L2_Connecting    0x02
+#define L2_Connected     0x03
+#define L2_ChangingBaud  0x04
+
+#define DCNCP_INITIALISED_MASK 0x08
+
+#define DCNCP_Uninitilised 0x00
+#define DCNCP_Initialised  0x08
+
+#define DCNCP_L3_ADDRESS_STATUS_MASK 0x10
+
+#define DCNCP_L3_Address_Not_Final 0x00
+#define DCNCP_L3_Address_Finalised 0x10
+
+#define L3_STATUS_MASK 0x20
+
+#define L3_Uninitialised 0x00
+#define L3_Inititialised 0x20
+
+typedef struct {
+    union {
+        struct {
+            u8 l2_status : 3;
+            u8 dcncp_initialised : 1;
+            u8 dcncp_l3_address_final : 1;
+            u8 l3_initialised : 1;
+        } bit_field;
+        u8 byte;
+    };
+} can_status_t;
+#if 0
 typedef enum {
 	Uninitialised,
 	Listening,
@@ -37,6 +104,7 @@ typedef enum {
 	Connected,
 	ChangingBaud
 } can_status_t;
+#endif //0
 
 typedef enum {
 	baud_10K = 0,
@@ -59,20 +127,14 @@ extern char baud_rate_strings[8][10];
 #define BAUD_MAX baud_1M
 
 extern result_t can_init(baud_rate_t      baud,
- #if defined(CAN_LAYER_3)
-       u8 l3_address,
-#endif
 	can_status_handler   status_default_handler);
 
 //extern bool can_initialised(void);
 
 
 
-
-extern result_t l2_init(baud_rate_t          baudRate,
-		        can_status_handler   status_default_handler);
-
-//extern bool l2_initialised(void);
+extern result_t l2_init(baud_rate_t arg_baud_rate,
+                 void (*arg_status_handler)(u8 mask, can_status_t status, baud_rate_t baud));
 
 extern result_t l2_reg_handler(can_target_t *target);
 
@@ -90,14 +152,6 @@ extern void L2_SetCanNetworkBuadRate(baud_rate_t);
 
 extern void L2_getStatus(can_status_t *, baud_rate_t *);
 
-#ifdef MCP2515_OUTPUT_0
-extern void set_output_0(u8);
-#endif
-
-#ifdef MCP2515_OUTPUT_1
-extern void set_output_1(u8);
-#endif
-
 #ifdef MCP
 extern void canTasks(void);
 #endif
@@ -106,9 +160,9 @@ extern void canTasks(void);
 #if defined(CAN_LAYER_3)
 #define NET_LOG_L3_ID   0xc9 
 
-extern result_t l3_init(u8 address);
-extern void l3_finalise_address(u8 source);
-extern bool l3_initialised(void);
+extern result_t l3_init(void (*arg_status_handler)(u8 mask, can_status_t status, baud_rate_t baud));
+//extern void l3_finalise_address(u8 source);
+extern BOOL l3_initialised(void);
 //extern result_t l3_get_ddress(u8 * address);
 extern result_t l3_tx_msg(l3_can_msg_t *msg);
 

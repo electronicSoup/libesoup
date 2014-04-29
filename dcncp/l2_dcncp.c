@@ -29,7 +29,9 @@
 #define DEBUG_FILE
 
 #if defined(MCP)
+#define DEBUG_FILE
 #include "es_lib/logger/serial.h"
+#undef DEBUG_FILE
 #include "es_lib/can/es_can.h"
 #include "es_lib/utils/utils.h"
 #elif defined(ES_LINUX)
@@ -40,12 +42,10 @@
 #include "es_lib/timers/timer_sys.h"
 #include "es_lib/can/es_can.h"
 #if defined(CAN_LAYER_3)
-#include "es_can/logger/net.h"
+#include "es_lib/logger/net.h"
 #endif
 
-#if DEBUG_LEVEL < NO_LOGGING
 #define TAG "NODE_ADDRESS"
-#endif
 
 #define NodeInfo 0x01;
 
@@ -57,7 +57,6 @@ static es_timer sendRegisterReqTimer;
 #endif
 static es_timer nodeRegisteredTimer;
 
-static u8 l3_node_registered = FALSE;
 //static bool this_node_net_logger = FALSE;
 
 static can_frame local_net_logger_frame;
@@ -79,16 +78,22 @@ void sendTestMsg(union sigval data);
 BYTE otherNode = 0xff;
 #endif
 
-void l2_dcncp_init(void)
+static can_status_t status;
+static void (*status_handler)(u8 mask, can_status_t status, baud_rate_t baud) = NULL;
+
+void l2_dcncp_init(void (*arg_status_handler)(u8 mask, can_status_t status, baud_rate_t baud))
 {
 	can_target_t target;
 	result_t result;
 
+        status_handler = arg_status_handler;
+        status.byte = 0x00;
+
 #if defined(CAN_LAYER_3)
-	sendRegisterReqTimer.status = INACTIVE;
+	TIMER_INIT(sendRegisterReqTimer);
 #endif
-	nodeRegisteredTimer.status = INACTIVE;
-	local_net_logger_timer.status = INACTIVE;
+	TIMER_INIT(nodeRegisteredTimer);
+	TIMER_INIT(local_net_logger_timer);
 
 	/*
 	 * Add the Layer 2 and Layer 3 Can Message Handlers
@@ -110,6 +115,11 @@ void l2_dcncp_init(void)
 		DEBUG_E("Failed to start Register Timer\n\r");
 	}
 #endif
+        status.bit_field.dcncp_initialised = 1;
+
+        if(status_handler)
+			status_handler(DCNCP_INITIALISED_MASK, status, no_baud);
+
 }
 
 #if defined(CAN_LAYER_3)
@@ -124,11 +134,9 @@ void exp_sendAddressRegisterReq(union sigval data)
 	 */
 	data = data;
 
-	sendRegisterReqTimer.status = INACTIVE;
+	TIMER_INIT(sendRegisterReqTimer);
 
-	result = get_l3_node_address(&address);
-
-	if(result == SUCCESS) {
+	get_l3_node_address(&address);
 
 		DEBUG_D("sendRegisterReq(%x)\n\r", (u16)address);
 
@@ -144,9 +152,6 @@ void exp_sendAddressRegisterReq(union sigval data)
 		if(result != SUCCESS) {
 			DEBUG_E("Failed to start Node Registered Timer\n\r");
 		}
-	} else {
-		DEBUG_E("Failed to get the system Layer 3 node address\n\r");
-	}
 }
 #endif
 
@@ -160,16 +165,14 @@ void exp_nodeAddressRegistered(union sigval data)
 	 * Clear the compiler warning
 	 */
 	data = data;
-	nodeRegisteredTimer.status = INACTIVE;
+	TIMER_INIT(nodeRegisteredTimer);
 
 	DEBUG_D("nodeRegistered()\n\r");
 
-	l3_node_registered = TRUE;
+        status.bit_field.dcncp_l3_address_final = 1;
 
-	result = get_l3_node_address(&address);
-
-	if(result == SUCCESS) {
-		l3_finalise_address(address);
+        if(status_handler)
+			status_handler(DCNCP_L3_ADDRESS_STATUS_MASK, status, no_baud);
 
 #ifdef TEST
 		result = start_timer(SECONDS_TO_TICKS(1), sendTestMsg, (union sigval)(void *)NULL, &sendRegisterReqTimer);
@@ -177,9 +180,6 @@ void exp_nodeAddressRegistered(union sigval data)
 			DEBUG_E("Failed to start Send Register Request Timer\n\r");
 		}
 #endif
-	} else {
-		DEBUG_E("Failed to get the system Layer 3 node address\n\r");
-	}
 }
 #endif
 
@@ -196,7 +196,7 @@ void l2MsgHandler(can_frame *msg)
 		get_l3_node_address(&address);
 
 		if(msg->data[0] == address) {
-			if(l3_node_registered){
+			if(status.bit_field.dcncp_l3_address_final){
 				DEBUG_D("reject Register Request\n\r");
 				txMsg.can_id = AddressRegisterReject;
 				txMsg.can_dlc = 1;
@@ -220,7 +220,7 @@ void l2MsgHandler(can_frame *msg)
 		get_l3_node_address(&address);
 
 		if(msg->data[0] == address) {
-			if(l3_node_registered) {
+			if(status.bit_field.dcncp_l3_address_final) {
 				DEBUG_E("Sending Can Error Message\n\r");
 				txMsg.can_id = NodeAddressError;
 				txMsg.can_dlc = 1;
@@ -297,7 +297,7 @@ void exp_sendNodeAddressReport(union sigval data)
 	txMsg.can_dlc = 2;
 	txMsg.data[1] = address;
 
-	if (l3_node_registered)
+	if (status.bit_field.dcncp_l3_address_final)
 		txMsg.data[0] = TRUE;
 	else
 		txMsg.data[0] = FALSE;
@@ -321,7 +321,7 @@ result_t register_this_node_net_logger(log_level_t level)
 
 	DEBUG_D("register_this_node_net_logger()\n\r");
 
-	if(l3_node_registered) {
+	if(status.bit_field.dcncp_l3_address_final) {
 		local_net_logger_frame.can_id = NetLogger;
 		local_net_logger_frame.can_dlc = 2;
 		local_net_logger_frame.data[0] = address;
@@ -411,7 +411,7 @@ void sendTestMsg(union sigval data __attribute__((unused)))
 		sizeToSend++;
 		result = start_timer(SECONDS_TO_TICKS(10), sendTestMsg, (union sigval)(void *)NULL, &sendRegisterReqTimer);
 		if (result != SUCCESS) {
-			DBEUG_D("Failed to start Send Register Request Timer\n\r");
+			DEBUG_D("Failed to start Send Register Request Timer\n\r");
 		}
 	} else {
 		DEBUG_D("No Other Node\n\r");
