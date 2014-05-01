@@ -64,17 +64,17 @@ static es_timer local_net_logger_timer;
 
 #define LOCAL_NET_LOGGER_MSG_PERIOD SECONDS_TO_TICKS(5)
 
-static void exp_net_logger_ping(union sigval);
+static void exp_net_logger_ping(timer_t timer_id __attribute__((unused)), union sigval);
 
 
-static void exp_sendAddressRegisterReq(union sigval data);
-static void exp_nodeAddressRegistered(union sigval data);
-static void exp_sendNodeAddressReport(union sigval data);
+static void exp_sendAddressRegisterReq(timer_t timer_id, union sigval data);
+static void exp_nodeAddressRegistered(timer_t timer_id, union sigval data);
+static void exp_sendNodeAddressReport(timer_t timer_id, union sigval data);
 
 static void l2MsgHandler(can_frame *msg);
 
 #ifdef TEST
-void sendTestMsg(union sigval data);
+void sendTestMsg(timer_t timer_id, union sigval data);
 BYTE otherNode = 0xff;
 #endif
 
@@ -123,7 +123,7 @@ void l2_dcncp_init(void (*arg_status_handler)(u8 mask, can_status_t status, baud
 }
 
 #if defined(CAN_LAYER_3)
-void exp_sendAddressRegisterReq(union sigval data)
+void exp_sendAddressRegisterReq(timer_t timer_id __attribute__((unused)), union sigval data)
 {
 	u8 address;
 	can_frame msg;
@@ -156,7 +156,7 @@ void exp_sendAddressRegisterReq(union sigval data)
 #endif
 
 #if defined(CAN_LAYER_3)
-void exp_nodeAddressRegistered(union sigval data)
+void exp_nodeAddressRegistered(timer_t timer_id __attribute__((unused)), union sigval data)
 {
 	u8 address;
 	result_t result;
@@ -211,7 +211,7 @@ void l2MsgHandler(can_frame *msg)
 				result = cancel_timer(&nodeRegisteredTimer);
 
 				get_new_l3_node_address(&address);
-				exp_sendAddressRegisterReq((union sigval)(void *)NULL);
+				exp_sendAddressRegisterReq(0xff, (union sigval)(void *)NULL);
 			}
 		}
 #endif
@@ -234,7 +234,7 @@ void l2MsgHandler(can_frame *msg)
 				cancel_timer(&nodeRegisteredTimer);
 
 				get_new_l3_node_address(&address);
-				exp_sendAddressRegisterReq((union sigval)(void *)NULL);
+				exp_sendAddressRegisterReq(0xff, (union sigval)(void *)NULL);
 			}
 		}
 #endif
@@ -279,7 +279,7 @@ void l2MsgHandler(can_frame *msg)
 }
 
 #if defined(CAN_LAYER_3)
-void exp_sendNodeAddressReport(union sigval data)
+void exp_sendNodeAddressReport(timer_t timer_id __attribute__((unused)), union sigval data)
 {
 	u8 address;
 	can_frame txMsg;
@@ -340,7 +340,7 @@ result_t register_this_node_net_logger(log_level_t level)
 #endif
 
 #if defined(CAN_LAYER_3)
-void exp_net_logger_ping(union sigval data)
+void exp_net_logger_ping(timer_t timer_id __attribute__((unused)), union sigval data)
 {
 	data = data;
 
@@ -386,7 +386,7 @@ void send_ping_message(void)
 
 #if defined(CAN_LAYER_3)
 #ifdef TEST
-void sendTestMsg(union sigval data __attribute__((unused)))
+void sendTestMsg(timer_t timer_id __attribute__((unused)), union sigval data __attribute__((unused)))
 {
 	//L3 Message
 	u8 buffer[70];

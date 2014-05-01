@@ -73,9 +73,9 @@ static void CANReset(void);
 static void CANSetRegMaskValue(u8 reg, u8 mask, u8 value);
 static void set_can_mode(u8 mode);
 static void setBitRate(baud_rate_t baudRate);
-static void exp_checkNetworkConnection(union sigval);
-static void exp_finaliseBaudRateChange(union sigval data);
-static void exp_resendBaudRateChange(union sigval data);
+static void exp_checkNetworkConnection(timer_t timer_id, union sigval);
+static void exp_finaliseBaudRateChange(timer_t timer_id, union sigval data);
+static void exp_resendBaudRateChange(timer_t timer_id, union sigval data);
 static void CANEnableRXInterrupts(void);
 static void CANDisableRXInterrupts(void);
 static u8 CANReadReg(u8 reg);
@@ -277,7 +277,7 @@ void exp_test_ping(union sigval data __attribute__((unused)))
 }
 #endif
 
-void exp_checkNetworkConnection(union sigval data __attribute__((unused)))
+void exp_checkNetworkConnection(timer_t timer_id __attribute__((unused)), union sigval data __attribute__((unused)))
 {
 	result_t result;
 	u8 rec = CANReadReg(REC);
@@ -1125,7 +1125,7 @@ void L2_SetCanNodeBuadRate(baud_rate_t baudRate)
 	start_timer(SECONDS_TO_TICKS(5), exp_finaliseBaudRateChange, (union sigval)(void *)NULL, &timer);
 }
 
-static void exp_finaliseBaudRateChange(union sigval data __attribute__((unused)))
+static void exp_finaliseBaudRateChange(timer_t timer_id __attribute__((unused)), union sigval data __attribute__((unused)))
 {
 	DEBUG_D("exp_finaliseBaudRateChange()\n\r");
 
@@ -1169,7 +1169,7 @@ void L2_SetCanNetworkBuadRate(baud_rate_t rate)
 	}
 }
 
-static void exp_resendBaudRateChange(union sigval data __attribute__((unused)))
+static void exp_resendBaudRateChange(timer_t timer_id __attribute__((unused)), union sigval data __attribute__((unused)))
 {
 	can_frame msg;
 	es_timer timer;

@@ -190,8 +190,11 @@ void flash_erase(UINT32 address)
 {
 	unsigned int offset;
 
-	DEBUG_D("erasePage %x\n\r", address);
+	DEBUG_D("erasePage 0x%lx\n\r", address);
 
+        if((address & 0x3ff) != 0x00) {
+            DEBUG_E("Invalid address for Erase!\n\r");
+        }
 	TBLPAG = ((address & 0x7F0000)>>16);
 	offset = (address & 0x00FFFF);
         
