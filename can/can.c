@@ -68,7 +68,7 @@ void status_handler(u8 mask, can_status_t status, baud_rate_t baud)
     if(mask == L2_STATUS_MASK) {
         if((status.bit_field.l2_status == L2_Connected) && (can_status.bit_field.l2_status != L2_Connected)) {
 		DEBUG_D("Layer 2 Connected so start DCNCP\n\r");
-		l2_dcncp_init(status_handler);
+		dcncp_init(status_handler);
         }
         can_status.bit_field.l2_status = status.bit_field.l2_status;
     }

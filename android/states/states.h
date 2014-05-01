@@ -42,7 +42,7 @@ extern state_t current_state;
 extern void set_idle_state(void);
 extern void set_android_connected_state(void);
 #if defined(NODE) || defined(BOOT)
-extern void set_app_connected_state(void);
+extern void set_node_connected_state(void);
 #elif defined(DONGLE)
 extern void set_dongle_connected_state(void);
 #endif

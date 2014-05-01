@@ -22,7 +22,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "system.h"
-#include "es_lib/dcncp/l2_dcncp.h"
+#include "es_lib/dcncp/dcncp.h"
 #include "es_lib/can/es_can.h"
 
 #define DEBUG_FILE

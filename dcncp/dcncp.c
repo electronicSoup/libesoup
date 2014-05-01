@@ -38,7 +38,7 @@
 #include "serial.h"
 #endif
 
-#include "es_lib/dcncp/l2_dcncp.h"
+#include "es_lib/dcncp/dcncp.h"
 #include "es_lib/timers/timer_sys.h"
 #include "es_lib/can/es_can.h"
 #if defined(CAN_LAYER_3)
@@ -81,7 +81,7 @@ BYTE otherNode = 0xff;
 static can_status_t status;
 static void (*status_handler)(u8 mask, can_status_t status, baud_rate_t baud) = NULL;
 
-void l2_dcncp_init(void (*arg_status_handler)(u8 mask, can_status_t status, baud_rate_t baud))
+void dcncp_init(void (*arg_status_handler)(u8 mask, can_status_t status, baud_rate_t baud))
 {
 	can_target_t target;
 	result_t result;

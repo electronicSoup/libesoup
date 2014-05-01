@@ -54,7 +54,8 @@ static void update_node_config_info(char *buffer);
 #ifdef BOOT
 extern void jmp_firmware(void);
 #endif //BOOT
-void set_app_connected_state(void)
+
+void set_node_connected_state(void)
 {
     DEBUG_D("App Connected State\n\r");
     // Android App connected so cancel the timer. 

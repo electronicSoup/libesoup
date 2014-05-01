@@ -46,7 +46,7 @@
 #define NetLogger  0x707
 #define CancelNetLogger  0x708
 
-extern void l2_dcncp_init(void (*arg_status_handler)(u8 mask, can_status_t status, baud_rate_t baud));
+extern void dcncp_init(void (*arg_status_handler)(u8 mask, can_status_t status, baud_rate_t baud));
 extern void send_ping_message(void);
 #if defined(CAN_LAYER_3)
 extern u8 node_get_net_logger_address(void);
