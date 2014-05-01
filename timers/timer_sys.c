@@ -25,12 +25,11 @@
 
 #define DEBUG_FILE
 #include "es_lib/logger/serial.h"
+#undef DEBUG_FILE
 
 #if LOG_LEVEL < NO_LOGGING
     #define TAG "TIMER"
 #endif
-
-#define NUMBER_OF_TIMERS 20
 
 static UINT16 timer_counter = 0;
 
@@ -135,7 +134,7 @@ void tick(void)
 
             timers[loop].expiry_count = 0;
             timers[loop].function = (expiry_function)NULL;
-            function(data);
+            function(loop, data);
         }
     }
 }

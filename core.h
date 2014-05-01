@@ -166,7 +166,7 @@ union sigval {          /* Data passed with notification */
  * The expiry_function is a pointer to a function which accepts as parameter a 
  * pointer to a BYTE. The expiry function will not return anything.
  */
-typedef void (*expiry_function)(union sigval);
+typedef void (*expiry_function)(timer_t timer_id, union sigval);
 
 /****************************************************
  *

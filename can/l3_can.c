@@ -168,17 +168,17 @@ static void l3_l2_frame_handler(can_frame *rxMsg);
 static void init_tx_buffer(tx_buffer_t *);
 static void init_rx_buffer(rx_buffer_t *);
 
-static void exp_sendConsecutiveFrame(union sigval);
+static void exp_sendConsecutiveFrame(timer_t timer_id, union sigval);
 static void sendFlowControlFrame(rx_buffer_t *rx_buffer, u8 flowStatus);
 static void startConsecutiveFrameTimer(tx_buffer_t *tx_buffer) ;
 
 static void startTimer_N_Cr(rx_buffer_t *);
 static void stopTimer_N_Cr(rx_buffer_t *);
-static void exp_timer_N_Cr_Expired(union sigval);
+static void exp_timer_N_Cr_Expired(timer_t timer_id, union sigval);
 
 static void startTimer_N_Bs(tx_buffer_t *);
 static void stopTimer_N_Bs(tx_buffer_t *);
-static void exp_timer_N_Bs_Expired(union sigval);
+static void exp_timer_N_Bs_Expired(timer_t timer_id, union sigval);
 
 void init_tx_buffer(tx_buffer_t *tx_buf)
 {
@@ -376,7 +376,7 @@ result_t l3_tx_msg(l3_can_msg_t *msg)
 	return(SUCCESS);
 }
 
-void exp_sendConsecutiveFrame(union sigval data)
+void exp_sendConsecutiveFrame(timer_t timer_id __attribute__((unused)), union sigval data)
 {
 	u8 loop;
 	tx_buffer_t *tx_buffer;
@@ -689,7 +689,7 @@ void l3_l2_frame_handler(can_frame *rxMsg)
 		switch(flowStatus) {
 		case FS_CTS:
 			tx_buffer->frames_sent_in_block = 0x00;
-			exp_sendConsecutiveFrame((union sigval)(void *)tx_buffer);
+			exp_sendConsecutiveFrame(0xff, (union sigval)(void *)tx_buffer);
 			break;
 		case FS_Wait:
 			//TODO Have to count and limit the number of Wait's we accept
@@ -759,7 +759,7 @@ void stopTimer_N_Cr(rx_buffer_t *rx_buffer)
 		cancel_timer(&rx_buffer->timer_N_Cr);
 }
 
-void exp_timer_N_Cr_Expired(union sigval data)
+void exp_timer_N_Cr_Expired(timer_t timer_id __attribute__((unused)), union sigval data)
 {
 	rx_buffer_t *rx_buffer;
 
@@ -797,7 +797,7 @@ void stopTimer_N_Bs(tx_buffer_t *tx_buffer)
 		cancel_timer(&tx_buffer->timer_N_Bs);
 }
 
-void exp_timer_N_Bs_Expired(union sigval data)
+void exp_timer_N_Bs_Expired(timer_t timer_id __attribute__((unused)), union sigval data)
 {
 	tx_buffer_t *tx_buffer;
 
