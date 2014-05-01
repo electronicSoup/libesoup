@@ -25,7 +25,7 @@
 #include "system.h"
 #include "usb/usb.h"
 #include "usb/usb_host_android.h"
-#include "ipc.h"
+#include "node_ipc.h"
 #include "states.h"
 #include "es_lib/utils/utils.h"
 #include "es_lib/android/android.h"
