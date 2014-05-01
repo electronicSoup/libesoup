@@ -2,7 +2,8 @@
  *
  * \file ipc.h
  *
- * Definitions for communications with an Android Device
+ * Definitions for communications with an Android Device for Bootloader 
+ * and CAN Node
  *
  * Copyright 2014 John Whitmore <jwhitmore@electronicsoup.com>
  *
@@ -19,8 +20,8 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  *
  */
-#ifndef IPC_H
-#define IPC_H
+#ifndef NODE_IPC_H
+#define NODE_IPC_H
 
 typedef enum android_command_t
 {
@@ -54,4 +55,4 @@ typedef enum android_app_t
     NODE_CONFIG_APP  = 0x02
 } android_app_t;
 
-#endif //IPC_H
+#endif //NODE_IPC_H

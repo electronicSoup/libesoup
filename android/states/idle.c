@@ -25,7 +25,11 @@
 #include "system.h"
 #include "usb/usb.h"
 #include "usb/usb_host_android.h"
-#include "ipc.h"
+#if defined(NODE) || defined(BOOT)
+#include "node_ipc.h"
+#elif defined(DONGLE)
+#include "dongle_ipc.h"
+#endif
 #include "states.h"
 
 #define DEBUG_FILE
@@ -61,7 +65,7 @@ void set_idle_state(void)
  */
 void idle_process_msg(android_command_t cmd, void *data, UINT16 data_len)
 {
-    DEBUG_E("Received Android Msg in the Idle state\n\r");
+    DEBUG_E("Received Android Msg in the Idle state command 0x%x data Lentgh %d\n\r", cmd, data_len);
 }
 
 /*

@@ -25,7 +25,11 @@
 #include "system.h"
 #include "usb/usb.h"
 #include "usb/usb_host_android.h"
-#include "ipc.h"
+#if defined(NODE) || defined(BOOT)
+#include "node_ipc.h"
+#elif defined(DONGLE)
+#include "dongle_ipc.h"
+#endif
 #include "states.h"
 
 #define DEBUG_FILE
@@ -62,7 +66,11 @@ void set_android_connected_state(void)
 void android_connected_process_msg(android_command_t cmd, void *data, UINT16 data_len)
 {
     if(cmd == COMMAND_APP_CONNECT) {
-        set_app_connected_state();
+#if defined(DONGLE)
+        set_dongle_connected_state();
+#elif defined(NODE)
+        set_node_connected_state();
+#endif
     } else {
         DEBUG_E("Android Connected State received Android message other then App connected\n\r");
     }
