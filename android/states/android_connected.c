@@ -68,11 +68,11 @@ void android_connected_process_msg(android_command_t cmd, void *data, UINT16 dat
     if(cmd == COMMAND_APP_CONNECT) {
 #if defined(DONGLE)
         set_dongle_connected_state();
-#elif defined(NODE)
+#elif defined(NODE) || defined(BOOT)
         set_node_connected_state();
 #endif
     } else {
-        DEBUG_E("Android Connected State received Android message other then App connected\n\r");
+        DEBUG_E("Android Connected State received Android message other then App connected 0x%x\n\r", cmd);
     }
 }
 

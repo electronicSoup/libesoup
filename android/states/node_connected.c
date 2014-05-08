@@ -1,6 +1,6 @@
 /**
  *
- * \file states/appConnected.c
+ * \file states/node_connected.c
  *
  * The Android Application Connected state for the Android Communications.
  *
