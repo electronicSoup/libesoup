@@ -524,7 +524,7 @@ void initRand(void)
  * @param source: The source String located in Program Flash Memory
  * @return Function returns the number of characters copied across.
  */
-#if defined( __C30__ )
+#if defined( __C30__ ) || defined(__XC16__)
 UINT16 strcpypgmtoram(char *dest, const char *source, UINT16 len)
 {
 #if 0
@@ -589,6 +589,22 @@ UINT16 strcpypgmtoram(char *dest, const char *source, UINT16 len)
 #endif
 }
 #endif
+
+#if defined( __C30__ ) || defined(__XC16__)
+UINT16 psv_strcpy(char *dst, __prog__ char *src, UINT16 len)
+{
+    char *ptr = dst;
+    UINT16 i = 0;
+
+    while((*src != 0x00) && (*src != 0xff) && (i < len - 1)) {
+        *ptr++ = *src++;
+        i++;
+    }
+    *ptr = 0x00;
+
+    return i;
+}
+#endif // __C30__ || __XC16__
 
 #ifdef HW_SPI
 void spi_init(void)
@@ -683,7 +699,7 @@ void spi_init(void)
 #endif
 
 #ifdef HW_SPI
-#if defined(__C30__)
+#if defined(__C30__) || defined(__XC16__)
 unsigned char SPIWriteByte(unsigned char write)
 {
 	SPI1BUF = write;

@@ -76,6 +76,7 @@ extern void initRand(void);
 
 //#if defined( __C30__ )
     extern UINT16 strcpypgmtoram(char *dest, const char *source, UINT16 len);
+    extern UINT16 psv_strcpy(char *dst, __prog__ char *src, UINT16 len);
 //#endif
 
 #ifdef TEST
