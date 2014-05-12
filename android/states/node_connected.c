@@ -30,13 +30,15 @@
 #include "es_lib/utils/utils.h"
 #include "es_lib/android/android.h"
 #include "main.h"
+#include "os_api.h"
 
 #define DEBUG_FILE
 #include "es_lib/logger/serial.h"
 
-#if LOG_LEVEL < NO_LOGGING
-#define TAG "AppConnected"
-#endif
+#define TAG "NodeConnected"
+
+extern void (*app_init)(void);
+extern void (*app_main)(void);
 
 void app_connected_process_msg(android_command_t, void *, UINT16);
 void app_connected_main(void);
@@ -47,6 +49,7 @@ static void transmit_app_type_info(void);
 static void transmit_hardware_info(void);
 static void transmit_bootcode_info(void);
 static void transmit_firmware_info(void);
+static void transmit_application_info(void);
 #ifdef NODE
 static void transmit_node_config_info(void);
 static void update_node_config_info(char *buffer);
@@ -83,14 +86,14 @@ void app_connected_process_msg(android_command_t cmd, void *data, UINT16 data_le
             break;
 #endif //BOOT
 
-#ifdef BOOT
         case COMMAND_BEGIN_FLASH:
             DEBUG_D("COMMAND_BEGIN_FLASH transmit ready\n\r");
+            eeprom_write(APP_VALID_MAGIC, 0x00);
+            eeprom_write(APP_VALID_MAGIC + 1, 0x00);
+            application_invalid = (APP_INIT_INVALID | APP_MAIN_INVLAID | APP_ISR_INVALID);
             transmit_ready();
             break;
-#endif //BOOT
 
-#ifdef BOOT
         case COMMAND_ERASE:
             if(data != NULL) {
                 byte_data = (BYTE *) data;
@@ -99,18 +102,21 @@ void app_connected_process_msg(android_command_t cmd, void *data, UINT16 data_le
                 for (loop = 0; loop < 4; loop++) {
                     address = (address << 8) | (byte_data[loop] & 0xff);
                 }
+
                 DEBUG_I("COMMAND_ERASE 0x%lx ", address);
-                if(!flash_page_empty(address)) {
-                    flash_erase(address);
+                if(address < APP_START_ADDRESS) {
+                    DEBUG_E("Bad address to Erase\n\r");
                 } else {
-                    DEBUG_I("Already empty\n\r");
+                    if (!flash_page_empty(address)) {
+                        flash_erase(address);
+                    } else {
+                        DEBUG_I("Already empty\n\r");
+                    }
+                    transmit_ready();
                 }
-                transmit_ready();
             }
             break;
-#endif //BOOT
 
-#ifdef BOOT
         case COMMAND_ROW:
             if(data != NULL) {
                 byte_data = (BYTE *) data;
@@ -121,11 +127,27 @@ void app_connected_process_msg(android_command_t cmd, void *data, UINT16 data_le
                 }
 
                 DEBUG_D("COMMAND_ROW address 0x%lx data length 0x%x\n\r", address, data_len);
-                flash_write(address, &byte_data[4]);
-                transmit_ready();
+                if(address < APP_START_ADDRESS) {
+                    DEBUG_E("Bad address to Write to row\n\r");
+                } else {
+                    flash_write(address, &byte_data[4]);
+                    transmit_ready();
+                }
             }
             break;
-#endif //BOOT
+
+        case COMMAND_REFLASHED:
+            app_init();
+            application_invalid &= ~APP_INIT_INVALID;
+            app_main();
+            /*
+             * Can only assume that the ISR is valid at this point
+             */
+            application_invalid = 0x00;
+
+            eeprom_write(APP_VALID_MAGIC, APP_VALID_MAGIC_VALUE);
+            eeprom_write(APP_VALID_MAGIC + 1, ~APP_VALID_MAGIC_VALUE);
+            break;
 
         case ANDROID_APP_TYPE_REQ:
             DEBUG_D("ANDROID_APP_TYPE_REQ\n\r");
@@ -143,8 +165,13 @@ void app_connected_process_msg(android_command_t cmd, void *data, UINT16 data_le
             break;
 
         case FIRMWARE_INFO_REQ:
-            DEBUG_D("APP_INFO_REQ\n\r");
+            DEBUG_D("FIRMWARE_INFO_REQ\n\r");
             transmit_firmware_info();
+            break;
+
+        case APPLICATION_INFO_REQ:
+            DEBUG_D("APPLICATION_INFO_REQ\n\r");
+            transmit_application_info();
             break;
 
 #ifdef NODE
@@ -279,6 +306,40 @@ void transmit_firmware_info(void)
     android_transmit((BYTE *)buffer, index);
 }
 
+void transmit_application_info(void)
+{
+    char buffer[153];
+    char test[50];
+    UINT16 index = 0;
+    buffer[1] = APPLICATION_INFO_RESP;
+
+    buffer[2] = application_invalid;
+    DEBUG_D("App invalid is:0x%x\n\r", application_invalid);
+
+    index = 3;
+
+    psv_strcpy(test, app_author, 40);
+    DEBUG_D("App Author is:%s\n\r", test);
+    index += psv_strcpy(&buffer[index], app_author, 40) + 1;
+
+    psv_strcpy(test, app_software, 50);
+    DEBUG_D("App Software is:%s\n\r", test);
+    index += psv_strcpy(&buffer[index], app_software, 50) + 1;
+
+    psv_strcpy(test, app_version, 10);
+    DEBUG_D("App Version is:%s\n\r", test);
+    index += psv_strcpy(&buffer[index], app_version, 10) + 1;
+
+    psv_strcpy(test, app_uri, 50);
+    DEBUG_D("App URI is:%s\n\r", test);
+    index += psv_strcpy(&buffer[index], app_uri, 50) + 1;
+
+    DEBUG_D("Transmit Application info length %d\n\r", index);
+    buffer[0] = index;
+
+    android_transmit((BYTE *)buffer, index);
+}
+
 #ifdef NODE
 void transmit_node_config_info(void)
 {
@@ -310,36 +371,5 @@ void transmit_node_config_info(void)
     buffer[0] = index;
 
     android_transmit((BYTE *)buffer, index);
-}
-#endif //NODE
-
-#ifdef NODE
-void update_node_config_info(char *buffer)
-{
-    char string[50];
-    UINT16 index;
-    BYTE value;
-#if 0
-    eeprom_read(L3_NODE_ADDRESS, (BYTE *) &value);
-    DEBUG_D("Layer 3 Node Address 0x%x\n\r", value);
-    buffer[index++] = value;
-
-    eeprom_read(BAUD_RATE, (BYTE *) &value);
-    DEBUG_D("CAN Baud Rate 0x%x\n\r", value);
-    buffer[index++] = value;
-
-    eeprom_read(IO_ADDRESS, (BYTE *) &value);
-    DEBUG_D("I/O Address 0x%x\n\r", value);
-    buffer[index++] = value;
-
-    eeprom_str_read(NODE_DESCRIPTION, string, 50);
-    DEBUG_D("Description: %s\n\r", string);
-    strcpy(buffer[index], string);
-
-    index = index + strlen(string);
-    buffer[0] = index;
-
-    android_transmit((BYTE *)buffer, index);
-#endif // 0
 }
 #endif //NODE
