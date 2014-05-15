@@ -471,6 +471,7 @@ void l3_l2_frame_handler(can_frame *rxMsg)
 
 		DEBUG_D("SF\n\r");
 #if defined(MCP)
+                rx_buffer = &mcp_rx_buffer;
 		if(mcp_receiver_busy) {
 			DEBUG_E("ERROR: Can L3 Received First Frame whilst RxBuffer Busy\n\r");
 			return;

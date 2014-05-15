@@ -158,7 +158,7 @@ void exp_sendAddressRegisterReq(timer_t timer_id __attribute__((unused)), union 
 #if defined(CAN_LAYER_3)
 void exp_nodeAddressRegistered(timer_t timer_id __attribute__((unused)), union sigval data)
 {
-	u8 address;
+//	u8 address;
 	result_t result;
 
 	/*

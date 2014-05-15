@@ -23,7 +23,7 @@
 #ifndef NODE_IPC_H
 #define NODE_IPC_H
 
-typedef enum android_command_t
+typedef enum
 {
     ANDROID_APP_TYPE_REQ   = 0x01,
     ANDROID_APP_TYPE_RESP  = 0x02,

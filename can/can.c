@@ -22,6 +22,7 @@
 
 #include "system.h"
 #include "es_lib/can/es_can.h"
+#include "es_lib/dcncp/dcncp.h"
 #define DEBUG_FILE
 #include "es_lib/logger/serial.h"
 #undef DEBUG_FILE
