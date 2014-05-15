@@ -1,3 +1,6 @@
+/*
+ * This is a template main.c file for a Cinnamon Bun Node Application
+ */
 #include "es_lib/os/os.h"
 
 /*
@@ -13,22 +16,30 @@ __prog__ char app_software[50] __attribute__((space(prog), address(APP_STRINGS_B
 __prog__ char app_version[10] __attribute__((space(prog), address(APP_STRINGS_BASE + 40 + 50))) = "1.0";
 __prog__ char app_uri[50] __attribute__((space(prog), address(APP_STRINGS_BASE + 40 + 50 + 10))) = "http:/www.bogus.com";
 
+#define TAG "MyAPP"
 
 /*
- * Like the Arduino sketches this is the initialisation code which will be
- * called by the OS on power up and immediately after the Applicatoin has been
- * installed on the Cinnamon Bun Device.
+ * Like the Arduino sketche's setup() function this is the initialisation code
+ * which will be called by the OS on power up and immediately after the
+ * Application has been installed on the Cinnamon Bun Device.
  * This routine must return in a timely fashion! If the watch dog timer kicks
  * in resetting the device before this funciton returns the application will
  * be marked as invalid by the OS.
  */
 void app_init(void)
 {
+    /*
+     * This funciton call to initialise the OS API Functions is very important!
+     * If you are going to call OS API functons you must first have called
+     * this function. Otherwise your code will jump to random locations in
+     * program memory.
+     */
     os_init();
-    os_serial_log(Debug, "TAG", "app_init()\n\r");
+
+    os_serial_log(Debug, TAG, "app_init()\n\r");
 }
+
 
 void app_main(void)
 {
-    os_serial_log(Debug, "TAG", "app_main()\n\r");
 }
