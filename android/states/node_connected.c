@@ -38,8 +38,9 @@
 
 #define TAG "NodeConnected"
 
-extern void (*app_init)(void);
-extern void (*app_main)(void);
+extern void app_init(void);
+extern void app_main(void);
+
 
 void app_connected_process_msg(android_command_t, void *, UINT16);
 void app_connected_main(void);
@@ -150,12 +151,14 @@ void app_connected_process_msg(android_command_t cmd, void *data, UINT16 data_le
             break;
 #ifdef NODE
         case COMMAND_REFLASHED:
+            DEBUG_D("COMMAND_REFLASHED\n\r");
             app_init();
             application_invalid &= ~APP_INIT_INVALID;
             app_main();
             /*
-             * Can only assume that the ISR is valid at this point
+             * At this point we can only assume that the ISR is valid
              */
+            DEBUG_D("Application is valid\n\r");
             application_invalid = 0x00;
 
             eeprom_write(APP_VALID_MAGIC, APP_VALID_MAGIC_VALUE);
@@ -259,7 +262,7 @@ void transmit_app_type_info(void)
 #elif defined(NODE)
     buffer[2] = NODE_CONFIG_APP;
 #endif
-    android_transmit(buffer, 3);
+    android_transmit((BYTE *)buffer, 3);
 }
 void transmit_hardware_info(void)
 {

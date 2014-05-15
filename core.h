@@ -33,6 +33,7 @@
     typedef UINT16   u16;
     typedef UINT32   u32;
 
+#if 0
 #if defined(__18CXX)
     #include <p18cxxx.h>
 #elif defined(__XC8)
@@ -41,8 +42,11 @@
 #elif defined( __C30__ ) 
     #include "p24Fxxxx.h"
 #elif defined( __XC16__ )
+    #include <xc.h>
     #include "p24Fxxxx.h"
 #endif
+#endif //0
+    #include <xc.h>
 
 #elif defined(ES_LINUX)
     #include <stdint.h>

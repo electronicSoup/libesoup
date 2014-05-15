@@ -280,7 +280,7 @@ void exp_test_ping(union sigval data __attribute__((unused)))
 void exp_checkNetworkConnection(timer_t timer_id __attribute__((unused)), union sigval data __attribute__((unused)))
 {
 	result_t result;
-	u8 rec = CANReadReg(REC);
+//	u8 rec = CANReadReg(REC);
 
 	TIMER_INIT(listen_timer);
 
@@ -505,9 +505,9 @@ void L2_CanTasks(void)
 #endif
 	BYTE loop;
 	BYTE byte;
-        static BYTE last_flags = 0x00;
-	BYTE flags;
-	BYTE eflg;
+//        static BYTE last_flags = 0x00;
+//	BYTE flags;
+//	BYTE eflg;
 
 #ifndef L2_CAN_INTERRUPT_DRIVEN
 	L2_ISR();
@@ -555,17 +555,17 @@ void L2_CanTasks(void)
 		// Check if it's an extended
 		if (cirBuffer[cirBufferNextRead].sidl & SIDL_EXIDE) {
 			rxCanMsg.can_id = cirBuffer[cirBufferNextRead].sidh;
-			rxCanMsg.can_id = rxCanMsg.can_id << 3 | (cirBuffer[cirBufferNextRead].sidl >> 5) & 0x07;
-			rxCanMsg.can_id = rxCanMsg.can_id << 2 | cirBuffer[cirBufferNextRead].sidl & 0x03;
-			rxCanMsg.can_id = rxCanMsg.can_id << 8 | cirBuffer[cirBufferNextRead].eid8;
-			rxCanMsg.can_id = rxCanMsg.can_id << 8 | cirBuffer[cirBufferNextRead].eid0;
+			rxCanMsg.can_id = (rxCanMsg.can_id << 3) | ((cirBuffer[cirBufferNextRead].sidl >> 5) & 0x07);
+			rxCanMsg.can_id = (rxCanMsg.can_id << 2) | (cirBuffer[cirBufferNextRead].sidl & 0x03);
+			rxCanMsg.can_id = (rxCanMsg.can_id << 8) | cirBuffer[cirBufferNextRead].eid8;
+			rxCanMsg.can_id = (rxCanMsg.can_id << 8) | cirBuffer[cirBufferNextRead].eid0;
 			rxCanMsg.can_id |= CAN_EFF_FLAG;
 
 			if(cirBuffer[cirBufferNextRead].dcl & DCL_ERTR)
 				rxCanMsg.can_id |= CAN_RTR_FLAG;
 		} else {
 			rxCanMsg.can_id = cirBuffer[cirBufferNextRead].sidh;
-			rxCanMsg.can_id = rxCanMsg.can_id << 3 | (cirBuffer[cirBufferNextRead].sidl >> 5) & 0x07;
+			rxCanMsg.can_id = (rxCanMsg.can_id << 3) | ((cirBuffer[cirBufferNextRead].sidl >> 5) & 0x07);
 
 			if(cirBuffer[cirBufferNextRead].sidl & SIDL_SRTR)
 				rxCanMsg.can_id |= CAN_RTR_FLAG;
@@ -788,6 +788,8 @@ BYTE CheckErrors(void)
 		checkSubErrors();
 		CANSetRegMaskValue(CANINTF, ERRIE, 0x00);
 	}
+        // TODO check return value or make fn void
+        return(0x00);
 }
 
 static void checkSubErrors(void)
@@ -1348,10 +1350,12 @@ static void l2_dispatcher_frame_handler(can_frame *message)
 	}
 }
 
+#if 0
 static BYTE l2_can_dispatch_reg_handler(can_target_t *target)
 {
 	return(FALSE);
 }
+#endif
 
 result_t l2_reg_handler(can_target_t *target)
 {
