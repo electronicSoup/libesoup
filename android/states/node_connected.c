@@ -38,10 +38,6 @@
 
 #define TAG "NodeConnected"
 
-extern void app_init(void);
-extern void app_main(void);
-
-
 void app_connected_process_msg(android_command_t, void *, UINT16);
 void app_connected_main(void);
 void app_connected_process_usb_event(USB_EVENT event);
@@ -152,9 +148,10 @@ void app_connected_process_msg(android_command_t cmd, void *data, UINT16 data_le
 #ifdef NODE
         case COMMAND_REFLASHED:
             DEBUG_D("COMMAND_REFLASHED\n\r");
-            app_init();
+            CALL_APP_INIT();
             application_invalid &= ~APP_INIT_INVALID;
-            app_main();
+            CALL_APP_MAIN();
+
             /*
              * At this point we can only assume that the ISR is valid
              */
