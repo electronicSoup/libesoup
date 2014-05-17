@@ -27,7 +27,7 @@
 void serial_init(void)
 {
     /*
-     * Serial Outout pin should be defined in include file hw_config.h
+     * Serial Outout pin should be defined in include file system.h
      */
 #if SERIAL_PORT == 20
     RPOR10bits.RP20R = 3;
