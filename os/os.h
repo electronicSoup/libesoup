@@ -24,13 +24,12 @@
 
 #include "es_lib/core.h"
 
-#define OS_FNS 0x7E92
 extern void        os_init(void);
 
 extern result_t  (*os_start_timer)(UINT16, expiry_function, BYTE *, es_timer *timer);
 extern result_t  (*os_cancel_timer)(es_timer *timer);
 
-extern  result_t (*os_eeprom_read)(UINT16 address, BYTE *data);
+extern result_t  (*os_eeprom_read)(UINT16 address, BYTE *data);
 extern result_t  (*os_eeprom_write)(UINT16 address, BYTE data);
 
 extern result_t  (*os_l2_can_tx_msg)(can_frame *);
@@ -47,6 +46,7 @@ extern void      (*os_serial_log)(log_level_t level, char *tag, char *fmt, ...);
 extern void      (*os_net_log)(log_level_t level, char *msg);
 extern result_t  (*os_net_log_register_as_handler)(void (*)(log_level_t, char *), log_level_t);
 extern result_t  (*os_net_log_unregister_as_handler)(void);
+
 extern void      (*os_invalidate_app)(void);
 
 #endif // ES_OS_H
