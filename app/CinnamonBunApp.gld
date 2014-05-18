@@ -26,7 +26,7 @@ MEMORY
   reset          : ORIGIN = 0x0,           LENGTH = 0x4
   ivt            : ORIGIN = 0x4,           LENGTH = 0xFC
   aivt           : ORIGIN = 0x104,         LENGTH = 0xFC
-
+  app_handle     : ORIGIN = 0x400,         LENGTH = 0x400
 /*
  * Application Strings
  */
@@ -122,10 +122,14 @@ SECTIONS
         *(.user_init);
         KEEP (*(.handle));
         KEEP (*(.isr*));
-        *(.libc) *(.libm) *(.libdsp);  
+        *(.libc) *(.libm) *(.libdsp);
         *(.lib*);
   } >program
 */
+  .text :
+  {
+        KEEP (*(.handle));
+  } >app_handle
 
   /*
   ** User-Defined Section in Program Memory
