@@ -89,7 +89,7 @@ void app_connected_process_msg(android_command_t cmd, void *data, UINT16 data_le
 #ifdef NODE
             eeprom_write(APP_VALID_MAGIC, 0x00);
             eeprom_write(APP_VALID_MAGIC + 1, 0x00);
-            application_invalid = (APP_INIT_INVALID | APP_MAIN_INVLAID | APP_ISR_INVALID);
+            app_valid = FALSE;
 #endif //NODE
             transmit_ready();
             break;
@@ -105,7 +105,8 @@ void app_connected_process_msg(android_command_t cmd, void *data, UINT16 data_le
 
                 DEBUG_I("COMMAND_ERASE 0x%lx ", address);
 #if defined(NODE)
-                if(address < APP_START_ADDRESS) {
+                if(  (address < APP_START_ADDRESS)
+                   &&(address != APP_HANDLE_ADDRESS)) {
                     DEBUG_E("Bad address to Erase\n\r");
 #elif defined(BOOT)
                 if(address < FIRMWARE_START_ADDRESS) {
@@ -133,7 +134,8 @@ void app_connected_process_msg(android_command_t cmd, void *data, UINT16 data_le
 
                 DEBUG_D("COMMAND_ROW address 0x%lx data length 0x%x\n\r", address, data_len);
 #if defined(NODE)
-                if(address < APP_START_ADDRESS) {
+                if(  (address < APP_START_ADDRESS)
+                   &&(address != APP_HANDLE_ADDRESS)) {
                     DEBUG_E("Bad address to Write to row\n\r");
 #elif defined(BOOT)
                 if(address < FIRMWARE_START_ADDRESS) {
@@ -149,14 +151,9 @@ void app_connected_process_msg(android_command_t cmd, void *data, UINT16 data_le
         case COMMAND_REFLASHED:
             DEBUG_D("COMMAND_REFLASHED\n\r");
             CALL_APP_INIT();
-            application_invalid &= ~APP_INIT_INVALID;
             CALL_APP_MAIN();
-
-            /*
-             * At this point we can only assume that the ISR is valid
-             */
             DEBUG_D("Application is valid\n\r");
-            application_invalid = 0x00;
+            app_valid = TRUE;
 
             eeprom_write(APP_VALID_MAGIC, APP_VALID_MAGIC_VALUE);
             eeprom_write(APP_VALID_MAGIC + 1, ~APP_VALID_MAGIC_VALUE);
@@ -329,8 +326,7 @@ void transmit_application_info(void)
     UINT16 index = 0;
     buffer[1] = APPLICATION_INFO_RESP;
 
-    buffer[2] = application_invalid;
-    DEBUG_D("App invalid is:0x%x\n\r", application_invalid);
+    buffer[2] = app_valid;
 
     index = 3;
 

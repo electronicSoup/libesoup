@@ -24,8 +24,6 @@
 
 #ifdef MCP
     #define CHECK_TIMERS()  if(timer_tick) tick();
-    #define TIMER_INIT(timer) timer.status = INACTIVE;
-
 
     extern volatile BOOL timer_tick;
 

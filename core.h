@@ -116,6 +116,8 @@ typedef enum {
     ACTIVE,
 } timer_status_t;
 
+#define TIMER_INIT(timer) timer.status = INACTIVE;
+
 /**
  * \brief timer_t Timer identifier
  *
