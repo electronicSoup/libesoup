@@ -386,7 +386,7 @@ result_t eeprom_read(UINT16 address, BYTE *data)
 #ifdef EEPROM
 result_t eeprom_write(UINT16 address, BYTE data)
 {
-        DEBUG_D("eeprom_write(0x%x, 0x%x)\n\r", address, data);
+    DEBUG_D("eeprom_write(0x%x, 0x%x)\n\r", address, data);
 	if(address < EEPROM_MAX_ADDRESS) {
 #if defined(PIC18F4585)
 		EEADRH = (address >> 8) & 0xff;
@@ -433,7 +433,6 @@ result_t eeprom_write(UINT16 address, BYTE data)
 		SPIWriteByte(EEPROM_WRITE_DISABLE);
 		EEPROM_DeSelect();
 #endif // C30
-                DEBUG_D("eeprom_write return SUCCESS\n\r");
 		return(SUCCESS);
         }
         DEBUG_E("eeprom_write Address Range Error!\n\r");

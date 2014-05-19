@@ -50,7 +50,6 @@ static void transmit_firmware_info(void);
 #ifdef NODE
 static void transmit_application_info(void);
 static void transmit_node_config_info(void);
-static void update_node_config_info(char *buffer);
 #endif //NODE
 #ifdef BOOT
 extern void jmp_firmware(void);
@@ -85,10 +84,12 @@ void app_connected_process_msg(android_command_t cmd, void *data, UINT16 data_le
 #endif //BOOT
 
         case COMMAND_BEGIN_FLASH:
-            DEBUG_D("COMMAND_BEGIN_FLASH transmit ready\n\r");
+            DEBUG_D("COMMAND_BEGIN_FLASH\n\r");
 #ifdef NODE
-            eeprom_write(APP_VALID_MAGIC, 0x00);
-            eeprom_write(APP_VALID_MAGIC + 1, 0x00);
+            os_cancel_all_timers();
+            os_clear_app_eeprom();
+            eeprom_write(APP_VALID_MAGIC_ADDR, 0x00);
+            eeprom_write((APP_VALID_MAGIC_ADDR + 1), 0x00);
             app_valid = FALSE;
 #endif //NODE
             transmit_ready();
@@ -155,8 +156,12 @@ void app_connected_process_msg(android_command_t cmd, void *data, UINT16 data_le
             DEBUG_D("Application is valid\n\r");
             app_valid = TRUE;
 
-            eeprom_write(APP_VALID_MAGIC, APP_VALID_MAGIC_VALUE);
-            eeprom_write(APP_VALID_MAGIC + 1, ~APP_VALID_MAGIC_VALUE);
+            if(eeprom_write(APP_VALID_MAGIC_ADDR, APP_VALID_MAGIC_VALUE) != SUCCESS) {
+                DEBUG_E("Bad EEPROM Write\n\r");
+            }
+            if(eeprom_write((APP_VALID_MAGIC_ADDR + 1), (u8)(~APP_VALID_MAGIC_VALUE)) != SUCCESS) {
+                DEBUG_E("BAD EEPROM Write\n\r");
+            }
             break;
 #endif //NODE
         case ANDROID_APP_TYPE_REQ:
@@ -202,11 +207,11 @@ void app_connected_process_msg(android_command_t cmd, void *data, UINT16 data_le
             DEBUG_D("data[2] = 0x%x\n\r", byte_data[2]);
             DEBUG_D("descrioption String is %s\n\r", &byte_data[3]);
 
-            eeprom_write(L3_NODE_ADDRESS, byte_data[0]);
-            eeprom_write(CAN_BAUD_RATE, byte_data[1]);
-            eeprom_write(IO_ADDRESS, byte_data[2]);
+            eeprom_write(L3_NODE_ADDRESS_ADDR, byte_data[0]);
+            eeprom_write(CAN_BAUD_RATE_ADDR, byte_data[1]);
+            eeprom_write(IO_ADDRESS_ADDR, byte_data[2]);
 
-            len = eeprom_str_write(NODE_DESCRIPTION, &byte_data[3]);
+            len = eeprom_str_write(NODE_DESCRIPTION_ADDR, &byte_data[3]);
             DEBUG_D("%d bytes written to EEPROM\n\r", len);
             break;
 #endif //NODE
@@ -365,19 +370,19 @@ void transmit_node_config_info(void)
 
     index = 2;
 
-    eeprom_read(L3_NODE_ADDRESS, (BYTE *) &value);
+    eeprom_read(L3_NODE_ADDRESS_ADDR, (BYTE *) &value);
     DEBUG_D("Layer 3 Node Address 0x%x\n\r", value);
     buffer[index++] = value;
 
-    eeprom_read(CAN_BAUD_RATE, (BYTE *) &value);
+    eeprom_read(CAN_BAUD_RATE_ADDR, (BYTE *) &value);
     DEBUG_D("CAN Baud Rate 0x%x\n\r", value);
     buffer[index++] = value;
 
-    eeprom_read(IO_ADDRESS, (BYTE *) &value);
+    eeprom_read(IO_ADDRESS_ADDR, (BYTE *) &value);
     DEBUG_D("I/O Address 0x%x\n\r", value);
     buffer[index++] = value;
 
-    len = eeprom_str_read(NODE_DESCRIPTION, &buffer[index], 50);
+    len = eeprom_str_read(NODE_DESCRIPTION_ADDR, &buffer[index], 50);
     DEBUG_D("Description: String Length %d string '%s'\n\r", len, &buffer[index]);
 
     index = index + len;
