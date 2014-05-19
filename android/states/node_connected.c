@@ -53,7 +53,9 @@ static void transmit_node_config_info(void);
 #endif //NODE
 #ifdef BOOT
 extern void jmp_firmware(void);
+extern BOOL firmware_valid;
 #endif //BOOT
+
 
 void set_node_connected_state(void)
 {
@@ -91,7 +93,12 @@ void app_connected_process_msg(android_command_t cmd, void *data, UINT16 data_le
             eeprom_write(APP_VALID_MAGIC_ADDR, 0x00);
             eeprom_write((APP_VALID_MAGIC_ADDR + 1), 0x00);
             app_valid = FALSE;
-#endif //NODE
+#elif defined(BOOT)
+            eeprom_write(FIRMWARE_VALID_MAGIC_ADDR, 0x00);
+            eeprom_write((FIRMWARE_VALID_MAGIC_ADDR + 1), 0x00);
+            eeprom_erase(FIRMWARE_EEPROM_START);
+            firmware_valid = FALSE;
+#endif //NODE  BOOT
             transmit_ready();
             break;
 
@@ -148,9 +155,9 @@ void app_connected_process_msg(android_command_t cmd, void *data, UINT16 data_le
                 }
             }
             break;
-#ifdef NODE
         case COMMAND_REFLASHED:
             DEBUG_D("COMMAND_REFLASHED\n\r");
+#ifdef NODE
             CALL_APP_INIT();
             CALL_APP_MAIN();
             DEBUG_D("Application is valid\n\r");
@@ -162,8 +169,13 @@ void app_connected_process_msg(android_command_t cmd, void *data, UINT16 data_le
             if(eeprom_write((APP_VALID_MAGIC_ADDR + 1), (u8)(~APP_VALID_MAGIC_VALUE)) != SUCCESS) {
                 DEBUG_E("BAD EEPROM Write\n\r");
             }
+#elif defined(BOOT)
+            eeprom_write(FIRMWARE_VALID_MAGIC_ADDR, FIRMWARE_VALID_MAGIC_VALUE);
+            eeprom_write((FIRMWARE_VALID_MAGIC_ADDR + 1), (u8)(~FIRMWARE_VALID_MAGIC_VALUE));
+            firmware_valid = FALSE;
+
             break;
-#endif //NODE
+#endif //NODE BOOT
         case ANDROID_APP_TYPE_REQ:
             DEBUG_D("ANDROID_APP_TYPE_REQ\n\r");
             transmit_app_type_info();
@@ -273,11 +285,11 @@ void transmit_hardware_info(void)
     buffer[1] = HARDWARE_INFO_RESP;
 
     index = 2;
-    index += strcpypgmtoram(&buffer[index], hardware_manufacturer, 24) + 1;
-    index += strcpypgmtoram(&buffer[index], hardware_model, 24) + 1;
-    index += strcpypgmtoram(&buffer[index], hardware_description, 50) + 1;
-    index += strcpypgmtoram(&buffer[index], hardware_version, 10) + 1;
-    index += strcpypgmtoram(&buffer[index], hardware_uri, 50) + 1;
+    index += psv_strcpy(&buffer[index], hardware_manufacturer, 24) + 1;
+    index += psv_strcpy(&buffer[index], hardware_model, 24) + 1;
+    index += psv_strcpy(&buffer[index], hardware_description, 50) + 1;
+    index += psv_strcpy(&buffer[index], hardware_version, 10) + 1;
+    index += psv_strcpy(&buffer[index], hardware_uri, 50) + 1;
 
     DEBUG_D("Transmit boot info length %d\n\r", index);
     buffer[0] = index;
@@ -294,10 +306,10 @@ void transmit_bootcode_info(void)
     buffer[1] = BOOTCODE_INFO_RESP;
 
     index = 2;
-    index += strcpypgmtoram(&buffer[index], bootcode_author, 40) + 1;
-    index += strcpypgmtoram(&buffer[index], bootcode_description, 50) + 1;
-    index += strcpypgmtoram(&buffer[index], bootcode_version, 10) + 1;
-    index += strcpypgmtoram(&buffer[index], bootcode_uri, 50) + 1;
+    index += psv_strcpy(&buffer[index], bootcode_author, 40) + 1;
+    index += psv_strcpy(&buffer[index], bootcode_description, 50) + 1;
+    index += psv_strcpy(&buffer[index], bootcode_version, 10) + 1;
+    index += psv_strcpy(&buffer[index], bootcode_uri, 50) + 1;
 
     DEBUG_D("Transmit boot info length %d\n\r", index);
     buffer[0] = index;
@@ -313,10 +325,10 @@ void transmit_firmware_info(void)
 
     index = 2;
 
-    index += strcpypgmtoram(&buffer[index], firmware_author, 40) + 1;
-    index += strcpypgmtoram(&buffer[index], firmware_description, 50) + 1;
-    index += strcpypgmtoram(&buffer[index], firmware_version, 10) + 1;
-    index += strcpypgmtoram(&buffer[index], firmware_uri, 50) + 1;
+    index += psv_strcpy(&buffer[index], firmware_author, 40) + 1;
+    index += psv_strcpy(&buffer[index], firmware_description, 50) + 1;
+    index += psv_strcpy(&buffer[index], firmware_version, 10) + 1;
+    index += psv_strcpy(&buffer[index], firmware_uri, 50) + 1;
     DEBUG_D("Transmit Firmware info length %d\n\r", index);
     buffer[0] = index;
 
