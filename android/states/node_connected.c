@@ -115,16 +115,15 @@ void app_connected_process_msg(android_command_t cmd, void *data, UINT16 data_le
 #if defined(NODE)
                 if(  (address < APP_START_ADDRESS)
                    &&(address != APP_HANDLE_ADDRESS)) {
-                    DEBUG_E("Bad address to Erase\n\r");
 #elif defined(BOOT)
                 if(address < FIRMWARE_START_ADDRESS) {
-                    DEBUG_E("Bad address to Erase\n\r");
 #endif
+                    DEBUG_E("Bad address to Erase\n\r");
                 } else {
                     if (!flash_page_empty(address)) {
                         flash_erase(address);
                     } else {
-                        DEBUG_I("Already empty\n\r");
+                        DEBUG_D("Already empty\n\r");
                     }
                     transmit_ready();
                 }
@@ -173,7 +172,6 @@ void app_connected_process_msg(android_command_t cmd, void *data, UINT16 data_le
             eeprom_write(FIRMWARE_VALID_MAGIC_ADDR, FIRMWARE_VALID_MAGIC_VALUE);
             eeprom_write((FIRMWARE_VALID_MAGIC_ADDR + 1), (u8)(~FIRMWARE_VALID_MAGIC_VALUE));
             firmware_valid = FALSE;
-
             break;
 #endif //NODE BOOT
         case ANDROID_APP_TYPE_REQ:
