@@ -31,7 +31,7 @@
 #include "es_lib/android/android.h"
 #include "main.h"
 #ifdef NODE
-#include "os_api.h"
+#include "es_lib/os/os_api.h"
 #endif //NODE
 #define DEBUG_FILE
 #include "es_lib/logger/serial.h"
