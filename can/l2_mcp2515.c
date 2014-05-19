@@ -82,8 +82,8 @@ static u8 CANReadReg(u8 reg);
 static void CANWriteReg(u8 reg, u8 value);
 static void CANReadRxBuffer(u8 reg, u8 *buffer);
 static u8 CANFindFreeTxBuffer(void);
-static u8 CheckErrors(void);
-static void checkSubErrors(void);
+//static u8 CheckErrors(void);
+//static void checkSubErrors(void);
 
 static void l2_dispatcher_frame_handler(can_frame *message);
 
@@ -100,8 +100,8 @@ static BYTE ChangingBaudTxError;
 static BYTE g_CanErrors = 0x00;
 static UINT32 g_missedMessageCount = 0;
 static UINT32 rxMsgCount = 0;
-static UINT32 messageSentCount = 0;
-static UINT32 wakeUpCount = 0;
+//static UINT32 messageSentCount = 0;
+//static UINT32 wakeUpCount = 0;
 static can_frame rxCanMsg;
 
 static can_status_t status;
@@ -744,6 +744,7 @@ result_t l2_tx_frame(can_frame  *canMsg)
 	return(result);
 }
 
+#if 0
 BYTE CheckErrors(void)
 {
 	BYTE flags = 0x00;
@@ -791,7 +792,9 @@ BYTE CheckErrors(void)
         // TODO check return value or make fn void
         return(0x00);
 }
+#endif //0
 
+#if 0
 static void checkSubErrors(void)
 {
 	BYTE error = 0x00;
@@ -915,6 +918,7 @@ static void checkSubErrors(void)
 		DEBUG_D("Errors Have not changed\n\r");
 	}
 }
+#endif
 
 static void CANReset(void)
 {
