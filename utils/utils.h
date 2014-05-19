@@ -61,6 +61,7 @@ extern void flash_write(UINT32 address, BYTE *data);
 #ifdef EEPROM
 extern result_t eeprom_read(UINT16 addr, BYTE *data);
 extern result_t eeprom_write(UINT16 addr, BYTE data);
+extern result_t eeprom_erase(UINT16 addr);
 extern UINT16   eeprom_str_read(UINT16 addr, char *buffer, BYTE len);
 extern UINT16   eeprom_str_write(UINT16 addr, char *buffer);
 #endif
@@ -75,8 +76,9 @@ extern unsigned char SPIWriteByte(unsigned char write);
 extern void initRand(void);
 
 //#if defined( __C30__ )
-    extern UINT16 strcpypgmtoram(char *dest, const char *source, UINT16 len);
+//    extern UINT16 strcpypgmtoram(char *dest, const char *source, UINT16 len);
     extern UINT16 psv_strcpy(char *dst, __prog__ char *src, UINT16 len);
+//    extern UINT16 psv_strcpy(char *dst, char *src, UINT16 len);
 //#endif
 
 #ifdef TEST

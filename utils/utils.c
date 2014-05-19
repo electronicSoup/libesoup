@@ -441,6 +441,20 @@ result_t eeprom_write(UINT16 address, BYTE data)
 #endif
 
 #ifdef EEPROM
+result_t eeprom_erase(UINT16 addr)
+{
+    u16 loop;
+
+    for(loop = addr; loop <= EEPROM_MAX_ADDRESS; loop++) {
+        asm ("CLRWDT");
+        eeprom_write(loop, 0x00);
+    }
+
+    return(SUCCESS);
+}
+#endif //EEPROM
+
+#ifdef EEPROM
 UINT16 eeprom_str_read(UINT16 addr, char *buffer, BYTE len)
 {
     BYTE character;
@@ -520,6 +534,7 @@ void initRand(void)
  * @param source: The source String located in Program Flash Memory
  * @return Function returns the number of characters copied across.
  */
+#if 0
 #if defined( __C30__ ) || defined(__XC16__)
 UINT16 strcpypgmtoram(char *dest, const char *source, UINT16 len)
 {
@@ -584,6 +599,7 @@ UINT16 strcpypgmtoram(char *dest, const char *source, UINT16 len)
 	return(number_copied);
 #endif
 }
+#endif
 #endif
 
 #if defined( __C30__ ) || defined(__XC16__)
