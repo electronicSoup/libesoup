@@ -171,7 +171,7 @@ void app_connected_process_msg(android_command_t cmd, void *data, UINT16 data_le
 #elif defined(BOOT)
             eeprom_write(FIRMWARE_VALID_MAGIC_ADDR, FIRMWARE_VALID_MAGIC_VALUE);
             eeprom_write((FIRMWARE_VALID_MAGIC_ADDR + 1), (u8)(~FIRMWARE_VALID_MAGIC_VALUE));
-            firmware_valid = FALSE;
+            firmware_valid = TRUE;
             break;
 #endif //NODE BOOT
         case ANDROID_APP_TYPE_REQ:
