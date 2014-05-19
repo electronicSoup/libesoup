@@ -22,7 +22,7 @@
 #include "es_lib/core.h"
 #include "es_lib/os/os.h"
 
-#define OS_FNS 0x7E92
+#define OS_FNS 0x8892
 
 result_t (*os_start_timer)(UINT16, expiry_function, BYTE *, es_timer *timer);
 result_t (*os_cancel_timer)(es_timer *timer);
