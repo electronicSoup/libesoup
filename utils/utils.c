@@ -387,7 +387,7 @@ result_t eeprom_read(UINT16 address, BYTE *data)
 result_t eeprom_write(UINT16 address, BYTE data)
 {
     DEBUG_D("eeprom_write(0x%x, 0x%x)\n\r", address, data);
-	if(address < EEPROM_MAX_ADDRESS) {
+	if(address <= EEPROM_MAX_ADDRESS) {
 #if defined(PIC18F4585)
 		EEADRH = (address >> 8) & 0xff;
 		EEADR = address & 0xff;
