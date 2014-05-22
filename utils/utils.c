@@ -37,13 +37,6 @@
 #define TAG "UTILS"
 #endif
 
-/*
- * Flash addresses
- */
-#define FIRMWARE_START_ADDRESS 0x8800
-#define APP_HANDLE_PAGE        0x400
-
-
 //#define EEPROM_ADDR_MIN 20
 
 #if defined(PIC24FJ256GB106)

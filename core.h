@@ -23,6 +23,12 @@
 #define ES_CAN_CORE_H
 
 /*
+ * Flash addresses
+ */
+#define FIRMWARE_START_ADDRESS 0x8800
+#define APP_HANDLE_PAGE        0x400
+
+/*
  * Include MicroChip's definitions
  */
 #if defined(MCP)
