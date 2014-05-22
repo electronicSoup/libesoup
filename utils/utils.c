@@ -37,7 +37,14 @@
 #define TAG "UTILS"
 #endif
 
-#define EEPROM_ADDR_MIN 20
+/*
+ * Flash addresses
+ */
+#define FIRMWARE_START_ADDRESS 0x8800
+#define APP_HANDLE_PAGE        0x400
+
+
+//#define EEPROM_ADDR_MIN 20
 
 #if defined(PIC24FJ256GB106)
 #define EEPROM_READ           0x03
@@ -510,11 +517,11 @@ UINT16 eeprom_str_write(UINT16 addr, char *buffer)
 
 void random_init(void)
 {
-	BYTE loop;
-	UINT32 seed;
-	BYTE *data;
+	u8   loop;
+	u32  seed;
+	u8  *data;
 
-	data = &IC1TMR;  //0x146
+	data = (u8 *)&IC1TMR;  //0x146
 
 	seed = 0;
 
