@@ -501,18 +501,18 @@ UINT16 eeprom_str_write(UINT16 addr, char *buffer)
 }
 #endif //EEPROM
 
-#if defined(PIC18F4585)
-void initRand(void)
+void random_init(void)
 {
 	BYTE loop;
 	UINT32 seed;
 	BYTE *data;
 
-	data = &RXF0SIDH;  //0xf00
+	data = &IC1TMR;  //0x146
 
 	seed = 0;
 
-	for(loop = 0; loop < 100; loop++) {
+	for(loop = 0; loop < 0x1D8; loop++) {
+            asm("CLRWDT");
 		seed = seed + *data;
 		data++;
 	}
@@ -520,7 +520,6 @@ void initRand(void)
 	DEBUG_D("Seed 0x%lx\n\r", seed);
 	srand(seed);
 }
-#endif
 
 /**
  * Various string values, for example device manufacturer,

@@ -73,7 +73,7 @@ extern unsigned char SPIWriteByte(unsigned char write);
 #endif
 #endif
 
-extern void initRand(void);
+extern void random_init(void);
 
 //#if defined( __C30__ )
 //    extern UINT16 strcpypgmtoram(char *dest, const char *source, UINT16 len);
