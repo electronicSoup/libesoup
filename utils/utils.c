@@ -192,8 +192,10 @@ void flash_erase(UINT32 address)
 
 	DEBUG_D("erasePage 0x%lx\n\r", address);
 
-        if((address & 0x3ff) != 0x00) {
+        if(  ((address & 0x3ff) != 0x00)
+           ||((address < FIRMWARE_START_ADDRESS) && (address != APP_HANDLE_PAGE))) {
             DEBUG_E("Invalid address for Erase!\n\r");
+            return;
         }
 	TBLPAG = ((address & 0x7F0000)>>16);
 	offset = (address & 0x00FFFF);
@@ -294,6 +296,11 @@ void flash_write(UINT32 address, BYTE *data)
 	unsigned int offset;
 	unsigned int i;
 
+        if(  ((address & 0x3ff) != 0x00)
+           ||((address < FIRMWARE_START_ADDRESS) && (address != APP_HANDLE_PAGE))) {
+            DEBUG_E("Invalid address for Erase!\n\r");
+            return;
+        }
 
 	//Set up NVMCON for row programming
 	NVMCON = 0x4001;
