@@ -22,6 +22,7 @@ MEMORY
   reset          : ORIGIN = 0x0,           LENGTH = 0x4
   ivt            : ORIGIN = 0x4,           LENGTH = 0xFC
   aivt           : ORIGIN = 0x104,         LENGTH = 0xFC
+  test_value     : ORIGIN = 0x400,         LENGTH = 0x4
 
 /*
 ** Section app_ints is the Applications interrupts. The Processors AVIT is loaded with
@@ -50,13 +51,14 @@ MEMORY
   net_reg_handler   : ORIGIN = 0x8AC6,           LENGTH = 0x04
   net_unreg_handler : ORIGIN = 0x8ACA,           LENGTH = 0x04
   invalidate_app    : ORIGIN = 0x8ACE,           LENGTH = 0x04
+  get_io_address    : ORIGIN = 0x8AD2,           LENGTH = 0x04
 
 
 /*
  * Original program line. Reduced to leave room for the app.
  *  program (xr)   : ORIGIN = 0x8092,           LENGTH = 0x2ABF6 - 0x8092
  */
-  program (xr)   : ORIGIN = 0x8AD2,           LENGTH = 0x18000 - 0x8AD2
+  program (xr)   : ORIGIN = 0x8AD6,           LENGTH = 0x18000 - 0x8AD6
   CONFIG3        : ORIGIN = 0x2ABFA,          LENGTH = 0x2
   CONFIG2        : ORIGIN = 0x2ABFC,          LENGTH = 0x2
   CONFIG1        : ORIGIN = 0x2ABFE,          LENGTH = 0x2
@@ -93,6 +95,22 @@ SECTIONS
         SHORT((ABSOLUTE(__reset) >> 16) & 0x7F);
         SHORT(0);
   } >reset
+
+  /*
+  ** Test Value:
+  **
+  ** This section puts a dummy value at the test_value address. It's checked by
+  ** the Android Applicaiton when you pass it a Hex File to Flash into the
+  ** CinnamonBun Bootloader to check that the Firmware has been linked with
+  ** the correct linker file.
+  */
+  .test_value :
+  {
+        SHORT(ABSOLUTE(0x1234));
+        SHORT(0x04);
+        SHORT((ABSOLUTE(0x1234) >> 16) & 0x7F);
+        SHORT(0);
+  } >test_value
 
 
   /*
@@ -922,6 +940,17 @@ SECTIONS
         SHORT((ABSOLUTE(_os_invalidate_app_isr) >> 16) & 0x7F);
         SHORT(0);
   } >invalidate_app
+
+  /*
+  ** get_io_address
+  */
+  .get_io_address :
+  {
+        SHORT(ABSOLUTE(_os_get_io_address));
+        SHORT(0x04);
+        SHORT((ABSOLUTE(_os_get_io_address) >> 16) & 0x7F);
+        SHORT(0);
+  } >get_io_address
 
 
 

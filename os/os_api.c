@@ -282,3 +282,12 @@ result_t os_invalidate_app_isr(void)
     app_valid = FALSE;
     return(SUCCESS);
 }
+
+/*
+ * os_get_io_address
+ */
+result_t os_get_io_address(u8 *address)
+{
+    eeprom_read(IO_ADDRESS_ADDR, (u8 *) address);
+    return(SUCCESS);
+}

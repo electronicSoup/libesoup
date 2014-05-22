@@ -48,5 +48,6 @@ extern result_t  (*os_net_log_register_as_handler)(void (*)(log_level_t, char *)
 extern result_t  (*os_net_log_unregister_as_handler)(void);
 
 extern void      (*os_invalidate_app)(void);
+extern result_t  (*os_get_io_address)(u8 *);
 
 #endif // ES_OS_H
