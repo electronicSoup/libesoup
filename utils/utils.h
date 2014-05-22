@@ -48,7 +48,7 @@ extern void heartbeat_off(union sigval data);
 extern BYTE generate_hash(char *string);
 #endif
 
-extern BOOL flash_page_empty(UINT32 address);
+extern BOOL     flash_page_empty(UINT32 address);
 extern void flash_erase(UINT32 address);
 extern void flash_write(UINT32 address, BYTE *data);
 
