@@ -70,6 +70,8 @@
 #define L2_Connected     0x03
 #define L2_ChangingBaud  0x04
 
+#define DCNCP_STATUS_MASK 0x18
+
 #define DCNCP_INITIALISED_MASK 0x08
 
 #define DCNCP_Uninitilised 0x00
@@ -89,9 +91,8 @@ typedef struct {
     union {
         struct {
             u8 l2_status : 3;
-            u8 dcncp_initialised : 1;
-            u8 dcncp_l3_address_final : 1;
-            u8 l3_initialised : 1;
+            u8 dcncp_status : 2;
+            u8 l3_status : 1;
         } bit_field;
         u8 byte;
     };
@@ -147,7 +148,7 @@ extern result_t l2_tx_frame(can_frame *message);
 extern void L2_CanTxError(u8 node_type, u8 node_number, u32 errorCode);
 
 extern baud_rate_t L2_GetCanBuadRate(void);
-extern void L2_SetCanNodeBuadRate(baud_rate_t);
+extern void l2_set_can_node_buadrate(baud_rate_t baudrate);
 extern void L2_SetCanNetworkBuadRate(baud_rate_t);
 
 extern void L2_getStatus(can_status_t *, baud_rate_t *);

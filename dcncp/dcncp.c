@@ -115,10 +115,10 @@ void dcncp_init(void (*arg_status_handler)(u8 mask, can_status_t status, baud_ra
 		DEBUG_E("Failed to start Register Timer\n\r");
 	}
 #endif
-        status.bit_field.dcncp_initialised = 1;
+        status.bit_field.dcncp_status |= DCNCP_Initialised;
 
         if(status_handler)
-			status_handler(DCNCP_INITIALISED_MASK, status, no_baud);
+			status_handler(DCNCP_STATUS_MASK, status, no_baud);
 
 }
 
@@ -169,7 +169,7 @@ void exp_nodeAddressRegistered(timer_t timer_id __attribute__((unused)), union s
 
 	DEBUG_D("nodeRegistered()\n\r");
 
-        status.bit_field.dcncp_l3_address_final = 1;
+        status.bit_field.dcncp_status |= DCNCP_L3_Address_Not_Final;
 
         if(status_handler)
 			status_handler(DCNCP_L3_ADDRESS_STATUS_MASK, status, no_baud);
@@ -196,7 +196,7 @@ void l2MsgHandler(can_frame *msg)
 		get_l3_node_address(&address);
 
 		if(msg->data[0] == address) {
-			if(status.bit_field.dcncp_l3_address_final){
+			if(status.bit_field.dcncp_status & DCNCP_L3_Address_Finalised) {
 				DEBUG_D("reject Register Request\n\r");
 				txMsg.can_id = AddressRegisterReject;
 				txMsg.can_dlc = 1;
@@ -220,7 +220,7 @@ void l2MsgHandler(can_frame *msg)
 		get_l3_node_address(&address);
 
 		if(msg->data[0] == address) {
-			if(status.bit_field.dcncp_l3_address_final) {
+			if(status.bit_field.dcncp_status & DCNCP_L3_Address_Finalised) {
 				DEBUG_E("Sending Can Error Message\n\r");
 				txMsg.can_id = NodeAddressError;
 				txMsg.can_dlc = 1;
@@ -297,7 +297,7 @@ void exp_sendNodeAddressReport(timer_t timer_id __attribute__((unused)), union s
 	txMsg.can_dlc = 2;
 	txMsg.data[1] = address;
 
-	if (status.bit_field.dcncp_l3_address_final)
+	if (status.bit_field.dcncp_status & DCNCP_L3_Address_Finalised)
 		txMsg.data[0] = TRUE;
 	else
 		txMsg.data[0] = FALSE;
@@ -321,7 +321,7 @@ result_t register_this_node_net_logger(log_level_t level)
 
 	DEBUG_D("register_this_node_net_logger()\n\r");
 
-	if(status.bit_field.dcncp_l3_address_final) {
+	if(status.bit_field.dcncp_status  & DCNCP_L3_Address_Finalised) {
 		local_net_logger_frame.can_id = NetLogger;
 		local_net_logger_frame.can_dlc = 2;
 		local_net_logger_frame.data[0] = address;
