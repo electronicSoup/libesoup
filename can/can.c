@@ -43,6 +43,7 @@ char baud_rate_strings[8][10] = {
 #endif
 
 static can_status_t can_status;
+static baud_rate_t  baud_status = no_baud;
 
 static void status_handler(u8 mask, can_status_t status, baud_rate_t baud);
 
@@ -66,24 +67,32 @@ result_t can_init(baud_rate_t baudRate,
 
 void status_handler(u8 mask, can_status_t status, baud_rate_t baud)
 {
+    DEBUG_D("status_handler(mask-0x%x, status-0x%x\n\r", mask, status);
     if(mask == L2_STATUS_MASK) {
-        if((status.bit_field.l2_status == L2_Connected) && (can_status.bit_field.l2_status != L2_Connected)) {
+        if ((status.bit_field.l2_status == L2_Connected) && (can_status.bit_field.l2_status != L2_Connected)) {
 		DEBUG_D("Layer 2 Connected so start DCNCP\n\r");
 		dcncp_init(status_handler);
         }
         can_status.bit_field.l2_status = status.bit_field.l2_status;
+        baud_status = baud;
     }
 
-    if(mask == DCNCP_L3_ADDRESS_STATUS_MASK) {
-        if(status.bit_field.dcncp_l3_address_final) {
+    if(mask == DCNCP_STATUS_MASK) {
+        if(  (status.bit_field.dcncp_status & DCNCP_L3_Address_Finalised)
+                && (!(can_status.bit_field.dcncp_status & DCNCP_L3_Address_Finalised))) {
 #if defined(CAN_LAYER_3)
             l3_init(status_handler);
 #endif
         }
+        can_status.bit_field.dcncp_status = status.bit_field.dcncp_status;
+    }
+
+    if(mask == L3_STATUS_MASK) {
+        can_status.bit_field.l3_status = status.bit_field.l3_status;
     }
 
     if(app_status_handler)
-	app_status_handler(can_status, baud);
+	app_status_handler(can_status, baud_status);
 }
 
 #if defined(MCP)
