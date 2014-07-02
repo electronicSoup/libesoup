@@ -22,6 +22,8 @@
 #ifndef _OS_H
 #define _OS_H
 
+#include "es_lib/core.h"
+
 extern BOOL app_valid;
 
 extern void     os_init_data(void);

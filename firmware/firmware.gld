@@ -22,7 +22,7 @@ MEMORY
   reset          : ORIGIN = 0x0,           LENGTH = 0x4
   ivt            : ORIGIN = 0x4,           LENGTH = 0xFC
   aivt           : ORIGIN = 0x104,         LENGTH = 0xFC
-  test_value     : ORIGIN = 0x400,         LENGTH = 0x4
+  magic          : ORIGIN = 0x800,         LENGTH = 0x4
 
 /*
 ** Section app_ints is the Applications interrupts. The Processors AVIT is loaded with
@@ -75,20 +75,20 @@ SECTIONS
   } >reset
 
   /*
-  ** Test Value:
+  ** magic:
   **
-  ** This section puts a dummy value at the test_value address. It's checked by
+  ** This section puts a magic value at the magic address. It's checked by
   ** the Android Applicaiton when you pass it a Hex File to Flash into the
   ** CinnamonBun Bootloader to check that the Firmware has been linked with
   ** the correct linker file.
   */
-  .test_value :
+  .magic :
   {
         SHORT(ABSOLUTE(0x1234));
         SHORT(0x04);
         SHORT((ABSOLUTE(0x1234) >> 16) & 0x7F);
         SHORT(0);
-  } >test_value
+  } >magic
 
 
   /*

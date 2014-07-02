@@ -27,6 +27,7 @@ MEMORY
   ivt            : ORIGIN = 0x4,           LENGTH = 0xFC
   aivt           : ORIGIN = 0x104,         LENGTH = 0xFC
   app_handle     : ORIGIN = 0x400,         LENGTH = 0x400
+  magic          : ORIGIN = 0x800,           LENGTH = 0x4
 /*
  * Application Strings
  */
@@ -68,19 +69,19 @@ SECTIONS
 
 
   /*
-  ** Reset Instruction:
+  ** Magic Instruction:
   **
-  ** This section puts a dummy value at the reset address. It's checked by the
+  ** This section puts a dummy value at the known address. It's checked by the
   ** Android Applicaiton when you pass it a Hex File to Flash into the
   ** CinnamonBun
   */
-  .reset :
+  .magic :
   {
-        SHORT(ABSOLUTE(0x1234));
+        SHORT(ABSOLUTE(0x9876));
         SHORT(0x04);
-        SHORT((ABSOLUTE(0x1234) >> 16) & 0x7F);
+        SHORT((ABSOLUTE(0x9876) >> 16) & 0x7F);
         SHORT(0);
-  } >reset
+  } >magic
 
   /*
   ** app_init() Instruction
