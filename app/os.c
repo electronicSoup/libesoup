@@ -20,7 +20,7 @@
  *
  */
 #include "es_lib/core.h"
-#include "es_lib/os/os.h"
+#include "es_lib/app/os.h"
 
 #define OS_FNS 0x8892
 
