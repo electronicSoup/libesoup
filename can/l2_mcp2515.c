@@ -85,8 +85,8 @@ static void     set_baudrate(baud_rate_t baudRate);
 static void     exp_check_network_connection(timer_t timer_id, union sigval);
 static void     exp_finalise_baudrate_change(timer_t timer_id, union sigval data);
 static void     exp_resend_baudrate_change(timer_t timer_id, union sigval data);
-#if defined(CAN_IDLE_PING)
 static void     exp_test_ping(timer_t timer_id, union sigval data);
+#if defined(CAN_IDLE_PING)
 static void     restart_ping_timer(void);
 #endif // CAN_TEST_PING
 
@@ -445,7 +445,9 @@ void service_device(void)
 
 		if (flags & RX0IE) {
 			DEBUG_D("RX0IE\n\r");
+#if defined(CAN_IDLE_PING)
 			restart_ping_timer();
+#endif
 			/*
 			 * Increment the rx count in case we're listening for Baud
 			 * Rate settings.
@@ -467,7 +469,10 @@ void service_device(void)
 
 		if (flags & RX1IE) {
 			DEBUG_D("RX1IE\n\r");
+#if defined(CAN_IDLE_PING)
 			restart_ping_timer();
+#endif
+
 			/*
 			 * Incrememnt the rx count incase we're listening for Baud
 			 * Rate seettings.
@@ -627,8 +632,9 @@ result_t l2_tx_frame(can_frame  *frame)
 
 	DEBUG_D("L2 => Id %lx\n\r", frame->can_id);
 
+#if defined(CAN_IDLE_PING)
         restart_ping_timer();
-
+#endif
 	if(connected_baudrate == no_baud) {
 		DEBUG_E("Can't Transmit network not connected!\n\r");
 		return(ERR_GENERAL_CAN_ERROR);
