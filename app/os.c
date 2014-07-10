@@ -47,6 +47,8 @@ result_t (*os_net_log_unregister_as_handler)(void);
 
 void (*os_invalidate_app)(void);
 
+result_t (*os_get_io_address)(u8 *);
+
 void _ISR __attribute__((__no_auto_psv__)) _DefaultInterrupt(void)
 {
 	os_invalidate_app();
@@ -76,5 +78,5 @@ void os_init(void)
 	os_net_log_unregister_as_handler = (result_t(*)(void))(OS_FNS + 56);
 	os_invalidate_app = (void (*)(void))(OS_FNS + 60);
 
-	os_get_io_address = (result_t (8)(u8 *))(OS_FNS + 64);
+	os_get_io_address = (result_t (*)(u8 *))(OS_FNS + 64);
 }
