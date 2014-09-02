@@ -23,6 +23,11 @@
 #define ES_CAN_CORE_H
 
 /*
+ * Clock speed of the Hardware.
+ */
+#define CLOCK_FREQ 16000000
+
+/*
  * Flash addresses
  */
 #define FIRMWARE_START_ADDRESS 0x8800
