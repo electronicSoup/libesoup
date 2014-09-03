@@ -103,12 +103,6 @@ typedef enum {
     ERR_L3_PROTOCOL
 } result_t;
 
-#define LOG_DEBUG 0
-#define LOG_INFO 1
-#define LOG_WARNING 2
-#define LOG_ERROR 3
-#define NO_LOGGING 4
-
 /**
  *  This is the maximum string length of a status reported
  *  over the network.
@@ -310,6 +304,19 @@ typedef enum
     Warning,
     Error
 } log_level_t;
+
+/*
+ * This series of defines are here as they should be included very early. At 
+ * leasy before the serial logging code. These macros are used to conditionally
+ * compile debugging code out of an executable. The actual logging level of the
+ * build should be defined in system.h
+ */
+#define LOG_DEBUG 0
+#define LOG_INFO 1
+#define LOG_WARNING 2
+#define LOG_ERROR 3
+#define NO_LOGGING 4
+
 
 typedef enum {
     HWInfoRequest = 0x01,

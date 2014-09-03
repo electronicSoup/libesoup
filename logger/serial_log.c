@@ -1,8 +1,8 @@
 /**
  *
- * \file es_can/logger/serial.c
+ * \file es_can/logger/serial_log.c
  *
- * Functions for logging to the Serial Port of the electronicSoup CAN code Library
+ * Functions for logging to the Serial Port.
  *
  * Copyright 2014 John Whitmore <jwhitmore@electronicsoup.com>
  *
@@ -22,43 +22,6 @@
 #include "system.h"
 
 #include <stdio.h>
-
-#if (LOG_LEVEL < NO_LOGGING)
-void serial_init(void)
-{
-	/*
-	 * Serial Outout pin should be defined in include file system.h
-	 */
-#if defined(SERIAL_PORT_GndTxRx)
-	RPOR12bits.RP25R = 3;
-#elif defined(SERIAL_PORT_GndRxTx)
-	RPOR10bits.RP20R = 3;
-#endif
-
-#if 0
-#if SERIAL_PORT == 20  // <-
-	RPOR10bits.RP20R = 3;
-#elif SERIAL_PORT == 6
-	RPOR3bits.RP6R = 3;
-#elif SERIAL_PORT == 26
-	RPOR13bits.RP26R = 3;
-#endif
-#endif //0
-
-	U1MODE = 0x8800;
-	U1STA = 0x0410;
-
-	/*
-	 * Desired Baud Rate = FCY/(16 (UxBRG + 1))
-	 *
-	 * UxBRG = ((FCY/Desired Baud Rate)/16) - 1
-	 *
-	 * UxBRG = ((CLOCK/SERIAL_BAUD)/16) -1
-	 *
-	 */
-	U1BRG = ((CLOCK_FREQ / SERIAL_BAUD) / 16) - 1;
-}
-#endif // (LOG_LEVEL < NO_LOGGING)
 
 
 #if (LOG_LEVEL < NO_LOGGING)

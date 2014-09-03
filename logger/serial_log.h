@@ -1,8 +1,8 @@
 /**
  *
- * \file es_can/logger/serial.h
+ * \file es_can/logger/serial_log.h
  *
- * Definitions for logging to the Serial Port of the electronicSoup CAN code Library
+ * Definitions for logging to the Serial Port.
  *
  * Copyright 2014 John Whitmore <jwhitmore@electronicsoup.com>
  *
@@ -19,8 +19,8 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  *
  */
-#ifndef SERIAL_LOGGER_H
-#define SERIAL_LOGGER_H
+#ifndef SERIAL_LOG_H
+#define SERIAL_LOG_H
 
 #include "system.h"
 
@@ -48,16 +48,10 @@
 #define DEBUG_E //
 #endif
 
-#if (LOG_LEVEL < NO_LOGGING)
-#if defined(MCP)
-extern void serial_init(void);
-#endif
-#endif
-
 #ifdef MCP
 extern void serial_log(log_level_t level, char* tag, char* fmt, ...);
 #elif defined(ES_LINUX)
 extern void serial_log(log_level_t level, char* tag, char* fmt, ...);
 #endif //#if (LOG_LEVEL < NO_LOGGING)
 
-#endif // NODE_LOGGER_H
+#endif // SERIAL_LOG_H
