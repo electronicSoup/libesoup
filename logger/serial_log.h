@@ -25,27 +25,27 @@
 #include "system.h"
 
 #if (defined(DEBUG_FILE) && LOG_LEVEL <= LOG_DEBUG)
-#define DEBUG_D(...) serial_log(Debug, TAG, __VA_ARGS__)
+#define LOG_D(...) serial_log(Debug, TAG, __VA_ARGS__)
 #else
-#define DEBUG_D //
+#define LOG_D(...) 
 #endif
 
 #if (defined(DEBUG_FILE) && LOG_LEVEL <= LOG_INFO)
-#define DEBUG_I(...) serial_log(Info, TAG, __VA_ARGS__)
+#define LOG_I(...) serial_log(Info, TAG, __VA_ARGS__)
 #else
-#define DEBUG_I //
+#define LOG_I(...)
 #endif
 
 #if (defined(DEBUG_FILE) && LOG_LEVEL <= LOG_WARNING)
-#define DEBUG_W(...) serial_log(Warning, TAG, __VA_ARGS__)
+#define LOG_W(...) serial_log(Warning, TAG, __VA_ARGS__)
 #else
-#define DEBUG_W //
+#define LOG_W(...)
 #endif
 
 #if (LOG_LEVEL <= LOG_ERROR)
-#define DEBUG_E(...)  serial_log(Error, TAG, __VA_ARGS__)
+#define LOG_E(...)  serial_log(Error, TAG, __VA_ARGS__)
 #else
-#define DEBUG_E //
+#define LOG_E(...) 
 #endif
 
 #ifdef MCP
