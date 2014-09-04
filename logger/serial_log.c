@@ -25,11 +25,7 @@
 
 
 #if (LOG_LEVEL < NO_LOGGING)
-#ifdef __C30__
 void serial_log(log_level_t level, char* tag, char* fmt, ...)
-#elif defined(__18CXX)
-void serial_log(log_level_t level, const rom char* tag, const rom char* fmt, ...)
-#endif
 {
 	va_list args;
 
