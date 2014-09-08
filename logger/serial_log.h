@@ -27,7 +27,6 @@
 
 #ifdef MCP
 extern void serial_log(log_level_t level, char* tag, char* fmt, ...);
-//extern void serial_log(log_level_t level, const rom char* tag, const rom char* fmt, ...);
 #elif defined(ES_LINUX)
 extern void serial_log(log_level_t level, char* tag, char* fmt, ...);
 #endif //#if (LOG_LEVEL < NO_LOGGING)
