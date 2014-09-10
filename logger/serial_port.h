@@ -22,6 +22,22 @@
 #ifndef SERIAL_PORT_H
 #define SERIAL_PORT_H
 
+/*
+ *  serial_init()
+ *
+ * This function is only defined for Code compiled for the Microchip
+ * microcontroller so the switch MCP must be defined as part of your
+ * Project.
+ * 
+ * In additon the system.h config file should define the baud rate to
+ * be used and the physical pin configuration of the 3 pin serial port:
+ * GndRxTx or GndTxRx
+ *
+ * for example : #define SERIAL_BAUD 19200
+ *
+ * And either : #define SERIAL_PORT_GndTxRx or #define SERIAL_PORT_GndRxTx
+ *
+ */
 #if defined(MCP)
 extern void serial_init(void);
 #endif
