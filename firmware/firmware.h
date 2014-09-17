@@ -22,6 +22,16 @@
 #ifndef FIRMWARE_H
 #define FIRMWARE_H
 
+/*******************************************************************************
+ *
+ *                               WARNING
+ *
+ * The bootloader enables the watchdog timer so ensure that your firmware 
+ * pulses the watchdog in a timely fashion!!!
+ *
+ *  asm("CLRWDT");
+ *
+ *******************************************************************************
 /*
  * The configuration settings are needed to program into the last page of Flash
  *
