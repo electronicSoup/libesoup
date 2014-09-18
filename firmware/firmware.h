@@ -53,6 +53,13 @@ _CONFIG2(FNOSC_FRCPLL & POSCMOD_NONE & OSCIOFNC_ON & PLL_96MHZ_ON & PLLDIV_NODIV
  * The following are definitions for setting up the identification strings
  * in the Flash which the Bootloader expects to be at specific locations.
  * There are four strings describing the Firmware installed in the Device.
+ * An example useage would be:
+
+DEF_FIRMWARE_AUTHOR_40("me@mail.com")
+DEF_FIRMWARE_DESCRIPTION_50("Serial_Firmware")
+DEF_FIRMWARE_VERSION_10("v1.0")
+DEF_FIRMWARE_URL_50("www.test.com")
+
  */
 #define FIRMWARE_STRINGS_BASE          0x8800
 #define FIRMWARE_AUTHOR_40_ADDR        FIRMWARE_STRINGS_BASE
