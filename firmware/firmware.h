@@ -1,6 +1,6 @@
 /**
  *
- * \file es_can/firmware/firmware.h
+ * \file es_lib/firmware/firmware.h
  *
  * Definitions for creating firmware for the CinnamonBun Bootloader
  *

@@ -1,6 +1,6 @@
 /**
  *
- * \file es_can/can/l3_can.c
+ * \file es_lib/can/l3_can.c
  *
  * Based on ISO_15765-2 but with a much reduced Message Length. The standard allows for 4KB
  * of a message whereas for the electronicSoup CAN Bus Nodes the limit is 74 Bytes.

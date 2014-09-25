@@ -1,6 +1,6 @@
 /**
  *
- * \file es_can/dcncp/dcncp.h
+ * \file es_lib/dcncp/dcncp.h
  *
  * Dynamic CAN Node Configuration Protocol  definitions
  *

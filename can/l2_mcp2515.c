@@ -1,6 +1,6 @@
 /**
  *
- * \file es_can/can/l2_mcp2515.c
+ * \file es_lib/can/l2_mcp2515.c
  *
  * CAN L2 Functionality for MCP2515 Chip
  *

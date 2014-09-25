@@ -1,6 +1,6 @@
 /**
  *
- * \file es_can/utils/utils.h
+ * \file es_lib/utils/utils.h
  *
  * General utility functions of the electronicSoup CAN code Library
  *

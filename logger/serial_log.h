@@ -1,6 +1,6 @@
 /**
  *
- * \file es_can/logger/serial_log.h
+ * \file es_lib/logger/serial_log.h
  *
  * Definitions for logging to the Serial Port.
  *

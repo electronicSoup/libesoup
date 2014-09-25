@@ -1,6 +1,6 @@
 /**
  *
- * \file es_can/timers/timers_sys.c
+ * \file es_lib/timers/timers_sys.c
  *
  * Timer functionalty of electronicSoup CAN code Library
  *

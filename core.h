@@ -1,6 +1,6 @@
 /**
  *
- * \file es_can/core.h
+ * \file es_lib/core.h
  *
  * Core definitions required by electronicSoup CAN code
  *

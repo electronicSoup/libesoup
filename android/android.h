@@ -1,6 +1,6 @@
 /**
  *
- * \file es_can/android/android.h
+ * \file es_lib/android/android.h
  *
  * Function prototypes for Android Comms
  *

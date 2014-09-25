@@ -1,6 +1,6 @@
 /**
  *
- * \file es_can/logger/serial_port.c
+ * \file es_lib/logger/serial_port.c
  *
  * Functions for initialisation of the Serial Port.
  *

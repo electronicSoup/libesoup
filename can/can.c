@@ -1,6 +1,6 @@
 /**
  *
- * \file es_can/can/can.c
+ * \file es_lib/can/can.c
  *
  * Core CAN Functionality of electronicSoup CAN code
  *

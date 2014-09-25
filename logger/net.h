@@ -1,6 +1,6 @@
 /**
  *
- * \file es_can/logger/net.h
+ * \file es_lib/logger/net.h
  *
  * Definitions for the Network Logger
  *

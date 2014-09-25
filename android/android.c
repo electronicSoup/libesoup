@@ -1,6 +1,6 @@
 /**
  *
- * \file es_can/android/android.c
+ * \file es_lib/android/android.c
  *
  * Functions for communicating with Android Apps 
  *

@@ -1,6 +1,6 @@
 /**
  *
- * \file es_can/os/os.c
+ * \file es_lib/os/os.c
  *
  * OS initialise routine
  *
