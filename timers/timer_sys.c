@@ -24,7 +24,7 @@
 #include <stdio.h>
 
 #define DEBUG_FILE
-#include "es_lib/logger/serial.h"
+#include "es_lib/logger/serial_log.h"
 #undef DEBUG_FILE
 
 #if LOG_LEVEL < NO_LOGGING
@@ -147,7 +147,7 @@ result_t start_timer(UINT16 ticks,
     timer_t loop;
 
     if(timer->status != INACTIVE) {
-        DEBUG_E("Timer already Active\n\r");
+        LOG_E("Timer already Active\n\r");
         return(ERR_TIMER_ACTIVE);
     }
 
@@ -171,7 +171,7 @@ result_t start_timer(UINT16 ticks,
             return(SUCCESS);
         }
     }
-    DEBUG_E("No Timers Free");
+    LOG_E("No Timers Free");
 
     return(ERR_NO_RESOURCES);
 }
