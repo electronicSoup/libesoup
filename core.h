@@ -22,10 +22,18 @@
 #ifndef ES_CAN_CORE_H
 #define ES_CAN_CORE_H
 
+#include <p24Fxxxx.h>
+
 /*
  * Clock speed of the Hardware.
  */
 #define CLOCK_FREQ 16000000
+
+/*
+ * I/O pin definitions
+ */
+#define INPUT_PIN 1
+#define OUTPUT_PIN 0
 
 /*
  * Flash addresses
@@ -33,6 +41,12 @@
 #define FIRMWARE_START_ADDRESS 0x8800
 #define APP_HANDLE_PAGE        0x400
 
+/*
+ * USB Host Power pin
+ */
+//#define USB_HOST_POWER_PIN_DIRECTION    TRISDbits.TRISD8
+//#define USB_HOST_POWER                  LATDbits.LATD8
+#define USB_HOST_POWER TRISDbits.TRISD8 = OUTPUT_PIN; LATDbits.LATD8 = 1;
 /*
  * Include MicroChip's definitions
  */
@@ -44,20 +58,7 @@
     typedef UINT16   u16;
     typedef UINT32   u32;
 
-#if 0
-#if defined(__18CXX)
-    #include <p18cxxx.h>
-#elif defined(__XC8)
-    #include <xc.h>
-    #include <p18cxxx.h>
-#elif defined( __C30__ ) 
-    #include "p24Fxxxx.h"
-#elif defined( __XC16__ )
-    #include <xc.h>
-    #include "p24Fxxxx.h"
-#endif
-#endif //0
-    #include <xc.h>
+//    #include <xc.h>
 
 #elif defined(ES_LINUX)
     #include <stdint.h>
