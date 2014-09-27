@@ -25,7 +25,7 @@
 
 
 #define DEBUG_FILE
-#include "es_lib/logger/serial.h"
+#include "es_lib/logger/serial_log.h"
 #undef DEBUG_FILE
 #include "es_lib/can/es_can.h"
 #include "es_lib/can/l2_mcp2515.h"
@@ -149,7 +149,7 @@ result_t l2_init(baud_rate_t arg_baud_rate,
 	u8 exit_mode = NORMAL_MODE;
 	u32 delay;
         result_t result;
-	DEBUG_D("l2_init()\n\r");
+	LOG_D("l2_init()\n\r");
 
 	mcp2515_isr = FALSE;
 
@@ -198,7 +198,7 @@ result_t l2_init(baud_rate_t arg_baud_rate,
 	 * Have to set the baud rate if one has been passed into the function
 	 */
 	if(arg_baud_rate <= BAUD_MAX) {
-		DEBUG_D("Valid Baud Rate specified - %s\n\r", baud_rate_strings[arg_baud_rate]);
+		LOG_D("Valid Baud Rate specified - %s\n\r", baud_rate_strings[arg_baud_rate]);
 		connected_baudrate = arg_baud_rate;
 		set_baudrate(arg_baud_rate);
 		exit_mode = NORMAL_MODE;
@@ -213,7 +213,7 @@ result_t l2_init(baud_rate_t arg_baud_rate,
 		 * Have to search for the Networks baud rate. Start at the bottom
 		 */
 		rx_msg_count = 0;
-		DEBUG_D("Before trying 10K REC - %d, rxCount - %d\n\r", read_reg(REC), rx_msg_count);
+		LOG_D("Before trying 10K REC - %d, rxCount - %d\n\r", read_reg(REC), rx_msg_count);
 		listen_baudrate = baud_10K;
 		set_baudrate(listen_baudrate);
 		exit_mode = LISTEN_MODE;
@@ -229,7 +229,7 @@ result_t l2_init(baud_rate_t arg_baud_rate,
 	}
 	asm ("CLRWDT");
 
-	DEBUG_D("Set Exit Mode 0x%x\n\r", exit_mode);
+	LOG_D("Set Exit Mode 0x%x\n\r", exit_mode);
 	set_can_mode(exit_mode);
 
 
@@ -246,10 +246,10 @@ result_t l2_init(baud_rate_t arg_baud_rate,
 	 * If we've been given a valid baud rate and connected send a test mesage to Network
 	 */
 	if(status.bit_field.l2_status == L2_Connecting) {
-		DEBUG_D("Connecting send a test Ping message!\n\r");
+		LOG_D("Connecting send a test Ping message!\n\r");
 		result = send_ping();
 		if (result != SUCCESS) {
-			DEBUG_E("Failed to send a test Ping message!\n\r");
+			LOG_E("Failed to send a test Ping message!\n\r");
 		}
 	}
 	// Create a random timer between 1 and 1.5 seconds for firing the
@@ -259,7 +259,7 @@ result_t l2_init(baud_rate_t arg_baud_rate,
 	start_timer(ping_time, exp_test_ping, (union sigval)(void *)NULL, &ping_timer);
 #endif
 
-	DEBUG_D("CAN Layer 2 Initialised\n\r");
+	LOG_D("CAN Layer 2 Initialised\n\r");
 	return(SUCCESS);
 }
 
@@ -278,12 +278,12 @@ void exp_test_ping(timer_t timer_id __attribute__((unused)), union sigval data _
 {
 	result_t result = SUCCESS;
 
-        DEBUG_D("exp_test_ping()\n\r");
+        LOG_D("exp_test_ping()\n\r");
 	TIMER_INIT(ping_timer);
 
         if(status.bit_field.l2_status == L2_Connected) {
 		if(send_ping() != SUCCESS) {
-			DEBUG_E("Failed to send the PING Message\n\r");
+			LOG_E("Failed to send the PING Message\n\r");
 		}
         }
 
@@ -296,7 +296,7 @@ void restart_ping_timer(void)
 {
 	if(ping_timer.status == ACTIVE) {
 		if(cancel_timer(&ping_timer) != SUCCESS) {
-			DEBUG_E("Failed to cancel the Ping timer\n\r");
+			LOG_E("Failed to cancel the Ping timer\n\r");
 			return;
 		}
 	}
@@ -313,15 +313,15 @@ void exp_check_network_connection(timer_t timer_id __attribute__((unused)), unio
 	TIMER_INIT(listen_timer);
 
 	if(listen_baudrate <= BAUD_MAX) {
-		DEBUG_D("After trying %s Errors - %d, rxCount - %ld\n\r", baud_rate_strings[listen_baudrate], connecting_errors, rx_msg_count);
+		LOG_D("After trying %s Errors - %d, rxCount - %ld\n\r", baud_rate_strings[listen_baudrate], connecting_errors, rx_msg_count);
 	} else {
-		DEBUG_D("After trying %s Errors - %d, rxCount - %ld\n\r", "NO BAUD RATE", connecting_errors, rx_msg_count);
+		LOG_D("After trying %s Errors - %d, rxCount - %ld\n\r", "NO BAUD RATE", connecting_errors, rx_msg_count);
 	}
 	/*
 	 * If we heard valid messages with no errors we've found the baud rate.
 	 */
 	if(rx_msg_count > 0 && connecting_errors == 0) {
-		DEBUG_D("*** Network connected ***\n\r");
+		LOG_D("*** Network connected ***\n\r");
 		connected_baudrate = listen_baudrate;
 
 		set_can_mode(NORMAL_MODE);
@@ -336,7 +336,7 @@ void exp_check_network_connection(timer_t timer_id __attribute__((unused)), unio
 			listen_baudrate = baud_10K;
 		else
 			listen_baudrate++;
-		DEBUG_D("No joy try Baud Rate - %s\n\r", baud_rate_strings[listen_baudrate]);
+		LOG_D("No joy try Baud Rate - %s\n\r", baud_rate_strings[listen_baudrate]);
 		set_can_mode(CONFIG_MODE);
 		set_baudrate(listen_baudrate);
 		set_can_mode(LISTEN_MODE);
@@ -349,13 +349,13 @@ void exp_check_network_connection(timer_t timer_id __attribute__((unused)), unio
 		if(status_handler)
 			status_handler(L2_STATUS_MASK, status, status_baud);
 
-		DEBUG_D("Restart timer\n\r");
+		LOG_D("Restart timer\n\r");
 		result = start_timer(CAN_BAUD_AUTO_DETECT_LISTEN_PERIOD,
 				     exp_check_network_connection,
 				     (union sigval)(void *)NULL,
 				     &listen_timer);
 		if(result != SUCCESS) {
-			DEBUG_E("Failed to start listen timer, result 0x%x\n\r", result);
+			LOG_E("Failed to start listen timer, result 0x%x\n\r", result);
 		}
 	}
 }
@@ -366,7 +366,7 @@ void exp_check_network_connection(timer_t timer_id __attribute__((unused)), unio
 void _ISR __attribute__((__no_auto_psv__)) _INT0Interrupt(void)
 {
     if(mcp2515_isr) {
-        DEBUG_E("Overlapping MCP2515 ISR\n\r");
+        LOG_E("Overlapping MCP2515 ISR\n\r");
     }
     mcp2515_isr = TRUE;
     IFS0bits.INT0IF = 0;
@@ -393,18 +393,18 @@ void service_device(void)
 		canstat = read_reg(CANSTAT);
 		write_reg(CANINTF, 0x00);
 
-		DEBUG_W("*** ISR with zero flags! IOCD %x\n\r", canstat & IOCD);
+		LOG_W("*** ISR with zero flags! IOCD %x\n\r", canstat & IOCD);
 	} else {
-            DEBUG_D("service_device() flags 0x%x\n\r", flags);
+            LOG_D("service_device() flags 0x%x\n\r", flags);
         }
 
 	while(flags != 0x00) {
 		canstat = read_reg(CANSTAT);
-		DEBUG_D("service() Flag-%x, IOCD-%x\n\r", flags, (canstat & IOCD));
+		LOG_D("service() Flag-%x, IOCD-%x\n\r", flags, (canstat & IOCD));
 		if (flags & ERRIE) {
 			eflg = read_reg(EFLG);
-			DEBUG_E("*** CAN ERRIR Flag!!!\n\r");
-			DEBUG_E("*** CAN EFLG %x\n\r", eflg);
+			LOG_E("*** CAN ERRIR Flag!!!\n\r");
+			LOG_E("*** CAN EFLG %x\n\r", eflg);
 			if(status.bit_field.l2_status == L2_Listening)
 				connecting_errors++;
 
@@ -418,7 +418,7 @@ void service_device(void)
 		}
 
 		if (flags & MERRE) {
-			DEBUG_W("CAN MERRE Flag\n\r");
+			LOG_W("CAN MERRE Flag\n\r");
 			if(status.bit_field.l2_status == L2_Listening)
 				connecting_errors++;
 
@@ -435,7 +435,7 @@ void service_device(void)
 			tx_flags = read_reg(ctrl);
 
 			if((tx_flags & TXREQ) && (tx_flags & TXERR)) {
-				DEBUG_E("Transmit Buffer Failed to send\n\r");
+				LOG_E("Transmit Buffer Failed to send\n\r");
 				set_reg_mask_value(ctrl, TXREQ, 0x00);
 				if (status.bit_field.l2_status == L2_ChangingBaud)
 					changing_baud_tx_error++;
@@ -444,7 +444,7 @@ void service_device(void)
 		}
 
 		if (flags & RX0IE) {
-			DEBUG_D("RX0IE\n\r");
+			LOG_D("RX0IE\n\r");
 #if defined(CAN_IDLE_PING)
 			restart_ping_timer();
 #endif
@@ -460,7 +460,7 @@ void service_device(void)
 					buffer_next_write = (buffer_next_write + 1) % CAN_RX_CIR_BUFFER_SIZE;
 					buffer_count++;
 				} else {
-					DEBUG_E("Circular Buffer overflow!\n\r");
+					LOG_E("Circular Buffer overflow!\n\r");
 				}
 			}
 
@@ -468,7 +468,7 @@ void service_device(void)
 		}
 
 		if (flags & RX1IE) {
-			DEBUG_D("RX1IE\n\r");
+			LOG_D("RX1IE\n\r");
 #if defined(CAN_IDLE_PING)
 			restart_ping_timer();
 #endif
@@ -485,7 +485,7 @@ void service_device(void)
 					buffer_next_write = (buffer_next_write + 1) % CAN_RX_CIR_BUFFER_SIZE;
 					buffer_count++;
 				} else {
-					DEBUG_E("Circular Buffer overflow!\n\r");
+					LOG_E("Circular Buffer overflow!\n\r");
 				}
 			}
 
@@ -493,7 +493,7 @@ void service_device(void)
 		}
 
 		if (flags & TX2IE) {
-			DEBUG_D("TX2IE\n\r");
+			LOG_D("TX2IE\n\r");
 			if (status.bit_field.l2_status == L2_Connecting) {
 				status.bit_field.l2_status = L2_Connected;
 
@@ -505,7 +505,7 @@ void service_device(void)
 		}
 
 		if (flags & TX1IE) {
-			DEBUG_D("TX1IE\n\r");
+			LOG_D("TX1IE\n\r");
 			if (status.bit_field.l2_status == L2_Connecting) {
 				status.bit_field.l2_status = L2_Connected;
 
@@ -516,7 +516,7 @@ void service_device(void)
 		}
 
 		if (flags & TX0IE) {
-			DEBUG_D("TX0IE\n\r");
+			LOG_D("TX0IE\n\r");
 			if (status.bit_field.l2_status == L2_Connecting) {
 				status.bit_field.l2_status = L2_Connected;
 
@@ -544,12 +544,14 @@ void L2_CanTasks(void)
         if(mcp2515_isr)
 		service_device();
 
+#ifdef TEST
 	count++;
 
 	if(count == 0x00) {
-		DEBUG_D("L2_CanTasks()\n\r");
+		LOG_D("L2_CanTasks()\n\r");
 	}
-
+#endif // TEST
+	
 	while(buffer_count > 0) {
 		if (status.bit_field.l2_status == L2_Connecting) {
 			status.bit_field.l2_status = L2_Connected;
@@ -591,7 +593,7 @@ void L2_CanTasks(void)
 			rx_can_msg.data[loop] = buffer[buffer_next_read].data[loop];
 		}
 
-//        DEBUG_D("Received a message id - %lx\n\r", rxCanMsg.header.can_id.id);
+//        LOG_D("Received a message id - %lx\n\r", rxCanMsg.header.can_id.id);
 		buffer_next_read = (buffer_next_read + 1) % CAN_RX_CIR_BUFFER_SIZE;
 		buffer_count--;
 		l2_dispatcher_frame_handler(&rx_can_msg);
@@ -630,13 +632,13 @@ result_t l2_tx_frame(can_frame  *frame)
 	u8           ctrl;
 	u8           can_buffer;
 
-	DEBUG_D("L2 => Id %lx\n\r", frame->can_id);
+	LOG_D("L2 => Id %lx\n\r", frame->can_id);
 
 #if defined(CAN_IDLE_PING)
         restart_ping_timer();
 #endif
 	if(connected_baudrate == no_baud) {
-		DEBUG_E("Can't Transmit network not connected!\n\r");
+		LOG_E("Can't Transmit network not connected!\n\r");
 		return(ERR_GENERAL_CAN_ERROR);
 	}
 
@@ -669,16 +671,16 @@ result_t l2_tx_frame(can_frame  *frame)
 
 	if(ctrl == 0xff) {
 		// Shipment of fail has arrived
-		DEBUG_E("ERROR No free Tx Buffers\n\r");
+		LOG_E("ERROR No free Tx Buffers\n\r");
 		return(ERR_CAN_NO_FREE_BUFFER);
 	} else if (ctrl == TXB0CTRL) {
-		DEBUG_D("TXB0CTRL\n\r");
+		LOG_D("TXB0CTRL\n\r");
 		can_buffer = TXB0SIDH;
 	} else if (ctrl == TXB1CTRL) {
-		DEBUG_D("TXB1CTRL\n\r");
+		LOG_D("TXB1CTRL\n\r");
 		can_buffer = TXB1SIDH;
 	} else if (ctrl == TXB2CTRL) {
-		DEBUG_D("TXB2CTRL\n\r");
+		LOG_D("TXB2CTRL\n\r");
 		can_buffer = TXB2SIDH;
 	}
 
@@ -707,7 +709,7 @@ result_t l2_tx_frame(can_frame  *frame)
 	 * and send in One Shot Mode if we're unsure of the Network.
 	 */
 	if (status.bit_field.l2_status == L2_Connecting) {
-		DEBUG_D("Network not good so sending OSM\n\r");
+		LOG_D("Network not good so sending OSM\n\r");
 		set_reg_mask_value(CANCTRL, OSM, OSM);
 	} else {
 		// Clear One Shot Mode
@@ -719,9 +721,7 @@ result_t l2_tx_frame(can_frame  *frame)
 
 	if (status.bit_field.l2_status == L2_Connecting) {
 		while (read_reg(ctrl) & 0x08) {
-#if LOG_LEVEL <= LOG_ERROR
-			DEBUG_E("Wait for transmission to complete\n\r");
-#endif
+			LOG_E("Wait for transmission to complete\n\r");
 		}
 		status.bit_field.l2_status = L2_Connected;
 		if (status_handler)
@@ -739,7 +739,7 @@ BYTE CheckErrors(void)
 	flags = CANReadReg(CANINTF);
 
 	if(flags != 0x00) {
-		DEBUG_D("CheckErrors() Flag set 0x%x\n\r", flags);
+		LOG_D("CheckErrors() Flag set 0x%x\n\r", flags);
 	}
 
 	if (flags & TX0IE) {
@@ -759,13 +759,13 @@ BYTE CheckErrors(void)
 
 	if (flags & MERRE) {
 		CANSetRegMaskValue(CANINTF, MERRE, 0x00);
-		DEBUG_E("Message Error Flag set! Flasg now 0x%x\n\r", CANReadReg(CANINTF));
+		LOG_E("Message Error Flag set! Flasg now 0x%x\n\r", CANReadReg(CANINTF));
 	}
 
 	if (flags & WAKIE) {
 		CANSetRegMaskValue(CANINTF, WAKIE, 0x00);
 		wakeUpCount++;
-		DEBUG_D("Wake Up Count - now %ld\n\r", wakeUpCount);
+		LOG_D("Wake Up Count - now %ld\n\r", wakeUpCount);
 	}
 
 	if (flags & ERRIE) {
@@ -795,7 +795,7 @@ static void checkSubErrors(void)
 	error = CANReadReg(EFLG);
 
 	if(error != 0x00) {
-		DEBUG_E("checkSubErrors() errors - %x\n\r", error);
+		LOG_E("checkSubErrors() errors - %x\n\r", error);
 	}
 
 	/*
@@ -803,7 +803,7 @@ static void checkSubErrors(void)
 	 */
 	if (error & RX1OVR) {
 		g_missedMessageCount++;
-		DEBUG_D("Missed Message Count - %ld\n\r", g_missedMessageCount);
+		LOG_D("Missed Message Count - %ld\n\r", g_missedMessageCount);
 
 		/*
 		 * Clear this flag
@@ -813,7 +813,7 @@ static void checkSubErrors(void)
 
 	if (error & RX0OVR) {
 		g_missedMessageCount++;
-		DEBUG_D("Missed Message Count - %ld\n\r", g_missedMessageCount);
+		LOG_D("Missed Message Count - %ld\n\r", g_missedMessageCount);
 
 		/*
 		 * Clear this flag
@@ -842,7 +842,7 @@ static void checkSubErrors(void)
 		 * Work out what's changed
 		 */
 		difference = error ^ g_CanErrors;
-		DEBUG_E("ERRORS Have changed! Difference is %x\n\r", difference);
+		LOG_E("ERRORS Have changed! Difference is %x\n\r", difference);
 
 		/*
 		 * Loop through the lower 6 bits we're interested in
@@ -857,52 +857,52 @@ static void checkSubErrors(void)
 					 */
 					if(error & TXBO) {
 						//TODO Must send an error to Android
-						DEBUG_E("ERROR Bus OFF!\n\r");
+						LOG_E("ERROR Bus OFF!\n\r");
 					} else {
-						DEBUG_E("Error Cleared CAN Bus Active again\n\r");
+						LOG_E("Error Cleared CAN Bus Active again\n\r");
 					}
 				}
 
 				if (mask & TXEP) {
 					if (error & TXEP) {
 						//ToDo Must send an error to Android
-						DEBUG_E("Transmitter ERROR PASSIVE Error count > 128!\n\r");
+						LOG_E("Transmitter ERROR PASSIVE Error count > 128!\n\r");
 					} else {
-						DEBUG_E("Tx Error count < 128 ;-)\n\r");
+						LOG_E("Tx Error count < 128 ;-)\n\r");
 					}
 				}
 
 				if (mask & RXEP) {
 					if (error & RXEP) {
 						//TODO Must send an error to Android
-						DEBUG_E("Receiver ERROR PASSIVE Error count > 128!\n\r");
+						LOG_E("Receiver ERROR PASSIVE Error count > 128!\n\r");
 					} else {
-						DEBUG_E("Rx Error < 128 :-)\n\r");
+						LOG_E("Rx Error < 128 :-)\n\r");
 					}
 				}
 
 				if (mask & TXWAR) {
 					if (error & TXWAR) {
 						//TODO Must send an error to Android
-						DEBUG_E("Transmitter WARNING Error count > 96!\n\r");
+						LOG_E("Transmitter WARNING Error count > 96!\n\r");
 					} else {
-						DEBUG_E("Tx Warning cleared Error Count < 96\n\r");
+						LOG_E("Tx Warning cleared Error Count < 96\n\r");
 					}
 				}
 
 				if (mask & TXBO) {
 					if (error & RXWAR) {
 						//TODO Must send an error to Android
-						DEBUG_E("Receiver WARNING Error count > 96!\n\r");
+						LOG_E("Receiver WARNING Error count > 96!\n\r");
 					} else {
-						DEBUG_E("Rx Warning Cleared Error Count < 96\n\r");
+						LOG_E("Rx Warning Cleared Error Count < 96\n\r");
 					}
 				}
 			}
 		}
 		g_CanErrors = error;
 	} else {
-		DEBUG_D("Errors Have not changed\n\r");
+		LOG_D("Errors Have not changed\n\r");
 	}
 }
 #endif
@@ -929,7 +929,7 @@ static void set_reg_mask_value(BYTE reg, BYTE mask, BYTE value)
        
         fail = (read_reg(reg) & mask) != value;
         if(fail) {
-		DEBUG_E("Bit Modify Failed!\n\r");
+		LOG_E("Bit Modify Failed!\n\r");
         }
 //    } while (fail);
 }
@@ -943,7 +943,7 @@ static void set_can_mode(BYTE mode)
 #endif
 
 #ifdef TEST
-	DEBUG_D("set_can_mode(0x%x)\n\r", mode);
+	LOG_D("set_can_mode(0x%x)\n\r", mode);
 #endif
 
 	set_reg_mask_value(CANCTRL, MODE_MASK, mode);
@@ -951,7 +951,7 @@ static void set_can_mode(BYTE mode)
 	result = read_reg(CANCTRL);
 
 	while((result & MODE_MASK) != mode) {
-		DEBUG_D("Before write CANCTRL 0x%x\n\r", result & MODE_MASK);
+		LOG_D("Before write CANCTRL 0x%x\n\r", result & MODE_MASK);
 		set_reg_mask_value(CANCTRL, MODE_MASK, mode);
 		result = read_reg(CANCTRL);
 #ifdef TEST
@@ -1046,7 +1046,7 @@ static void set_baudrate(baud_rate_t baudrate)
 		break;
 
         default:
-		DEBUG_E("Invalid Baud Rate Specified\n\r");
+		LOG_E("Invalid Baud Rate Specified\n\r");
 		break;
 	}
 
@@ -1079,7 +1079,7 @@ void l2_set_can_node_buadrate(baud_rate_t baudrate)
 {
 	es_timer timer;
 
-	DEBUG_D("set_can_node_buadrate()\n\r");
+	LOG_D("set_can_node_buadrate()\n\r");
 	TIMER_INIT(timer);
 
 	status.bit_field.l2_status = L2_ChangingBaud;
@@ -1101,7 +1101,7 @@ void l2_set_can_node_buadrate(baud_rate_t baudrate)
 
 static void exp_finalise_baudrate_change(timer_t timer_id __attribute__((unused)), union sigval data __attribute__((unused)))
 {
-	DEBUG_D("exp_finalise_baudrate_change()\n\r");
+	LOG_D("exp_finalise_baudrate_change()\n\r");
 
         set_can_mode(NORMAL_MODE);
 
@@ -1120,7 +1120,7 @@ void initiate_can_buadrate_change(baud_rate_t rate)
 	can_frame msg;
 	result_t result = SUCCESS;
 
-	DEBUG_D("initiate_can_buadrate_change()\n\r");
+	LOG_D("initiate_can_buadrate_change()\n\r");
 	TIMER_INIT(timer);
 
 	msg.can_id = 0x705;
@@ -1150,10 +1150,10 @@ static void exp_resend_baudrate_change(timer_t timer_id __attribute__((unused)),
 
         TIMER_INIT(timer);
 
-	DEBUG_D("exp_resend_baudrate_change()\n\r");
+	LOG_D("exp_resend_baudrate_change()\n\r");
 
 	if(changing_baud_tx_error < 3) {
-		DEBUG_D("resending Baud Rate Change Request %d\n\r", changing_baud_tx_error);
+		LOG_D("resending Baud Rate Change Request %d\n\r", changing_baud_tx_error);
 		msg.can_id = 0x705;
 		msg.can_dlc = 1;
 
@@ -1162,28 +1162,28 @@ static void exp_resend_baudrate_change(timer_t timer_id __attribute__((unused)),
 		if(l2_tx_frame(&msg) != ERR_CAN_NO_FREE_BUFFER)
 			start_timer(MILLI_SECONDS_TO_TICKS(500), exp_resend_baudrate_change, (union sigval)(void *)NULL, &timer);
 		else {
-			DEBUG_D("No Free Buffers so change the Baud Rate\n\r");
+			LOG_D("No Free Buffers so change the Baud Rate\n\r");
 			set_reg_mask_value(TXB0CTRL, TXREQ, 0x00);
 			set_reg_mask_value(TXB1CTRL, TXREQ, 0x00);
 			set_reg_mask_value(TXB2CTRL, TXREQ, 0x00);
                         l2_set_can_node_buadrate(status_baud);
 		}
 	} else {
-		DEBUG_D("3 Errors so NOT Resending Baud Rate Change Request\n\r");
+		LOG_D("3 Errors so NOT Resending Baud Rate Change Request\n\r");
                 l2_set_can_node_buadrate(status_baud);
 	}
 }
 
 static void enable_rx_interrupts(void)
 {
-	DEBUG_D("CANEnableRXInterrupts\n\r");
+	LOG_D("CANEnableRXInterrupts\n\r");
 	set_reg_mask_value(CANINTE, RX1IE, RX1IE);
 	set_reg_mask_value(CANINTE, RX0IE, RX0IE);
 }
 
 static void disable_rx_interrupts(void)
 {
-	DEBUG_D("CANDisableRXInterrupts\n\r");
+	LOG_D("CANDisableRXInterrupts\n\r");
 	set_reg_mask_value(CANINTE, RX1IE, 0x00);
 	set_reg_mask_value(CANINTE, RX0IE, 0x00);
 }
@@ -1229,7 +1229,7 @@ static void read_rx_buffer(BYTE reg, BYTE *buffer)
 
 	dataLength = buffer[4] & 0x0f;
 	if(dataLength > CAN_DATA_LENGTH) {
-		DEBUG_E("Invalid Data Length %x & 0x0f = %x\n\r", buffer[4], buffer[4] & 0x0f);
+		LOG_E("Invalid Data Length %x & 0x0f = %x\n\r", buffer[4], buffer[4] & 0x0f);
 	} else {
 		for (loop = 0; loop < dataLength; loop++, ptr++) {
 			*ptr = SPIWriteByte(0x00);
@@ -1269,19 +1269,19 @@ void print_error_counts(void)
 	byte = read_reg(TEC);
 	if(byte != tec) {
 		tec = byte;
-		DEBUG_E("Tx Error (TEC) Count Change - 0x%x\n\r", tec);
+		LOG_E("Tx Error (TEC) Count Change - 0x%x\n\r", tec);
 	}
 
 	byte = read_reg(REC);
 	if(byte != rec) {
 		rec = byte;
-		DEBUG_E("Rx Error (REC) Count Change - 0x%x\n\r", rec);
+		LOG_E("Rx Error (REC) Count Change - 0x%x\n\r", rec);
 	}
 
 	byte = read_reg(EFLG);
 	if(byte != eflg) {
 		eflg = byte;
-		DEBUG_E("EFLG Changed - 0x%x\n\r", eflg);
+		LOG_E("EFLG Changed - 0x%x\n\r", eflg);
 	}
 }
 #endif
@@ -1295,7 +1295,7 @@ void test_can()
 	byte = read_reg(CANCTRL);
 	CAN_DESELECT();
 
-	DEBUG_D("Test read of CANCTRL - 0x%x\n\r", byte);
+	LOG_D("Test read of CANCTRL - 0x%x\n\r", byte);
 }
 #endif
 
@@ -1304,7 +1304,7 @@ static void l2_dispatcher_frame_handler(can_frame *message)
 	BYTE loop;
 	BOOL found = FALSE;
 
-	DEBUG_D("L2_CanDispatcherL2MsgHandler 0x%lx\n\r", message->can_id);
+	LOG_D("L2_CanDispatcherL2MsgHandler 0x%lx\n\r", message->can_id);
 
 	for (loop = 0; loop < CAN_L2_HANDLER_ARRAY_SIZE; loop++) {
 		if( (registered_handlers[loop].used)
@@ -1318,7 +1318,7 @@ static void l2_dispatcher_frame_handler(can_frame *message)
 		/*
 		 * No handler found so pass the received message to the Application
 		 */
-		DEBUG_D("No Handler for 0x%lx\n\r", message->can_id);
+		LOG_D("No Handler for 0x%lx\n\r", message->can_id);
 	}
 }
 
@@ -1332,7 +1332,7 @@ static BYTE l2_can_dispatch_reg_handler(can_target_t *target)
 result_t l2_reg_handler(can_target_t *target)
 {
 	BYTE loop;
-	DEBUG_D("sys_l2_can_dispatch_reg_handler mask %lx, filter %lx Handler %lx\n\r",
+	LOG_D("sys_l2_can_dispatch_reg_handler mask %lx, filter %lx Handler %lx\n\r",
 		   target->mask,
 		   target->filter,
 		   target->handler);
@@ -1348,7 +1348,7 @@ result_t l2_reg_handler(can_target_t *target)
 	// Find a free slot
 	for(loop = 0; loop < CAN_L2_HANDLER_ARRAY_SIZE; loop++) {
 		if(registered_handlers[loop].used == FALSE) {
-			DEBUG_D("Target stored at target %d\n\r", loop);
+			LOG_D("Target stored at target %d\n\r", loop);
 			registered_handlers[loop].used = TRUE;
 			registered_handlers[loop].target.mask = target->mask;
 			registered_handlers[loop].target.filter = target->filter;

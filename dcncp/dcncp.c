@@ -30,7 +30,7 @@
 
 #if defined(MCP)
 #define DEBUG_FILE
-#include "es_lib/logger/serial.h"
+#include "es_lib/logger/serial_log.h"
 #undef DEBUG_FILE
 #include "es_lib/can/es_can.h"
 #include "es_lib/utils/utils.h"
@@ -102,7 +102,7 @@ void dcncp_init(void (*arg_status_handler)(u8 mask, can_status_t status, baud_ra
 	target.filter = (u32)NODE_FILTER;
 	target.handler = l2MsgHandler;
 
-	DEBUG_D("Node Address Register handler Mask 0x%x, Filter 0x%x\n\r", target.mask, target.filter);
+	LOG_D("Node Address Register handler Mask 0x%x, Filter 0x%x\n\r", target.mask, target.filter);
 	l2_reg_handler(&target);
 
 #if defined(CAN_LAYER_3)
@@ -190,7 +190,7 @@ void l2MsgHandler(can_frame *msg)
 	es_timer timer;
 	result_t result;
 
-	DEBUG_D("Node Adress message received 0x%lx\n\r", msg->can_id);
+	LOG_D("Node Adress message received 0x%lx\n\r", msg->can_id);
 	if (msg->can_id == AddressRegisterReq) {
 #if defined(CAN_LAYER_3)
 		get_l3_node_address(&address);
@@ -248,33 +248,33 @@ void l2MsgHandler(can_frame *msg)
 #endif
 	} else if (msg->can_id == NodeAddressReporting) {
 		if(msg->data[0]) {
-			DEBUG_D("Foreign Node Rep Registered Node Address 0x%x\n\r", msg->data[1]);
+			LOG_D("Foreign Node Rep Registered Node Address 0x%x\n\r", msg->data[1]);
 		} else {
-			DEBUG_D("Foreign Node Rep UN-Registered Node Address 0x%x\n\r", msg->data[1]);
+			LOG_D("Foreign Node Rep UN-Registered Node Address 0x%x\n\r", msg->data[1]);
 		}
 	} else if (msg->can_id == NodeSetBaudRate) {
-		DEBUG_D(Debug, TAG, "***Baud Rate Change Request New Baud Rate %s\n\r", baud_rate_strings[msg->data[0]]);
+		LOG_D(Debug, TAG, "***Baud Rate Change Request New Baud Rate %s\n\r", baud_rate_strings[msg->data[0]]);
 //TODO		L2_SetCanNodeBuadRate(msg->data[0]);
 	} else if (msg->can_id == NodePingMessage) {
 #if DEBUG_LEVEL <= LOG_DEBUG
 		printf(".");
 #endif
 	} else if (msg->can_id == NetLogger) {
-		DEBUG_D("Received NetLogger Message\n\r");
+		LOG_D("Received NetLogger Message\n\r");
 #if defined(CAN_LAYER_3)
 		net_logger_foreign_register(msg->data[0], msg->data[1]);
 #else
-		DEBUG_D("Ignoring NetLogger Message NO LAYER 3!\n\r");
+		LOG_D("Ignoring NetLogger Message NO LAYER 3!\n\r");
 #endif
 	} else if (msg->can_id == CancelNetLogger) {
-		DEBUG_D("Received CancelNetLogger Message\n\r");
+		LOG_D("Received CancelNetLogger Message\n\r");
 #if defined(CAN_LAYER_3)
 		net_logger_foreign_cancel(msg->data[0]);
 #else
-		DEBUG_D("Ignoring NetLogger Message NO LAYER 3!\n\r");
+		LOG_D("Ignoring NetLogger Message NO LAYER 3!\n\r");
 #endif
 	} else {
-		DEBUG_W("Node Unrecognised Request %lx \n\r", msg->can_id);
+		LOG_W("Node Unrecognised Request %lx \n\r", msg->can_id);
 	}
 }
 
@@ -381,7 +381,7 @@ void send_ping_message(void)
 	txMsg.can_dlc = 0;
 
 	l2_tx_frame(&txMsg);
-	DEBUG_D("Ping message sent\n\r");
+	LOG_D("Ping message sent\n\r");
 }
 
 #if defined(CAN_LAYER_3)
