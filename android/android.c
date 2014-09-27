@@ -24,7 +24,7 @@
 #include "usb/usb_host_android.h"
 
 #define DEBUG_FILE
-#include "es_lib/logger/serial.h"
+#include "es_lib/logger/serial_log.h"
 
 #if LOG_LEVEL < NO_LOGGING
 #define TAG "Android"
@@ -57,15 +57,15 @@ static BOOL transmitter_busy = FALSE;
 
 void android_init(void)
 {
-    rx_write_index = 0;
-    rx_read_index = 0;
-    rx_buffer_count = 0;
-    receiver_busy = FALSE;
+	rx_write_index = 0;
+	rx_read_index = 0;
+	rx_buffer_count = 0;
+	receiver_busy = FALSE;
 
-    tx_write_index = 0;
-    tx_read_index = 0;
-    tx_buffer_count = 0;
-    transmitter_busy = FALSE;
+	tx_write_index = 0;
+	tx_read_index = 0;
+	tx_buffer_count = 0;
+	transmitter_busy = FALSE;
 }
 
 BOOL android_receive(BYTE *buffer, UINT16 *size, BYTE *error_code)
@@ -80,7 +80,7 @@ BOOL android_receive(BYTE *buffer, UINT16 *size, BYTE *error_code)
 		// The first word to read is a size of the message
 		msg_size = rx_circular_buffer[rx_read_index] << 8 | rx_circular_buffer[(rx_read_index + 1) % RX_BUFFER_SIZE];
 
-                DEBUG_D("Receiving message size %d\n\r", msg_size);
+                LOG_D("Receiving message size %d\n\r", msg_size);
 		if(msg_size + 2 > rx_buffer_count) {
 			*size = 0;
 			return (FALSE);
@@ -95,8 +95,8 @@ BOOL android_receive(BYTE *buffer, UINT16 *size, BYTE *error_code)
 		rx_read_index = ++rx_read_index % RX_BUFFER_SIZE;
 
 		if (msg_size > *size) {
-			DEBUG_D("msg_size %d\n\r", msg_size);
-			DEBUG_D("Read received buffer size %d not big enough for %d\n\r",*size, rx_buffer_count);
+			LOG_D("msg_size %d\n\r", msg_size);
+			LOG_D("Read received buffer size %d not big enough for %d\n\r",*size, rx_buffer_count);
 			*error_code = USB_ILLEGAL_REQUEST;
 			return (FALSE);
 		}
@@ -121,7 +121,7 @@ BYTE android_transmit(BYTE *buffer, BYTE size)
 
 	if ( (tx_buffer_count + size) >= TX_BUFFER_SIZE) {
 		// ERROR Can't accept that much data at present
-		DEBUG_E("Buffer Full\n\r");
+		LOG_E("Buffer Full\n\r");
 		return (USB_EVENT_QUEUE_FULL);
 	}
 
@@ -153,7 +153,7 @@ BYTE android_tasks(void* device_handle)
 		//If the device is attached, then lets wait for a command from the application
 		if (error_code != USB_SUCCESS) {
 			if (error_code != USB_ENDPOINT_BUSY) {
-				DEBUG_E("Error trying to start read - %x\n\r", error_code);
+				LOG_E("Error trying to start read - %x\n\r", error_code);
 			}
 		} else {
 			receiver_busy = TRUE;
@@ -169,7 +169,7 @@ BYTE android_tasks(void* device_handle)
 				// Copy the Received Message into the Circular buffer.
 				// Check if there's space for message
 				if ((rx_buffer_count + size) >= RX_BUFFER_SIZE) {
-					DEBUG_E("Error Receive buffer overflow");
+					LOG_E("Error Receive buffer overflow");
 				}
 				for (loop = 0; loop < size; loop++) {
 					rx_circular_buffer[rx_write_index] = rx_buffer[loop];
@@ -180,7 +180,7 @@ BYTE android_tasks(void* device_handle)
 			} else {
 				//Error
 				receiver_busy = FALSE;
-				DEBUG_E("Error trying to complete read request %x\n\r", error_code);
+				LOG_E("Error trying to complete read request %x\n\r", error_code);
 			}
 		}
 	}
