@@ -33,7 +33,7 @@
 #include "states.h"
 
 #define DEBUG_FILE
-#include "es_lib/logger/serial.h"
+#include "es_lib/logger/serial_log.h"
 
 #if LOG_LEVEL < NO_LOGGING
 #define TAG "Android"
@@ -51,11 +51,11 @@ void android_connected_process_usb_event(USB_EVENT event);
  */
 void set_android_connected_state(void)
 {
-    DEBUG_D("State --> AndroidConnected\n\r");
+	LOG_D("State --> AndroidConnected\n\r");
 
-    current_state.process_msg = android_connected_process_msg;
-    current_state.main = android_connected_main;
-    current_state.process_usb_event = android_connected_process_usb_event;
+	current_state.process_msg = android_connected_process_msg;
+	current_state.main = android_connected_main;
+	current_state.process_usb_event = android_connected_process_usb_event;
 }
 
 /*
@@ -65,15 +65,15 @@ void set_android_connected_state(void)
  */
 void android_connected_process_msg(android_command_t cmd, void *data, UINT16 data_len)
 {
-    if(cmd == COMMAND_APP_CONNECT) {
+	if (cmd == COMMAND_APP_CONNECT) {
 #if defined(DONGLE)
-        set_dongle_connected_state();
+		set_dongle_connected_state();
 #elif defined(NODE) || defined(BOOT)
-        set_node_connected_state();
+		set_node_connected_state();
 #endif
-    } else {
-        DEBUG_E("Android Connected State received Android message other then App connected 0x%x\n\r", cmd);
-    }
+	} else {
+		LOG_E("Android Connected State received Android message other then App connected 0x%x\n\r", cmd);
+	}
 }
 
 /*
@@ -89,13 +89,12 @@ void android_connected_main()
  */
 void android_connected_process_usb_event(USB_EVENT event)
 {
-    switch(event)
-    {
-        case EVENT_ANDROID_DETACH:
-            set_idle_state();
-            break;
+	switch (event) {
+		case EVENT_ANDROID_DETACH:
+			set_idle_state();
+			break;
 
-        default:
-            break;
-    }
+		default:
+			break;
+	}
 }

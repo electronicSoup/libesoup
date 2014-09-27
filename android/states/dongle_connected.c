@@ -32,7 +32,7 @@
 #include "main.h"
 
 #define DEBUG_FILE
-#include "es_lib/logger/serial.h"
+#include "es_lib/logger/serial_log.h"
 #undef DEBUG_FILE
 
 #define TAG "DongleConnected"
@@ -43,26 +43,21 @@ void dongle_connected_process_usb_event(USB_EVENT event);
 
 void set_dongle_connected_state(void)
 {
-    DEBUG_D("Dongle Connected State\n\r");
-    current_state.process_msg = dongle_connected_process_msg;
-    current_state.main = dongle_connected_main;
-    current_state.process_usb_event = dongle_connected_process_usb_event;
+	LOG_D("Dongle Connected State\n\r");
+	current_state.process_msg = dongle_connected_process_msg;
+	current_state.main = dongle_connected_main;
+	current_state.process_usb_event = dongle_connected_process_usb_event;
 }
 
 void dongle_connected_process_msg(android_command_t cmd, void *data, UINT16 data_len)
 {
-    UINT32 address;
-    BYTE *byte_data;
-    UINT8 loop;
-    UINT16 len;
+	LOG_D("dongle_connected_process_msg data lenght %d\n\r", data_len);
+	switch (cmd) {
 
-    DEBUG_D("dongle_connected_process_msg data lenght %d\n\r", data_len);
-    switch(cmd) {
-
-        default:
-            DEBUG_W("Unprocessed message 0x%x\n\r", cmd);
-            break;
-    }
+		default:
+			LOG_W("Unprocessed message 0x%x\n\r", cmd);
+			break;
+	}
 }
 
 void dongle_connected_main()
@@ -71,12 +66,12 @@ void dongle_connected_main()
 
 void dongle_connected_process_usb_event(USB_EVENT event)
 {
-    switch (event) {
-        case EVENT_ANDROID_ATTACH:
-            break;
+	switch (event) {
+		case EVENT_ANDROID_ATTACH:
+			break;
 
-        case EVENT_ANDROID_DETACH:
-            set_idle_state();
-            break;
-    }
+		case EVENT_ANDROID_DETACH:
+			set_idle_state();
+			break;
+	}
 }

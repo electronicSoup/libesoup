@@ -33,7 +33,7 @@
 #include "states.h"
 
 #define DEBUG_FILE
-#include "es_lib/logger/serial.h"
+#include "es_lib/logger/serial_log.h"
 
 #if LOG_LEVEL < NO_LOGGING
 #define TAG "Idle"
@@ -52,11 +52,11 @@ void idle_process_usb_event(USB_EVENT event);
  */
 void set_idle_state(void)
 {
-    DEBUG_D("State --> Idle\n\r");
-    
-    current_state.process_msg = idle_process_msg;
-    current_state.main = idle_main;
-    current_state.process_usb_event = idle_process_usb_event;
+	LOG_D("State --> Idle\n\r");
+
+	current_state.process_msg = idle_process_msg;
+	current_state.main = idle_main;
+	current_state.process_usb_event = idle_process_usb_event;
 }
 
 /*
@@ -65,7 +65,7 @@ void set_idle_state(void)
  */
 void idle_process_msg(android_command_t cmd, void *data, UINT16 data_len)
 {
-    DEBUG_E("Received Android Msg in the Idle state command 0x%x data Lentgh %d\n\r", cmd, data_len);
+	LOG_E("Received Android Msg in the Idle state command 0x%x data Lentgh %d\n\r", cmd, data_len);
 }
 
 /*
@@ -83,13 +83,12 @@ void idle_main()
  */
 void idle_process_usb_event(USB_EVENT event)
 {
-    switch(event)
-    {
-        case EVENT_ANDROID_ATTACH:
-            set_android_connected_state();
-            break;
+	switch (event) {
+		case EVENT_ANDROID_ATTACH:
+			set_android_connected_state();
+			break;
 
-        default:
-            break;
-    }
+		default:
+			break;
+	}
 }
