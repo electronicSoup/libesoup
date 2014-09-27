@@ -29,6 +29,44 @@
  */
 #define CLOCK_FREQ 16000000
 
+#define SPI_RW_FINISHED SPI1STATbits.SPIRBF
+
+    /*
+     *  RD1/RP24  - SCK
+     *  RD2       - SO  (Pin 14 of 18 DIP 2515)
+     *  RD3       - SI  (Pin 15 of 18 DIP 2515)
+     *  RD7       - /EEPROM CS
+     *  RD6       - /CAN CS
+     *  RD0       - /CAN INT
+     */
+
+    //  RD7 - /EEPROM CS
+    #define EEPROM_MAX_ADDRESS 0x7F
+    #define EEPROM_CS_PIN_DIRECTION    TRISDbits.TRISD7
+    #define EEPROM_CS                  LATDbits.LATD7
+
+    #define EEPROM_Select()            EEPROM_CS = 0
+    #define EEPROM_DeSelect()          EEPROM_CS = 1
+
+    //  RD0  - /CAN INT
+    #define CAN_INTERRUPT_PIN_DIRECTION    TRISDbits.TRISD0
+    #define CAN_INTERRUPT_PIN                  PORTDbits.RD0
+    #define CAN_INTERRUPT                  !CAN_INTERRUPT_PIN
+
+    //  RD6 - /CAN CS
+    #define CAN_CS_PIN_DIRECTION    TRISDbits.TRISD6
+    #define CAN_CS                  LATDbits.LATD6
+
+    #define CAN_SELECT()            CAN_CS = 0;
+    #define CAN_DESELECT()          CAN_CS = 1
+
+     //  RD1  - SCK
+     //  RD2  - SO
+     //  RD3  - SI
+    #define SPI_SCK_DIRECTION   TRISDbits.TRISD1
+    #define SPI_MISO_DIRECTION  TRISDbits.TRISD2
+    #define SPI_MOSI_DIRECTION  TRISDbits.TRISD3
+
 /*
  * I/O pin definitions
  */
