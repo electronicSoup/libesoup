@@ -1,6 +1,8 @@
 
 #include "es_lib/core.h"
 
+#define DONGLE
+
 /*
  * Baud rate of the serial debug port
  */
@@ -26,3 +28,16 @@
  * demand for timers in your design.
  */
 #define NUMBER_OF_TIMERS 20
+
+#define HW_SPI
+
+/*
+ * CAN Definitions
+ */
+/*
+ * The number of Handlers that can be registered with Layer 2
+ */
+#define CAN
+#define CAN_BAUD_AUTO_DETECT_LISTEN_PERIOD    SECONDS_TO_TICKS(10)
+#define CAN_L2_HANDLER_ARRAY_SIZE 5
+//#define CAN_LAYER_3
