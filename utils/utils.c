@@ -30,7 +30,7 @@
 #include "es_lib/timers/timer_sys.h"
 #endif
 #define DEBUG_FILE
-#include "es_lib/logger/serial.h"
+#include "es_lib/logger/serial_log.h"
 
 #if LOG_LEVEL < NO_LOGGING
 #define TAG "UTILS"
@@ -189,11 +189,11 @@ void flash_erase(UINT32 address)
 {
 	unsigned int offset;
 
-	DEBUG_D("erasePage 0x%lx\n\r", address);
+	LOG_D("erasePage 0x%lx\n\r", address);
 
         if(  ((address & 0x3ff) != 0x00)
            ||((address < FIRMWARE_START_ADDRESS) && (address != APP_HANDLE_PAGE))) {
-            DEBUG_E("Invalid address for Erase!\n\r");
+            LOG_E("Invalid address for Erase!\n\r");
             return;
         }
 	TBLPAG = ((address & 0x7F0000)>>16);
@@ -297,7 +297,7 @@ void flash_write(UINT32 address, BYTE *data)
 
         if(  ((address & 0x3ff) != 0x00)
            ||((address < FIRMWARE_START_ADDRESS) && (address != APP_HANDLE_PAGE))) {
-            DEBUG_E("Invalid address for Erase!\n\r");
+            LOG_E("Invalid address for Erase!\n\r");
             return;
         }
 
@@ -523,7 +523,7 @@ void random_init(void)
 		data++;
 	}
 
-	DEBUG_D("Seed 0x%lx\n\r", seed);
+	LOG_D("Seed 0x%lx\n\r", seed);
 	srand(seed);
 }
 
@@ -628,7 +628,7 @@ void spi_init(void)
 {
 	BYTE loop;
 
-	DEBUG_D("spi_init()\n\r");
+	LOG_D("spi_init()\n\r");
 
 	/*
 	 * short delay before init SPI
