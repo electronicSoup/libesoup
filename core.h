@@ -75,8 +75,14 @@
 
 /*
  * Flash addresses
+ *
+ * Start of Firmware code
  */
 #define FIRMWARE_START_ADDRESS 0x8800
+
+/*
+ * Address of the App's page in low memory
+ */
 #define APP_HANDLE_PAGE        0x400
 
 /*

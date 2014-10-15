@@ -33,11 +33,12 @@
   #define LAST_FLASH_ADDRESS 0xBFFF
 #endif
 #if defined(PIC24FJ256GB110) || defined(PIC24FJ256GB106)
-  #define FLASH_PAGE_SIZE 0x600
-  #define FIRST_FLASH_ADDRESS 0x07800
+  #define FLASH_PAGE_SIZE 0x400
+//  #define FIRST_FLASH_ADDRESS 0x07800
   #define LAST_FLASH_ADDRESS 0x2ABF9
   #define NUM_INSTRUCTION_PER_ROW 64
 #endif
+
 
 #ifdef HEARTBEAT
 extern void heartbeat_on(union sigval data);
