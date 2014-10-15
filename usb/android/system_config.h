@@ -1,4 +1,24 @@
-
+/**
+ *
+ * \file es_lib/usb/android/system_config.h
+ *
+ * Definition file required by the Microchip USB Host stack
+ *
+ * Copyright 2014 John Whitmore <jwhitmore@electronicsoup.com>
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the version 2 of the GNU General Public License
+ * as published by the Free Software Foundation
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, see <http://www.gnu.org/licenses/>.
+ *
+ */
 #define USB_SUPPORT_HOST
 
 #define MAX_ALLOWED_CURRENT   500
@@ -11,7 +31,6 @@
 #define USB_ENABLE_TRANSFER_EVENT
 
 #define USB_HOST_APP_DATA_EVENT_HANDLER USB_ApplicationDataEventHandler
-//#define USB_ENABLE_SOF_EVENT
 #define USB_ENABLE_1MS_EVENT
 
 #define ANDROID_DEVICE_ATTACH_TIMEOUT 3000
