@@ -1,11 +1,31 @@
-#include "es_lib/core.h"
-#include "system.h"
+/*********************************************************************
+ *
+ * \file es_lib/usb/xpad/usb_config.c
+ *
+ * Required by the Microchip USB Library 
+ *
+ * Copyright 2014 John Whitmore <jwhitmore@electronicsoup.com>
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the version 2 of the GNU General Public License
+ * as published by the Free Software Foundation
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, see <http://www.gnu.org/licenses/>.
+ *
+ *********************************************************************
+ * 
+ * This file sets up the Target Peripheral List for the USB devices
+ * supported by this USB Driver. The TPL Structure has to be setup for
+ * the Microchip Host stack.
+ */
 #include "usb/usb.h"
-#include "usb/usb_host_xpad.h"
-
-// *****************************************************************************
-// Client Driver Function Pointer Table for the USB Embedded Host foundation
-// *****************************************************************************
+#include "usb_host_xpad.h"
 
 CLIENT_DRIVER_TABLE usbClientDrvTable[NUM_CLIENT_DRIVER_ENTRIES] =
 {                                        
@@ -17,18 +37,8 @@ CLIENT_DRIVER_TABLE usbClientDrvTable[NUM_CLIENT_DRIVER_ENTRIES] =
     }
 };
 
-// *****************************************************************************
-// USB Embedded Host Targeted Peripheral List (TPL)
-// *****************************************************************************
 USB_TPL usbTPL[NUM_TPL_ENTRIES] =
 {
-      /*[1] Device identification information
-        [2] Initial USB configuration to use
-        [3] Client driver table entry
-        [4] Flags (HNP supported, client driver entry, SetConfiguration() commands allowed)
-    ---------------------------------------------------------------------
-                [1]                      [2][3] [4]
-    ---------------------------------------------------------------------*/
     { INIT_VID_PID( 0x046Dul, 0xC21Dul ), 0, 0, {0} }, // Logitech Gamepad F310
 };
 

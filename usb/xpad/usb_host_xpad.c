@@ -1,5 +1,31 @@
+/*********************************************************************
+ *
+ * \file es_lib/usb/xpad/usb_config.c
+ *
+ * The USB Driver for the Logitech xbox gamepad
+ *
+ * http://euc.jp/periphs/xbox-controller.ja.html
+ *
+ * Copyright 2014 John Whitmore <jwhitmore@electronicsoup.com>
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the version 2 of the GNU General Public License
+ * as published by the Free Software Foundation
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, see <http://www.gnu.org/licenses/>.
+ *
+ *********************************************************************
+ * 
+ */
+#include <stdio.h>
 #include <usb/usb.h>
-#include "usb/usb_host_xpad_events.h"
+#include "usb_host_xpad_events.h"
 
 #include "system.h"
 
@@ -8,9 +34,15 @@
 
 #include "es_lib/logger/serial_log.h"
 
+/*
+ * USB Descriptor Constants.
+ */
 #define USB_DESC_bLength                                0
 #define USB_DESC_bDescriptorType                        1
 
+/*
+ * USB Descriptor Types.
+ */
 #define USB_DEVICE_DESCRIPTOR                           0x01
 #define USB_CONFIG_DESCRIPTOR                           0x02
 #define USB_STRING_DESCRIPTOR                           0x03
@@ -18,6 +50,9 @@
 #define USB_ENDPOINT_DESCRIPTOR                         0x05
 #define USB_HID_DESCRIPTOR                              0x21
 
+/*
+ * USB Device Descriptor data offsets.
+ */
 #define USB_DEV_DESC_bDeviceClass                       4
 #define USB_DEV_DESC_bDeviceSubClass                    5
 #define USB_DEV_DESC_bDeviceProtocol                    6
@@ -26,26 +61,40 @@
 #define USB_DEV_DESC_PID_OFFSET                         10
 #define USB_DEV_DESC_NUM_CONFIGS_OFFSET                 17
 
+/*
+ * USB Config Descriptor data offsets.
+ */
 #define USB_CONFIG_DESC_wTotalLength                    2
 
+/*
+ * USB Endpoint Descriptor data offsets.
+ */
 #define USB_ENDPOINT_DESC_bEndpointAddress              2
 #define USB_ENDPOINT_DESC_bmAttributes                  3
 #define USB_ENDPOINT_DESC_wMaxPacketSize                4
 
+/*
+ * USB Interface Descriptor data offsets.
+ */
 #define USB_INTERFACE_DESC_bInterfaceNumber             2
 #define USB_INTERFACE_DESC_bNumEndpoints                4
 #define USB_INTERFACE_DESC_bInterfaceClass              5
 #define USB_INTERFACE_DESC_bInterfaceSubClass           6
 #define USB_INTERFACE_DESC_bInterfaceProtocol           7
 
+/*
+ * USB Human Interface Device Descriptor data offsets.
+ */
 #define USB_HID_DESC_bNumDescriptors                    5
 #define USB_HID_DESC_bDescriptorType                    6
 #define USB_HID_DESC_wDescriptorLength                  7
 #define USB_HID_DESC_bOptionalDescriptorType            9
 #define USB_HID_DESC_wOptionalDescriptorLength          10
 
-#define USB_ERROR_BUFFER_TOO_SMALL      USB_ERROR_CLASS_DEFINED + 0
-
+/*
+ * This driver will use a very simple state machine simply constantly
+ * reading the data from the connected gamepad device.
+ */
 typedef enum {
 	NO_DEVICE = 0,
 	DEVICE_ATTACHED,
@@ -53,6 +102,9 @@ typedef enum {
 	READING
 } XPAD_DEVICE_STATE;
 
+/*
+ * Information on the connected USB xpad device
+ */
 typedef struct
 {
     uint8_t address;
@@ -86,6 +138,12 @@ typedef struct
 
 static XPAD_DEVICE_DATA xpad_device;
 
+/*
+ * Data structure for the data received from the connected USB
+ * device:
+ *
+ * http://euc.jp/periphs/xbox-controller.ja.html
+ */
 typedef struct {
 	uint8_t zero;
 	uint8_t size;
@@ -123,9 +181,12 @@ XPAD_DATA xpad_data;
 uint8_t rx_buffer[RX_BUFFER_SIZE];
 
 /****************************************************************************
-  Function: xpad_start()
-
-  ***************************************************************************/
+ *  Function: xpad_start()
+ *
+ * Simply initialises the driver by zero-ing data structures used in the 
+ * driver.
+ *
+ ****************************************************************************/
 void xpad_start()
 {
     LOG_D("xpad_start()\n\r");
@@ -134,9 +195,14 @@ void xpad_start()
 }
 
 /****************************************************************************
-  Function:
-
-  ***************************************************************************/
+ *  Function: uint8_t xpad_read(uint8_t* data, uint32_t size)
+ *
+ * Initiates a read opperation from the connected xpad device. The read is
+ * simply initiated, the Microchip Host Stack will process the read and return
+ * any data to this driver via the EVENT_TRANSFER event. So data is processed
+ * in the drivers event handler.
+ *
+ ****************************************************************************/
 uint8_t xpad_read(uint8_t* data, uint32_t size)
 {
 	uint8_t errorCode;
@@ -151,10 +217,6 @@ uint8_t xpad_read(uint8_t* data, uint32_t size)
 
 	if (xpad_device.status.rx_busy == 1) {
 		return USB_ENDPOINT_BUSY;
-	}
-
-	if (size < xpad_device.INEndpointSize) {
-		return USB_ERROR_BUFFER_TOO_SMALL;
 	}
 
 	errorCode = USBHostRead(xpad_device.address,
@@ -175,11 +237,14 @@ uint8_t xpad_read(uint8_t* data, uint32_t size)
 	return errorCode;
 }
 
-
 /****************************************************************************
-  Function: xpad_tasks()
-
-  ***************************************************************************/
+ * Function: xpad_tasks()
+ *
+ * xpad driver's state machine. The state machine simply initiates a USB
+ * read oppearion when the state has been set to read. The driver constantly
+ * reads from the connected deivce.
+ *
+ ****************************************************************************/
 void xpad_tasks(void)
 {
 	uint8_t error_code;
@@ -215,9 +280,15 @@ void xpad_tasks(void)
 }
 
 /****************************************************************************
-  Function: xpad_initialise
-
-  ***************************************************************************/
+ * Function: xpad_change()
+ *
+ * This funciton simply process the 20Byte structure returned from the xpad
+ * monitors for changes in the xpad controller and forwards events to the 
+ * application's even handler for further processing.
+ *
+ * At present only processing the D Pad Down Button as an example.
+ *
+ ****************************************************************************/
 void xpad_change()
 {
 	XPAD_DATA *data;
@@ -241,9 +312,12 @@ void xpad_change()
 }
 
 /****************************************************************************
-  Function: xpad_initialise
-
-  ***************************************************************************/
+ * Function: xpad_initialise
+ *
+ * Function called by the Microchip USB Host stack when a device is plugged
+ * into the USB Port. It simply precesses the Device's descriptors and stores
+ * retreived data in the xpad_device structure.
+ ****************************************************************************/
 bool xpad_initialise ( uint8_t address, uint32_t flags, uint8_t clientDriverID )
 {
 	uint8_t *descriptor = NULL;
@@ -377,9 +451,13 @@ bool xpad_initialise ( uint8_t address, uint32_t flags, uint8_t clientDriverID )
 }
 
 /****************************************************************************
-  Function: xpad_event_handler()
-
-  ***************************************************************************/
+ * Function: xpad_event_handler()
+ *
+ * Handler for events from the Microchip USB Host Stack. The main event 
+ * received is the EVENT_TRANSFER event which will pass data to this driver
+ * received from the connected xpad controller.
+ *
+ ****************************************************************************/
 bool xpad_event_handler( uint8_t address, USB_EVENT event, void *data, uint32_t size )
 {
 	uint32_t count;
@@ -402,6 +480,9 @@ bool xpad_event_handler( uint8_t address, USB_EVENT event, void *data, uint32_t 
 			if ( ((HOST_TRANSFER_DATA *)data)->bEndpointAddress == (xpad_device.INEndpointNum) )
 			{
 				if (count) { // unless NAK or ZLP
+					/*
+					 * Process data received for button chages.
+					 */
 					xpad_change();
 				}
 			}
@@ -438,9 +519,12 @@ bool xpad_event_handler( uint8_t address, USB_EVENT event, void *data, uint32_t 
 }
 
 /****************************************************************************
-  Function: xpad_data_event_handler()
-
-  ***************************************************************************/
+ * Function: xpad_data_event_handler()
+ *
+ * This data event handler is only used for the 1MS event which causes the 
+ * driver's state machine to be checked for required processing.
+ *
+ ****************************************************************************/
 bool xpad_data_event_handler( uint8_t address, USB_EVENT event, void *data, uint32_t size )
 {
 	switch (event) {
@@ -457,4 +541,3 @@ bool xpad_data_event_handler( uint8_t address, USB_EVENT event, void *data, uint
 	}
 	return false;
 }
-
