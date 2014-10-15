@@ -1,0 +1,2 @@
+#define USB_XPAD_D_DOWN_PRESS           EVENT_USER_BASE + 0
+#define USB_XPAD_D_DOWN_RELEASE         EVENT_USER_BASE + 1
