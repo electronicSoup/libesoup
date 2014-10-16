@@ -59,14 +59,6 @@ extern void flash_write(UINT32 address, BYTE *data);
 
 #endif
 
-#ifdef EEPROM
-extern result_t eeprom_read(UINT16 addr, BYTE *data);
-extern result_t eeprom_write(UINT16 addr, BYTE data);
-extern result_t eeprom_erase(UINT16 addr);
-extern UINT16   eeprom_str_read(UINT16 addr, char *buffer, BYTE len);
-extern UINT16   eeprom_str_write(UINT16 addr, char *buffer);
-#endif
-
 #ifdef HW_SPI
 #if defined(PIC24FJ256GB106)
 extern void spi_init(void);

@@ -52,13 +52,6 @@
 #define HW_SPI
 
 /*
- * Define EEPROM to enable EEPROM read and write functionality.
- *
- * NOTE: HW_SPI Must be enabled for this option!
- */
-#define EEPROM
-
-/*
  * CAN Definitions
  */
 /*

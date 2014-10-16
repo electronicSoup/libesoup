@@ -32,9 +32,7 @@
 #define DEBUG_FILE
 #include "es_lib/logger/serial_log.h"
 
-#if LOG_LEVEL < NO_LOGGING
 #define TAG "UTILS"
-#endif
 
 #define NUM_INSTRUCTION_PER_ROW 64
 
@@ -155,112 +153,6 @@ void flash_write(UINT32 address, BYTE *data)
 	__builtin_write_NVM(); // Perform unlock sequence and set WR
 }
 
-
-#ifdef EEPROM
-result_t eeprom_read(UINT16 address, BYTE *data)
-{
-	if(address < EEPROM_MAX_ADDRESS) {
-		EEPROM_Select();
-		Nop();
-		SPIWriteByte(EEPROM_READ);
-		SPIWriteByte((BYTE)address);
-		*data = SPIWriteByte(0x00);
-		EEPROM_DeSelect();
-		return(SUCCESS);
-	}
-	return (ERR_ADDRESS_RANGE);
-}
-#endif
-
-#ifdef EEPROM
-result_t eeprom_write(UINT16 address, BYTE data)
-{
-	LOG_D("eeprom_write(0x%x, 0x%x)\n\r", address, data);
-	if (address <= EEPROM_MAX_ADDRESS) {
-		EEPROM_Select();
-		Nop();
-
-		SPIWriteByte(EEPROM_WRITE_ENABLE);
-		EEPROM_DeSelect();
-
-		EEPROM_Select();
-
-		SPIWriteByte(EEPROM_WRITE);
-		SPIWriteByte((BYTE)address);
-		SPIWriteByte(data);
-		EEPROM_DeSelect();
-
-		EEPROM_Select();
-		SPIWriteByte(EEPROM_WRITE_DISABLE);
-		EEPROM_DeSelect();
-		return(SUCCESS);
-        }
-        LOG_E("eeprom_write Address Range Error!\n\r");
-	return (ERR_ADDRESS_RANGE);
-}
-#endif
-
-#ifdef EEPROM
-result_t eeprom_erase(UINT16 addr)
-{
-	u16 loop;
-
-	for (loop = addr; loop <= EEPROM_MAX_ADDRESS; loop++) {
-		asm ("CLRWDT");
-		eeprom_write(loop, 0x00);
-	}
-
-	return (SUCCESS);
-}
-#endif //EEPROM
-
-#ifdef EEPROM
-UINT16 eeprom_str_read(UINT16 addr, char *buffer, BYTE len)
-{
-	BYTE character;
-	char *ptr;
-	BYTE num = 0;
-
-	LOG_D("eeprom_str_read()\n\r");
-
-	ptr = buffer;
-
-	eeprom_read(addr++, &character);
-
-	while ((character != 0) && (character != 0xff) && (num < len)) {
-		*ptr++ = character;
-		num++;
-		eeprom_read(addr++, &character);
-	}
-	*ptr = 0x00;
-	LOG_D("eeprom_str_read() read %s\n\r", buffer);
-
-	return (num);
-}
-#endif //EEPROM
-
-#ifdef EEPROM
-UINT16 eeprom_str_write(UINT16 addr, char *buffer)
-{
-	char *ptr;
-	BYTE copied = 0;
-
-	LOG_D("eeprom_str_write()\n\r");
-
-	ptr = buffer;
-
-	while (*ptr) {
-		LOG_D("Write to location %d value 0x%x\n\r", addr, *ptr);
-		eeprom_write(addr++, *ptr++);
-		copied++;
-	}
-	LOG_D("Write loop finished\n\r");
-	eeprom_write(addr, 0x00);
-
-	return (copied);
-}
-#endif //EEPROM
-
 void random_init(void)
 {
 	u8   loop;
@@ -319,13 +211,11 @@ void spi_init(void)
 	 */
 	for (loop = 0; loop < 0xff; loop++) Nop();
 
-#ifdef EEPROM
 	/*
 	 * Initialise the EEPROM Chip Select Pin
 	 */
 	EEPROM_CS_PIN_DIRECTION = OUTPUT_PIN;
 	EEPROM_DeSelect();
-#endif
 
 	SPI_SCK_DIRECTION = OUTPUT_PIN;
 	SPI_MISO_DIRECTION = INPUT_PIN;
