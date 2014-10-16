@@ -2,7 +2,7 @@
  *
  * \file es_lib/core.h
  *
- * Core definitions required by electronicSoup CAN code
+ * Core definitions required by electronicSoup Cinnamon Bun
  *
  * Copyright 2014 John Whitmore <jwhitmore@electronicsoup.com>
  *
@@ -48,6 +48,13 @@
     #define EEPROM_Select()            EEPROM_CS = 0
     #define EEPROM_DeSelect()          EEPROM_CS = 1
 
+    #define EEPROM_READ           0x03
+    #define EEPROM_WRITE          0x02
+    #define EEPROM_WRITE_DISABLE  0x04
+    #define EEPROM_WRITE_ENABLE   0x06
+    #define EEPROM_STATUS_READ    0x05
+    #define EEPROM_STATUS_WRITE   0x01
+
     //  RD0  - /CAN INT
     #define CAN_INTERRUPT_PIN_DIRECTION    TRISDbits.TRISD0
     #define CAN_INTERRUPT_PIN                  PORTDbits.RD0
@@ -88,21 +95,30 @@
 /*
  * USB Host Power pin
  */
-//#define USB_HOST_POWER_PIN_DIRECTION    TRISDbits.TRISD8
-//#define USB_HOST_POWER                  LATDbits.LATD8
 #define USB_HOST_POWER TRISDbits.TRISD8 = OUTPUT_PIN; LATDbits.LATD8 = 1;
+#define USB_DEVICE     TRISDbits.TRISD8 = OUTPUT_PIN; LATDbits.LATD8 = 0;
+
+/*
+ * The Hardware has a "Boot" Jumper. If the jumper is not connected the
+ * bootloader does NOT attempt to connect to an Android device and allow
+ * firmware update.
+ *
+ * NOTE: This definition might look incorrect with the '=' but it IS 
+ * Correct. The switch is expected to be used in an 'if' statement. The 
+ * first part will be false but it's the second part of the or statement
+ * that will dictate the action of the if!
+ */
+#define BOOT_FLAG      (TRISDbits.TRISD11 = 0 || PORTDbits.RD11)
+
 /*
  * Include MicroChip's definitions
  */
 #if defined(MCP)
     #include <GenericTypeDefs.h>
 
-//    typedef BOOL     bool;
     typedef UINT8    u8;
     typedef UINT16   u16;
     typedef UINT32   u32;
-
-//    #include <xc.h>
 
 #elif defined(ES_LINUX)
     #include <stdint.h>
