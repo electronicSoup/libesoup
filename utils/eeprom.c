@@ -66,10 +66,10 @@ result_t eeprom_write(UINT16 address, BYTE data)
 	LOG_D("eeprom_write(0x%x, 0x%x)\n\r", address, data);
 
 #ifdef EEPROM_USE_BOOT_PAGE
-	if(address < EEPROM_BOOT_PAGE_SIZE) {
+	if(address <= EEPROM_MAX_ADDRESS) {
 		use_address = (BYTE)address;
 #else
-	if((address + EEPROM_BOOT_PAGE_SIZE) < EEPROM_MAX_ADDRESS) {
+	if((address + EEPROM_BOOT_PAGE_SIZE) <= EEPROM_MAX_ADDRESS) {
 		use_address = address + EEPROM_BOOT_PAGE_SIZE;
 #endif
 		EEPROM_Select();

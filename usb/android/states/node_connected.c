@@ -97,7 +97,7 @@ void app_connected_process_msg(android_command_t cmd, void *data, UINT16 data_le
 #elif defined(ANDROID_BOOT)
             eeprom_write(FIRMWARE_VALID_MAGIC_ADDR, 0x00);
             eeprom_write((FIRMWARE_VALID_MAGIC_ADDR + 1), 0x00);
-            eeprom_erase(FIRMWARE_EEPROM_START);
+            eeprom_erase(EEPROM_BOOT_PAGE_SIZE);
             firmware_valid = FALSE;
 #endif //ANDROID_NODE / ANDROID_BOOT
             transmit_ready();
