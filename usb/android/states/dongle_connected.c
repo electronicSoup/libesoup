@@ -28,7 +28,7 @@
 #include "dongle_ipc.h"
 #include "states.h"
 #include "es_lib/utils/utils.h"
-#include "es_lib/android/android.h"
+#include "es_lib/usb/android/android.h"
 #include "main.h"
 
 #define DEBUG_FILE

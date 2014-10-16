@@ -1,7 +1,27 @@
+/**
+ *
+ * \file es_lib/example_system.h
+ *
+ * This file contains the various switches which can be used with the
+ * es_lib source code library. 
+ *
+ * Copyright 2014 John Whitmore <jwhitmore@electronicsoup.com>
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the version 2 of the GNU General Public License
+ * as published by the Free Software Foundation
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, see <http://www.gnu.org/licenses/>.
+ *
+ */
 
 #include "es_lib/core.h"
-
-#define DONGLE
 
 /*
  * Baud rate of the serial debug port
@@ -32,6 +52,13 @@
 #define HW_SPI
 
 /*
+ * Define EEPROM to enable EEPROM read and write functionality.
+ *
+ * NOTE: HW_SPI Must be enabled for this option!
+ */
+#define EEPROM
+
+/*
  * CAN Definitions
  */
 /*
@@ -41,3 +68,13 @@
 #define CAN_BAUD_AUTO_DETECT_LISTEN_PERIOD    SECONDS_TO_TICKS(10)
 #define CAN_L2_HANDLER_ARRAY_SIZE 5
 //#define CAN_LAYER_3
+
+/*
+ * Android Definitions:
+ *
+ * When using the library Android states one of these switches should be
+ * enabled.
+ */
+//#define ANDROID_BOOT
+//#define ANDROID_NODE
+//#define ANDROID_DONGLE

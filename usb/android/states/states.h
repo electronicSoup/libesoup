@@ -1,6 +1,6 @@
 /**
  *
- * \file states.h
+ * \file es_lib/usb/android/states/states.h
  *
  * Definitions for the Android states defined by the Firmware.
  *
@@ -24,9 +24,9 @@
 
 #include "system.h"
 #include "usb/usb.h"
-#if defined(NODE) || defined(BOOT)
+#if defined(ANDROID_NODE) || defined(ANDROID_BOOT)
 #include "node_ipc.h"
-#elif defined(DONGLE)
+#elif defined(ANDROID_DONGLE)
 #include "dongle_ipc.h"
 #endif
 
@@ -41,9 +41,9 @@ extern state_t current_state;
 
 extern void set_idle_state(void);
 extern void set_android_connected_state(void);
-#if defined(NODE) || defined(BOOT)
+#if defined(ANDROID_NODE) || defined(ANDROID_BOOT)
 extern void set_node_connected_state(void);
-#elif defined(DONGLE)
+#elif defined(ANDROID_DONGLE)
 extern void set_dongle_connected_state(void);
 #endif
 

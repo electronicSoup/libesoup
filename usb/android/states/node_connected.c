@@ -1,6 +1,6 @@
 /**
  *
- * \file states/node_connected.c
+ * \file es_lib/usb/android/states/node_connected.c
  *
  * The Android Application Connected state for the Android Communications.
  *
@@ -28,15 +28,16 @@
 #include "node_ipc.h"
 #include "states.h"
 #include "es_lib/utils/utils.h"
-#include "es_lib/android/android.h"
+#include "es_lib/usb/android/android.h"
 #include "main.h"
-#ifdef NODE
+#ifdef ANDROID_NODE
 #include "es_lib/os/os_api.h"
-#endif //NODE
-#define DEBUG_FILE
-#include "es_lib/logger/serial.h"
+#endif //ANDROID_NODE
 
-#define TAG "NodeConnected"
+#define DEBUG_FILE
+#include "es_lib/logger/serial_log.h"
+
+#define TAG "Android-NodeConnected"
 
 void app_connected_process_msg(android_command_t, void *, UINT16);
 void app_connected_main(void);
@@ -47,19 +48,19 @@ static void transmit_app_type_info(void);
 static void transmit_hardware_info(void);
 static void transmit_bootcode_info(void);
 static void transmit_firmware_info(void);
-#ifdef NODE
+#ifdef ANDROID_NODE
 static void transmit_application_info(void);
 static void transmit_node_config_info(void);
-#endif //NODE
-#ifdef BOOT
+#endif //ANDROID_NODE
+#ifdef ANDROID_BOOT
 extern void jmp_firmware(void);
 extern BOOL firmware_valid;
-#endif //BOOT
+#endif //ANDROID_BOOT
 
 
 void set_node_connected_state(void)
 {
-    DEBUG_D("App Connected State\n\r");
+    LOG_D("App Connected State\n\r");
     // Android App connected so cancel the timer. 
     // Android App now controls booting
     T2CONbits.TON = 0;
@@ -78,27 +79,27 @@ void app_connected_process_msg(android_command_t cmd, void *data, UINT16 data_le
 
 //    DEBUG_D("app_connected_process_msg data lenght %d\n\r", data_len);
     switch(cmd) {
-#ifdef BOOT
+#ifdef ANDROID_BOOT
         case COMMAND_BOOT:
-            DEBUG_D("COMMAND_BOOT Jump to application\n\r");
+            LOG_D("COMMAND_BOOT Jump to application\n\r");
             jmp_firmware();
             break;
-#endif //BOOT
+#endif //ANDROID_BOOT
 
         case COMMAND_BEGIN_FLASH:
-            DEBUG_D("COMMAND_BEGIN_FLASH\n\r");
-#ifdef NODE
+            LOG_D("COMMAND_BEGIN_FLASH\n\r");
+#ifdef ANDROID_NODE
             os_cancel_all_timers();
             os_clear_app_eeprom();
             eeprom_write(APP_VALID_MAGIC_ADDR, 0x00);
             eeprom_write((APP_VALID_MAGIC_ADDR + 1), 0x00);
             app_valid = FALSE;
-#elif defined(BOOT)
+#elif defined(ANDROID_BOOT)
             eeprom_write(FIRMWARE_VALID_MAGIC_ADDR, 0x00);
             eeprom_write((FIRMWARE_VALID_MAGIC_ADDR + 1), 0x00);
             eeprom_erase(FIRMWARE_EEPROM_START);
             firmware_valid = FALSE;
-#endif //NODE  BOOT
+#endif //ANDROID_NODE / ANDROID_BOOT
             transmit_ready();
             break;
 
@@ -111,19 +112,19 @@ void app_connected_process_msg(android_command_t cmd, void *data, UINT16 data_le
                     address = (address << 8) | (byte_data[loop] & 0xff);
                 }
 
-                DEBUG_I("COMMAND_ERASE 0x%lx ", address);
-#if defined(NODE)
+                LOG_I("COMMAND_ERASE 0x%lx\n\r", address);
+#if defined(ANDROID_NODE)
                 if(  (address < APP_START_ADDRESS)
                    &&(address != APP_HANDLE_ADDRESS)) {
-#elif defined(BOOT)
+#elif defined(ANDROID_BOOT)
                 if(address < FIRMWARE_START_ADDRESS) {
 #endif
-                    DEBUG_E("Bad address to Erase\n\r");
+                    LOG_E("Bad address to Erase\n\r");
                 } else {
                     if (!flash_page_empty(address)) {
                         flash_erase(address);
                     } else {
-                        DEBUG_D("Already empty\n\r");
+                        LOG_D("Already empty\n\r");
                     }
                     transmit_ready();
                 }
@@ -139,14 +140,14 @@ void app_connected_process_msg(android_command_t cmd, void *data, UINT16 data_le
                     address = (address << 8) | (byte_data[loop] & 0xff);
                 }
 
-                DEBUG_D("COMMAND_ROW address 0x%lx data length 0x%x\n\r", address, data_len);
-#if defined(NODE)
+                LOG_D("COMMAND_ROW address 0x%lx data length 0x%x\n\r", address, data_len);
+#if defined(ANDROID_NODE)
                 if(  (address < APP_START_ADDRESS)
                    &&(address != APP_HANDLE_ADDRESS)) {
                     DEBUG_E("Bad address to Write to row\n\r");
-#elif defined(BOOT)
+#elif defined(ANDROID_BOOT)
                 if(address < FIRMWARE_START_ADDRESS) {
-                    DEBUG_E("Bad address to Write to row\n\r");
+                    LOG_E("Bad address to Write to row\n\r");
 #endif
                 } else {
                     flash_write(address, &byte_data[4]);
@@ -155,8 +156,8 @@ void app_connected_process_msg(android_command_t cmd, void *data, UINT16 data_le
             }
             break;
         case COMMAND_REFLASHED:
-            DEBUG_D("COMMAND_REFLASHED\n\r");
-#ifdef NODE
+            LOG_D("COMMAND_REFLASHED\n\r");
+#ifdef ANDROID_NODE
             CALL_APP_INIT();
             CALL_APP_MAIN();
             DEBUG_D("Application is valid\n\r");
@@ -168,47 +169,47 @@ void app_connected_process_msg(android_command_t cmd, void *data, UINT16 data_le
             if(eeprom_write((APP_VALID_MAGIC_ADDR + 1), (u8)(~APP_VALID_MAGIC_VALUE)) != SUCCESS) {
                 DEBUG_E("BAD EEPROM Write\n\r");
             }
-#elif defined(BOOT)
+#elif defined(ANDROID_BOOT)
             eeprom_write(FIRMWARE_VALID_MAGIC_ADDR, FIRMWARE_VALID_MAGIC_VALUE);
             eeprom_write((FIRMWARE_VALID_MAGIC_ADDR + 1), (u8)(~FIRMWARE_VALID_MAGIC_VALUE));
             firmware_valid = TRUE;
             break;
-#endif //NODE BOOT
+#endif //ANDROID_NODE / ANDROID_BOOT
         case ANDROID_APP_TYPE_REQ:
-            DEBUG_D("ANDROID_APP_TYPE_REQ\n\r");
+            LOG_D("ANDROID_APP_TYPE_REQ\n\r");
             transmit_app_type_info();
             break;
 
         case HARDWARE_INFO_REQ:
-            DEBUG_D("HARDWARE_INFO_REQ\n\r");
+            LOG_D("HARDWARE_INFO_REQ\n\r");
             transmit_hardware_info();
             break;
 
         case BOOTCODE_INFO_REQ:
-            DEBUG_D("BOOTCODE_INFO_REQ\n\r");
+            LOG_D("BOOTCODE_INFO_REQ\n\r");
             transmit_bootcode_info();
             break;
 
         case FIRMWARE_INFO_REQ:
-            DEBUG_D("FIRMWARE_INFO_REQ\n\r");
+            LOG_D("FIRMWARE_INFO_REQ\n\r");
             transmit_firmware_info();
             break;
 
-#ifdef NODE
+#ifdef ANDROID_NODE
         case APPLICATION_INFO_REQ:
             DEBUG_D("APPLICATION_INFO_REQ\n\r");
             transmit_application_info();
             break;
-#endif //NODE
+#endif //ANDROID_NODE
 
-#ifdef NODE
+#ifdef ANDROID_NODE
         case NODE_CONFIG_INFO_REQ:
             DEBUG_D("NODE_CONFIG_INFO_REQ\n\r");
             transmit_node_config_info();
             break;
-#endif //NODE
+#endif //ANDROID_NODE
 
-#ifdef NODE
+#ifdef ANDROID_NODE
         case NODE_CONFIG_UPDATE:
             byte_data = (BYTE *) data;
             DEBUG_D("NODE_CONFIG_UPDATE\n\r");
@@ -224,10 +225,10 @@ void app_connected_process_msg(android_command_t cmd, void *data, UINT16 data_le
             len = eeprom_str_write(NODE_DESCRIPTION_ADDR, &byte_data[3]);
             DEBUG_D("%d bytes written to EEPROM\n\r", len);
             break;
-#endif //NODE
+#endif //ANDROID_NODE
 
         default:
-            DEBUG_W("Unprocessed message 0x%x\n\r", cmd);
+            LOG_W("Unprocessed message 0x%x\n\r", cmd);
             break;
     }
 }
@@ -262,13 +263,13 @@ void transmit_app_type_info(void)
 {
     char buffer[3];
 
-    DEBUG_D("transmit_app_type_info()\n\r");
+    LOG_D("transmit_app_type_info()\n\r");
 
     buffer[0] = 2;
     buffer[1] = ANDROID_APP_TYPE_RESP;
-#if defined(BOOT)
+#if defined(ANDROID_BOOT)
     buffer[2] = BOOTLOADER_APP;
-#elif defined(NODE)
+#elif defined(ANDROID_NODE)
     buffer[2] = NODE_CONFIG_APP;
 #endif
     android_transmit((BYTE *)buffer, 3);
@@ -278,7 +279,7 @@ void transmit_hardware_info(void)
     char buffer[160];
     BYTE index = 0;
 
-    DEBUG_D("transmit_hardware_info()\n\r");
+    LOG_D("transmit_hardware_info()\n\r");
 
     buffer[1] = HARDWARE_INFO_RESP;
 
@@ -289,7 +290,7 @@ void transmit_hardware_info(void)
     index += psv_strcpy(&buffer[index], hardware_version, 10) + 1;
     index += psv_strcpy(&buffer[index], hardware_uri, 50) + 1;
 
-    DEBUG_D("Transmit boot info length %d\n\r", index);
+    LOG_D("Transmit boot info length %d\n\r", index);
     buffer[0] = index;
 
     android_transmit((BYTE *)buffer, index);
@@ -309,7 +310,7 @@ void transmit_bootcode_info(void)
     index += psv_strcpy(&buffer[index], bootcode_version, 10) + 1;
     index += psv_strcpy(&buffer[index], bootcode_uri, 50) + 1;
 
-    DEBUG_D("Transmit boot info length %d\n\r", index);
+    LOG_D("Transmit boot info length %d\n\r", index);
     buffer[0] = index;
 
     android_transmit((BYTE *)buffer, index);
@@ -327,13 +328,13 @@ void transmit_firmware_info(void)
     index += psv_strcpy(&buffer[index], firmware_description, 50) + 1;
     index += psv_strcpy(&buffer[index], firmware_version, 10) + 1;
     index += psv_strcpy(&buffer[index], firmware_uri, 50) + 1;
-    DEBUG_D("Transmit Firmware info length %d\n\r", index);
+    LOG_D("Transmit Firmware info length %d\n\r", index);
     buffer[0] = index;
 
     android_transmit((BYTE *)buffer, index);
 }
 
-#ifdef NODE
+#ifdef ANDROID_NODE
 void transmit_application_info(void)
 {
     char buffer[153];
@@ -366,9 +367,9 @@ void transmit_application_info(void)
 
     android_transmit((BYTE *)buffer, index);
 }
-#endif //NODE
+#endif //ANDROID_NODE
 
-#ifdef NODE
+#ifdef ANDROID_NODE
 void transmit_node_config_info(void)
 {
     char buffer[55];
@@ -381,23 +382,23 @@ void transmit_node_config_info(void)
     index = 2;
 
     eeprom_read(L3_NODE_ADDRESS_ADDR, (BYTE *) &value);
-    DEBUG_D("Layer 3 Node Address 0x%x\n\r", value);
+    LOG_D("Layer 3 Node Address 0x%x\n\r", value);
     buffer[index++] = value;
 
     eeprom_read(CAN_BAUD_RATE_ADDR, (BYTE *) &value);
-    DEBUG_D("CAN Baud Rate 0x%x\n\r", value);
+    LOG_D("CAN Baud Rate 0x%x\n\r", value);
     buffer[index++] = value;
 
     eeprom_read(IO_ADDRESS_ADDR, (BYTE *) &value);
-    DEBUG_D("I/O Address 0x%x\n\r", value);
+    LOG_D("I/O Address 0x%x\n\r", value);
     buffer[index++] = value;
 
     len = eeprom_str_read(NODE_DESCRIPTION_ADDR, &buffer[index], 50);
-    DEBUG_D("Description: String Length %d string '%s'\n\r", len, &buffer[index]);
+    LOG_D("Description: String Length %d string '%s'\n\r", len, &buffer[index]);
 
     index = index + len;
     buffer[0] = index;
 
     android_transmit((BYTE *)buffer, index);
 }
-#endif //NODE
+#endif //ANDROID_NODE

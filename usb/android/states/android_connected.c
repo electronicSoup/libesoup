@@ -1,6 +1,6 @@
 /**
  *
- * \file states/androidConnected.c
+ * \file es_lib/usb/android/states/androidConnected.c
  *
  * The Android Device Connected state for the Android Communications.
  *
@@ -25,9 +25,9 @@
 #include "system.h"
 #include "usb/usb.h"
 #include "usb/usb_host_android.h"
-#if defined(NODE) || defined(BOOT)
+#if defined(ANDROID_NODE) || defined(ANDROID_BOOT)
 #include "node_ipc.h"
-#elif defined(DONGLE)
+#elif defined(ANDROID_DONGLE)
 #include "dongle_ipc.h"
 #endif
 #include "states.h"
@@ -35,9 +35,7 @@
 #define DEBUG_FILE
 #include "es_lib/logger/serial_log.h"
 
-#if LOG_LEVEL < NO_LOGGING
-#define TAG "Android"
-#endif
+#define TAG "Android-Connected"
 
 /*
  * Forward declatation of functions in the file.
@@ -66,9 +64,9 @@ void set_android_connected_state(void)
 void android_connected_process_msg(android_command_t cmd, void *data, UINT16 data_len)
 {
 	if (cmd == COMMAND_APP_CONNECT) {
-#if defined(DONGLE)
+#if defined(ANDROID_DONGLE)
 		set_dongle_connected_state();
-#elif defined(NODE) || defined(BOOT)
+#elif defined(ANDROID_NODE) || defined(ANDROID_BOOT)
 		set_node_connected_state();
 #endif
 	} else {

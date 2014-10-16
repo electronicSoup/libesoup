@@ -1,6 +1,6 @@
 /**
  *
- * \file states/idle.c
+ * \file es_lib/usb/android/states/idle.c
  *
  * The Bootloader Idle state for the Android Communications.
  *
@@ -25,9 +25,9 @@
 #include "system.h"
 #include "usb/usb.h"
 #include "usb/usb_host_android.h"
-#if defined(NODE) || defined(BOOT)
+#if defined(ANDROID_NODE) || defined(ANDROID_BOOT)
 #include "node_ipc.h"
-#elif defined(DONGLE)
+#elif defined(ANDROID_DONGLE)
 #include "dongle_ipc.h"
 #endif
 #include "states.h"
@@ -35,9 +35,7 @@
 #define DEBUG_FILE
 #include "es_lib/logger/serial_log.h"
 
-#if LOG_LEVEL < NO_LOGGING
 #define TAG "Idle"
-#endif
 
 /*
  * Forward declarations of the states functions.
