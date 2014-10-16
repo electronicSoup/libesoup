@@ -30,6 +30,8 @@
 //#include "es_lib/timers/timer_sys.h"
 //#endif
 
+#include "es_lib/utils/spi.h"
+
 #define DEBUG_FILE
 #include "es_lib/logger/serial_log.h"
 

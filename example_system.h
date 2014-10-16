@@ -49,8 +49,6 @@
  */
 #define NUMBER_OF_TIMERS 20
 
-#define HW_SPI
-
 /*
  * CAN Definitions
  */

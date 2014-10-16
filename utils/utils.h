@@ -59,13 +59,6 @@ extern void flash_write(UINT32 address, BYTE *data);
 
 #endif
 
-#ifdef HW_SPI
-#if defined(PIC24FJ256GB106)
-extern void spi_init(void);
-extern unsigned char SPIWriteByte(unsigned char write);
-#endif
-#endif
-
 extern void random_init(void);
 
 //#if defined( __C30__ )
