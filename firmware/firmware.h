@@ -32,7 +32,7 @@
  *  asm("CLRWDT");
  *
  *******************************************************************************
-/*
+ *
  * The configuration settings are needed to program into the last page of Flash
  *
  * This is might seem a little strange as the Bootloader has set up the
