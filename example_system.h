@@ -71,3 +71,8 @@
 //#define ANDROID_BOOT
 //#define ANDROID_NODE
 //#define ANDROID_DONGLE
+
+/*
+ * If project is to use the BOOT Page of EEPROM then define this option.
+ */
+//#define EEPROM_USE_BOOT_PAGE

@@ -35,15 +35,21 @@
 
 #define TAG "EEPROM"
 
-#define NUM_INSTRUCTION_PER_ROW 64
-
 result_t eeprom_read(UINT16 address, BYTE *data)
 {
-	if(address < EEPROM_MAX_ADDRESS) {
+	BYTE use_address;
+
+#ifdef EEPROM_USE_BOOT_PAGE
+	if(address < EEPROM_BOOT_PAGE_SIZE) {
+		use_address = (BYTE)address;
+#else
+	if((address + EEPROM_BOOT_PAGE_SIZE) < EEPROM_MAX_ADDRESS) {
+		use_address = address + EEPROM_BOOT_PAGE_SIZE;
+#endif
 		EEPROM_Select();
 		Nop();
 		SPIWriteByte(EEPROM_READ);
-		SPIWriteByte((BYTE)address);
+		SPIWriteByte((BYTE)use_address);
 		*data = SPIWriteByte(0x00);
 		EEPROM_DeSelect();
 		return(SUCCESS);
@@ -53,8 +59,17 @@ result_t eeprom_read(UINT16 address, BYTE *data)
 
 result_t eeprom_write(UINT16 address, BYTE data)
 {
+	BYTE use_address;
+
 	LOG_D("eeprom_write(0x%x, 0x%x)\n\r", address, data);
-	if (address <= EEPROM_MAX_ADDRESS) {
+
+#ifdef EEPROM_USE_BOOT_PAGE
+	if(address < EEPROM_BOOT_PAGE_SIZE) {
+		use_address = (BYTE)address;
+#else
+	if((address + EEPROM_BOOT_PAGE_SIZE) < EEPROM_MAX_ADDRESS) {
+		use_address = address + EEPROM_BOOT_PAGE_SIZE;
+#endif
 		EEPROM_Select();
 		Nop();
 
@@ -64,7 +79,7 @@ result_t eeprom_write(UINT16 address, BYTE data)
 		EEPROM_Select();
 
 		SPIWriteByte(EEPROM_WRITE);
-		SPIWriteByte((BYTE)address);
+		SPIWriteByte((BYTE)use_address);
 		SPIWriteByte(data);
 		EEPROM_DeSelect();
 
@@ -77,11 +92,11 @@ result_t eeprom_write(UINT16 address, BYTE data)
 	return (ERR_ADDRESS_RANGE);
 }
 
-result_t eeprom_erase(UINT16 addr)
+result_t eeprom_erase(UINT16 start_addr)
 {
 	u16 loop;
 
-	for (loop = addr; loop <= EEPROM_MAX_ADDRESS; loop++) {
+	for (loop = start_addr; loop <= EEPROM_MAX_ADDRESS; loop++) {
 		asm ("CLRWDT");
 		eeprom_write(loop, 0x00);
 	}

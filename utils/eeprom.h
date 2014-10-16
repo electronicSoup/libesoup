@@ -2,7 +2,7 @@
  *
  * \file es_lib/utils/utils.h
  *
- * EEPROM functions of the electronicSoup CAN code Library
+ * Cinnamon Bun EEPROM functions of the electronicSoup code Library
  *
  * Copyright 2014 John Whitmore <jwhitmore@electronicsoup.com>
  *

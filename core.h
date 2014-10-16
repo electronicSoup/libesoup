@@ -31,6 +31,12 @@
 
 #define SPI_RW_FINISHED SPI1STATbits.SPIRBF
 
+/*
+ *  EEPROM Address Map
+ */
+#define EEPROM_BOOT_PAGE_SIZE   0x20
+#define EEPROM_MAX_ADDRESS      0x7F
+
     /*
      *  RD1/RP24  - SCK
      *  RD2       - SO  (Pin 14 of 18 DIP 2515)
@@ -40,8 +46,8 @@
      *  RD0       - /CAN INT
      */
 
+
     //  RD7 - /EEPROM CS
-    #define EEPROM_MAX_ADDRESS 0x7F
     #define EEPROM_CS_PIN_DIRECTION    TRISDbits.TRISD7
     #define EEPROM_CS                  LATDbits.LATD7
 
