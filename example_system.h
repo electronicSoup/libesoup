@@ -52,13 +52,33 @@
 /*
  * CAN Definitions
  */
+//#define CAN
+
+#ifdef CAN
+#define CAN_BAUD_AUTO_DETECT_LISTEN_PERIOD    SECONDS_TO_TICKS(10)
 /*
  * The number of Handlers that can be registered with Layer 2
  */
-#define CAN
-#define CAN_BAUD_AUTO_DETECT_LISTEN_PERIOD    SECONDS_TO_TICKS(10)
 #define CAN_L2_HANDLER_ARRAY_SIZE 5
+#endif
+
+//#define CAN_L2_IDLE_PING
+
+#ifdef CAN_L2_IDLE_PING
+#define CAN_L2_IDLE_PING_FRAME_ID 0x666
+/*
+ * The Ping Period will be between CAN_IDLE_PERIOD - 0.5 Seconds and +0.5 Seconds
+ * As a result this shold probably be greater then 1 Second. If a node picks a 
+ * random value of Zero then it'll do nothing but ping!
+ */
+#define CAN_L2_IDLE_PING_PERIOD     SECONDS_TO_TICKS(2)
+#endif
+
+/*
+ * Include CAN Layer 3 functionality
+ */
 //#define CAN_LAYER_3
+
 
 /*
  * Android Definitions:
@@ -74,3 +94,11 @@
  * If project is to use the BOOT Page of EEPROM then define this option.
  */
 //#define EEPROM_USE_BOOT_PAGE
+
+/*
+ *******************************************************************************
+ *
+ * Project Specific Defines
+ *
+ *******************************************************************************
+ */
