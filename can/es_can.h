@@ -27,7 +27,7 @@
  */
 #if defined(CAN_LAYER_3)
 #define NODE_MANAGEMENT_L3_ID   0xc8  //0x01
-#define NET_LOG_L3_ID   0xc9  // 0x02
+#define NET_LOG_L3_ID           0xc9  // 0x02
 #endif
 
 /*
@@ -139,9 +139,7 @@ extern result_t l2_init(baud_rate_t arg_baud_rate,
 
 extern result_t l2_reg_handler(can_target_t *target);
 
-#ifdef L2_CAN_INTERRUPT_DRIVEN
 extern void L2_ISR(void);
-#endif
 extern void L2_CanTasks(void);
 
 extern result_t l2_tx_frame(can_frame *message);
