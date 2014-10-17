@@ -26,16 +26,13 @@
 
 #define DEBUG_FILE
 #include "es_lib/logger/serial_log.h"
-#undef DEBUG_FILE
 #include "es_lib/can/es_can.h"
 #include "es_lib/can/l2_mcp2515.h"
-#include "es_lib/timers/timer_sys.h"
+#include "es_lib/timers/timers.h"
 
-#include "es_lib/utils/utils.h"
+#include "es_lib/utils/spi.h"
 
 #define TAG "MCP2515"
-
-#define L2_CAN_INTERRUPT_DRIVEN
 
 typedef struct
 {
@@ -69,9 +66,9 @@ static BOOL mcp2515_isr = FALSE;
 /*
  * Byte to store current input values in TXRTSCTRL
  */
-static u8 txrtsctrl = 0x00;
+//static u8 txrtsctrl = 0x00;
 
-#if defined(CAN_IDLE_PING)
+#if defined(CAN_L2_IDLE_PING)
 /*
  * Idle duration before sending a Ping Message
  */
@@ -86,9 +83,9 @@ static void     exp_check_network_connection(timer_t timer_id, union sigval);
 static void     exp_finalise_baudrate_change(timer_t timer_id, union sigval data);
 static void     exp_resend_baudrate_change(timer_t timer_id, union sigval data);
 static void     exp_test_ping(timer_t timer_id, union sigval data);
-#if defined(CAN_IDLE_PING)
+#if defined(CAN_L2_IDLE_PING)
 static void     restart_ping_timer(void);
-#endif // CAN_TEST_PING
+#endif
 
 
 static void     enable_rx_interrupts(void);
@@ -127,9 +124,9 @@ static can_status_t status;
 static baud_rate_t status_baud = no_baud;
 
 static es_timer listen_timer;
-#if defined(CAN_IDLE_PING)
+#if defined(CAN_L2_IDLE_PING)
 static es_timer ping_timer;
-#endif // CAN_IDLE_PING
+#endif // CAN_L2_IDLE_PING
 static void (*status_handler)(u8 mask, can_status_t status, baud_rate_t baud) = NULL;
 
 /**
@@ -148,7 +145,7 @@ result_t l2_init(baud_rate_t arg_baud_rate,
 	u8 loop = 0x00;
 	u8 exit_mode = NORMAL_MODE;
 	u32 delay;
-        result_t result;
+//        result_t result;
 	LOG_D("l2_init()\n\r");
 
 	mcp2515_isr = FALSE;
@@ -160,9 +157,9 @@ result_t l2_init(baud_rate_t arg_baud_rate,
         status_baud = no_baud;
 
 	TIMER_INIT(listen_timer);
-#if defined(CAN_IDLE_PING)
+#if defined(CAN_L2_IDLE_PING)
 	TIMER_INIT(ping_timer);
-#endif // CAN_IDLE_PING
+#endif // CAN_L2_IDLE_PING
 
         /*
          * Initialise the Handlers table
@@ -225,7 +222,7 @@ result_t l2_init(baud_rate_t arg_baud_rate,
 			status_handler(L2_STATUS_MASK, status, status_baud);
 
 		/* Now wait and see if we have errors */
-		start_timer(CAN_BAUD_AUTO_DETECT_LISTEN_PERIOD, exp_check_network_connection, (union sigval)(void *)NULL, &listen_timer);
+		timer_start(CAN_BAUD_AUTO_DETECT_LISTEN_PERIOD, exp_check_network_connection, (union sigval)(void *)NULL, &listen_timer);
 	}
 	asm ("CLRWDT");
 
@@ -243,9 +240,9 @@ result_t l2_init(baud_rate_t arg_baud_rate,
 
 	// Create a random timer between 1 and 1.5 seconds for firing the
 	// Network Idle Ping message
-#if defined(CAN_IDLE_PING)
-	ping_time = (u16)((rand() % SECONDS_TO_TICKS(1)) + (CAN_IDLE_PING_PERIOD - MILLI_SECONDS_TO_TICKS(500)));
-        DEBUG_D("Ping time set to %d Ticks, Ping Period %d - %d\n\r", ping_time, CAN_IDLE_PING_PERIOD, MILLI_SECONDS_TO_TICKS(500));
+#if defined(CAN_L2_IDLE_PING)
+	ping_time = (u16)((rand() % SECONDS_TO_TICKS(1)) + (CAN_L2_IDLE_PING_PERIOD - MILLI_SECONDS_TO_TICKS(500)));
+        LOG_D("Ping time set to %d Ticks, Ping Period %d - %d\n\r", ping_time, CAN_L2_IDLE_PING_PERIOD, MILLI_SECONDS_TO_TICKS(500));
         restart_ping_timer();
 #endif
 
@@ -253,44 +250,44 @@ result_t l2_init(baud_rate_t arg_baud_rate,
 	return(SUCCESS);
 }
 
-#if defined(CAN_IDLE_PING)
+#if defined(CAN_L2_IDLE_PING)
 result_t send_ping(void)
 {
 	can_frame msg;
 
-	msg.can_id = CAN_IDLE_PING_FRAME_ID;
+	msg.can_id = CAN_L2_IDLE_PING_FRAME_ID;
 	msg.can_dlc = 0;
 
 	return(l2_tx_frame(&msg));
 }
 #endif
 
-#if defined(CAN_IDLE_PING)
+#if defined(CAN_L2_IDLE_PING)
 void exp_test_ping(timer_t timer_id __attribute__((unused)), union sigval data __attribute__((unused)))
 {
-	result_t result = SUCCESS;
+//	result_t result = SUCCESS;
 
         LOG_D("exp_test_ping()\n\r");
 	TIMER_INIT(ping_timer);
 
 	if (send_ping() != SUCCESS) {
-		DEBUG_E("Failed to send the PING Message\n\r");
+		LOG_E("Failed to send the PING Message\n\r");
 	}
 }
 #endif
 
-#if defined(CAN_IDLE_PING)
+#if defined(CAN_L2_IDLE_PING)
 void restart_ping_timer(void)
 {
 	if(ping_timer.status == ACTIVE) {
 		LOG_D("Cancel running ping timer\n\r");
- 		if(cancel_timer(&ping_timer) != SUCCESS) {
+ 		if(timer_cancel(&ping_timer) != SUCCESS) {
 			LOG_E("Failed to cancel the Ping timer\n\r");
 			return;
 		}
 	}
 
-	start_timer(ping_time, exp_test_ping, (union sigval)(void *) NULL, &ping_timer);
+	timer_start(ping_time, exp_test_ping, (union sigval)(void *) NULL, &ping_timer);
 }
 #endif
 
@@ -339,7 +336,7 @@ void exp_check_network_connection(timer_t timer_id __attribute__((unused)), unio
 			status_handler(L2_STATUS_MASK, status, status_baud);
 
 		LOG_D("Restart timer\n\r");
-		result = start_timer(CAN_BAUD_AUTO_DETECT_LISTEN_PERIOD,
+		result = timer_start(CAN_BAUD_AUTO_DETECT_LISTEN_PERIOD,
 				     exp_check_network_connection,
 				     (union sigval)(void *)NULL,
 				     &listen_timer);
@@ -385,7 +382,7 @@ void service_device(void)
 
 		LOG_W("*** ISR with zero flags! IOCD %x\n\r", canstat & IOCD);
 	} else {
-            LOG_D("service_device() flags 0x%x\n\r", flags);
+		LOG_D("service_device() flags 0x%x\n\r", flags);
         }
 
 	while(flags != 0x00) {
@@ -395,11 +392,11 @@ void service_device(void)
 			eflg = read_reg(EFLG);
 			LOG_E("*** CAN ERRIR Flag!!!\n\r");
 			LOG_E("*** CAN EFLG %x\n\r", eflg);
-			if(status.bit_field.l2_status == L2_Listening)
+			if(status.bit_field.l2_status == L2_Listening) {
 				connecting_errors++;
                         } else if(status.bit_field.l2_status == L2_Connecting) {
                                 tec = read_reg(TEC);
-                                DEBUG_W("Tx Error Count = %d\n\r", tec);
+                                LOG_W("Tx Error Count = %d\n\r", tec);
                                 if(eflg & TXWAR) {
 					set_can_mode(CONFIG_MODE);
 					set_can_mode(NORMAL_MODE);
@@ -421,7 +418,7 @@ void service_device(void)
 				connecting_errors++;
                         } else if(status.bit_field.l2_status == L2_Connecting) {
                                 tec = read_reg(TEC);
-                                DEBUG_W("Tx Error Count = %d\n\r", tec);
+                                LOG_W("Tx Error Count = %d\n\r", tec);
                         }
 			/*
 			 * We've got an error condition so dump all received messages
@@ -446,7 +443,7 @@ void service_device(void)
 
 		if (flags & RX0IE) {
 			LOG_D("RX0IE\n\r");
-#if defined(CAN_IDLE_PING)
+#if defined(CAN_L2_IDLE_PING)
 			restart_ping_timer();
 #endif
 			/*
@@ -470,7 +467,7 @@ void service_device(void)
 
 		if (flags & RX1IE) {
 			LOG_D("RX1IE\n\r");
-#if defined(CAN_IDLE_PING)
+#if defined(CAN_L2_IDLE_PING)
 			restart_ping_timer();
 #endif
 
@@ -537,7 +534,7 @@ void L2_CanTasks(void)
 	static UINT16 count = 0;
 #endif
 	BYTE loop;
-	BYTE byte;
+//	BYTE byte;
 //        static BYTE last_flags = 0x00;
 //	BYTE flags;
 //	BYTE eflg;
@@ -545,7 +542,7 @@ void L2_CanTasks(void)
         if(mcp2515_isr)
 		service_device();
 
-#ifdef 0
+#if 0
 	count++;
 
 	if(count == 0x00) {
@@ -635,7 +632,7 @@ result_t l2_tx_frame(can_frame  *frame)
 
 	LOG_D("L2 => Id %lx\n\r", frame->can_id);
 
-#if defined(CAN_IDLE_PING)
+#if defined(CAN_L2_IDLE_PING)
         restart_ping_timer();
 #endif
 	if(connected_baudrate == no_baud) {
@@ -937,7 +934,7 @@ static void set_reg_mask_value(BYTE reg, BYTE mask, BYTE value)
 
 static void set_can_mode(BYTE mode)
 {
-	unsigned char result;
+//	unsigned char result;
 #ifdef TEST
 	UINT16 delay;
 	UINT16 loop = 0;
@@ -1097,7 +1094,7 @@ void l2_set_can_node_buadrate(baud_rate_t baudrate)
 	 * The Baud rate is being changed so going to stay in config mode
 	 * for 10 Seconds and let the Network settle down.
 	 */
-	start_timer(SECONDS_TO_TICKS(5), exp_finalise_baudrate_change, (union sigval)(void *)NULL, &timer);
+	timer_start(SECONDS_TO_TICKS(5), exp_finalise_baudrate_change, (union sigval)(void *)NULL, &timer);
 }
 
 static void exp_finalise_baudrate_change(timer_t timer_id __attribute__((unused)), union sigval data __attribute__((unused)))
@@ -1139,8 +1136,7 @@ void initiate_can_buadrate_change(baud_rate_t rate)
 		if (status_handler)
 			status_handler(L2_STATUS_MASK, status, status_baud);
 
-        //ToDo
-		start_timer(MILLI_SECONDS_TO_TICKS(500), exp_resend_baudrate_change, (union sigval)(void *)NULL, &timer);
+		timer_start(MILLI_SECONDS_TO_TICKS(500), exp_resend_baudrate_change, (union sigval)(void *)NULL, &timer);
 	}
 }
 
@@ -1161,7 +1157,7 @@ static void exp_resend_baudrate_change(timer_t timer_id __attribute__((unused)),
 		msg.data[0] = status_baud;
 
 		if(l2_tx_frame(&msg) != ERR_CAN_NO_FREE_BUFFER)
-			start_timer(MILLI_SECONDS_TO_TICKS(500), exp_resend_baudrate_change, (union sigval)(void *)NULL, &timer);
+			timer_start(MILLI_SECONDS_TO_TICKS(500), exp_resend_baudrate_change, (union sigval)(void *)NULL, &timer);
 		else {
 			LOG_D("No Free Buffers so change the Baud Rate\n\r");
 			set_reg_mask_value(TXB0CTRL, TXREQ, 0x00);
