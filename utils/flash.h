@@ -31,4 +31,7 @@ extern BOOL flash_page_empty(UINT32 address);
 extern void flash_erase(UINT32 address);
 extern void flash_write(UINT32 address, BYTE *data);
 
+extern UINT16 psv_strcpy(char *dst, __prog__ char *src, UINT16 len);
+
+
 #endif //FLASH_H

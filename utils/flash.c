@@ -114,3 +114,30 @@ void flash_write(UINT32 address, BYTE *data)
 	                // for next 5 instructions
 	__builtin_write_NVM(); // Perform unlock sequence and set WR
 }
+
+/**
+ * Various string values, for example device manufacturer,
+ * are stored in the Program Flash memory during project building. In
+ * order to operate on these strings they must first be copies to the
+ * system's RAM memory. This function carries out this function.
+ *
+ * This code is specific to the PIC24 Processor and C30 Compiler
+ *
+ * @param dest: Destination String location in RAM
+ * @param source: The source String located in Program Flash Memory
+ * @return Function returns the number of characters copied across.
+ */
+UINT16 psv_strcpy(char *dst, __prog__ char *src, UINT16 len)
+{
+	char *ptr = dst;
+	UINT16 i = 0;
+
+	while ((*src != 0x00) && (*src != 0xff) && (i < len - 1)) {
+		*ptr++ = *src++;
+		i++;
+	}
+	*ptr = 0x00;
+
+	return i;
+}
+

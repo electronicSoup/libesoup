@@ -43,6 +43,4 @@ extern BYTE generate_hash(char *string);
 
 extern void random_init(void);
 
-extern UINT16 psv_strcpy(char *dst, __prog__ char *src, UINT16 len);
-
 #endif //UTILS_H
