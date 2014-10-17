@@ -1,8 +1,8 @@
 /**
  *
- * \file es_lib/timers/timers_sys.h
+ * \file es_lib/timers/timers.h
  *
- * Timer definitions of electronicSoup CAN code Library
+ * Timer function prototypes of the electronicSoup Cinnamon Bun
  *
  * Copyright 2014 John Whitmore <jwhitmore@electronicsoup.com>
  *
@@ -27,13 +27,12 @@
 
     extern volatile BOOL timer_tick;
 
-    extern void init_timer(void);
+    extern void timer_init(void);
     extern void tick(void);
 #endif
 
-extern result_t start_timer(u16, expiry_function, union sigval, es_timer *);
-
-extern result_t cancel_timer(es_timer *timer);
+extern result_t timer_start(u16, expiry_function, union sigval, es_timer *);
+extern result_t timer_cancel(es_timer *timer);
 
 #endif
 
