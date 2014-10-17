@@ -1,8 +1,8 @@
 /**
  *
- * \file es_lib/utils/utils.h
+ * \file es_lib/utils/flash.h
  *
- * General utility functions of the electronicSoup CAN code Library
+ * Flash function prototypes for electronicSoup Cinnamon Bun code Library
  *
  * Copyright 2014 John Whitmore <jwhitmore@electronicsoup.com>
  *
@@ -20,29 +20,15 @@
  *
  */
 
-#ifndef UTILS_H
-#define UTILS_H
+#ifndef FLASH_H
+#define FLASH_H
 
-#include "es_lib/core.h"
 #include "system.h"
 
 
-//#define FLASH_PAGE_SIZE 0x400
-//#define LAST_FLASH_ADDRESS 0x2ABF9
-//#define NUM_INSTRUCTION_PER_ROW 64
 
+extern BOOL flash_page_empty(UINT32 address);
+extern void flash_erase(UINT32 address);
+extern void flash_write(UINT32 address, BYTE *data);
 
-#ifdef HEARTBEAT
-extern void heartbeat_on(union sigval data);
-extern void heartbeat_off(union sigval data);
-#endif
-
-#if 0
-extern BYTE generate_hash(char *string);
-#endif
-
-extern void random_init(void);
-
-extern UINT16 psv_strcpy(char *dst, __prog__ char *src, UINT16 len);
-
-#endif //UTILS_H
+#endif //FLASH_H
