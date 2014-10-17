@@ -56,7 +56,7 @@ result_t eeprom_read(UINT16 address, BYTE *data)
 #else
 	use_address = (BYTE)(address + EEPROM_BOOT_PAGE_SIZE);
 #endif
-	if((use_address <= EEPROM_MAX_ADDRESS) {
+	if(use_address <= EEPROM_MAX_ADDRESS) {
 		EEPROM_Select();
 		Nop();
 		SPIWriteByte(EEPROM_READ);
@@ -110,7 +110,7 @@ result_t eeprom_erase(UINT16 start_addr)
 #ifdef EEPROM_USE_BOOT_PAGE
 	use_address = (BYTE)address;
 #else
-	use_address = (BYTE)(address + EEPROM_BOOT_PAGE_SIZE);
+	use_address = (BYTE)(start_addr + EEPROM_BOOT_PAGE_SIZE);
 #endif
 	if(use_address <= EEPROM_MAX_ADDRESS) {
 		for (loop = use_address; loop <= EEPROM_MAX_ADDRESS; loop++) {
