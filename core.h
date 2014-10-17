@@ -102,7 +102,7 @@
 /*
  * USB Host Power pin
  */
-#define USB_HOST_POWER TRISDbits.TRISD8 = OUTPUT_PIN; LATDbits.LATD8 = 1;
+#define USB_HOST       TRISDbits.TRISD8 = OUTPUT_PIN; LATDbits.LATD8 = 1;
 #define USB_DEVICE     TRISDbits.TRISD8 = OUTPUT_PIN; LATDbits.LATD8 = 0;
 
 /*
