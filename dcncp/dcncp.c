@@ -26,20 +26,17 @@
 #include "es_lib/core.h"
 #include "system.h"
 
-#define DEBUG_FILE
-
 #if defined(MCP)
 #define DEBUG_FILE
 #include "es_lib/logger/serial_log.h"
-#undef DEBUG_FILE
 #include "es_lib/can/es_can.h"
-#include "es_lib/utils/utils.h"
+//#include "es_lib/utils/utils.h"
 #elif defined(ES_LINUX)
 #include "serial.h"
 #endif
 
 #include "es_lib/dcncp/dcncp.h"
-#include "es_lib/timers/timer_sys.h"
+#include "es_lib/timers/timers.h"
 #include "es_lib/can/es_can.h"
 #if defined(CAN_LAYER_3)
 #include "es_lib/logger/net.h"
@@ -110,9 +107,9 @@ void dcncp_init(void (*arg_status_handler)(u8 mask, can_status_t status, baud_ra
 	 * If we're going to use layer 3 we need to initialise a Layer 3 address to use
 	 */
 	// Create a random timer between 1 and 5 seconds for firing node register message
-	result = start_timer(MILLI_SECONDS_TO_TICKS( (u16)((rand() % 4000) + 1000)), exp_sendAddressRegisterReq, (union sigval)(void *)NULL, &sendRegisterReqTimer);
+	result = timer_start(MILLI_SECONDS_TO_TICKS( (u16)((rand() % 4000) + 1000)), exp_sendAddressRegisterReq, (union sigval)(void *)NULL, &sendRegisterReqTimer);
 	if(result != SUCCESS) {
-		DEBUG_E("Failed to start Register Timer\n\r");
+		LOG_E("Failed to start Register Timer\n\r");
 	}
 #endif
         status.bit_field.dcncp_status |= DCNCP_Initialised;
@@ -138,7 +135,7 @@ void exp_sendAddressRegisterReq(timer_t timer_id __attribute__((unused)), union 
 
 	get_l3_node_address(&address);
 
-		DEBUG_D("sendRegisterReq(%x)\n\r", (u16)address);
+		LOG_D("sendRegisterReq(%x)\n\r", (u16)address);
 
 		msg.can_id = AddressRegisterReq;
 		msg.can_dlc = 1;
@@ -148,9 +145,9 @@ void exp_sendAddressRegisterReq(timer_t timer_id __attribute__((unused)), union 
 
 		// Create a 2 Second timer if no reject is recieved in that time
 		// this node shall consider itself registered
-		result = start_timer(SECONDS_TO_TICKS(2), exp_nodeAddressRegistered, (union sigval)(void *)NULL, &nodeRegisteredTimer);
+		result = timer_start(SECONDS_TO_TICKS(2), exp_nodeAddressRegistered, (union sigval)(void *)NULL, &nodeRegisteredTimer);
 		if(result != SUCCESS) {
-			DEBUG_E("Failed to start Node Registered Timer\n\r");
+			LOG_E("Failed to start Node Registered Timer\n\r");
 		}
 }
 #endif
@@ -159,7 +156,7 @@ void exp_sendAddressRegisterReq(timer_t timer_id __attribute__((unused)), union 
 void exp_nodeAddressRegistered(timer_t timer_id __attribute__((unused)), union sigval data)
 {
 //	u8 address;
-	result_t result;
+//	result_t result;
 
 	/*
 	 * Clear the compiler warning
@@ -167,18 +164,18 @@ void exp_nodeAddressRegistered(timer_t timer_id __attribute__((unused)), union s
 	data = data;
 	TIMER_INIT(nodeRegisteredTimer);
 
-	DEBUG_D("nodeRegistered()\n\r");
+	LOG_D("nodeRegistered()\n\r");
 
         status.bit_field.dcncp_status |= DCNCP_L3_Address_Not_Final;
 
-        if(status_handler)
-			status_handler(DCNCP_L3_ADDRESS_STATUS_MASK, status, no_baud);
-
+        if(status_handler) {
+		status_handler(DCNCP_L3_ADDRESS_STATUS_MASK, status, no_baud);
+	}
 #ifdef TEST
-		result = start_timer(SECONDS_TO_TICKS(1), sendTestMsg, (union sigval)(void *)NULL, &sendRegisterReqTimer);
-		if(result != SUCCESS) {
-			DEBUG_E("Failed to start Send Register Request Timer\n\r");
-		}
+	result = start_timer(SECONDS_TO_TICKS(1), sendTestMsg, (union sigval)(void *) NULL, &sendRegisterReqTimer);
+	if (result != SUCCESS) {
+		DEBUG_E("Failed to start Send Register Request Timer\n\r");
+	}
 #endif
 }
 #endif
@@ -197,18 +194,18 @@ void l2MsgHandler(can_frame *msg)
 
 		if(msg->data[0] == address) {
 			if(status.bit_field.dcncp_status & DCNCP_L3_Address_Finalised) {
-				DEBUG_D("reject Register Request\n\r");
+				LOG_D("reject Register Request\n\r");
 				txMsg.can_id = AddressRegisterReject;
 				txMsg.can_dlc = 1;
 				txMsg.data[0] = address;
 
 				l2_tx_frame(&txMsg);
 			} else {
-				DEBUG_D("Register Node Address clash\n\r");
+				LOG_D("Register Node Address clash\n\r");
 				//Have to create a new node address for this node
 				//cancel the timers
-				result = cancel_timer(&sendRegisterReqTimer);
-				result = cancel_timer(&nodeRegisteredTimer);
+				result = timer_cancel(&sendRegisterReqTimer);
+				result = timer_cancel(&nodeRegisteredTimer);
 
 				get_new_l3_node_address(&address);
 				exp_sendAddressRegisterReq(0xff, (union sigval)(void *)NULL);
@@ -221,7 +218,7 @@ void l2MsgHandler(can_frame *msg)
 
 		if(msg->data[0] == address) {
 			if(status.bit_field.dcncp_status & DCNCP_L3_Address_Finalised) {
-				DEBUG_E("Sending Can Error Message\n\r");
+				LOG_E("Sending Can Error Message\n\r");
 				txMsg.can_id = NodeAddressError;
 				txMsg.can_dlc = 1;
 				txMsg.data[0] = address;
@@ -230,8 +227,8 @@ void l2MsgHandler(can_frame *msg)
 			} else {
 				//Have to create a new node address for this node
 				//cancel the timers
-				cancel_timer(&sendRegisterReqTimer);
-				cancel_timer(&nodeRegisteredTimer);
+				timer_cancel(&sendRegisterReqTimer);
+				timer_cancel(&nodeRegisteredTimer);
 
 				get_new_l3_node_address(&address);
 				exp_sendAddressRegisterReq(0xff, (union sigval)(void *)NULL);
@@ -241,9 +238,9 @@ void l2MsgHandler(can_frame *msg)
 	} else if (msg->can_id == NodeAddressReportReq) {
 #if defined(CAN_LAYER_3)
 		// Create a random timer between 100 and  1000 miliSeconds for firing node report message
-		result = start_timer(MILLI_SECONDS_TO_TICKS((u16) ((rand() % 900) + 100)), exp_sendNodeAddressReport, (union sigval)(void *)NULL, &timer);
+		result = timer_start(MILLI_SECONDS_TO_TICKS((u16) ((rand() % 900) + 100)), exp_sendNodeAddressReport, (union sigval)(void *)NULL, &timer);
 		if (result != SUCCESS) {
-			DEBUG_E("Failed to start Node Registered Timer\n\r");
+			LOG_E("Failed to start Node Registered Timer\n\r");
 		}
 #endif
 	} else if (msg->can_id == NodeAddressReporting) {
@@ -291,7 +288,7 @@ void exp_sendNodeAddressReport(timer_t timer_id __attribute__((unused)), union s
 
 	get_l3_node_address(&address);
 
-	DEBUG_D("exp_sendNodeAddressReport(Address %x)\n\r", address);
+	LOG_D("exp_sendNodeAddressReport(Address %x)\n\r", address);
 
 	txMsg.can_id = NodeAddressReporting;
 	txMsg.can_dlc = 2;
@@ -319,7 +316,7 @@ result_t register_this_node_net_logger(log_level_t level)
 
 	get_l3_node_address(&address);
 
-	DEBUG_D("register_this_node_net_logger()\n\r");
+	LOG_D("register_this_node_net_logger()\n\r");
 
 	if(status.bit_field.dcncp_status  & DCNCP_L3_Address_Finalised) {
 		local_net_logger_frame.can_id = NetLogger;
@@ -328,12 +325,12 @@ result_t register_this_node_net_logger(log_level_t level)
 		local_net_logger_frame.data[1] = level;
 
 		l2_tx_frame(&local_net_logger_frame);
-		DEBUG_D("NetLogger message sent\n\r");
-		start_timer(LOCAL_NET_LOGGER_MSG_PERIOD, exp_net_logger_ping, (union sigval)(void *)NULL, &local_net_logger_timer);
+		LOG_D("NetLogger message sent\n\r");
+		timer_start(LOCAL_NET_LOGGER_MSG_PERIOD, exp_net_logger_ping, (union sigval)(void *)NULL, &local_net_logger_timer);
 
 		return(SUCCESS);
 	} else {
-		DEBUG_D("NetLogger message not sent Node not Registered yet\n\r");
+		LOG_D("NetLogger message not sent Node not Registered yet\n\r");
 		return(ERR_GENERAL_L3_ERROR);
 	}
 }
@@ -345,8 +342,8 @@ void exp_net_logger_ping(timer_t timer_id __attribute__((unused)), union sigval 
 	data = data;
 
 	l2_tx_frame(&local_net_logger_frame);
-	DEBUG_D("NetLogger message sent\n\r");
-	start_timer(LOCAL_NET_LOGGER_MSG_PERIOD, exp_net_logger_ping, (union sigval)(void *)NULL, &local_net_logger_timer);
+	LOG_D("NetLogger message sent\n\r");
+	timer_start(LOCAL_NET_LOGGER_MSG_PERIOD, exp_net_logger_ping, (union sigval)(void *)NULL, &local_net_logger_timer);
 }
 #endif
 
@@ -356,7 +353,7 @@ result_t unregister_this_node_net_logger()
 	u8 address;
 	can_frame txMsg;
 
-	DEBUG_D("DeRegAsNetLogger()\n\r");
+	LOG_D("DeRegAsNetLogger()\n\r");
 	get_l3_node_address(&address);
 
 	txMsg.can_id = CancelNetLogger;
@@ -364,10 +361,10 @@ result_t unregister_this_node_net_logger()
 	txMsg.data[0] = address;
 
 	l2_tx_frame(&txMsg);
-	DEBUG_D("CancelNetLogger message sent\n\r");
+	LOG_D("CancelNetLogger message sent\n\r");
 
 	if(local_net_logger_timer.status == ACTIVE)
-		cancel_timer(&local_net_logger_timer);
+		timer_cancel(&local_net_logger_timer);
 
 	return (SUCCESS);
 }
