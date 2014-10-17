@@ -2,7 +2,7 @@
  *
  * \file es_lib/utils/eeprom.c
  *
- * General eeprom functions of the electronicSoup CAN code Library
+ * eeprom functions of the electronicSoup Cinnamon Bun
  *
  * Copyright 2014 John Whitmore <jwhitmore@electronicsoup.com>
  *
@@ -18,18 +18,25 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  *
+ *******************************************************************************
+ *
+ * The Cinnamon Bun uses an EEPROM SPI chip with 128 Bytes of memory. The max
+ * address is defined in core.h as EEPROM_MAX_ADDRESS any address passed to 
+ * the eeprom function will return the ERR_ADDRESS_RANGE Erorr code. 
+ *
+ * The eeprom address map is split into two sections with the first 32 Bytes
+ * being reserved for a Bootloader. This size is specified in core.h by the
+ * constant EEPROM_BOOT_PAGE_SIZE. If your project is not using a Bootloader 
+ * then defining the switch EEPROM_USE_BOOT_PAGE in your system.h file will
+ * ignore this restriction and allow access to the full eeprom address space.
  */
 
-//#include <libpic30.h>
-//#include <stdlib.h>
-//#include <string.h>
-//#include <stdio.h>
 #include "system.h"
-//#include "es_lib/utils/utils.h"
-//#ifdef HEARTBEAT
-//#include "es_lib/timers/timer_sys.h"
-//#endif
 
+/*
+ * The EEPROM chip is connected to one of the SPI buses on the PIC24FJ256GB106
+ * so spi code is required.
+ */
 #include "es_lib/utils/spi.h"
 
 #define DEBUG_FILE
@@ -37,17 +44,19 @@
 
 #define TAG "EEPROM"
 
+/*
+ *
+ */
 result_t eeprom_read(UINT16 address, BYTE *data)
 {
 	BYTE use_address;
 
 #ifdef EEPROM_USE_BOOT_PAGE
-	if(address < EEPROM_BOOT_PAGE_SIZE) {
-		use_address = (BYTE)address;
+	use_address = (BYTE)address;
 #else
-	if((address + EEPROM_BOOT_PAGE_SIZE) < EEPROM_MAX_ADDRESS) {
-		use_address = address + EEPROM_BOOT_PAGE_SIZE;
+	use_address = (BYTE)(address + EEPROM_BOOT_PAGE_SIZE);
 #endif
+	if((use_address <= EEPROM_MAX_ADDRESS) {
 		EEPROM_Select();
 		Nop();
 		SPIWriteByte(EEPROM_READ);
@@ -66,12 +75,11 @@ result_t eeprom_write(UINT16 address, BYTE data)
 	LOG_D("eeprom_write(0x%x, 0x%x)\n\r", address, data);
 
 #ifdef EEPROM_USE_BOOT_PAGE
-	if(address <= EEPROM_MAX_ADDRESS) {
-		use_address = (BYTE)address;
+	use_address = (BYTE)address;
 #else
-	if((address + EEPROM_BOOT_PAGE_SIZE) <= EEPROM_MAX_ADDRESS) {
-		use_address = address + EEPROM_BOOT_PAGE_SIZE;
+	use_address = (BYTE)(address + EEPROM_BOOT_PAGE_SIZE);
 #endif
+	if(use_address <= EEPROM_MAX_ADDRESS) {
 		EEPROM_Select();
 		Nop();
 
@@ -97,13 +105,23 @@ result_t eeprom_write(UINT16 address, BYTE data)
 result_t eeprom_erase(UINT16 start_addr)
 {
 	u16 loop;
+	BYTE use_address;
 
-	for (loop = start_addr; loop <= EEPROM_MAX_ADDRESS; loop++) {
-		asm ("CLRWDT");
-		eeprom_write(loop, 0x00);
-	}
+#ifdef EEPROM_USE_BOOT_PAGE
+	use_address = (BYTE)address;
+#else
+	use_address = (BYTE)(address + EEPROM_BOOT_PAGE_SIZE);
+#endif
+	if(use_address <= EEPROM_MAX_ADDRESS) {
+		for (loop = use_address; loop <= EEPROM_MAX_ADDRESS; loop++) {
+			asm ("CLRWDT");
+			eeprom_write(loop, 0x00);
+		}
 
-	return (SUCCESS);
+		return (SUCCESS);
+	}	
+        LOG_E("eeprom_erase Address Range Error!\n\r");
+	return (ERR_ADDRESS_RANGE);
 }
 
 UINT16 eeprom_str_read(UINT16 addr, char *buffer, BYTE len)
