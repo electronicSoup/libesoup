@@ -225,8 +225,6 @@ typedef struct
  */
 #define MILLI_SECONDS_TO_TICKS(ms) ((ms < SYSTEM_TICK_ms) ? 1 : (ms / SYSTEM_TICK_ms))
  
-#define MILLI_SECONDS_TO_TICKS(ms) (ms < SYSTEM_TICK_ms) ? 1 : (ms / SYSTEM_TICK_ms)
-
 #ifdef MCP
 /*
  * In both the C8 and C30 compilers Data Pointers are 16 bits wide.
