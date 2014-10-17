@@ -68,10 +68,11 @@ void heartbeat_off(union sigval data)
 
 void random_init(void)
 {
-	u8   loop;
+	u16  loop;
 	u32  seed;
 	u8  *data;
 
+	LOG_D("random_init()\n\r");
 	data = (u8 *)&IC1TMR;  //0x146
 
 	seed = 0;
