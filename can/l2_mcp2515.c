@@ -232,7 +232,6 @@ result_t l2_init(baud_rate_t arg_baud_rate,
 	LOG_D("Set Exit Mode 0x%x\n\r", exit_mode);
 	set_can_mode(exit_mode);
 
-
         /*
 	 * Turn on Interrupts
 	 */
@@ -242,36 +241,29 @@ result_t l2_init(baud_rate_t arg_baud_rate,
         IFS0bits.INT0IF = 0;    // Clear the flag
         IEC0bits.INT0IE = 1;    //Interrupt Enabled
 
-	/*
-	 * If we've been given a valid baud rate and connected send a test mesage to Network
-	 */
-	if(status.bit_field.l2_status == L2_Connecting) {
-		LOG_D("Connecting send a test Ping message!\n\r");
-		result = send_ping();
-		if (result != SUCCESS) {
-			LOG_E("Failed to send a test Ping message!\n\r");
-		}
-	}
 	// Create a random timer between 1 and 1.5 seconds for firing the
 	// Network Idle Ping message
 #if defined(CAN_IDLE_PING)
 	ping_time = (u16)((rand() % SECONDS_TO_TICKS(1)) + (CAN_IDLE_PING_PERIOD - MILLI_SECONDS_TO_TICKS(500)));
-	start_timer(ping_time, exp_test_ping, (union sigval)(void *)NULL, &ping_timer);
+        DEBUG_D("Ping time set to %d Ticks, Ping Period %d - %d\n\r", ping_time, CAN_IDLE_PING_PERIOD, MILLI_SECONDS_TO_TICKS(500));
+        restart_ping_timer();
 #endif
 
 	LOG_D("CAN Layer 2 Initialised\n\r");
 	return(SUCCESS);
 }
 
+#if defined(CAN_IDLE_PING)
 result_t send_ping(void)
 {
 	can_frame msg;
 
-	msg.can_id = 0x666;
+	msg.can_id = CAN_IDLE_PING_FRAME_ID;
 	msg.can_dlc = 0;
 
 	return(l2_tx_frame(&msg));
 }
+#endif
 
 #if defined(CAN_IDLE_PING)
 void exp_test_ping(timer_t timer_id __attribute__((unused)), union sigval data __attribute__((unused)))
@@ -281,13 +273,9 @@ void exp_test_ping(timer_t timer_id __attribute__((unused)), union sigval data _
         LOG_D("exp_test_ping()\n\r");
 	TIMER_INIT(ping_timer);
 
-        if(status.bit_field.l2_status == L2_Connected) {
-		if(send_ping() != SUCCESS) {
-			LOG_E("Failed to send the PING Message\n\r");
-		}
-        }
-
-        restart_ping_timer();
+	if (send_ping() != SUCCESS) {
+		DEBUG_E("Failed to send the PING Message\n\r");
+	}
 }
 #endif
 
@@ -295,7 +283,8 @@ void exp_test_ping(timer_t timer_id __attribute__((unused)), union sigval data _
 void restart_ping_timer(void)
 {
 	if(ping_timer.status == ACTIVE) {
-		if(cancel_timer(&ping_timer) != SUCCESS) {
+		LOG_D("Cancel running ping timer\n\r");
+ 		if(cancel_timer(&ping_timer) != SUCCESS) {
 			LOG_E("Failed to cancel the Ping timer\n\r");
 			return;
 		}
@@ -380,6 +369,7 @@ void service_device(void)
 	BYTE ctrl;
 	BYTE loop;
 	BYTE canstat;
+        BYTE tec = 0x00;
 
 	mcp2515_isr = FALSE;
 
@@ -407,6 +397,14 @@ void service_device(void)
 			LOG_E("*** CAN EFLG %x\n\r", eflg);
 			if(status.bit_field.l2_status == L2_Listening)
 				connecting_errors++;
+                        } else if(status.bit_field.l2_status == L2_Connecting) {
+                                tec = read_reg(TEC);
+                                DEBUG_W("Tx Error Count = %d\n\r", tec);
+                                if(eflg & TXWAR) {
+					set_can_mode(CONFIG_MODE);
+					set_can_mode(NORMAL_MODE);
+                                }
+                        }
 
 			/*
 			 * Clear any rx Frames as there's been an error
@@ -419,9 +417,12 @@ void service_device(void)
 
 		if (flags & MERRE) {
 			LOG_W("CAN MERRE Flag\n\r");
-			if(status.bit_field.l2_status == L2_Listening)
+			if(status.bit_field.l2_status == L2_Listening) {
 				connecting_errors++;
-
+                        } else if(status.bit_field.l2_status == L2_Connecting) {
+                                tec = read_reg(TEC);
+                                DEBUG_W("Tx Error Count = %d\n\r", tec);
+                        }
 			/*
 			 * We've got an error condition so dump all received messages
 			 */
@@ -544,13 +545,13 @@ void L2_CanTasks(void)
         if(mcp2515_isr)
 		service_device();
 
-#ifdef TEST
+#ifdef 0
 	count++;
 
 	if(count == 0x00) {
 		LOG_D("L2_CanTasks()\n\r");
 	}
-#endif // TEST
+#endif // 0
 	
 	while(buffer_count > 0) {
 		if (status.bit_field.l2_status == L2_Connecting) {
@@ -718,7 +719,7 @@ result_t l2_tx_frame(can_frame  *frame)
 
 	// Set the buffer for Transmission
 	set_reg_mask_value(ctrl, TXREQ, TXREQ);
-
+#if 0
 	if (status.bit_field.l2_status == L2_Connecting) {
 		while (read_reg(ctrl) & 0x08) {
 			LOG_E("Wait for transmission to complete\n\r");
@@ -727,7 +728,7 @@ result_t l2_tx_frame(can_frame  *frame)
 		if (status_handler)
 			status_handler(L2_STATUS_MASK, status, status_baud);
         }
-
+#endif
 	return(result);
 }
 
