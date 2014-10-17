@@ -223,6 +223,8 @@ typedef struct
  *
  * Convience Macro to convert milliSeconds to system timer ticks
  */
+#define MILLI_SECONDS_TO_TICKS(ms) ((ms < SYSTEM_TICK_ms) ? 1 : (ms / SYSTEM_TICK_ms))
+ 
 #define MILLI_SECONDS_TO_TICKS(ms) (ms < SYSTEM_TICK_ms) ? 1 : (ms / SYSTEM_TICK_ms)
 
 #ifdef MCP
