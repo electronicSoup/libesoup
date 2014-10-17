@@ -108,7 +108,7 @@ result_t eeprom_erase(UINT16 start_addr)
 	BYTE use_address;
 
 #ifdef EEPROM_USE_BOOT_PAGE
-	use_address = (BYTE)address;
+	use_address = (BYTE)start_addr;
 #else
 	use_address = (BYTE)(start_addr + EEPROM_BOOT_PAGE_SIZE);
 #endif
