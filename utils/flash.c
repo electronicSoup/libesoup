@@ -25,7 +25,7 @@
 #define DEBUG_FILE
 #include "es_lib/logger/serial_log.h"
 
-#define TAG FLASH
+#define TAG "FLASH"
 
 BOOL flash_page_empty(UINT32 address)
 {
@@ -57,7 +57,7 @@ void flash_erase(UINT32 address)
 	LOG_D("erasePage 0x%lx\n\r", address);
 
         if(  ((address & 0x3ff) != 0x00)
-           ||((address < FIRMWARE_START_ADDRESS) && (address != APP_HANDLE_PAGE))) {
+           ||((address < FLASH_FIRMWARE_START_ADDRESS) && (address != APP_HANDLE_PAGE))) {
 		LOG_E("Invalid address for Erase!\n\r");
 		return;
         }
@@ -81,7 +81,7 @@ void flash_write(UINT32 address, BYTE *data)
 
 	LOG_D("flash_write(0x%lx)\n\r", address);
 	
-        if((address < FIRMWARE_START_ADDRESS) && (address != APP_HANDLE_PAGE)) {
+        if((address < FLASH_FIRMWARE_START_ADDRESS) && (address != APP_HANDLE_PAGE)) {
 		LOG_E("Invalid address for Erase!\n\r");
 		return;
         }
@@ -98,7 +98,7 @@ void flash_write(UINT32 address, BYTE *data)
 
 	// Initialize lower word of address
 	//Perform TBLWT instructions to write necessary number of latches
-	for (i = 0; i < NUM_INSTRUCTION_PER_ROW; i++) {
+	for (i = 0; i < FLASH_NUM_INSTRUCTION_PER_ROW; i++) {
 		highWord = data[(i * 4) + 3] << 8 | data[(i * 4) + 2];
 		lowWord = data[(i * 4) + 1] << 8 | data[(i * 4)];
 

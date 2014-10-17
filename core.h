@@ -91,7 +91,8 @@
  *
  * Start of Firmware code
  */
-#define FIRMWARE_START_ADDRESS 0x8800
+#define FLASH_NUM_INSTRUCTION_PER_ROW  64
+#define FLASH_FIRMWARE_START_ADDRESS   0x8800
 
 /*
  * Address of the App's page in low memory

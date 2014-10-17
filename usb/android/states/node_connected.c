@@ -27,7 +27,8 @@
 #include "usb/usb_host_android.h"
 #include "node_ipc.h"
 #include "states.h"
-#include "es_lib/utils/utils.h"
+#include "es_lib/utils/flash.h"
+#include "es_lib/utils/eeprom.h"
 #include "es_lib/usb/android/android.h"
 #include "main.h"
 #ifdef ANDROID_NODE
@@ -117,7 +118,7 @@ void app_connected_process_msg(android_command_t cmd, void *data, UINT16 data_le
                 if(  (address < APP_START_ADDRESS)
                    &&(address != APP_HANDLE_ADDRESS)) {
 #elif defined(ANDROID_BOOT)
-                if(address < FIRMWARE_START_ADDRESS) {
+                if(address < FLASH_FIRMWARE_START_ADDRESS) {
 #endif
                     LOG_E("Bad address to Erase\n\r");
                 } else {
@@ -146,7 +147,7 @@ void app_connected_process_msg(android_command_t cmd, void *data, UINT16 data_le
                    &&(address != APP_HANDLE_ADDRESS)) {
                     DEBUG_E("Bad address to Write to row\n\r");
 #elif defined(ANDROID_BOOT)
-                if(address < FIRMWARE_START_ADDRESS) {
+                if(address < FLASH_FIRMWARE_START_ADDRESS) {
                     LOG_E("Bad address to Write to row\n\r");
 #endif
                 } else {
