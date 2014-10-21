@@ -1,8 +1,8 @@
 /**
  *
- * \file es_lib/utils/utils.h
+ * \file es_lib/utils/rand.h
  *
- * General utility functions of the electronicSoup CAN code Library
+ * prototype of the random initialisation function.
  *
  * Copyright 2014 John Whitmore <jwhitmore@electronicsoup.com>
  *
@@ -20,25 +20,9 @@
  *
  */
 
-#ifndef UTILS_H
-#define UTILS_H
+#ifndef RAND_H
+#define RAND_H
 
-#include "es_lib/core.h"
-#include "system.h"
+extern void random_init(void);
 
-
-//#define FLASH_PAGE_SIZE 0x400
-//#define LAST_FLASH_ADDRESS 0x2ABF9
-//#define NUM_INSTRUCTION_PER_ROW 64
-
-
-#ifdef HEARTBEAT
-extern void heartbeat_on(union sigval data);
-extern void heartbeat_off(union sigval data);
-#endif
-
-#if 0
-extern BYTE generate_hash(char *string);
-#endif
-
-#endif //UTILS_H
+#endif //RAND_H

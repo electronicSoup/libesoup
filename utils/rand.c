@@ -1,8 +1,8 @@
 /**
  *
- * \file es_lib/utils/heartbeat.c
+ * \file es_lib/utils/rand.c
  *
- * General utility functions of the electronicSoup CAN code Library
+ * Random initialisation function for the electronicSoup Cinnamon Bun
  *
  * Copyright 2014 John Whitmore <jwhitmore@electronicsoup.com>
  *
@@ -32,28 +32,27 @@
 #define DEBUG_FILE
 #include "es_lib/logger/serial_log.h"
 
-#define TAG "HEARTBEAT"
+#define TAG "RAND"
 
 
-void heartbeat_on(union sigval data);
-void heartbeat_off(union sigval data);
-
-//unsigned char SPIWriteByte(unsigned char write);
-
-void heartbeat_on(union sigval data)
+void random_init(void)
 {
-	es_timer timer;
+	u16  loop;
+	u32  seed;
+	u8  *data;
 
-	Heartbeat_on();
+	LOG_D("random_init()\n\r");
+	data = (u8 *)&IC1TMR;  //0x146
 
-	start_timer(HEARTBEAT_ON_TIME, heartbeat_off, data, &timer);
+	seed = 0;
+
+	for(loop = 0; loop < 0x1D8; loop++) {
+		asm("CLRWDT");
+		seed = seed + *data;
+		data++;
+	}
+
+	LOG_D("Seed 0x%lx\n\r", seed);
+	srand(seed);
 }
 
-void heartbeat_off(union sigval data)
-{
-	es_timer timer;
-
-	Heartbeat_off();
-
-	start_timer(HEARTBEAT_OFF_TIME, heartbeat_on, data, &timer);
-}
