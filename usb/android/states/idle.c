@@ -23,8 +23,14 @@
  *
  */
 #include "system.h"
+
+/*
+ * Microchip USB Includes
+ */
 #include "usb/usb.h"
 #include "usb/usb_host_android.h"
+
+#include "es_lib/usb/android/android_state.h"
 #if defined(ANDROID_NODE) || defined(ANDROID_BOOT)
 #include "node_ipc.h"
 #elif defined(ANDROID_DONGLE)
@@ -40,7 +46,8 @@
 /*
  * Forward declarations of the states functions.
  */
-void idle_process_msg(android_command_t, void *, UINT16);
+//void idle_process_msg(android_command_t, void *, UINT16);
+void idle_process_msg(BYTE, void *, UINT16);
 void idle_main(void);
 void idle_process_usb_event(USB_EVENT event);
 
@@ -61,7 +68,7 @@ void set_idle_state(void)
  * When in the Idle state there is no Android Device connected so we'd
  * not expect to receive any messages from the Android for processing.
  */
-void idle_process_msg(android_command_t cmd, void *data, UINT16 data_len)
+void idle_process_msg(BYTE cmd, void *data, UINT16 data_len)
 {
 	LOG_E("Received Android Msg in the Idle state command 0x%x data Lentgh %d\n\r", cmd, data_len);
 }

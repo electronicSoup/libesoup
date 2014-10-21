@@ -23,8 +23,15 @@
  *
  */
 #include "system.h"
+
+/*
+ * Microchip USB Includes
+ */
 #include "usb/usb.h"
 #include "usb/usb_host_android.h"
+
+#include "es_lib/usb/android/android_state.h"
+
 #if defined(ANDROID_NODE) || defined(ANDROID_BOOT)
 #include "node_ipc.h"
 #elif defined(ANDROID_DONGLE)
@@ -40,7 +47,8 @@
 /*
  * Forward declatation of functions in the file.
  */
-void android_connected_process_msg(android_command_t, void *, UINT16);
+//void android_connected_process_msg(android_command_t, void *, UINT16);
+void android_connected_process_msg(BYTE, void *, UINT16);
 void android_connected_main(void);
 void android_connected_process_usb_event(USB_EVENT event);
 
@@ -61,7 +69,7 @@ void set_android_connected_state(void)
  * connected command from the Android Device and moving state accordingly.
  * we're not interested in any other messages from the Connected device.
  */
-void android_connected_process_msg(android_command_t cmd, void *data, UINT16 data_len)
+void android_connected_process_msg(BYTE cmd, void *data, UINT16 data_len)
 {
 	if (cmd == COMMAND_APP_CONNECT) {
 #if defined(ANDROID_DONGLE)

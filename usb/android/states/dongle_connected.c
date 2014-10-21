@@ -23,12 +23,19 @@
  */
 #include <stdio.h>
 #include "system.h"
+
+/*
+ * Microchip USB Includes
+ */
 #include "usb/usb.h"
 #include "usb/usb_host_android.h"
+
+
 #include "dongle_ipc.h"
 #include "states.h"
 #include "es_lib/utils/utils.h"
 #include "es_lib/usb/android/android.h"
+#include "es_lib/usb/android/android_state.h"
 #include "main.h"
 
 #define DEBUG_FILE
@@ -37,7 +44,8 @@
 
 #define TAG "DongleConnected"
 
-void dongle_connected_process_msg(android_command_t, void *, UINT16);
+//void dongle_connected_process_msg(android_command_t, void *, UINT16);
+void dongle_connected_process_msg(BYTE, void *, UINT16);
 void dongle_connected_main(void);
 void dongle_connected_process_usb_event(USB_EVENT event);
 
@@ -49,7 +57,7 @@ void set_dongle_connected_state(void)
 	current_state.process_usb_event = dongle_connected_process_usb_event;
 }
 
-void dongle_connected_process_msg(android_command_t cmd, void *data, UINT16 data_len)
+void dongle_connected_process_msg(BYTE cmd, void *data, UINT16 data_len)
 {
 	LOG_D("dongle_connected_process_msg data lenght %d\n\r", data_len);
 	switch (cmd) {

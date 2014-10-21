@@ -1,6 +1,6 @@
 /**
  *
- * \file es_lib/android/android.c
+ * \file es_lib/usb/android/android.c
  *
  * Functions for communicating with Android Apps 
  *
@@ -20,21 +20,27 @@
  *
  */
 #include "system.h"
+
+/*
+ * Microchip Includes
+ */ 
 #include "usb/usb.h"
 #include "usb/usb_host_android.h"
+
+#include "es_lib/usb/android/android_state.h"
 
 #define DEBUG_FILE
 #include "es_lib/logger/serial_log.h"
 
-#if LOG_LEVEL < NO_LOGGING
 #define TAG "Android"
-#endif
 
 /*
- * Definitions of the Rx and Tx buffer sizes.
+ * Definitions of the Rx and Tx circular buffer sizes.
  */
 #define TX_BUFFER_SIZE 300
 #define RX_BUFFER_SIZE 300
+
+static void process_msg_from_android(void);
 
 /*
  *
@@ -209,5 +215,50 @@ BYTE android_tasks(void* device_handle)
 		transmitter_busy = TRUE;
 	}
 
+	/*
+	 * Check for any messages from the Android device.
+	 */
+	process_msg_from_android();
+
+	/*
+	 * Do whatever functionality is required of the current state.
+	 */
+	current_state.main();
+
 	return (error_code);
+}
+
+/*!
+ * \fn void process_msg_from_android(void)
+ *
+ * \brief processes messages from the android device
+ *
+ * This function polls the system for messages from the Android device
+ */
+static void process_msg_from_android(void)
+{
+	UINT16 size = 0;
+	BYTE read_buffer[300];
+	BYTE error_code = USB_SUCCESS;
+
+	void *data = NULL;
+
+	size = (UINT16)sizeof (read_buffer);
+	while (android_receive((BYTE*) & read_buffer, (UINT16 *)&size, &error_code)) {
+		if (error_code != USB_SUCCESS) {
+			LOG_E("android_receive raised an error %x\n\r", error_code);
+		}
+
+		if (size > 1) {
+			data = (void *) &read_buffer[1];
+		} else {
+			data = NULL;
+		}
+
+		/*
+		 * Pass the received message onto the current state for processing.
+		 */
+		LOG_D("Process Received message in State Machine\n\r");
+		current_state.process_msg(read_buffer[0], data, size - 1);
+	}
 }
