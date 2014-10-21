@@ -127,7 +127,7 @@ result_t eeprom_erase(UINT16 start_addr)
 UINT16 eeprom_str_read(UINT16 addr, BYTE *buffer, BYTE len)
 {
 	BYTE character;
-	char *ptr;
+	BYTE *ptr;
 	BYTE num = 0;
 
 	LOG_D("eeprom_str_read()\n\r");
@@ -149,7 +149,7 @@ UINT16 eeprom_str_read(UINT16 addr, BYTE *buffer, BYTE len)
 
 UINT16 eeprom_str_write(UINT16 addr, BYTE *buffer)
 {
-	char *ptr;
+	BYTE *ptr;
 	BYTE copied = 0;
 
 	LOG_D("eeprom_str_write()\n\r");
