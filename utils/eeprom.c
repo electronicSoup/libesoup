@@ -146,15 +146,15 @@ result_t eeprom_write(UINT16 address, BYTE data)
  *          otherwise SUCCESS
  *
  */
-result_t eeprom_erase(UINT16 start_addr)
+result_t eeprom_erase(UINT16 start_address)
 {
 	u16 loop;
 	BYTE use_address;
 
 #ifdef EEPROM_USE_BOOT_PAGE
-	use_address = (BYTE)start_addr;
+	use_address = (BYTE)start_address;
 #else
-	use_address = (BYTE)(start_addr + EEPROM_BOOT_PAGE_SIZE);
+	use_address = (BYTE)(start_address + EEPROM_BOOT_PAGE_SIZE);
 #endif
 	if(use_address <= EEPROM_MAX_ADDRESS) {
 		for (loop = use_address; loop <= EEPROM_MAX_ADDRESS; loop++) {

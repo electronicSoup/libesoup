@@ -22,10 +22,10 @@
 #ifndef EEPROM_H
 #define EEPROM_H
 
-extern result_t eeprom_read(UINT16 addr, BYTE *data);
-extern result_t eeprom_write(UINT16 addr, BYTE data);
-extern result_t eeprom_erase(UINT16 addr);
-extern UINT16   eeprom_str_read(UINT16 addr, BYTE *buffer, BYTE len);
-extern UINT16   eeprom_str_write(UINT16 addr, BYTE *buffer);
+extern result_t eeprom_read(UINT16 address, BYTE *data);
+extern result_t eeprom_write(UINT16 address, BYTE data);
+extern result_t eeprom_erase(UINT16 start_address);
+extern result_t eeprom_str_read(UINT16 address, BYTE *buffer, UINT16 *length);
+extern result_t eeprom_str_write(UINT16 address, BYTE *buffer, UINT16 *length);
 
 #endif // EEPROM_H
