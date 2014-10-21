@@ -26,7 +26,7 @@
 #include "es_lib/can/es_can.h"
 
 #define DEBUG_FILE
-#include "es_lib/logger/serial.h"
+#include "es_lib/logger/serial_log.h"
 #include "es_lib/logger/net.h"
 
 #if defined(MCP)
@@ -62,7 +62,7 @@ static void l3NetLogHandler(l3_can_msg_t *message)
 			net_logger_handler(message->address, level, string);
 		}
 	} else {
-		DEBUG_D("No Handler\n\r");
+		LOG_D("No Handler\n\r");
 	}
 }
 #endif
@@ -73,7 +73,7 @@ static void l3NetLogHandler(l3_can_msg_t *message)
 #if defined(CAN_LAYER_3)
 result_t net_logger_local_register(void (*handler)(u8, log_level_t, char *), log_level_t level)
 {
-	DEBUG_D("net_log_reg_as_handler() level %x\n\r", level);
+	LOG_D("net_log_reg_as_handler() level %x\n\r", level);
 	if(l3_initialised()) {
 		net_logger = TRUE;
 		net_logger_local = TRUE;
@@ -95,7 +95,7 @@ result_t net_logger_local_register(void (*handler)(u8, log_level_t, char *), log
 #if defined(CAN_LAYER_3)
 result_t net_logger_local_cancel(void)
 {
-	DEBUG_D("net_log_unreg_as_handler()\n\r");
+	LOG_D("net_log_unreg_as_handler()\n\r");
 	if(net_logger_local) {
 		net_logger_local = FALSE;
 		net_logger = FALSE;
@@ -114,13 +114,13 @@ void net_log(log_level_t level, char *string)
 
 	l3_can_msg_t msg;
 
-	DEBUG_D("net_log(0x%x, %s)\n\r", (u16)level, string);
+	LOG_D("net_log(0x%x, %s)\n\r", (u16)level, string);
 
 	if(net_logger) {
 		if(net_logger_local && net_logger_handler) {
 			get_l3_node_address(&address);
 			net_logger_handler(address, level, string);
-			DEBUG_D("Local Net Logger\n\r");
+			LOG_D("Local Net Logger\n\r");
 		} else if(level <= net_logger_level) {
 			if(strlen((char *)string) < L3_CAN_MAX_MSG - 2) {
 				msg.address = net_logger_address;
@@ -137,14 +137,14 @@ void net_log(log_level_t level, char *string)
 				if(msg.size < L3_CAN_MAX_MSG) {
 					l3_tx_msg(&msg);
 				} else {
-					DEBUG_E("Layer 3 message size limit exceeded!\n\r");
+					LOG_E("Layer 3 message size limit exceeded!\n\r");
 				}
 			}
 		} else {
-			DEBUG_D("Net logger not logging insifficient Level\n\r");
+			LOG_D("Net logger not logging insifficient Level\n\r");
 		}
 	} else {
-		DEBUG_D("no Logger Registered\n\r");
+		LOG_D("no Logger Registered\n\r");
 	}
 }
 #endif
