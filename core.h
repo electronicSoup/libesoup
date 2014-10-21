@@ -29,56 +29,63 @@
  */
 #define CLOCK_FREQ 16000000
 
-#define SPI_RW_FINISHED SPI1STATbits.SPIRBF
-
 /*
  *  EEPROM Address Map
  */
 #define EEPROM_BOOT_PAGE_SIZE   0x20
 #define EEPROM_MAX_ADDRESS      0x7F
 
-    /*
-     *  RD1/RP24  - SCK
-     *  RD2       - SO  (Pin 14 of 18 DIP 2515)
-     *  RD3       - SI  (Pin 15 of 18 DIP 2515)
-     *  RD7       - /EEPROM CS
-     *  RD6       - /CAN CS
-     *  RD0       - /CAN INT
-     */
+/*
+ *  RD1/RP24  - SCK
+ *  RD2       - SO  (Pin 14 of 18 DIP 2515)
+ *  RD3       - SI  (Pin 15 of 18 DIP 2515)
+ *  RD7       - /EEPROM CS
+ *  RD6       - /CAN CS
+ *  RD0       - /CAN INT
+ */
 
 
-    //  RD7 - /EEPROM CS
-    #define EEPROM_CS_PIN_DIRECTION    TRISDbits.TRISD7
-    #define EEPROM_CS                  LATDbits.LATD7
+//  RD7 - /EEPROM CS
+#define EEPROM_CS_PIN_DIRECTION    TRISDbits.TRISD7
+#define EEPROM_CS                  LATDbits.LATD7
 
-    #define EEPROM_Select()            EEPROM_CS = 0
-    #define EEPROM_DeSelect()          EEPROM_CS = 1
+#define EEPROM_Select()            EEPROM_CS = 0
+#define EEPROM_DeSelect()          EEPROM_CS = 1
 
-    #define EEPROM_READ           0x03
-    #define EEPROM_WRITE          0x02
-    #define EEPROM_WRITE_DISABLE  0x04
-    #define EEPROM_WRITE_ENABLE   0x06
-    #define EEPROM_STATUS_READ    0x05
-    #define EEPROM_STATUS_WRITE   0x01
+/*
+ * EEPROM SPI Commands.
+ */
+#define EEPROM_READ           0x03
+#define EEPROM_WRITE          0x02
+#define EEPROM_WRITE_DISABLE  0x04
+#define EEPROM_WRITE_ENABLE   0x06
+#define EEPROM_STATUS_READ    0x05
+#define EEPROM_STATUS_WRITE   0x01
 
-    //  RD0  - /CAN INT
-    #define CAN_INTERRUPT_PIN_DIRECTION    TRISDbits.TRISD0
-    #define CAN_INTERRUPT_PIN                  PORTDbits.RD0
-    #define CAN_INTERRUPT                  !CAN_INTERRUPT_PIN
+//  RD0  - /CAN INT
+#define CAN_INTERRUPT_PIN_DIRECTION    TRISDbits.TRISD0
+#define CAN_INTERRUPT_PIN                  PORTDbits.RD0
+#define CAN_INTERRUPT                  !CAN_INTERRUPT_PIN
 
-    //  RD6 - /CAN CS
-    #define CAN_CS_PIN_DIRECTION    TRISDbits.TRISD6
-    #define CAN_CS                  LATDbits.LATD6
+//  RD6 - /CAN CS
+#define CAN_CS_PIN_DIRECTION    TRISDbits.TRISD6
+#define CAN_CS                  LATDbits.LATD6
 
-    #define CAN_SELECT()            CAN_CS = 0;
-    #define CAN_DESELECT()          CAN_CS = 1
+#define CAN_SELECT()            CAN_CS = 0;
+#define CAN_DESELECT()          CAN_CS = 1
 
-     //  RD1  - SCK
-     //  RD2  - SO
-     //  RD3  - SI
-    #define SPI_SCK_DIRECTION   TRISDbits.TRISD1
-    #define SPI_MISO_DIRECTION  TRISDbits.TRISD2
-    #define SPI_MOSI_DIRECTION  TRISDbits.TRISD3
+/*
+ * SPI (Serial Peripheral Interface Definitions.
+ *
+ * Pins:  RD1  - SCK
+ *        RD2  - MISO
+ *        RD3  - MOSI
+ */
+#define SPI_RW_FINISHED SPI1STATbits.SPIRBF
+
+#define SPI_SCK_DIRECTION   TRISDbits.TRISD1
+#define SPI_MISO_DIRECTION  TRISDbits.TRISD2
+#define SPI_MOSI_DIRECTION  TRISDbits.TRISD3
 
 /*
  * I/O pin definitions
@@ -102,8 +109,8 @@
 /*
  * USB Host Power pin
  */
-#define USB_HOST       TRISDbits.TRISD8 = OUTPUT_PIN; LATDbits.LATD8 = 1; USBInitialize(0);
-#define USB_DEVICE     TRISDbits.TRISD8 = OUTPUT_PIN; LATDbits.LATD8 = 0;
+#define USB_HOST    TRISDbits.TRISD8 = OUTPUT_PIN; LATDbits.LATD8 = 1; USBInitialize(0);
+#define USB_DEVICE  TRISDbits.TRISD8 = OUTPUT_PIN; LATDbits.LATD8 = 0;
 
 /*
  * The Hardware has a "Boot" Jumper. If the jumper is not connected the
@@ -299,10 +306,7 @@ typedef u32 canid_t;
  * Structure to define the Layer 2 CAN Message. Simply the header above and
  * and array for the Data Bytes.
  */
-typedef struct
-#if defined(__C30__) || defined(__XC16__)
-__attribute__ ((packed))
-#endif
+typedef struct __attribute__ ((packed))
 {
     canid_t can_id; /* 32 bit CAN_ID + EFF/RTR/ERR flags */
     u8            can_dlc;
