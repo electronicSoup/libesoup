@@ -20,15 +20,8 @@
  *
  */
 
-//#include <libpic30.h>
-//#include <stdlib.h>
-//#include <string.h>
-//#include <stdio.h>
+#include <stdlib.h>    // needed for srand()
 #include "system.h"
-//#include "es_lib/utils/utils.h"
-//#ifdef HEARTBEAT
-//#include "es_lib/timers/timer_sys.h"
-//#endif
 #define DEBUG_FILE
 #include "es_lib/logger/serial_log.h"
 
