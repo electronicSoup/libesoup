@@ -124,7 +124,7 @@ result_t eeprom_erase(UINT16 start_addr)
 	return (ERR_ADDRESS_RANGE);
 }
 
-UINT16 eeprom_str_read(UINT16 addr, char *buffer, BYTE len)
+UINT16 eeprom_str_read(UINT16 addr, BYTE *buffer, BYTE len)
 {
 	BYTE character;
 	char *ptr;
@@ -147,7 +147,7 @@ UINT16 eeprom_str_read(UINT16 addr, char *buffer, BYTE len)
 	return (num);
 }
 
-UINT16 eeprom_str_write(UINT16 addr, char *buffer)
+UINT16 eeprom_str_write(UINT16 addr, BYTE *buffer)
 {
 	char *ptr;
 	BYTE copied = 0;
