@@ -26,12 +26,6 @@
 #include "es_lib/core.h"
 #include "system.h"
 
-
-//#define FLASH_PAGE_SIZE 0x400
-//#define LAST_FLASH_ADDRESS 0x2ABF9
-//#define NUM_INSTRUCTION_PER_ROW 64
-
-
 #ifdef HEARTBEAT
 extern void heartbeat_on(union sigval data);
 extern void heartbeat_off(union sigval data);

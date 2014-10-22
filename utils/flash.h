@@ -25,13 +25,9 @@
 
 #include "system.h"
 
-
-
-extern BOOL flash_page_empty(UINT32 address);
-extern void flash_erase(UINT32 address);
-extern void flash_write(UINT32 address, BYTE *data);
-
-extern UINT16 psv_strcpy(char *dst, __prog__ char *src, UINT16 len);
-
+extern BOOL     flash_page_empty(UINT32 address);
+extern result_t flash_erase_page(UINT32 address);
+extern result_t flash_write_row(UINT32 address, BYTE *data);
+extern result_t flash_strcpy(char *dst, __prog__ char *src, UINT16 *length);
 
 #endif //FLASH_H

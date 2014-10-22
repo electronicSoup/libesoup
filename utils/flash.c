@@ -18,6 +18,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  *
+ *******************************************************************************
+ *
  */
 
 #include "system.h"
@@ -27,12 +29,28 @@
 
 #define TAG "FLASH"
 
+/*
+ * BOOL flash_page_empty(UINT32 address)
+ *
+ * Function simply checks that a Flash page is empty. If the address is invalid False is returned.
+ *
+ * Input  : UINT16 address - Flash page address check
+ *
+ * Return : True if the given FLASH Page is Valid address and empty. False otherwise.
+ *
+ */
 BOOL flash_page_empty(UINT32 address)
 {
 	UINT16 loop = 0;
 	UINT16 offset;
 	UINT16 highWord;
 	UINT16 lowWord;
+
+	/*
+	 * Check that the given address is on a page boundary.
+	 */
+        if(address & (FLASH_PAGE_SIZE - 1) != 0x00)
+		return(FALSE);
 
 	TBLPAG = ((address & 0x7F0000)>>16);
 	offset = (address & 0x00FFFF);
@@ -50,17 +68,35 @@ BOOL flash_page_empty(UINT32 address)
 	return(TRUE);
 }
 
-void flash_erase(UINT32 address)
+/*
+ * result_t flash_erase_page(UINT32 address)
+ *
+ * Function Erase a Flash page.
+ *
+ * Input  : UINT16 address - Flash page to erase.
+ *
+ * Return : result_t  -  ERR_ADDRESS_RANGE if the passed address is incorrect.
+ *                    -  SUCCESS if the page has been erased.
+ */
+result_t flash_erase_page(UINT32 address)
 {
 	unsigned int offset;
 
-	LOG_D("erasePage 0x%lx\n\r", address);
+	LOG_D("flash_erase_page(0x%lx)\n\r", address);
 
-        if(  ((address & 0x3ff) != 0x00)
-           ||((address < FLASH_FIRMWARE_START_ADDRESS) && (address != APP_HANDLE_PAGE))) {
-		LOG_E("Invalid address for Erase!\n\r");
-		return;
+	/*
+	 * Check that the given address is on a page boundary.
+	 */
+        if(address & (FLASH_PAGE_SIZE - 1) != 0x00)
+		return (ERR_ADDRESS_RANGE);
+
+	/*
+	 * Check that the given address is in an area of Firmware Address space which we can erase.
+	 */
+        if((address < FLASH_FIRMWARE_START_ADDRESS) && (address != FLASH_APP_HANDLE_PAGE)) {
+		return (ERR_ADDRESS_RANGE);
         }
+
 	TBLPAG = ((address & 0x7F0000)>>16);
 	offset = (address & 0x00FFFF);
         
@@ -70,9 +106,23 @@ void flash_erase(UINT32 address)
 	NVMCON = 0x4042; // Initialize NVMCON
 	asm("DISI #5");
 	__builtin_write_NVM();
+
+	return(SUCCESS);
 }
 
-void flash_write(UINT32 address, BYTE *data)
+/*
+ * result_t flash_write_row(UINT32 address, BYTE *data)
+ *
+ * Function Write a Row of Flash.
+ *
+ * Input  : UINT16 address - Address of the Row to write.
+ *
+ * Input  : BYTE *data     - The row of data to be written to the Flash Page.
+ *
+ * Return : result_t  -  ERR_ADDRESS_RANGE if the passed address is incorrect.
+ *                    -  SUCCESS if the Row has been written.
+ */
+result_t flash_write_row(UINT32 address, BYTE *data)
 {
 	UINT16 highWord = 0;
 	UINT16 lowWord = 0;
@@ -80,64 +130,86 @@ void flash_write(UINT32 address, BYTE *data)
 	unsigned int i;
 
 	LOG_D("flash_write(0x%lx)\n\r", address);
+
+	/*
+	 * Check that the given address is on a Flash Row boundary.
+	 */
+        if(address & (FLASH_NUM_INSTRUCTION_PER_ROW - 1) != 0x00)
+		return (ERR_ADDRESS_RANGE);
 	
-        if((address < FLASH_FIRMWARE_START_ADDRESS) && (address != APP_HANDLE_PAGE)) {
-		LOG_E("Invalid address for Erase!\n\r");
-		return;
+	/*
+	 * Check that the given address is in an area of Firmware Address space which we can erase.
+	 */
+        if((address < FLASH_FIRMWARE_START_ADDRESS) && (address != FLASH_APP_HANDLE_PAGE)) {
+		return (ERR_ADDRESS_RANGE);
         }
 
-	//Set up NVMCON for row programming
+	/*
+	 * Set up NVMCON for row programming
+	 */
 	NVMCON = 0x4001;
 
-	//Set up pointer to the first memory location to be written
+	/*
+	 * Set up pointer to the first memory location to be written
+	 */
 	TBLPAG = address >> 16;
 
-	// Initialize PM Page Boundary SFR
-
+	/*
+	 * Initialize PM Page Boundary SFR
+	 */
 	offset = address & 0xFFFF;
 
-	// Initialize lower word of address
-	//Perform TBLWT instructions to write necessary number of latches
+	/*
+	 * Perform TBLWT instructions to write necessary number of latches
+	 */
 	for (i = 0; i < FLASH_NUM_INSTRUCTION_PER_ROW; i++) {
 		highWord = data[(i * 4) + 3] << 8 | data[(i * 4) + 2];
 		lowWord = data[(i * 4) + 1] << 8 | data[(i * 4)];
 
-		__builtin_tblwtl(offset, lowWord);
-		// Write to address low word
-		__builtin_tblwth(offset, highWord);
-		// Write to upper byte
-		offset = offset + 2;
-		// Increment address
+		__builtin_tblwtl(offset, lowWord);	// Write to address low word
+		__builtin_tblwth(offset, highWord);     // Write to upper byte
+		offset = offset + 2;      		// Increment address
 	}
 
-	asm("DISI #5"); // Block all interrupts with priority < 7
-	                // for next 5 instructions
+	/*
+	 * Block all interrupts with priority < 7 for next 5 instructions
+	 */
+	asm("DISI #5"); 
 	__builtin_write_NVM(); // Perform unlock sequence and set WR
+
+	return(SUCCESS);
 }
 
-/**
+/*
+ * result_t flash_write_row(UINT32 address, BYTE *data)
+ *
+ * Function to copy a C null terminated string from Flash into RAM memory.
+ *
  * Various string values, for example device manufacturer,
- * are stored in the Program Flash memory during project building. In
- * order to operate on these strings they must first be copies to the
- * system's RAM memory. This function carries out this function.
+ * are stored in the Program Flash memory during project building, at the
+ * linker stage. In order to operate on these strings they must first be 
+ * copied to the RAM memory. This function carries out this function.
  *
- * This code is specific to the PIC24 Processor and C30 Compiler
+ * Input  : char *dst - RAM Address where string is copied to.
  *
- * @param dest: Destination String location in RAM
- * @param source: The source String located in Program Flash Memory
- * @return Function returns the number of characters copied across.
+ * Input  : char *src - Flash Address where string is copied from.
+ *
+ * Input/Output : UINT16 *length - Input as the length of the destination buffer
+ *                               - Output as the number of characters written to buffer.
+ *
+ * Return : result_t  -  SUCCESS
  */
-UINT16 psv_strcpy(char *dst, __prog__ char *src, UINT16 len)
+result_t flash_strcpy(char *dst, __prog__ char *src, UINT16 *length)
 {
 	char *ptr = dst;
 	UINT16 i = 0;
 
-	while ((*src != 0x00) && (*src != 0xff) && (i < len - 1)) {
+	while ((*src != 0x00) && (*src != 0xff) && (i < length - 1)) {
 		*ptr++ = *src++;
 		i++;
 	}
 	*ptr = 0x00;
 
-	return i;
+	*length = i;
+	return (SUCCESS);
 }
-

@@ -95,16 +95,23 @@
 
 /*
  * Flash addresses
- *
+ */
+/*
+ * The Flash page size is 512 Instructions, which is 1536 as each instruction is 3 Bytes.
+ * But the Flash is addressed in Words so the length given here is 0x400 (512 * 2)
+ */
+#define FLASH_PAGE_SIZE 0x400
+#define FLASH_LAST_ADDRESS 0x2ABF9
+#define FLASH_NUM_INSTRUCTION_PER_ROW 64
+/*
  * Start of Firmware code
  */
-#define FLASH_NUM_INSTRUCTION_PER_ROW  64
 #define FLASH_FIRMWARE_START_ADDRESS   0x8800
 
 /*
  * Address of the App's page in low memory
  */
-#define APP_HANDLE_PAGE        0x400
+#define FLASH_APP_HANDLE_PAGE        0x400
 
 /*
  * USB Host Power pin
