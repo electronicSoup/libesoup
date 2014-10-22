@@ -49,7 +49,7 @@ BOOL flash_page_empty(UINT32 address)
 	/*
 	 * Check that the given address is on a page boundary.
 	 */
-        if(address & (FLASH_PAGE_SIZE - 1) != 0x00)
+        if((address & (FLASH_PAGE_SIZE - 1)) != 0x00)
 		return(FALSE);
 
 	TBLPAG = ((address & 0x7F0000)>>16);
@@ -87,7 +87,7 @@ result_t flash_erase_page(UINT32 address)
 	/*
 	 * Check that the given address is on a page boundary.
 	 */
-        if(address & (FLASH_PAGE_SIZE - 1) != 0x00)
+        if((address & (FLASH_PAGE_SIZE - 1)) != 0x00)
 		return (ERR_ADDRESS_RANGE);
 
 	/*
@@ -134,7 +134,7 @@ result_t flash_write_row(UINT32 address, BYTE *data)
 	/*
 	 * Check that the given address is on a Flash Row boundary.
 	 */
-        if(address & (FLASH_NUM_INSTRUCTION_PER_ROW - 1) != 0x00)
+        if((address & (FLASH_NUM_INSTRUCTION_PER_ROW - 1)) != 0x00)
 		return (ERR_ADDRESS_RANGE);
 	
 	/*
