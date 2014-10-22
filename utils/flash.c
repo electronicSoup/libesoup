@@ -204,7 +204,7 @@ result_t flash_strcpy(char *dst, __prog__ char *src, UINT16 *length)
 	char *ptr = dst;
 	UINT16 i = 0;
 
-	while ((*src != 0x00) && (*src != 0xff) && (i < length - 1)) {
+	while ((*src != 0x00) && (*src != 0xff) && (i < (*length) - 1)) {
 		*ptr++ = *src++;
 		i++;
 	}
