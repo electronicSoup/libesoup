@@ -262,8 +262,11 @@ void app_connected_process_msg(BYTE cmd, void *data, UINT16 data_len)
 			eeprom_write(EEPROM_CAN_BAUD_RATE_ADDR, byte_data[1]);
 			eeprom_write(EEPROM_IO_ADDRESS_ADDR, byte_data[2]);
 
-			len = eeprom_str_write(EEPROM_NODE_DESCRIPTION_ADDR, &byte_data[3]);
-			LOG_D("%d bytes written to EEPROM\n\r", len);
+			rc = eeprom_str_write(EEPROM_NODE_DESCRIPTION_ADDR, &byte_data[3], &length);
+			if(rc != SUCCESS) {
+				LOG_E("Error writing node description to eeprom\n\r");
+			}
+			LOG_D("%d bytes written to EEPROM\n\r", length);
 			break;
 #endif //ANDROID_NODE
 
@@ -461,8 +464,9 @@ void transmit_node_config_info(void)
 {
 	BYTE buffer[55];
 	UINT16 index;
-	UINT16 len;
+	UINT16 length;
 	BYTE value;
+	result_t rc;
 
 	buffer[1] = NODE_CONFIG_INFO_RESP;
 
@@ -480,10 +484,14 @@ void transmit_node_config_info(void)
 	LOG_D("I/O Address 0x%x\n\r", value);
 	buffer[index++] = value;
 
-	len = eeprom_str_read(EEPROM_NODE_DESCRIPTION_ADDR, &buffer[index], 50);
-	LOG_D("Description: String Length %d string '%s'\n\r", len, &buffer[index]);
+	length = 50;
+	rc = eeprom_str_read(EEPROM_NODE_DESCRIPTION_ADDR, &buffer[index], &length);
+	if(rc != SUCCESS) {
+		LOG_E("Failed to write the node description\n\r");
+	}
+	LOG_D("Description: String Length %d string '%s'\n\r", length, &buffer[index]);
 
-	index = index + len;
+	index = index + length;
 	buffer[0] = index;
 
 	android_transmit((BYTE *) buffer, index);
