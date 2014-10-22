@@ -106,7 +106,8 @@ void app_connected_process_msg(BYTE cmd, void *data, UINT16 data_len)
 	UINT32 address;
 	BYTE *byte_data;
 	UINT8 loop;
-	UINT16 len;
+	UINT16 length;
+	result_t rc;
 
 	//    DEBUG_D("app_connected_process_msg data lenght %d\n\r", data_len);
 	switch (cmd) {
@@ -153,7 +154,10 @@ void app_connected_process_msg(BYTE cmd, void *data, UINT16 data_len)
 					LOG_E("Bad address to Erase\n\r");
 				} else {
 					if (!flash_page_empty(address)) {
-						flash_erase(address);
+						rc = flash_erase_page(address);
+						if(rc != SUCCESS) {
+							LOG_E("Failed to erase page 0x%lx", address);
+						}
 					} else {
 						LOG_D("Already empty\n\r");
 					}
@@ -181,7 +185,10 @@ void app_connected_process_msg(BYTE cmd, void *data, UINT16 data_len)
 					LOG_E("Bad address to Write to row\n\r");
 #endif
 				} else {
-					flash_write(address, &byte_data[4]);
+					rc = flash_write_row(address, &byte_data[4]);
+					if(rc != SUCCESS) {
+						LOG_E("Failed to write row to address 0x%lx\n\r", address);
+					}
 					transmit_ready();
 				}
 			}
@@ -314,17 +321,28 @@ void transmit_hardware_info(void)
 {
 	char buffer[160];
 	BYTE index = 0;
+	UINT16 length;
 
 	LOG_D("transmit_hardware_info()\n\r");
 
 	buffer[1] = HARDWARE_INFO_RESP;
 
 	index = 2;
-	index += psv_strcpy(&buffer[index], hardware_manufacturer, 24) + 1;
-	index += psv_strcpy(&buffer[index], hardware_model, 24) + 1;
-	index += psv_strcpy(&buffer[index], hardware_description, 50) + 1;
-	index += psv_strcpy(&buffer[index], hardware_version, 10) + 1;
-	index += psv_strcpy(&buffer[index], hardware_uri, 50) + 1;
+
+	length = 24;
+	index += flash_strcpy(&buffer[index], hardware_manufacturer, &length) + 1;
+
+	length = 24;
+	index += flash_strcpy(&buffer[index], hardware_model, &length) + 1;
+
+	length = 50;
+	index += flash_strcpy(&buffer[index], hardware_description, &length) + 1;
+
+	length = 10;
+	index += flash_strcpy(&buffer[index], hardware_version, &length) + 1;
+
+	length = 50;
+	index += flash_strcpy(&buffer[index], hardware_uri, &length) + 1;
 
 	LOG_D("Transmit boot info length %d\n\r", index);
 	buffer[0] = index;
@@ -337,14 +355,23 @@ void transmit_bootcode_info(void)
 	//    char string[50];
 	char buffer[152];
 	BYTE index = 0;
+	UINT16 length;
 
 	buffer[1] = BOOTCODE_INFO_RESP;
 
 	index = 2;
-	index += psv_strcpy(&buffer[index], bootcode_author, 40) + 1;
-	index += psv_strcpy(&buffer[index], bootcode_description, 50) + 1;
-	index += psv_strcpy(&buffer[index], bootcode_version, 10) + 1;
-	index += psv_strcpy(&buffer[index], bootcode_uri, 50) + 1;
+
+	length = 40;
+	index += flash_strcpy(&buffer[index], bootcode_author, &length) + 1;
+
+	length = 50;
+	index += flash_strcpy(&buffer[index], bootcode_description, &length) + 1;
+
+	length = 10;
+	index += flash_strcpy(&buffer[index], bootcode_version, &length) + 1;
+
+	length = 50;
+	index += flash_strcpy(&buffer[index], bootcode_uri, &length) + 1;
 
 	LOG_D("Transmit boot info length %d\n\r", index);
 	buffer[0] = index;
@@ -356,14 +383,24 @@ void transmit_firmware_info(void)
 {
 	char buffer[152];
 	UINT16 index = 0;
+	UINT16 length;
+
 	buffer[1] = FIRMWARE_INFO_RESP;
 
 	index = 2;
 
-	index += psv_strcpy(&buffer[index], firmware_author, 40) + 1;
-	index += psv_strcpy(&buffer[index], firmware_description, 50) + 1;
-	index += psv_strcpy(&buffer[index], firmware_version, 10) + 1;
-	index += psv_strcpy(&buffer[index], firmware_uri, 50) + 1;
+	length = 40;
+	index += flash_strcpy(&buffer[index], firmware_author, &length) + 1;
+
+	length = 50;
+	index += flash_strcpy(&buffer[index], firmware_description, &length) + 1;
+
+	length = 10;
+	index += flash_strcpy(&buffer[index], firmware_version, &length) + 1;
+
+	length = 50;
+	index += flash_strcpy(&buffer[index], firmware_uri, &length) + 1;
+
 	LOG_D("Transmit Firmware info length %d\n\r", index);
 	buffer[0] = index;
 
@@ -376,27 +413,41 @@ void transmit_application_info(void)
 	char buffer[153];
 	char test[50];
 	UINT16 index = 0;
+	UINT16 length;
+
 	buffer[1] = APPLICATION_INFO_RESP;
 
 	buffer[2] = app_valid;
 
 	index = 3;
 
-	psv_strcpy(test, app_author, 40);
+	length = 40;
+	flash_strcpy(test, app_author, &length);
 	LOG_D("App Author is:%s\n\r", test);
-	index += psv_strcpy(&buffer[index], app_author, 40) + 1;
 
-	psv_strcpy(test, app_software, 50);
+	length = 40;
+	index += flash_strcpy(&buffer[index], app_author, &length) + 1;
+
+	length = 50;
+	flash_strcpy(test, app_software, &length);
 	LOG_D("App Software is:%s\n\r", test);
-	index += psv_strcpy(&buffer[index], app_software, 50) + 1;
 
-	psv_strcpy(test, app_version, 10);
+	length = 50;
+	index += flash_strcpy(&buffer[index], app_software, &length) + 1;
+
+	length = 10;
+	flash_strcpy(test, app_version, &length);
 	LOG_D("App Version is:%s\n\r", test);
-	index += psv_strcpy(&buffer[index], app_version, 10) + 1;
 
-	psv_strcpy(test, app_uri, 50);
+	length = 10;
+	index += flash_strcpy(&buffer[index], app_version, &length) + 1;
+
+	length = 50;
+	flash_strcpy(test, app_uri, &length);
 	LOG_D("App URI is:%s\n\r", test);
-	index += psv_strcpy(&buffer[index], app_uri, 50) + 1;
+
+	length = 50;
+	index += flash_strcpy(&buffer[index], app_uri, &length) + 1;
 
 	LOG_D("Transmit Application info length %d\n\r", index);
 	buffer[0] = index;
