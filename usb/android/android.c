@@ -76,17 +76,15 @@ void android_init(void)
 
 BOOL android_receive(BYTE *buffer, UINT16 *size, BYTE *error_code)
 {
+	UINT16 msg_size;
+	UINT16 loop;
 	*error_code = USB_SUCCESS;
 
-//        DEBUG_D("android_receive() rx_buffer_count is %d\n\r", rx_buffer_count);
 	if (rx_buffer_count > 2) {
-		UINT16 msg_size;
-		UINT16 loop;
 
 		// The first word to read is a size of the message
 		msg_size = rx_circular_buffer[rx_read_index] << 8 | rx_circular_buffer[(rx_read_index + 1) % RX_BUFFER_SIZE];
 
-                LOG_D("Receiving message size %d\n\r", msg_size);
 		if(msg_size + 2 > rx_buffer_count) {
 			*size = 0;
 			return (FALSE);
@@ -148,7 +146,6 @@ BYTE android_tasks(void* device_handle)
 	UINT32 size = 0;
 
 	if(device_handle == NULL) {
-//            DEBUG_D("android_tasks() device_handle null");
 		receiver_busy = FALSE;
 		transmitter_busy = FALSE;
 		return(USB_SUCCESS);
@@ -258,7 +255,7 @@ static void process_msg_from_android(void)
 		/*
 		 * Pass the received message onto the current state for processing.
 		 */
-		LOG_D("Process Received message in State Machine\n\r");
+		LOG_D("Process Received message in State Machine 0x%x size %d\n\r",read_buffer[0], size-1);
 		current_state.process_msg(read_buffer[0], data, size - 1);
 	}
 }
