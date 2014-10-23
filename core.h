@@ -197,7 +197,12 @@ typedef enum {
  *
  ****************************************************
  */
+/**
+ * \brief Duration of the system timer tick in MilliSeconds
+ */
+#define SYSTEM_TICK_ms 5 //5 mS
 
+#if 0
 typedef enum {
     INACTIVE = 0x00, /**< enum value Success */
     ACTIVE,
@@ -220,11 +225,6 @@ typedef struct
 	timer_status_t status;
 	timer_t        timer_id;
 } es_timer;
-
-/**
- * \brief Duration of the system timer tick in MilliSeconds
- */
-#define SYSTEM_TICK_ms 5 //5 mS
 
 /**
  * \brief SECONDS_TO_TICKS
@@ -260,6 +260,7 @@ union sigval {          /* Data passed with notification */
  * pointer to a BYTE. The expiry function will not return anything.
  */
 typedef void (*expiry_function)(timer_t timer_id, union sigval);
+#endif // 0
 
 /****************************************************
  *

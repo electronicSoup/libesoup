@@ -22,8 +22,12 @@
  *
  * This file contains the code for creating timers on an electronicSoup 
  * Cinnaom Bun. The API for creating and canceling timers is modeled on the 
- * API used in Linux to that source code can be compiled for both the 
+ * timers API used in Linux so that source code can be compiled for both the 
  * Cinnamon Bun and Linux based systems.
+ *
+ * The timer tick is set using the First Timer Interrupt on the PIC24FJ256GB106
+ * this timer is setup by the init function and the ISR for Timer_1 then
+ * triggers the regular checking of the active timers.
  *
  * Linux refers to the interval of time as Jiffies where as in this code it's 
  * refered to as a "tick". This tick interval is defined in the core.h file
@@ -57,9 +61,9 @@
  *
  *
  */
-#include "es_lib/core.h"
 #include "system.h"
-#include <stdio.h>
+//#include <stdio.h>
+#include "es_lib/timers/timers.h"
 
 #define DEBUG_FILE
 #include "es_lib/logger/serial_log.h"
@@ -68,8 +72,11 @@
 
 static UINT16 timer_counter = 0;
 
-volatile BOOL timer_tick = FALSE;
+volatile BOOL timer_ticked = FALSE;
 
+/*
+ * Data structure for a Timer on the Cinnamon Bun.
+ */
 typedef struct {
 	BOOL active;
 	UINT16 expiry_count;
@@ -77,17 +84,38 @@ typedef struct {
 	union sigval expiry_data;
 } sys_timer_t;
 
+/*
+ * The Cinnamon Bun maintains a table of timers which can be activated
+ * by the calling code. The NUMBER_OF_TIMERS, defined in your system.h
+ * file defines how many timers the code maintains. 
+ *
+ * If your project uses a limited number of know timers then you can set 
+ * NUMBER_OF_TIMERS to a known value.
+ */
 #pragma udata
 sys_timer_t timers[NUMBER_OF_TIMERS];
 
+/*
+ * Timer_1 ISR. To keep ISR short it simply restarts TIMER_1 and sets 
+ * the variable "timer_tick" which is should be regularly checked by 
+ * the main control loop of your project by calling the CHECK_TIMERS()
+ * macro.
+ */
 void _ISR __attribute__((__no_auto_psv__)) _T1Interrupt(void)
 {
 	IFS0bits.T1IF = 0;
 	TMR1 = 0x00;
 
-	timer_tick = TRUE;
+	timer_ticked = TRUE;
 }
 
+/*
+ * void timer_init(void)
+ *
+ * Function to initialise the data structures for timers and start 
+ * Timer_1 of the PIC 
+ *
+ */
 void timer_init(void)
 {
 	BYTE loop;
@@ -101,7 +129,9 @@ void timer_init(void)
 		timers[loop].function = (expiry_function)NULL;
 	}
 
-	// Initialise Timer 1 for use as the 5mS timer
+	/*
+	 * Initialise Timer 1 for use as the timer tick 
+	 */
 	T1CONbits.TCS = 0;      // Internal FOSC/2
 	T1CONbits.TCKPS1 = 0;   // Divide by 8
 	T1CONbits.TCKPS0 = 1;
@@ -114,13 +144,21 @@ void timer_init(void)
 	T1CONbits.TON = 1;
 }
 
-void tick(void)
+/*
+ * void timer_tick(void)
+ *
+ * Function periodically called to check the state of active timers and check
+ * expiry of any of the timers. If a timer has expired after the current tick
+ * it's expiry function is called.
+ *
+ */
+void timer_tick(void)
 {
 	BYTE loop;
 	expiry_function function;
 	union sigval data;
 
-	timer_tick = FALSE;
+	timer_ticked = FALSE;
 	timer_counter++;
 
 	/*
@@ -129,6 +167,10 @@ void tick(void)
 	for(loop=0; loop < NUMBER_OF_TIMERS; loop++) {
 		if (  (timers[loop].active)
 		    &&(timers[loop].expiry_count == timer_counter) ) {
+
+			/*
+			 * timer expired so call expiry function.
+			 */
 			timers[loop].active = FALSE;
 
 			function = timers[loop].function;
@@ -141,6 +183,41 @@ void tick(void)
 	}
 }
 
+/*
+ * result_t timer_start(UINT16 ticks,
+ *                      expiry_function function,
+ *                      union sigval data,
+ *                      es_timer *timer)
+ *
+ * Function to start a timer on the system.
+ *
+ * Input  : UINT16 ticks
+ *              The duration of the timer in system timer ticks.
+ *              The two convienence macros (SECONDS_TO_TICKS and
+ *              MILLI_SECONDS_TO_TICKS) should be used to calculate
+ *              this duration to keep code portable in case the
+ *              system tick duration is changed from it's current
+ *              value.
+ *
+ * Input  : expiry_function function
+ *              The function which is to be called if the timer expires before
+ *              it is canceled.
+ *
+ * Input  : union sigval data
+ *              This Input parameter is a data parameter which will be passed
+ *              to the given expiry function if the timer expires. The union
+ *              is defined in timers.h and can be a value or a pointer.
+ *
+ * Input/Output  : es_timer *timer
+ *              The timer strucure which the function is to operate on. The
+ *              structure's timer identifier will be updated depending on which
+ *              system timer is allocated to the timer.
+ *
+ * Return : SUCCESS             Timer created successfully
+ *          ERR_TIMER_ACTIVE    Error - Given timer is already active
+ *          ERR_NO_RESOURCES    Error - No Free system timers available.
+ *
+ */
 result_t timer_start(UINT16 ticks,
 		     expiry_function function,
 		     union sigval data,
@@ -149,7 +226,6 @@ result_t timer_start(UINT16 ticks,
 	timer_t loop;
 
 	if(timer->status != INACTIVE) {
-		LOG_E("Timer already Active\n\r");
 		return(ERR_TIMER_ACTIVE);
 	}
 
@@ -158,6 +234,9 @@ result_t timer_start(UINT16 ticks,
 	 */
 	for(loop=0; loop < NUMBER_OF_TIMERS; loop++) {
 		if (!timers[loop].active) {
+			/*
+			 * Found an inactive timer so assign to this expiry
+			 */
 			timers[loop].active = TRUE;
 
 			if( (0xFFFF - timer_counter) > ticks) {
@@ -173,20 +252,30 @@ result_t timer_start(UINT16 ticks,
 			return(SUCCESS);
 		}
 	}
-	LOG_E("No Timers Free");
 
 	return(ERR_NO_RESOURCES);
 }
 
-result_t timer_cancel(es_timer *tmr)
+/*
+ * result_t timer_cancel(es_timer *timer)
+ *
+ * Function to cancel a running timer on the system.
+ *
+ * Input/Output  : es_timer *timer
+ *              The timer strucure which the function is to operate on.
+ *
+ * Return : SUCCESS
+ *
+ */
+result_t timer_cancel(es_timer *timer)
 {
-	if(tmr->status == ACTIVE) {
-		if(timers[tmr->timer_id].active) {
-			timers[tmr->timer_id].active = FALSE;
-			timers[tmr->timer_id].expiry_count = 0;
-			timers[tmr->timer_id].function = (expiry_function) NULL;
+	if(timer->status == ACTIVE) {
+		if(timers[timer->timer_id].active) {
+			timers[timer->timer_id].active = FALSE;
+			timers[timer->timer_id].expiry_count = 0;
+			timers[timer->timer_id].function = (expiry_function) NULL;
 		}
-		tmr->status = INACTIVE;
+		timer->status = INACTIVE;
 	}
 	return(SUCCESS);
 }
