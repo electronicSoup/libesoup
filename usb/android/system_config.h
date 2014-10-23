@@ -47,7 +47,8 @@
 #define USBTasks()                  \
     {                               \
         USBHostTasks();             \
-        AndroidTasks();          \
+        AndroidTasks();             \
+	android_tasks();            \
     }
 
 #define USBInitialize(x)            \
