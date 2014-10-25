@@ -45,7 +45,6 @@
  */
 static void process_msg_from_android(void);
 static BOOL android_receive(BYTE *buffer, UINT16 *size, BYTE *error_code);
-static BYTE android_transmit(BYTE *buffer, BYTE size);
 static void process_msg_from_android(void);
 
 /*
@@ -328,7 +327,7 @@ static BOOL android_receive(BYTE *buffer, UINT16 *size, BYTE *error_code)
  *          USB_SUCCESS            Message queued for future transmission.
  *
  */
-static BYTE android_transmit(BYTE *buffer, BYTE size)
+BYTE android_transmit(BYTE *buffer, BYTE size)
 {
 	UINT16 loop;
 	BYTE *buffer_ptr;
