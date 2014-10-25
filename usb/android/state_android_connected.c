@@ -30,14 +30,8 @@
 #include "usb/usb.h"
 #include "usb/usb_host_android.h"
 
-#include "es_lib/usb/android/android_state.h"
-
-#if defined(ANDROID_NODE) || defined(ANDROID_BOOT)
-#include "node_ipc.h"
-#elif defined(ANDROID_DONGLE)
-#include "dongle_ipc.h"
-#endif
-#include "states.h"
+#include "es_lib/usb/android/state.h"
+#include "es_lib/usb/android/ipc.h"
 
 #define DEBUG_FILE
 #include "es_lib/logger/serial_log.h"
@@ -72,11 +66,7 @@ void set_android_connected_state(void)
 void android_connected_process_msg(BYTE cmd, void *data, UINT16 data_len)
 {
 	if (cmd == COMMAND_APP_CONNECT) {
-#if defined(ANDROID_DONGLE)
-		set_dongle_connected_state();
-#elif defined(ANDROID_NODE) || defined(ANDROID_BOOT)
-		set_node_connected_state();
-#endif
+		ANDROID_APPLICATION_CONNECTED_STATE
 	} else {
 		LOG_E("Android Connected State received Android message other then App connected 0x%x\n\r", cmd);
 	}

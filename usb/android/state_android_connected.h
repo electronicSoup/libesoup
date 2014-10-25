@@ -19,23 +19,9 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  *
  */
-#ifndef STATES_H
-#define STATES_H
+#ifndef STATE_ANDROID_CONNECTED_H
+#define STATE_ANDROID_CONNECTED_H
 
-#include "system.h"
-#include "usb/usb.h"
-#if defined(ANDROID_NODE) || defined(ANDROID_BOOT)
-#include "node_ipc.h"
-#elif defined(ANDROID_DONGLE)
-#include "dongle_ipc.h"
-#endif
-
-extern void set_idle_state(void);
 extern void set_android_connected_state(void);
-#if defined(ANDROID_NODE) || defined(ANDROID_BOOT)
-extern void set_node_connected_state(void);
-#elif defined(ANDROID_DONGLE)
-extern void set_dongle_connected_state(void);
-#endif
 
 #endif // STATES_H

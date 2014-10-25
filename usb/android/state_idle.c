@@ -30,13 +30,9 @@
 #include "usb/usb.h"
 #include "usb/usb_host_android.h"
 
-#include "es_lib/usb/android/android_state.h"
-#if defined(ANDROID_NODE) || defined(ANDROID_BOOT)
-#include "node_ipc.h"
-#elif defined(ANDROID_DONGLE)
-#include "dongle_ipc.h"
-#endif
-#include "states.h"
+#include "es_lib/usb/android/state.h"
+#include "es_lib/usb/android/ipc.h"
+#include "es_lib/usb/android/state_android_connected.h"
 
 #define DEBUG_FILE
 #include "es_lib/logger/serial_log.h"

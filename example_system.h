@@ -83,12 +83,7 @@
 /*
  * Android Definitions:
  *
- * When using the library Android states one of these switches should be
- * enabled.
  */
-//#define ANDROID_BOOT
-//#define ANDROID_NODE
-//#define ANDROID_DONGLE
 
 /*
  * If project is to use the BOOT Page of EEPROM then define this option.

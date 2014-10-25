@@ -27,7 +27,7 @@
 #include "usb/usb.h"
 #include "usb/usb_host_android.h"
 
-#include "es_lib/usb/android/android_state.h"
+#include "es_lib/usb/android/state.h"
 
 #define DEBUG_FILE
 #include "es_lib/logger/serial_log.h"
