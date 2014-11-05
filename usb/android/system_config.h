@@ -31,7 +31,6 @@
 #define USB_ENABLE_TRANSFER_EVENT
 
 #define USB_HOST_APP_DATA_EVENT_HANDLER USB_ApplicationDataEventHandler
-#define USB_ENABLE_1MS_EVENT
 
 #define ANDROID_DEVICE_ATTACH_TIMEOUT 3000
 
@@ -44,11 +43,11 @@
 #define USB_INSERT_TIME (250+1)
 #define USB_HOST_APP_EVENT_HANDLER USB_ApplicationEventHandler
 
-#define USBTasks()                  \
-    {                               \
-        USBHostTasks();             \
-        AndroidTasks();             \
-	android_tasks();            \
+#define USBTasks()                    \
+    {                                 \
+        USBHostTasks();               \
+        AndroidTasks();               \
+	android_tasks();              \
     }
 
 #define USBInitialize(x)            \
