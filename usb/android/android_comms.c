@@ -73,6 +73,14 @@ static BOOL transmitter_busy = FALSE;
 static void* device_handle = NULL;
 
 /*
+ * Interrupt Handler for the USB Host Functionality of Microchip USB Stack.
+ */
+void __attribute__((interrupt,auto_psv)) _USB1Interrupt()
+{
+        USB_HostInterruptHandler();
+}
+
+/*
  * void android_init(void *data)
  *
  * Function to initialise the two circular buffers being used for comms with 
