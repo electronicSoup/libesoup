@@ -226,6 +226,7 @@ result_t timer_start(UINT16 ticks,
 	timer_t loop;
 
 	if(timer->status != INACTIVE) {
+		LOG_E("start_timer() ERR_TIMER_ACTIVE\n\r");
 		return(ERR_TIMER_ACTIVE);
 	}
 
@@ -253,6 +254,7 @@ result_t timer_start(UINT16 ticks,
 		}
 	}
 
+	LOG_E("start_timer() ERR_NO_RESOURCES\n\r");
 	return(ERR_NO_RESOURCES);
 }
 
