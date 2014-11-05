@@ -24,8 +24,9 @@
 #include <stdio.h>
 #include "system.h"
 #include "usb/usb.h"
-//#include "usb/usb_host_android.h"
+#include "usb/usb_host_android.h"
 #include "es_lib/usb/android/state.h"
+#include "es_lib/usb/android/state_idle.h"
 
 #define DEBUG_FILE
 #include "es_lib/logger/serial_log.h"
@@ -39,7 +40,7 @@ void app_connected_process_msg(BYTE, void *, UINT16);
 void app_connected_main(void);
 void app_connected_process_usb_event(USB_EVENT event);
 
-void set_app_connected_state(void)
+void example_set_app_connected_state(void)
 {
 	LOG_D("State -> App_connected\n\r");
 
@@ -50,11 +51,6 @@ void set_app_connected_state(void)
 
 void app_connected_process_msg(BYTE cmd, void *data, UINT16 data_len)
 {
-	UINT32 address;
-	BYTE *byte_data;
-	UINT8 loop;
-	result_t rc;
-
 }
 
 void app_connected_main()
