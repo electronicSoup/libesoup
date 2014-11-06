@@ -22,13 +22,13 @@ bool USB_ApplicationDataEventHandler( uint8_t address, USB_EVENT event, void *da
 
 bool USB_ApplicationEventHandler( uint8_t address, USB_EVENT event, void *data, uint32_t size )
 {
-	LOG_D("USB_ApplicationEventHandler()\n\r");
+//	LOG_D("USB_ApplicationEventHandler()\n\r");
 
 	asm ("CLRWDT");
 
 	switch( event) {
 		case EVENT_VBUS_REQUEST_POWER:
-			LOG_D("EVENT_VBUS_REQUEST_POWER current %d\n\r", ((USB_VBUS_POWER_EVENT_DATA*) data)->current);
+//			LOG_D("EVENT_VBUS_REQUEST_POWER current %d\n\r", ((USB_VBUS_POWER_EVENT_DATA*) data)->current);
 			// The data pointer points to a byte that represents the amount of power
 			// requested in mA, divided by two.  If the device wants too much power,
 			// we reject it.
