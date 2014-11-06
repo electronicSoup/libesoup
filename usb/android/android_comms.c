@@ -32,7 +32,7 @@
 #define DEBUG_FILE
 #include "es_lib/logger/serial_log.h"
 
-#define TAG "Android"
+#define TAG "Android-Com"
 
 /*
  * Definitions of the Rx and Tx circular buffer sizes.
@@ -180,6 +180,7 @@ void android_tasks(void)
 						rx_buffer_count++;
 						rx_write_index = ++rx_write_index % RX_BUFFER_SIZE;
 					}
+					LOG_D("Message transfered to RX circular buffer\n\r");
 				}
 				receiver_busy = FALSE;
 			} else {
@@ -391,7 +392,7 @@ static void process_msg_from_android(void)
 		/*
 		 * Pass the received message onto the current state for processing.
 		 */
-		LOG_D("Process Received message in State Machine 0x%x size %d\n\r",read_buffer[0], size-1);
+		LOG_D("Process Received message (0x%x) in State Machine size %d\n\r",read_buffer[0], size-1);
 		current_state.process_msg(read_buffer[0], data, size - 1);
 	}
 }
