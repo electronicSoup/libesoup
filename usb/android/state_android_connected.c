@@ -67,7 +67,7 @@ void set_android_connected_state(void)
 void android_connected_process_msg(BYTE cmd, void *data, UINT16 data_len)
 {
 	if (cmd == COMMAND_APP_CONNECT) {
-		ANDROID_APPLICATION_CONNECTED_STATE
+		ANDROID_SET_APPLICATION_CONNECTED_STATE
 	} else {
 		LOG_E("Android Connected State received Android message other then App connected 0x%x\n\r", cmd);
 	}
@@ -78,6 +78,9 @@ void android_connected_process_msg(BYTE cmd, void *data, UINT16 data_len)
  */
 void android_connected_main()
 {
+#if defined(NO_ANDROID_APP_FN)
+	NO_ANDROID_APP_FN
+#endif
 }
 
 /*

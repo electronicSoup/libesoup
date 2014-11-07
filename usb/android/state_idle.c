@@ -75,6 +75,9 @@ void idle_process_msg(BYTE cmd, void *data, UINT16 data_len)
  */
 void idle_main()
 {
+#if defined(NO_ANDROID_APP_FN)
+	NO_ANDROID_APP_FN
+#endif
 }
 
 /*
