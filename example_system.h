@@ -84,6 +84,27 @@
  * Android Definitions:
  *
  */
+/*
+ * Definition of the function used to change State to the App connected
+ * state. If you are going to use an Android connected device you must
+ * define a function for moving into the App Connected state. See example
+ * below:
+ *
+ *   extern void example_set_app_connected_state(void);
+ *   #define ANDROID_SET_APPLICATION_CONNECTED_STATE example_set_app_connected_state();
+ */
+
+/*
+ * Android main processing when the Android Application is NOT Connected.
+ * If different processing is required when the Android Applicaiton is not
+ * connected to your device then define the function to perform this 
+ * functionality and the MACRO.
+ * This is NOT Mandatory. If you project does not require it then don't 
+ * define the MACRO.
+ *
+ *  extern void example_no_android_app_function(void);
+ *  #define NO_ANDROID_APP_FN example_no_android_app_function();
+ */
 
 /*
  * If project is to use the BOOT Page of EEPROM then define this option.
@@ -96,4 +117,21 @@
  * Project Specific Defines
  *
  *******************************************************************************
+ */
+
+/*
+ * Android IPC Messages.
+ *
+ * App message is transmitted from the Android Device App to the Cinnamom Bun
+ * Bun message is transmitted from the Cinnamon Bun to the Android Device App
+ *
+ * Messages for communications with an Android App should be defined as 
+ * project specific constants relative to USER_OFFSETS.
+ *
+ * #define MY_FIRST_BUN_MSG     BUN_MSG_USER_OFFSET
+ * #define MY_SECOND_BUN_MSG    BUN_MSG_USER_OFFSET + 1
+ *
+ * #define MY_FIRST_APP_MSG     APP_MSG_USER_OFFSET
+ * #define MY_SECOND_APP_MSG    APP_MSG_USER_OFFSET + 1
+ *
  */
