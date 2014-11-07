@@ -132,6 +132,29 @@
 #define BOOT_FLAG      (TRISDbits.TRISD11 = 0 || PORTDbits.RD11)
 
 /*
+ * Android IPC
+ *
+ * App message is transmitted from the Android Device App to the Cinnamom Bun
+ * Bun message is transmitted from the Cinnamon Bun to the Android Device App
+ *
+ * Messages carry a Byte Identifier so there are 255 possible messages. The
+ * lower message id's may be used by es_lib system so a user's Android App
+ * messages should be defined relative to these. For example you would define
+ * your messages to send from the CinnamonBun as:
+ *
+ * #define MY_FIRST_BUN_MSG   BUN_MSG_USER_OFFSET
+ * #define MY_SECOND_BUN_MSG  BUN_MSG_USER_OFFSET + 1
+ *
+ * And messgaes which your CinnamonBun project expects to recieve from the
+ * Android App would be defined as:
+ *
+ * #define MY_FIRST_APP_MSG   APP_MSG_USER_OFFSET
+ * #define MY_FIRST_APP_MSG   APP_MSG_USER_OFFSET + 1
+ */
+#define BUN_MSG_USER_OFFSET    0x00
+#define APP_MSG_USER_OFFSET    0x02
+
+/*
  * Include MicroChip's definitions
  */
 #if defined(MCP)
