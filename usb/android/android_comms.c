@@ -44,7 +44,7 @@
  * Forward declaration of funcitons in file
  */
 static void process_msg_from_android(void);
-static BOOL android_receive(BYTE *buffer, UINT16 *size, BYTE *error_code);
+static BOOL android_receive(BYTE *buffer, UINT8 *size, BYTE *error_code);
 static void process_msg_from_android(void);
 
 /*
@@ -118,7 +118,7 @@ void android_init(void* data)
 void android_tasks(void)
 {
 	BYTE error_code = USB_SUCCESS;
-	result_t rc = SUCCESS;
+//	result_t rc = SUCCESS;
 	UINT16 loop = 0;
 	UINT32 size = 0;
 
@@ -247,18 +247,18 @@ void android_tasks(void)
  *                Flase if no message was received or there was an error.
  *
  */
-static BOOL android_receive(BYTE *buffer, UINT16 *size, BYTE *error_code)
+static BOOL android_receive(BYTE *buffer, UINT8 *size, BYTE *error_code)
 {
-	UINT16 msg_size;
-	UINT16 loop;
+	UINT8 msg_size;
+	UINT8 loop;
 	*error_code = USB_SUCCESS;
 
 	/*
-	 * The first word (2 Bytes) of the received message is the size of the
-	 * incoming message. If there's not more then 2 bytes in the circular
-	 * buffer we can't have a complete message so ignore it.
+	 * The first Bytes of the received message is the number of bytes which
+	 * follow this first byte count. As a result the circular buffer must
+	 * contain at least 2 bytes or we don't have a message.
 	 */
-	if (rx_buffer_count <= 2) {
+	if (rx_buffer_count < 2) {
 		*size = 0;
 		return (FALSE);
 	}
@@ -266,27 +266,23 @@ static BOOL android_receive(BYTE *buffer, UINT16 *size, BYTE *error_code)
 	/*
 	 * determing the size of the incoming message
 	 */
-	msg_size = rx_circular_buffer[rx_read_index] << 8 | rx_circular_buffer[(rx_read_index + 1) % RX_BUFFER_SIZE];
+	msg_size = rx_circular_buffer[rx_read_index];
 
 	/*
 	 * If we dont't have more bytes in the Rx Circular buffer then the 
 	 * size of the incoming message then there is not a complete 
 	 * message in the circular buffer so ignore the incomplete message.
 	 */
-	if(msg_size + 2 > rx_buffer_count) {
+	if(msg_size + 1 > rx_buffer_count) {
 		*size = 0;
 		return (FALSE);
 	}
 
 	/*
-	 * We have a complete message in the Rx Circular buffer.
-	 * First remove the 2 size bytes from the circular buffer
+	 * We have enough bytes in circular buffer for a complete message
+	 * First remove the size byte from the circular buffer
 	 */
 	msg_size = rx_circular_buffer[rx_read_index];
-	rx_buffer_count--;
-	rx_read_index = ++rx_read_index % RX_BUFFER_SIZE;
-
-	msg_size = msg_size << 8 | rx_circular_buffer[rx_read_index];
 	rx_buffer_count--;
 	rx_read_index = ++rx_read_index % RX_BUFFER_SIZE;
 
@@ -371,14 +367,14 @@ BYTE android_transmit(BYTE *buffer, BYTE size)
  */
 static void process_msg_from_android(void)
 {
-	UINT16 size = 0;
-	BYTE read_buffer[300];
+	UINT8 size = 0;
+	BYTE read_buffer[255];
 	BYTE error_code = USB_SUCCESS;
 
 	void *data = NULL;
 
-	size = (UINT16)sizeof (read_buffer);
-	while (android_receive((BYTE*) & read_buffer, (UINT16 *)&size, &error_code)) {
+	size = (UINT8)sizeof (read_buffer);
+	while (android_receive((BYTE*) & read_buffer, (UINT8 *)&size, &error_code)) {
 		if (error_code != USB_SUCCESS) {
 			LOG_E("android_receive raised an error %x\n\r", error_code);
 		}
