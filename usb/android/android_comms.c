@@ -43,8 +43,7 @@
 /*
  * Forward declaration of funcitons in file
  */
-static void process_msg_from_android(void);
-static BOOL android_receive(BYTE *buffer, UINT8 *size, BYTE *error_code);
+static BOOL android_receive(BYTE *id, BYTE *data, UINT16 *data_size, BYTE *error_code);
 static void process_msg_from_android(void);
 
 /*
@@ -247,51 +246,54 @@ void android_tasks(void)
  *                Flase if no message was received or there was an error.
  *
  */
-static BOOL android_receive(BYTE *buffer, UINT8 *size, BYTE *error_code)
+static BOOL android_receive(BYTE *id, BYTE *data, UINT16 *data_size, BYTE *error_code)
 {
-	UINT8 msg_size;
-	UINT8 loop;
+	UINT16 msg_size;
+	UINT16 loop;
 	*error_code = USB_SUCCESS;
 
 	/*
-	 * The first Bytes of the received message is the number of bytes which
+	 * The first 2 Bytes of the received message is the number of bytes which
 	 * follow this first byte count. As a result the circular buffer must
-	 * contain at least 2 bytes or we don't have a message.
+	 * contain at least 3 bytes or we don't have a message.
 	 */
-	if (rx_buffer_count < 2) {
-		*size = 0;
+	if (rx_buffer_count < 3) {
+		*data_size = 0;
 		return (FALSE);
 	}
 
 	/*
 	 * determing the size of the incoming message
 	 */
-	msg_size = rx_circular_buffer[rx_read_index];
+	loop = rx_read_index;
+	msg_size = rx_circular_buffer[loop];
+	loop = ++loop % RX_BUFFER_SIZE;
+	msg_size = (msg_size << 8) | rx_circular_buffer[loop];
 
 	/*
 	 * If we dont't have more bytes in the Rx Circular buffer then the 
 	 * size of the incoming message then there is not a complete 
 	 * message in the circular buffer so ignore the incomplete message.
 	 */
-	if(msg_size + 1 > rx_buffer_count) {
-		*size = 0;
+	if(msg_size + 2 > rx_buffer_count) {
+		*data_size = 0;
 		return (FALSE);
 	}
 
 	/*
 	 * We have enough bytes in circular buffer for a complete message
-	 * First remove the size byte from the circular buffer
+	 * First remove the two size bytes from the circular buffer
 	 */
-	msg_size = rx_circular_buffer[rx_read_index];
+	rx_buffer_count--;
+	rx_read_index = ++rx_read_index % RX_BUFFER_SIZE;
 	rx_buffer_count--;
 	rx_read_index = ++rx_read_index % RX_BUFFER_SIZE;
 
 	/*
 	 * Check that the input buffer is big enough for received message
 	 */
-	if (msg_size > *size) {
-		LOG_D("msg_size %d\n\r", msg_size);
-		LOG_D("Read received buffer size %d not big enough for %d\n\r",*size, rx_buffer_count);
+	if (msg_size > *data_size) {
+		LOG_E("Read received buffer size %d not big enough for %d\n\r",*data_size, rx_buffer_count);
 
 		/*
 		 * Remove this huge message from circular buffer. It will be 
@@ -307,14 +309,22 @@ static BOOL android_receive(BYTE *buffer, UINT8 *size, BYTE *error_code)
 	}
 
 	/*
-	 * Have buffer space for message so copy message to buffer.
+	 * Have buffer space for data so process message.
+	 * First pull out the message id
 	 */
-	for (loop = 0; loop < msg_size; loop++) {
-		buffer[loop] = rx_circular_buffer[rx_read_index];
+	*id = rx_circular_buffer[rx_read_index];
+	rx_read_index = ++rx_read_index % RX_BUFFER_SIZE;
+	rx_buffer_count--;
+
+	/*
+	 * Now the data associated with the message.
+	 */
+	for (loop = 0; loop < (msg_size - 1); loop++) {
+		data[loop] = rx_circular_buffer[rx_read_index];
 		rx_read_index = ++rx_read_index % RX_BUFFER_SIZE;
 		rx_buffer_count--;
 	}
-	*size = msg_size;
+	*data_size = loop;
 	return (TRUE);
 }
 
@@ -367,28 +377,25 @@ BYTE android_transmit(BYTE *buffer, BYTE size)
  */
 static void process_msg_from_android(void)
 {
-	UINT8 size = 0;
-	BYTE read_buffer[255];
+	UINT16 data_size = 0;
+	BYTE id;
+	BYTE data[300];
 	BYTE error_code = USB_SUCCESS;
 
-	void *data = NULL;
-
-	size = (UINT8)sizeof (read_buffer);
-	while (android_receive((BYTE*) & read_buffer, (UINT8 *)&size, &error_code)) {
+	data_size = (UINT16)sizeof(data);
+	while (android_receive((BYTE *)&id, (BYTE*)&data, (UINT16 *)&data_size, &error_code)) {
 		if (error_code != USB_SUCCESS) {
 			LOG_E("android_receive raised an error %x\n\r", error_code);
-		}
-
-		if (size > 1) {
-			data = (void *) &read_buffer[1];
-		} else {
-			data = NULL;
 		}
 
 		/*
 		 * Pass the received message onto the current state for processing.
 		 */
-		LOG_D("Process Received message (0x%x) in State Machine size %d\n\r",read_buffer[0], size-1);
-		current_state.process_msg(read_buffer[0], data, size - 1);
+		LOG_D("Process Received message (0x%x) in State Machine data size %d\n\r",id, data_size);
+		if (data_size == 0) {
+			current_state.process_msg(id, NULL, data_size);
+		} else {
+			current_state.process_msg(id, data, data_size);
+		}
 	}
 }
