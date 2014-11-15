@@ -31,7 +31,7 @@
 #include "usb/usb_host_android.h"
 
 #include "es_lib/usb/android/state.h"
-#include "es_lib/usb/android/ipc.h"
+//#include "es_lib/usb/android/ipc.h"
 #include "es_lib/usb/android/state_android_connected.h"
 
 #define DEBUG_FILE

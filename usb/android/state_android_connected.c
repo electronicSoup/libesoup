@@ -32,7 +32,6 @@
 
 #include "es_lib/usb/android/state.h"
 #include "es_lib/usb/android/state_idle.h"
-#include "es_lib/usb/android/ipc.h"
 
 #define DEBUG_FILE
 #include "es_lib/logger/serial_log.h"
@@ -66,7 +65,7 @@ void set_android_connected_state(void)
  */
 void android_connected_process_msg(BYTE cmd, void *data, UINT16 data_len)
 {
-	if (cmd == COMMAND_APP_CONNECT) {
+	if (cmd == APP_MSG_COMMAND_APP_CONNECT) {
 		ANDROID_SET_APPLICATION_CONNECTED_STATE
 	} else {
 		LOG_E("Android Connected State received Android message other then App connected 0x%x\n\r", cmd);
