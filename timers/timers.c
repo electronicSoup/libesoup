@@ -66,7 +66,12 @@
 #include "es_lib/timers/timers.h"
 
 #define DEBUG_FILE
-#include "es_lib/logger/serial_log.h"
+#ifdef __PIC24FJ256GB106__
+#include "es_lib/logger/pic24_serial_log.h"
+#endif //__PIC24FJ256GB106__
+#ifdef __18F2680
+#include "es_lib/logger/pic18_serial_log.h"
+#endif //__18F2680
 
 #define TAG "TIMERS"
 
@@ -92,7 +97,9 @@ typedef struct {
  * If your project uses a limited number of know timers then you can set 
  * NUMBER_OF_TIMERS to a known value.
  */
+#ifdef __PIC24FJ256GB106__
 #pragma udata
+#endif //__PIC24FJ256GB106__
 sys_timer_t timers[NUMBER_OF_TIMERS];
 
 /*
@@ -101,6 +108,7 @@ sys_timer_t timers[NUMBER_OF_TIMERS];
  * the main control loop of your project by calling the CHECK_TIMERS()
  * macro.
  */
+#ifdef __PIC24FJ256GB106__
 void _ISR __attribute__((__no_auto_psv__)) _T1Interrupt(void)
 {
 	IFS0bits.T1IF = 0;
@@ -108,6 +116,7 @@ void _ISR __attribute__((__no_auto_psv__)) _T1Interrupt(void)
 
 	timer_ticked = TRUE;
 }
+#endif //__PIC24FJ256GB106__
 
 /*
  * void timer_init(void)
@@ -129,6 +138,7 @@ void timer_init(void)
 		timers[loop].function = (expiry_function)NULL;
 	}
 
+#ifdef __PIC24FJ256GB106__
 	/*
 	 * Initialise Timer 1 for use as the timer tick 
 	 */
@@ -142,6 +152,31 @@ void timer_init(void)
 	IEC0bits.T1IE = 1;
     
 	T1CONbits.TON = 1;
+#endif //__PIC24FJ256GB106__
+
+#ifdef __18F2680
+	    /*
+     * Timer 0 set up
+     */
+    T0CONbits.T08BIT = 0;         // 16 bit opperation
+    T0CONbits.T0CS = 0;           // Timer 0 Off internal clock
+    T0CONbits.PSA = 0;            // Enable prescaler for Timer 0
+    T0CONbits.T0PS0 = 0;          //
+    T0CONbits.T0PS1 = 0;          //   Divide the clock by 256 prescaler
+    T0CONbits.T0PS2 = 1;          //
+
+    TMR0H = 0xfd;
+    TMR0L = 0x90;                 // Should give 5mS
+
+    INTCON2bits.TMR0IP = 1;       // Set Timer to High Priority ISR
+    T0CONbits.TMR0ON = 1;         // Enable Timer 0
+
+    /*
+     * Enable interrupts from Timer 0
+     */
+    INTCONbits.TMR0IE = 1;        // Timer 0 Interrupt Enable
+    INTCONbits.TMR0IF = 0;        // Clear the Timer 0 interupt flag
+#endif //__18F2680
 }
 
 /*
