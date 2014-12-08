@@ -66,12 +66,7 @@
 #include "es_lib/timers/timers.h"
 
 #define DEBUG_FILE
-#ifdef __PIC24FJ256GB106__
-#include "es_lib/logger/pic24_serial_log.h"
-#endif //__PIC24FJ256GB106__
-#ifdef __18F2680
-#include "es_lib/logger/pic18_serial_log.h"
-#endif //__18F2680
+#include "es_lib/logger/serial_log.h"
 
 #define TAG "TIMERS"
 
