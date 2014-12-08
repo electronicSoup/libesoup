@@ -21,8 +21,16 @@
  */
 #include "system.h"
 
+#ifdef __18F2680
+#include <usart.h>
+#endif
+
 void serial_init(void)
 {
+	/*
+	 * CinnamonBun is running a PIC24FJ256GB106 processor
+	 */
+#ifdef __PIC24FJ256GB106__
 	/*
 	 * Serial Port pin configuration should be defined 
 	 * in include file system.h
@@ -45,5 +53,21 @@ void serial_init(void)
 	 *
 	 */
 	U1BRG = ((CLOCK_FREQ / SERIAL_BAUD) / 16) - 1;
+#endif
+
+	/*
+	 * Analogue Guage is running a PIC18F2680 processor
+	 */
+#ifdef __18F2680
+	UINT8 baud;
+
+	RCSTAbits.SPEN = 1;
+	TRISCbits.TRISC6 = 0;
+	TRISCbits.TRISC7 = 1;
+	baud = ((CLOCK_FREQ / SERIAL_BAUD) / 64 ) - 1;
+
+	OpenUSART(USART_TX_INT_OFF & USART_RX_INT_OFF & USART_ASYNCH_MODE
+		  & USART_EIGHT_BIT & USART_BRGH_LOW, baud);
+#endif
 }
 

@@ -1,8 +1,8 @@
 /**
  *
- * \file es_lib/logger/pic24_serial_log.h
+ * \file es_lib/logger/pic18_serial_log.h
  *
- * Definitions for logging to the Serial Port on pic24 processor.
+ * Definitions for logging to the Serial Port on the pic18 processor.
  *
  * Copyright 2014 John Whitmore <jwhitmore@electronicsoup.com>
  *
@@ -19,8 +19,8 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  *
  */
-#ifndef PIC24_SERIAL_LOG_H
-#define PIC24_SERIAL_LOG_H
+#ifndef PIC18_SERIAL_LOG_H
+#define PIC18_SERIAL_LOG_H
 
 /*
  * This file contains the definition of the convenience logging function
@@ -43,52 +43,42 @@
  */
 
 #include "system.h"
-
-/*
- *   serial_log()
- * 
- * Parameters:
- *    log_level_t level : The severity of the log message.
- *    char        *tag  : And identification tag, source of the log msg.
- *    char        *fmt  : A printf format string and parameters.
- *
- */
-extern void serial_log(log_level_t level, char* tag, char* fmt, ...);
+#include <stdio.h>
 
 /*
  * LOG_D  -> Log a Debug severity message.
  */
 #if (defined(DEBUG_FILE) && LOG_LEVEL <= LOG_DEBUG)
-#define LOG_D(...) serial_log(Debug, TAG, __VA_ARGS__)
+#define LOG_D printf("D :TAG:"); printf
 #else
-#define LOG_D(...) 
+#define LOG_D 
 #endif
 
 /*
  * LOG_I  -> Log an Informationional severity message.
  */
 #if (defined(DEBUG_FILE) && LOG_LEVEL <= LOG_INFO)
-#define LOG_I(...) serial_log(Info, TAG, __VA_ARGS__)
+#define LOG_I printf("I :TAG:"); printf
 #else
-#define LOG_I(...)
+#define LOG_I
 #endif
 
 /*
  * LOG_W  -> Log a Warning severity message.
  */
 #if (defined(DEBUG_FILE) && LOG_LEVEL <= LOG_WARNING)
-#define LOG_W(...) serial_log(Warning, TAG, __VA_ARGS__)
+#define LOG_W printf("W :TAG:"); printf
 #else
-#define LOG_W(...)
+#define LOG_W 
 #endif
 
 /*
  * LOG_E  -> Log an Error severity message.
  */
 #if (LOG_LEVEL <= LOG_ERROR)
-#define LOG_E(...)  serial_log(Error, TAG, __VA_ARGS__)
+#define LOG_E printf("E :TAG:"); printf
 #else
-#define LOG_E(...) 
+#define LOG_E 
 #endif
 
-#endif // PIC24_SERIAL_LOG_H
+#endif // PIC18_SERIAL_LOG_H
