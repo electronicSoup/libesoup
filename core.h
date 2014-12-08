@@ -22,8 +22,13 @@
 #ifndef ES_CAN_CORE_H
 #define ES_CAN_CORE_H
 
-#include <p24Fxxxx.h>
+#ifdef __18F2680
+#include <p18cxxx.h>
+#endif
 
+#ifdef __PIC24FJ256GB106__
+#include <p24Fxxxx.h>
+#endif
 /*
  * Clock speed of the Hardware.
  */
@@ -55,12 +60,12 @@
 /*
  * EEPROM SPI Commands.
  */
-#define EEPROM_READ           0x03
-#define EEPROM_WRITE          0x02
-#define EEPROM_WRITE_DISABLE  0x04
-#define EEPROM_WRITE_ENABLE   0x06
-#define EEPROM_STATUS_READ    0x05
-#define EEPROM_STATUS_WRITE   0x01
+#define SPI_EEPROM_READ           0x03
+#define SPI_EEPROM_WRITE          0x02
+#define SPI_EEPROM_WRITE_DISABLE  0x04
+#define SPI_EEPROM_WRITE_ENABLE   0x06
+#define SPI_EEPROM_STATUS_READ    0x05
+#define SPI_EEPROM_STATUS_WRITE   0x01
 
 //  RD0  - /CAN INT
 #define CAN_INTERRUPT_PIN_DIRECTION    TRISDbits.TRISD0
@@ -340,7 +345,17 @@ typedef u32 canid_t;
  * Structure to define the Layer 2 CAN Message. Simply the header above and
  * and array for the Data Bytes.
  */
+#ifdef __PIC24FJ256GB106__
 typedef struct __attribute__ ((packed))
+{
+    canid_t can_id; /* 32 bit CAN_ID + EFF/RTR/ERR flags */
+    u8            can_dlc;
+    u8          data[CAN_DATA_LENGTH];
+} can_frame;
+#endif //__PIC24FJ256GB106__
+#ifdef __18F2680
+#endif //__18F2680
+typedef struct
 {
     canid_t can_id; /* 32 bit CAN_ID + EFF/RTR/ERR flags */
     u8            can_dlc;
