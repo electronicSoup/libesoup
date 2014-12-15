@@ -30,13 +30,8 @@
 #include "usb/usb.h"
 #include "usb/usb_host_android.h"
 
-#include "es_lib/usb/android/android_state.h"
-#if defined(ANDROID_NODE) || defined(ANDROID_BOOT)
-#include "node_ipc.h"
-#elif defined(ANDROID_DONGLE)
-#include "dongle_ipc.h"
-#endif
-#include "states.h"
+#include "es_lib/usb/android/state.h"
+//#include "es_lib/usb/android/ipc.h"
 
 #define DEBUG_FILE
 #include "es_lib/logger/serial_log.h"
@@ -70,7 +65,11 @@ void set_idle_state(void)
  */
 void idle_process_msg(BYTE cmd, void *data, UINT16 data_len)
 {
-	LOG_E("Received Android Msg in the Idle state command 0x%x data Lentgh %d\n\r", cmd, data_len);
+	if (cmd == APP_MSG_COMMAND_APP_CONNECT) {
+		ANDROID_SET_APPLICATION_CONNECTED_STATE
+	} else {
+		LOG_E("Android Connected State received Android message other then App connected 0x%x\n\r", cmd);
+	}
 }
 
 /*
@@ -79,6 +78,9 @@ void idle_process_msg(BYTE cmd, void *data, UINT16 data_len)
  */
 void idle_main()
 {
+#if defined(NO_ANDROID_APP_FN)
+	NO_ANDROID_APP_FN
+#endif
 }
 
 /*
@@ -90,7 +92,9 @@ void idle_process_usb_event(USB_EVENT event)
 {
 	switch (event) {
 		case EVENT_ANDROID_ATTACH:
-			set_android_connected_state();
+			break;
+
+		case EVENT_ANDROID_DETACH:
 			break;
 
 		default:

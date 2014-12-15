@@ -22,7 +22,9 @@
 
 #include "system.h"
 #include "es_lib/can/es_can.h"
-#include "es_lib/dcncp/dcncp.h"
+#ifdef CAN_DCNCP
+#include "es_lib/can/dcncp/dcncp.h"
+#endif
 #define DEBUG_FILE
 #include "es_lib/logger/serial_log.h"
 #undef DEBUG_FILE
@@ -60,7 +62,7 @@ result_t can_init(baud_rate_t baudRate,
 	can_status.byte = 0x00;
 	app_status_handler = arg_status_handler;
 
-	l2_init(baudRate, status_handler);
+	can_l2_init(baudRate, status_handler);
 
 	return(SUCCESS);
 }
@@ -69,14 +71,43 @@ void status_handler(u8 mask, can_status_t status, baud_rate_t baud)
 {
 	LOG_D("status_handler(mask-0x%x, status-0x%x\n\r", mask, status);
 	if (mask == L2_STATUS_MASK) {
+		switch(status.bit_field.l2_status) {
+			case L2_Uninitialised:
+				LOG_D("L2_Uninitialised\n\r");
+				break;
+				
+			case L2_Listening:
+				LOG_D("L2_Listening\n\r");
+				break;
+				
+			case L2_Connecting:
+				LOG_D("L2_Connecting\n\r");
+				break;
+				
+			case L2_Connected:
+				LOG_D("L2_Connected\n\r");
+				break;
+				
+			case L2_ChangingBaud:
+				LOG_D("L2_ChangingBaud\n\r");
+				break;
+			
+			default:
+				LOG_E("Unrecognised CAN Layer 2 status\n\r");
+				break;
+		}
+
+#ifdef CAN_DCNCP
 		if ((status.bit_field.l2_status == L2_Connected) && (can_status.bit_field.l2_status != L2_Connected)) {
 			LOG_D("Layer 2 Connected so start DCNCP\n\r");
 			dcncp_init(status_handler);
 		}
+#endif
 		can_status.bit_field.l2_status = status.bit_field.l2_status;
 		baud_status = baud;
 	}
 
+#ifdef CAN_DCNCP
 	if (mask == DCNCP_STATUS_MASK) {
 		if ((status.bit_field.dcncp_status & DCNCP_L3_Address_Finalised)
 			&& (!(can_status.bit_field.dcncp_status & DCNCP_L3_Address_Finalised))) {
@@ -86,10 +117,13 @@ void status_handler(u8 mask, can_status_t status, baud_rate_t baud)
 		}
 		can_status.bit_field.dcncp_status = status.bit_field.dcncp_status;
 	}
-
+#endif
+	
+#if defined(CAN_LAYER_3)
 	if (mask == L3_STATUS_MASK) {
 		can_status.bit_field.l3_status = status.bit_field.l3_status;
 	}
+#endif
 
 	if (app_status_handler)
 		app_status_handler(can_status, baud_status);
@@ -98,6 +132,6 @@ void status_handler(u8 mask, can_status_t status, baud_rate_t baud)
 #if defined(MCP)
 void canTasks(void)
 {
-	L2_CanTasks();
+	can_l2_tasks();
 }
 #endif

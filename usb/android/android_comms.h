@@ -1,8 +1,8 @@
 /**
  *
- * \file es_lib/usb/android/states/states.h
+ * \file es_lib/usb/android/android.h
  *
- * Definitions for the Android states defined by the Firmware.
+ * Function prototypes for Android Comms
  *
  * Copyright 2014 John Whitmore <jwhitmore@electronicsoup.com>
  *
@@ -19,23 +19,12 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  *
  */
-#ifndef STATES_H
-#define STATES_H
+#ifndef ANDROID_H
+#define ANDROID_H
 
-#include "system.h"
-#include "usb/usb.h"
-#if defined(ANDROID_NODE) || defined(ANDROID_BOOT)
-#include "node_ipc.h"
-#elif defined(ANDROID_DONGLE)
-#include "dongle_ipc.h"
-#endif
+extern void android_init(void* data);
+extern void android_tasks(void);
+extern BYTE android_transmit(BYTE *buffer, BYTE size);
 
-extern void set_idle_state(void);
-extern void set_android_connected_state(void);
-#if defined(ANDROID_NODE) || defined(ANDROID_BOOT)
-extern void set_node_connected_state(void);
-#elif defined(ANDROID_DONGLE)
-extern void set_dongle_connected_state(void);
-#endif
 
-#endif // STATES_H
+#endif /* SEND_ANDROID_H */

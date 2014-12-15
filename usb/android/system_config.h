@@ -44,10 +44,11 @@
 #define USB_INSERT_TIME (250+1)
 #define USB_HOST_APP_EVENT_HANDLER USB_ApplicationEventHandler
 
-#define USBTasks()                  \
-    {                               \
-        USBHostTasks();             \
-        AndroidTasks();          \
+#define USBTasks()                    \
+    {                                 \
+        USBHostTasks();               \
+        AndroidTasks();               \
+	android_tasks();              \
     }
 
 #define USBInitialize(x)            \

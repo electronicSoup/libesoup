@@ -132,6 +132,32 @@
 #define BOOT_FLAG      (TRISDbits.TRISD11 = 0 || PORTDbits.RD11)
 
 /*
+ * Android IPC
+ *
+ * App message is transmitted from the Android Device App to the Cinnamom Bun
+ * Bun message is transmitted from the Cinnamon Bun to the Android Device App
+ *
+ * Messages carry a Byte Identifier so there are 255 possible messages. The
+ * lower message id's may be used by es_lib system so a user's Android App
+ * messages should be defined relative to these. For example you would define
+ * your messages to send from the CinnamonBun as:
+ *
+ * #define MY_FIRST_BUN_MSG   BUN_MSG_USER_OFFSET
+ * #define MY_SECOND_BUN_MSG  BUN_MSG_USER_OFFSET + 1
+ *
+ * And messgaes which your CinnamonBun project expects to recieve from the
+ * Android App would be defined as:
+ *
+ * #define MY_FIRST_APP_MSG   APP_MSG_USER_OFFSET
+ * #define MY_FIRST_APP_MSG   APP_MSG_USER_OFFSET + 1
+ */
+#define  APP_MSG_COMMAND_APP_DISCONNECT  0x00
+#define  APP_MSG_COMMAND_APP_CONNECT     0x01
+
+#define BUN_MSG_USER_OFFSET    0x00
+#define APP_MSG_USER_OFFSET    0x02
+
+/*
  * Include MicroChip's definitions
  */
 #if defined(MCP)
@@ -228,7 +254,12 @@ typedef enum {
  */
 
 #if defined(MCP)
-/* special address description flags for the CAN_ID */
+/*
+ * special address description flags for the CAN_ID
+ * 
+ * SFF - Standard Frame Format
+ * EFF - Extended Frame Format
+ */
 #define CAN_EFF_FLAG 0x80000000U /* EFF/SFF is set in the MSB */
 #define CAN_RTR_FLAG 0x40000000U /* remote transmission request */
 #define CAN_ERR_FLAG 0x20000000U /* error message frame */
@@ -270,7 +301,7 @@ typedef struct __attribute__ ((packed))
  * handlers. A handler accepts as parameter a pointer to a CAN Message sructure
  * defined above and returns nothing.
  */
-typedef void (*l2_msg_handler_t)(can_frame *msg);
+typedef void (*can_l2_msg_handler_t)(can_frame *msg);
 
 /**
  * \brief can_target_t
@@ -281,8 +312,8 @@ typedef struct
 {
     u32           mask;
     u32           filter;
-    l2_msg_handler_t handler;
-} can_target_t;
+    can_l2_msg_handler_t handler;
+} can_l2_target_t;
 
 /**
  * \brief L3_CAN_MAX_MSG

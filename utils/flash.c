@@ -87,13 +87,16 @@ result_t flash_erase_page(UINT32 address)
 	/*
 	 * Check that the given address is on a page boundary.
 	 */
-        if((address & (FLASH_PAGE_SIZE - 1)) != 0x00)
+        if((address & (FLASH_PAGE_SIZE - 1)) != 0x00) {
+		LOG_E("ERR_ADDRESS_RANGE(0x%lx)\n\r", address);
 		return (ERR_ADDRESS_RANGE);
+	}
 
 	/*
 	 * Check that the given address is in an area of Firmware Address space which we can erase.
 	 */
         if((address < FLASH_FIRMWARE_START_ADDRESS) && (address != FLASH_APP_HANDLE_PAGE)) {
+		LOG_E("ERR_ADDRESS_RANGE(0x%lx)\n\r", address);
 		return (ERR_ADDRESS_RANGE);
         }
 
@@ -141,6 +144,7 @@ result_t flash_write_row(UINT32 address, BYTE *data)
 	 * Check that the given address is in an area of Firmware Address space which we can erase.
 	 */
         if((address < FLASH_FIRMWARE_START_ADDRESS) && (address != FLASH_APP_HANDLE_PAGE)) {
+		LOG_E("flash_write ERR_ADDRESS_RANGE 0x%lx\n\r", address);
 		return (ERR_ADDRESS_RANGE);
         }
 

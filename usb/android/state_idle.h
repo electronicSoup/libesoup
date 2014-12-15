@@ -1,8 +1,8 @@
 /**
  *
- * \file es_lib/usb/android/android.h
+ * \file es_lib/usb/android/states_idle.h
  *
- * Function prototypes for Android Comms
+ * Definitions for the Android states defined by the Firmware.
  *
  * Copyright 2014 John Whitmore <jwhitmore@electronicsoup.com>
  *
@@ -19,13 +19,9 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  *
  */
-#ifndef ANDROID_H
-#define ANDROID_H
+#ifndef STATE_IDLE_H
+#define STATE_IDLE_H
 
-extern void android_init(void);
-extern BOOL android_receive(BYTE *buffer, UINT16 *size, BYTE *error_code);
-extern BYTE android_transmit(BYTE *buffer, BYTE Size);
-extern BYTE android_tasks(void* device_handle);
+extern void set_idle_state(void);
 
-
-#endif /* SEND_ANDROID_H */
+#endif // STATES_IDLE_H
