@@ -360,7 +360,7 @@ void _ISR __attribute__((__no_auto_psv__)) _INT0Interrupt(void)
     IFS0bits.INT0IF = 0;
 }
 
-void service_device(void)
+static void service_device(void)
 {
 	BYTE flags = 0x00;
 	BYTE eflg;
@@ -661,13 +661,10 @@ result_t can_l2_tx_frame(can_frame  *frame)
 		LOG_E("ERROR No free Tx Buffers\n\r");
 		return(ERR_CAN_NO_FREE_BUFFER);
 	} else if (ctrl == TXB0CTRL) {
-		LOG_D("TXB0CTRL\n\r");
 		can_buffer = TXB0SIDH;
 	} else if (ctrl == TXB1CTRL) {
-		LOG_D("TXB1CTRL\n\r");
 		can_buffer = TXB1SIDH;
 	} else if (ctrl == TXB2CTRL) {
-		LOG_D("TXB2CTRL\n\r");
 		can_buffer = TXB2SIDH;
 	}
 
@@ -1293,10 +1290,12 @@ static void can_l2_dispatcher_frame_handler(can_frame *message)
 	LOG_D("L2_CanDispatcherL2MsgHandler 0x%lx\n\r", message->can_id);
 
 	for (loop = 0; loop < CAN_L2_HANDLER_ARRAY_SIZE; loop++) {
-		if( (registered_handlers[loop].used)
-		    &&((message->can_id & registered_handlers[loop].target.mask) == (registered_handlers[loop].target.filter & registered_handlers[loop].target.mask))) {
-			registered_handlers[loop].target.handler(message);
-			found = TRUE;
+
+		if(registered_handlers[loop].used) {
+			if ((message->can_id & registered_handlers[loop].target.mask) == (registered_handlers[loop].target.filter & registered_handlers[loop].target.mask)) {
+				registered_handlers[loop].target.handler(message);
+				found = TRUE;
+			}
 		}
 	}
 
@@ -1308,23 +1307,16 @@ static void can_l2_dispatcher_frame_handler(can_frame *message)
 	}
 }
 
-#if 0
-static BYTE l2_can_dispatch_reg_handler(can_target_t *target)
-{
-	return(FALSE);
-}
-#endif
-
 result_t can_l2_reg_handler(can_l2_target_t *target)
 {
 	BYTE loop;
-	LOG_D("sys_l2_can_dispatch_reg_handler mask %lx, filter %lx Handler %lx\n\r",
+	LOG_D("sys_l2_can_dispatch_reg_handler mask 0x%lx, filter 0x%lx Handler %lx\n\r",
 		   target->mask,
 		   target->filter,
 		   target->handler);
-    /*
-     * clean up the target in case the caller has included spurious bits
-     */
+	/*
+	 * clean up the target in case the caller has included spurious bits
+	 */
 	if(target->mask & CAN_EFF_FLAG) {
 		target->mask = target->mask & (CAN_EFF_FLAG | CAN_EFF_MASK);
 	} else {
