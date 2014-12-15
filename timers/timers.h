@@ -19,6 +19,16 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  *
  */
+/*
+ * A note on timers. The timer structures used in this electronicSoup
+ * CinnamonBun Library are not as simple as they could be, given the simplicity
+ * usually aspired to in simple embedded code. The structures and functions
+ * used are complicated more then necessary because the timer API is modeled on
+ * the Linux timer API. This is not for any other reason then the C code
+ * written to use this library code can be compiled and run under Linux. This
+ * has the advantage that protocols written for the CinnamonBun can easily be
+ * ported to the RaspberryPi platform.
+ */
 #ifndef TIMERS_H
 #define TIMERS_H
 
@@ -42,7 +52,8 @@ typedef enum {
  * timer_t Timer identifier
  *
  * A Timer ID is used to identify a timer. It should not be used directly
- * by code but only used by timer.c
+ * by code but only used by timer.c. It is part of the es_timer structure so
+ * we'll just define it here.
  */
 #ifdef MCP
 typedef u8 timer_t;
@@ -73,7 +84,12 @@ typedef struct
 
 #ifdef MCP
 /*
- * .
+ * union sigval
+ *
+ * The sigval union comes straight from the Linux timer API which is why this
+ * definition if encased in a test for MCP definition. The union is passed to
+ * the expiry function if the timer expires. It can either carry a 16 bit
+ * integer value or a pointer.
  */
 union sigval {          /* Data passed with notification */
            u16     sival_int;         /* Integer value */
@@ -85,24 +101,58 @@ union sigval {          /* Data passed with notification */
  * \brief typedef expiry_function
  *
  * When a timer is created an expiry function is passed to the creation function.
- * The CAN Node Core SW executes this expiry_function when the timer expires.
+ * The CinnamonBun timer code executes this expiry_function when the timer
+ * expires.
  *
  * The expiry_function is a pointer to a function which accepts as parameter a
- * pointer to a BYTE. The expiry function will not return anything.
+ * pointer to a BYTE containing the timer_id identifer of the timer which has
+ * expired and the union sigval, defined above, which can be used to pass data
+ * to the expiry funcion. The expiry function is declared void and will not
+ * return anything to the timer library code.
  */
 typedef void (*expiry_function)(timer_t timer_id, union sigval);
 
 
 #ifdef MCP
+    /*
+     * CHECK_TIMERS()
+     *
+     * this CHECK_TIMERS() macro should be placed in the main loop of you code
+     * so taht it calls the library timer functionality when ever the tick
+     * interrup has occured.
+     */
     #define CHECK_TIMERS()  if(timer_ticked) timer_tick();
 
     extern volatile BOOL timer_ticked;
 
+    /*
+     * timer_init()
+     *
+     * This function should be called to initialise the timer functionality
+     * of the electronicSoup CinnamonBun Library. It initialises all data
+     * structures. The project's system.h header file should define the number
+     * of timers the library should define space for an manage. See the
+     * definition of NUMBER_OF_TIMERS in the example system.h file in the
+     * es_lib directory.
+     */
     extern void timer_init(void);
+
+    /*
+     * timer_tick()
+     *
+     * This function should not be called directly but called with the
+     * CHECK_TIMERS macro defined above. It should be called only when the
+     * timer interrupt has fired for a timer tick. The period of the timer tick
+     * is defined in core.h.
+     */
     extern void timer_tick(void);
 #endif
 
-extern result_t timer_start(u16, expiry_function, union sigval, es_timer *);
+/*
+ * timer_start()
+ * 
+ */
+extern result_t timer_start(u16 duration, expiry_function fn, union sigval data, es_timer *timer);
 extern result_t timer_cancel(es_timer *timer);
 
 #endif
