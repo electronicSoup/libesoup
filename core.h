@@ -90,7 +90,7 @@
 /*
  * I/O pin definitions
  */
-#define INPUT_PIN 1
+#define INPUT_PIN  1
 #define OUTPUT_PIN 0
 
 /*
@@ -100,9 +100,10 @@
  * The Flash page size is 512 Instructions, which is 1536 as each instruction is 3 Bytes.
  * But the Flash is addressed in Words so the length given here is 0x400 (512 * 2)
  */
-#define FLASH_PAGE_SIZE 0x400
-#define FLASH_LAST_ADDRESS 0x2ABF9
-#define FLASH_NUM_INSTRUCTION_PER_ROW 64
+#define FLASH_PAGE_SIZE                0x400
+#define FLASH_LAST_ADDRESS             0x2ABF9
+#define FLASH_NUM_INSTRUCTION_PER_ROW  64
+
 /*
  * Start of Firmware code
  */
@@ -393,14 +394,14 @@ typedef struct
     u8 size;
     u8 protocol;
     u8 *data;
-} l3_can_msg_t;
+} can_l3_msg_t;
 
 /**
  * \brief l3_msg_handler
  *
  * CAN Layer 3 Message Handler function.
  */
-typedef void (*l3_msg_handler_t)(l3_can_msg_t *msg);
+typedef void (*can_l3_msg_handler_t)(can_l3_msg_t *msg);
 
 
 /**
