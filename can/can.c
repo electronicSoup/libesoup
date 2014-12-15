@@ -109,6 +109,20 @@ void status_handler(u8 mask, can_status_t status, baud_rate_t baud)
 
 #ifdef CAN_DCNCP
 	if (mask == DCNCP_STATUS_MASK) {
+		switch(status.bit_field.dcncp_status) {
+			case DCNCP_Uninitilised:
+				LOG_D("DCNCP_Uninitilised\n\r");
+				break;
+
+			case DCNCP_Initialised:
+				LOG_D("DCNCP_Initialised\n\r");
+				break;
+
+			default:
+				LOG_E("unrecognised DCNCP status\n\r");
+				break;
+		}
+
 		if ((status.bit_field.dcncp_status & DCNCP_L3_Address_Finalised)
 			&& (!(can_status.bit_field.dcncp_status & DCNCP_L3_Address_Finalised))) {
 #if defined(CAN_LAYER_3)
