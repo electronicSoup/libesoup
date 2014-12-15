@@ -54,7 +54,7 @@ BYTE        buffer_count = 0;
 typedef struct
 {
 	BYTE used;
-	can_target_t target;
+	can_l2_target_t target;
 } can_register_t;
 
 static can_register_t registered_handlers[CAN_L2_HANDLER_ARRAY_SIZE];
@@ -76,14 +76,16 @@ static u16 ping_time;
 #endif
 
 static void     service_device(void);
+#ifdef CAN_L2_IDLE_PING
 static result_t send_ping(void);
+#endif
 static void     set_can_mode(u8 mode);
 static void     set_baudrate(baud_rate_t baudRate);
 static void     exp_check_network_connection(timer_t timer_id, union sigval);
 static void     exp_finalise_baudrate_change(timer_t timer_id, union sigval data);
 static void     exp_resend_baudrate_change(timer_t timer_id, union sigval data);
-static void     exp_test_ping(timer_t timer_id, union sigval data);
 #if defined(CAN_L2_IDLE_PING)
+static void     exp_test_ping(timer_t timer_id, union sigval data);
 static void     restart_ping_timer(void);
 #endif
 
@@ -101,7 +103,7 @@ static u8       find_free_tx_buffer(void);
 //static u8 CheckErrors(void);
 //static void checkSubErrors(void);
 
-static void l2_dispatcher_frame_handler(can_frame *message);
+static void can_l2_dispatcher_frame_handler(can_frame *message);
 
 #if LOG_LEVEL < NO_LOGGING
 void print_error_counts(void);
@@ -139,8 +141,8 @@ static void (*status_handler)(u8 mask, can_status_t status, baud_rate_t baud) = 
  * \param processCanL2Message The function to process received
  * Layer 2 Can messages.
  */
-result_t l2_init(baud_rate_t arg_baud_rate,
-                 void (*arg_status_handler)(u8 mask, can_status_t status, baud_rate_t baud))
+result_t can_l2_init(baud_rate_t arg_baud_rate,
+                     void (*arg_status_handler)(u8 mask, can_status_t status, baud_rate_t baud))
 {
 	u8 loop = 0x00;
 	u8 exit_mode = NORMAL_MODE;
@@ -168,7 +170,7 @@ result_t l2_init(baud_rate_t arg_baud_rate,
 		registered_handlers[loop].used = FALSE;
 		registered_handlers[loop].target.mask = 0x00;
 		registered_handlers[loop].target.filter = 0x00;
-		registered_handlers[loop].target.handler = (l2_msg_handler_t)NULL;
+		registered_handlers[loop].target.handler = (can_l2_msg_handler_t)NULL;
 	}
 
 	status_handler = arg_status_handler;
@@ -528,28 +530,16 @@ void service_device(void)
 	}
 }
 
-void L2_CanTasks(void)
+void can_l2_tasks(void)
 {
 #ifdef TEST
 	static UINT16 count = 0;
 #endif
 	BYTE loop;
-//	BYTE byte;
-//        static BYTE last_flags = 0x00;
-//	BYTE flags;
-//	BYTE eflg;
 
         if(mcp2515_isr)
 		service_device();
 
-#if 0
-	count++;
-
-	if(count == 0x00) {
-		LOG_D("L2_CanTasks()\n\r");
-	}
-#endif // 0
-	
 	while(buffer_count > 0) {
 		if (status.bit_field.l2_status == L2_Connecting) {
 			status.bit_field.l2_status = L2_Connected;
@@ -591,10 +581,9 @@ void L2_CanTasks(void)
 			rx_can_msg.data[loop] = buffer[buffer_next_read].data[loop];
 		}
 
-//        LOG_D("Received a message id - %lx\n\r", rxCanMsg.header.can_id.id);
 		buffer_next_read = (buffer_next_read + 1) % CAN_RX_CIR_BUFFER_SIZE;
 		buffer_count--;
-		l2_dispatcher_frame_handler(&rx_can_msg);
+		can_l2_dispatcher_frame_handler(&rx_can_msg);
 	}
 
 #ifdef TEST
@@ -621,7 +610,7 @@ void deactivate(void)
 	disable_rx_interrupts();
 }
 
-result_t l2_tx_frame(can_frame  *frame)
+result_t can_l2_tx_frame(can_frame  *frame)
 {
 	result_t     result = SUCCESS;
 	canBuffer_t  tx_buffer;
@@ -1073,7 +1062,7 @@ baud_rate_t get_buadrate(void)
 	return(connected_baudrate);
 }
 
-void l2_set_can_node_buadrate(baud_rate_t baudrate)
+void can_l2_set_node_buadrate(baud_rate_t baudrate)
 {
 	es_timer timer;
 
@@ -1112,7 +1101,7 @@ static void exp_finalise_baudrate_change(timer_t timer_id __attribute__((unused)
 /*
  * TODO Change name to initiate
  */
-void initiate_can_buadrate_change(baud_rate_t rate)
+void can_l2_initiate_buadrate_change(baud_rate_t rate)
 {
 	es_timer timer;
 	can_frame msg;
@@ -1126,7 +1115,7 @@ void initiate_can_buadrate_change(baud_rate_t rate)
 
 	msg.data[0] = rate;
 
-	result = l2_tx_frame(&msg);
+	result = can_l2_tx_frame(&msg);
 
 	if (result == SUCCESS) {
 		status.bit_field.l2_status = L2_ChangingBaud;
@@ -1156,18 +1145,18 @@ static void exp_resend_baudrate_change(timer_t timer_id __attribute__((unused)),
 
 		msg.data[0] = status_baud;
 
-		if(l2_tx_frame(&msg) != ERR_CAN_NO_FREE_BUFFER)
+		if(can_l2_tx_frame(&msg) != ERR_CAN_NO_FREE_BUFFER)
 			timer_start(MILLI_SECONDS_TO_TICKS(500), exp_resend_baudrate_change, (union sigval)(void *)NULL, &timer);
 		else {
 			LOG_D("No Free Buffers so change the Baud Rate\n\r");
 			set_reg_mask_value(TXB0CTRL, TXREQ, 0x00);
 			set_reg_mask_value(TXB1CTRL, TXREQ, 0x00);
 			set_reg_mask_value(TXB2CTRL, TXREQ, 0x00);
-                        l2_set_can_node_buadrate(status_baud);
+                        can_l2_set_node_buadrate(status_baud);
 		}
 	} else {
 		LOG_D("3 Errors so NOT Resending Baud Rate Change Request\n\r");
-                l2_set_can_node_buadrate(status_baud);
+                can_l2_set_node_buadrate(status_baud);
 	}
 }
 
@@ -1296,7 +1285,7 @@ void test_can()
 }
 #endif
 
-static void l2_dispatcher_frame_handler(can_frame *message)
+static void can_l2_dispatcher_frame_handler(can_frame *message)
 {
 	BYTE loop;
 	BOOL found = FALSE;
@@ -1326,7 +1315,7 @@ static BYTE l2_can_dispatch_reg_handler(can_target_t *target)
 }
 #endif
 
-result_t l2_reg_handler(can_target_t *target)
+result_t can_l2_reg_handler(can_l2_target_t *target)
 {
 	BYTE loop;
 	LOG_D("sys_l2_can_dispatch_reg_handler mask %lx, filter %lx Handler %lx\n\r",
@@ -1356,7 +1345,7 @@ result_t l2_reg_handler(can_target_t *target)
 	return(ERR_NO_RESOURCES);
 }
 
-result_t l2_can_dispatch_unreg_handler(BYTE id)
+result_t can_l2_dispatch_unreg_handler(BYTE id)
 {
 	if(id < CAN_L2_HANDLER_ARRAY_SIZE) {
 		if (registered_handlers[id].used) {

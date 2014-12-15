@@ -313,7 +313,12 @@ typedef void (*expiry_function)(timer_t timer_id, union sigval);
  */
 
 #if defined(MCP)
-/* special address description flags for the CAN_ID */
+/*
+ * special address description flags for the CAN_ID
+ * 
+ * SFF - Standard Frame Format
+ * EFF - Extended Frame Format
+ */
 #define CAN_EFF_FLAG 0x80000000U /* EFF/SFF is set in the MSB */
 #define CAN_RTR_FLAG 0x40000000U /* remote transmission request */
 #define CAN_ERR_FLAG 0x20000000U /* error message frame */
@@ -355,7 +360,7 @@ typedef struct __attribute__ ((packed))
  * handlers. A handler accepts as parameter a pointer to a CAN Message sructure
  * defined above and returns nothing.
  */
-typedef void (*l2_msg_handler_t)(can_frame *msg);
+typedef void (*can_l2_msg_handler_t)(can_frame *msg);
 
 /**
  * \brief can_target_t
@@ -366,8 +371,8 @@ typedef struct
 {
     u32           mask;
     u32           filter;
-    l2_msg_handler_t handler;
-} can_target_t;
+    can_l2_msg_handler_t handler;
+} can_l2_target_t;
 
 /**
  * \brief L3_CAN_MAX_MSG

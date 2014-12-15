@@ -22,6 +22,8 @@
 #ifndef ES_CAN_H
 #define ES_CAN_H
 
+#include "system.h"
+
 /*
  * Layer 3 Protocols
  */
@@ -70,6 +72,7 @@
 #define L2_Connected     0x03
 #define L2_ChangingBaud  0x04
 
+#ifdef CAN_DCNCP
 #define DCNCP_STATUS_MASK 0x18
 
 #define DCNCP_INITIALISED_MASK 0x08
@@ -81,11 +84,14 @@
 
 #define DCNCP_L3_Address_Not_Final 0x00
 #define DCNCP_L3_Address_Finalised 0x10
+#endif
 
+#ifdef CAN_LAYER_3
 #define L3_STATUS_MASK 0x20
 
 #define L3_Uninitialised 0x00
 #define L3_Inititialised 0x20
+#endif
 
 typedef struct {
     union {
@@ -134,22 +140,22 @@ extern result_t can_init(baud_rate_t      baud,
 
 
 
-extern result_t l2_init(baud_rate_t arg_baud_rate,
+extern result_t can_l2_init(baud_rate_t arg_baud_rate,
                  void (*arg_status_handler)(u8 mask, can_status_t status, baud_rate_t baud));
 
-extern result_t l2_reg_handler(can_target_t *target);
+extern result_t can_l2_reg_handler(can_l2_target_t *target);
 
-extern void L2_ISR(void);
-extern void L2_CanTasks(void);
+extern void can_l2_ISR(void);
+extern void can_l2_tasks(void);
 
-extern result_t l2_tx_frame(can_frame *message);
-extern void L2_CanTxError(u8 node_type, u8 node_number, u32 errorCode);
+extern result_t can_l2_tx_frame(can_frame *message);
+extern void can_l2_tx_error(u8 node_type, u8 node_number, u32 errorCode);
 
-extern baud_rate_t L2_GetCanBuadRate(void);
-extern void l2_set_can_node_buadrate(baud_rate_t baudrate);
-extern void L2_SetCanNetworkBuadRate(baud_rate_t);
+extern baud_rate_t can_l2_GetCanBuadRate(void);
+extern void can_l2_set_can_node_buadrate(baud_rate_t baudrate);
+extern void can_l2_SetCanNetworkBuadRate(baud_rate_t);
 
-extern void L2_getStatus(can_status_t *, baud_rate_t *);
+extern void can_l2_getStatus(can_status_t *, baud_rate_t *);
 
 #ifdef MCP
 extern void canTasks(void);
