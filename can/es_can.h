@@ -75,8 +75,6 @@
 #ifdef CAN_DCNCP
 #define DCNCP_STATUS_MASK 0x18
 
-#define DCNCP_INITIALISED_MASK 0x08
-
 #define DCNCP_Uninitilised 0x00
 #define DCNCP_Initialised  0x08
 
