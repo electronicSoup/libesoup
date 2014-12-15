@@ -216,78 +216,19 @@ typedef enum {
  *  This is the maximum string length of a status reported
  *  over the network.
  */
-#define MAX_STATUS_LEN 24
+//#define MAX_STATUS_LEN 24
 
-/****************************************************
- *
- * Basic Timer types
- *
- ****************************************************
- */
 /**
- * \brief Duration of the system timer tick in MilliSeconds
+ * \brief Duration of the system timer tick in MilliSeconds.
+ *
+ * If code is written in a protable fashion using the macros provided in
+ * es_lib/timers.h then this value can be changed if greater grandularity
+ * timers are required. At present it is expected to be in milliSeconds and if
+ * even greater grandularity then 1mS is required then initialisation code
+ * in es_lib/timers/timers.c will have to be changed and the macros in
+ * es_lib/timers/tiemrs.h
  */
 #define SYSTEM_TICK_ms 5 //5 mS
-
-#if 0
-typedef enum {
-    INACTIVE = 0x00, /**< enum value Success */
-    ACTIVE,
-} timer_status_t;
-
-#define TIMER_INIT(timer) timer.status = INACTIVE;
-
-/**
- * \brief timer_t Timer identifier
- *
- * A Timer ID is used to identify a timer. When you create a timer this ID type 
- * is returned to the caller so that the timer can be canceled.
- */ 
-#ifdef MCP
-typedef u8 timer_t;
-#endif
-
-typedef struct
-{
-	timer_status_t status;
-	timer_t        timer_id;
-} es_timer;
-
-/**
- * \brief SECONDS_TO_TICKS
- *
- * Convience Macro to convert seconds to system timer ticks
- */
-#define SECONDS_TO_TICKS(s)  ((s) * (1000 / SYSTEM_TICK_ms))
-
-/**
- * \brief MILLI_SECONDS_TO_TICKS
- *
- * Convience Macro to convert milliSeconds to system timer ticks
- */
-#define MILLI_SECONDS_TO_TICKS(ms) ((ms < SYSTEM_TICK_ms) ? 1 : (ms / SYSTEM_TICK_ms))
- 
-#ifdef MCP
-/*
- * In both the C8 and C30 compilers Data Pointers are 16 bits wide.
- */
-union sigval {          /* Data passed with notification */
-           u16     sival_int;         /* Integer value */
-           void   *sival_ptr;         /* Pointer value */
-};
-#endif
-
-/**
- * \brief typedef expiry_function
- *
- * When a timer is created an expiry function is passed to the creation function.
- * The CAN Node Core SW executes this expiry_function when the timer expires.
- *
- * The expiry_function is a pointer to a function which accepts as parameter a 
- * pointer to a BYTE. The expiry function will not return anything.
- */
-typedef void (*expiry_function)(timer_t timer_id, union sigval);
-#endif // 0
 
 /****************************************************
  *
