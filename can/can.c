@@ -71,12 +71,38 @@ void status_handler(u8 mask, can_status_t status, baud_rate_t baud)
 {
 	LOG_D("status_handler(mask-0x%x, status-0x%x\n\r", mask, status);
 	if (mask == L2_STATUS_MASK) {
+		switch(status.bit_field.l2_status) {
+			case L2_Uninitialised:
+				LOG_D("L2_Uninitialised\n\r");
+				break;
+				
+			case L2_Listening:
+				LOG_D("L2_Listening\n\r");
+				break;
+				
+			case L2_Connecting:
+				LOG_D("L2_Connecting\n\r");
+				break;
+				
+			case L2_Connected:
+				LOG_D("L2_Connected\n\r");
+				break;
+				
+			case L2_ChangingBaud:
+				LOG_D("L2_ChangingBaud\n\r");
+				break;
+			
+			default:
+				LOG_E("Unrecognised CAN Layer 2 status\n\r");
+				break;
+		}
+
+#ifdef CAN_DCNCP
 		if ((status.bit_field.l2_status == L2_Connected) && (can_status.bit_field.l2_status != L2_Connected)) {
 			LOG_D("Layer 2 Connected so start DCNCP\n\r");
-#ifdef CAN_DCNCP
 			dcncp_init(status_handler);
-#endif
 		}
+#endif
 		can_status.bit_field.l2_status = status.bit_field.l2_status;
 		baud_status = baud;
 	}
