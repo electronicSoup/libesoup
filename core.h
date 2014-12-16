@@ -90,7 +90,7 @@
 /*
  * I/O pin definitions
  */
-#define INPUT_PIN 1
+#define INPUT_PIN  1
 #define OUTPUT_PIN 0
 
 /*
@@ -100,9 +100,10 @@
  * The Flash page size is 512 Instructions, which is 1536 as each instruction is 3 Bytes.
  * But the Flash is addressed in Words so the length given here is 0x400 (512 * 2)
  */
-#define FLASH_PAGE_SIZE 0x400
-#define FLASH_LAST_ADDRESS 0x2ABF9
-#define FLASH_NUM_INSTRUCTION_PER_ROW 64
+#define FLASH_PAGE_SIZE                0x400
+#define FLASH_LAST_ADDRESS             0x2ABF9
+#define FLASH_NUM_INSTRUCTION_PER_ROW  64
+
 /*
  * Start of Firmware code
  */
@@ -215,78 +216,19 @@ typedef enum {
  *  This is the maximum string length of a status reported
  *  over the network.
  */
-#define MAX_STATUS_LEN 24
+//#define MAX_STATUS_LEN 24
 
-/****************************************************
- *
- * Basic Timer types
- *
- ****************************************************
- */
 /**
- * \brief Duration of the system timer tick in MilliSeconds
+ * \brief Duration of the system timer tick in MilliSeconds.
+ *
+ * If code is written in a protable fashion using the macros provided in
+ * es_lib/timers.h then this value can be changed if greater grandularity
+ * timers are required. At present it is expected to be in milliSeconds and if
+ * even greater grandularity then 1mS is required then initialisation code
+ * in es_lib/timers/timers.c will have to be changed and the macros in
+ * es_lib/timers/tiemrs.h
  */
 #define SYSTEM_TICK_ms 5 //5 mS
-
-#if 0
-typedef enum {
-    INACTIVE = 0x00, /**< enum value Success */
-    ACTIVE,
-} timer_status_t;
-
-#define TIMER_INIT(timer) timer.status = INACTIVE;
-
-/**
- * \brief timer_t Timer identifier
- *
- * A Timer ID is used to identify a timer. When you create a timer this ID type 
- * is returned to the caller so that the timer can be canceled.
- */ 
-#ifdef MCP
-typedef u8 timer_t;
-#endif
-
-typedef struct
-{
-	timer_status_t status;
-	timer_t        timer_id;
-} es_timer;
-
-/**
- * \brief SECONDS_TO_TICKS
- *
- * Convience Macro to convert seconds to system timer ticks
- */
-#define SECONDS_TO_TICKS(s)  ((s) * (1000 / SYSTEM_TICK_ms))
-
-/**
- * \brief MILLI_SECONDS_TO_TICKS
- *
- * Convience Macro to convert milliSeconds to system timer ticks
- */
-#define MILLI_SECONDS_TO_TICKS(ms) ((ms < SYSTEM_TICK_ms) ? 1 : (ms / SYSTEM_TICK_ms))
- 
-#ifdef MCP
-/*
- * In both the C8 and C30 compilers Data Pointers are 16 bits wide.
- */
-union sigval {          /* Data passed with notification */
-           u16     sival_int;         /* Integer value */
-           void   *sival_ptr;         /* Pointer value */
-};
-#endif
-
-/**
- * \brief typedef expiry_function
- *
- * When a timer is created an expiry function is passed to the creation function.
- * The CAN Node Core SW executes this expiry_function when the timer expires.
- *
- * The expiry_function is a pointer to a function which accepts as parameter a 
- * pointer to a BYTE. The expiry function will not return anything.
- */
-typedef void (*expiry_function)(timer_t timer_id, union sigval);
-#endif // 0
 
 /****************************************************
  *
@@ -313,7 +255,12 @@ typedef void (*expiry_function)(timer_t timer_id, union sigval);
  */
 
 #if defined(MCP)
-/* special address description flags for the CAN_ID */
+/*
+ * special address description flags for the CAN_ID
+ * 
+ * SFF - Standard Frame Format
+ * EFF - Extended Frame Format
+ */
 #define CAN_EFF_FLAG 0x80000000U /* EFF/SFF is set in the MSB */
 #define CAN_RTR_FLAG 0x40000000U /* remote transmission request */
 #define CAN_ERR_FLAG 0x20000000U /* error message frame */
@@ -355,7 +302,7 @@ typedef struct __attribute__ ((packed))
  * handlers. A handler accepts as parameter a pointer to a CAN Message sructure
  * defined above and returns nothing.
  */
-typedef void (*l2_msg_handler_t)(can_frame *msg);
+typedef void (*can_l2_msg_handler_t)(can_frame *msg);
 
 /**
  * \brief can_target_t
@@ -366,8 +313,8 @@ typedef struct
 {
     u32           mask;
     u32           filter;
-    l2_msg_handler_t handler;
-} can_target_t;
+    can_l2_msg_handler_t handler;
+} can_l2_target_t;
 
 /**
  * \brief L3_CAN_MAX_MSG
@@ -388,14 +335,14 @@ typedef struct
     u8 size;
     u8 protocol;
     u8 *data;
-} l3_can_msg_t;
+} can_l3_msg_t;
 
 /**
  * \brief l3_msg_handler
  *
  * CAN Layer 3 Message Handler function.
  */
-typedef void (*l3_msg_handler_t)(l3_can_msg_t *msg);
+typedef void (*can_l3_msg_handler_t)(can_l3_msg_t *msg);
 
 
 /**
