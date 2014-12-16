@@ -2,8 +2,8 @@
  *
  * \file es_lib/example_system.h
  *
- * This file contains the various switches which can be used with the
- * es_lib source code library. 
+ * This file contains the various switches which can be used to configure
+ * the es_lib source code library. 
  *
  * Copyright 2014 John Whitmore <jwhitmore@electronicsoup.com>
  *
