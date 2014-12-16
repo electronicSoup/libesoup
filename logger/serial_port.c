@@ -21,7 +21,7 @@
  */
 #include "system.h"
 
-#ifdef __18F2680
+#if defined(__18F2680) || defined(__18F4585)
 #include <usart.h>
 #endif
 
@@ -58,7 +58,7 @@ void serial_init(void)
 	/*
 	 * Analogue Guage is running a PIC18F2680 processor
 	 */
-#ifdef __18F2680
+#if defined(__18F2680) || defined(__18F4585)
 	UINT8 baud;
 
 	RCSTAbits.SPEN = 1;

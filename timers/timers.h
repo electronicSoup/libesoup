@@ -22,6 +22,18 @@
 #ifndef TIMERS_H
 #define TIMERS_H
 
+#ifdef __18F2680
+/*
+ * Calculate the 16 bit value that will give us an ISR for the system tick
+ * duration.
+ */
+#define TMR0H_VAL ((UINT8) ( (0xFFFF - (UINT16)( SYSTEM_TICK_ms * ( (CLOCK_FREQ / 2) / 256) * 1000 ) ) >> 8)  & 0xFF)
+#define TMR0L_VAL ((UINT8) ( 0xFFFF - (UINT16)( SYSTEM_TICK_ms * ( (CLOCK_FREQ / 2) / 256) * 1000 ) )  & 0xFF)
+
+//	TMR0H = 0xfd;
+//	TMR0L = 0x90; // Should give 5mS      623
+#endif __18F2680
+
 /*
  * Enumerated type for the current status of a timer in the system. A timer
  * is either Active or it's not.
@@ -94,12 +106,22 @@ typedef void (*expiry_function)(timer_t timer_id, union sigval);
 
 
 #ifdef MCP
-    #define CHECK_TIMERS()  if(timer_ticked) timer_tick();
+#ifdef __18F2680
+        #define PIC18_TIMER_ISR() { \
+                if (INTCONbits.TMR0IF) { \
+                        INTCONbits.TMR0IF = 0; \
+                        TMR0H = TMR0H_VAL;          \
+                        TMR0L = TMR0L_VAL;          \
+                        timer_tick = 1;        \
+                } \
+        }
+#endif //__18F2680
+        #define CHECK_TIMERS()  if(timer_ticked) timer_tick();
 
-    extern volatile BOOL timer_ticked;
+        extern volatile BOOL timer_ticked;
 
-    extern void timer_init(void);
-    extern void timer_tick(void);
+        extern void timer_init(void);
+        extern void timer_tick(void);
 #endif
 
 extern result_t timer_start(u16, expiry_function, union sigval, es_timer *);

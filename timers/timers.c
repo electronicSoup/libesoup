@@ -150,27 +150,27 @@ void timer_init(void)
 #endif //__PIC24FJ256GB106__
 
 #ifdef __18F2680
-	    /*
-     * Timer 0 set up
-     */
-    T0CONbits.T08BIT = 0;         // 16 bit opperation
-    T0CONbits.T0CS = 0;           // Timer 0 Off internal clock
-    T0CONbits.PSA = 0;            // Enable prescaler for Timer 0
-    T0CONbits.T0PS0 = 0;          //
-    T0CONbits.T0PS1 = 0;          //   Divide the clock by 256 prescaler
-    T0CONbits.T0PS2 = 1;          //
+	/*
+	 * Timer 0 set up
+	 */
+	T0CONbits.T08BIT = 0; // 16 bit opperation
+	T0CONbits.T0CS = 0; // Timer 0 Off internal clock
+	T0CONbits.PSA = 0; // Enable prescaler for Timer 0
+	T0CONbits.T0PS0 = 0; //
+	T0CONbits.T0PS1 = 0; //   Divide the clock by 256 prescaler
+	T0CONbits.T0PS2 = 1; //
 
-    TMR0H = 0xfd;
-    TMR0L = 0x90;                 // Should give 5mS
+	TMR0H = TMR0H_VAL;
+	TMR0L = TMR0L_VAL;
 
-    INTCON2bits.TMR0IP = 1;       // Set Timer to High Priority ISR
-    T0CONbits.TMR0ON = 1;         // Enable Timer 0
+	INTCON2bits.TMR0IP = 1; // Set Timer to High Priority ISR
+	T0CONbits.TMR0ON = 1; // Enable Timer 0
 
-    /*
-     * Enable interrupts from Timer 0
-     */
-    INTCONbits.TMR0IE = 1;        // Timer 0 Interrupt Enable
-    INTCONbits.TMR0IF = 0;        // Clear the Timer 0 interupt flag
+	/*
+	 * Enable interrupts from Timer 0
+	 */
+	INTCONbits.TMR0IE = 1; // Timer 0 Interrupt Enable
+	INTCONbits.TMR0IF = 0; // Clear the Timer 0 interupt flag
 #endif //__18F2680
 }
 
