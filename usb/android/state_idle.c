@@ -52,8 +52,6 @@ void idle_process_usb_event(USB_EVENT event);
  */
 void set_idle_state(void)
 {
-	LOG_D("State --> Idle\n\r");
-
 	current_state.process_msg = idle_process_msg;
 	current_state.main = idle_main;
 	current_state.process_usb_event = idle_process_usb_event;
