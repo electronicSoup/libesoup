@@ -23,11 +23,6 @@
 
 #include "es_lib/core.h"
 
-#ifdef __PIC24FJ256GB106__
-#endif
-#ifdef __18F2680
-#endif
-
 /*
  * Baud rate of the serial debug port
  */
