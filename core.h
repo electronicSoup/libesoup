@@ -294,15 +294,10 @@ typedef u32 canid_t;
  */
 #ifdef __PIC24FJ256GB106__
 typedef struct __attribute__ ((packed))
-{
-    canid_t can_id; /* 32 bit CAN_ID + EFF/RTR/ERR flags */
-    u8            can_dlc;
-    u8          data[CAN_DATA_LENGTH];
-} can_frame;
 #endif //__PIC24FJ256GB106__
 #ifdef __18F2680
-#endif //__18F2680
 typedef struct
+#endif //__18F2680
 {
     canid_t can_id; /* 32 bit CAN_ID + EFF/RTR/ERR flags */
     u8            can_dlc;
