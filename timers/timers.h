@@ -42,7 +42,7 @@
 
 //	TMR0H = 0xfd;
 //	TMR0L = 0x90; // Should give 5mS      623
-#endif __18F2680
+#endif //__18F2680
 
 /*
  * Enumerated type for the current status of a timer in the system. A timer
