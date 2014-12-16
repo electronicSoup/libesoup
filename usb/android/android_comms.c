@@ -179,7 +179,6 @@ void android_tasks(void)
 						rx_buffer_count++;
 						rx_write_index = ++rx_write_index % RX_BUFFER_SIZE;
 					}
-					LOG_D("Message transfered to RX circular buffer\n\r");
 				}
 				receiver_busy = FALSE;
 			} else {
@@ -391,7 +390,6 @@ static void process_msg_from_android(void)
 		/*
 		 * Pass the received message onto the current state for processing.
 		 */
-		LOG_D("Process Received message (0x%x) in State Machine data size %d\n\r",id, data_size);
 		if (data_size == 0) {
 			current_state.process_msg(id, NULL, data_size);
 		} else {
