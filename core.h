@@ -295,7 +295,7 @@ typedef u32 canid_t;
 #ifdef __PIC24FJ256GB106__
 typedef struct __attribute__ ((packed))
 #endif //__PIC24FJ256GB106__
-#ifdef __18F2680
+#if defined(__18F2680) || defined(__18F4585)
 typedef struct
 #endif //__18F2680
 {
