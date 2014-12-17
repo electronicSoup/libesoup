@@ -40,6 +40,15 @@
  */
 #if defined(MCP)
 extern void serial_init(void);
+
+/*
+ * The PIC18 Processors process the serial Interrupt loading up the TXREG
+ * register. This function should be called from the PIC18 ISR
+ */
+#if defined(__18F2680) || defined(__18F4585)
+extern void serial_isr(void);
+#endif // (__18F2680) || (__18F4585)
+
 #endif
 
 #endif // SERIAL_PORT_H

@@ -21,10 +21,6 @@
  */
 #include "system.h"
 
-#if defined(__18F2680) || defined(__18F4585)
-#include <usart.h>
-#endif
-
 void serial_init(void)
 {
 	/*
@@ -61,13 +57,36 @@ void serial_init(void)
 #if defined(__18F2680) || defined(__18F4585)
 	UINT8 baud;
 
-	RCSTAbits.SPEN = 1;
 	TRISCbits.TRISC6 = 0;
 	TRISCbits.TRISC7 = 1;
+
+	TXSTAbits.TXEN = 1;    // Transmitter enabled
+	TXSTAbits.SYNC = 0;    // Asynchronous mode
+	TXSTAbits.BRGH = 0;    // High Baud Rate Select bit
+
+	BAUDCONbits.BRG16 = 0; // 16-bit Baud Rate Register Enable bit
+
 	baud = ((CLOCK_FREQ / SERIAL_BAUD) / 64 ) - 1;
 
-	OpenUSART(USART_TX_INT_OFF & USART_RX_INT_OFF & USART_ASYNCH_MODE
-		  & USART_EIGHT_BIT & USART_BRGH_LOW, baud);
-#endif
+	SPBRG = baud;
+
+	PIR1bits.TXIF = 0;
+	PIE1bits.TXIE = 1;
+	RCSTAbits.SPEN = 1;
+
+	TXREG = 'A';
+#endif // (__18F2680) || (__18F4585)
 }
 
+#if defined(__18F2680) || defined(__18F4585)
+void serial_isr(void)
+{
+	if(PIR1bits.TXIF) {
+		/*
+		 * The TXIF Interrupt is cleared by writing to TXREG it
+		 * cannot be cleared by SW directly.
+		 */
+		TXREG = 'A';
+	}
+}
+#endif // (__18F2680) || (__18F4585)
