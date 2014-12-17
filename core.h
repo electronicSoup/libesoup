@@ -22,13 +22,13 @@
 #ifndef ES_CAN_CORE_H
 #define ES_CAN_CORE_H
 
-#ifdef __18F2680
+#if defined (__18F2680) || defined(__18F4585)
 #include <p18cxxx.h>
-#endif
+#endif // (__18F2680) || defined(__18F4585)
 
-#ifdef __PIC24FJ256GB106__
+#if defined (__PIC24FJ256GB106__)
 #include <p24Fxxxx.h>
-#endif
+#endif // (__PIC24FJ256GB106__)
 /*
  * Clock speed of the Hardware.
  */
