@@ -24,6 +24,11 @@
 #include "es_lib/core.h"
 
 /*
+ * The size of the Transmit buffer to be used on the USART Serial port.
+ */
+#define USART_TX_BUFFER_SIZE 300
+
+/*
  * Baud rate of the serial debug port
  */
 #define SERIAL_BAUD 19200
