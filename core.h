@@ -23,7 +23,8 @@
 #define ES_CAN_CORE_H
 
 #if defined (__18F2680) || defined(__18F4585)
-#include <p18cxxx.h>
+//#include <p18cxxx.h>
+#include <xc.h>
 #endif // (__18F2680) || defined(__18F4585)
 
 #if defined (__PIC24FJ256GB106__)
