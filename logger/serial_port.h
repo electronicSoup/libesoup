@@ -47,6 +47,7 @@ extern void serial_init(void);
  */
 #if defined(__18F2680) || defined(__18F4585)
 extern void serial_isr(void);
+extern void putch(char);
 #endif // (__18F2680) || (__18F4585)
 
 #endif

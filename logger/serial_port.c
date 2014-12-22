@@ -21,6 +21,20 @@
  */
 #include "system.h"
 
+#include "es_lib/logger/serial_port.h"
+
+#if defined(__18F2680) || defined(__18F4585)
+/*
+ * Definitions for the Transmit Circular buffer. Calls to putchar will load
+ * up this circular buffer and the UASRT serial port will empty it.
+ */
+static BYTE tx_circular_buffer[USART_TX_BUFFER_SIZE];
+
+static UINT16 tx_write_index = 0;
+static UINT16 tx_read_index = 0;
+static UINT16 tx_buffer_count = 0;
+#endif // (__18F2680) || (__18F4585)
+
 void serial_init(void)
 {
 	/*
@@ -57,12 +71,24 @@ void serial_init(void)
 #if defined(__18F2680) || defined(__18F4585)
 	UINT8 baud;
 
+	/*
+	 * Initialise the TX Circular buffer
+	 */
+	tx_write_index = 0;
+	tx_read_index = 0;
+	tx_buffer_count = 0;
+
 	TRISCbits.TRISC6 = 0;
 	TRISCbits.TRISC7 = 1;
 
 	TXSTAbits.TXEN = 1;    // Transmitter enabled
 	TXSTAbits.SYNC = 0;    // Asynchronous mode
 	TXSTAbits.BRGH = 0;    // High Baud Rate Select bit
+
+#if defined(ENABLE_USART_RX)
+	RCSTAbits.CREN = 1;    // Enagle the Receiver
+#endif
+	RCSTAbits.SPEN = 1;
 
 	BAUDCONbits.BRG16 = 0; // 16-bit Baud Rate Register Enable bit
 
@@ -71,22 +97,51 @@ void serial_init(void)
 	SPBRG = baud;
 
 	PIR1bits.TXIF = 0;
-	PIE1bits.TXIE = 1;
-	RCSTAbits.SPEN = 1;
+#if defined(ENABLE_USART_RX)
+	PIR1bits.RCIF = 0;
+	PIE1bits.RCIE = 1;
+#endif // ENABLE_EUSART_RX
 
-	TXREG = 'A';
+	RCSTAbits.SPEN = 1;
 #endif // (__18F2680) || (__18F4585)
 }
 
 #if defined(__18F2680) || defined(__18F4585)
 void serial_isr(void)
 {
+#if defined(ENABLE_USART_RX)
+	u8 data;
+#endif // (ENABLE_UASAT_RX)
+
 	if(PIR1bits.TXIF) {
 		/*
 		 * The TXIF Interrupt is cleared by writing to TXREG it
 		 * cannot be cleared by SW directly.
 		 */
-		TXREG = 'A';
+		if(tx_buffer_count > 0) {
+			TXREG = tx_circular_buffer[tx_read_index];
+			tx_read_index = ++tx_read_index % USART_TX_BUFFER_SIZE;
+			tx_buffer_count--;
+		} else {
+			PIE1bits.TXIE = 0;
+		}
+	}
+#if defined(ENABLE_USART_RX)
+	if(PIR1bits.RCIF) {
+		data = RCREG;
+	}
+#endif
+}
+#endif // (__18F2680) || (__18F4585)
+
+#if defined(__18F2680) || defined(__18F4585)
+void putch(char character)
+{
+	if(tx_buffer_count < USART_TX_BUFFER_SIZE) {
+		tx_circular_buffer[tx_write_index] = character;
+		tx_write_index = ++tx_write_index % USART_TX_BUFFER_SIZE;
+		tx_buffer_count++;
+		PIE1bits.TXIE = 1;
 	}
 }
 #endif // (__18F2680) || (__18F4585)
