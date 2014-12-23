@@ -212,7 +212,7 @@ result_t can_l2_init(baud_rate_t arg_baud_rate,
 		 * Have to search for the Networks baud rate. Start at the bottom
 		 */
 		rx_msg_count = 0;
-		LOG_D("Before trying 10K REC - %d, rxCount - %d\n\r", read_reg(REC), rx_msg_count);
+		LOG_D("Before trying 10K REC - %d, rxCount - %ld\n\r", read_reg(REC), rx_msg_count);
 		listen_baudrate = baud_10K;
 		set_baudrate(listen_baudrate);
 		exit_mode = LISTEN_MODE;
