@@ -96,7 +96,7 @@ void dcncp_init(void (*arg_status_handler)(u8 mask, can_status_t status, baud_ra
 	target.filter = (u32)CAN_DCNCP_FILTER;
 	target.handler = can_l2_msg_handler;
 
-	LOG_D("Node Address Register handler Mask 0x%x, Filter 0x%x\n\r", target.mask, target.filter);
+	LOG_D("Node Address Register handler Mask 0x%lx, Filter 0x%lx\n\r", target.mask, target.filter);
 	can_l2_reg_handler(&target);
 
 #if defined(CAN_LAYER_3)
