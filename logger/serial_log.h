@@ -49,7 +49,7 @@
  * LOG_D  -> Log a Debug severity message.
  */
 #if (defined(DEBUG_FILE) && LOG_LEVEL <= LOG_DEBUG)
-#define LOG_D printf("D :TAG:"); printf
+#define LOG_D printf("D :%s:", TAG); printf
 #else
 #define LOG_D 
 #endif
@@ -58,7 +58,7 @@
  * LOG_I  -> Log an Informationional severity message.
  */
 #if (defined(DEBUG_FILE) && LOG_LEVEL <= LOG_INFO)
-#define LOG_I printf("I :TAG:"); printf
+#define LOG_I printf("I :%s:", TAG); printf
 #else
 #define LOG_I
 #endif
@@ -67,7 +67,7 @@
  * LOG_W  -> Log a Warning severity message.
  */
 #if (defined(DEBUG_FILE) && LOG_LEVEL <= LOG_WARNING)
-#define LOG_W printf("W :TAG:"); printf
+#define LOG_W printf("W :%s:", TAG); printf
 #else
 #define LOG_W 
 #endif
@@ -76,7 +76,7 @@
  * LOG_E  -> Log an Error severity message.
  */
 #if (LOG_LEVEL <= LOG_ERROR)
-#define LOG_E printf("E :TAG:"); printf
+#define LOG_E printf("E :%s:", TAG); printf
 #else
 #define LOG_E 
 #endif
