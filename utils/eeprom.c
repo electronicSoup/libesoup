@@ -78,9 +78,9 @@ result_t eeprom_read(UINT16 address, BYTE *data)
 	if(use_address <= EEPROM_MAX_ADDRESS) {
 		EEPROM_Select();
 		Nop();
-		SPIWriteByte(SPI_EEPROM_READ);
-		SPIWriteByte((BYTE)use_address);
-		*data = SPIWriteByte(0x00);
+		spi_write_byte(SPI_EEPROM_READ);
+		spi_write_byte((BYTE)use_address);
+		*data = spi_write_byte(0x00);
 		EEPROM_DeSelect();
 		return(SUCCESS);
 	}
@@ -116,18 +116,18 @@ result_t eeprom_write(UINT16 address, BYTE data)
 		EEPROM_Select();
 		Nop();
 
-		SPIWriteByte(SPI_EEPROM_WRITE_ENABLE);
+		spi_write_byte(SPI_EEPROM_WRITE_ENABLE);
 		EEPROM_DeSelect();
 
 		EEPROM_Select();
 
-		SPIWriteByte(SPI_EEPROM_WRITE);
-		SPIWriteByte((BYTE)use_address);
-		SPIWriteByte(data);
+		spi_write_byte(SPI_EEPROM_WRITE);
+		spi_write_byte((BYTE)use_address);
+		spi_write_byte(data);
 		EEPROM_DeSelect();
 
 		EEPROM_Select();
-		SPIWriteByte(SPI_EEPROM_WRITE_DISABLE);
+		spi_write_byte(SPI_EEPROM_WRITE_DISABLE);
 		EEPROM_DeSelect();
 		return(SUCCESS);
         }

@@ -23,7 +23,7 @@
 #define SPI_H
 
 extern void spi_init(void);
-extern unsigned char SPIWriteByte(unsigned char write);
+extern unsigned char spi_write_byte(unsigned char write);
 
 
 #endif // SPI_H

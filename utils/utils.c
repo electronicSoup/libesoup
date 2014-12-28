@@ -38,8 +38,6 @@
 void heartbeat_on(union sigval data);
 void heartbeat_off(union sigval data);
 
-//unsigned char SPIWriteByte(unsigned char write);
-
 void heartbeat_on(union sigval data)
 {
 	es_timer timer;

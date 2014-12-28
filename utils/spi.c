@@ -84,7 +84,7 @@ void spi_init(void)
 	SPI1STATbits.SPIEN = 1;   // Enable the SPI
 }
 
-unsigned char SPIWriteByte(unsigned char write)
+unsigned char spi_write_byte(unsigned char write)
 {
 	SPI1BUF = write;
 	while (!SPI_RW_FINISHED);

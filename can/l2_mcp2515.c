@@ -672,19 +672,19 @@ result_t can_l2_tx_frame(can_frame  *frame)
 	 * Load up the transmit buffer
 	 */
 	CAN_SELECT();
-	SPIWriteByte(CAN_WRITE_REG);
-	SPIWriteByte(can_buffer);
+	spi_write_byte(CAN_WRITE_REG);
+	spi_write_byte(can_buffer);
 
 	/*
 	 * First pull out the five header bytes in the message
 	 */
 	buff = (BYTE *)&tx_buffer;
 	for(loop = 0; loop < 5; loop++, buff++) {
-		SPIWriteByte(*buff);
+		spi_write_byte(*buff);
 	}
 
 	for(loop = 0; loop < frame->can_dlc; loop++, buff++) {
-		SPIWriteByte(*buff);
+		spi_write_byte(*buff);
 	}
 	CAN_DESELECT();
 
@@ -895,7 +895,7 @@ static void reset(void)
 {
 	/* Reset the Can Chip */
 	CAN_SELECT();
-	SPIWriteByte(CAN_RESET);
+	spi_write_byte(CAN_RESET);
 	CAN_DESELECT();
 }
 
@@ -905,10 +905,10 @@ static void set_reg_mask_value(BYTE reg, BYTE mask, BYTE value)
 
         //    do {
         CAN_SELECT();
-        SPIWriteByte(CAN_BIT_MODIFY);
-        SPIWriteByte(reg);
-        SPIWriteByte(mask);
-        SPIWriteByte(value);
+        spi_write_byte(CAN_BIT_MODIFY);
+        spi_write_byte(reg);
+        spi_write_byte(mask);
+        spi_write_byte(value);
         CAN_DESELECT();
        
         fail = (read_reg(reg) & mask) != value;
@@ -1175,9 +1175,9 @@ static u8 read_reg(BYTE reg)
 {
 	u8 value;
 	CAN_SELECT();
-	SPIWriteByte(CAN_READ_REG);
-	SPIWriteByte(reg);
-	value = SPIWriteByte(0x00);
+	spi_write_byte(CAN_READ_REG);
+	spi_write_byte(reg);
+	value = spi_write_byte(0x00);
 	CAN_DESELECT();
 
 	return(value);
@@ -1186,9 +1186,9 @@ static u8 read_reg(BYTE reg)
 static void write_reg(BYTE reg, BYTE value)
 {
 	CAN_SELECT();
-	SPIWriteByte(CAN_WRITE_REG);
-	SPIWriteByte(reg);
-	SPIWriteByte(value);
+	spi_write_byte(CAN_WRITE_REG);
+	spi_write_byte(reg);
+	spi_write_byte(value);
 	CAN_DESELECT();
 }
 
@@ -1200,14 +1200,14 @@ static void read_rx_buffer(BYTE reg, BYTE *buffer)
 
 	ptr = buffer;
 	CAN_SELECT();
-	SPIWriteByte(CAN_READ_REG);
-	SPIWriteByte(reg);
+	spi_write_byte(CAN_READ_REG);
+	spi_write_byte(reg);
 
 	/*
 	 * First pull out the five header bytes in the message
 	 */
 	for(loop = 0; loop < 5; loop++, ptr++) {
-		*ptr = SPIWriteByte(0x00);
+		*ptr = spi_write_byte(0x00);
 	}
 
 	dataLength = buffer[4] & 0x0f;
@@ -1215,7 +1215,7 @@ static void read_rx_buffer(BYTE reg, BYTE *buffer)
 		LOG_E("Invalid Data Length %x & 0x0f = %x\n\r", buffer[4], buffer[4] & 0x0f);
 	} else {
 		for (loop = 0; loop < dataLength; loop++, ptr++) {
-			*ptr = SPIWriteByte(0x00);
+			*ptr = spi_write_byte(0x00);
 		}
         }
 
