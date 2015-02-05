@@ -1054,16 +1054,16 @@ void get_status(can_status_t *arg_status, baud_rate_t *arg_baud)
 	*arg_baud = status_baud;
 }
 
-baud_rate_t get_buadrate(void)
+baud_rate_t get_baudrate(void)
 {
 	return(connected_baudrate);
 }
 
-void can_l2_set_node_buadrate(baud_rate_t baudrate)
+void can_l2_set_node_baudrate(baud_rate_t baudrate)
 {
 	es_timer timer;
 
-	LOG_D("set_can_node_buadrate()\n\r");
+	LOG_D("set_can_node_baudrate()\n\r");
 	TIMER_INIT(timer);
 
 	status.bit_field.l2_status = L2_ChangingBaud;
@@ -1098,13 +1098,13 @@ static void exp_finalise_baudrate_change(timer_t timer_id __attribute__((unused)
 /*
  * TODO Change name to initiate
  */
-void can_l2_initiate_buadrate_change(baud_rate_t rate)
+void can_l2_initiate_baudrate_change(baud_rate_t rate)
 {
 	es_timer timer;
 	can_frame msg;
 	result_t result = SUCCESS;
 
-	LOG_D("initiate_can_buadrate_change()\n\r");
+	LOG_D("initiate_can_baudrate_change()\n\r");
 	TIMER_INIT(timer);
 
 	msg.can_id = 0x705;
@@ -1149,11 +1149,11 @@ static void exp_resend_baudrate_change(timer_t timer_id __attribute__((unused)),
 			set_reg_mask_value(TXB0CTRL, TXREQ, 0x00);
 			set_reg_mask_value(TXB1CTRL, TXREQ, 0x00);
 			set_reg_mask_value(TXB2CTRL, TXREQ, 0x00);
-                        can_l2_set_node_buadrate(status_baud);
+                        can_l2_set_node_baudrate(status_baud);
 		}
 	} else {
 		LOG_D("3 Errors so NOT Resending Baud Rate Change Request\n\r");
-                can_l2_set_node_buadrate(status_baud);
+                can_l2_set_node_baudrate(status_baud);
 	}
 }
 
