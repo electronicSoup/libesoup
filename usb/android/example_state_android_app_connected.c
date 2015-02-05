@@ -49,6 +49,15 @@ void example_set_app_connected_state(void)
 	current_state.process_usb_event = app_connected_process_usb_event;
 }
 
+/*
+ * app_connected_process_msg
+ *
+ * The function which processes messages received from the Connected Android Device.
+ * NB The es_lib Android Comms code passes the data pointer to this function but as
+ * soon as this function returns the buffer WILL be reused for the next message from 
+ * the connected Android. If you want to keep this received after the function returns 
+ * then copy it out to your own buffer!
+ */
 void app_connected_process_msg(BYTE cmd, void *data, UINT16 data_len)
 {
 }
