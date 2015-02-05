@@ -36,7 +36,6 @@
 
 #include "es_lib/can/dcncp/dcncp.h"
 #include "es_lib/timers/timers.h"
-#include "es_lib/can/es_can.h"
 #if defined(CAN_LAYER_3)
 #include "es_lib/logger/net.h"
 #endif
@@ -247,8 +246,8 @@ void can_l2_msg_handler(can_frame *msg)
 			LOG_D("Foreign Node Rep UN-Registered Node Address 0x%x\n\r", msg->data[1]);
 		}
 	} else if (msg->can_id == CAN_DCNCP_NodeSetBaudRate) {
-		LOG_D(Debug, TAG, "***Baud Rate Change Request New Baud Rate %s\n\r", baud_rate_strings[msg->data[0]]);
-//TODO		L2_SetCanNodeBuadRate(msg->data[0]);
+		LOG_D("***Baud Rate Change Request New Baud Rate %s\n\r", baud_rate_strings[msg->data[0]]);
+		can_l2_set_node_baudrate(msg->data[0]);
 	} else if (msg->can_id == CAN_DCNCP_NodePingMessage) {
 #if DEBUG_LEVEL <= LOG_DEBUG
 		printf(".");

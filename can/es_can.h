@@ -150,7 +150,7 @@ extern result_t can_l2_tx_frame(can_frame *message);
 extern void can_l2_tx_error(u8 node_type, u8 node_number, u32 errorCode);
 
 extern baud_rate_t can_l2_GetCanBuadRate(void);
-extern void can_l2_set_can_node_buadrate(baud_rate_t baudrate);
+extern void can_l2_set_node_baudrate(baud_rate_t baudrate);
 extern void can_l2_SetCanNetworkBuadRate(baud_rate_t);
 
 extern void can_l2_getStatus(can_status_t *, baud_rate_t *);
