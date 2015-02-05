@@ -346,6 +346,8 @@ BYTE android_transmit(BYTE *buffer, BYTE size)
 	UINT16 loop;
 	BYTE *buffer_ptr;
 
+	LOG_D("android_transmit(%d bytes)\n\r", size);
+	
 	/*
 	 * Check we have enough free space in Tx Circular buffer for message.
 	 */
