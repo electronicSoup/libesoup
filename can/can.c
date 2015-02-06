@@ -118,27 +118,19 @@ void status_handler(u8 mask, can_status_t status, can_baud_rate_t baud)
 
 #ifdef CAN_DCNCP
 	if (mask == DCNCP_STATUS_MASK) {
-		switch(status.bit_field.dcncp_status) {
-			case DCNCP_Uninitilised:
-				LOG_D("DCNCP_Uninitilised\n\r");
-				break;
-
-			case DCNCP_Initialised:
-				LOG_D("DCNCP_Initialised\n\r");
-				break;
-
-			default:
-				LOG_E("unrecognised DCNCP status\n\r");
-				break;
+		if(status.bit_field.dcncp_initialised) {
+			LOG_D("DCNCP_Initialised\n\r");
+		} else {
+			LOG_D("DCNCP_Uninitilised\n\r");
 		}
 
-		if ((status.bit_field.dcncp_status & DCNCP_L3_Address_Finalised)
-			&& (!(can_status.bit_field.dcncp_status & DCNCP_L3_Address_Finalised))) {
+		if (status.bit_field.dcncp_l3_valid && !can_status.bit_field.dcncp_l3_valid) {
 #if defined(CAN_LAYER_3)
 			l3_init(status_handler);
 #endif
 		}
-		can_status.bit_field.dcncp_status = status.bit_field.dcncp_status;
+		can_status.bit_field.dcncp_initialised = status.bit_field.dcncp_initialised;
+		can_status.bit_field.dcncp_l3_valid = status.bit_field.dcncp_l3_valid;
 	}
 #endif
 	
@@ -153,7 +145,7 @@ void status_handler(u8 mask, can_status_t status, can_baud_rate_t baud)
 }
 
 #if defined(MCP)
-void canTasks(void)
+void can_tasks(void)
 {
 	can_l2_tasks();
 }

@@ -79,6 +79,8 @@ extern char can_l2_status_strings[5][17];
 #ifdef CAN_DCNCP
 #define DCNCP_STATUS_MASK 0x18
 
+#if 0
+
 #define DCNCP_Uninitilised 0x00
 #define DCNCP_Initialised  0x08
 
@@ -86,7 +88,9 @@ extern char can_l2_status_strings[5][17];
 
 #define DCNCP_L3_Address_Not_Final 0x00
 #define DCNCP_L3_Address_Finalised 0x10
-#endif
+
+#endif // 0
+#endif // CAN_DCNCP
 
 #ifdef CAN_LAYER_3
 #define L3_STATUS_MASK 0x20
@@ -99,7 +103,8 @@ typedef struct {
     union {
         struct {
             u8 l2_status : 3;
-            u8 dcncp_status : 2;
+            u8 dcncp_initialised : 1;
+            u8 dcncp_l3_valid :1;
             u8 l3_status : 1;
         } bit_field;
         u8 byte;
@@ -144,14 +149,13 @@ extern void can_l2_tasks(void);
 extern result_t can_l2_tx_frame(can_frame *message);
 extern void can_l2_tx_error(u8 node_type, u8 node_number, u32 errorCode);
 
-extern can_baud_rate_t can_l2_GetCanBuadRate(void);
+extern can_baud_rate_t can_l2_get_baudrate(void);
 extern void can_l2_set_node_baudrate(can_baud_rate_t baudrate);
-extern void can_l2_SetCanNetworkBuadRate(can_baud_rate_t);
 
-extern void can_l2_getStatus(can_status_t *, can_baud_rate_t *);
+extern void can_l2_get_status(can_status_t *, can_baud_rate_t *);
 
 #ifdef MCP
-extern void canTasks(void);
+extern void can_tasks(void);
 #endif
 
 

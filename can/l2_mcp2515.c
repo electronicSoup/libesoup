@@ -1054,7 +1054,7 @@ void get_status(can_status_t *arg_status, can_baud_rate_t *arg_baud)
 	*arg_baud = status_baud;
 }
 
-can_baud_rate_t get_baudrate(void)
+can_baud_rate_t can_l2_get_baudrate(void)
 {
 	return(connected_baudrate);
 }
@@ -1078,7 +1078,7 @@ void can_l2_set_node_baudrate(can_baud_rate_t baudrate)
 
 	/*
 	 * The Baud rate is being changed so going to stay in config mode
-	 * for 10 Seconds and let the Network settle down.
+	 * for 5 Seconds and let the Network settle down.
 	 */
 	timer_start(SECONDS_TO_TICKS(5), exp_finalise_baudrate_change, (union sigval)(void *)NULL, &timer);
 }

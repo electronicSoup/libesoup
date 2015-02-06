@@ -47,9 +47,13 @@
 //extern void rxNetLogRegReq(u8 address, log_level_t level);
 //extern void rxNetLogUnRegReq(u8 address);
 
+static es_timer dcncp_network_baudrate_req_timer;
+static void exp_resend_network_baud_chage_req(timer_t timer_id, union sigval data);
+static void exp_network_baud_chage_req(timer_t timer_id, union sigval data);
+
 #if defined(CAN_LAYER_3)
-static es_timer send_reg_req_timer;
-static es_timer node_reg_timer;
+static es_timer l3_send_reg_req_timer;
+static es_timer l3_node_reg_timer;
 #endif
 
 #if defined(CAN_LAYER_3)
@@ -73,15 +77,16 @@ BYTE other_node = 0xff;
 #endif
 
 static can_status_t status;
-static void (*status_handler)(u8 mask, can_status_t status, baud_rate_t baud) = NULL;
+static void (*status_handler)(u8 mask, can_status_t status, can_baud_rate_t baud) = NULL;
 
-void dcncp_init(void (*arg_status_handler)(u8 mask, can_status_t status, baud_rate_t baud))
+void dcncp_init(void (*arg_status_handler)(u8 mask, can_status_t status, can_baud_rate_t baud))
 {
 	can_l2_target_t target;
-//	result_t result;
 
         status_handler = arg_status_handler;
         status.byte = 0x00;
+
+	TIMER_INIT(dcncp_network_baudrate_req_timer);
 
 #if defined(CAN_LAYER_3)
 	TIMER_INIT(send_reg_req_timer);
@@ -108,10 +113,105 @@ void dcncp_init(void (*arg_status_handler)(u8 mask, can_status_t status, baud_ra
 		LOG_E("Failed to start Register Timer\n\r");
 	}
 #endif
-        status.bit_field.dcncp_status |= DCNCP_Initialised;
+        status.bit_field.dcncp_initialised = 1;
 
         if(status_handler)
 		status_handler(DCNCP_STATUS_MASK, status, no_baud);
+}
+
+void dcncp_request_network_baud_change(can_baud_rate_t baud)
+{
+	result_t     rc;
+	can_frame    msg;
+	union sigval data;
+
+	LOG_D("dcncp_request_network_baud_change()\n\r");
+
+        if(!status.bit_field.dcncp_initialised) {
+		LOG_W("Ignoring DCNCP not ready!\n\r");
+		return;
+	}
+
+	if(baud == can_l2_get_baudrate()) {
+		LOG_W("Ignoring spurious request!\n\r");
+		return;
+	}
+	
+	/*
+	 * Send a Layer 2 message to inform network of impending change!
+	 */
+	TIMER_INIT(dcncp_network_baudrate_req_timer);
+
+	data.sival_int = baud;
+	data.sival_int = (data.sival_int << 8) | 2;
+
+	/*
+	 * Create a 1 Second timer to repeat this message.
+	 */
+	rc = timer_start(SECONDS_TO_TICKS(1), exp_resend_network_baud_chage_req, data, &dcncp_network_baudrate_req_timer);
+	if (rc != SUCCESS) {
+		LOG_E("Failed to start BaudRate change Request Timer\n\r");
+		return;
+	}
+
+	LOG_D("send network baudrate change request\n\r");
+
+	msg.can_id = CAN_DCNCP_NetworkChangeBaudRateReq;
+	msg.can_dlc = 2;
+	msg.data[0] = baud;
+	msg.data[1] = 3;      // 3 Seconds till Change
+
+	can_l2_tx_frame(&msg);
+}
+
+static void exp_resend_network_baud_chage_req(timer_t timer_id, union sigval data)
+{
+	can_frame msg;
+	result_t rc;
+	u8 time_left;
+	can_baud_rate_t baud;
+
+	LOG_D("exp_resend_network_baud_chage_req()\n\r");
+	/*
+	 * Resend a Layer 2 message to inform network of impending change!
+	 */
+	TIMER_INIT(dcncp_network_baudrate_req_timer);
+
+	time_left = data.sival_int & 0xff;
+	baud = (data.sival_int >> 8) & 0xff;
+
+	LOG_D("Time left %d\n\r", time_left);
+
+	if(time_left > 0) {
+		data.sival_int--;
+
+		/*
+		 * Create a 1 Second timer to repeat this message.
+		 */
+		rc = timer_start(SECONDS_TO_TICKS(1), exp_resend_network_baud_chage_req, data, &dcncp_network_baudrate_req_timer);
+		if (rc != SUCCESS) {
+			LOG_E("Failed to start BaudRate change Request Timer\n\r");
+			return;
+		}
+
+		LOG_D("send network baudrate change request\n\r");
+
+		msg.can_id = CAN_DCNCP_NetworkChangeBaudRateReq;
+		msg.can_dlc = 2;
+		msg.data[0] = baud;
+		msg.data[1] = time_left;
+
+		can_l2_tx_frame(&msg);
+	} else {
+		LOG_D("TIME UP Change Baud Rate\n\r");
+		can_l2_set_node_baudrate(baud);
+	}
+}
+
+static void exp_network_baud_chage_req(timer_t timer_id, union sigval data)
+{
+	LOG_D("!!! exp_network_baud_chage_req() !!!\n\r");
+	can_l2_set_node_baudrate((can_baud_rate_t)(data.sival_int & 0xff));
 }
 
 #if defined(CAN_LAYER_3)
@@ -177,11 +277,12 @@ void exp_node_addr_regd(timer_t timer_id __attribute__((unused)), union sigval d
 
 void can_l2_msg_handler(can_frame *msg)
 {
+	result_t rc;
+	union sigval data;
 #if defined(CAN_LAYER_3)
 	u8 address;
 	can_frame txMsg;
 	es_timer timer;
-	result_t result;
 #endif
 	LOG_D("Node Adress message received 0x%lx\n\r", msg->can_id);
 	if (msg->can_id == CAN_DCNCP_AddressRegisterReq) {
@@ -200,8 +301,8 @@ void can_l2_msg_handler(can_frame *msg)
 				LOG_D("Register Node Address clash\n\r");
 				//Have to create a new node address for this node
 				//cancel the timers
-				result = timer_cancel(&send_reg_req_timer);
-				result = timer_cancel(&node_reg_timer);
+				rc = timer_cancel(&send_reg_req_timer);
+				rc = timer_cancel(&node_reg_timer);
 
 				get_new_l3_node_address(&address);
 				exp_send_addr_reg_req(0xff, (union sigval)(void *)NULL);
@@ -234,8 +335,8 @@ void can_l2_msg_handler(can_frame *msg)
 	} else if (msg->can_id == CAN_DCNCP_NodeAddressReportReq) {
 #if defined(CAN_LAYER_3)
 		// Create a random timer between 100 and  1000 miliSeconds for firing node report message
-		result = timer_start(MILLI_SECONDS_TO_TICKS((u16) ((rand() % 900) + 100)), exp_send_node_addr_report, (union sigval)(void *)NULL, &timer);
-		if (result != SUCCESS) {
+		rc = timer_start(MILLI_SECONDS_TO_TICKS((u16) ((rand() % 900) + 100)), exp_send_node_addr_report, (union sigval)(void *)NULL, &timer);
+		if (rc != SUCCESS) {
 			LOG_E("Failed to start Node Registered Timer\n\r");
 		}
 #endif
@@ -245,9 +346,24 @@ void can_l2_msg_handler(can_frame *msg)
 		} else {
 			LOG_D("Foreign Node Rep UN-Registered Node Address 0x%x\n\r", msg->data[1]);
 		}
-	} else if (msg->can_id == CAN_DCNCP_NodeSetBaudRate) {
-		LOG_D("***Baud Rate Change Request New Baud Rate %s\n\r", baud_rate_strings[msg->data[0]]);
-		can_l2_set_node_baudrate(msg->data[0]);
+	} else if (msg->can_id == CAN_DCNCP_NetworkChangeBaudRateReq) {
+		LOG_D("***Baud Rate Change Request New Baud Rate %s Time left %dS\n\r", can_baud_rate_strings[msg->data[0]], msg->data[1]);
+
+		timer_cancel(&dcncp_network_baudrate_req_timer);
+		TIMER_INIT(dcncp_network_baudrate_req_timer);
+
+		data.sival_int = msg->data[0];   // Baudrate
+
+		/*
+		 * Create a timer to for time given in message.
+		 */
+		rc = timer_start(SECONDS_TO_TICKS(msg->data[1]), exp_network_baud_chage_req, data, &dcncp_network_baudrate_req_timer);
+		if (rc != SUCCESS) {
+			LOG_E("Failed to start BaudRate change Request Timer\n\r");
+			return;
+		}
+
+		//		can_l2_set_node_baudrate(msg->data[0]);
 	} else if (msg->can_id == CAN_DCNCP_NodePingMessage) {
 #if DEBUG_LEVEL <= LOG_DEBUG
 		printf(".");
