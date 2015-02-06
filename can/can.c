@@ -32,7 +32,15 @@
 #if DEBUG_LEVEL < NO_LOGGING
 #define TAG "CAN"
 
-char baud_rate_strings[8][10] = {
+char can_l2_status_strings[5][17] = {
+	"L2_Uninitialised",
+	"L2_Listening",
+	"L2_Connecting",
+	"L2_Connected",
+	"L2_ChangingBaud"
+};
+
+char can_baud_rate_strings[8][10] = {
 	"baud_10K",
 	"baud_20K",
 	"baud_50K",
@@ -45,13 +53,13 @@ char baud_rate_strings[8][10] = {
 #endif
 
 static can_status_t can_status;
-static baud_rate_t  baud_status = no_baud;
+static can_baud_rate_t  baud_status = no_baud;
 
-static void status_handler(u8 mask, can_status_t status, baud_rate_t baud);
+static void status_handler(u8 mask, can_status_t status, can_baud_rate_t baud);
 
 can_status_handler app_status_handler = (can_status_handler)NULL;
 
-result_t can_init(baud_rate_t baudRate,
+result_t can_init(can_baud_rate_t baudRate,
 		  can_status_handler arg_status_handler)
 {
 	LOG_D("can_init\n\r");
@@ -67,9 +75,10 @@ result_t can_init(baud_rate_t baudRate,
 	return(SUCCESS);
 }
 
-void status_handler(u8 mask, can_status_t status, baud_rate_t baud)
+void status_handler(u8 mask, can_status_t status, can_baud_rate_t baud)
 {
-	LOG_D("status_handler(mask-0x%x, status-0x%x\n\r", mask, status);
+	LOG_D("status_handler(mask-0x%x, status-0x%x\n\r", mask, status.byte);
+
 	if (mask == L2_STATUS_MASK) {
 		switch(status.bit_field.l2_status) {
 			case L2_Uninitialised:

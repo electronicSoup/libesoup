@@ -72,6 +72,10 @@
 #define L2_Connected     0x03
 #define L2_ChangingBaud  0x04
 
+#if LOG_LEVEL < NO_LOGGING
+extern char can_l2_status_strings[5][17];
+#endif
+
 #ifdef CAN_DCNCP
 #define DCNCP_STATUS_MASK 0x18
 
@@ -101,15 +105,6 @@ typedef struct {
         u8 byte;
     };
 } can_status_t;
-#if 0
-typedef enum {
-	Uninitialised,
-	Listening,
-	Connecting,
-	Connected,
-	ChangingBaud
-} can_status_t;
-#endif //0
 
 typedef enum {
 	baud_10K = 0,
@@ -121,25 +116,25 @@ typedef enum {
 	baud_800K  = 6,
 	baud_1M = 7,
 	no_baud = 0xff
-} baud_rate_t;
+} can_baud_rate_t;
 
-typedef void (*can_status_handler)(can_status_t, baud_rate_t);
+typedef void (*can_status_handler)(can_status_t, can_baud_rate_t);
 
 #if LOG_LEVEL < NO_LOGGING
-extern char baud_rate_strings[8][10];
+extern char can_baud_rate_strings[8][10];
 #endif
 
 #define BAUD_MAX baud_1M
 
-extern result_t can_init(baud_rate_t      baud,
+extern result_t can_init(can_baud_rate_t      baud,
 	can_status_handler   status_default_handler);
 
 //extern bool can_initialised(void);
 
 
 
-extern result_t can_l2_init(baud_rate_t arg_baud_rate,
-                 void (*arg_status_handler)(u8 mask, can_status_t status, baud_rate_t baud));
+extern result_t can_l2_init(can_baud_rate_t arg_baud_rate,
+                 void (*arg_status_handler)(u8 mask, can_status_t status, can_baud_rate_t baud));
 
 extern result_t can_l2_reg_handler(can_l2_target_t *target);
 
@@ -149,11 +144,11 @@ extern void can_l2_tasks(void);
 extern result_t can_l2_tx_frame(can_frame *message);
 extern void can_l2_tx_error(u8 node_type, u8 node_number, u32 errorCode);
 
-extern baud_rate_t can_l2_GetCanBuadRate(void);
-extern void can_l2_set_node_baudrate(baud_rate_t baudrate);
-extern void can_l2_SetCanNetworkBuadRate(baud_rate_t);
+extern can_baud_rate_t can_l2_GetCanBuadRate(void);
+extern void can_l2_set_node_baudrate(can_baud_rate_t baudrate);
+extern void can_l2_SetCanNetworkBuadRate(can_baud_rate_t);
 
-extern void can_l2_getStatus(can_status_t *, baud_rate_t *);
+extern void can_l2_getStatus(can_status_t *, can_baud_rate_t *);
 
 #ifdef MCP
 extern void canTasks(void);

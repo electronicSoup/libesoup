@@ -24,7 +24,7 @@
 #include "system.h"
 
 
-#define DEBUG_FILE
+//#define DEBUG_FILE
 #include "es_lib/logger/serial_log.h"
 #include "es_lib/can/es_can.h"
 #include "es_lib/can/l2_mcp2515.h"
@@ -80,7 +80,7 @@ static void     service_device(void);
 static result_t send_ping(void);
 #endif
 static void     set_can_mode(u8 mode);
-static void     set_baudrate(baud_rate_t baudRate);
+static void     set_baudrate(can_baud_rate_t baudRate);
 static void     exp_check_network_connection(timer_t timer_id, union sigval);
 static void     exp_finalise_baudrate_change(timer_t timer_id, union sigval data);
 static void     exp_resend_baudrate_change(timer_t timer_id, union sigval data);
@@ -112,8 +112,8 @@ void print_error_counts(void);
 /*
  * Global record of CAN Bus error flags.
  */
-static baud_rate_t connected_baudrate = no_baud;
-static baud_rate_t listen_baudrate = no_baud;
+static can_baud_rate_t connected_baudrate = no_baud;
+static can_baud_rate_t listen_baudrate = no_baud;
 static BYTE changing_baud_tx_error;
 //static BYTE g_CanErrors = 0x00;
 //static UINT32 g_missedMessageCount = 0;
@@ -123,13 +123,13 @@ static UINT32 rx_msg_count = 0;
 static can_frame rx_can_msg;
 
 static can_status_t status;
-static baud_rate_t status_baud = no_baud;
+static can_baud_rate_t status_baud = no_baud;
 
 static es_timer listen_timer;
 #if defined(CAN_L2_IDLE_PING)
 static es_timer ping_timer;
 #endif // CAN_L2_IDLE_PING
-static void (*status_handler)(u8 mask, can_status_t status, baud_rate_t baud) = NULL;
+static void (*status_handler)(u8 mask, can_status_t status, can_baud_rate_t baud) = NULL;
 
 /**
  * \brief Initialise the CAN Bus.
@@ -141,8 +141,8 @@ static void (*status_handler)(u8 mask, can_status_t status, baud_rate_t baud) = 
  * \param processCanL2Message The function to process received
  * Layer 2 Can messages.
  */
-result_t can_l2_init(baud_rate_t arg_baud_rate,
-                     void (*arg_status_handler)(u8 mask, can_status_t status, baud_rate_t baud))
+result_t can_l2_init(can_baud_rate_t arg_baud_rate,
+                     void (*arg_status_handler)(u8 mask, can_status_t status, can_baud_rate_t baud))
 {
 	u8 loop = 0x00;
 	u8 exit_mode = NORMAL_MODE;
@@ -197,7 +197,7 @@ result_t can_l2_init(baud_rate_t arg_baud_rate,
 	 * Have to set the baud rate if one has been passed into the function
 	 */
 	if(arg_baud_rate <= BAUD_MAX) {
-		LOG_D("Valid Baud Rate specified - %s\n\r", baud_rate_strings[arg_baud_rate]);
+		LOG_D("Valid Baud Rate specified - %s\n\r", can_baud_rate_strings[arg_baud_rate]);
 		connected_baudrate = arg_baud_rate;
 		set_baudrate(arg_baud_rate);
 		exit_mode = NORMAL_MODE;
@@ -301,7 +301,7 @@ void exp_check_network_connection(timer_t timer_id __attribute__((unused)), unio
 	TIMER_INIT(listen_timer);
 
 	if(listen_baudrate <= BAUD_MAX) {
-		LOG_D("After trying %s Errors - %d, rxCount - %ld\n\r", baud_rate_strings[listen_baudrate], connecting_errors, rx_msg_count);
+		LOG_D("After trying %s Errors - %d, rxCount - %ld\n\r", can_baud_rate_strings[listen_baudrate], connecting_errors, rx_msg_count);
 	} else {
 		LOG_D("After trying %s Errors - %d, rxCount - %ld\n\r", "NO BAUD RATE", connecting_errors, rx_msg_count);
 	}
@@ -324,7 +324,7 @@ void exp_check_network_connection(timer_t timer_id __attribute__((unused)), unio
 			listen_baudrate = baud_10K;
 		else
 			listen_baudrate++;
-		LOG_D("No joy try Baud Rate - %s\n\r", baud_rate_strings[listen_baudrate]);
+		LOG_D("No joy try Baud Rate - %s\n\r", can_baud_rate_strings[listen_baudrate]);
 		set_can_mode(CONFIG_MODE);
 		set_baudrate(listen_baudrate);
 		set_can_mode(LISTEN_MODE);
@@ -955,7 +955,7 @@ static void set_can_mode(BYTE mode)
  *
  * \param baudRate baud rate to set
  */
-static void set_baudrate(baud_rate_t baudrate)
+static void set_baudrate(can_baud_rate_t baudrate)
 {
 	BYTE sjw = 0;
 	BYTE brp = 0;
@@ -1048,18 +1048,18 @@ static void set_baudrate(baud_rate_t baudrate)
 	set_reg_mask_value(CNF3_REG, PSEG2_MASK, (phseg2 - 1) );
 }
 
-void get_status(can_status_t *arg_status, baud_rate_t *arg_baud)
+void get_status(can_status_t *arg_status, can_baud_rate_t *arg_baud)
 {
 	*arg_status = status;
 	*arg_baud = status_baud;
 }
 
-baud_rate_t get_baudrate(void)
+can_baud_rate_t get_baudrate(void)
 {
 	return(connected_baudrate);
 }
 
-void can_l2_set_node_baudrate(baud_rate_t baudrate)
+void can_l2_set_node_baudrate(can_baud_rate_t baudrate)
 {
 	es_timer timer;
 
@@ -1098,7 +1098,7 @@ static void exp_finalise_baudrate_change(timer_t timer_id __attribute__((unused)
 /*
  * TODO Change name to initiate
  */
-void can_l2_initiate_baudrate_change(baud_rate_t rate)
+void can_l2_initiate_baudrate_change(can_baud_rate_t rate)
 {
 	es_timer timer;
 	can_frame msg;
@@ -1310,10 +1310,9 @@ static void can_l2_dispatcher_frame_handler(can_frame *message)
 result_t can_l2_reg_handler(can_l2_target_t *target)
 {
 	BYTE loop;
-	LOG_D("sys_l2_can_dispatch_reg_handler mask 0x%lx, filter 0x%lx Handler %lx\n\r",
+	LOG_D("sys_l2_can_dispatch_reg_handler mask 0x%lx, filter 0x%lx\n\r",
 		   target->mask,
-		   target->filter,
-		   target->handler);
+		   target->filter);
 	/*
 	 * clean up the target in case the caller has included spurious bits
 	 */
