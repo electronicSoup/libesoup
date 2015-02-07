@@ -27,6 +27,7 @@
 //#define DEBUG_FILE
 #include "es_lib/logger/serial_log.h"
 #include "es_lib/can/es_can.h"
+#include "es_lib/can/dcncp/dcncp.h"
 #include "es_lib/can/l2_mcp2515.h"
 #include "es_lib/timers/timers.h"
 
@@ -70,15 +71,14 @@ static BOOL mcp2515_isr = FALSE;
 
 #if defined(CAN_L2_IDLE_PING)
 /*
- * Idle duration before sending a Ping Message
+ * Idle duration before sending a Ping Message. Initialised to a random value
+ * on powerup.
  */
 static u16 ping_time;
+//static result_t send_ping(void);
 #endif
 
 static void     service_device(void);
-#ifdef CAN_L2_IDLE_PING
-static result_t send_ping(void);
-#endif
 static void     set_can_mode(u8 mode);
 static void     set_baudrate(can_baud_rate_t baudRate);
 static void     exp_check_network_connection(timer_t timer_id, union sigval);
@@ -87,6 +87,7 @@ static void     exp_resend_baudrate_change(timer_t timer_id, union sigval data);
 #if defined(CAN_L2_IDLE_PING)
 static void     exp_test_ping(timer_t timer_id, union sigval data);
 static void     restart_ping_timer(void);
+static es_timer ping_timer;
 #endif
 
 
@@ -126,9 +127,6 @@ static can_status_t status;
 static can_baud_rate_t status_baud = no_baud;
 
 static es_timer listen_timer;
-#if defined(CAN_L2_IDLE_PING)
-static es_timer ping_timer;
-#endif // CAN_L2_IDLE_PING
 static void (*status_handler)(u8 mask, can_status_t status, can_baud_rate_t baud) = NULL;
 
 /**
@@ -240,7 +238,7 @@ result_t can_l2_init(can_baud_rate_t arg_baud_rate,
         IFS0bits.INT0IF = 0;    // Clear the flag
         IEC0bits.INT0IE = 1;    //Interrupt Enabled
 
-	// Create a random timer between 1 and 1.5 seconds for firing the
+	// Create a random timer for firing the
 	// Network Idle Ping message
 #if defined(CAN_L2_IDLE_PING)
 	ping_time = (u16)((rand() % SECONDS_TO_TICKS(1)) + (CAN_L2_IDLE_PING_PERIOD - MILLI_SECONDS_TO_TICKS(500)));
@@ -252,6 +250,7 @@ result_t can_l2_init(can_baud_rate_t arg_baud_rate,
 	return(SUCCESS);
 }
 
+#if 0
 #if defined(CAN_L2_IDLE_PING)
 result_t send_ping(void)
 {
@@ -263,6 +262,7 @@ result_t send_ping(void)
 	return(l2_tx_frame(&msg));
 }
 #endif
+#endif
 
 #if defined(CAN_L2_IDLE_PING)
 void exp_test_ping(timer_t timer_id __attribute__((unused)), union sigval data __attribute__((unused)))
@@ -272,9 +272,8 @@ void exp_test_ping(timer_t timer_id __attribute__((unused)), union sigval data _
         LOG_D("exp_test_ping()\n\r");
 	TIMER_INIT(ping_timer);
 
-	if (send_ping() != SUCCESS) {
-		LOG_E("Failed to send the PING Message\n\r");
-	}
+	dcncp_send_ping();
+        restart_ping_timer();
 }
 #endif
 

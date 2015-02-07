@@ -24,11 +24,9 @@
 
 #include "es_lib/can/es_can.h"
 
-// Node module will use standard CAN frames which are 11 bits for Id
-//
-// Mask 0x7f0        111 1111 0000
-// Filter 0x700
-
+/*
+ * Node module will use standard CAN frames which are 11 bits for Id
+ */
 #define CAN_DCNCP_MASK                          0x7f0
 #define CAN_DCNCP_FILTER                        0x700
 
@@ -47,7 +45,7 @@
 
 extern void dcncp_init(void (*arg_status_handler)(u8 mask, can_status_t status, can_baud_rate_t baud));
 extern void dcncp_request_network_baud_change(can_baud_rate_t baud);
-extern void send_ping_message(void);
+extern void dcncp_send_ping(void);
 #if defined(CAN_LAYER_3)
 extern u8 node_get_net_logger_address(void);
 extern result_t register_this_node_net_logger(log_level_t level);

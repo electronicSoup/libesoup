@@ -482,7 +482,7 @@ result_t unregister_this_node_net_logger()
 }
 #endif
 
-void send_ping_message(void)
+void dcncp_send_ping(void)
 {
 	can_frame txMsg;
 
