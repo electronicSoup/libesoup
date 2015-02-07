@@ -3,7 +3,7 @@
  * \file es_lib/example_system.h
  *
  * This file contains the various switches which can be used to configure
- * the es_lib source code library. 
+ * the es_lib source code library.
  *
  * Copyright 2014 John Whitmore <jwhitmore@electronicsoup.com>
  *
@@ -47,8 +47,8 @@
 
 /*
  * NUMBER_OF_TIMERS
- * 
- * Definition of the number of system timers required in the system. Increasing 
+ *
+ * Definition of the number of system timers required in the system. Increasing
  * the number of timers uses more system RAM. This will depend on the estimated
  * demand for timers in your design.
  */
@@ -60,23 +60,27 @@
 //#define CAN
 
 #ifdef CAN
-#define CAN_BAUD_AUTO_DETECT_LISTEN_PERIOD    SECONDS_TO_TICKS(10)
+#define CAN_BAUD_AUTO_DETECT_LISTEN_PERIOD    SECONDS_TO_TICKS(20)
 /*
  * The number of Handlers that can be registered with Layer 2
  */
 #define CAN_L2_HANDLER_ARRAY_SIZE 5
-#endif
 
+/*
+ * DCNCP - Dynamic Can Node Configuration Protocol
+ */
+//#define CAN_DCNCP
+
+#ifdef CAN_DCNCP
 //#define CAN_L2_IDLE_PING
 
 #ifdef CAN_L2_IDLE_PING
-#define CAN_L2_IDLE_PING_FRAME_ID 0x666
 /*
  * The Ping Period will be between CAN_IDLE_PERIOD - 0.5 Seconds and +0.5 Seconds
- * As a result this shold probably be greater then 1 Second. If a node picks a 
+ * As a result this shold probably be greater then 1 Second. If a node picks a
  * random value of Zero then it'll do nothing but ping!
  */
-#define CAN_L2_IDLE_PING_PERIOD     SECONDS_TO_TICKS(2)
+#define CAN_L2_IDLE_PING_PERIOD     SECONDS_TO_TICKS(5)
 #endif
 
 /*
@@ -84,6 +88,9 @@
  */
 //#define CAN_LAYER_3
 
+#endif // CAN_DCNCP
+
+#endif // CAN
 
 /*
  * Android Definitions:
@@ -102,9 +109,9 @@
 /*
  * Android main processing when the Android Application is NOT Connected.
  * If different processing is required when the Android Applicaiton is not
- * connected to your device then define the function to perform this 
+ * connected to your device then define the function to perform this
  * functionality and the MACRO.
- * This is NOT Mandatory. If you project does not require it then don't 
+ * This is NOT Mandatory. If you project does not require it then don't
  * define the MACRO.
  *
  *  extern void example_no_android_app_function(void);
@@ -122,21 +129,4 @@
  * Project Specific Defines
  *
  *******************************************************************************
- */
-
-/*
- * Android IPC Messages.
- *
- * App message is transmitted from the Android Device App to the Cinnamom Bun
- * Bun message is transmitted from the Cinnamon Bun to the Android Device App
- *
- * Messages for communications with an Android App should be defined as 
- * project specific constants relative to USER_OFFSETS.
- *
- * #define MY_FIRST_BUN_MSG     BUN_MSG_USER_OFFSET
- * #define MY_SECOND_BUN_MSG    BUN_MSG_USER_OFFSET + 1
- *
- * #define MY_FIRST_APP_MSG     APP_MSG_USER_OFFSET
- * #define MY_SECOND_APP_MSG    APP_MSG_USER_OFFSET + 1
- *
  */
