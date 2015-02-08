@@ -52,7 +52,7 @@ bool USB_ApplicationEventHandler( uint8_t address, USB_EVENT event, void *data, 
 			/*
 			 * Pass a Detach event on to the state machine for processing.
 			 */
-			current_state.process_usb_event(EVENT_ANDROID_DETACH);
+			android_state.process_usb_event(EVENT_ANDROID_DETACH);
 			android_init(NULL);
 			return TRUE;
 			break;
@@ -63,7 +63,7 @@ bool USB_ApplicationEventHandler( uint8_t address, USB_EVENT event, void *data, 
 			/*
 			 * Pass an Attach even on to the State machine.
 			 */
-			current_state.process_usb_event(EVENT_ANDROID_ATTACH);
+			android_state.process_usb_event(EVENT_ANDROID_ATTACH);
 			android_init(data);
 			return TRUE;
 

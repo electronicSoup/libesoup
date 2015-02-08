@@ -25,13 +25,13 @@
 #include "system.h"
 #include "usb/usb.h"
 
-typedef struct state_t
+typedef struct android_state_t
 {
     void (*process_msg)(BYTE, void *, UINT16);
     void (*main)(void);
     void (*process_usb_event)(USB_EVENT event);
-} state_t;
+} android_state_t;
 
-extern state_t current_state;
+extern android_state_t android_state;
 
 #endif // ANDROID_STATE_H

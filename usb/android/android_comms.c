@@ -129,7 +129,7 @@ void android_tasks(void)
 		receiver_busy = FALSE;
 		transmitter_busy = FALSE;
 
-		current_state.main();
+		android_state.main();
 
 		return;
 	}
@@ -224,7 +224,7 @@ void android_tasks(void)
 	/*
 	 * Execute whatever functionality is required of the current state.
 	 */
-	current_state.main();
+	android_state.main();
 }
 
 /*
@@ -393,9 +393,9 @@ static void process_msg_from_android(void)
 		 * Pass the received message onto the current state for processing.
 		 */
 		if (data_size == 0) {
-			current_state.process_msg(id, NULL, data_size);
+			android_state.process_msg(id, NULL, data_size);
 		} else {
-			current_state.process_msg(id, data, data_size);
+			android_state.process_msg(id, data, data_size);
 		}
 	}
 }

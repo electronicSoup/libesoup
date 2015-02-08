@@ -41,7 +41,7 @@
 /*
  * Variables to keep track of the state of comms with Android Device.
  */
-state_t current_state;
+android_state_t android_state;
 
 /*
  * Forward declarations of the states functions.
@@ -57,9 +57,9 @@ void idle_process_usb_event(USB_EVENT event);
  */
 void set_idle_state(void)
 {
-	current_state.process_msg = idle_process_msg;
-	current_state.main = idle_main;
-	current_state.process_usb_event = idle_process_usb_event;
+	android_state.process_msg = idle_process_msg;
+	android_state.main = idle_main;
+	android_state.process_usb_event = idle_process_usb_event;
 }
 
 /*
