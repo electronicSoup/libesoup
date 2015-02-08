@@ -39,6 +39,11 @@
 #define TAG "Idle"
 
 /*
+ * Variables to keep track of the state of comms with Android Device.
+ */
+state_t current_state;
+
+/*
  * Forward declarations of the states functions.
  */
 //void idle_process_msg(android_command_t, void *, UINT16);
