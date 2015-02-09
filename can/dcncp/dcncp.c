@@ -54,18 +54,23 @@ static void exp_network_baud_chage_req(timer_t timer_id, union sigval data);
 #if defined(CAN_LAYER_3)
 static es_timer l3_send_reg_req_timer;
 static es_timer l3_node_reg_timer;
-#endif
 
-#if defined(CAN_LAYER_3)
+#ifdef CAN_NET_LOGGER
 static can_frame local_net_logger_frame;
 static es_timer local_net_logger_timer;
+#endif // CAN_NET_LOGGER
 
 #define LOCAL_NET_LOGGER_MSG_PERIOD SECONDS_TO_TICKS(5)
 
-static void exp_net_logger_ping(timer_t timer_id __attribute__((unused)), union sigval);
+static u8 dcncp_l3_address;
+u8 dcncp_get_can_l3_address(void);
 
-static void exp_send_addr_reg_req(timer_t timer_id, union sigval data);
-static void exp_node_addr_regd(timer_t timer_id, union sigval data);
+#ifdef CAN_NET_LOGGER
+static void exp_net_logger_ping(timer_t timer_id __attribute__((unused)), union sigval);
+#endif //CAN_NET_LOGGER
+
+static void exp_send_address_register_request(timer_t timer_id, union sigval data);
+static void exp_node_address_registered(timer_t timer_id __attribute__((unused)), union sigval data);
 static void exp_send_node_addr_report(timer_t timer_id, union sigval data);
 #endif
 
@@ -82,6 +87,9 @@ static void (*status_handler)(u8 mask, can_status_t status, can_baud_rate_t baud
 void dcncp_init(void (*arg_status_handler)(u8 mask, can_status_t status, can_baud_rate_t baud))
 {
 	can_l2_target_t target;
+#if defined(CAN_LAYER_3)
+	result_t rc;
+#endif
 
         status_handler = arg_status_handler;
         status.byte = 0x00;
@@ -89,10 +97,14 @@ void dcncp_init(void (*arg_status_handler)(u8 mask, can_status_t status, can_bau
 	TIMER_INIT(dcncp_network_baudrate_req_timer);
 
 #if defined(CAN_LAYER_3)
-	TIMER_INIT(send_reg_req_timer);
-	TIMER_INIT(local_net_logger_timer);
-	TIMER_INIT(node_reg_timer);
+	TIMER_INIT(l3_send_reg_req_timer);
+	TIMER_INIT(l3_node_reg_timer);
 #endif
+
+#ifdef CAN_NET_LOGGER
+	TIMER_INIT(local_net_logger_timer);
+#endif // CAN_NET_LOGGER
+
 	/*
 	 * Add the Layer 2 and Layer 3 Can Message Handlers
 	 */
@@ -106,17 +118,22 @@ void dcncp_init(void (*arg_status_handler)(u8 mask, can_status_t status, can_bau
 #if defined(CAN_LAYER_3)
 	/*
 	 * If we're going to use layer 3 we need to initialise a Layer 3 address to use
+	 * Create a random timer for firing node register message. If all network nodes
+	 * powerup at the same time we don't want to flood the network with register
+	 * requests so we'll hold off. Random time between 1 and 5 seconds.
 	 */
-	// Create a random timer between 1 and 5 seconds for firing node register message
-	result = timer_start(MILLI_SECONDS_TO_TICKS( (u16)((rand() % 4000) + 1000)), exp_send_addr_reg_req, (union sigval)(void *)NULL, &send_reg_req_timer);
-	if(result != SUCCESS) {
+	rc = timer_start(MILLI_SECONDS_TO_TICKS( (u16)((rand() % 4000) + 1000)),
+		         exp_send_address_register_request,
+			 (union sigval)(void *) NULL,
+			 &l3_send_reg_req_timer);
+	if(rc != SUCCESS) {
 		LOG_E("Failed to start Register Timer\n\r");
 	}
 #endif
         status.bit_field.dcncp_initialised = 1;
 
         if(status_handler)
-		status_handler(DCNCP_STATUS_MASK, status, no_baud);
+		status_handler(DCNCP_INIT_STATUS_MASK, status, no_baud);
 }
 
 void dcncp_request_network_baud_change(can_baud_rate_t baud)
@@ -148,7 +165,10 @@ void dcncp_request_network_baud_change(can_baud_rate_t baud)
 	/*
 	 * Create a 1 Second timer to repeat this message.
 	 */
-	rc = timer_start(SECONDS_TO_TICKS(1), exp_resend_network_baud_chage_req, data, &dcncp_network_baudrate_req_timer);
+	rc = timer_start(SECONDS_TO_TICKS(1),
+	                 exp_resend_network_baud_chage_req,
+			 data,
+			 &dcncp_network_baudrate_req_timer);
 	if (rc != SUCCESS) {
 		LOG_E("Failed to start BaudRate change Request Timer\n\r");
 		return;
@@ -188,7 +208,10 @@ static void exp_resend_network_baud_chage_req(timer_t timer_id, union sigval dat
 		/*
 		 * Create a 1 Second timer to repeat this message.
 		 */
-		rc = timer_start(SECONDS_TO_TICKS(1), exp_resend_network_baud_chage_req, data, &dcncp_network_baudrate_req_timer);
+		rc = timer_start(SECONDS_TO_TICKS(1),
+		                 exp_resend_network_baud_chage_req,
+				 data,
+				 &dcncp_network_baudrate_req_timer);
 		if (rc != SUCCESS) {
 			LOG_E("Failed to start BaudRate change Request Timer\n\r");
 			return;
@@ -215,9 +238,15 @@ static void exp_network_baud_chage_req(timer_t timer_id, union sigval data)
 }
 
 #if defined(CAN_LAYER_3)
-void exp_send_addr_reg_req(timer_t timer_id __attribute__((unused)), union sigval data)
+u8 dcncp_get_can_l3_address(void)
 {
-	u8 address;
+	return(dcncp_l3_address);
+}
+#endif
+
+#if defined(CAN_LAYER_3)
+void exp_send_address_register_request(timer_t timer_id __attribute__((unused)), union sigval data)
+{
 	can_frame msg;
 	result_t result;
 
@@ -226,21 +255,26 @@ void exp_send_addr_reg_req(timer_t timer_id __attribute__((unused)), union sigva
 	 */
 	data = data;
 
-	TIMER_INIT(send_reg_req_timer);
+	TIMER_INIT(l3_send_reg_req_timer);
 
-	get_l3_node_address(&address);
+	dcncp_l3_address = node_get_can_l3_address();
 
-	LOG_D("sendRegisterReq(%x)\n\r", (u16) address);
+	LOG_D("sendRegisterReq(%x)\n\r", (u16) dcncp_l3_address);
 
 	msg.can_id = CAN_DCNCP_AddressRegisterReq;
 	msg.can_dlc = 1;
-	msg.data[0] = address;
+	msg.data[0] = dcncp_l3_address;
 
 	can_l2_tx_frame(&msg);
 
-	// Create a 2 Second timer if no reject is recieved in that time
-	// this node shall consider itself registered
-	result = timer_start(SECONDS_TO_TICKS(2), exp_nodeAddressRegistered, (union sigval)(void *) NULL, &nodeRegisteredTimer);
+	/*
+	 *Create a 2 Second timer if no reject is recieved in that time
+	 * this node shall consider itself registered
+	 */
+	result = timer_start(SECONDS_TO_TICKS(2), 
+	                     exp_node_address_registered,
+			     (union sigval)(void *) NULL,
+			     &l3_node_reg_timer);
 	if (result != SUCCESS) {
 		LOG_E("Failed to start Node Registered Timer\n\r");
 	}
@@ -248,7 +282,7 @@ void exp_send_addr_reg_req(timer_t timer_id __attribute__((unused)), union sigva
 #endif
 
 #if defined(CAN_LAYER_3)
-void exp_node_addr_regd(timer_t timer_id __attribute__((unused)), union sigval data)
+void exp_node_address_registered(timer_t timer_id __attribute__((unused)), union sigval data)
 {
 //	u8 address;
 //	result_t result;
@@ -257,11 +291,11 @@ void exp_node_addr_regd(timer_t timer_id __attribute__((unused)), union sigval d
 	 * Clear the compiler warning
 	 */
 	data = data;
-	TIMER_INIT(node_reg_timer);
+	TIMER_INIT(l3_node_reg_timer);
 
 	LOG_D("nodeRegistered()\n\r");
 
-        status.bit_field.dcncp_status |= DCNCP_L3_Address_Not_Final;
+        status.bit_field.dcncp_l3_valid = 1;
 
         if(status_handler) {
 		status_handler(DCNCP_L3_ADDRESS_STATUS_MASK, status, no_baud);
@@ -280,55 +314,56 @@ void can_l2_msg_handler(can_frame *msg)
 	result_t rc;
 	union sigval data;
 #if defined(CAN_LAYER_3)
-	u8 address;
 	can_frame txMsg;
 	es_timer timer;
 #endif
-	LOG_D("Node Adress message received 0x%lx\n\r", msg->can_id);
+	LOG_D("DCNCP message received 0x%lx\n\r", msg->can_id);
 	if (msg->can_id == CAN_DCNCP_AddressRegisterReq) {
 #if defined(CAN_LAYER_3)
-		get_l3_node_address(&address);
-
-		if(msg->data[0] == address) {
-			if(status.bit_field.dcncp_status & DCNCP_L3_Address_Finalised) {
+		if(msg->data[0] == dcncp_l3_address) {
+			if(status.bit_field.dcncp_l3_valid) {
 				LOG_D("reject Register Request\n\r");
 				txMsg.can_id = CAN_DCNCP_AddressRegisterReject;
 				txMsg.can_dlc = 1;
-				txMsg.data[0] = address;
+				txMsg.data[0] = dcncp_l3_address;
 
 				can_l2_tx_frame(&txMsg);
 			} else {
 				LOG_D("Register Node Address clash\n\r");
-				//Have to create a new node address for this node
-				//cancel the timers
-				rc = timer_cancel(&send_reg_req_timer);
-				rc = timer_cancel(&node_reg_timer);
+				/*
+				 *Have to create a new node address for this node
+				 *cancel the timers
+				 */
+				rc = timer_cancel(&l3_send_reg_req_timer);
+				rc = timer_cancel(&l3_node_reg_timer);
 
-				get_new_l3_node_address(&address);
-				exp_send_addr_reg_req(0xff, (union sigval)(void *)NULL);
+				dcncp_l3_address = node_get_can_l3_address();
+
+				exp_send_address_register_request(0xff, (union sigval)(void *)NULL);
 			}
 		}
-#endif
+#endif  // CAN_LAYER_3
 	} else if(msg->can_id == CAN_DCNCP_AddressRegisterReject) {
 #if defined(CAN_LAYER_3)
-		get_l3_node_address(&address);
-
-		if(msg->data[0] == address) {
-			if(status.bit_field.dcncp_status & DCNCP_L3_Address_Finalised) {
+		if(msg->data[0] == dcncp_l3_address) {
+			if(status.bit_field.dcncp_l3_valid) {
 				LOG_E("Sending Can Error Message\n\r");
 				txMsg.can_id = CAN_DCNCP_NodeAddressError;
 				txMsg.can_dlc = 1;
-				txMsg.data[0] = address;
+				txMsg.data[0] = dcncp_l3_address;
 
 				can_l2_tx_frame(&txMsg);
 			} else {
-				//Have to create a new node address for this node
-				//cancel the timers
-				timer_cancel(&send_reg_req_timer);
-				timer_cancel(&node_reg_timer);
+				/*
+				 *Have to create a new node address for this node
+				 *cancel the timers
+				 */
+				rc = timer_cancel(&l3_send_reg_req_timer);
+				rc = timer_cancel(&l3_node_reg_timer);
 
-				get_new_l3_node_address(&address);
-				exp_send_addr_reg_req(0xff, (union sigval)(void *)NULL);
+				dcncp_l3_address = node_get_can_l3_address();
+
+				exp_send_address_register_request(0xff, (union sigval)(void *)NULL);
 			}
 		}
 #endif
@@ -370,14 +405,14 @@ void can_l2_msg_handler(can_frame *msg)
 #endif
 	} else if (msg->can_id == CAN_DCNCP_NetLogger) {
 		LOG_D("Received NetLogger Message\n\r");
-#if defined(CAN_LAYER_3)
+#if defined(CAN_NET_LOGGER)
 		net_logger_foreign_register(msg->data[0], msg->data[1]);
 #else
 		LOG_D("Ignoring NetLogger Message NO LAYER 3!\n\r");
 #endif
 	} else if (msg->can_id == CAN_DCNCP_CancelNetLogger) {
 		LOG_D("Received CancelNetLogger Message\n\r");
-#if defined(CAN_LAYER_3)
+#if defined(CAN_NET_LOGGER)
 		net_logger_foreign_cancel(msg->data[0]);
 #else
 		LOG_D("Ignoring NetLogger Message NO LAYER 3!\n\r");
@@ -390,7 +425,6 @@ void can_l2_msg_handler(can_frame *msg)
 #if defined(CAN_LAYER_3)
 void exp_send_node_addr_report(timer_t timer_id __attribute__((unused)), union sigval data)
 {
-	u8 address;
 	can_frame txMsg;
 
 	/*
@@ -398,15 +432,13 @@ void exp_send_node_addr_report(timer_t timer_id __attribute__((unused)), union s
 	 */
 	data = data;
 
-	get_l3_node_address(&address);
-
-	LOG_D("exp_send_node_addr_report(Address %x)\n\r", address);
+	LOG_D("exp_send_node_addr_report(Address %x)\n\r", dcncp_l3_address);
 
 	txMsg.can_id = CAN_DCNCP_NodeAddressReporting;
 	txMsg.can_dlc = 2;
-	txMsg.data[1] = address;
+	txMsg.data[1] = dcncp_l3_address;
 
-	if (status.bit_field.dcncp_status & DCNCP_L3_Address_Finalised)
+	if (status.bit_field.dcncp_l3_valid)
 		txMsg.data[0] = TRUE;
 	else
 		txMsg.data[0] = FALSE;
@@ -418,22 +450,18 @@ void exp_send_node_addr_report(timer_t timer_id __attribute__((unused)), union s
 /*
  * Net Logger Stuff
  */
-#if defined(CAN_LAYER_3)
+#if defined(CAN_NET_LOGGER)
 result_t register_this_node_net_logger(log_level_t level)
 {
-	u8 address;
-
 	if(!l3_initialised()) 
 		return(ERR_L3_UNINITIALISED);
 
-	get_l3_node_address(&address);
-
 	LOG_D("register_this_node_net_logger()\n\r");
 
-	if(status.bit_field.dcncp_status  & DCNCP_L3_Address_Finalised) {
-		local_net_logger_frame.can_id = NetLogger;
+	if(status.bit_field.dcncp_l3_valid) {
+		local_net_logger_frame.can_id = CAN_DCNCP_NetLogger;
 		local_net_logger_frame.can_dlc = 2;
-		local_net_logger_frame.data[0] = address;
+		local_net_logger_frame.data[0] = dcncp_l3_address;
 		local_net_logger_frame.data[1] = level;
 
 		can_l2_tx_frame(&local_net_logger_frame);
@@ -448,7 +476,7 @@ result_t register_this_node_net_logger(log_level_t level)
 }
 #endif
 
-#if defined(CAN_LAYER_3)
+#if defined(CAN_NET_LOGGER)
 void exp_net_logger_ping(timer_t timer_id __attribute__((unused)), union sigval data)
 {
 	data = data;
@@ -459,18 +487,16 @@ void exp_net_logger_ping(timer_t timer_id __attribute__((unused)), union sigval 
 }
 #endif
 
-#if defined(CAN_LAYER_3)
+#if defined(CAN_NET_LOGGER)
 result_t unregister_this_node_net_logger()
 {
-	u8 address;
 	can_frame txMsg;
 
 	LOG_D("DeRegAsNetLogger()\n\r");
-	get_l3_node_address(&address);
 
 	txMsg.can_id = CAN_DCNCP_CancelNetLogger;
 	txMsg.can_dlc = 1;
-	txMsg.data[0] = address;
+	txMsg.data[0] = dcncp_l3_address;
 
 	can_l2_tx_frame(&txMsg);
 	LOG_D("CancelNetLogger message sent\n\r");

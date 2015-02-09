@@ -117,22 +117,24 @@ void status_handler(u8 mask, can_status_t status, can_baud_rate_t baud)
 	}
 
 #ifdef CAN_DCNCP
-	if (mask == DCNCP_STATUS_MASK) {
+	else if (mask == DCNCP_INIT_STATUS_MASK) {
 		if(status.bit_field.dcncp_initialised) {
 			LOG_D("DCNCP_Initialised\n\r");
 		} else {
 			LOG_D("DCNCP_Uninitilised\n\r");
 		}
 
-		if (status.bit_field.dcncp_l3_valid && !can_status.bit_field.dcncp_l3_valid) {
-#if defined(CAN_LAYER_3)
-			l3_init(status_handler);
-#endif
-		}
 		can_status.bit_field.dcncp_initialised = status.bit_field.dcncp_initialised;
+	}
+#if defined(CAN_LAYER_3)
+	else if (mask == DCNCP_L3_ADDRESS_STATUS_MASK) {
+		if (status.bit_field.dcncp_l3_valid && !can_status.bit_field.dcncp_l3_valid) {
+			l3_init(status_handler);
+		}
 		can_status.bit_field.dcncp_l3_valid = status.bit_field.dcncp_l3_valid;
 	}
-#endif
+#endif // CAN_LAYER_3
+#endif // CAN_DCNCP
 	
 #if defined(CAN_LAYER_3)
 	if (mask == L3_STATUS_MASK) {

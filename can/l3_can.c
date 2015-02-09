@@ -28,37 +28,23 @@
 
 #include "system.h"
 #include "es_lib/can/es_can.h"
+#include "es_lib/can/dcncp/dcncp.h"
 #include "es_lib/timers/timers.h"
-//#include "es_lib/dcncp/l2_dcncp.h"
 
 #define DEBUG_FILE
 #include "es_lib/logger/serial_log.h"
 
 #define TAG "CAN_L3"
 
-/*
- * The number of different Layer 3 protocols that can be registered 
- * in the system or applicaiton.
- */
-#define L3_REGISTER_ARRAY_SIZE 10
-
-/*
- * L3_RESERVED_SYSTEM_PROTOCOLS defines the first Layer 3 protocol
- * identifiers which is reserved for system use. All protcols above this
- * defined value are reserved. User Application Protocols start at 0 and
- * continue up to, but not including, this value.
- */
-#define L3_FIRST_RESERVED_SYSTEM_PROTOCOL 0xc8
-
 typedef struct
 {
     u8 used;
     u8 protocol;
-    l3_msg_handler_t handler;
+    can_l3_msg_handler_t handler;
 } L3_CanRegister;
 
-static L3_CanRegister registered[L3_REGISTER_ARRAY_SIZE];
-static void dispatcher_l3_msg_handler(l3_can_msg_t *message);
+static L3_CanRegister registered[CAN_L3_REGISTER_ARRAY_SIZE];
+static void dispatcher_l3_msg_handler(can_l3_msg_t *message);
 
 #define L3_SINGLE_FRAME_SIZE 7
 
@@ -130,7 +116,7 @@ typedef struct {
 	u8 frames_received_in_block;
 	u8 source;
 	can_frame frame;
-	l3_can_msg_t l3_msg;
+	can_l3_msg_t l3_msg;
 	es_timer timer_N_Cr;
 } rx_buffer_t;
 
@@ -155,7 +141,7 @@ node_buffers_t node_buffers[NUM_NODES];
 /*
  */
 static can_status_t status;
-static void (*status_handler)(u8 mask, can_status_t status, baud_rate_t baud) = NULL;
+static void (*status_handler)(u8 mask, can_status_t status, can_baud_rate_t baud) = NULL;
 
 /*
  * This node's local Layer 3 Node Address
@@ -207,20 +193,20 @@ void init_rx_buffer(rx_buffer_t *rx_buf)
 	TIMER_INIT(rx_buf->timer_N_Cr);
 }
 
-result_t l3_init(void (*arg_status_handler)(u8 mask, can_status_t status, baud_rate_t baud))
+result_t l3_init(void (*arg_status_handler)(u8 mask, can_status_t status, can_baud_rate_t baud))
 {
 	u16 loop;
-	can_target_t target;
+	can_l2_target_t target;
 
 	LOG_D("l3_init()\n\r");
 
         status.byte = 0x00;
         status_handler = arg_status_handler;
 
-	for(loop = 0; loop < L3_REGISTER_ARRAY_SIZE; loop++) {
+	for(loop = 0; loop < CAN_L3_REGISTER_ARRAY_SIZE; loop++) {
 		registered[loop].used = FALSE;
 		registered[loop].protocol = 0x00;
-		registered[loop].handler = (l3_msg_handler_t)NULL;
+		registered[loop].handler = (can_l3_msg_handler_t)NULL;
 	}
 
 #if defined(MCP)
@@ -237,7 +223,7 @@ result_t l3_init(void (*arg_status_handler)(u8 mask, can_status_t status, baud_r
 		node_buffers[loop].rx_buffer = NULL;
 	}
 #endif
-        get_l3_node_address(&node_address);
+        node_address = dcncp_get_can_l3_address();
 
 	/*
 	 * Initialise the static parts or our tx message header.
@@ -256,7 +242,7 @@ result_t l3_init(void (*arg_status_handler)(u8 mask, can_status_t status, baud_r
 	target.filter = tx_frame_id.can_id & 0xffff00ff; //Don't filter on the Source Byte
 	target.handler = l3_l2_frame_handler;
 
-	l2_reg_handler(&target);
+	can_l2_reg_handler(&target);
 
         status.bit_field.l3_status &= L3_Inititialised;
 
@@ -271,7 +257,7 @@ BOOL l3_initialised(void)
     return(status.bit_field.l3_status &  L3_Inititialised);
 }
 
-result_t l3_tx_msg(l3_can_msg_t *msg)
+result_t l3_tx_msg(can_l3_msg_t *msg)
 {
 	u8 *dataPtr;
 	u8 loop;
@@ -339,7 +325,7 @@ result_t l3_tx_msg(l3_can_msg_t *msg)
 			tx_buffer->frame.data[loop] = *dataPtr++;
 		}
 		LOG_D("Tx Single Frame\n\r");
-		l2_tx_frame(&(tx_buffer->frame));
+		can_l2_tx_frame(&(tx_buffer->frame));
 	} else {
 		/*
 		 * Copy the l3 message to be sent into the Trasmit buffer.
@@ -367,7 +353,7 @@ result_t l3_tx_msg(l3_can_msg_t *msg)
 		}
 		LOG_D("Tx First Frame\n\r");
 		tx_buffer->sequence = (tx_buffer->sequence + 1) % 0x0f;
-		l2_tx_frame(&tx_buffer->frame);
+		can_l2_tx_frame(&tx_buffer->frame);
 
 		// Expect a FC frame in timely fasion
 		startTimer_N_Bs(tx_buffer);
@@ -400,7 +386,7 @@ void exp_sendConsecutiveFrame(timer_t timer_id __attribute__((unused)), union si
 		}
 
 		tx_buffer->frame.can_dlc = loop;
-		l2_tx_frame(&tx_buffer->frame);
+		can_l2_tx_frame(&tx_buffer->frame);
 		tx_buffer->sequence = (tx_buffer->sequence + 1) % 0x0f;
 		tx_buffer->frames_sent_in_block++;
 
@@ -438,7 +424,7 @@ void sendFlowControlFrame(rx_buffer_t *rx_buffer, u8 flowStatus)
 		frame.data[1] = rx_buffer->block_size;
 		frame.data[2] = rx_buffer->seperation_time;
 		LOG_D("Send Flow Control Frame\n\r");
-		l2_tx_frame(&frame);
+		can_l2_tx_frame(&frame);
 	} else {
 		LOG_W("Bad Flow Status\n\r");
 	}
@@ -818,7 +804,7 @@ void exp_timer_N_Bs_Expired(timer_t timer_id __attribute__((unused)), union sigv
 }
 
 
-void dispatcher_l3_msg_handler(l3_can_msg_t *message)
+void dispatcher_l3_msg_handler(can_l3_msg_t *message)
 {
 	u8 loop;
 
@@ -827,7 +813,7 @@ void dispatcher_l3_msg_handler(l3_can_msg_t *message)
 		   (u16)message->protocol,
 		   (u16)message->size);
 
-	for (loop = 0; loop < L3_REGISTER_ARRAY_SIZE; loop++) {
+	for (loop = 0; loop < CAN_L3_REGISTER_ARRAY_SIZE; loop++) {
 		if (registered[loop].used && (message->protocol == registered[loop].protocol) ) {
 			LOG_D(" => Dispatch\n\r");
 			registered[loop].handler(message);
@@ -837,18 +823,15 @@ void dispatcher_l3_msg_handler(l3_can_msg_t *message)
 	LOG_D(" No Handler found for Protocol 0x%x\n\r", (u16)message->protocol);
 }
 
-result_t l3_register_handler(u8 protocol, l3_msg_handler_t handler)
+result_t l3_register_handler(u8 protocol, can_l3_msg_handler_t handler)
 {
 	u8 loop;
 	LOG_D("l3_can_dispatch_register_handler(0x%x)\n\r", (u16)protocol);
 
-	if(protocol < L3_FIRST_RESERVED_SYSTEM_PROTOCOL)
-		return(ERR_L3_PROTOCOL);
-
 	/*
 	 * Check is there already a handler for the Protocol
 	 */
-	for(loop = 0; loop < L3_REGISTER_ARRAY_SIZE; loop++) {
+	for(loop = 0; loop < CAN_L3_REGISTER_ARRAY_SIZE; loop++) {
 		if(  (registered[loop].used == TRUE)
 		     &&(registered[loop].protocol == protocol)) {
 			LOG_D("Replacing existing handler for Protocol 0x%x\n\r", (u16)protocol);
@@ -860,7 +843,7 @@ result_t l3_register_handler(u8 protocol, l3_msg_handler_t handler)
 	/*
 	 * Find a free slot and add the Protocol
 	 */
-	for(loop = 0; loop < L3_REGISTER_ARRAY_SIZE; loop++) {
+	for(loop = 0; loop < CAN_L3_REGISTER_ARRAY_SIZE; loop++) {
 		if(registered[loop].used == FALSE) {
 			registered[loop].used = TRUE;
 			registered[loop].protocol = protocol;
@@ -873,7 +856,7 @@ result_t l3_register_handler(u8 protocol, l3_msg_handler_t handler)
 	return(ERR_GENERAL_ERROR);
 }
 
-result_t app_l3_can_dispatch_reg_handler(u8 protocol, l3_msg_handler_t handler, u8 *id)
+result_t app_l3_can_dispatch_reg_handler(u8 protocol, can_l3_msg_handler_t handler, u8 *id)
 {
 	u8 loop;
 
@@ -881,13 +864,10 @@ result_t app_l3_can_dispatch_reg_handler(u8 protocol, l3_msg_handler_t handler, 
 
 	LOG_D("l3_can_dispatch_register_handler(0x%x)\n\r", (u16)protocol);
 
-	if(protocol >= L3_FIRST_RESERVED_SYSTEM_PROTOCOL)
-		return(ERR_L3_PROTOCOL);
-
 	/*
 	 * Check is there already a handler for the Protocol
 	 */
-	for(loop = 0; loop < L3_REGISTER_ARRAY_SIZE; loop++) {
+	for(loop = 0; loop < CAN_L3_REGISTER_ARRAY_SIZE; loop++) {
 		if(  (registered[loop].used == TRUE)
 		     &&(registered[loop].protocol == protocol)) {
 			LOG_D("Replacing existing handler for Protocol 0x%x\n\r", (u16)protocol);
@@ -900,7 +880,7 @@ result_t app_l3_can_dispatch_reg_handler(u8 protocol, l3_msg_handler_t handler, 
 	/*
 	 * Find a free slot and add the Protocol
 	 */
-	for(loop = 0; loop < L3_REGISTER_ARRAY_SIZE; loop++) {
+	for(loop = 0; loop < CAN_L3_REGISTER_ARRAY_SIZE; loop++) {
 		if(registered[loop].used == FALSE) {
 			registered[loop].used = TRUE;
 			registered[loop].protocol = protocol;
@@ -916,10 +896,10 @@ result_t app_l3_can_dispatch_reg_handler(u8 protocol, l3_msg_handler_t handler, 
 
 result_t app_l3_can_dispatch_unreg_handler(u8 id)
 {
-	if((id < L3_REGISTER_ARRAY_SIZE) && (registered[id].used)) {
+	if((id < CAN_L3_REGISTER_ARRAY_SIZE) && (registered[id].used)) {
 		registered[id].used = FALSE;
 		registered[id].protocol = 0x00;
-		registered[id].handler = (l3_msg_handler_t)NULL;
+		registered[id].handler = (can_l3_msg_handler_t)NULL;
 		return(SUCCESS);
 	}
 	return(ERR_GENERAL_L3_ERROR);

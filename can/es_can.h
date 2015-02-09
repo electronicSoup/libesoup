@@ -77,14 +77,14 @@ extern char can_l2_status_strings[5][17];
 #endif
 
 #ifdef CAN_DCNCP
-#define DCNCP_STATUS_MASK 0x18
+#define DCNCP_INIT_STATUS_MASK 0x08
+#define DCNCP_L3_ADDRESS_STATUS_MASK 0x10
 
 #if 0
 
 #define DCNCP_Uninitilised 0x00
 #define DCNCP_Initialised  0x08
 
-#define DCNCP_L3_ADDRESS_STATUS_MASK 0x10
 
 #define DCNCP_L3_Address_Not_Final 0x00
 #define DCNCP_L3_Address_Finalised 0x10
@@ -160,15 +160,21 @@ extern void can_tasks(void);
 
 
 #if defined(CAN_LAYER_3)
-#define NET_LOG_L3_ID   0xc9 
+//#define NET_LOG_L3_ID   0xc9
 
-extern result_t l3_init(void (*arg_status_handler)(u8 mask, can_status_t status, baud_rate_t baud));
+/*
+ * Function provided by higher layers to provide a Layer 3 address to the 
+ * l3 protocol stack.
+ */
+extern u8 node_get_can_l3_address(void);
+
+extern result_t l3_init(void (*arg_status_handler)(u8 mask, can_status_t status, can_baud_rate_t baud));
 //extern void l3_finalise_address(u8 source);
 extern BOOL l3_initialised(void);
-//extern result_t l3_get_ddress(u8 * address);
-extern result_t l3_tx_msg(l3_can_msg_t *msg);
+//extern result_t can_l3_get_ddress(u8 * address);
+extern result_t l3_tx_msg(can_l3_msg_t *msg);
 
-extern result_t l3_register_handler(u8 protocol, l3_msg_handler_t handler);
+extern result_t l3_register_handler(u8 protocol, can_l3_msg_handler_t handler);
 #endif
 
 #endif // CAN_H
