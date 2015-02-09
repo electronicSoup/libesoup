@@ -30,10 +30,125 @@
 #if defined (__PIC24FJ256GB106__)
 #include <p24Fxxxx.h>
 #endif // (__PIC24FJ256GB106__)
+
+/*
+ * Include MicroChip's definitions
+ */
+#if defined(MCP)
+    #include <GenericTypeDefs.h>
+
+    typedef UINT8    u8;
+    typedef UINT16   u16;
+    typedef UINT32   u32;
+
+#elif defined(ES_LINUX)
+    #include <stdint.h>
+
+    typedef uint8_t  u8;
+    typedef uint16_t u16;
+    typedef uint32_t u32;
+
+    typedef unsigned char bool;
+    #define FALSE 0
+    #define TRUE !(FALSE)
+
+    #include <linux/can.h>
+    #include <time.h>
+    #include <signal.h>
+
+    #define can_frame struct can_frame
+#endif
+
 /*
  * Clock speed of the Hardware.
  */
 #define CLOCK_FREQ 16000000
+
+/*
+ * Timer definitions
+ */
+/*
+ * Enumerated type for the current status of a timer in the system. A timer
+ * is either Active or it's not.
+ */
+typedef enum {
+    INACTIVE = 0x00,
+    ACTIVE
+} timer_status_t;
+
+/*
+ * Simple macro to initialise the current statusof a timer to inactive.
+ * A timer should always be initialsed to an inactive status before it is used
+ * otherwise the timer might appear to be already active
+ */
+#define TIMER_INIT(timer) timer.status = INACTIVE;
+
+/*
+ * timer_t Timer identifier
+ *
+ * A Timer ID is used to identify a timer. It should not be used directly
+ * by code but only used by timer.c. It is part of the es_timer structure so
+ * we'll just define it here.
+ */
+#ifdef MCP
+typedef u8 timer_t;
+#endif
+
+/*
+ * The actual timer structure is simply the timer identifier and it's status.
+ */
+typedef struct
+{
+	timer_status_t status;
+	timer_t        timer_id;
+} es_timer;
+
+/*
+ * SECONDS_TO_TICKS
+ *
+ * Convience Macro to convert seconds to system timer ticks
+ */
+#define SECONDS_TO_TICKS(s)  ((s) * (1000 / SYSTEM_TICK_ms))
+
+/*
+ * MILLI_SECONDS_TO_TICKS
+ *
+ * Convience Macro to convert milliSeconds to system timer ticks
+ */
+#define MILLI_SECONDS_TO_TICKS(ms) ((ms < SYSTEM_TICK_ms) ? 1 : (ms / SYSTEM_TICK_ms))
+
+#ifdef MCP
+/*
+ * union sigval
+ *
+ * The sigval union comes straight from the Linux timer API which is why this
+ * definition if encased in a test for MCP definition. The union is passed to
+ * the expiry function if the timer expires. It can either carry a 16 bit
+ * integer value or a pointer.
+ */
+union sigval {          /* Data passed with notification */
+           u16     sival_int;         /* Integer value */
+           void   *sival_ptr;         /* Pointer value */
+};
+#endif
+
+/**
+ * \brief typedef expiry_function
+ *
+ * When a timer is created an expiry function is passed to the creation function.
+ * The CinnamonBun timer code executes this expiry_function when the timer
+ * expires.
+ *
+ * The expiry_function is a pointer to a function which accepts as parameter a
+ * pointer to a BYTE containing the timer_id identifer of the timer which has
+ * expired and the union sigval, defined above, which can be used to pass data
+ * to the expiry funcion. The expiry function is declared void and will not
+ * return anything to the timer library code.
+ */
+typedef void (*expiry_function)(timer_t timer_id, union sigval);
+
+
+
 
 /*
  *  EEPROM Address Map
@@ -163,34 +278,6 @@
 
 #define BUN_MSG_USER_OFFSET    0x00
 #define APP_MSG_USER_OFFSET    0x02
-
-/*
- * Include MicroChip's definitions
- */
-#if defined(MCP)
-    #include <GenericTypeDefs.h>
-
-    typedef UINT8    u8;
-    typedef UINT16   u16;
-    typedef UINT32   u32;
-
-#elif defined(ES_LINUX)
-    #include <stdint.h>
-
-    typedef uint8_t  u8;
-    typedef uint16_t u16;
-    typedef uint32_t u32;
-
-    typedef unsigned char bool;
-    #define FALSE 0
-    #define TRUE !(FALSE)
-
-    #include <linux/can.h>
-    #include <time.h>
-    #include <signal.h>
-
-    #define can_frame struct can_frame
-#endif
 
 /**
  *
