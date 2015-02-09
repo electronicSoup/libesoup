@@ -31,12 +31,12 @@ result_t (*os_eeprom_read)(UINT16 address, BYTE *data);
 result_t (*os_eeprom_write)(UINT16 address, BYTE data);
 
 result_t (*os_l2_can_tx_msg)(can_frame *);
-result_t (*os_l2_can_dispatch_register_handler)(can_target_t *target, BYTE *id);
+result_t (*os_l2_can_dispatch_register_handler)(can_l2_target_t *target, BYTE *id);
 result_t (*os_l2_can_dispatch_unregister_handler)(BYTE id);
 
 result_t (*os_l3_get_address)(BYTE *address);
-result_t (*os_l3_can_tx_message)(l3_can_msg_t *msg);
-result_t (*os_l3_can_dispatch_register_handler)(BYTE protocol, l3_msg_handler_t handler, BYTE *id);
+result_t (*os_l3_can_tx_message)(can_l3_msg_t *msg);
+result_t (*os_l3_can_dispatch_register_handler)(BYTE protocol, can_l3_msg_handler_t handler, BYTE *id);
 result_t (*os_l3_can_dispatch_unregister_handler)(BYTE id);
 
 void (*os_serial_log)(log_level_t level, char *tag, char *fmt, ...);
@@ -63,12 +63,12 @@ void os_init(void)
 	os_eeprom_write = (result_t(*)(UINT16, BYTE))(OS_FNS + 12);
 
 	os_l2_can_tx_msg = (result_t(*)(can_frame *))(OS_FNS + 16);
-	os_l2_can_dispatch_register_handler = (result_t(*)(can_target_t *, BYTE *))(OS_FNS + 20);
+	os_l2_can_dispatch_register_handler = (result_t(*)(can_l2_target_t *, BYTE *))(OS_FNS + 20);
 	os_l2_can_dispatch_unregister_handler = (result_t(*)(BYTE))(OS_FNS + 24);
 
 	os_l3_get_address = (result_t(*)(BYTE *))(OS_FNS + 28);
-	os_l3_can_tx_message = (result_t(*)(l3_can_msg_t *))(OS_FNS + 32);
-	os_l3_can_dispatch_register_handler = (result_t(*)(BYTE, l3_msg_handler_t, BYTE *))(OS_FNS + 36);
+	os_l3_can_tx_message = (result_t(*)(can_l3_msg_t *))(OS_FNS + 32);
+	os_l3_can_dispatch_register_handler = (result_t(*)(BYTE, can_l3_msg_handler_t, BYTE *))(OS_FNS + 36);
 	os_l3_can_dispatch_unregister_handler = (result_t(*)(BYTE))(OS_FNS + 40);
 
 	os_serial_log = (void (*)(log_level_t, char *, char *, ...))(OS_FNS + 44);
