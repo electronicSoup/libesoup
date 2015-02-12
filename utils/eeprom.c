@@ -53,6 +53,19 @@
 
 #define TAG "EEPROM"
 
+
+/*
+ * EEPROM SPI Commands.
+ */
+#define SPI_EEPROM_READ           0x03
+#define SPI_EEPROM_WRITE          0x02
+#define SPI_EEPROM_WRITE_DISABLE  0x04
+#define SPI_EEPROM_WRITE_ENABLE   0x06
+#define SPI_EEPROM_STATUS_READ    0x05
+#define SPI_EEPROM_STATUS_WRITE   0x01
+
+#define EEPROM_STATUS_WIP         0x01
+
 /*
  * result_t eeprom_read(UINT16 address, BYTE *data)
  *
@@ -68,6 +81,7 @@
  */
 result_t eeprom_read(UINT16 address, BYTE *data)
 {
+	BYTE status;
 	BYTE use_address;
 
 #ifdef EEPROM_USE_BOOT_PAGE
@@ -78,10 +92,17 @@ result_t eeprom_read(UINT16 address, BYTE *data)
 	if(use_address <= EEPROM_MAX_ADDRESS) {
 		EEPROM_Select();
 		Nop();
+		spi_write_byte(SPI_EEPROM_STATUS_READ);
+		status = spi_write_byte(0x00);
+		if(status & EEPROM_STATUS_WIP) {
+			return(ERR_NOT_READY);
+		}
+
 		spi_write_byte(SPI_EEPROM_READ);
-		spi_write_byte((BYTE)use_address);
+		spi_write_byte(use_address);
 		*data = spi_write_byte(0x00);
 		EEPROM_DeSelect();
+		LOG_D("eeprom_read(0x%x, 0x%x)\n\r", address, *data);
 		return(SUCCESS);
 	}
         LOG_E("eeprom_read Address Range Error!\n\r");
