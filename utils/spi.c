@@ -54,14 +54,6 @@ void spi_init(void)
 	RPINR20bits.SDI1R = 23;
 	
 	/*
-	 * INT
-	 *
-	 * RA14 = RPI36 - External Interrup
-	 */
-//    RPINR0bits.INT1R0 = 36;
-//    RPINR0bits.INT1R = 36;
-
-	/*
 	 * OUTPUTS:
 	 *  RD3 = RP22 -  SO  - SPI1 Data Output Function 7
 	 *  RD1 = RP24 - SCK  - SPI1 Clock Output Function 8
@@ -70,7 +62,9 @@ void spi_init(void)
 	RPOR11bits.RP22R = 7;     //SPI1 SO
 	RPOR12bits.RP24R = 8;     //SPI1 SCK
 
-	/* Init the SPI Config */
+	/* 
+	 * Init the SPI Config
+	 */
 	SPI1CON1bits.SSEN = 0;    // Don't use SPIs chip select it's extrnal
 	SPI1CON1bits.MSTEN = 1;   // Master mode
 	SPI1CON1bits.PPRE = 0x02;
@@ -80,7 +74,6 @@ void spi_init(void)
 	SPI1CON1bits.CKP = 1;
 	
 	SPI1CON2 = 0x00;
-//    SPI1STATbits.SPIROV = 0;
 	SPI1STATbits.SPIEN = 1;   // Enable the SPI
 }
 
