@@ -165,23 +165,11 @@ typedef void (*expiry_function)(timer_t timer_id, union sigval);
  *  RD0       - /CAN INT
  */
 
-
 //  RD7 - /EEPROM CS
 #define EEPROM_CS_PIN_DIRECTION    TRISDbits.TRISD7
 #define EEPROM_CS                  LATDbits.LATD7
-
 #define EEPROM_Select()            EEPROM_CS = 0
 #define EEPROM_DeSelect()          EEPROM_CS = 1
-
-/*
- * EEPROM SPI Commands.
- */
-#define SPI_EEPROM_READ           0x03
-#define SPI_EEPROM_WRITE          0x02
-#define SPI_EEPROM_WRITE_DISABLE  0x04
-#define SPI_EEPROM_WRITE_ENABLE   0x06
-#define SPI_EEPROM_STATUS_READ    0x05
-#define SPI_EEPROM_STATUS_WRITE   0x01
 
 //  RD0  - /CAN INT
 #define CAN_INTERRUPT_PIN_DIRECTION    TRISDbits.TRISD0
@@ -291,6 +279,7 @@ typedef enum {
     ERR_TIMER_ACTIVE,
     ERR_NO_RESOURCES,
     ERR_ADDRESS_RANGE,
+    ERR_NOT_READY,
     ERR_GENERAL_CAN_ERROR,
     ERR_CAN_NOT_CONNECTED,
     ERR_CAN_TARGET_OVERLAP,
