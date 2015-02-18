@@ -66,6 +66,19 @@
 
 #define EEPROM_STATUS_WIP         0x01
 
+static void clear_write_in_progress(void)
+{
+	BYTE status;
+
+	do {
+		EEPROM_Select();
+		Nop();
+		spi_write_byte(SPI_EEPROM_STATUS_READ);
+		status = spi_write_byte(0x00);
+		EEPROM_DeSelect();
+	} while (status & EEPROM_STATUS_WIP);
+}
+
 /*
  * result_t eeprom_read(UINT16 address, BYTE *data)
  *
@@ -81,7 +94,6 @@
  */
 result_t eeprom_read(UINT16 address, BYTE *data)
 {
-	BYTE status;
 	BYTE use_address;
 
 #ifdef EEPROM_USE_BOOT_PAGE
@@ -90,14 +102,8 @@ result_t eeprom_read(UINT16 address, BYTE *data)
 	use_address = (BYTE)(address + EEPROM_BOOT_PAGE_SIZE);
 #endif
 	if(use_address <= EEPROM_MAX_ADDRESS) {
+		clear_write_in_progress();
 		EEPROM_Select();
-		Nop();
-		spi_write_byte(SPI_EEPROM_STATUS_READ);
-		status = spi_write_byte(0x00);
-		if(status & EEPROM_STATUS_WIP) {
-			return(ERR_NOT_READY);
-		}
-
 		spi_write_byte(SPI_EEPROM_READ);
 		spi_write_byte(use_address);
 		*data = spi_write_byte(0x00);
@@ -134,19 +140,18 @@ result_t eeprom_write(UINT16 address, BYTE data)
 	use_address = (BYTE)(address + EEPROM_BOOT_PAGE_SIZE);
 #endif
 	if(use_address <= EEPROM_MAX_ADDRESS) {
+		clear_write_in_progress();
 		EEPROM_Select();
-		Nop();
-
 		spi_write_byte(SPI_EEPROM_WRITE_ENABLE);
 		EEPROM_DeSelect();
-
+		Nop();
 		EEPROM_Select();
 
 		spi_write_byte(SPI_EEPROM_WRITE);
 		spi_write_byte((BYTE)use_address);
 		spi_write_byte(data);
 		EEPROM_DeSelect();
-
+		Nop();
 		EEPROM_Select();
 		spi_write_byte(SPI_EEPROM_WRITE_DISABLE);
 		EEPROM_DeSelect();
