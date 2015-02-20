@@ -68,7 +68,7 @@ void set_idle_state(void)
  */
 void idle_process_msg(BYTE cmd, void *data, UINT16 data_len)
 {
-	if (cmd == APP_MSG_COMMAND_APP_CONNECT) {
+	if (cmd == APP_MSG_APP_CONNECT) {
 		ANDROID_SET_APPLICATION_CONNECTED_STATE
 	} else {
 		LOG_E("Android Connected State received Android message other then App connected 0x%x\n\r", cmd);

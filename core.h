@@ -261,11 +261,18 @@ typedef void (*expiry_function)(timer_t timer_id, union sigval);
  * #define MY_FIRST_APP_MSG   APP_MSG_USER_OFFSET
  * #define MY_FIRST_APP_MSG   APP_MSG_USER_OFFSET + 1
  */
-#define  APP_MSG_COMMAND_APP_DISCONNECT  0x00
-#define  APP_MSG_COMMAND_APP_CONNECT     0x01
+#define  APP_MSG_ERROR                   0x00
+#define  APP_MSG_APP_DISCONNECT          0x01
+#define  APP_MSG_APP_CONNECT             0x02
+#define  APP_MSG_CAN_STATUS_REQ          0x03
+#define  APP_MSG_CAN_L2_FRAME            0x04
+#define  APP_MSG_CAN_L2_TARGET           0x05
+#define  APP_MSG_USER_OFFSET             0x06
 
-#define BUN_MSG_USER_OFFSET    0x00
-#define APP_MSG_USER_OFFSET    0x02
+#define  BUN_MSG_ERROR                   0x00
+#define  BUN_MSG_CAN_STATUS              0x01
+#define  BUN_MSG_CAN_L2_FRAME            0x02
+#define  BUN_MSG_USER_OFFSET             0x03
 
 /**
  *
@@ -377,8 +384,8 @@ typedef struct
 #endif //__18F2680
 {
     canid_t can_id; /* 32 bit CAN_ID + EFF/RTR/ERR flags */
-    u8            can_dlc;
-    u8          data[CAN_DATA_LENGTH];
+    u8      can_dlc;
+    u8      data[CAN_DATA_LENGTH];
 } can_frame;
 #endif //MCP
 
