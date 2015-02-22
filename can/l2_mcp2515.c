@@ -194,7 +194,7 @@ result_t can_l2_init(can_baud_rate_t arg_baud_rate,
 	/**
 	 * Have to set the baud rate if one has been passed into the function
 	 */
-	if(arg_baud_rate <= BAUD_MAX) {
+	if(arg_baud_rate < no_baud) {
 		LOG_D("Valid Baud Rate specified - %s\n\r", can_baud_rate_strings[arg_baud_rate]);
 		connected_baudrate = arg_baud_rate;
 		set_baudrate(arg_baud_rate);
@@ -299,7 +299,7 @@ void exp_check_network_connection(timer_t timer_id __attribute__((unused)), unio
 
 	TIMER_INIT(listen_timer);
 
-	if(listen_baudrate <= BAUD_MAX) {
+	if(listen_baudrate < no_baud) {
 		LOG_D("After trying %s Errors - %d, rxCount - %ld\n\r", can_baud_rate_strings[listen_baudrate], connecting_errors, rx_msg_count);
 	} else {
 		LOG_D("After trying %s Errors - %d, rxCount - %ld\n\r", "NO BAUD RATE", connecting_errors, rx_msg_count);
@@ -319,10 +319,10 @@ void exp_check_network_connection(timer_t timer_id __attribute__((unused)), unio
 		if(status_handler)
 			status_handler(L2_STATUS_MASK, status, status_baud);
 	} else {
-		if(listen_baudrate == BAUD_MAX)
+		listen_baudrate++;
+		if(listen_baudrate == no_baud)
 			listen_baudrate = baud_10K;
-		else
-			listen_baudrate++;
+
 		LOG_D("No joy try Baud Rate - %s\n\r", can_baud_rate_strings[listen_baudrate]);
 		set_can_mode(CONFIG_MODE);
 		set_baudrate(listen_baudrate);

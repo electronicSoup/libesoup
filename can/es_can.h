@@ -112,15 +112,15 @@ typedef struct {
 } can_status_t;
 
 typedef enum {
-	baud_10K = 0,
-	baud_20K = 1,
-	baud_50K = 2,
-	baud_125K = 3,
-	baud_250K = 4,
-	baud_500K = 5,
-	baud_800K  = 6,
-	baud_1M = 7,
-	no_baud = 0xff
+	baud_10K   = 0x00,
+	baud_20K   = 0x01,
+	baud_50K   = 0x02,
+	baud_125K  = 0x03,
+	baud_250K  = 0x04,
+	baud_500K  = 0x05,
+	baud_800K  = 0x06,
+	baud_1M    = 0x07,
+	no_baud    = 0x08
 } can_baud_rate_t;
 
 typedef void (*can_status_handler)(can_status_t, can_baud_rate_t);
@@ -129,7 +129,7 @@ typedef void (*can_status_handler)(can_status_t, can_baud_rate_t);
 extern char can_baud_rate_strings[8][10];
 #endif
 
-#define BAUD_MAX baud_1M
+//#define BAUD_MAX baud_1M
 
 extern result_t can_init(can_baud_rate_t      baud,
 	can_status_handler   status_default_handler);
