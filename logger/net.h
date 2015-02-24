@@ -30,14 +30,15 @@ extern void net_log(log_level_t level, char *msg);
  * This function takes a function pointer which is going to handle the received
  * debug messages and the minimum level that we're expecting to receive.
  */
-extern result_t net_logger_local_register(void (*handler)(u8, log_level_t, char *), log_level_t level);
-extern result_t net_logger_local_cancel(void);
+extern result_t net_logger_register_as_logger(void (*handler)(u8, log_level_t, char *), log_level_t level);
+//extern result_t net_logger_local_register(void (*handler)(u8, log_level_t, char *), log_level_t level);
+//extern result_t net_logger_local_cancel(void);
 
 /*
  * If another node on the network registers/unregisters as the network logger 
  * these two functions are used.
  */
-extern void net_logger_foreign_register(u8 address, log_level_t level);
-extern void net_logger_foreign_cancel(u8 address);
+extern void net_logger_register_remote(u8 address, log_level_t level);
+extern void net_logger_unregister_remote(u8 address);
 
 #endif // NET_LOGGER_H

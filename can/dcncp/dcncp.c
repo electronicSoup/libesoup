@@ -42,11 +42,6 @@
 
 #define TAG "CAN_DCNCP"
 
-//#define NodeInfo 0x01;
-
-//extern void rxNetLogRegReq(u8 address, log_level_t level);
-//extern void rxNetLogUnRegReq(u8 address);
-
 static es_timer dcncp_network_baudrate_req_timer;
 static void exp_resend_network_baud_chage_req(timer_t timer_id, union sigval data);
 static void exp_network_baud_chage_req(timer_t timer_id, union sigval data);
@@ -58,9 +53,9 @@ static es_timer l3_node_reg_timer;
 #ifdef CAN_NET_LOGGER
 static can_frame local_net_logger_frame;
 static es_timer local_net_logger_timer;
-#endif // CAN_NET_LOGGER
 
 #define LOCAL_NET_LOGGER_MSG_PERIOD SECONDS_TO_TICKS(5)
+#endif // CAN_NET_LOGGER
 
 static u8 dcncp_l3_address;
 u8 dcncp_get_can_l3_address(void);
@@ -72,7 +67,7 @@ static void exp_net_logger_ping(timer_t timer_id __attribute__((unused)), union 
 static void exp_send_address_register_request(timer_t timer_id, union sigval data);
 static void exp_node_address_registered(timer_t timer_id __attribute__((unused)), union sigval data);
 static void exp_send_node_addr_report(timer_t timer_id, union sigval data);
-#endif
+#endif  // CAN_LAYER_3
 
 static void can_l2_msg_handler(can_frame *msg);
 
@@ -403,20 +398,12 @@ void can_l2_msg_handler(can_frame *msg)
 #if DEBUG_LEVEL <= LOG_DEBUG
 		printf(".");
 #endif
-	} else if (msg->can_id == CAN_DCNCP_NetLogger) {
+	} else if (msg->can_id == CAN_DCNCP_RegisterNetLogger) {
 		LOG_D("Received NetLogger Message\n\r");
-#if defined(CAN_NET_LOGGER)
-		net_logger_foreign_register(msg->data[0], msg->data[1]);
-#else
-		LOG_D("Ignoring NetLogger Message NO LAYER 3!\n\r");
-#endif
-	} else if (msg->can_id == CAN_DCNCP_CancelNetLogger) {
+		net_logger_register_remote(msg->data[0], msg->data[1]);
+	} else if (msg->can_id == CAN_DCNCP_UnRegisterNetLogger) {
 		LOG_D("Received CancelNetLogger Message\n\r");
-#if defined(CAN_NET_LOGGER)
-		net_logger_foreign_cancel(msg->data[0]);
-#else
-		LOG_D("Ignoring NetLogger Message NO LAYER 3!\n\r");
-#endif
+		net_logger_unregister_remote(msg->data[0]);
 	} else {
 		LOG_W("Node Unrecognised Request %lx \n\r", msg->can_id);
 	}
@@ -451,7 +438,7 @@ void exp_send_node_addr_report(timer_t timer_id __attribute__((unused)), union s
  * Net Logger Stuff
  */
 #if defined(CAN_NET_LOGGER)
-result_t register_this_node_net_logger(log_level_t level)
+result_t dcncp_register_this_node_net_logger(log_level_t level)
 {
 	if(!l3_initialised()) 
 		return(ERR_L3_UNINITIALISED);
@@ -459,7 +446,7 @@ result_t register_this_node_net_logger(log_level_t level)
 	LOG_D("register_this_node_net_logger()\n\r");
 
 	if(status.bit_field.dcncp_l3_valid) {
-		local_net_logger_frame.can_id = CAN_DCNCP_NetLogger;
+		local_net_logger_frame.can_id = CAN_DCNCP_RegisterNetLogger;
 		local_net_logger_frame.can_dlc = 2;
 		local_net_logger_frame.data[0] = dcncp_l3_address;
 		local_net_logger_frame.data[1] = level;
@@ -474,7 +461,7 @@ result_t register_this_node_net_logger(log_level_t level)
 		return(ERR_GENERAL_L3_ERROR);
 	}
 }
-#endif
+#endif // CAN_NET_LOGGER
 
 #if defined(CAN_NET_LOGGER)
 void exp_net_logger_ping(timer_t timer_id __attribute__((unused)), union sigval data)
@@ -485,16 +472,16 @@ void exp_net_logger_ping(timer_t timer_id __attribute__((unused)), union sigval 
 	LOG_D("NetLogger message sent\n\r");
 	timer_start(LOCAL_NET_LOGGER_MSG_PERIOD, exp_net_logger_ping, (union sigval)(void *)NULL, &local_net_logger_timer);
 }
-#endif
+#endif // CAN_NET_LOGGER
 
 #if defined(CAN_NET_LOGGER)
-result_t unregister_this_node_net_logger()
+result_t dcncp_unregister_this_node_net_logger()
 {
 	can_frame txMsg;
 
 	LOG_D("DeRegAsNetLogger()\n\r");
 
-	txMsg.can_id = CAN_DCNCP_CancelNetLogger;
+	txMsg.can_id = CAN_DCNCP_UnRegisterNetLogger;
 	txMsg.can_dlc = 1;
 	txMsg.data[0] = dcncp_l3_address;
 
@@ -506,7 +493,7 @@ result_t unregister_this_node_net_logger()
 
 	return (SUCCESS);
 }
-#endif
+#endif // CAN_NET_LOGGER
 
 void dcncp_send_ping(void)
 {

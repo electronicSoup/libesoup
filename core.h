@@ -281,6 +281,7 @@ typedef void (*expiry_function)(timer_t timer_id, union sigval);
 typedef enum {
     SUCCESS = 0x00, /**< enum value Success */
     ERR_GENERAL_ERROR,
+    ERR_BAD_INPUT_PARAMETER,
     ERR_TIMER_ACTIVE,
     ERR_NO_RESOURCES,
     ERR_ADDRESS_RANGE,

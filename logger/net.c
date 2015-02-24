@@ -29,22 +29,17 @@
 #include "es_lib/logger/serial_log.h"
 #include "es_lib/logger/net.h"
 
-#if defined(MCP)
-#include "es_lib/utils/utils.h"
-#endif
-
-#if DEBUG_LEVEL < NO_LOGGING
 #define TAG "NET_LOG"
-#endif
 
 /*
  * Network Logging
  */
 #if defined(CAN_LAYER_3)
+#ifdef CAN_NET_LOGGER
 static void (*net_logger_handler)(u8, log_level_t, char*) = NULL;
+#endif // CAN_NET_LOGGER
 
 static BOOL net_logger = FALSE;
-static BOOL net_logger_local = FALSE;
 static u8 net_logger_address;
 static log_level_t net_logger_level = Error;
 #endif
@@ -56,14 +51,10 @@ static void l3NetLogHandler(can_l3_msg_t *message)
 	log_level_t level;
 	char        string[L3_CAN_MAX_MSG];
 
-	if(net_logger && net_logger_local) {
-		level = message->data[0];
-		if((level >= net_logger_level) && net_logger_handler) {
-			strcpy(string, (char *) &(message->data[1]));
-			net_logger_handler(message->address, level, string);
-		}
-	} else {
-		LOG_D("No Handler\n\r");
+	level = message->data[0];
+	if ((level >= net_logger_level) && net_logger_handler) {
+		strcpy(string, (char *) &(message->data[1]));
+		net_logger_handler(message->address, level, string);
 	}
 }
 #endif // CAN_NET_LOGGER
@@ -74,18 +65,21 @@ static void l3NetLogHandler(can_l3_msg_t *message)
  */
 #if defined(CAN_LAYER_3)
 #ifdef CAN_NET_LOGGER
-result_t net_logger_local_register(void (*handler)(u8, log_level_t, char *), log_level_t level)
+result_t net_logger_register_as_logger(void (*handler)(u8, log_level_t, char *), log_level_t level)
 {
 	LOG_D("net_log_reg_as_handler() level %x\n\r", level);
 	if(l3_initialised()) {
-		net_logger = TRUE;
-		net_logger_local = TRUE;
-		net_logger_handler = handler;
-		net_logger_level = level;
+		if(handler != NULL) {
+			net_logger_handler = handler;
+			net_logger_level = level;
 
-		l3_register_handler(NET_LOG_L3_ID, l3NetLogHandler);
+			l3_register_handler(NET_LOG_L3_ID, l3NetLogHandler);
 
-		return(register_this_node_net_logger(level));
+			return (dcncp_register_this_node_net_logger(level));
+		} else {
+			LOG_E("No handler given\n\r");
+			return(ERR_BAD_INPUT_PARAMETER);
+		}
 	} else {
 		return(ERR_L3_UNINITIALISED);
 	}
@@ -98,15 +92,12 @@ result_t net_logger_local_register(void (*handler)(u8, log_level_t, char *), log
  */
 #if defined(CAN_LAYER_3)
 #ifdef CAN_NET_LOGGER
-result_t net_logger_local_cancel(void)
+result_t net_logger_unregister_as_logger(void)
 {
 	LOG_D("net_log_unreg_as_handler()\n\r");
-	if(net_logger_local) {
-		net_logger_local = FALSE;
-		net_logger = FALSE;
-		net_logger_handler = NULL;
-	}
-	return(unregister_this_node_net_logger());
+	net_logger = FALSE;
+	net_logger_handler = NULL;
+	return(dcncp_unregister_this_node_net_logger());
 }
 #endif // CAN_NET_LOGGER
 #endif
@@ -115,7 +106,7 @@ result_t net_logger_local_cancel(void)
 void net_log(log_level_t level, char *string)
 {
 	u8 loop;
-	u8 address;
+//	u8 address;
 	u8 data[L3_CAN_MAX_MSG];
 
 	can_l3_msg_t msg;
@@ -160,22 +151,21 @@ void net_log(log_level_t level, char *string)
  * Another network node has registered as the system
  */
 #if defined(CAN_LAYER_3)
-void net_logger_foreign_register(u8 address, log_level_t level)
+void net_logger_register_remote(u8 address, log_level_t level)
 {
 	net_logger = TRUE;
-	net_logger_local = FALSE;
 	net_logger_address = address;
 	net_logger_level = level;
 }
-#endif
+#endif // CAN_LAYER_3
 
 /*
  * Another network node has UN-registered as the system
  */
 #if defined(CAN_LAYER_3)
-void net_logger_foreign_cancel(u8 address)
+void net_logger_unregister_remote(u8 address)
 {
 	if(net_logger_address == address)
 		net_logger = FALSE;
 }
-#endif
+#endif // CAN_LAYER_3
