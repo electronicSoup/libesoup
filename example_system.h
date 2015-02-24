@@ -2,8 +2,8 @@
  *
  * \file es_lib/example_system.h
  *
- * This file contains the various switches which can be used with the
- * es_lib source code library. 
+ * This file contains the various switches which can be used to configure
+ * the es_lib source code library.
  *
  * Copyright 2014 John Whitmore <jwhitmore@electronicsoup.com>
  *
@@ -22,6 +22,11 @@
  */
 
 #include "es_lib/core.h"
+
+/*
+ * The size of the Transmit buffer to be used on the USART Serial port.
+ */
+#define USART_TX_BUFFER_SIZE 300
 
 /*
  * Baud rate of the serial debug port
@@ -52,11 +57,21 @@
 /*
  * CAN Definitions
  */
+//#define CAN
+
+#ifdef CAN
+#define CAN_BAUD_AUTO_DETECT_LISTEN_PERIOD    SECONDS_TO_TICKS(20)
 /*
  * The number of Handlers that can be registered with Layer 2
  */
-//#define CAN_L2_HANDLER_ARRAY_SIZE 5
+#define CAN_L2_HANDLER_ARRAY_SIZE 5
 
+/*
+ * DCNCP - Dynamic Can Node Configuration Protocol
+ */
+#define CAN_DCNCP
+
+#ifdef CAN_DCNCP
 //#define CAN_BAUD_AUTO_DETECT_LISTEN_PERIOD    SECONDS_TO_TICKS(10)
 
 /*
@@ -72,11 +87,6 @@
 #ifdef CAN_L2_IDLE_PING
 #define CAN_L2_IDLE_PING_PERIOD     SECONDS_TO_TICKS(5)
 #endif
-
-/*
- * DCNCP - Dynamic Can Node Configuration Protocol
- */
-//#define CAN_DCNCP
 
 /*
  * Include CAN Layer 3 functionality
@@ -101,6 +111,9 @@
  * in the system or applicaiton.
  */
 #define CAN_L3_REGISTER_ARRAY_SIZE 2
+
+
+//#define CAN_NET_LOGGING
 
 /*
  * If this node can act as a CAN Bus Network logger define CAN_NET_LOGGER

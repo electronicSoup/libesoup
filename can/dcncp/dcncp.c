@@ -399,11 +399,15 @@ void can_l2_msg_handler(can_frame *msg)
 		printf(".");
 #endif
 	} else if (msg->can_id == CAN_DCNCP_RegisterNetLogger) {
-		LOG_D("Received NetLogger Message\n\r");
+		LOG_D("Received NetLogger Registration Message\n\r");
+#ifdef CAN_NET_LOGGING
 		net_logger_register_remote(msg->data[0], msg->data[1]);
+#endif // CAN_NET_LOGGING
 	} else if (msg->can_id == CAN_DCNCP_UnRegisterNetLogger) {
-		LOG_D("Received CancelNetLogger Message\n\r");
+		LOG_D("Received NetLogger UnRegistration Message\n\r");
+#ifdef CAN_NET_LOGGING
 		net_logger_unregister_remote(msg->data[0]);
+#endif // CAN_NET_LOGGING
 	} else {
 		LOG_W("Node Unrecognised Request %lx \n\r", msg->can_id);
 	}
