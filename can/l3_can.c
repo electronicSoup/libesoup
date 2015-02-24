@@ -198,8 +198,6 @@ result_t l3_init(void (*arg_status_handler)(u8 mask, can_status_t status, can_ba
 	u16 loop;
 	can_l2_target_t target;
 
-	LOG_D("l3_init()\n\r");
-
         status.byte = 0x00;
         status_handler = arg_status_handler;
 
@@ -224,6 +222,7 @@ result_t l3_init(void (*arg_status_handler)(u8 mask, can_status_t status, can_ba
 	}
 #endif
         node_address = dcncp_get_can_l3_address();
+	LOG_D("l3_init() node address = 0x%x\n\r", node_address);
 
 	/*
 	 * Initialise the static parts or our tx message header.
