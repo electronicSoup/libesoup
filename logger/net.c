@@ -50,7 +50,8 @@ static log_level_t net_logger_level = Error;
 #endif
 
 #if defined(CAN_LAYER_3)
-static void l3NetLogHandler(l3_can_msg_t *message)
+#ifdef CAN_NET_LOGGER
+static void l3NetLogHandler(can_l3_msg_t *message)
 {
 	log_level_t level;
 	char        string[L3_CAN_MAX_MSG];
@@ -65,12 +66,14 @@ static void l3NetLogHandler(l3_can_msg_t *message)
 		LOG_D("No Handler\n\r");
 	}
 }
+#endif // CAN_NET_LOGGER
 #endif
 
 /*
  * Register this node on the Network as the logger
  */
 #if defined(CAN_LAYER_3)
+#ifdef CAN_NET_LOGGER
 result_t net_logger_local_register(void (*handler)(u8, log_level_t, char *), log_level_t level)
 {
 	LOG_D("net_log_reg_as_handler() level %x\n\r", level);
@@ -87,12 +90,14 @@ result_t net_logger_local_register(void (*handler)(u8, log_level_t, char *), log
 		return(ERR_L3_UNINITIALISED);
 	}
 }
+#endif // CAN_NET_LOGGER
 #endif
 
 /*
  * Unregister this node as the Network Logger!
  */
 #if defined(CAN_LAYER_3)
+#ifdef CAN_NET_LOGGER
 result_t net_logger_local_cancel(void)
 {
 	LOG_D("net_log_unreg_as_handler()\n\r");
@@ -103,6 +108,7 @@ result_t net_logger_local_cancel(void)
 	}
 	return(unregister_this_node_net_logger());
 }
+#endif // CAN_NET_LOGGER
 #endif
 
 #if defined(CAN_LAYER_3)
@@ -112,16 +118,17 @@ void net_log(log_level_t level, char *string)
 	u8 address;
 	u8 data[L3_CAN_MAX_MSG];
 
-	l3_can_msg_t msg;
+	can_l3_msg_t msg;
 
 	LOG_D("net_log(0x%x, %s)\n\r", (u16)level, string);
 
 	if(net_logger) {
-		if(net_logger_local && net_logger_handler) {
-			get_l3_node_address(&address);
-			net_logger_handler(address, level, string);
-			LOG_D("Local Net Logger\n\r");
-		} else if(level <= net_logger_level) {
+//		if(net_logger_local && net_logger_handler) {
+//			get_l3_node_address(&address);
+//			net_logger_handler(address, level, string);
+//			LOG_D("Local Net Logger\n\r");
+//		} else
+		if(level <= net_logger_level) {
 			if(strlen((char *)string) < L3_CAN_MAX_MSG - 2) {
 				msg.address = net_logger_address;
 				msg.protocol = NET_LOG_L3_ID;
