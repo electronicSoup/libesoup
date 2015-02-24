@@ -444,26 +444,21 @@ void exp_send_node_addr_report(timer_t timer_id __attribute__((unused)), union s
 #if defined(CAN_NET_LOGGER)
 result_t dcncp_register_this_node_net_logger(log_level_t level)
 {
-	if(!l3_initialised()) 
-		return(ERR_L3_UNINITIALISED);
-
 	LOG_D("register_this_node_net_logger()\n\r");
 
-	if(status.bit_field.dcncp_l3_valid) {
-		local_net_logger_frame.can_id = CAN_DCNCP_RegisterNetLogger;
-		local_net_logger_frame.can_dlc = 2;
-		local_net_logger_frame.data[0] = dcncp_l3_address;
-		local_net_logger_frame.data[1] = level;
+	if(!l3_initialised())
+		return(ERR_L3_UNINITIALISED);
 
-		can_l2_tx_frame(&local_net_logger_frame);
-		LOG_D("NetLogger message sent\n\r");
-		timer_start(LOCAL_NET_LOGGER_MSG_PERIOD, exp_net_logger_ping, (union sigval)(void *)NULL, &local_net_logger_timer);
+	local_net_logger_frame.can_id = CAN_DCNCP_RegisterNetLogger;
+	local_net_logger_frame.can_dlc = 2;
+	local_net_logger_frame.data[0] = dcncp_l3_address;
+	local_net_logger_frame.data[1] = level;
 
-		return(SUCCESS);
-	} else {
-		LOG_D("NetLogger message not sent Node not Registered yet\n\r");
-		return(ERR_GENERAL_L3_ERROR);
-	}
+	can_l2_tx_frame(&local_net_logger_frame);
+	LOG_D("NetLogger message sent\n\r");
+	timer_start(LOCAL_NET_LOGGER_MSG_PERIOD, exp_net_logger_ping, (union sigval)(void *) NULL, &local_net_logger_timer);
+
+	return (SUCCESS);
 }
 #endif // CAN_NET_LOGGER
 

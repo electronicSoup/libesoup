@@ -243,7 +243,7 @@ result_t l3_init(void (*arg_status_handler)(u8 mask, can_status_t status, can_ba
 
 	can_l2_reg_handler(&target);
 
-        status.bit_field.l3_status &= L3_Inititialised;
+	status.bit_field.l3_status = 1;
 
         if(status_handler)
 			status_handler(L3_STATUS_MASK, status, no_baud);
@@ -253,7 +253,7 @@ result_t l3_init(void (*arg_status_handler)(u8 mask, can_status_t status, can_ba
 
 BOOL l3_initialised(void)
 {
-    return(status.bit_field.l3_status &  L3_Inititialised);
+    return(status.bit_field.l3_status);
 }
 
 result_t l3_tx_msg(can_l3_msg_t *msg)
@@ -268,7 +268,7 @@ result_t l3_tx_msg(can_l3_msg_t *msg)
 		   (u16)msg->protocol,
 		   (u16)msg->size);
 
-        if(!(status.bit_field.l3_status & L3_Inititialised)) {
+        if(status.bit_field.l3_status) {
 		LOG_E("L3_Can not Initialised\n\r");
 		return(ERR_GENERAL_L3_ERROR);
 	}
