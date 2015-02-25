@@ -321,10 +321,11 @@ result_t l3_tx_msg(can_l3_msg_t *msg)
 		tx_buffer->frame.data[1] = msg->protocol;
 
 		dataPtr = msg->data;
-		for(loop = 2; loop <= msg->size; loop++) {
-			tx_buffer->frame.data[loop] = *dataPtr++;
-		}
 		LOG_D("Tx Single Frame\n\r");
+		for(loop = 0; loop < msg->size; loop++) {
+			tx_buffer->frame.data[loop + 2] = *dataPtr++;
+			LOG_D("L3TX Byte 0x%x\n\r", tx_buffer->frame.data[loop + 2]);
+		}
 		can_l2_tx_frame(&(tx_buffer->frame));
 	} else {
 		/*
