@@ -49,7 +49,7 @@ static log_level_t net_logger_level = Error;
 static void l3NetLogHandler(can_l3_msg_t *message)
 {
 	log_level_t level;
-	char        string[L3_CAN_MAX_MSG];
+	char        string[CAN_L3_MAX_MSG];
 
 	level = message->data[0];
 	if ((level >= net_logger_level) && net_logger_handler) {
