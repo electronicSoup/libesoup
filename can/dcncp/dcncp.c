@@ -103,8 +103,8 @@ void dcncp_init(void (*arg_status_handler)(u8 mask, can_status_t status, can_bau
 	/*
 	 * Add the Layer 2 and Layer 3 Can Message Handlers
 	 */
-	target.mask = (u32)CAN_DCNCP_MASK;
-	target.filter = (u32)CAN_DCNCP_FILTER;
+	target.mask    = (u32)CAN_DCNCP_MASK;
+	target.filter  = (u32)CAN_DCNCP_FILTER;
 	target.handler = can_l2_msg_handler;
 
 	LOG_D("Node Address Register handler Mask 0x%lx, Filter 0x%lx\n\r", target.mask, target.filter);
@@ -250,6 +250,7 @@ void exp_send_address_register_request(timer_t timer_id __attribute__((unused)),
 	 */
 	data = data;
 
+	LOG_D("exp_send_address_register_request() Send Initial Register Req\n\r");
 	TIMER_INIT(l3_send_reg_req_timer);
 
 	dcncp_l3_address = node_get_can_l3_address();
@@ -312,7 +313,6 @@ void can_l2_msg_handler(can_frame *msg)
 	can_frame txMsg;
 	es_timer timer;
 #endif
-	LOG_D("DCNCP message received 0x%lx\n\r", msg->can_id);
 	if (msg->can_id == CAN_DCNCP_AddressRegisterReq) {
 #if defined(CAN_LAYER_3)
 		if(msg->data[0] == dcncp_l3_address) {
@@ -324,7 +324,7 @@ void can_l2_msg_handler(can_frame *msg)
 
 				can_l2_tx_frame(&txMsg);
 			} else {
-				LOG_D("Register Node Address clash\n\r");
+				LOG_D("Register Node Address clash. Get New L3 Address!\n\r");
 				/*
 				 *Have to create a new node address for this node
 				 *cancel the timers
@@ -349,6 +349,7 @@ void can_l2_msg_handler(can_frame *msg)
 
 				can_l2_tx_frame(&txMsg);
 			} else {
+				LOG_D("Address Regected so get a new one!\n\r");
 				/*
 				 *Have to create a new node address for this node
 				 *cancel the timers
@@ -395,9 +396,6 @@ void can_l2_msg_handler(can_frame *msg)
 
 		//		can_l2_set_node_baudrate(msg->data[0]);
 	} else if (msg->can_id == CAN_DCNCP_NodePingMessage) {
-#if DEBUG_LEVEL <= LOG_DEBUG
-		printf(".");
-#endif
 	} else if (msg->can_id == CAN_DCNCP_RegisterNetLogger) {
 		LOG_D("Received NetLogger Registration Message\n\r");
 #ifdef CAN_NET_LOGGING
@@ -502,7 +500,9 @@ void dcncp_send_ping(void)
 	txMsg.can_dlc = 0;
 
 	can_l2_tx_frame(&txMsg);
+#ifdef CAN_L2_PING_LOGGING
 	LOG_D("Ping message sent\n\r");
+#endif // CAN_L2_PING_LOGGING
 }
 
 #if defined(CAN_LAYER_3)
