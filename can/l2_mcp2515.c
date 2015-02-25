@@ -142,10 +142,12 @@ static void (*status_handler)(u8 mask, can_status_t status, can_baud_rate_t baud
 result_t can_l2_init(can_baud_rate_t arg_baud_rate,
                      void (*arg_status_handler)(u8 mask, can_status_t status, can_baud_rate_t baud))
 {
-	u8 loop = 0x00;
-	u8 exit_mode = NORMAL_MODE;
-	u32 delay;
-//        result_t result;
+	u8        loop = 0x00;
+	u8        exit_mode = NORMAL_MODE;
+	u32       delay;
+#ifndef CAN_L2_IDLE_PING
+	can_frame frame;
+#endif // CAN_L2_IDLE_PING
 	LOG_D("l2_init()\n\r");
 
 	mcp2515_isr = FALSE;
@@ -244,31 +246,20 @@ result_t can_l2_init(can_baud_rate_t arg_baud_rate,
 	ping_time = (u16)((rand() % SECONDS_TO_TICKS(1)) + (CAN_L2_IDLE_PING_PERIOD - MILLI_SECONDS_TO_TICKS(500)));
         LOG_D("Ping time set to %d Ticks, Ping Period %d - %d\n\r", ping_time, CAN_L2_IDLE_PING_PERIOD, MILLI_SECONDS_TO_TICKS(500));
         restart_ping_timer();
+#else
+	frame.can_id = CAN_DCNCP_NodePingMessage;
+	frame.can_dlc = 0;
+
+	can_l2_tx_frame(&frame);
 #endif
 
 	LOG_D("CAN Layer 2 Initialised\n\r");
 	return(SUCCESS);
 }
 
-#if 0
-#if defined(CAN_L2_IDLE_PING)
-result_t send_ping(void)
-{
-	can_frame msg;
-
-	msg.can_id = CAN_L2_IDLE_PING_FRAME_ID;
-	msg.can_dlc = 0;
-
-	return(l2_tx_frame(&msg));
-}
-#endif
-#endif
-
 #if defined(CAN_L2_IDLE_PING)
 void exp_test_ping(timer_t timer_id __attribute__((unused)), union sigval data __attribute__((unused)))
 {
-//	result_t result = SUCCESS;
-
         LOG_D("exp_test_ping()\n\r");
 	TIMER_INIT(ping_timer);
 

@@ -494,12 +494,13 @@ result_t dcncp_unregister_this_node_net_logger()
 
 void dcncp_send_ping(void)
 {
-	can_frame txMsg;
+	can_frame frame;
 
-	txMsg.can_id = CAN_DCNCP_NodePingMessage;
-	txMsg.can_dlc = 0;
+	frame.can_id = CAN_DCNCP_NodePingMessage;
+	frame.can_dlc = 0;
 
-	can_l2_tx_frame(&txMsg);
+	can_l2_tx_frame(&frame);
+
 #ifdef CAN_L2_PING_LOGGING
 	LOG_D("Ping message sent\n\r");
 #endif // CAN_L2_PING_LOGGING

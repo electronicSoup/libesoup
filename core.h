@@ -417,7 +417,7 @@ typedef struct
  * The maximum Layer 3 Message size is 74 Bytes including the protocol!
  * So one protocol Byte and 73 Data Bytes
  */
-#define L3_CAN_MAX_MSG 73 // reduced by one make protocol seperate 74  //4095
+#define CAN_L3_MAX_MSG 73 // reduced by one make protocol seperate 74  //4095
 
 /**
  * \brief l3_can_msg_t
