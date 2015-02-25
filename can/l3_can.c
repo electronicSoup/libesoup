@@ -66,7 +66,7 @@ typedef union
     u32 can_id;
 } l3_can_id;
 
-#define L3_TARGET_PHYSICAL 218
+#define L3_TARGET_PHYSICAL   218
 #define L3_TARGET_FUNCTIONAL 219
 
 #define L3_COMS 0x18
@@ -268,7 +268,7 @@ result_t l3_tx_msg(can_l3_msg_t *msg)
 		   (u16)msg->protocol,
 		   (u16)msg->size);
 
-        if(status.bit_field.l3_status) {
+	if (!status.bit_field.l3_status) {
 		LOG_E("L3_Can not Initialised\n\r");
 		return(ERR_GENERAL_L3_ERROR);
 	}
@@ -448,6 +448,7 @@ void l3_l2_frame_handler(can_frame *rxMsg)
 
 	source = rx_msg_id.bytes.source;
 
+	LOG_D("l3_l2_frame_handler() got a frame from 0x%x\n\r", source);
 	type = rxMsg->data[0] & 0xf0;
 
 	if(type == L3_SF) {
