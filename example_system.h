@@ -78,6 +78,7 @@
  * Random must be initialised to use Ping Protocol!
  */
 //#define CAN_L2_IDLE_PING
+//#define CAN_L2_PING_LOGGING
 
 /*
  * The Ping Period will be between CAN_IDLE_PERIOD - 0.5 Seconds and +0.5 Seconds
