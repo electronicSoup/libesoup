@@ -81,7 +81,7 @@ typedef union
 #define SEPERATION_TIME 0x25
 
 #define L3_EXTENDED TRUE
-#define L3_MASK     0x1ffeff00
+#define L3_MASK     0xfffeff00
 //#define L3_FILTER   0x18da0000
 
 #define FS_CTS 0x00
@@ -238,8 +238,8 @@ result_t l3_init(void (*arg_status_handler)(u8 mask, can_status_t status, can_ba
 	/*
 	 * Define our target for Layer 2 Frames and register it.
 	 */
-	target.mask = (u32) (L3_MASK | CAN_EFF_FLAG);
-	target.filter = tx_frame_id.can_id & 0xffff00ff; //Don't filter on the Source Byte
+	target.mask = L3_MASK;
+	target.filter = tx_frame_id.can_id & 0xffffff00; //Don't filter on the Source Byte
 	target.handler = l3_l2_frame_handler;
 
 	can_l2_reg_handler(&target);
@@ -492,14 +492,14 @@ void l3_l2_frame_handler(can_frame *rxMsg)
 			 */
 			for (loop = 2; loop < 2 + rx_buffer->bytes_expected -1; loop++) {
 				LOG_D("Rx Data byte %d - 0x%x\n\r",
-					   (u16)rx_buffer->index,
-					   (u16)rxMsg->data[loop]);
+					   rx_buffer->index,
+					   rxMsg->data[loop]);
 				rx_buffer->data[rx_buffer->index++] = rxMsg->data[loop];
 			}
 
 			rx_buffer->l3_msg.protocol = rx_buffer->protocol;
 			rx_buffer->l3_msg.data = rx_buffer->data;
-			rx_buffer->l3_msg.size = rx_buffer->bytes_expected;   // subtract one for Protocol Byte
+			rx_buffer->l3_msg.size = rx_buffer->bytes_expected - 1;   // subtract one for Protocol Byte
 			rx_buffer->l3_msg.address = rx_buffer->source;
 
 			dispatcher_l3_msg_handler(&rx_buffer->l3_msg);
