@@ -94,7 +94,7 @@ typedef struct {
 	u8 seperation_time;
 	can_frame frame;
 	u8 sequence;
-	u8 data[L3_CAN_MAX_MSG];
+	u8 data[CAN_L3_MAX_MSG];
 	u8 index;
 	u8 frames_sent_in_block;
 	u8 bytes_to_send;
@@ -107,7 +107,7 @@ typedef struct {
 typedef struct {
 	u8 block_size;
 	u8 seperation_time;
-	u8 data[L3_CAN_MAX_MSG];
+	u8 data[CAN_L3_MAX_MSG];
 	u8 index;
 	u8 sequence;
 	u8 protocol;
@@ -268,7 +268,7 @@ result_t l3_tx_msg(can_l3_msg_t *msg)
 		   (u16)msg->protocol,
 		   (u16)msg->size);
 
-        if(status.bit_field.l3_status) {
+        if(!status.bit_field.l3_status) {
 		LOG_E("L3_Can not Initialised\n\r");
 		return(ERR_GENERAL_L3_ERROR);
 	}
@@ -278,7 +278,7 @@ result_t l3_tx_msg(can_l3_msg_t *msg)
 		return(ERR_L3_ZERO_LENGTH);
 	}
 
-	if(msg->size > L3_CAN_MAX_MSG) {
+	if(msg->size > CAN_L3_MAX_MSG) {
 		LOG_E("L3_Can Message exceeds size limit\n\r");
 		return(ERR_L3_MAX_LENGTH);
 	}
@@ -542,7 +542,7 @@ void l3_l2_frame_handler(can_frame *rxMsg)
 		size = size << 8;
 		size = size | rxMsg->data[1];
 
-		if (size > L3_CAN_MAX_MSG + 1) {
+		if (size > CAN_L3_MAX_MSG + 1) {
 			LOG_E("Message received overflows Max Size\n\r");
 			sendFlowControlFrame(rx_buffer, FS_Overflow); //source
 			return;

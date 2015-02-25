@@ -107,7 +107,7 @@ void net_log(log_level_t level, char *string)
 {
 	u8 loop;
 //	u8 address;
-	u8 data[L3_CAN_MAX_MSG];
+	u8 data[CAN_L3_MAX_MSG];
 
 	can_l3_msg_t msg;
 
@@ -120,7 +120,7 @@ void net_log(log_level_t level, char *string)
 //			LOG_D("Local Net Logger\n\r");
 //		} else
 		if(level <= net_logger_level) {
-			if(strlen((char *)string) < L3_CAN_MAX_MSG - 2) {
+			if(strlen((char *)string) < CAN_L3_MAX_MSG - 2) {
 				msg.address = net_logger_address;
 				msg.protocol = NET_LOG_L3_ID;
 				data[0] = level;
@@ -132,7 +132,7 @@ void net_log(log_level_t level, char *string)
 				msg.size = loop + 1;
 				msg.data = data;
 
-				if(msg.size < L3_CAN_MAX_MSG) {
+				if(msg.size < CAN_L3_MAX_MSG) {
 					l3_tx_msg(&msg);
 				} else {
 					LOG_E("Layer 3 message size limit exceeded!\n\r");
