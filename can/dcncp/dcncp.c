@@ -53,8 +53,6 @@ static es_timer l3_node_reg_timer;
 #ifdef CAN_NET_LOGGER
 static can_frame local_net_logger_frame;
 static es_timer local_net_logger_timer;
-
-#define LOCAL_NET_LOGGER_MSG_PERIOD SECONDS_TO_TICKS(5)
 #endif // CAN_NET_LOGGER
 
 static u8 dcncp_l3_address;
@@ -454,7 +452,8 @@ result_t dcncp_register_this_node_net_logger(log_level_t level)
 
 	can_l2_tx_frame(&local_net_logger_frame);
 	LOG_D("NetLogger message sent\n\r");
-	timer_start(LOCAL_NET_LOGGER_MSG_PERIOD, exp_net_logger_ping, (union sigval)(void *) NULL, &local_net_logger_timer);
+	TIMER_INIT(local_net_logger_timer);
+	timer_start(NET_LOGGER_PING_PERIOD, exp_net_logger_ping, (union sigval)(void *) NULL, &local_net_logger_timer);
 
 	return (SUCCESS);
 }
@@ -467,7 +466,8 @@ void exp_net_logger_ping(timer_t timer_id __attribute__((unused)), union sigval 
 
 	can_l2_tx_frame(&local_net_logger_frame);
 	LOG_D("NetLogger message sent\n\r");
-	timer_start(LOCAL_NET_LOGGER_MSG_PERIOD, exp_net_logger_ping, (union sigval)(void *)NULL, &local_net_logger_timer);
+	TIMER_INIT(local_net_logger_timer);
+	timer_start(NET_LOGGER_PING_PERIOD, exp_net_logger_ping, (union sigval)(void *)NULL, &local_net_logger_timer);
 }
 #endif // CAN_NET_LOGGER
 
