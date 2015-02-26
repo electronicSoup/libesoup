@@ -114,6 +114,9 @@ void status_handler(u8 mask, can_status_t status, can_baud_rate_t baud)
 #endif
 		can_status.bit_field.l2_status = status.bit_field.l2_status;
 		baud_status = baud;
+
+		if (app_status_handler)
+			app_status_handler(can_status, baud_status);
 	}
 
 #ifdef CAN_DCNCP
@@ -125,14 +128,18 @@ void status_handler(u8 mask, can_status_t status, can_baud_rate_t baud)
 		}
 
 		can_status.bit_field.dcncp_initialised = status.bit_field.dcncp_initialised;
+		if (app_status_handler)
+			app_status_handler(can_status, baud_status);
 	}
 #if defined(CAN_LAYER_3)
 	else if (mask == DCNCP_L3_ADDRESS_STATUS_MASK) {
 		LOG_D("L3 Status update\n\r");
 		if (status.bit_field.dcncp_l3_valid && !can_status.bit_field.dcncp_l3_valid) {
+			can_status.bit_field.dcncp_l3_valid = status.bit_field.dcncp_l3_valid;
+			if (app_status_handler)
+				app_status_handler(can_status, baud_status);
 			l3_init(status_handler);
 		}
-		can_status.bit_field.dcncp_l3_valid = status.bit_field.dcncp_l3_valid;
 	}
 #endif // CAN_LAYER_3
 #endif // CAN_DCNCP
@@ -140,11 +147,10 @@ void status_handler(u8 mask, can_status_t status, can_baud_rate_t baud)
 #if defined(CAN_LAYER_3)
 	if (mask == L3_STATUS_MASK) {
 		can_status.bit_field.l3_status = status.bit_field.l3_status;
+		if (app_status_handler)
+			app_status_handler(can_status, baud_status);
 	}
 #endif
-
-	if (app_status_handler)
-		app_status_handler(can_status, baud_status);
 }
 
 #if defined(MCP)
