@@ -39,7 +39,7 @@
 static void (*net_logger_handler)(u8, log_level_t, char*) = NULL;
 #endif // CAN_NET_LOGGER
 
-static BOOL net_logger = FALSE;
+static u8 net_logger = FALSE;
 static u8 net_logger_address;
 static log_level_t net_logger_level = Error;
 #endif
