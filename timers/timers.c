@@ -64,11 +64,18 @@
 #include "system.h"
 #include "es_lib/timers/timers.h"
 
+#ifdef ES_LINUX
+#include <stdlib.h>
+#include <signal.h>
+#include <time.h>
+#endif // ES_LINUX
+
 #define DEBUG_FILE
 #include "es_lib/logger/serial_log.h"
 
 #define TAG "TIMERS"
 
+#ifdef MCP
 static UINT16 timer_counter = 0;
 
 volatile BOOL timer_ticked = FALSE;
@@ -82,6 +89,7 @@ typedef struct {
 	expiry_function function;
 	union sigval expiry_data;
 } sys_timer_t;
+#endif // MCP
 
 /*
  * The Cinnamon Bun maintains a table of timers which can be activated
@@ -91,10 +99,12 @@ typedef struct {
  * If your project uses a limited number of know timers then you can set 
  * NUMBER_OF_TIMERS to a known value.
  */
+#ifdef MCP
 #if defined (__PIC24FJ256GB106__)
 #pragma udata
 #endif //__PIC24FJ256GB106__
 sys_timer_t timers[NUMBER_OF_TIMERS];
+#endif // MCP
 
 /*
  * Timer_1 ISR. To keep ISR short it simply restarts TIMER_1 and sets 
@@ -102,6 +112,7 @@ sys_timer_t timers[NUMBER_OF_TIMERS];
  * the main control loop of your project by calling the CHECK_TIMERS()
  * macro.
  */
+#ifdef MCP
 #if defined (__PIC24FJ256GB106__)
 void _ISR __attribute__((__no_auto_psv__)) _T1Interrupt(void)
 {
@@ -123,6 +134,7 @@ void timer_isr(void)
 	}
 }
 #endif // (__18F2680) || (__18F4584)
+#endif // MCP
 
 /*
  * void timer_init(void)
@@ -131,6 +143,7 @@ void timer_isr(void)
  * Timer_1 of the PIC 
  *
  */
+#ifdef MCP
 void timer_init(void)
 {
 	BYTE loop;
@@ -182,6 +195,7 @@ void timer_init(void)
 	INTCONbits.TMR0IE = 1;  // Timer 0 Interrupt Enable
 #endif // (__18F2680) || (__18F4585)
 }
+#endif // MCP
 
 /*
  * void timer_tick(void)
@@ -191,6 +205,7 @@ void timer_init(void)
  * it's expiry function is called.
  *
  */
+#ifdef MCP
 void timer_tick(void)
 {
 	BYTE loop;
@@ -221,6 +236,7 @@ void timer_tick(void)
 		}
 	}
 }
+#endif // MCP
 
 /*
  * result_t timer_start(UINT16 ticks,
@@ -257,11 +273,12 @@ void timer_tick(void)
  *          ERR_NO_RESOURCES    Error - No Free system timers available.
  *
  */
-result_t timer_start(UINT16 ticks,
+result_t timer_start(u16 ticks,
 		     expiry_function function,
 		     union sigval data,
 		     es_timer *timer)
 {
+#ifdef MCP
 	timer_t loop;
 
 	if(timer->status != INACTIVE) {
@@ -295,6 +312,47 @@ result_t timer_start(UINT16 ticks,
 
 	LOG_E("start_timer() ERR_NO_RESOURCES\n\r");
 	return(ERR_NO_RESOURCES);
+#elif defined(ES_LINUX)
+	struct itimerspec its;
+	struct sigevent action;
+	int ret;
+
+//	LOG_D("start_timer(%d) 5ms Ticks\n\r", duration);
+
+	if(timer->status == ACTIVE) {
+		LOG_D("Cancel Running timer\n\r");
+		timer_cancel(timer);
+	}
+
+	action.sigev_notify = SIGEV_THREAD;
+	action.sigev_notify_function = (void (*)(union sigval))function; 
+	action.sigev_notify_attributes = NULL;
+	action.sigev_value = data;
+
+	ret = timer_create(CLOCK_REALTIME, &action, &(timer->timer_id));
+
+	if(ret) {
+		LOG_E("Error can't create timer\n\r");
+		return(ERR_GENERAL_ERROR);
+	}
+	
+//	LOG_D("Setting time to %d Seconds %d nano Seonds\n\r", 
+//		   (duration * SYSTEM_TICK_ms) / 1000, 
+//		   (duration * SYSTEM_TICK_ms) % 1000 * 1000000);
+
+	its.it_value.tv_sec = (ticks * SYSTEM_TICK_ms) / 1000;
+	its.it_value.tv_nsec = (ticks * SYSTEM_TICK_ms) % 1000 * 1000000;
+	its.it_interval.tv_sec = 0;
+	its.it_interval.tv_nsec = 0;
+
+	if (timer_settime(timer->timer_id, 0, &its, NULL) == -1) {
+		LOG_E("Error can't set time\n\r");
+		return(ERR_GENERAL_ERROR);
+	}
+	timer->status = ACTIVE;
+
+	return(SUCCESS);
+#endif
 }
 
 /*
@@ -310,6 +368,7 @@ result_t timer_start(UINT16 ticks,
  */
 result_t timer_cancel(es_timer *timer)
 {
+#ifdef MCP
 	if(timer->status == ACTIVE) {
 		if(timers[timer->timer_id].active) {
 			timers[timer->timer_id].active = FALSE;
@@ -318,5 +377,21 @@ result_t timer_cancel(es_timer *timer)
 		}
 		timer->status = INACTIVE;
 	}
+#elif defined(ES_LINUX)
+	struct itimerspec its;
+
+	if(timer->status == ACTIVE) {
+		its.it_value.tv_sec = 0;
+		its.it_value.tv_nsec = 0;
+		its.it_interval.tv_sec = 0;
+		its.it_interval.tv_nsec = 0;
+
+		if (timer_settime(timer->timer_id, 0, &its, NULL) == -1) {
+			LOG_E("Error can't create timer\n\r");
+			return(ERR_GENERAL_ERROR);
+		}
+		timer->status = INACTIVE;
+	}
+#endif
 	return(SUCCESS);
 }

@@ -32,6 +32,8 @@
 #ifndef TIMERS_H
 #define TIMERS_H
 
+#ifdef MCP
+
 #if defined (__18F2680) || defined(__18F4585)
 /*
  * Calculate the 16 bit value that will give us an ISR for the system tick
@@ -41,7 +43,6 @@
 #define TMR0L_VAL (0xFFFF - ((SYSTEM_TICK_ms * CLOCK_FREQ) / 4000)) & 0xFF
 #endif // (__18F2680) || __18F4585)
 
-#ifdef MCP
 
     /*
      * CHECK_TIMERS()
@@ -83,7 +84,7 @@
     extern void timer_isr(void);
 #endif // (__18F2680) || (__18F4585)
 
-#endif
+#endif // MCP
 
 /*
  * timer_start()
