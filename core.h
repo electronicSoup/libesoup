@@ -52,6 +52,7 @@
     #define FALSE 0
     #define TRUE !(FALSE)
 
+    #include <sys/socket.h>
     #include <linux/can.h>
     #include <time.h>
     #include <signal.h>
