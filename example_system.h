@@ -20,6 +20,8 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  *
  */
+#ifndef _SYSTEM_H
+#define _SYSTEM_H
 
 #include "es_lib/core.h"
 
@@ -47,8 +49,8 @@
 
 /*
  * NUMBER_OF_TIMERS
- * 
- * Definition of the number of system timers required in the system. Increasing 
+ *
+ * Definition of the number of system timers required in the system. Increasing
  * the number of timers uses more system RAM. This will depend on the estimated
  * demand for timers in your design.
  */
@@ -60,34 +62,49 @@
 //#define CAN
 
 #ifdef CAN
-#define CAN_BAUD_AUTO_DETECT_LISTEN_PERIOD    SECONDS_TO_TICKS(20)
 /*
  * The number of Handlers that can be registered with Layer 2
  */
 #define CAN_L2_HANDLER_ARRAY_SIZE 5
 
 /*
- * DCNCP - Dynamic Can Node Configuration Protocol
+ * If Layer 2 is required to listen for the Connected Baud rate this
+ * macro defines the listening period.
  */
-#define CAN_DCNCP
-
-#ifdef CAN_DCNCP
-//#define CAN_BAUD_AUTO_DETECT_LISTEN_PERIOD    SECONDS_TO_TICKS(10)
+#define CAN_BAUD_AUTO_DETECT_LISTEN_PERIOD    SECONDS_TO_TICKS(20)
 
 /*
+ * The Ping Protocol.
+ *
+ * If the network will be used with baud rate auto detect then Ping
+ * Protocol keeps activity on the CAN Network.
+ *
  * Random must be initialised to use Ping Protocol!
  */
 //#define CAN_L2_IDLE_PING
-//#define CAN_L2_PING_LOGGING
 
 /*
- * The Ping Period will be between CAN_IDLE_PERIOD - 0.5 Seconds and +0.5 Seconds
- * As a result this shold probably be greater then 1 Second. If a node picks a 
- * random value of Zero then it'll do nothing but ping!
+ * The Ping Period will be between CAN_IDLE_PERIOD - 0.5 Seconds and +0.5
+ * Seconds As a result this shold probably be greater then 1 Second. If
+ * a node picks a random value of Zero then it'll do nothing but ping!
  */
 #ifdef CAN_L2_IDLE_PING
+//#define CAN_L2_PING_LOGGING
 #define CAN_L2_IDLE_PING_PERIOD     SECONDS_TO_TICKS(5)
-#endif
+#endif  // CAN_L2_IDLE_PING
+
+/*
+ * DCNCP - Dynamic Can Node Configuration Protocol
+ */
+//#define CAN_DCNCP
+
+#ifdef CAN_DCNCP
+
+/*
+ * If DCNCP includes code to change Baud Rate on the fly include
+ * CAN_DCNCP_BAUDRATE
+ */
+//#define CAN_DCNCP_BAUDRATE
 
 /*
  * Include CAN Layer 3 functionality
@@ -113,7 +130,10 @@
  */
 #define CAN_L3_REGISTER_ARRAY_SIZE 2
 
-
+/*
+ * Project uses the Net Logging functionality using Layer 3 to send debug
+ * information across the network
+ */
 //#define CAN_NET_LOGGING
 
 /*
@@ -124,12 +144,25 @@
  */
 //#define CAN_NET_LOGGER
 
+/*
+ * The Network Logger will periodically repeat it's register request messages
+ * in case any of the nodes are late to the party.
+ */
+#ifdef CAN_NET_LOGGER
+#define NET_LOGGER_PING_PERIOD SECONDS_TO_TICKS(60)
+#endif // CAN_NET_LOGGER
+
 #endif // CAN_LAYER_3
+#endif // CAN_DCNCP
+#endif // CAN
 
 /*
  * Android Definitions:
  *
  */
+//#define ANDROID
+
+#ifdef ANDROID
 /*
  * Definition of the function used to change State to the App connected
  * state. If you are going to use an Android connected device you must
@@ -139,18 +172,24 @@
  *   extern void example_set_app_connected_state(void);
  *   #define ANDROID_SET_APPLICATION_CONNECTED_STATE example_set_app_connected_state();
  */
+extern void set_app_connected_state(void);
+#define ANDROID_SET_APPLICATION_CONNECTED_STATE set_app_connected_state();
 
 /*
  * Android main processing when the Android Application is NOT Connected.
  * If different processing is required when the Android Applicaiton is not
- * connected to your device then define the function to perform this 
+ * connected to your device then define the function to perform this
  * functionality and the MACRO.
- * This is NOT Mandatory. If you project does not require it then don't 
+ * This is NOT Mandatory. If you project does not require it then don't
  * define the MACRO.
  *
  *  extern void example_no_android_app_function(void);
  *  #define NO_ANDROID_APP_FN example_no_android_app_function();
  */
+//extern void example_no_android_app_function(void);
+//#define NO_ANDROID_APP_FN example_no_android_app_function();
+
+#endif // ANDROID
 
 /*
  * If project is to use the BOOT Page of EEPROM then define this option.
@@ -171,7 +210,7 @@
  * App message is transmitted from the Android Device App to the Cinnamom Bun
  * Bun message is transmitted from the Cinnamon Bun to the Android Device App
  *
- * Messages for communications with an Android App should be defined as 
+ * Messages for communications with an Android App should be defined as
  * project specific constants relative to USER_OFFSETS.
  *
  * #define MY_FIRST_BUN_MSG     BUN_MSG_USER_OFFSET
@@ -181,3 +220,5 @@
  * #define MY_SECOND_APP_MSG    APP_MSG_USER_OFFSET + 1
  *
  */
+
+#endif //SYSTEM_H
