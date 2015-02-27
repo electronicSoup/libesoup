@@ -57,10 +57,10 @@ static can_baud_rate_t  baud_status = no_baud;
 
 static void status_handler(u8 mask, can_status_t status, can_baud_rate_t baud);
 
-can_status_handler app_status_handler = (can_status_handler)NULL;
+can_status_handler_t app_status_handler = (can_status_handler_t)NULL;
 
 result_t can_init(can_baud_rate_t baudrate,
-		  can_status_handler arg_status_handler)
+		  can_status_handler_t arg_status_handler)
 {
 	LOG_D("can_init\n\r");
 
