@@ -37,24 +37,24 @@
 
 typedef struct
 {
-	BYTE sidh;
-	BYTE sidl;
-	BYTE eid8;
-	BYTE eid0;
-	BYTE dcl;
-	BYTE data[8];
+	u8 sidh;
+	u8 sidl;
+	u8 eid8;
+	u8 eid0;
+	u8 dcl;
+	u8 data[8];
 } canBuffer_t;
 
 #define CAN_RX_CIR_BUFFER_SIZE 5
 
 canBuffer_t buffer[CAN_RX_CIR_BUFFER_SIZE];
-BYTE        buffer_next_read = 0;
-BYTE        buffer_next_write = 0;
-BYTE        buffer_count = 0;
+u8        buffer_next_read = 0;
+u8        buffer_next_write = 0;
+u8        buffer_count = 0;
 
 typedef struct
 {
-	BYTE used;
+	u8 used;
 	can_l2_target_t target;
 } can_register_t;
 
@@ -115,8 +115,8 @@ void print_error_counts(void);
  */
 static can_baud_rate_t connected_baudrate = no_baud;
 static can_baud_rate_t listen_baudrate = no_baud;
-static BYTE changing_baud_tx_error;
-//static BYTE g_CanErrors = 0x00;
+static u8 changing_baud_tx_error;
+//static u8 g_CanErrors = 0x00;
 //static UINT32 g_missedMessageCount = 0;
 static UINT32 rx_msg_count = 0;
 //static UINT32 messageSentCount = 0;
@@ -352,13 +352,13 @@ void _ISR __attribute__((__no_auto_psv__)) _INT0Interrupt(void)
 
 static void service_device(void)
 {
-	BYTE flags = 0x00;
-	BYTE eflg;
-	BYTE tx_flags = 0x00;
-	BYTE ctrl;
-	BYTE loop;
-	BYTE canstat;
-        BYTE tec = 0x00;
+	u8 flags = 0x00;
+	u8 eflg;
+	u8 tx_flags = 0x00;
+	u8 ctrl;
+	u8 loop;
+	u8 canstat;
+        u8 tec = 0x00;
 
 	mcp2515_isr = FALSE;
 
@@ -446,7 +446,7 @@ static void service_device(void)
 				rx_msg_count++;
 			} else {
 				if (buffer_count < CAN_RX_CIR_BUFFER_SIZE) {
-					read_rx_buffer(RXB0SIDH, (BYTE *) & buffer[buffer_next_write]);
+					read_rx_buffer(RXB0SIDH, (u8 *) & buffer[buffer_next_write]);
 					buffer_next_write = (buffer_next_write + 1) % CAN_RX_CIR_BUFFER_SIZE;
 					buffer_count++;
 				} else {
@@ -471,7 +471,7 @@ static void service_device(void)
 				rx_msg_count++;
 			} else {
 				if (buffer_count < CAN_RX_CIR_BUFFER_SIZE) {
-					read_rx_buffer(RXB1SIDH, (BYTE *) & buffer[buffer_next_write]);
+					read_rx_buffer(RXB1SIDH, (u8 *) & buffer[buffer_next_write]);
 					buffer_next_write = (buffer_next_write + 1) % CAN_RX_CIR_BUFFER_SIZE;
 					buffer_count++;
 				} else {
@@ -525,7 +525,7 @@ void can_l2_tasks(void)
 #ifdef TEST
 	static UINT16 count = 0;
 #endif
-	BYTE loop;
+	u8 loop;
 
         if(mcp2515_isr)
 		service_device();
@@ -668,7 +668,7 @@ result_t can_l2_tx_frame(can_frame  *frame)
 	/*
 	 * First pull out the five header bytes in the message
 	 */
-	buff = (BYTE *)&tx_buffer;
+	buff = (u8 *)&tx_buffer;
 	for(loop = 0; loop < 5; loop++, buff++) {
 		spi_write_byte(*buff);
 	}
@@ -706,9 +706,9 @@ result_t can_l2_tx_frame(can_frame  *frame)
 }
 
 #if 0
-BYTE CheckErrors(void)
+u8 CheckErrors(void)
 {
-	BYTE flags = 0x00;
+	u8 flags = 0x00;
 
 	flags = CANReadReg(CANINTF);
 
@@ -758,10 +758,10 @@ BYTE CheckErrors(void)
 #if 0
 static void checkSubErrors(void)
 {
-	BYTE error = 0x00;
-	BYTE difference = 0x00;
-	BYTE mask = 0x00;
-	BYTE loop = 0x00;
+	u8 error = 0x00;
+	u8 difference = 0x00;
+	u8 mask = 0x00;
+	u8 loop = 0x00;
 
 	/*
 	 * Read the error flag
@@ -889,9 +889,9 @@ static void reset(void)
 	CAN_DESELECT();
 }
 
-static void set_reg_mask_value(BYTE reg, BYTE mask, BYTE value)
+static void set_reg_mask_value(u8 reg, u8 mask, u8 value)
 {
-	BYTE fail;
+	u8 fail;
 
         //    do {
         CAN_SELECT();
@@ -908,7 +908,7 @@ static void set_reg_mask_value(BYTE reg, BYTE mask, BYTE value)
 //    } while (fail);
 }
 
-static void set_can_mode(BYTE mode)
+static void set_can_mode(u8 mode)
 {
 //	unsigned char result;
 #ifdef TEST
@@ -947,11 +947,11 @@ static void set_can_mode(BYTE mode)
  */
 static void set_baudrate(can_baud_rate_t baudrate)
 {
-	BYTE sjw = 0;
-	BYTE brp = 0;
-	BYTE phseg1 = 0;
-	BYTE phseg2 = 0;
-	BYTE propseg = 0;
+	u8 sjw = 0;
+	u8 brp = 0;
+	u8 phseg1 = 0;
+	u8 phseg2 = 0;
+	u8 propseg = 0;
 
 	switch(baudrate)
 	{
@@ -1161,7 +1161,7 @@ static void disable_rx_interrupts(void)
 	set_reg_mask_value(CANINTE, RX0IE, 0x00);
 }
 
-static u8 read_reg(BYTE reg)
+static u8 read_reg(u8 reg)
 {
 	u8 value;
 	CAN_SELECT();
@@ -1173,7 +1173,7 @@ static u8 read_reg(BYTE reg)
 	return(value);
 }
 
-static void write_reg(BYTE reg, BYTE value)
+static void write_reg(u8 reg, u8 value)
 {
 	CAN_SELECT();
 	spi_write_byte(CAN_WRITE_REG);
@@ -1182,11 +1182,11 @@ static void write_reg(BYTE reg, BYTE value)
 	CAN_DESELECT();
 }
 
-static void read_rx_buffer(BYTE reg, BYTE *buffer)
+static void read_rx_buffer(u8 reg, u8 *buffer)
 {
-	BYTE loop = 0x00;
-	BYTE *ptr;
-	BYTE dataLength = 0x00;
+	u8 loop = 0x00;
+	u8 *ptr;
+	u8 dataLength = 0x00;
 
 	ptr = buffer;
 	CAN_SELECT();
@@ -1212,9 +1212,9 @@ static void read_rx_buffer(BYTE reg, BYTE *buffer)
 	CAN_DESELECT();
 }
 
-BYTE find_free_tx_buffer(void)
+u8 find_free_tx_buffer(void)
 {
-	BYTE ctrl_value = 0x00;
+	u8 ctrl_value = 0x00;
 
 	ctrl_value = read_reg(TXB0CTRL);
 	if(!(ctrl_value & 0x08))
@@ -1234,10 +1234,10 @@ BYTE find_free_tx_buffer(void)
 #if LOG_LEVEL < NO_LOGGING
 void print_error_counts(void)
 {
-	BYTE byte;
-	static BYTE rec = 0x00;
-	static BYTE tec = 0x00;
-	static BYTE eflg = 0x00;
+	u8 byte;
+	static u8 rec = 0x00;
+	static u8 tec = 0x00;
+	static u8 eflg = 0x00;
 
 	byte = read_reg(TEC);
 	if(byte != tec) {
@@ -1262,7 +1262,7 @@ void print_error_counts(void)
 #ifdef TEST
 void test_can()
 {
-	BYTE byte;
+	u8 byte;
 
 	CAN_SELECT();
 	byte = read_reg(CANCTRL);
@@ -1274,7 +1274,7 @@ void test_can()
 
 static void can_l2_dispatcher_frame_handler(can_frame *message)
 {
-	BYTE loop;
+	u8 loop;
 	BOOL found = FALSE;
 
 	LOG_D("L2_CanDispatcherL2MsgHandler 0x%lx\n\r", message->can_id);
@@ -1299,7 +1299,7 @@ static void can_l2_dispatcher_frame_handler(can_frame *message)
 
 result_t can_l2_reg_handler(can_l2_target_t *target)
 {
-	BYTE loop;
+	u8 loop;
 	LOG_D("sys_l2_can_dispatch_reg_handler mask 0x%lx, filter 0x%lx\n\r",
 		   target->mask,
 		   target->filter);
@@ -1326,7 +1326,7 @@ result_t can_l2_reg_handler(can_l2_target_t *target)
 	return(ERR_NO_RESOURCES);
 }
 
-result_t can_l2_dispatch_unreg_handler(BYTE id)
+result_t can_l2_dispatch_unreg_handler(u8 id)
 {
 	if(id < CAN_L2_HANDLER_ARRAY_SIZE) {
 		if (registered_handlers[id].used) {

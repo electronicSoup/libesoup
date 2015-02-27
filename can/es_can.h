@@ -112,7 +112,7 @@ typedef enum {
 	no_baud    = 0x08
 } can_baud_rate_t;
 
-typedef void (*can_status_handler)(can_status_t, can_baud_rate_t);
+typedef void (*can_status_handler_t)(can_status_t, can_baud_rate_t);
 
 #if LOG_LEVEL < NO_LOGGING
 extern char can_baud_rate_strings[8][10];
@@ -121,7 +121,7 @@ extern char can_baud_rate_strings[8][10];
 //#define BAUD_MAX baud_1M
 
 extern result_t can_init(can_baud_rate_t      baud,
-	can_status_handler   status_default_handler);
+	can_status_handler_t   status_default_handler);
 
 //extern bool can_initialised(void);
 
@@ -157,7 +157,7 @@ extern void can_tasks(void);
 extern u8 node_get_can_l3_address(void);
 
 extern result_t l3_init(void (*arg_status_handler)(u8 mask, can_status_t status, can_baud_rate_t baud));
-extern BOOL l3_initialised(void);
+extern u8 l3_initialised(void);
 extern result_t l3_tx_msg(can_l3_msg_t *msg);
 
 extern result_t l3_register_handler(u8 protocol, can_l3_msg_handler_t handler);

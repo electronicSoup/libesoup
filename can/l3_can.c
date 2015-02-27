@@ -252,7 +252,7 @@ result_t l3_init(void (*arg_status_handler)(u8 mask, can_status_t status, can_ba
 	return(SUCCESS);
 }
 
-BOOL l3_initialised(void)
+u8 l3_initialised(void)
 {
     return(status.bit_field.l3_status);
 }
@@ -295,13 +295,13 @@ result_t l3_tx_msg(can_l3_msg_t *msg)
 	 * Check for a transmit buffer already active to the destination
 	 */
 	if(node_buffers[msg->address].tx_buffer != NULL) {
-		DEBUG_E("L3_Can transmitter already busy\n\r");
+		LOG_E("L3_Can transmitter already busy\n\r");
 		return(ERR_L3_TX_BUSY);
 	}
 
 	tx_buffer = malloc(sizeof(tx_buffer_t));
 	if(!tx_buffer) {
-		DEBUG_E("Malloc Failed\n\r");
+		LOG_E("Malloc Failed\n\r");
 		exit(1);
 	}
 	node_buffers[msg->address].tx_buffer = tx_buffer;
@@ -362,10 +362,15 @@ result_t l3_tx_msg(can_l3_msg_t *msg)
 	return(SUCCESS);
 }
 
-void exp_sendConsecutiveFrame(timer_t timer_id __attribute__((unused)), union sigval data)
+void exp_sendConsecutiveFrame(timer_t timer_id, union sigval data)
 {
 	u8 loop;
 	tx_buffer_t *tx_buffer;
+
+	/*
+	 * Clear the compiler warning
+	 */
+	timer_id = timer_id;
 
 	tx_buffer = (tx_buffer_t *)data.sival_ptr;
 
@@ -398,7 +403,7 @@ void exp_sendConsecutiveFrame(timer_t timer_id __attribute__((unused)), union si
 			/*
 			 * Free the Transmit buffer
 			 */
-			node_buffers[the destination].rx_buffer = NULL;
+			node_buffers[tx_buffer->destination].rx_buffer = NULL;
                         free(tx_buffer);
 #endif
 		} else {
@@ -465,13 +470,13 @@ void l3_l2_frame_handler(can_frame *rxMsg)
 		}
 #elif defined(ES_LINUX)
 		if(node_buffers[source].rx_buffer != NULL) {
-			DEBUG_E("L3_Can transmitter already busy\n\r");
+			LOG_E("L3_Can transmitter already busy\n\r");
 			return;
 		}
 
 		rx_buffer = malloc(sizeof(rx_buffer_t));
 		if(!rx_buffer) {
-			DEBUG_E("Malloc Failed\n\r");
+			LOG_E("Malloc Failed\n\r");
 			exit(1);
 		}
 		node_buffers[source].rx_buffer = rx_buffer;
@@ -558,7 +563,7 @@ void l3_l2_frame_handler(can_frame *rxMsg)
 			rx_buffer->protocol = rxMsg->data[2];
 
 			for (loop = 3; loop < rxMsg->can_dlc; loop++) {
-//                              DEBUG_D("Add Byte 0x%x\n\r", (UINT16)rxMsg->data[loop]);
+//                              LOG_D("Add Byte 0x%x\n\r", (UINT16)rxMsg->data[loop]);
 				rx_buffer->data[rx_buffer->index++] = rxMsg->data[loop];
 				rx_buffer->bytes_received++;
 			}
@@ -584,7 +589,7 @@ void l3_l2_frame_handler(can_frame *rxMsg)
 		rx_buffer = &mcp_rx_buffer;
 #elif defined(ES_LINUX)
 		if(node_buffers[source].rx_buffer == NULL) {
-			DEBUG_E("L3_Can CF and NOT busy??\n\r");
+			LOG_E("L3_Can CF and NOT busy??\n\r");
 			return;
 		}
 
@@ -595,7 +600,7 @@ void l3_l2_frame_handler(can_frame *rxMsg)
 		LOG_D("Compare Seq Numbers 0x%x=0x%x?\n\r", rx_buffer->sequence, (rxMsg->data[0] & 0x0f));
 		if (rx_buffer->sequence == (rxMsg->data[0] & 0x0f)) {
 			for (loop = 1; loop < rxMsg->can_dlc; loop++) {
-//                    DEBUG_D("Add Byte 0x%x\n\r", (UINT16) rxMsg->data[loop]);
+//                    LOG_D("Add Byte 0x%x\n\r", (UINT16) rxMsg->data[loop]);
 				rx_buffer->data[rx_buffer->index++] = rxMsg->data[loop];
 				rx_buffer->bytes_received++;
 			}
@@ -677,7 +682,7 @@ void l3_l2_frame_handler(can_frame *rxMsg)
 		switch(flowStatus) {
 		case FS_CTS:
 			tx_buffer->frames_sent_in_block = 0x00;
-			exp_sendConsecutiveFrame(0xff, (union sigval)(void *)tx_buffer);
+			exp_sendConsecutiveFrame((timer_t)0xff, (union sigval)(void *)tx_buffer);
 			break;
 		case FS_Wait:
 			//TODO Have to count and limit the number of Wait's we accept
