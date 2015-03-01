@@ -32,7 +32,7 @@
 
 #include "es_lib/can/dcncp/dcncp.h"
 #include "es_lib/timers/timers.h"
-#if defined(ISO15765_LOGGER)
+#if defined(ISO15765_LOGGER) || defined(ISO15765_LOGGING)
 #include "es_lib/logger/iso15765_log.h"
 #endif
 
@@ -380,17 +380,17 @@ void can_l2_msg_handler(can_frame *frame)
 		}
 	} else if (frame->can_id == CAN_DCNCP_NetworkChangeBaudRateReq) {
 #ifdef CAN_DCNCP_BAUDRATE
-		LOG_D("***Baud Rate Change Request New Baud Rate %s Time left %dS\n\r", can_baud_rate_strings[msg->data[0]], msg->data[1]);
+		LOG_D("***Baud Rate Change Request New Baud Rate %s Time left %dS\n\r", can_baud_rate_strings[frame->data[0]], frame->data[1]);
 
 		timer_cancel(&dcncp_network_baudrate_req_timer);
 		TIMER_INIT(dcncp_network_baudrate_req_timer);
 
-		data.sival_int = msg->data[0];   // Baudrate
+		data.sival_int = frame->data[0];   // Baudrate
 
 		/*
 		 * Create a timer to for time given in message.
 		 */
-		rc = timer_start(SECONDS_TO_TICKS(msg->data[1]), exp_network_baud_chage_req, data, &dcncp_network_baudrate_req_timer);
+		rc = timer_start(SECONDS_TO_TICKS(frame->data[1]), exp_network_baud_chage_req, data, &dcncp_network_baudrate_req_timer);
 		if (rc != SUCCESS) {
 			LOG_E("Failed to start BaudRate change Request Timer\n\r");
 			return;
