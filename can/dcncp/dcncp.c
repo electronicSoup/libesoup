@@ -305,11 +305,15 @@ void exp_node_address_registered(timer_t timer_id __attribute__((unused)), union
 
 void can_l2_msg_handler(can_frame *frame)
 {
+#if defined(ISO15765) || defined(ISO11783) || defined(CAN_DCNCP_BAUDRATE)
+	result_t rc;
+#endif // defined(ISO15765) || defined(ISO11783) || defined(CAN_DCNCP_BAUDRATE)
+
+
 #ifdef CAN_DCNCP_BAUDRATE
 	union sigval data;
 #endif 
 #if defined(ISO15765) || defined(ISO11783)
-	result_t rc;
 	can_frame tx_frame;
 	es_timer timer;
 #endif // ISO15765 || ISO11783
