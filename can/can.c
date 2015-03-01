@@ -52,7 +52,7 @@ char can_baud_rate_strings[8][10] = {
 };
 #endif
 
-static can_status_t can_status = { {}, 0x00 };
+static can_status_t can_status = { {0x00, 0x00, 0x00} };
 static can_baud_rate_t  baud_status = no_baud;
 
 static void status_handler(u8 mask, can_status_t status, can_baud_rate_t baud);
@@ -131,26 +131,25 @@ void status_handler(u8 mask, can_status_t status, can_baud_rate_t baud)
 		if (app_status_handler)
 			app_status_handler(can_status, baud_status);
 	}
-#if defined(CAN_LAYER_3)
-	else if (mask == DCNCP_L3_ADDRESS_STATUS_MASK) {
+#if defined(ISO15765) || defined(ISO11783)
+	else if (mask == DCNCP_NODE_ADDRESS_STATUS_MASK) {
 		LOG_D("L3 Status update\n\r");
-		if (status.bit_field.dcncp_l3_valid && !can_status.bit_field.dcncp_l3_valid) {
-			can_status.bit_field.dcncp_l3_valid = status.bit_field.dcncp_l3_valid;
+		if (status.bit_field.dcncp_node_address_valid && !can_status.bit_field.dcncp_node_address_valid) {
+			can_status.bit_field.dcncp_node_address_valid = status.bit_field.dcncp_node_address_valid;
 			if (app_status_handler)
 				app_status_handler(can_status, baud_status);
-			l3_init(status_handler);
+
+#if defined(ISO15765)
+			iso15765_init(dcncp_get_node_address());
+#endif
+
+#if defined(ISO11783)
+			iso11783_init(dcncp_get_node_address());
+#endif
 		}
 	}
-#endif // CAN_LAYER_3
+#endif // ISO15765 || ISO11783
 #endif // CAN_DCNCP
-	
-#if defined(CAN_LAYER_3)
-	if (mask == L3_STATUS_MASK) {
-		can_status.bit_field.l3_status = status.bit_field.l3_status;
-		if (app_status_handler)
-			app_status_handler(can_status, baud_status);
-	}
-#endif
 }
 
 #if defined(MCP)

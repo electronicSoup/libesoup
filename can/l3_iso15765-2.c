@@ -1,6 +1,6 @@
 /**
  *
- * \file es_lib/can/l3_can.c
+ * \file es_lib/can/iso15765.c
  *
  * Based on ISO_15765-2 but with a much reduced Message Length. The standard
  * allows for 4KB of a message whereas for the electronicSoup CAN Bus Nodes 
@@ -35,19 +35,19 @@
 #define DEBUG_FILE
 #include "es_lib/logger/serial_log.h"
 
-#define TAG "CAN_L3"
+#define TAG "ISO-15765"
 
 typedef struct
 {
     u8 used;
     u8 protocol;
-    can_l3_msg_handler_t handler;
-} L3_CanRegister;
+    iso15765_msg_handler_t handler;
+} iso15765_register_t;
 
-static L3_CanRegister registered[CAN_L3_REGISTER_ARRAY_SIZE];
-static void dispatcher_l3_msg_handler(can_l3_msg_t *message);
+static iso15765_register_t registered[ISO15765_REGISTER_ARRAY_SIZE];
+static void dispatcher_iso15765_msg_handler(iso15765_msg_t *message);
 
-#define L3_SINGLE_FRAME_SIZE 7
+#define SINGLE_FRAME_SIZE 7
 
 /*
  * The CAN ID as used by the Layer 3 Protocol
@@ -65,37 +65,36 @@ typedef union
         u8 layer3;
     } bytes;
     u32 can_id;
-} l3_can_id;
+} iso15765_id;
 
-#define L3_TARGET_PHYSICAL   218
-#define L3_TARGET_FUNCTIONAL 219
+#define ISO15765_TARGET_PHYSICAL   218
+#define ISO15765_TARGET_FUNCTIONAL 219
 
-#define L3_COMS 0x18
+#define ISO15765_COMS 0x18
 
-#define L3_SF 0x00
-#define L3_FF 0x10
-#define L3_CF 0x20
-#define L3_FC 0x30
+#define ISO15765_SF 0x00
+#define ISO15765_FF 0x10
+#define ISO15765_CF 0x20
+#define ISO15765_FC 0x30
 
 #define BLOCK_SIZE 2
 #define SEPERATION_TIME 0x25
 
-#define L3_EXTENDED TRUE
-#define L3_MASK     0xfffeff00
-//#define L3_FILTER   0x18da0000
+#define ISO15765_EXTENDED TRUE
+#define ISO15765_MASK     0xfffeff00
 
 #define FS_CTS 0x00
 #define FS_Wait 0x01
 #define FS_Overflow 0x02
 
-static l3_can_id tx_frame_id;
+static iso15765_id tx_frame_id;
 
 typedef struct {
 	u8 block_size;
 	u8 seperation_time;
 	can_frame frame;
 	u8 sequence;
-	u8 data[CAN_L3_MAX_MSG];
+	u8 data[ISO15765_MAX_MSG];
 	u8 index;
 	u8 frames_sent_in_block;
 	u8 bytes_to_send;
@@ -108,7 +107,7 @@ typedef struct {
 typedef struct {
 	u8 block_size;
 	u8 seperation_time;
-	u8 data[CAN_L3_MAX_MSG];
+	u8 data[ISO15765_MAX_MSG];
 	u8 index;
 	u8 sequence;
 	u8 protocol;
@@ -117,7 +116,7 @@ typedef struct {
 	u8 frames_received_in_block;
 	u8 source;
 	can_frame frame;
-	can_l3_msg_t l3_msg;
+	iso15765_msg_t msg;
 	es_timer timer_N_Cr;
 } rx_buffer_t;
 
@@ -140,16 +139,12 @@ node_buffers_t node_buffers[NUM_NODES];
 
 
 /*
- */
-static can_status_t status;
-static void (*status_handler)(u8 mask, can_status_t status, can_baud_rate_t baud) = NULL;
-
-/*
  * This node's local Layer 3 Node Address
  */
 static u8 node_address;
+static u8 initialised = 0x00;
 
-static void l3_l2_frame_handler(can_frame *rxMsg);
+static void iso15765_frame_handler(can_frame *rxMsg);
 
 static void init_tx_buffer(tx_buffer_t *);
 static void init_rx_buffer(rx_buffer_t *);
@@ -194,18 +189,15 @@ void init_rx_buffer(rx_buffer_t *rx_buf)
 	TIMER_INIT(rx_buf->timer_N_Cr);
 }
 
-result_t l3_init(void (*arg_status_handler)(u8 mask, can_status_t status, can_baud_rate_t baud))
+result_t iso15765_init(u8 address)
 {
 	u16 loop;
 	can_l2_target_t target;
 
-        status.byte = 0x00;
-        status_handler = arg_status_handler;
-
-	for(loop = 0; loop < CAN_L3_REGISTER_ARRAY_SIZE; loop++) {
+	for(loop = 0; loop < ISO15765_REGISTER_ARRAY_SIZE; loop++) {
 		registered[loop].used = FALSE;
 		registered[loop].protocol = 0x00;
-		registered[loop].handler = (can_l3_msg_handler_t)NULL;
+		registered[loop].handler = (iso15765_msg_handler_t)NULL;
 	}
 
 #if defined(MCP)
@@ -222,14 +214,14 @@ result_t l3_init(void (*arg_status_handler)(u8 mask, can_status_t status, can_ba
 		node_buffers[loop].rx_buffer = NULL;
 	}
 #endif
-        node_address = dcncp_get_can_l3_address();
+        node_address = address;
 	LOG_D("l3_init() node address = 0x%x\n\r", node_address);
 
 	/*
 	 * Initialise the static parts or our tx message header.
 	 */
-	tx_frame_id.bytes.layer3 = L3_COMS;
-	tx_frame_id.bytes.type = L3_TARGET_PHYSICAL;
+	tx_frame_id.bytes.layer3 = ISO15765_COMS;
+	tx_frame_id.bytes.type = ISO15765_TARGET_PHYSICAL;
 	tx_frame_id.bytes.source = node_address;
 	tx_frame_id.bytes.destination = node_address;
     
@@ -238,30 +230,26 @@ result_t l3_init(void (*arg_status_handler)(u8 mask, can_status_t status, can_ba
 	/*
 	 * Define our target for Layer 2 Frames and register it.
 	 */
-	target.mask = L3_MASK;
+	target.mask = ISO15765_MASK;
 	target.filter = tx_frame_id.can_id & 0xffffff00; //Don't filter on the Source Byte
-	target.handler = l3_l2_frame_handler;
+	target.handler = iso15765_frame_handler;
 
 	can_l2_reg_handler(&target);
 
-	status.bit_field.l3_status = 1;
-
-        if(status_handler)
-			status_handler(L3_STATUS_MASK, status, no_baud);
-
+	initialised = 0x01;
 	return(SUCCESS);
 }
 
-u8 l3_initialised(void)
+u8 iso15765_initialised(void)
 {
-    return(status.bit_field.l3_status);
+    return(initialised);
 }
 
-result_t l3_tx_msg(can_l3_msg_t *msg)
+result_t iso15765_tx_msg(iso15765_msg_t *msg)
 {
 	u8 *dataPtr;
 	u8 loop;
-	l3_can_id can_id;
+	iso15765_id id;
 	tx_buffer_t *tx_buffer;
 
 	LOG_D("Tx to 0x%x, Protocol-0x%x, len(0x%x)\n\r",
@@ -269,25 +257,25 @@ result_t l3_tx_msg(can_l3_msg_t *msg)
 		   (u16)msg->protocol,
 		   (u16)msg->size);
 
-        if(!status.bit_field.l3_status) {
-		LOG_E("L3_Can not Initialised\n\r");
-		return(ERR_GENERAL_L3_ERROR);
+        if(!initialised) {
+		LOG_E("ISO15765 not Initialised\n\r");
+		return(ERR_UNINITIALISED);
 	}
 
 	if(msg->size == 0) {
-		LOG_E("L3_Can Message Zero size not Sending\n\r");
-		return(ERR_L3_ZERO_LENGTH);
+		LOG_E("ISO15765 Message Zero size not Sending\n\r");
+		return(ERR_BAD_INPUT_PARAMETER);
 	}
 
-	if(msg->size > CAN_L3_MAX_MSG) {
+	if(msg->size > ISO15765_MAX_MSG) {
 		LOG_E("L3_Can Message exceeds size limit\n\r");
-		return(ERR_L3_MAX_LENGTH);
+		return(ERR_BAD_INPUT_PARAMETER);
 	}
 
 #if defined(MCP)
 	if(mcp_transmitter_busy) {
-		LOG_E("L3_Can transmitter already busy\n\r");
-		return(ERR_L3_TX_BUSY);
+		LOG_E("ISO15765 transmitter already busy\n\r");
+		return(ERR_BUSY);
 	}
 	tx_buffer = &mcp_tx_buffer;
 #elif defined(ES_LINUX)
@@ -295,8 +283,8 @@ result_t l3_tx_msg(can_l3_msg_t *msg)
 	 * Check for a transmit buffer already active to the destination
 	 */
 	if(node_buffers[msg->address].tx_buffer != NULL) {
-		LOG_E("L3_Can transmitter already busy\n\r");
-		return(ERR_L3_TX_BUSY);
+		LOG_E("ISO15765 transmitter already busy\n\r");
+		return(ERR_BUSY);
 	}
 
 	tx_buffer = malloc(sizeof(tx_buffer_t));
@@ -311,20 +299,20 @@ result_t l3_tx_msg(can_l3_msg_t *msg)
 	/*
 	 * cut off for the single frame message.
 	 */
-	if(msg->size + 1 <= L3_SINGLE_FRAME_SIZE ) { // +1 for Protocol Byte 
+	if(msg->size + 1 <= SINGLE_FRAME_SIZE ) { // +1 for Protocol Byte
 		tx_buffer->frame.can_dlc = msg->size + 2;
-		can_id.can_id = tx_frame_id.can_id;
-		can_id.bytes.destination = msg->address;
-		tx_buffer->frame.can_id = can_id.can_id;
+		id.can_id = tx_frame_id.can_id;
+		id.bytes.destination = msg->address;
+		tx_buffer->frame.can_id = id.can_id;
 
-		tx_buffer->frame.data[0] = L3_SF | ((msg->size + 1) & 0x0f);
+		tx_buffer->frame.data[0] = ISO15765_SF | ((msg->size + 1) & 0x0f);
 		tx_buffer->frame.data[1] = msg->protocol;
 
 		dataPtr = msg->data;
 		LOG_D("Tx Single Frame\n\r");
 		for(loop = 0; loop < msg->size; loop++) {
 			tx_buffer->frame.data[loop + 2] = *dataPtr++;
-			LOG_D("L3TX Byte 0x%x\n\r", tx_buffer->frame.data[loop + 2]);
+			LOG_D("ISO15765 TX Byte 0x%x\n\r", tx_buffer->frame.data[loop + 2]);
 		}
 		can_l2_tx_frame(&(tx_buffer->frame));
 	} else {
@@ -339,12 +327,12 @@ result_t l3_tx_msg(can_l3_msg_t *msg)
 		mcp_transmitter_busy = TRUE;
 #endif
 		// Fill in the can id we're going to use for the transmission.
-		can_id = tx_frame_id;
-		can_id.bytes.destination = tx_buffer->destination;
+		id = tx_frame_id;
+		id.bytes.destination = tx_buffer->destination;
 
-		tx_buffer->frame.can_id = can_id.can_id;
+		tx_buffer->frame.can_id = id.can_id;
 	        tx_buffer->frame.can_dlc = CAN_DATA_LENGTH;
-		tx_buffer->frame.data[0] = L3_FF;
+		tx_buffer->frame.data[0] = ISO15765_FF;
 		tx_buffer->frame.data[1] = msg->size + 1; // Add one for Protocol Byte
 		tx_buffer->frame.data[2] = msg->protocol;
 
@@ -379,7 +367,7 @@ void exp_sendConsecutiveFrame(timer_t timer_id, union sigval data)
 	tx_buffer->consecutive_frame_timer.status = INACTIVE;
 
 	if((tx_buffer->block_size == 0x00) || (tx_buffer->frames_sent_in_block < tx_buffer->block_size)) {
-		tx_buffer->frame.data[0] = L3_CF | (tx_buffer->sequence & 0x0f);
+		tx_buffer->frame.data[0] = ISO15765_CF | (tx_buffer->sequence & 0x0f);
 
 		for (loop = 0x01; loop < CAN_DATA_LENGTH; loop++) {
 			tx_buffer->frame.data[loop] = tx_buffer->data[tx_buffer->index++];
@@ -417,7 +405,7 @@ void exp_sendConsecutiveFrame(timer_t timer_id, union sigval data)
 
 void sendFlowControlFrame(rx_buffer_t *rx_buffer, u8 flowStatus)
 {
-	l3_can_id can_id;
+	iso15765_id can_id;
 	can_frame frame;
 
 	if(flowStatus == FS_CTS || flowStatus == FS_Wait || flowStatus == FS_Overflow) {
@@ -426,7 +414,7 @@ void sendFlowControlFrame(rx_buffer_t *rx_buffer, u8 flowStatus)
 		frame.can_dlc = 3;
 		can_id.bytes.destination = rx_buffer->source;
 	        frame.can_id = can_id.can_id;
-		frame.data[0] = L3_FC | (flowStatus & 0x0f);
+		frame.data[0] = ISO15765_FC | (flowStatus & 0x0f);
 		frame.data[1] = rx_buffer->block_size;
 		frame.data[2] = rx_buffer->seperation_time;
 		LOG_D("Send Flow Control Frame\n\r");
@@ -436,12 +424,12 @@ void sendFlowControlFrame(rx_buffer_t *rx_buffer, u8 flowStatus)
 	}
 }
 
-void l3_l2_frame_handler(can_frame *rxMsg)
+void iso15765_frame_handler(can_frame *rxMsg)
 {
 	u8 type;
 	u8 loop;
 	u8 source;
-	l3_can_id rx_msg_id;
+	iso15765_id rx_msg_id;
 	rx_buffer_t *rx_buffer;
 	tx_buffer_t *tx_buffer;
 
@@ -449,28 +437,28 @@ void l3_l2_frame_handler(can_frame *rxMsg)
 
 	if(rx_msg_id.bytes.destination != node_address) {
 		// L3 Message but not for this node - Ignore it
-		LOG_D("L3 Message not for this node\n\r");
+		LOG_D("ISO15765 Message not for this node\n\r");
 		return;
 	}
 
 	source = rx_msg_id.bytes.source;
 
-	LOG_D("l3_l2_frame_handler() got a frame from 0x%x\n\r", source);
+	LOG_D("iso15765_frame_handler() got a frame from 0x%x\n\r", source);
 	type = rxMsg->data[0] & 0xf0;
 
-	if(type == L3_SF) {
-		u8 l3Len;
+	if(type == ISO15765_SF) {
+		u8 length;
 
 		LOG_D("SF\n\r");
 #if defined(MCP)
                 rx_buffer = &mcp_rx_buffer;
 		if(mcp_receiver_busy) {
-			LOG_E("ERROR: Can L3 Received First Frame whilst RxBuffer Busy\n\r");
+			LOG_E("ERROR: ISO15765 Received First Frame whilst RxBuffer Busy\n\r");
 			return;
 		}
 #elif defined(ES_LINUX)
 		if(node_buffers[source].rx_buffer != NULL) {
-			LOG_E("L3_Can transmitter already busy\n\r");
+			LOG_E("ISO15765 transmitter already busy\n\r");
 			return;
 		}
 
@@ -482,10 +470,10 @@ void l3_l2_frame_handler(can_frame *rxMsg)
 		node_buffers[source].rx_buffer = rx_buffer;
 #endif // MCP - ES_LINUX
 		init_rx_buffer(rx_buffer);
-		l3Len = rxMsg->data[0] & 0x0f;
-		rx_buffer->bytes_expected = l3Len;
+		length = rxMsg->data[0] & 0x0f;
+		rx_buffer->bytes_expected = length;
 
-		if( (l3Len > 0) && (l3Len <= L3_SINGLE_FRAME_SIZE)) {
+		if( (length > 0) && (length <= SINGLE_FRAME_SIZE)) {
 			rx_buffer->index = 0;
 			rx_buffer->protocol = rxMsg->data[1];
 
@@ -503,12 +491,12 @@ void l3_l2_frame_handler(can_frame *rxMsg)
 				rx_buffer->data[rx_buffer->index++] = rxMsg->data[loop];
 			}
 
-			rx_buffer->l3_msg.protocol = rx_buffer->protocol;
-			rx_buffer->l3_msg.data = rx_buffer->data;
-			rx_buffer->l3_msg.size = rx_buffer->bytes_expected - 1;   // subtract one for Protocol Byte
-			rx_buffer->l3_msg.address = rx_buffer->source;
+			rx_buffer->msg.protocol = rx_buffer->protocol;
+			rx_buffer->msg.data = rx_buffer->data;
+			rx_buffer->msg.size = rx_buffer->bytes_expected - 1;   // subtract one for Protocol Byte
+			rx_buffer->msg.address = rx_buffer->source;
 
-			dispatcher_l3_msg_handler(&rx_buffer->l3_msg);
+			dispatcher_iso15765_msg_handler(&rx_buffer->msg);
 #if defined(MCP)
 			mcp_receiver_busy = FALSE;
 #elif defined(ES_LINUX)
@@ -519,7 +507,7 @@ void l3_l2_frame_handler(can_frame *rxMsg)
 		else {
 			LOG_E("Error in received length");
 		}
-	} else if(type == L3_FF) {
+	} else if(type == ISO15765_FF) {
 		u16 size = 0;
 		LOG_D("Rx First Frame\n\r");
 #if defined(MCP)
@@ -532,7 +520,7 @@ void l3_l2_frame_handler(can_frame *rxMsg)
 		mcp_receiver_busy = TRUE;
 #elif defined(ES_LINUX)
 		if(node_buffers[source].rx_buffer != NULL) {
-			LOG_E("L3_Can transmitter already busy\n\r");
+			LOG_E("ISO15765 transmitter already busy\n\r");
 			return;
 		}
 
@@ -550,7 +538,7 @@ void l3_l2_frame_handler(can_frame *rxMsg)
 		size = size << 8;
 		size = size | rxMsg->data[1];
 
-		if (size > CAN_L3_MAX_MSG + 1) {
+		if (size > ISO15765_MAX_MSG + 1) {
 			LOG_E("Message received overflows Max Size\n\r");
 			sendFlowControlFrame(rx_buffer, FS_Overflow); //source
 			return;
@@ -574,7 +562,7 @@ void l3_l2_frame_handler(can_frame *rxMsg)
 		} else {
 			LOG_E("expected a L2 Message of size 8\n\r");
 		}
-	} else if(type == L3_CF) {
+	} else if(type == ISO15765_CF) {
 		LOG_D("Rx Consecutive Frame\n\r");
 		for (loop = 0; loop < rxMsg->can_dlc; loop++)
 			LOG_D("Add Byte %d 0x%x\n\r", loop, rxMsg->data[loop]);
@@ -582,14 +570,14 @@ void l3_l2_frame_handler(can_frame *rxMsg)
 #if defined(MCP)
 		// If the Receiver isn't busy not sure why we're gettting a CF
 		if(!mcp_receiver_busy) {
-             LOG_E("ERROR: Can L3 Received CF whilst RxBuffer NOT Busy\n\r");
+             LOG_E("ERROR: ISO15765 Received CF whilst RxBuffer NOT Busy\n\r");
 			return;
 		}
 
 		rx_buffer = &mcp_rx_buffer;
 #elif defined(ES_LINUX)
 		if(node_buffers[source].rx_buffer == NULL) {
-			LOG_E("L3_Can CF and NOT busy??\n\r");
+			LOG_E("ISO15765 CF and NOT busy??\n\r");
 			return;
 		}
 
@@ -609,16 +597,16 @@ void l3_l2_frame_handler(can_frame *rxMsg)
 
 			if (rx_buffer->bytes_received == rx_buffer->bytes_expected) {
 			LOG_D("Complete Message\n\r");
-				rx_buffer->l3_msg.protocol = rx_buffer->protocol;
-				rx_buffer->l3_msg.data = rx_buffer->data;
-				rx_buffer->l3_msg.size = rx_buffer->bytes_expected;
-				rx_buffer->l3_msg.address = rx_buffer->source;
+				rx_buffer->msg.protocol = rx_buffer->protocol;
+				rx_buffer->msg.data = rx_buffer->data;
+				rx_buffer->msg.size = rx_buffer->bytes_expected;
+				rx_buffer->msg.address = rx_buffer->source;
 
 				LOG_D("RX Msg from-0x%x, Protocol-0x%x, Size-0x%x\n\r",
-					   (u16)rx_buffer->l3_msg.address,
-					   (u16)rx_buffer->l3_msg.protocol,
-					   (u16)rx_buffer->l3_msg.size);
-				dispatcher_l3_msg_handler(&rx_buffer->l3_msg);
+					   (u16)rx_buffer->msg.address,
+					   (u16)rx_buffer->msg.protocol,
+					   (u16)rx_buffer->msg.size);
+				dispatcher_iso15765_msg_handler(&rx_buffer->msg);
 
 				/*
 				 * Compete L3 message received so Rx Buffer Available
@@ -651,7 +639,7 @@ void l3_l2_frame_handler(can_frame *rxMsg)
 
 			LOG_D("Bad Sequence Number: expected 0x%x received 0x%x\n\r", rx_buffer->sequence, (rxMsg->data[0] & 0x0f));
 		}
-	} else if(type == L3_FC) {
+	} else if(type == ISO15765_FC) {
 		u8 flowStatus;
 		LOG_D("Rx Flow Control Frame: BlockSize %d, Seperation time %x\n\r", rxMsg->data[1], rxMsg->data[2]);
 		LOG_D("BlockSize %d, Seperation time %x\n\r", rxMsg->data[1], rxMsg->data[2]);
@@ -659,14 +647,14 @@ void l3_l2_frame_handler(can_frame *rxMsg)
 #if defined(MCP)
 		// If the Receiver isn't busy not sure why we're gettting a CF
 		if(!mcp_transmitter_busy) {
-			LOG_E("ERROR: Can L3 Received FC whilst TxBuffer NOT Busy\n\r");
+			LOG_E("ERROR: ISO15765 Received FC whilst TxBuffer NOT Busy\n\r");
 			return;
 		}
 
 		tx_buffer = &mcp_tx_buffer;
 #elif defined(ES_LINUX)
 		if(node_buffers[source].tx_buffer == NULL) {
-			LOG_E("L3_Can FC and NOT busy??\n\r");
+			LOG_E("ISO15765 FC and NOT busy??\n\r");
 			return;
 		}
 
@@ -811,16 +799,16 @@ void exp_timer_N_Bs_Expired(timer_t timer_id __attribute__((unused)), union sigv
 }
 
 
-void dispatcher_l3_msg_handler(can_l3_msg_t *message)
+void dispatcher_iso15765_msg_handler(iso15765_msg_t *message)
 {
 	u8 loop;
 
-	LOG_D("L3 Dis from-0x%x Protocol-0x%x len(0x%x)\n\r",
+	LOG_D("ISO15765 Dis from-0x%x Protocol-0x%x len(0x%x)\n\r",
 		   (u16)message->address,
 		   (u16)message->protocol,
 		   (u16)message->size);
 
-	for (loop = 0; loop < CAN_L3_REGISTER_ARRAY_SIZE; loop++) {
+	for (loop = 0; loop < ISO15765_REGISTER_ARRAY_SIZE; loop++) {
 		if (registered[loop].used && (message->protocol == registered[loop].protocol) ) {
 			LOG_D(" => Dispatch\n\r");
 			registered[loop].handler(message);
@@ -830,15 +818,15 @@ void dispatcher_l3_msg_handler(can_l3_msg_t *message)
 	LOG_D(" No Handler found for Protocol 0x%x\n\r", (u16)message->protocol);
 }
 
-result_t l3_register_handler(u8 protocol, can_l3_msg_handler_t handler)
+result_t iso15765_register_handler(u8 protocol, iso15765_msg_handler_t handler)
 {
 	u8 loop;
-	LOG_D("l3_can_dispatch_register_handler(0x%x)\n\r", (u16)protocol);
+	LOG_D("iso15765_can_dispatch_register_handler(0x%x)\n\r", (u16)protocol);
 
 	/*
 	 * Check is there already a handler for the Protocol
 	 */
-	for(loop = 0; loop < CAN_L3_REGISTER_ARRAY_SIZE; loop++) {
+	for(loop = 0; loop < ISO15765_REGISTER_ARRAY_SIZE; loop++) {
 		if(  (registered[loop].used == TRUE)
 		     &&(registered[loop].protocol == protocol)) {
 			LOG_D("Replacing existing handler for Protocol 0x%x\n\r", (u16)protocol);
@@ -850,7 +838,7 @@ result_t l3_register_handler(u8 protocol, can_l3_msg_handler_t handler)
 	/*
 	 * Find a free slot and add the Protocol
 	 */
-	for(loop = 0; loop < CAN_L3_REGISTER_ARRAY_SIZE; loop++) {
+	for(loop = 0; loop < ISO15765_REGISTER_ARRAY_SIZE; loop++) {
 		if(registered[loop].used == FALSE) {
 			registered[loop].used = TRUE;
 			registered[loop].protocol = protocol;
@@ -859,22 +847,22 @@ result_t l3_register_handler(u8 protocol, can_l3_msg_handler_t handler)
 		}
 	}
 
-	LOG_E("L3 Dispatch full!\n\r");
-	return(ERR_GENERAL_ERROR);
+	LOG_E("ISO15765 Dispatch full!\n\r");
+	return(ERR_NO_RESOURCES);
 }
 
-result_t app_l3_can_dispatch_reg_handler(u8 protocol, can_l3_msg_handler_t handler, u8 *id)
+result_t iso15765_dispatch_reg_handler(u8 protocol, iso15765_msg_handler_t handler, u8 *id)
 {
 	u8 loop;
 
 	*id = 0xff;
 
-	LOG_D("l3_can_dispatch_register_handler(0x%x)\n\r", (u16)protocol);
+	LOG_D("iso15765_dispatch_register_handler(0x%x)\n\r", (u16)protocol);
 
 	/*
 	 * Check is there already a handler for the Protocol
 	 */
-	for(loop = 0; loop < CAN_L3_REGISTER_ARRAY_SIZE; loop++) {
+	for(loop = 0; loop < ISO15765_REGISTER_ARRAY_SIZE; loop++) {
 		if(  (registered[loop].used == TRUE)
 		     &&(registered[loop].protocol == protocol)) {
 			LOG_D("Replacing existing handler for Protocol 0x%x\n\r", (u16)protocol);
@@ -887,7 +875,7 @@ result_t app_l3_can_dispatch_reg_handler(u8 protocol, can_l3_msg_handler_t handl
 	/*
 	 * Find a free slot and add the Protocol
 	 */
-	for(loop = 0; loop < CAN_L3_REGISTER_ARRAY_SIZE; loop++) {
+	for(loop = 0; loop < ISO15765_REGISTER_ARRAY_SIZE; loop++) {
 		if(registered[loop].used == FALSE) {
 			registered[loop].used = TRUE;
 			registered[loop].protocol = protocol;
@@ -897,17 +885,17 @@ result_t app_l3_can_dispatch_reg_handler(u8 protocol, can_l3_msg_handler_t handl
 		}
 	}
 
-	LOG_E("L3 Dispatch full!\n\r");
+	LOG_E("ISO15765 Dispatch full!\n\r");
 	return(ERR_NO_RESOURCES);
 }
 
-result_t app_l3_can_dispatch_unreg_handler(u8 id)
+result_t iso15765_dispatch_unreg_handler(u8 id)
 {
-	if((id < CAN_L3_REGISTER_ARRAY_SIZE) && (registered[id].used)) {
+	if((id < ISO15765_REGISTER_ARRAY_SIZE) && (registered[id].used)) {
 		registered[id].used = FALSE;
 		registered[id].protocol = 0x00;
-		registered[id].handler = (can_l3_msg_handler_t)NULL;
+		registered[id].handler = (iso15765_msg_handler_t)NULL;
 		return(SUCCESS);
 	}
-	return(ERR_GENERAL_L3_ERROR);
+	return(ERR_BAD_INPUT_PARAMETER);
 }

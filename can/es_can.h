@@ -25,11 +25,11 @@
 #include "system.h"
 
 /*
- * Layer 3 Protocols
+ * ISO15765 Protocols
  */
-#if defined(CAN_LAYER_3)
-#define NET_LOG_L3_ID           0x01
-#define NODE_MANAGEMENT_L3_ID   0x02
+#if defined(ISO15765)
+#define LOGGER_PROTOCOL_ID             0x01
+#define NODE_MANAGEMENT_PROTOCOL_ID    0x02
 #endif
 
 /*
@@ -53,8 +53,8 @@
  *
  *         DCNCP_L3_ADDRESS_STATUS_MASK 0x10
  *
- *             DCNCP_L3_Address_Not_Final 0x00,
- *             DCNCP_L3_Address_Finalised 0x10,
+ *             DCNCP_NODE_Address_Not_Final 0x00,
+ *             DCNCP_NODE_Address_Finalised 0x10,
  *
  * Layer 3 - 2 values Initialised or not. 1 bit
  *
@@ -77,24 +77,16 @@ extern char can_l2_status_strings[5][17];
 #endif
 
 #ifdef CAN_DCNCP
-#define DCNCP_INIT_STATUS_MASK 0x08
-#define DCNCP_L3_ADDRESS_STATUS_MASK 0x10
+#define DCNCP_INIT_STATUS_MASK         0x08
+#define DCNCP_NODE_ADDRESS_STATUS_MASK 0x10
 #endif // CAN_DCNCP
-
-#ifdef CAN_LAYER_3
-#define L3_STATUS_MASK 0x20
-
-#define L3_Uninitialised 0x00
-#define L3_Inititialised 0x20
-#endif
 
 typedef struct {
     union {
         struct {
             u8 l2_status : 3;
             u8 dcncp_initialised : 1;
-            u8 dcncp_l3_valid :1;
-            u8 l3_status : 1;
+            u8 dcncp_node_address_valid :1;
         } bit_field;
         u8 byte;
     };
@@ -125,8 +117,6 @@ extern result_t can_init(can_baud_rate_t      baud,
 
 //extern bool can_initialised(void);
 
-
-
 extern result_t can_l2_init(can_baud_rate_t arg_baud_rate,
                  void (*arg_status_handler)(u8 mask, can_status_t status, can_baud_rate_t baud));
 
@@ -148,19 +138,19 @@ extern void can_tasks(void);
 #endif
 
 
-#if defined(CAN_LAYER_3)
+#if defined(ISO15765)
 
-/*
- * Function provided by higher layers to provide a Layer 3 address to the 
- * l3 protocol stack.
- */
-extern u8 node_get_can_l3_address(void);
+extern u8 node_get_address(void);
 
-extern result_t l3_init(void (*arg_status_handler)(u8 mask, can_status_t status, can_baud_rate_t baud));
-extern u8 l3_initialised(void);
-extern result_t l3_tx_msg(can_l3_msg_t *msg);
+extern result_t iso15765_init(u8 address);
+extern u8 iso15765_initialised(void);
+extern result_t iso15765_tx_msg(iso15765_msg_t *msg);
 
-extern result_t l3_register_handler(u8 protocol, can_l3_msg_handler_t handler);
+extern result_t iso15765_register_handler(u8 protocol, iso15765_msg_handler_t handler);
 #endif
+
+#if defined(ISO11783)
+extern result_t  iso11783_init(u8);
+#endif // ISO11783
 
 #endif // CAN_H

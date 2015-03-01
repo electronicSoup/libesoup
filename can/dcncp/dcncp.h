@@ -46,13 +46,13 @@
 extern void dcncp_init(void (*arg_status_handler)(u8 mask, can_status_t status, can_baud_rate_t baud));
 extern void dcncp_request_network_baud_change(can_baud_rate_t baud);
 extern void dcncp_send_ping(void);
-#if defined(CAN_LAYER_3)
-extern u8 dcncp_get_can_l3_address(void);
+#if defined(ISO15765)
+extern u8 dcncp_get_node_address(void);
 extern u8 node_get_net_logger_address(void);
-#ifdef CAN_NET_LOGGER
+#ifdef ISO15765_LOGGER
 extern result_t dcncp_register_this_node_net_logger(log_level_t level);
 extern result_t dcncp_unregister_this_node_net_logger(void);
-#endif // CAN_NET_LOGGER
+#endif // ISO15765_LOGGER
 #endif
 
 #endif //NODE_H

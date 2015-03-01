@@ -107,34 +107,34 @@
 //#define CAN_DCNCP_BAUDRATE
 
 /*
- * Include CAN Layer 3 functionality
+ * Include ISO15765 Protocol functionality
  *
- * If you enable CAN Bus Layer 3 protocol then you must include utils/rand.c
+ * If you enable CAN Bus ISO15765 protocol then you must include utils/rand.c
  * in your project. Random numbers are used. In addition provide a function
- * "node_get_can_l3_address" which returns a Layer 3 Address for the protocol
+ * "node_get_address" which returns an Address for the protocol
  * to use. Note that the address you give may well be rejected if it is already
  * being used not the network so the function can be recalled until an unused
  * address is obtained
  *
- * u8 node_get_can_l3_address(void)
+ * u8 node_get_address(void)
  * {
  *	return(0x01);
  * }
  */
-//#define CAN_LAYER_3
+//#define ISO15765
 
-#ifdef CAN_LAYER_3
+#ifdef ISO15765
 /*
  * The number of different Layer 3 protocols that can be registered
  * in the system or applicaiton.
  */
-#define CAN_L3_REGISTER_ARRAY_SIZE 2
+#define ISO15765_REGISTER_ARRAY_SIZE 2
 
 /*
- * Project uses the Net Logging functionality using Layer 3 to send debug
- * information across the network
+ * Project uses the ISO15765 Logging functionality to send information across
+ * the network
  */
-//#define CAN_NET_LOGGING
+//#define ISO15765_LOGGING
 
 /*
  * If this node can act as a CAN Bus Network logger define CAN_NET_LOGGER
@@ -142,17 +142,23 @@
  * Without this definition the node can still send network logging messages but
  * does not include the code to act as the network logger itself.
  */
-//#define CAN_NET_LOGGER
+//#define ISO15765_LOGGER
 
 /*
  * The Network Logger will periodically repeat it's register request messages
  * in case any of the nodes are late to the party.
  */
-#ifdef CAN_NET_LOGGER
-#define NET_LOGGER_PING_PERIOD SECONDS_TO_TICKS(60)
-#endif // CAN_NET_LOGGER
+#ifdef ISO15765_LOGGER
+#define ISO15765_LOGGER_PING_PERIOD SECONDS_TO_TICKS(60)
+#endif // ISO15765_LOGGER
 
-#endif // CAN_LAYER_3
+#endif // ISO15765
+
+/*
+ * Include the ISO11783 Protocol
+ */
+#define ISO11783
+
 #endif // CAN_DCNCP
 #endif // CAN
 

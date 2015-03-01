@@ -292,14 +292,16 @@ typedef enum {
     ERR_CAN_BAUDRATE,
     ERR_CAN_TARGET_OVERLAP,
     ERR_CAN_NO_FREE_BUFFER,
-    ERR_L3_UNINITIALISED,
-    ERR_GENERAL_L3_ERROR,
+    ERR_UNINITIALISED,
+    ERR_BUSY
+#if 0
     ERR_L3_NO_ADDRESS,	  
     ERR_L3_NOT_REGISTERED,
     ERR_L3_ZERO_LENGTH,
     ERR_L3_MAX_LENGTH,
     ERR_L3_TX_BUSY,
     ERR_L3_PROTOCOL
+#endif
 } result_t;
 
 /**
@@ -412,16 +414,15 @@ typedef struct
 } can_l2_target_t;
 
 /**
- * \brief L3_CAN_MAX_MSG
- * CAN Layer 3 message
+ * \brief ISO15765_MAX_MSG
  *
- * The maximum Layer 3 Message size is 74 Bytes including the protocol!
+ * The maximum ISO15765 Message size is 74 Bytes including the protocol!
  * So one protocol Byte and 73 Data Bytes
  */
-#define CAN_L3_MAX_MSG 73 // reduced by one make protocol seperate 74  //4095
+#define ISO15765_MAX_MSG 73 // reduced by one make protocol seperate 74  //4095
 
 /**
- * \brief l3_can_msg_t
+ * \brief iso15765_msg_t
  *
  */
 typedef struct
@@ -430,14 +431,14 @@ typedef struct
     u8 size;
     u8 protocol;
     u8 *data;
-} can_l3_msg_t;
+} iso15765_msg_t;
 
 /**
- * \brief l3_msg_handler
+ * \brief iso15765_msg_handler
  *
- * CAN Layer 3 Message Handler function.
+ * ISO15765 Message Handler function.
  */
-typedef void (*can_l3_msg_handler_t)(can_l3_msg_t *msg);
+typedef void (*iso15765_msg_handler_t)(iso15765_msg_t *msg);
 
 
 /**
