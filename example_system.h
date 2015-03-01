@@ -157,7 +157,7 @@
 /*
  * Include the ISO11783 Protocol
  */
-#define ISO11783
+//#define ISO11783
 
 #endif // CAN_DCNCP
 #endif // CAN
