@@ -1,8 +1,8 @@
 /**
  *
- * \file es_lib/logger/net.h
+ * \file es_lib/logger/iso15765_log.h
  *
- * Definitions for the Network Logger
+ * Definitions for the ISO15765 Network Logger
  *
  * Copyright 2014 John Whitmore <jwhitmore@electronicsoup.com>
  *
@@ -19,8 +19,8 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  *
  */
-#ifndef NET_LOGGER_H
-#define NET_LOGGER_H
+#ifndef ISO15765_LOGGER_H
+#define ISO15765_LOGGER_H
 
 extern void iso15765_log(log_level_t level, char *msg);
 
@@ -41,4 +41,4 @@ extern result_t iso15765_logger_register_as_logger(void (*handler)(u8, log_level
 extern void iso15765_logger_register_remote(u8 address, log_level_t level);
 extern void iso15765_logger_unregister_remote(u8 address);
 
-#endif // NET_LOGGER_H
+#endif // ISO15765_LOGGER_H
