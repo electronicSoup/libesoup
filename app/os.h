@@ -37,8 +37,8 @@ extern result_t  (*os_l2_can_dispatch_register_handler)(can_l2_target_t *target,
 extern result_t  (*os_l2_can_dispatch_unregister_handler)(BYTE id);
 
 extern result_t  (*os_l3_get_address)(BYTE *address);
-extern result_t  (*os_l3_can_tx_message)(can_l3_msg_t *msg);
-extern result_t  (*os_l3_can_dispatch_register_handler)(BYTE protocol, can_l3_msg_handler_t handler, BYTE *id);
+extern result_t  (*os_l3_can_tx_message)(iso15765_msg_t *msg);
+extern result_t  (*os_l3_can_dispatch_register_handler)(BYTE protocol, iso15765_msg_handler_t handler, BYTE *id);
 extern result_t  (*os_l3_can_dispatch_unregister_handler)(BYTE id);
 
 extern void      (*os_serial_log)(log_level_t level, char *tag, char *fmt, ...);
