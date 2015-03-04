@@ -66,6 +66,18 @@
 #define CLOCK_FREQ 16000000
 
 /*
+ * The Bootloader Watch Dog Reset Protocol address and bit fields. Used for
+ * communication between the Bootloader and the installed Firmware.
+ */
+#define EEPROM_WDR_PROTOCOL_ADDR           0x00
+
+/*
+ * Watch Dog Reset bit definitions.
+ */
+#define WDR_PROCESSOR_RESET_BY_WATCHDOG    0x01
+#define WDR_DO_NOT_INVALIDATE_FIRMWARE     0x02
+
+/*
  * Timer definitions
  */
 /*
@@ -151,7 +163,7 @@ typedef void (*expiry_function)(timer_t timer_id, union sigval);
 /*
  *  EEPROM Address Map
  */
-#define EEPROM_BOOT_PAGE_SIZE   0x20
+#define EEPROM_BOOT_PAGE_SIZE   0x04
 #define EEPROM_MAX_ADDRESS      0x7F
 
 /*
@@ -214,7 +226,8 @@ typedef void (*expiry_function)(timer_t timer_id, union sigval);
 /*
  * Start of Firmware code
  */
-#define FLASH_FIRMWARE_START_ADDRESS   0x8800
+#define FLASH_FIRMWARE_START_ADDRESS   0x08800
+#define FLASH_APP_START_ADDRESS        0x18000
 
 /*
  * Address of the App's page in low memory
@@ -262,16 +275,21 @@ typedef void (*expiry_function)(timer_t timer_id, union sigval);
 #define  APP_MSG_ERROR                   0x00
 #define  APP_MSG_APP_DISCONNECT          0x01
 #define  APP_MSG_APP_CONNECT             0x02
-#define  APP_MSG_CAN_CONNECT             0x03
-#define  APP_MSG_CAN_STATUS_REQ          0x04
-#define  APP_MSG_CAN_L2_FRAME            0x05
-#define  APP_MSG_CAN_L2_TARGET           0x06
-#define  APP_MSG_USER_OFFSET             0x07
+#define  APP_MSG_FLASH_REPROGRAM         0x03
+#define  APP_MSG_FLASH_ERASE_PAGE        0x04
+#define  APP_MSG_FLASH_WRITE_ROW         0x05
+#define  APP_MSG_FLASH_REFLASHED         0x06
+#define  APP_MSG_CAN_CONNECT             0x07
+#define  APP_MSG_CAN_STATUS_REQ          0x08
+#define  APP_MSG_CAN_L2_FRAME            0x09
+#define  APP_MSG_CAN_L2_TARGET           0x0a
+#define  APP_MSG_USER_OFFSET             0x0b
 
 #define  BUN_MSG_ERROR                   0x00
-#define  BUN_MSG_CAN_STATUS              0x01
-#define  BUN_MSG_CAN_L2_FRAME            0x02
-#define  BUN_MSG_USER_OFFSET             0x03
+#define  BUN_COMMAND_READY               0x01
+#define  BUN_MSG_CAN_STATUS              0x02
+#define  BUN_MSG_CAN_L2_FRAME            0x03
+#define  BUN_MSG_USER_OFFSET             0x04
 
 /**
  *
