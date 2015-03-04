@@ -25,4 +25,9 @@
 
 extern void random_init(void);
 
+/*
+ * At present rans() is provided by Microchip Library
+ */
+extern int rand(void);
+
 #endif //RAND_H
