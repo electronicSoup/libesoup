@@ -1,6 +1,6 @@
 /**
  *
- * \file es_lib/os/os.h
+ * \file es_lib/app/os.h
  *
  * OS function prototypes
  *
