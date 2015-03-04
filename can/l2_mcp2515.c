@@ -20,11 +20,11 @@
  *
  */
 #include <stdlib.h>
-#include "es_lib/core.h"
 #include "system.h"
 
 
-//#define DEBUG_FILE
+#define DEBUG_FILE
+#define LOG_LEVEL LOG_INFO
 #include "es_lib/logger/serial_log.h"
 #include "es_lib/can/es_can.h"
 #include "es_lib/can/dcncp/dcncp.h"
@@ -81,7 +81,9 @@ static u16 ping_time;
 static void     service_device(void);
 static void     set_can_mode(u8 mode);
 static void     set_baudrate(can_baud_rate_t baudRate);
+#if defined(CAN_BAUD_AUTO_DETECT)
 static void     exp_check_network_connection(timer_t timer_id, union sigval);
+#endif // CAN_BAUD_AUTO_DETECT
 static void     exp_finalise_baudrate_change(timer_t timer_id, union sigval data);
 static void     exp_resend_baudrate_change(timer_t timer_id, union sigval data);
 #if defined(CAN_L2_IDLE_PING)
@@ -114,7 +116,9 @@ void print_error_counts(void);
  * Global record of CAN Bus error flags.
  */
 static can_baud_rate_t connected_baudrate = no_baud;
+#if defined(CAN_BAUD_AUTO_DETECT)
 static can_baud_rate_t listen_baudrate = no_baud;
+#endif
 static u8 changing_baud_tx_error;
 //static u8 g_CanErrors = 0x00;
 //static UINT32 g_missedMessageCount = 0;
@@ -125,8 +129,9 @@ static can_frame rx_can_msg;
 
 static can_status_t status;
 static can_baud_rate_t status_baud = no_baud;
-
+#if defined(CAN_BAUD_AUTO_DETECT)
 static es_timer listen_timer;
+#endif
 static void (*status_handler)(u8 mask, can_status_t status, can_baud_rate_t baud) = NULL;
 
 /**
@@ -150,6 +155,12 @@ result_t can_l2_init(can_baud_rate_t arg_baud_rate,
 #endif // CAN_L2_IDLE_PING
 	LOG_D("l2_init()\n\r");
 
+#ifndef CAN_BAUD_AUTO_DETECT
+	if(arg_baud_rate >= no_baud) {
+		LOG_E("Bad Baud rate!!!\n\r");
+		return (ERR_BAD_INPUT_PARAMETER);
+	}
+#endif // CAN_BAUD_AUTO_DETECT
 	mcp2515_isr = FALSE;
 
 	/*
@@ -158,7 +169,9 @@ result_t can_l2_init(can_baud_rate_t arg_baud_rate,
         status.byte = 0x00;
         status_baud = no_baud;
 
+#if defined(CAN_BAUD_AUTO_DETECT)
 	TIMER_INIT(listen_timer);
+#endif
 #if defined(CAN_L2_IDLE_PING)
 	TIMER_INIT(ping_timer);
 #endif // CAN_L2_IDLE_PING
@@ -208,6 +221,7 @@ result_t can_l2_init(can_baud_rate_t arg_baud_rate,
 		if(status_handler)
 			status_handler(L2_STATUS_MASK, status, status_baud);
 	} else {
+#if defined(CAN_BAUD_AUTO_DETECT)
 		/*
 		 * Have to search for the Networks baud rate. Start at the bottom
 		 */
@@ -225,6 +239,7 @@ result_t can_l2_init(can_baud_rate_t arg_baud_rate,
 
 		/* Now wait and see if we have errors */
 		timer_start(CAN_BAUD_AUTO_DETECT_LISTEN_PERIOD, exp_check_network_connection, (union sigval)(void *)NULL, &listen_timer);
+#endif // CAN_BAUD_AUTO_DETECT
 	}
 	asm ("CLRWDT");
 
@@ -272,7 +287,9 @@ void exp_test_ping(timer_t timer_id __attribute__((unused)), union sigval data _
 void restart_ping_timer(void)
 {
 	if(ping_timer.status == ACTIVE) {
+#if defined(CAN_L2_PING_LOGGING)
 		LOG_D("Cancel running ping timer\n\r");
+#endif // CAN_L2_PING_LOGGING
  		if(timer_cancel(&ping_timer) != SUCCESS) {
 			LOG_E("Failed to cancel the Ping timer\n\r");
 			return;
@@ -283,6 +300,7 @@ void restart_ping_timer(void)
 }
 #endif
 
+#if defined(CAN_BAUD_AUTO_DETECT)
 void exp_check_network_connection(timer_t timer_id __attribute__((unused)), union sigval data __attribute__((unused)))
 {
 	result_t result;
@@ -337,6 +355,7 @@ void exp_check_network_connection(timer_t timer_id __attribute__((unused)), unio
 		}
 	}
 }
+#endif // CAN_BAUD_AUTO_DETECT
 
 /*
  * CAN L2 ISR
@@ -607,7 +626,7 @@ result_t can_l2_tx_frame(can_frame  *frame)
 	u8          *buff;
 	u8           loop = 0x00;
 	u8           ctrl;
-	u8           can_buffer;
+	u8           can_buffer = 0x00;
 
 	LOG_D("L2 => Id %lx\n\r", frame->can_id);
 
