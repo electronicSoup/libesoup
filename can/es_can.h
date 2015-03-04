@@ -33,6 +33,12 @@
 #endif
 
 /*
+ * A Node address of 0xff is a Broadcast Network node address in ISO11783 so
+ * we'll not use it.
+ */
+#define BROADCAST_NODE_ADDRESS 0xff
+
+/*
  * Have to change this status to cater for L2, DCNCP and L3
  *
  * Layer 2 - 5 values so 3 bits L2_STATUS_MASK 0x07
