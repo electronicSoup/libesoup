@@ -66,6 +66,18 @@
 #define CLOCK_FREQ 16000000
 
 /*
+ * The Bootloader Watch Dog Reset Protocol address and bit fields. Used for
+ * communication between the Bootloader and the installed Firmware.
+ */
+#define EEPROM_WDR_PROTOCOL_ADDR           0x00
+
+/*
+ * Watch Dog Reset bit definitions.
+ */
+#define WDR_PROCESSOR_RESET_BY_WATCHDOG    0x01
+#define WDR_DO_NOT_INVALIDATE_FIRMWARE     0x02
+
+/*
  * Timer definitions
  */
 /*
@@ -151,7 +163,7 @@ typedef void (*expiry_function)(timer_t timer_id, union sigval);
 /*
  *  EEPROM Address Map
  */
-#define EEPROM_BOOT_PAGE_SIZE   0x20
+#define EEPROM_BOOT_PAGE_SIZE   0x04
 #define EEPROM_MAX_ADDRESS      0x7F
 
 /*
@@ -214,7 +226,8 @@ typedef void (*expiry_function)(timer_t timer_id, union sigval);
 /*
  * Start of Firmware code
  */
-#define FLASH_FIRMWARE_START_ADDRESS   0x8800
+#define FLASH_FIRMWARE_START_ADDRESS   0x08800
+#define FLASH_APP_START_ADDRESS        0x18000
 
 /*
  * Address of the App's page in low memory
