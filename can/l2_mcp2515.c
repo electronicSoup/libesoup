@@ -1339,6 +1339,7 @@ result_t can_l2_reg_handler(can_l2_target_t *target)
 			registered_handlers[loop].target.mask = target->mask;
 			registered_handlers[loop].target.filter = target->filter;
 			registered_handlers[loop].target.handler = target->handler;
+			target->handler_id = loop;
 			return(SUCCESS);
 		}
 	}

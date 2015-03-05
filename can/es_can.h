@@ -127,11 +127,12 @@ extern result_t can_l2_init(can_baud_rate_t arg_baud_rate,
                  void (*arg_status_handler)(u8 mask, can_status_t status, can_baud_rate_t baud));
 
 extern result_t can_l2_reg_handler(can_l2_target_t *target);
+extern result_t can_l2_dispatch_unreg_handler(u8 id);
 
-extern void can_l2_ISR(void);
+//extern void can_l2_ISR(void);
 extern void can_l2_tasks(void);
 
-extern result_t can_l2_tx_frame(can_frame *message);
+extern result_t can_l2_tx_frame(can_frame *frame);
 extern void can_l2_tx_error(u8 node_type, u8 node_number, u32 errorCode);
 
 extern can_baud_rate_t can_l2_get_baudrate(void);
@@ -152,7 +153,10 @@ extern result_t iso15765_init(u8 address);
 extern u8 iso15765_initialised(void);
 extern result_t iso15765_tx_msg(iso15765_msg_t *msg);
 
-extern result_t iso15765_register_handler(u8 protocol, iso15765_msg_handler_t handler);
+extern result_t iso15765_dispatch_reg_handler(iso15765_target_t *target);
+extern result_t iso15765_dispatch_unreg_handler(u8 id);
+
+//extern result_t iso15765_register_handler(u8 protocol, iso15765_msg_handler_t handler);
 #endif
 
 #if defined(ISO11783)
