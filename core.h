@@ -66,18 +66,6 @@
 #define CLOCK_FREQ 16000000
 
 /*
- * The Bootloader Watch Dog Reset Protocol address and bit fields. Used for
- * communication between the Bootloader and the installed Firmware.
- */
-#define EEPROM_WDR_PROTOCOL_ADDR           0x00
-
-/*
- * Watch Dog Reset bit definitions.
- */
-#define WDR_PROCESSOR_RESET_BY_WATCHDOG    0x01
-#define WDR_DO_NOT_INVALIDATE_FIRMWARE     0x02
-
-/*
  * Timer definitions
  */
 /*
@@ -165,6 +153,18 @@ typedef void (*expiry_function)(timer_t timer_id, union sigval);
  */
 #define EEPROM_BOOT_PAGE_SIZE   0x04
 #define EEPROM_MAX_ADDRESS      0x7F
+
+/*
+ * The Bootloader Watch Dog Reset Protocol address and bit fields. Used for
+ * communication between the Bootloader and the installed Firmware.
+ */
+#define EEPROM_WDR_PROTOCOL_ADDR           0x00
+
+/*
+ * Watch Dog Reset bit definitions.
+ */
+#define WDR_PROCESSOR_RESET_BY_WATCHDOG    0x01
+#define WDR_DO_NOT_INVALIDATE_FIRMWARE     0x02
 
 /*
  *  RD1/RP24  - SCK
@@ -426,9 +426,10 @@ typedef void (*can_l2_msg_handler_t)(can_frame *msg);
  */
 typedef struct 
 {
-    u32           mask;
-    u32           filter;
+    u32                  mask;
+    u32                  filter;
     can_l2_msg_handler_t handler;
+    u8                   handler_id;
 } can_l2_target_t;
 
 /**
@@ -457,6 +458,13 @@ typedef struct
  * ISO15765 Message Handler function.
  */
 typedef void (*iso15765_msg_handler_t)(iso15765_msg_t *msg);
+
+typedef struct
+{
+    u8                       protocol;
+    iso15765_msg_handler_t   handler;
+    u8                       handler_id;
+} iso15765_target_t;
 
 
 /**
