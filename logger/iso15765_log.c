@@ -67,13 +67,17 @@ static void iso15765_log_handler(iso15765_msg_t *message)
 #ifdef ISO15765_LOGGER
 result_t iso15765_logger_register_as_logger(void (*handler)(u8, log_level_t, char *), log_level_t level)
 {
+	iso15765_target_t target;
+
 	LOG_D("iso15765_log_reg_as_handler() level %x\n\r", level);
 	if(iso15765_initialised()) {
 		if(handler != NULL) {
 			iso15765_logger_handler = handler;
 			iso15765_logger_level = level;
 
-			iso15765_register_handler(LOGGER_PROTOCOL_ID, iso15765_log_handler);
+			target.protocol = LOGGER_PROTOCOL_ID;
+			target.handler = iso15765_log_handler;
+			iso15765_dispatch_reg_handler(&target);
 
 			return (dcncp_register_this_node_net_logger(level));
 		} else {
