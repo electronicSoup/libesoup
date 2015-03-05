@@ -26,15 +26,15 @@ MEMORY
   reset          : ORIGIN = 0x0,           LENGTH = 0x4
   ivt            : ORIGIN = 0x4,           LENGTH = 0xFC
   aivt           : ORIGIN = 0x104,         LENGTH = 0xFC
-  app_info       : ORIGIN = 0x400,         LENGTH = 0x96
-  app_handle     : ORIGIN = 0x496,         LENGTH = 0x400 - 0x96
+  app_handle     : ORIGIN = 0x400,         LENGTH = 0x400
   magic          : ORIGIN = 0x800,         LENGTH = 0x4
 /*
  * Application Strings
  */
-  app_init  : ORIGIN = 0x18000,           LENGTH = 0x4
-  app_main  : ORIGIN = 0x18004,           LENGTH = 0x4
-  app_ints  : ORIGIN = 0x18008,           LENGTH = 0x1F8
+  app_info  : ORIGIN = 0x18000,           LENGTH = 0x96
+  app_init  : ORIGIN = 0x18096,           LENGTH = 0x4
+  app_main  : ORIGIN = 0x1809A,           LENGTH = 0x4
+  app_ints  : ORIGIN = 0x1809E,           LENGTH = 0x1F8
 
 /*
  * Original program line. Reduced to leave room for the app.
@@ -42,8 +42,9 @@ MEMORY
  *       program (xr)   : ORIGIN = 0x8092,           LENGTH = 0x2ABF6 - 0x8092
  * Reduced Line:
  *       program (xr)   : ORIGIN = 0x7ECE,           LENGTH = 0x2ABF6 - 0x18000
+ *       program (xr)   : ORIGIN = 0x18200,          LENGTH = 0x2ABF6 - 0x18200
  */
-  program (xr)   : ORIGIN = 0x18200,          LENGTH = 0x2ABF6 - 0x18200
+  program (xr)   : ORIGIN = 0x18296,          LENGTH = 0x2A3F6 - 0x18296
   CONFIG3        : ORIGIN = 0x2ABFA,          LENGTH = 0x2
   CONFIG2        : ORIGIN = 0x2ABFC,          LENGTH = 0x2
   CONFIG1        : ORIGIN = 0x2ABFE,          LENGTH = 0x2
@@ -126,22 +127,10 @@ SECTIONS
         *(.lib*);
   } >program
 */
-/*
   .text :
   {
         KEEP (*(.handle));
   } >app_handle
-*/
-  .text :
-  {
-        *(text);
-  } >app_handle
-/*
-  userconst :
-  {
-       *(userconst);
-  } >app_handle
-*/
   /*
   ** User-Defined Section in Program Memory
   **
@@ -186,14 +175,12 @@ SECTIONS
   /*
   ** Configuration Words
   */
-/*
   __CONFIG3 :
-  { *(__CONFIG3.sec)    } >CONFIG3
+  { SHORT(ABSOLUTE(0xFFFF));    } >CONFIG3
   __CONFIG2 :
-  { *(__CONFIG2.sec)    } >CONFIG2
+  { SHORT(ABSOLUTE(0x81DF));    } >CONFIG2
   __CONFIG1 :
-  { *(__CONFIG1.sec)    } >CONFIG1
-*/
+  { SHORT(ABSOLUTE(0x3EEA));    } >CONFIG1
 
   /*
   ** =========== Data Memory ===========
