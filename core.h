@@ -459,6 +459,9 @@ typedef struct
  */
 typedef void (*iso15765_msg_handler_t)(iso15765_msg_t *msg);
 
+/*
+ * ISO-15765 target
+ */
 typedef struct
 {
     u8                       protocol;
