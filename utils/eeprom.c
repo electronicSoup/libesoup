@@ -108,7 +108,6 @@ result_t eeprom_read(UINT16 address, BYTE *data)
 		spi_write_byte(use_address);
 		*data = spi_write_byte(0x00);
 		EEPROM_DeSelect();
-		LOG_D("eeprom_read(0x%x, 0x%x)\n\r", address, *data);
 		return(SUCCESS);
 	}
         LOG_E("eeprom_read Address Range Error!\n\r");
@@ -131,8 +130,6 @@ result_t eeprom_read(UINT16 address, BYTE *data)
 result_t eeprom_write(UINT16 address, BYTE data)
 {
 	BYTE use_address;
-
-	LOG_D("eeprom_write(0x%x, 0x%x)\n\r", address, data);
 
 #ifdef EEPROM_USE_BOOT_PAGE
 	use_address = (BYTE)address;
@@ -175,15 +172,14 @@ result_t eeprom_write(UINT16 address, BYTE data)
 result_t eeprom_erase(UINT16 start_address)
 {
 	u16 loop;
-	BYTE use_address;
 
+        LOG_E("eeprom_erase(0x%x)\n\r", start_address);
 #ifdef EEPROM_USE_BOOT_PAGE
-	use_address = (BYTE)start_address;
+	if(start_address <= EEPROM_MAX_ADDRESS) {
 #else
-	use_address = (BYTE)(start_address + EEPROM_BOOT_PAGE_SIZE);
+	if(start_address + EEPROM_BOOT_PAGE_SIZE <= EEPROM_MAX_ADDRESS) {
 #endif
-	if(use_address <= EEPROM_MAX_ADDRESS) {
-		for (loop = use_address; loop <= EEPROM_MAX_ADDRESS; loop++) {
+		for (loop = start_address; (loop + EEPROM_BOOT_PAGE_SIZE) <= EEPROM_MAX_ADDRESS ; loop++) {
 			asm ("CLRWDT");
 			eeprom_write(loop, 0x00);
 		}
@@ -229,7 +225,7 @@ result_t eeprom_str_read(UINT16 address, BYTE *buffer, UINT16 *length)
 	while(  (rc == SUCCESS)
 	      &&(character != 0)
 	      &&(character != 0xff)
-	      &&(num_read < *length)) {
+	      &&(num_read < (*length - 1))) {
 
 		*ptr++ = character;
 		num_read++;
@@ -267,7 +263,7 @@ result_t  eeprom_str_write(UINT16 address, BYTE *buffer, UINT16 *length)
 
 	ptr = buffer;
 
-	while ( (*ptr) && (rc == SUCCESS)) {
+	while ( (*ptr) && (rc == SUCCESS) && (copied < (*length - 1))) {
 		LOG_D("Write to location %d value 0x%x\n\r", address, *ptr);
 		rc = eeprom_write(address++, *ptr++);
 		copied++;
