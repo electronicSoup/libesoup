@@ -52,7 +52,7 @@ char can_baud_rate_strings[8][10] = {
 };
 #endif
 
-static can_status_t can_status = { {0x00, 0x00, 0x00} };
+static can_status_t can_status;
 static can_baud_rate_t  baud_status = no_baud;
 
 static void status_handler(u8 mask, can_status_t status, can_baud_rate_t baud);

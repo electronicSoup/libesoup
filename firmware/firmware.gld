@@ -808,13 +808,20 @@ SECTIONS
 
   /*
   ** Configuration Words
+  *
+  *  __CONFIG3 :
+  *  { *(__CONFIG3.sec)    } >CONFIG3
+  *  __CONFIG2 :
+  *  { *(__CONFIG2.sec)    } >CONFIG2
+  *  __CONFIG1 :
+  *  { *(__CONFIG1.sec)    } >CONFIG1
   */
   __CONFIG3 :
-  { *(__CONFIG3.sec)    } >CONFIG3
+  { SHORT(ABSOLUTE(0xFFFF));    } >CONFIG3
   __CONFIG2 :
-  { *(__CONFIG2.sec)    } >CONFIG2
+  { SHORT(ABSOLUTE(0x81DF));    } >CONFIG2
   __CONFIG1 :
-  { *(__CONFIG1.sec)    } >CONFIG1
+  { SHORT(ABSOLUTE(0x3EEA));    } >CONFIG1
 
 
   /*

@@ -818,7 +818,8 @@ void dispatcher_iso15765_msg_handler(iso15765_msg_t *message)
 	LOG_D(" No Handler found for Protocol 0x%x\n\r", (u16)message->protocol);
 }
 
-result_t iso15765_register_handler(u8 protocol, iso15765_msg_handler_t handler)
+#if 0
+result_t iso15765_register_handler(iso15765_target_t *target)
 {
 	u8 loop;
 	LOG_D("iso15765_can_dispatch_register_handler(0x%x)\n\r", (u16)protocol);
@@ -828,9 +829,10 @@ result_t iso15765_register_handler(u8 protocol, iso15765_msg_handler_t handler)
 	 */
 	for(loop = 0; loop < ISO15765_REGISTER_ARRAY_SIZE; loop++) {
 		if(  (registered[loop].used == TRUE)
-		     &&(registered[loop].protocol == protocol)) {
-			LOG_D("Replacing existing handler for Protocol 0x%x\n\r", (u16)protocol);
-			registered[loop].handler = handler;
+		     &&(registered[loop].protocol == target->protocol)) {
+			LOG_D("Replacing existing handler for Protocol 0x%x\n\r", (u16)taget->protocol);
+			registered[loop].handler = target->handler;
+			target->handler_id = loop;
 			return(SUCCESS);
 		}
 	}
@@ -841,8 +843,9 @@ result_t iso15765_register_handler(u8 protocol, iso15765_msg_handler_t handler)
 	for(loop = 0; loop < ISO15765_REGISTER_ARRAY_SIZE; loop++) {
 		if(registered[loop].used == FALSE) {
 			registered[loop].used = TRUE;
-			registered[loop].protocol = protocol;
-			registered[loop].handler = handler;
+			registered[loop].protocol = target->protocol;
+			registered[loop].handler = target->handler;
+			target->handler_id = loop;
 			return(SUCCESS);
 		}
 	}
@@ -850,24 +853,25 @@ result_t iso15765_register_handler(u8 protocol, iso15765_msg_handler_t handler)
 	LOG_E("ISO15765 Dispatch full!\n\r");
 	return(ERR_NO_RESOURCES);
 }
+#endif
 
-result_t iso15765_dispatch_reg_handler(u8 protocol, iso15765_msg_handler_t handler, u8 *id)
+result_t iso15765_dispatch_reg_handler(iso15765_target_t *target)
 {
 	u8 loop;
 
-	*id = 0xff;
+	target->handler_id = 0xff;
 
-	LOG_D("iso15765_dispatch_register_handler(0x%x)\n\r", (u16)protocol);
+	LOG_D("iso15765_dispatch_register_handler(0x%x)\n\r", (u16)target->protocol);
 
 	/*
 	 * Check is there already a handler for the Protocol
 	 */
 	for(loop = 0; loop < ISO15765_REGISTER_ARRAY_SIZE; loop++) {
 		if(  (registered[loop].used == TRUE)
-		     &&(registered[loop].protocol == protocol)) {
-			LOG_D("Replacing existing handler for Protocol 0x%x\n\r", (u16)protocol);
-			registered[loop].handler = handler;
-			*id = loop;
+		     &&(registered[loop].protocol == target->protocol)) {
+			LOG_D("Replacing existing handler for Protocol 0x%x\n\r", (u16)target->protocol);
+			registered[loop].handler = target->handler;
+			target->handler_id = loop;
 			return(SUCCESS);
 		}
 	}
@@ -878,9 +882,9 @@ result_t iso15765_dispatch_reg_handler(u8 protocol, iso15765_msg_handler_t handl
 	for(loop = 0; loop < ISO15765_REGISTER_ARRAY_SIZE; loop++) {
 		if(registered[loop].used == FALSE) {
 			registered[loop].used = TRUE;
-			registered[loop].protocol = protocol;
-			registered[loop].handler = handler;
-			*id = loop;
+			registered[loop].protocol = target->protocol;
+			registered[loop].handler = target->handler;
+			target->handler_id = loop;
 			return(SUCCESS);
 		}
 	}

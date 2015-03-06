@@ -20,63 +20,58 @@
  *
  */
 #include "es_lib/core.h"
-#include "es_lib/app/os.h"
+//#include "es_lib/app/os.h"
 
-#define OS_FNS 0x8892
+#define OS_FNS 0x8A92
 
-result_t (*os_start_timer)(UINT16, expiry_function, BYTE *, es_timer *timer);
-result_t (*os_cancel_timer)(es_timer *timer);
+result_t (*timer_start)(UINT16, expiry_function, union sigval, es_timer *);
+result_t (*timer_cancel)(es_timer *timer);
 
-result_t (*os_eeprom_read)(UINT16 address, BYTE *data);
-result_t (*os_eeprom_write)(UINT16 address, BYTE data);
+result_t (*eeprom_read)(UINT16 address, BYTE *data);
+result_t (*eeprom_write)(UINT16 address, BYTE data);
 
-result_t (*os_l2_can_tx_msg)(can_frame *);
-result_t (*os_l2_can_dispatch_register_handler)(can_l2_target_t *target, BYTE *id);
-result_t (*os_l2_can_dispatch_unregister_handler)(BYTE id);
+result_t (*can_l2_tx_frame)(can_frame *);
+result_t (*can_l2_dispatch_reg_handler)(can_l2_target_t *target);
+result_t (*can_l2_dispatch_unreg_handler)(u8 id);
 
-result_t (*os_l3_get_address)(BYTE *address);
-result_t (*os_l3_can_tx_message)(iso15765_msg_t *msg);
-result_t (*os_l3_can_dispatch_register_handler)(BYTE protocol, iso15765_msg_handler_t handler, BYTE *id);
-result_t (*os_l3_can_dispatch_unregister_handler)(BYTE id);
+result_t (*get_node_address)(u8 *address);
+result_t (*iso15765_tx_message)(iso15765_msg_t *msg);
+result_t (*iso15765_dispatch_reg_handler)(iso15765_target_t * target);
+result_t (*iso15765_dispatch_unreg_handler)(u8 id);
 
-void (*os_serial_log)(log_level_t level, char *tag, char *fmt, ...);
+void (*serial_log)(log_level_t level, char *tag, char *fmt, ...);
 
-void (*os_net_log)(log_level_t level, char *msg);
-result_t (*os_net_log_register_as_handler)(void (*)(log_level_t, char *), log_level_t);
-result_t (*os_net_log_unregister_as_handler)(void);
+void (*iso15765_log)(log_level_t level, char *msg);
 
-void (*os_invalidate_app)(void);
-
-result_t (*os_get_io_address)(u8 *);
+result_t (*invalidate_app)(void);
+result_t (*get_io_address)(u8 *);
 
 void _ISR __attribute__((__no_auto_psv__)) _DefaultInterrupt(void)
 {
-	os_invalidate_app();
+	invalidate_app();
 }
 
 void os_init(void)
 {
-	os_start_timer = (result_t(*)(UINT16, expiry_function, BYTE *, es_timer *))OS_FNS;
-	os_cancel_timer = (result_t(*)(es_timer *))(OS_FNS + 4);
+	timer_start = (result_t(*)(UINT16, expiry_function, union sigval data, es_timer *))OS_FNS;
+	timer_cancel = (result_t(*)(es_timer *))(OS_FNS + 4);
 
-	os_eeprom_read = (result_t(*)(UINT16, BYTE *))(OS_FNS + 8);
-	os_eeprom_write = (result_t(*)(UINT16, BYTE))(OS_FNS + 12);
+	eeprom_read = (result_t(*)(UINT16, BYTE *))(OS_FNS + 8);
+	eeprom_write = (result_t(*)(UINT16, BYTE))(OS_FNS + 12);
 
-	os_l2_can_tx_msg = (result_t(*)(can_frame *))(OS_FNS + 16);
-	os_l2_can_dispatch_register_handler = (result_t(*)(can_l2_target_t *, BYTE *))(OS_FNS + 20);
-	os_l2_can_dispatch_unregister_handler = (result_t(*)(BYTE))(OS_FNS + 24);
+	can_l2_tx_frame = (result_t(*)(can_frame *))(OS_FNS + 16);
+	can_l2_dispatch_reg_handler = (result_t(*)(can_l2_target_t *))(OS_FNS + 20);
+	can_l2_dispatch_unreg_handler = (result_t(*)(u8))(OS_FNS + 24);
 
-	os_l3_get_address = (result_t(*)(BYTE *))(OS_FNS + 28);
-	os_l3_can_tx_message = (result_t(*)(iso15765_msg_t *))(OS_FNS + 32);
-	os_l3_can_dispatch_register_handler = (result_t(*)(BYTE, iso15765_msg_handler_t, BYTE *))(OS_FNS + 36);
-	os_l3_can_dispatch_unregister_handler = (result_t(*)(BYTE))(OS_FNS + 40);
+	get_node_address = (result_t(*)(BYTE *))(OS_FNS + 28);
+	iso15765_tx_message = (result_t(*)(iso15765_msg_t *))(OS_FNS + 32);
+	iso15765_dispatch_reg_handler = (result_t(*)(iso15765_target_t * target))(OS_FNS + 36);
+	iso15765_dispatch_unreg_handler = (result_t(*)(u8))(OS_FNS + 40);
 
-	os_serial_log = (void (*)(log_level_t, char *, char *, ...))(OS_FNS + 44);
+	serial_log = (void (*)(log_level_t, char *, char *, ...))(OS_FNS + 44);
     
-	os_net_log = (void (*)(log_level_t, char *))(OS_FNS + 48);
-	os_net_log_register_as_handler = (result_t(*)(void (*)(log_level_t, char *), log_level_t))(OS_FNS + 52);
-	os_net_log_unregister_as_handler = (result_t(*)(void))(OS_FNS + 56);
-	os_invalidate_app = (void (*)(void))(OS_FNS + 60);
+	iso15765_log = (void (*)(log_level_t, char *))(OS_FNS + 48);
+	invalidate_app = (result_t (*)(void))(OS_FNS + 52);
 
-	os_get_io_address = (result_t (*)(u8 *))(OS_FNS + 64);
+	get_io_address = (result_t (*)(u8 *))(OS_FNS + 56);
 }

@@ -68,10 +68,19 @@
 #define CAN_L2_HANDLER_ARRAY_SIZE 5
 
 /*
+ * If Layer 2 is required to listen for the Connected Baud enable 
+ * CAN_BAUD_AUTO_DETECT. In that case pass the baudrate no_baud to the Layer
+ * 2 Initialise function
+ */
+//#define CAN_BAUD_AUTO_DETECT
+
+#ifdef CAN_BAUD_AUTO_DETECT
+/*
  * If Layer 2 is required to listen for the Connected Baud rate this
  * macro defines the listening period.
  */
 #define CAN_BAUD_AUTO_DETECT_LISTEN_PERIOD    SECONDS_TO_TICKS(20)
+#endif // CAN_BAUD_AUTO_DETECT
 
 /*
  * The Ping Protocol.

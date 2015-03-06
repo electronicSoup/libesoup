@@ -1,6 +1,7 @@
 /*
  * This is a template main.c file for a Cinnamon Bun Node Application
  */
+#incldue "es_lib/app/app.h"
 #include "es_lib/os/os.h"
 
 /*
@@ -10,11 +11,10 @@
  * the the OS assumes that there is no valid Application and will ignore your
  * applicaiton, failing to run any of your code.
  */
-#define APP_STRINGS_BASE 0x18000
-__prog__ char app_author[40] __attribute__((space(prog), address(APP_STRINGS_BASE))) = "me@bogus.com";
-__prog__ char app_software[50] __attribute__((space(prog), address(APP_STRINGS_BASE + 40))) = "My Supper cool App";
-__prog__ char app_version[10] __attribute__((space(prog), address(APP_STRINGS_BASE + 40 + 50))) = "1.0";
-__prog__ char app_uri[50] __attribute__((space(prog), address(APP_STRINGS_BASE + 40 + 50 + 10))) = "http:/www.bogus.com";
+DEF_APP_AUTHOR_40("me@mail.com")
+DEF_APP_DESCRIPTION_50("My ES CAN Node App")
+DEF_APP_VERSION_10("v1.0")
+DEF_APP_URL_50("www.test.com")
 
 #define TAG "MyAPP"
 

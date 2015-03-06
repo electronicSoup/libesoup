@@ -238,7 +238,11 @@ static void exp_network_baud_chage_req(timer_t timer_id, union sigval data)
 #if defined(ISO15765) || defined(ISO11783)
 u8 dcncp_get_node_address(void)
 {
-	return(dcncp_node_address);
+	if(status.bit_field.dcncp_node_address_valid) {
+		return (dcncp_node_address);
+	} else {
+		return(BROADCAST_NODE_ADDRESS);
+	}
 }
 #endif // ISO15765 || ISO11783
 

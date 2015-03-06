@@ -1,6 +1,6 @@
 /**
  *
- * \file es_lib/os/os.h
+ * \file es_lib/app/os.h
  *
  * OS function prototypes
  *
@@ -26,28 +26,26 @@
 
 extern void        os_init(void);
 
-extern result_t  (*os_start_timer)(UINT16, expiry_function, BYTE *, es_timer *timer);
-extern result_t  (*os_cancel_timer)(es_timer *timer);
+extern result_t  (*timer_start)(UINT16, expiry_function, union sigval data, es_timer *timer);
+extern result_t  (*timer_cancel)(es_timer *timer);
 
-extern result_t  (*os_eeprom_read)(UINT16 address, BYTE *data);
-extern result_t  (*os_eeprom_write)(UINT16 address, BYTE data);
+extern result_t  (*eeprom_read)(UINT16 address, BYTE *data);
+extern result_t  (*eeprom_write)(UINT16 address, BYTE data);
 
-extern result_t  (*os_l2_can_tx_msg)(can_frame *);
-extern result_t  (*os_l2_can_dispatch_register_handler)(can_l2_target_t *target, BYTE *id);
-extern result_t  (*os_l2_can_dispatch_unregister_handler)(BYTE id);
+extern result_t  (*can_l2_tx_frame)(can_frame *);
+extern result_t  (*can_l2_dispatch_reg_handler)(can_l2_target_t *target);
+extern result_t  (*can_l2_dispatch_unreg_handler)(u8 id);
 
-extern result_t  (*os_l3_get_address)(BYTE *address);
-extern result_t  (*os_l3_can_tx_message)(iso15765_msg_t *msg);
-extern result_t  (*os_l3_can_dispatch_register_handler)(BYTE protocol, iso15765_msg_handler_t handler, BYTE *id);
-extern result_t  (*os_l3_can_dispatch_unregister_handler)(BYTE id);
+extern result_t  (*get_node_address)(BYTE *address);
+extern result_t  (*iso15765_tx_message)(iso15765_msg_t *msg);
+extern result_t  (*iso15765_dispatch_reg_handler)(iso15765_target_t * target);
+extern result_t  (*iso15765_dispatch_unreg_handler)(u8 id);
 
-extern void      (*os_serial_log)(log_level_t level, char *tag, char *fmt, ...);
+extern void      (*serial_log)(log_level_t level, char *tag, char *fmt, ...);
 
-extern void      (*os_net_log)(log_level_t level, char *msg);
-extern result_t  (*os_net_log_register_as_handler)(void (*)(log_level_t, char *), log_level_t);
-extern result_t  (*os_net_log_unregister_as_handler)(void);
+extern void      (*iso15765_log)(log_level_t level, char *msg);
 
-extern void      (*os_invalidate_app)(void);
-extern result_t  (*os_get_io_address)(u8 *);
+extern void      (*invalidate_app)(void);
+extern result_t  (*get_io_address)(u8 *);
 
 #endif // ES_OS_H
