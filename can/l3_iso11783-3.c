@@ -117,7 +117,7 @@ void iso11783_frame_handler(can_frame *frame)
 	u8  pf;
 	u8  ps;
 
-	LOG_D("iso11783_frame_handler(frame id 0x%lx)\n\r", frame->can_id);
+	LOG_D("iso11783_frame_handler(frame id 0x%x)\n\r", frame->can_id);
 
 	/*
 	 * Parameter Group Numbers PGN:
@@ -145,5 +145,17 @@ void iso11783_frame_handler(can_frame *frame)
 	pgn = (pgn << 8) | pf;
 	pgn = (pgn << 8) | ps;
 
-	LOG_D("iso11783_frame_handler received PGN 0x%lx\n\r", pgn);
+	LOG_D("iso11783_frame_handler received PGN %d  =  0x%x\n\r", pgn, pgn);
+
+	if(pgn == 128267) {
+		LOG_D("Depth\n\r");
+	} else if(pgn == 129025) {
+		LOG_D("Position\n\r");
+	} else if(pgn == 129027) {
+		LOG_D("Position Delta\n\r");
+	} else if(pgn == 129029) {
+		LOG_D("GNSS Position Data\n\r");
+	} else if(pgn == 129033) {
+		LOG_D("Time & Date\n\r");
+	}
 }
