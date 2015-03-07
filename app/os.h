@@ -41,11 +41,10 @@ extern result_t  (*iso15765_tx_message)(iso15765_msg_t *msg);
 extern result_t  (*iso15765_dispatch_reg_handler)(iso15765_target_t * target);
 extern result_t  (*iso15765_dispatch_unreg_handler)(u8 id);
 
-extern void      (*serial_log)(log_level_t level, char *tag, char *fmt, ...);
+extern result_t  (*serial_log)(log_level_t level, char *tag, char *fmt, ...);
 
 extern void      (*iso15765_log)(log_level_t level, char *msg);
 
-extern void      (*invalidate_app)(void);
 extern result_t  (*get_io_address)(u8 *);
 
 #endif // ES_OS_H
