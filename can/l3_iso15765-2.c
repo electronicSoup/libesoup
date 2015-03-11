@@ -44,6 +44,8 @@ typedef struct
     iso15765_msg_handler_t handler;
 } iso15765_register_t;
 
+static iso15765_msg_handler_t unhandled_handler;
+
 static iso15765_register_t registered[ISO15765_REGISTER_ARRAY_SIZE];
 static void dispatcher_iso15765_msg_handler(iso15765_msg_t *message);
 
@@ -200,6 +202,8 @@ result_t iso15765_init(u8 address)
 		registered[loop].handler = (iso15765_msg_handler_t)NULL;
 	}
 
+	unhandled_handler = (iso15765_msg_handler_t)NULL;
+
 #if defined(MCP)
 	/*
 	 * Microchip Microcontrollers only have one Static RX and one Static TX Buffer
@@ -234,7 +238,7 @@ result_t iso15765_init(u8 address)
 	target.filter = tx_frame_id.can_id & 0xffffff00; //Don't filter on the Source Byte
 	target.handler = iso15765_frame_handler;
 
-	can_l2_reg_handler(&target);
+	can_l2_dispatch_reg_handler(&target);
 
 	initialised = 0x01;
 	return(SUCCESS);
@@ -818,43 +822,6 @@ void dispatcher_iso15765_msg_handler(iso15765_msg_t *message)
 	LOG_D(" No Handler found for Protocol 0x%x\n\r", (u16)message->protocol);
 }
 
-#if 0
-result_t iso15765_register_handler(iso15765_target_t *target)
-{
-	u8 loop;
-	LOG_D("iso15765_can_dispatch_register_handler(0x%x)\n\r", (u16)protocol);
-
-	/*
-	 * Check is there already a handler for the Protocol
-	 */
-	for(loop = 0; loop < ISO15765_REGISTER_ARRAY_SIZE; loop++) {
-		if(  (registered[loop].used == TRUE)
-		     &&(registered[loop].protocol == target->protocol)) {
-			LOG_D("Replacing existing handler for Protocol 0x%x\n\r", (u16)taget->protocol);
-			registered[loop].handler = target->handler;
-			target->handler_id = loop;
-			return(SUCCESS);
-		}
-	}
-
-	/*
-	 * Find a free slot and add the Protocol
-	 */
-	for(loop = 0; loop < ISO15765_REGISTER_ARRAY_SIZE; loop++) {
-		if(registered[loop].used == FALSE) {
-			registered[loop].used = TRUE;
-			registered[loop].protocol = target->protocol;
-			registered[loop].handler = target->handler;
-			target->handler_id = loop;
-			return(SUCCESS);
-		}
-	}
-
-	LOG_E("ISO15765 Dispatch full!\n\r");
-	return(ERR_NO_RESOURCES);
-}
-#endif
-
 result_t iso15765_dispatch_reg_handler(iso15765_target_t *target)
 {
 	u8 loop;
@@ -862,19 +829,6 @@ result_t iso15765_dispatch_reg_handler(iso15765_target_t *target)
 	target->handler_id = 0xff;
 
 	LOG_D("iso15765_dispatch_register_handler(0x%x)\n\r", (u16)target->protocol);
-
-	/*
-	 * Check is there already a handler for the Protocol
-	 */
-	for(loop = 0; loop < ISO15765_REGISTER_ARRAY_SIZE; loop++) {
-		if(  (registered[loop].used == TRUE)
-		     &&(registered[loop].protocol == target->protocol)) {
-			LOG_D("Replacing existing handler for Protocol 0x%x\n\r", (u16)target->protocol);
-			registered[loop].handler = target->handler;
-			target->handler_id = loop;
-			return(SUCCESS);
-		}
-	}
 
 	/*
 	 * Find a free slot and add the Protocol
@@ -902,4 +856,10 @@ result_t iso15765_dispatch_unreg_handler(u8 id)
 		return(SUCCESS);
 	}
 	return(ERR_BAD_INPUT_PARAMETER);
+}
+
+result_t iso15765_dispatch_set_unhandled_handler(iso15765_msg_handler_t handler)
+{
+	unhandled_handler = (iso15765_msg_handler_t)handler;
+	return(SUCCESS);
 }

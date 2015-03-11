@@ -104,7 +104,7 @@ void dcncp_init(void (*arg_status_handler)(u8 mask, can_status_t status, can_bau
 #elif defined(ES_LINUX)
 	LOG_D("Node Address Register handler Mask 0x%x, Filter 0x%x\n\r", target.mask, target.filter);
 #endif
-	can_l2_reg_handler(&target);
+	can_l2_dispatch_reg_handler(&target);
 
 #if defined(ISO15765) || defined(ISO11783)
 	/*
