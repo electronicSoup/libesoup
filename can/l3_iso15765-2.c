@@ -29,7 +29,7 @@
 
 #include "system.h"
 #include "es_lib/can/es_can.h"
-#include "es_lib/can/dcncp/dcncp.h"
+#include "es_lib/can/dcncp/dcncp_can.h"
 #include "es_lib/timers/timers.h"
 
 #define DEBUG_FILE

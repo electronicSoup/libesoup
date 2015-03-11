@@ -205,15 +205,26 @@ result_t flash_write_row(UINT32 address, BYTE *data)
  */
 result_t flash_strcpy(char *dst, __prog__ char *src, UINT16 *length)
 {
-	char *ptr = dst;
+	char *dst_p = dst;
+
 	UINT16 i = 0;
 
 	while ((*src != 0x00) && (*src != 0xff) && (i < (*length) - 1)) {
-		*ptr++ = *src++;
+		*dst_p++ = *src++;
 		i++;
 	}
-	*ptr = 0x00;
+	*dst_p = 0x00;
 
 	*length = i;
 	return (SUCCESS);
+}
+
+u16 flash_strlen(__prog__ char *src)
+{
+	UINT16 i = 0;
+
+	while ((*src != 0x00) && (*src != 0xff)) {
+		i++;
+	}
+	return (i);
 }

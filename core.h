@@ -495,17 +495,4 @@ typedef enum
 #define LOG_ERROR 3
 #define NO_LOGGING 4
 
-
-typedef enum {
-    HWInfoRequest = 0x01,
-    HWInfoResponse = 0x02,
-    OSInfoRequest = 0x03,
-    OSInfoResponse = 0x04,
-    AppInfoRequest = 0x05,
-    AppInfoResponse = 0x06,
-    AppStatusRequest = 0x07,
-    AppStatusResponse = 0x08
-} node_management_msg_t;
-
-
 #endif // ES_CAN_CORE_H
