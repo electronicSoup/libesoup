@@ -125,7 +125,7 @@ result_t can_l2_tx_frame(can_frame *frame)
 	return (SUCCESS);
 }
 
-result_t can_l2_reg_handler(can_l2_target_t *target)
+result_t can_l2_dispatch_reg_handler(can_l2_target_t *target)
 {
 	int loop;
 

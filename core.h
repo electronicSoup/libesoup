@@ -469,6 +469,33 @@ typedef struct
     u8                       handler_id;
 } iso15765_target_t;
 
+/**
+ * \brief iso11783_msg_t
+ *
+ */
+typedef struct
+{
+    u8 source;
+    u32 pgn;
+    u8 *data;
+} iso11783_msg_t;
+
+/**
+ * \brief iso11783_msg_handler
+ *
+ * ISO-11783 Message Handler function.
+ */
+typedef void (*iso11783_msg_handler_t)(iso11783_msg_t *msg);
+
+/*
+ * ISO-11783 target
+ */
+typedef struct
+{
+    u32                      pgn;
+    iso11783_msg_handler_t   handler;
+    u8                       handler_id;
+} iso11783_target_t;
 
 /**
  * \brief log_level_t
