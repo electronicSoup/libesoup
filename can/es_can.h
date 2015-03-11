@@ -28,8 +28,8 @@
  * ISO15765 Protocols
  */
 #if defined(ISO15765)
-#define LOGGER_PROTOCOL_ID             0x01
-#define NODE_MANAGEMENT_PROTOCOL_ID    0x02
+#define ISO15765_LOGGER_PROTOCOL_ID    0x01
+#define ISO15765_DCNCP_PROTOCOL_ID     0x02
 #endif
 
 /*
@@ -82,10 +82,10 @@
 extern char can_l2_status_strings[5][17];
 #endif
 
-#ifdef CAN_DCNCP
+#ifdef DCNCP_CAN
 #define DCNCP_INIT_STATUS_MASK         0x08
 #define DCNCP_NODE_ADDRESS_STATUS_MASK 0x10
-#endif // CAN_DCNCP
+#endif // DCNCP_CAN
 
 typedef struct {
     union {

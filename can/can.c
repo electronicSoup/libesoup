@@ -19,12 +19,15 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  *
  */
-
 #include "system.h"
 #include "es_lib/can/es_can.h"
-#ifdef CAN_DCNCP
-#include "es_lib/can/dcncp/dcncp.h"
+#ifdef DCNCP_CAN
+#include "es_lib/can/dcncp/dcncp_can.h"
 #endif
+#ifdef DCNCP_ISO15765
+#include "es_lib/can/dcncp/dcncp_iso15765.h"
+#endif // DCNCP_ISO15765
+
 #define DEBUG_FILE
 #include "es_lib/logger/serial_log.h"
 #undef DEBUG_FILE
@@ -106,7 +109,7 @@ void status_handler(u8 mask, can_status_t status, can_baud_rate_t baud)
 				break;
 		}
 
-#ifdef CAN_DCNCP
+#ifdef DCNCP_CAN
 		if ((status.bit_field.l2_status == L2_Connected) && (can_status.bit_field.l2_status != L2_Connected)) {
 			LOG_D("Layer 2 Connected so start DCNCP\n\r");
 			dcncp_init(status_handler);
@@ -119,7 +122,7 @@ void status_handler(u8 mask, can_status_t status, can_baud_rate_t baud)
 			app_status_handler(can_status, baud_status);
 	}
 
-#ifdef CAN_DCNCP
+#ifdef DCNCP_CAN
 	else if (mask == DCNCP_INIT_STATUS_MASK) {
 		if(status.bit_field.dcncp_initialised) {
 			LOG_D("DCNCP_Initialised\n\r");
@@ -141,15 +144,18 @@ void status_handler(u8 mask, can_status_t status, can_baud_rate_t baud)
 
 #if defined(ISO15765)
 			iso15765_init(dcncp_get_node_address());
-#endif
+#if defined(DCNCP_ISO15765)
+			dcncp_iso15765_init();
+#endif // DCNCP_ISO15765
+#endif // ISO15765
 
 #if defined(ISO11783)
-			iso11783_init(dcncp_get_node_address());
-#endif
+		 	iso11783_init(dcncp_get_node_address());
+#endif  // ISO11783
 		}
 	}
 #endif // ISO15765 || ISO11783
-#endif // CAN_DCNCP
+#endif // DCNCP_CAN
 }
 
 #if defined(MCP)

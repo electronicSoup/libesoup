@@ -27,21 +27,21 @@
 /*
  * Node module will use standard CAN frames which are 11 bits for Id
  */
-#define CAN_DCNCP_MASK                          0x7f0
-#define CAN_DCNCP_FILTER                        0x700
+#define DCNCP_CAN_MASK                          0x7f0
+#define DCNCP_CAN_FILTER                        0x700
 
-#define CAN_DCNCP_AddressRegisterReq            0x700
+#define DCNCP_CAN_AddressRegisterReq            0x700
 
-#define CAN_DCNCP_AddressRegisterReject         0x701
-#define CAN_DCNCP_NodeAddressError              0x702
-#define CAN_DCNCP_NodeAddressReportReq          0x703
-#define CAN_DCNCP_NodeAddressReporting          0x704
+#define DCNCP_CAN_AddressRegisterReject         0x701
+#define DCNCP_CAN_NodeAddressError              0x702
+#define DCNCP_CAN_NodeAddressReportReq          0x703
+#define DCNCP_CAN_NodeAddressReporting          0x704
 
-#define CAN_DCNCP_NetworkChangeBaudRateReq      0x705
-#define CAN_DCNCP_NodePingMessage               0x706
+#define DCNCP_CAN_NetworkChangeBaudRateReq      0x705
+#define DCNCP_CAN_NodePingMessage               0x706
 
-#define CAN_DCNCP_RegisterNetLogger             0x707
-#define CAN_DCNCP_UnRegisterNetLogger           0x708
+#define DCNCP_CAN_RegisterNetLogger             0x707
+#define DCNCP_CAN_UnRegisterNetLogger           0x708
 
 extern void dcncp_init(void (*arg_status_handler)(u8 mask, can_status_t status, can_baud_rate_t baud));
 extern void dcncp_request_network_baud_change(can_baud_rate_t baud);

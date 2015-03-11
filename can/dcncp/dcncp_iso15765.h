@@ -1,10 +1,10 @@
 /**
  *
- * \file es_lib/utils/flash.h
+ * \file es_lib/can/dcncp/dcncp_iso15765.h
  *
- * Flash function prototypes for electronicSoup Cinnamon Bun code Library
+ * ISO15765 based node managment
  *
- * Copyright 2014 John Whitmore <jwhitmore@electronicsoup.com>
+ * Copyright 2015 John Whitmore <jwhitmore@electronicsoup.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 2 of the GNU General Public License
@@ -19,16 +19,10 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  *
  */
+#ifndef DCNCP_ISO15765_H
+#define DCNCP_ISO15765_H
 
-#ifndef FLASH_H
-#define FLASH_H
+extern void dcncp_iso15765_init(void);
 
-#include "system.h"
 
-extern BOOL     flash_page_empty(UINT32 address);
-extern result_t flash_erase_page(UINT32 address);
-extern result_t flash_write_row(UINT32 address, BYTE *data);
-extern result_t flash_strcpy(char *dst, __prog__ char *src, UINT16 *length);
-extern u16      flash_strlen(__prog__ char *src);
-
-#endif //FLASH_H
+#endif
