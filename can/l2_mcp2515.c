@@ -1366,4 +1366,5 @@ result_t can_l2_dispatch_unreg_handler(u8 id)
 result_t can_l2_dispatch_set_unhandled_handler(can_l2_msg_handler_t handler)
 {
 	unhandled_handler = (can_l2_msg_handler_t)handler;
+	return(SUCCESS);
 }
