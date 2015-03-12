@@ -55,13 +55,13 @@
  */
 #define ISO_11783_DA_BROADCAST 0xFF
 
-#define EDP_MASK 0x02000000
-#define DP_MASK  0x01000000
-#define PF_MASK  0x00FF0000
-#define PS_MASK  0x0000FF00
-#define DA_MASK  0x0000FF00
-#define GE_MASK  0x0000FF00
-#define SA_MASK  0x000000FF
+#define EDP_MASK  0x02000000
+#define DP_MASK   0x01000000
+#define PF_MASK   0x00FF0000
+#define PS_MASK   0x0000FF00
+#define DA_MASK   0x0000FF00
+#define GE_MASK   0x0000FF00
+#define SA_MASK   0x000000FF
 
 #define PF_PDU_2_CUTOFF 0xF0
 
@@ -74,6 +74,7 @@
 #define PGN_PROPRIETARY_B_LAST    0x00FFFF
 #define PGN_TRANSFER              0x00CA00
 
+#if 0
 typedef union
 {
     struct
@@ -85,18 +86,39 @@ typedef union
     } bytes;
     u32 can_id;
 } iso11783_can_id;
+#endif
 
 static u8 node_address;
+
+typedef struct
+{
+    u8 used;
+    u32 pgn;
+    iso11783_msg_handler_t handler;
+} iso11783_register_t;
+
+static iso11783_register_t registered[ISO15765_REGISTER_ARRAY_SIZE];
+
+static iso11783_msg_handler_t unhandled_handler;
 
 static void iso11783_frame_handler(can_frame *frame);
 
 result_t iso11783_init(u8 address)
 {
+	u16 loop;
 	can_l2_target_t target;
 
 	LOG_D("iso11783_init(0x%x)\n\r", address);
 
 	node_address = address;
+
+	for(loop = 0; loop < ISO11783_REGISTER_ARRAY_SIZE; loop++) {
+		registered[loop].used = FALSE;
+		registered[loop].pgn = 0x00;
+		registered[loop].handler = (iso11783_msg_handler_t)NULL;
+	}
+
+	unhandled_handler = (iso11783_msg_handler_t)NULL;
 	
 	/*
 	 * Define our target for Layer 2 Frames and register it.
@@ -106,16 +128,24 @@ result_t iso11783_init(u8 address)
 	target.filter =  CAN_EFF_FLAG;
 	target.handler = iso11783_frame_handler;
 
-	can_l2_reg_handler(&target);
+	can_l2_dispatch_reg_handler(&target);
 
 	return(SUCCESS);
 }
 
+result_t iso11783_tx_msg(iso11783_msg_t *msg)
+{
+	LOG_D("iso11783_tx_msg()\n\r");
+}
+
 void iso11783_frame_handler(can_frame *frame)
 {
-	u32 pgn;
-	u8  pf;
-	u8  ps;
+	u32            pgn;
+	u8             pf;
+	u8             ps;
+	u16            loop;
+	u8             handled;
+	iso11783_msg_t msg;
 
 	LOG_D("iso11783_frame_handler(frame id 0x%x)\n\r", frame->can_id);
 
@@ -158,4 +188,59 @@ void iso11783_frame_handler(can_frame *frame)
 	} else if(pgn == 129033) {
 		LOG_D("Time & Date\n\r");
 	}
+
+	handled = 0x00;
+
+	for (loop = 0; loop < ISO11783_REGISTER_ARRAY_SIZE; loop++) {
+		if (registered[loop].used && (pgn == registered[loop].pgn)) {
+			registered[loop].handler(&msg);
+			handled = 1;
+		}
+	}
+
+	if(!handled) {
+		unhandled_handler(&msg);
+	}
+}
+
+result_t iso11783_dispatch_reg_handler(iso11783_target_t *target)
+{
+	u8 loop;
+
+	target->handler_id = 0xff;
+
+	LOG_D("iso11783_dispatch_register_handler(0x%lx)\n\r", target->pgn);
+
+	/*
+	 * Find a free slot and add the Protocol
+	 */
+	for(loop = 0; loop < ISO11783_REGISTER_ARRAY_SIZE; loop++) {
+		if(registered[loop].used == FALSE) {
+			registered[loop].used = TRUE;
+			registered[loop].pgn = target->pgn;
+			registered[loop].handler = target->handler;
+			target->handler_id = loop;
+			return(SUCCESS);
+		}
+	}
+
+	LOG_E("ISO11783 Dispatch full!\n\r");
+	return(ERR_NO_RESOURCES);
+}
+
+result_t iso11783_dispatch_unreg_handler(u8 id)
+{
+	if((id < ISO11783_REGISTER_ARRAY_SIZE) && (registered[id].used)) {
+		registered[id].used = FALSE;
+		registered[id].pgn = 0x00;
+		registered[id].handler = (iso11783_msg_handler_t)NULL;
+		return(SUCCESS);
+	}
+	return(ERR_BAD_INPUT_PARAMETER);
+}
+
+result_t iso11783_dispatch_set_unhandled_handler(iso11783_msg_handler_t handler)
+{
+	unhandled_handler = (iso11783_msg_handler_t)handler;
+	return(SUCCESS);
 }

@@ -23,14 +23,13 @@
 #include <string.h>
 #include <stdio.h>
 
-#include "es_lib/core.h"
 #include "system.h"
 
 #define DEBUG_FILE
 #include "es_lib/logger/serial_log.h"
 #include "es_lib/can/es_can.h"
 
-#include "es_lib/can/dcncp/dcncp.h"
+#include "es_lib/can/dcncp/dcncp_can.h"
 #include "es_lib/timers/timers.h"
 #if defined(ISO15765_LOGGER) || defined(ISO15765_LOGGING)
 #include "es_lib/logger/iso15765_log.h"
@@ -95,7 +94,7 @@ void dcncp_init(void (*arg_status_handler)(u8 mask, can_status_t status, can_bau
 #endif // ISO15765_LOGGER
 
 	/*
-	 * Add the Layer 2 and Layer 3 Can Message Handlers
+	 * Add the Layer 2 frame Handler
 	 */
 	target.mask    = (u32)DCNCP_CAN_MASK;
 	target.filter  = (u32)DCNCP_CAN_FILTER;
@@ -105,7 +104,7 @@ void dcncp_init(void (*arg_status_handler)(u8 mask, can_status_t status, can_bau
 #elif defined(ES_LINUX)
 	LOG_D("Node Address Register handler Mask 0x%x, Filter 0x%x\n\r", target.mask, target.filter);
 #endif
-	can_l2_reg_handler(&target);
+	can_l2_dispatch_reg_handler(&target);
 
 #if defined(ISO15765) || defined(ISO11783)
 	/*
@@ -373,6 +372,7 @@ void can_l2_msg_handler(can_frame *frame)
 		}
 #endif // ISO15765 || ISO11783
 	} else if (frame->can_id == DCNCP_CAN_NodeAddressReportReq) {
+		LOG_D("DCNCP_CAN_NodeAddressReportReq:\n\r");
 #if defined(ISO15765) || defined(ISO11783)
 		// Create a random timer between 100 and  1000 miliSeconds for firing node report message
 		rc = timer_start(MILLI_SECONDS_TO_TICKS((u16) ((rand() % 900) + 100)), exp_send_node_addr_report, (union sigval)(void *)NULL, &timer);

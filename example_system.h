@@ -161,6 +161,13 @@
 #define ISO15765_LOGGER_PING_PERIOD SECONDS_TO_TICKS(60)
 #endif // ISO15765_LOGGER
 
+/*
+ * Include Dynamic Can Node COnfiguration Protocol in ISO15765 layer.
+ *
+ * Used for management across the CAN Network
+ */
+#define DCNCP_ISO15765
+
 #endif // ISO15765
 
 /*

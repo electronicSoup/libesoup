@@ -27,7 +27,7 @@
 #define LOG_LEVEL LOG_INFO
 #include "es_lib/logger/serial_log.h"
 #include "es_lib/can/es_can.h"
-#include "es_lib/can/dcncp/dcncp.h"
+#include "es_lib/can/dcncp/dcncp_can.h"
 #include "es_lib/can/l2_mcp2515.h"
 #include "es_lib/timers/timers.h"
 
@@ -59,6 +59,7 @@ typedef struct
 } can_register_t;
 
 static can_register_t registered_handlers[CAN_L2_HANDLER_ARRAY_SIZE];
+static can_l2_msg_handler_t unhandled_handler;
 
 static u8 connecting_errors = 0;
 
@@ -162,6 +163,8 @@ result_t can_l2_init(can_baud_rate_t arg_baud_rate,
 	}
 #endif // CAN_BAUD_AUTO_DETECT
 	mcp2515_isr = FALSE;
+
+	unhandled_handler = (can_l2_msg_handler_t)NULL;
 
 	/*
          * Intialise the status info. and status_baud
@@ -1316,7 +1319,7 @@ static void can_l2_dispatcher_frame_handler(can_frame *message)
 	}
 }
 
-result_t can_l2_reg_handler(can_l2_target_t *target)
+result_t can_l2_dispatch_reg_handler(can_l2_target_t *target)
 {
 	u8 loop;
 	LOG_D("sys_l2_can_dispatch_reg_handler mask 0x%lx, filter 0x%lx\n\r",
@@ -1358,4 +1361,9 @@ result_t can_l2_dispatch_unreg_handler(u8 id)
 		}
 	}
 	return(ERR_GENERAL_CAN_ERROR);
+}
+
+result_t can_l2_dispatch_set_unhandled_handler(can_l2_msg_handler_t handler)
+{
+	unhandled_handler = (can_l2_msg_handler_t)handler;
 }
