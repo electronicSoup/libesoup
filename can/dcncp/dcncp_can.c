@@ -44,6 +44,11 @@ static void exp_network_baud_chage_req(timer_t timer_id, union sigval data);
 #endif // DCNCP_CAN_BAUDRATE
 
 #if defined(ISO15765) || defined(ISO11783)
+/*
+ * This function must be defined by your Firmware!
+ */
+extern u8 node_get_address(void);
+
     static es_timer node_send_reg_req_timer;
     static es_timer node_reg_timer;
 
