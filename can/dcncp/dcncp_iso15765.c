@@ -44,14 +44,14 @@
 extern BOOL app_valid;
 
 typedef enum {
-    hw_info_request     = 0x01,
-    hw_info_response    = 0x02,
-    os_info_request     = 0x03,
-    os_info_response    = 0x04,
-    app_info_request    = 0x05,
-    app_info_response   = 0x06,
-    app_status_request  = 0x07,
-    app_status_response = 0x08,
+    hw_info_request        = 0x01,
+    hw_info_response       = 0x02,
+    os_info_request        = 0x03,
+    os_info_response       = 0x04,
+    app_info_request       = 0x05,
+    app_info_response      = 0x06,
+    app_status_request     = 0x07,
+    app_status_response    = 0x08,
     node_begin_reflash     = 0x11,
     node_ready_next        = 0x12,
     node_write_row         = 0x13,
@@ -60,7 +60,7 @@ typedef enum {
 
 } dcncp_iso15765_msg_t;
 
-char *(*app_status)(void);
+void (*app_status)(char *, u16 *);
 
 //#define NODE_MAGIC              0x55
 
@@ -74,7 +74,7 @@ void dcncp_iso15765_init()
 
 	LOG_D("dcncp_iso15765_init()\n\r");
 
-	app_status = (char *(*)(void))APP_STATUS_ADDRESS;
+	app_status = (void (*)(char *, u16))APP_STATUS_ADDRESS;
 
 	target.protocol = ISO15765_DCNCP_PROTOCOL_ID;
 	target.handler = dcncp_iso15765_msg_handler;
@@ -244,8 +244,9 @@ static void dcncp_iso15765_msg_handler(iso15765_msg_t *msg)
 			response_buffer[response_index++] = app_status_response;
 
 			if (app_valid) {
-				status = app_status();
-				LOG_D("Status returning - %s\n\r", status);
+				length = 60;
+				app_status(data, &length);
+				LOG_D("Status returning - %s\n\r", data);
 			} else {
 				LOG_D("Status Req no App installed\n\r");
 				length = 60;

@@ -94,7 +94,7 @@ void dcncp_init(void (*arg_status_handler)(u8 mask, can_status_t status, can_bau
 #endif // ISO15765_LOGGER
 
 	/*
-	 * Add the Layer 2 and Layer 3 Can Message Handlers
+	 * Add the Layer 2 frame Handler
 	 */
 	target.mask    = (u32)DCNCP_CAN_MASK;
 	target.filter  = (u32)DCNCP_CAN_FILTER;
@@ -372,6 +372,7 @@ void can_l2_msg_handler(can_frame *frame)
 		}
 #endif // ISO15765 || ISO11783
 	} else if (frame->can_id == DCNCP_CAN_NodeAddressReportReq) {
+		LOG_D("DCNCP_CAN_NodeAddressReportReq:\n\r");
 #if defined(ISO15765) || defined(ISO11783)
 		// Create a random timer between 100 and  1000 miliSeconds for firing node report message
 		rc = timer_start(MILLI_SECONDS_TO_TICKS((u16) ((rand() % 900) + 100)), exp_send_node_addr_report, (union sigval)(void *)NULL, &timer);
