@@ -262,7 +262,7 @@ result_t can_l2_init(can_baud_rate_t arg_baud_rate,
         LOG_D("Ping time set to %d Ticks, Ping Period %d - %d\n\r", ping_time, CAN_L2_IDLE_PING_PERIOD, MILLI_SECONDS_TO_TICKS(500));
         restart_ping_timer();
 #else
-	frame.can_id = CAN_DCNCP_NodePingMessage;
+	frame.can_id = DCNCP_CAN_NodePingMessage;
 	frame.can_dlc = 0;
 
 	can_l2_tx_frame(&frame);

@@ -105,15 +105,15 @@
 /*
  * DCNCP - Dynamic Can Node Configuration Protocol
  */
-//#define CAN_DCNCP
+//#define DCNCP_CAN
 
-#ifdef CAN_DCNCP
+#ifdef DCNCP_CAN
 
 /*
  * If DCNCP includes code to change Baud Rate on the fly include
- * CAN_DCNCP_BAUDRATE
+ * DCNCP_CAN_BAUDRATE
  */
-//#define CAN_DCNCP_BAUDRATE
+//#define DCNCP_CAN_BAUDRATE
 
 /*
  * Include ISO15765 Protocol functionality
@@ -168,7 +168,7 @@
  */
 //#define ISO11783
 
-#endif // CAN_DCNCP
+#endif // DCNCP_CAN
 #endif // CAN
 
 /*

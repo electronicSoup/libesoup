@@ -22,7 +22,7 @@
 
 #include "system.h"
 #include "es_lib/can/es_can.h"
-#ifdef CAN_DCNCP
+#ifdef DCNCP_CAN
 #include "es_lib/can/dcncp/dcncp.h"
 #endif
 #define DEBUG_FILE
@@ -106,7 +106,7 @@ void status_handler(u8 mask, can_status_t status, can_baud_rate_t baud)
 				break;
 		}
 
-#ifdef CAN_DCNCP
+#ifdef DCNCP_CAN
 		if ((status.bit_field.l2_status == L2_Connected) && (can_status.bit_field.l2_status != L2_Connected)) {
 			LOG_D("Layer 2 Connected so start DCNCP\n\r");
 			dcncp_init(status_handler);
@@ -119,7 +119,7 @@ void status_handler(u8 mask, can_status_t status, can_baud_rate_t baud)
 			app_status_handler(can_status, baud_status);
 	}
 
-#ifdef CAN_DCNCP
+#ifdef DCNCP_CAN
 	else if (mask == DCNCP_INIT_STATUS_MASK) {
 		if(status.bit_field.dcncp_initialised) {
 			LOG_D("DCNCP_Initialised\n\r");
@@ -149,7 +149,7 @@ void status_handler(u8 mask, can_status_t status, can_baud_rate_t baud)
 		}
 	}
 #endif // ISO15765 || ISO11783
-#endif // CAN_DCNCP
+#endif // DCNCP_CAN
 }
 
 #if defined(MCP)

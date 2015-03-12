@@ -36,13 +36,13 @@
 #include "es_lib/logger/iso15765_log.h"
 #endif
 
-#define TAG "CAN_DCNCP"
+#define TAG "DCNCP_CAN"
 
-#ifdef CAN_DCNCP_BAUDRATE
+#ifdef DCNCP_CAN_BAUDRATE
 static es_timer dcncp_network_baudrate_req_timer;
 static void exp_resend_network_baud_chage_req(timer_t timer_id, union sigval data);
 static void exp_network_baud_chage_req(timer_t timer_id, union sigval data);
-#endif // CAN_DCNCP_BAUDRATE
+#endif // DCNCP_CAN_BAUDRATE
 
 #if defined(ISO15765) || defined(ISO11783)
     static es_timer node_send_reg_req_timer;
@@ -81,9 +81,9 @@ void dcncp_init(void (*arg_status_handler)(u8 mask, can_status_t status, can_bau
         status_handler = arg_status_handler;
         status.byte = 0x00;
 
-#ifdef CAN_DCNCP_BAUDRATE
+#ifdef DCNCP_CAN_BAUDRATE
 	TIMER_INIT(dcncp_network_baudrate_req_timer);
-#endif // CAN_DCNCP_BAUDRATE
+#endif // DCNCP_CAN_BAUDRATE
 
 #if defined(ISO15765) || defined(ISO11783)
 	TIMER_INIT(node_send_reg_req_timer);
@@ -97,8 +97,8 @@ void dcncp_init(void (*arg_status_handler)(u8 mask, can_status_t status, can_bau
 	/*
 	 * Add the Layer 2 and Layer 3 Can Message Handlers
 	 */
-	target.mask    = (u32)CAN_DCNCP_MASK;
-	target.filter  = (u32)CAN_DCNCP_FILTER;
+	target.mask    = (u32)DCNCP_CAN_MASK;
+	target.filter  = (u32)DCNCP_CAN_FILTER;
 	target.handler = can_l2_msg_handler;
 #ifdef MCP
 	LOG_D("Node Address Register handler Mask 0x%lx, Filter 0x%lx\n\r", target.mask, target.filter);
@@ -128,7 +128,7 @@ void dcncp_init(void (*arg_status_handler)(u8 mask, can_status_t status, can_bau
 		status_handler(DCNCP_INIT_STATUS_MASK, status, no_baud);
 }
 
-#ifdef CAN_DCNCP_BAUDRATE
+#ifdef DCNCP_CAN_BAUDRATE
 void dcncp_request_network_baud_change(can_baud_rate_t baud)
 {
 	result_t     rc;
@@ -169,16 +169,16 @@ void dcncp_request_network_baud_change(can_baud_rate_t baud)
 
 	LOG_D("send network baudrate change request\n\r");
 
-	msg.can_id = CAN_DCNCP_NetworkChangeBaudRateReq;
+	msg.can_id = DCNCP_CAN_NetworkChangeBaudRateReq;
 	msg.can_dlc = 2;
 	msg.data[0] = baud;
 	msg.data[1] = 3;      // 3 Seconds till Change
 
 	can_l2_tx_frame(&msg);
 }
-#endif // CAN_DCNCP_BAUDRATE
+#endif // DCNCP_CAN_BAUDRATE
 
-#ifdef CAN_DCNCP_BAUDRATE
+#ifdef DCNCP_CAN_BAUDRATE
 static void exp_resend_network_baud_chage_req(timer_t timer_id, union sigval data)
 {
 	can_frame msg;
@@ -214,7 +214,7 @@ static void exp_resend_network_baud_chage_req(timer_t timer_id, union sigval dat
 
 		LOG_D("send network baudrate change request\n\r");
 
-		msg.can_id = CAN_DCNCP_NetworkChangeBaudRateReq;
+		msg.can_id = DCNCP_CAN_NetworkChangeBaudRateReq;
 		msg.can_dlc = 2;
 		msg.data[0] = baud;
 		msg.data[1] = time_left;
@@ -225,15 +225,15 @@ static void exp_resend_network_baud_chage_req(timer_t timer_id, union sigval dat
 		can_l2_set_node_baudrate(baud);
 	}
 }
-#endif // CAN_DCNCP_BAUDRATE
+#endif // DCNCP_CAN_BAUDRATE
 
-#ifdef CAN_DCNCP_BAUDRATE
+#ifdef DCNCP_CAN_BAUDRATE
 static void exp_network_baud_chage_req(timer_t timer_id, union sigval data)
 {
 	LOG_D("!!! exp_network_baud_chage_req() !!!\n\r");
 	can_l2_set_node_baudrate((can_baud_rate_t)(data.sival_int & 0xff));
 }
-#endif // CAN_DCNCP_BAUDRATE
+#endif // DCNCP_CAN_BAUDRATE
 
 #if defined(ISO15765) || defined(ISO11783)
 u8 dcncp_get_node_address(void)
@@ -265,7 +265,7 @@ void exp_send_address_register_request(timer_t timer_id, union sigval data)
 
 	LOG_D("sendRegisterReq(%x)\n\r", (u16) dcncp_node_address);
 
-	msg.can_id = CAN_DCNCP_AddressRegisterReq;
+	msg.can_id = DCNCP_CAN_AddressRegisterReq;
 	msg.can_dlc = 1;
 	msg.data[0] = dcncp_node_address;
 
@@ -309,12 +309,12 @@ void exp_node_address_registered(timer_t timer_id __attribute__((unused)), union
 
 void can_l2_msg_handler(can_frame *frame)
 {
-#if defined(ISO15765) || defined(ISO11783) || defined(CAN_DCNCP_BAUDRATE)
+#if defined(ISO15765) || defined(ISO11783) || defined(DCNCP_CAN_BAUDRATE)
 	result_t rc;
-#endif // defined(ISO15765) || defined(ISO11783) || defined(CAN_DCNCP_BAUDRATE)
+#endif // defined(ISO15765) || defined(ISO11783) || defined(DCNCP_CAN_BAUDRATE)
 
 
-#ifdef CAN_DCNCP_BAUDRATE
+#ifdef DCNCP_CAN_BAUDRATE
 	union sigval data;
 #endif 
 #if defined(ISO15765) || defined(ISO11783)
@@ -322,12 +322,12 @@ void can_l2_msg_handler(can_frame *frame)
 	es_timer timer;
 #endif // ISO15765 || ISO11783
 
-	if (frame->can_id == CAN_DCNCP_AddressRegisterReq) {
+	if (frame->can_id == DCNCP_CAN_AddressRegisterReq) {
 #if defined(ISO15765) || defined(ISO11783)
 		if(frame->data[0] == dcncp_node_address) {
 			if(status.bit_field.dcncp_node_address_valid) {
 				LOG_D("reject Register Request\n\r");
-				tx_frame.can_id = CAN_DCNCP_AddressRegisterReject;
+				tx_frame.can_id = DCNCP_CAN_AddressRegisterReject;
 				tx_frame.can_dlc = 1;
 				tx_frame.data[0] = dcncp_node_address;
 
@@ -347,12 +347,12 @@ void can_l2_msg_handler(can_frame *frame)
 			}
 		}
 #endif  // ISO15765 || ISO11783
-	} else if(frame->can_id == CAN_DCNCP_AddressRegisterReject) {
+	} else if(frame->can_id == DCNCP_CAN_AddressRegisterReject) {
 #if defined(ISO15765) || defined(ISO11783)
 		if(frame->data[0] == dcncp_node_address) {
 			if(status.bit_field.dcncp_node_address_valid) {
 				LOG_E("Sending Can Error Message\n\r");
-				tx_frame.can_id = CAN_DCNCP_NodeAddressError;
+				tx_frame.can_id = DCNCP_CAN_NodeAddressError;
 				tx_frame.can_dlc = 1;
 				tx_frame.data[0] = dcncp_node_address;
 
@@ -372,7 +372,7 @@ void can_l2_msg_handler(can_frame *frame)
 			}
 		}
 #endif // ISO15765 || ISO11783
-	} else if (frame->can_id == CAN_DCNCP_NodeAddressReportReq) {
+	} else if (frame->can_id == DCNCP_CAN_NodeAddressReportReq) {
 #if defined(ISO15765) || defined(ISO11783)
 		// Create a random timer between 100 and  1000 miliSeconds for firing node report message
 		rc = timer_start(MILLI_SECONDS_TO_TICKS((u16) ((rand() % 900) + 100)), exp_send_node_addr_report, (union sigval)(void *)NULL, &timer);
@@ -380,14 +380,14 @@ void can_l2_msg_handler(can_frame *frame)
 			LOG_E("Failed to start Node Registered Timer\n\r");
 		}
 #endif // ISO15765 || ISO11783
-	} else if (frame->can_id == CAN_DCNCP_NodeAddressReporting) {
+	} else if (frame->can_id == DCNCP_CAN_NodeAddressReporting) {
 		if(frame->data[0]) {
 			LOG_D("Foreign Node Rep Registered Node Address 0x%x\n\r", frame->data[1]);
 		} else {
 			LOG_D("Foreign Node Rep UN-Registered Node Address 0x%x\n\r", frame->data[1]);
 		}
-	} else if (frame->can_id == CAN_DCNCP_NetworkChangeBaudRateReq) {
-#ifdef CAN_DCNCP_BAUDRATE
+	} else if (frame->can_id == DCNCP_CAN_NetworkChangeBaudRateReq) {
+#ifdef DCNCP_CAN_BAUDRATE
 		LOG_D("***Baud Rate Change Request New Baud Rate %s Time left %dS\n\r", can_baud_rate_strings[frame->data[0]], frame->data[1]);
 
 		timer_cancel(&dcncp_network_baudrate_req_timer);
@@ -405,14 +405,14 @@ void can_l2_msg_handler(can_frame *frame)
 		}
 #else
 		LOG_E("CAN Baudrate change! NO code in place to process request!\n\r");
-#endif // CAN_DCNCP_BAUDRATE
-	} else if (frame->can_id == CAN_DCNCP_NodePingMessage) {
-	} else if (frame->can_id == CAN_DCNCP_RegisterNetLogger) {
+#endif // DCNCP_CAN_BAUDRATE
+	} else if (frame->can_id == DCNCP_CAN_NodePingMessage) {
+	} else if (frame->can_id == DCNCP_CAN_RegisterNetLogger) {
 		LOG_D("Received NetLogger Registration Message\n\r");
 #ifdef ISO15765_LOGGING
 		iso15765_logger_register_remote(frame->data[0], frame->data[1]);
 #endif // ISO15765_LOGGING
-	} else if (frame->can_id == CAN_DCNCP_UnRegisterNetLogger) {
+	} else if (frame->can_id == DCNCP_CAN_UnRegisterNetLogger) {
 		LOG_D("Received NetLogger UnRegistration Message\n\r");
 #ifdef ISO15765_LOGGING
 		iso15765_logger_unregister_remote(frame->data[0]);
@@ -438,7 +438,7 @@ void exp_send_node_addr_report(timer_t timer_id __attribute__((unused)), union s
 
 	LOG_D("exp_send_node_addr_report(Address %x)\n\r", dcncp_node_address);
 
-	frame.can_id = CAN_DCNCP_NodeAddressReporting;
+	frame.can_id = DCNCP_CAN_NodeAddressReporting;
 	frame.can_dlc = 2;
 	frame.data[1] = dcncp_node_address;
 
@@ -462,7 +462,7 @@ result_t dcncp_register_this_node_net_logger(log_level_t level)
 	if(!iso15765_initialised())
 		return(ERR_NOT_READY);
 
-	local_iso15765_logger_frame.can_id = CAN_DCNCP_RegisterNetLogger;
+	local_iso15765_logger_frame.can_id = DCNCP_CAN_RegisterNetLogger;
 	local_iso15765_logger_frame.can_dlc = 2;
 	local_iso15765_logger_frame.data[0] = dcncp_node_address;
 	local_iso15765_logger_frame.data[1] = level;
@@ -495,7 +495,7 @@ result_t dcncp_unregister_this_node_net_logger()
 
 	LOG_D("DeRegAsNetLogger()\n\r");
 
-	frame.can_id = CAN_DCNCP_UnRegisterNetLogger;
+	frame.can_id = DCNCP_CAN_UnRegisterNetLogger;
 	frame.can_dlc = 1;
 	frame.data[0] = dcncp_node_address;
 
@@ -513,7 +513,7 @@ void dcncp_send_ping(void)
 {
 	can_frame frame;
 
-	frame.can_id = CAN_DCNCP_NodePingMessage;
+	frame.can_id = DCNCP_CAN_NodePingMessage;
 	frame.can_dlc = 0;
 
 	can_l2_tx_frame(&frame);
