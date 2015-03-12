@@ -97,7 +97,7 @@ typedef struct
     iso11783_msg_handler_t handler;
 } iso11783_register_t;
 
-static iso11783_register_t registered[ISO15765_REGISTER_ARRAY_SIZE];
+static iso11783_register_t registered[ISO11783_REGISTER_ARRAY_SIZE];
 
 static iso11783_msg_handler_t unhandled_handler;
 
@@ -136,6 +136,7 @@ result_t iso11783_init(u8 address)
 result_t iso11783_tx_msg(iso11783_msg_t *msg)
 {
 	LOG_D("iso11783_tx_msg()\n\r");
+	return(SUCCESS);
 }
 
 void iso11783_frame_handler(can_frame *frame)
