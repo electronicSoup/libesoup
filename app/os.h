@@ -37,7 +37,7 @@ extern result_t  (*can_l2_dispatch_reg_handler)(can_l2_target_t *target);
 extern result_t  (*can_l2_dispatch_unreg_handler)(u8 id);
 extern result_t  (*can_l2_dispatch_set_unhandled_handler)(can_l2_msg_handler_t handler);
 
-extern result_t  (*dcncp_get_node_address)(BYTE *address);
+extern u8        (*dcncp_get_node_address)(void);
 
 extern result_t  (*iso15765_tx_message)(iso15765_msg_t *msg);
 extern result_t  (*iso15765_dispatch_reg_handler)(iso15765_target_t * target);

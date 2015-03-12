@@ -75,7 +75,7 @@ void os_init(void)
 	can_l2_dispatch_unreg_handler = (result_t(*)(u8))(OS_FNS + 24);
 	can_l2_dispatch_set_unhandled_handler = (result_t(*)(can_l2_msg_handler_t handler))(OS_FNS + 28);
 
-	dcncp_get_node_address = (result_t(*)(BYTE *))(OS_FNS + 32);
+	dcncp_get_node_address = (u8 (*)(void))(OS_FNS + 32);
 
 	iso15765_tx_msg = (result_t(*)(iso15765_msg_t *))(OS_FNS + 36);
 	iso15765_dispatch_reg_handler = (result_t(*)(iso15765_target_t * target))(OS_FNS + 40);
