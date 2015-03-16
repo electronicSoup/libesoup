@@ -175,6 +175,15 @@
  */
 //#define ISO11783
 
+#ifdef ISO11783
+/*
+ * The number of different ISO-11783 handlers that can be registered
+ * in the system or applicaiton.
+ */
+#define ISO11783_REGISTER_ARRAY_SIZE 10
+
+#endif // ISO11783
+
 #endif // DCNCP_CAN
 #endif // CAN
 
