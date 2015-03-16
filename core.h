@@ -283,13 +283,19 @@ typedef void (*expiry_function)(timer_t timer_id, union sigval);
 #define  APP_MSG_CAN_STATUS_REQ          0x08
 #define  APP_MSG_CAN_L2_FRAME            0x09
 #define  APP_MSG_CAN_L2_TARGET           0x0a
-#define  APP_MSG_USER_OFFSET             0x0b
+#define  APP_MSG_ISO15765_MSG            0x0b
+#define  APP_MSG_ISO15765_TARGET         0x0c
+#define  APP_MSG_ISO11783_MSG            0x0d
+#define  APP_MSG_ISO11783_TARGET         0x0e
+#define  APP_MSG_USER_OFFSET             0x0f
 
 #define  BUN_MSG_ERROR                   0x00
 #define  BUN_COMMAND_READY               0x01
 #define  BUN_MSG_CAN_STATUS              0x02
 #define  BUN_MSG_CAN_L2_FRAME            0x03
-#define  BUN_MSG_USER_OFFSET             0x04
+#define  BUN_MSG_ISO15765_MSG            0x04
+#define  BUN_MSG_ISO11783_MSG            0x05
+#define  BUN_MSG_USER_OFFSET             0x06
 
 /**
  *
@@ -476,6 +482,8 @@ typedef struct
 typedef struct
 {
     u8 source;
+    u8 destination;
+    u8 priority;
     u32 pgn;
     u8 *data;
 } iso11783_msg_t;

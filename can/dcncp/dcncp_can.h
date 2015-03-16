@@ -26,6 +26,9 @@
 
 /*
  * Node module will use standard CAN frames which are 11 bits for Id
+ *
+ * All these definitions are used in the ES Node Management Applicaiton! If
+ * changed update there.
  */
 #define DCNCP_CAN_MASK                          0x7f0
 #define DCNCP_CAN_FILTER                        0x700

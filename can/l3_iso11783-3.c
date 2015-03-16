@@ -55,15 +55,23 @@
  */
 #define ISO_11783_DA_BROADCAST 0xFF
 
-#define EDP_MASK  0x02000000
-#define DP_MASK   0x01000000
-#define PF_MASK   0x00FF0000
-#define PS_MASK   0x0000FF00
-#define DA_MASK   0x0000FF00
-#define GE_MASK   0x0000FF00
-#define SA_MASK   0x000000FF
+#define CAN_EDP_MASK  0x02000000
+#define CAN_DP_MASK   0x01000000
+#define CAN_PF_MASK   0x00FF0000
+#define CAN_PS_MASK   0x0000FF00
+#define CAN_DA_MASK   0x0000FF00
+#define CAN_GE_MASK   0x0000FF00
+#define CAN_SA_MASK   0x000000FF
+
+#define PGN_EDP_MASK  0x020000
+#define PGN_DP_MASK   0x010000
+#define PGN_PF_MASK   0x00FF00
+#define PGN_PS_MASK   0x0000FF
 
 #define PF_PDU_2_CUTOFF 0xF0
+
+#define DEFAULT_PRIORITY_CONTROL  0x03
+#define DEFAULT_PRIORITY          0x06
 
 #define PGN_REQUEST               0x00EA00
 #define PGN_REQUEST_2             0x00C900
@@ -73,20 +81,26 @@
 #define PGN_PROPRIETARY_B_FIRST   0x00FF00
 #define PGN_PROPRIETARY_B_LAST    0x00FFFF
 #define PGN_TRANSFER              0x00CA00
+#define PGN_DATA_TRANSFER         0x00EB00
 
-#if 0
-typedef union
-{
-    struct
-    {
-        u8 source;
-        u8 destination;
-        u8 type;
-        u8 layer3;
-    } bytes;
-    u32 can_id;
-} iso11783_can_id;
-#endif
+#define PGN_TP_CM                 0x00EC00
+
+#define PGN_REQUEST_TO_SEND       0x00CA00
+#define PGN_CLEAR_TO_SEND         0x00CA00
+#define PGN_CONNECTION_ABORT              0x00CA00
+#define PGN_BROADCAST_ANNOUNCE              0x00CA00
+
+#define TIMER_Tr   200
+#define TIMER_Th   500
+#define TIMER_1    750
+#define TIMER_2   1250
+#define TIMER_3   1250
+#define TIMER_4   1050
+
+#define ACK             0
+#define NACK            1
+#define ACCESS_DENIED   2
+#define CANNOT_RESPOND  3
 
 static u8 node_address;
 
@@ -124,7 +138,7 @@ result_t iso11783_init(u8 address)
 	 * Define our target for Layer 2 Frames and register it.
 	 * Looking for Extended frame with EDP Bit set to zero
 	 */
-	target.mask   = CAN_EFF_FLAG | EDP_MASK;
+	target.mask   = CAN_EFF_FLAG | CAN_EDP_MASK;
 	target.filter =  CAN_EFF_FLAG;
 	target.handler = iso11783_frame_handler;
 
@@ -133,9 +147,124 @@ result_t iso11783_init(u8 address)
 	return(SUCCESS);
 }
 
+u32 pgn_to_canid(u8 priority, u32 pgn, u8 dst)
+{
+	u32 canid = 0x00;
+	u8 pf;
+
+	canid = (priority & 0x07);
+	canid = (canid << 2) | ((pgn & (PGN_EDP_MASK | PGN_DP_MASK)) >> 16);
+
+	pf = (u8)((pgn & PGN_PF_MASK) >> 8);
+	canid = canid << 8 | pf;
+
+	if(pf < PF_PDU_2_CUTOFF) {
+		canid = canid << 8 | (pgn & PGN_PS_MASK);
+	} else {
+		canid = canid << 8 | dst;
+	}
+
+	canid = canid << 8 | node_address;
+
+	return(canid);
+}
+
+u32 canid_to_pgn(u32 canid)
+{
+	u32 pgn = 0x00;
+	u8  pf;
+	u8  ps;
+
+	/*
+	 * EDP Bit is always 0! so move on to DP bit
+	 */
+	pgn = (u8)((canid & (CAN_EDP_MASK | CAN_DP_MASK)) >> 24);
+
+	pf = (u8)((canid & CAN_PF_MASK) >> 16);
+
+	if(pf < PF_PDU_2_CUTOFF) {
+		ps = 0x00;
+	} else {
+		ps = (u8) ((canid & CAN_PS_MASK) >> 8);
+	}
+	pgn = (pgn << 8) | pf;
+	pgn = (pgn << 8) | ps;
+
+	return(pgn);
+}
+
+u8 get_source_address_from_canid(u32 canid)
+{
+	return((u8)(canid & CAN_SA_MASK));
+}
+
+u8 get_destination_address_from_canid(u32 canid)
+{
+	u8  pf;
+
+	pf = (u8)((canid & CAN_PF_MASK) >> 16);
+
+	if(pf < PF_PDU_2_CUTOFF) {
+		return((u8) ((canid & CAN_PS_MASK) >> 8));
+	}
+	return(0xff);
+}
+
 result_t iso11783_tx_msg(iso11783_msg_t *msg)
 {
+	can_frame frame;
+
 	LOG_D("iso11783_tx_msg()\n\r");
+
+	frame.can_id = pgn_to_canid(msg->priority, msg->pgn, msg->destination);
+	frame.can_dlc = 0x00;
+
+	can_l2_tx_frame(&frame);
+
+	return(SUCCESS);
+}
+
+result_t iso11783_tx_request_pgn_data(u8 priority, u8 dst, u32 pgn)
+{
+	can_frame frame;
+	LOG_D("iso11783_tx_request_pgn_data()\n\r");
+
+	frame.can_id = pgn_to_canid(priority, PGN_REQUEST, dst);
+	frame.can_dlc = 0x03;
+
+	frame.data[0] = (u8)(pgn & 0xff);
+	frame.data[1] = (u8)((pgn & 0xff00) >> 8);
+	frame.data[2] = (u8)((pgn & 0xff0000) >> 16);
+
+	can_l2_tx_frame(&frame);
+
+	return(SUCCESS);
+}
+
+result_t iso11783_tx_ack_pgn(u8 priority, u8 dst, u32 pgn, u8 ack_value)
+{
+	u8        loop;
+	u32       tmp_pgn;
+	can_frame frame;
+	LOG_D("iso11783_tx_request_pgn_data()\n\r");
+
+	frame.can_id = pgn_to_canid(priority, PGN_ACK, dst);
+	frame.can_dlc = 0x08;
+
+	frame.data[0] = ack_value;
+	frame.data[1] = 0xff;      // Group Function Value
+	frame.data[2] = 0xff;      // reserved
+	frame.data[3] = 0xff;      // reserved
+	frame.data[4] = dst;       // Address Acknowledged
+
+	tmp_pgn = pgn;
+	for(loop = 0; loop < 3; loop++) {
+		frame.data[loop + 5] = tmp_pgn & 0xff;
+		tmp_pgn = tmp_pgn >> 8;
+	}
+
+	can_l2_tx_frame(&frame);
+
 	return(SUCCESS);
 }
 
@@ -157,24 +286,7 @@ void iso11783_frame_handler(can_frame *frame)
 	 *
 	 * if PDU_Format < 0xF0  then LSByte of PGN = 0x00
 	 */
-	pgn = 0x00;
-
-	/*
-	 * EDP Bit is always 0! so move on to DP bit
-	 */
-	if(frame->can_id & DP_MASK) {
-		pgn = 0x01;
-	}
-
-	pf = (u8)((frame->can_id & PF_MASK) >> 16);
-
-	if(pf < PF_PDU_2_CUTOFF) {
-		ps = (u8) ((frame->can_id & PS_MASK) >> 8);
-	} else {
-		ps = 0x00;
-	}
-	pgn = (pgn << 8) | pf;
-	pgn = (pgn << 8) | ps;
+	pgn = canid_to_pgn(frame->can_id);
 
 	LOG_D("iso11783_frame_handler received PGN %d  =  0x%x\n\r", pgn, pgn);
 
