@@ -63,6 +63,9 @@
 #define GE_MASK   0x0000FF00
 #define SA_MASK   0x000000FF
 
+#define DEFAULT_PRIORITY_CONTROL 0x03
+#define DEFAULT_PRIORITY         0x06
+
 #define PF_PDU_2_CUTOFF 0xF0
 
 #define PGN_REQUEST               0x00EA00
@@ -73,20 +76,6 @@
 #define PGN_PROPRIETARY_B_FIRST   0x00FF00
 #define PGN_PROPRIETARY_B_LAST    0x00FFFF
 #define PGN_TRANSFER              0x00CA00
-
-#if 0
-typedef union
-{
-    struct
-    {
-        u8 source;
-        u8 destination;
-        u8 type;
-        u8 layer3;
-    } bytes;
-    u32 can_id;
-} iso11783_can_id;
-#endif
 
 static u8 node_address;
 
@@ -122,7 +111,7 @@ result_t iso11783_init(u8 address)
 	
 	/*
 	 * Define our target for Layer 2 Frames and register it.
-	 * Looking for Extended frame with EDP Bit set to zero
+	 * Looking for Extended frame with EDP Bit set to Zero
 	 */
 	target.mask   = CAN_EFF_FLAG | EDP_MASK;
 	target.filter =  CAN_EFF_FLAG;
@@ -169,9 +158,9 @@ void iso11783_frame_handler(can_frame *frame)
 	pf = (u8)((frame->can_id & PF_MASK) >> 16);
 
 	if(pf < PF_PDU_2_CUTOFF) {
-		ps = (u8) ((frame->can_id & PS_MASK) >> 8);
-	} else {
 		ps = 0x00;
+	} else {
+		ps = (u8) ((frame->can_id & PS_MASK) >> 8);
 	}
 	pgn = (pgn << 8) | pf;
 	pgn = (pgn << 8) | ps;

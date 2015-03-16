@@ -380,6 +380,7 @@ void can_l2_msg_handler(can_frame *frame)
 		LOG_D("DCNCP_CAN_NodeAddressReportReq:\n\r");
 #if defined(ISO15765) || defined(ISO11783)
 		// Create a random timer between 100 and  1000 miliSeconds for firing node report message
+		TIMER_INIT(timer);
 		rc = timer_start(MILLI_SECONDS_TO_TICKS((u16) ((rand() % 900) + 100)), exp_send_node_addr_report, (union sigval)(void *)NULL, &timer);
 		if (rc != SUCCESS) {
 			LOG_E("Failed to start Node Registered Timer\n\r");

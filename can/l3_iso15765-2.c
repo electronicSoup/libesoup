@@ -54,8 +54,9 @@ static void dispatcher_iso15765_msg_handler(iso15765_msg_t *message);
 /*
  * The CAN ID as used by the Layer 3 Protocol
  *
- *   28..26  25  24  |   23..16   |  15..8  |  7..0  |
- *    110     0    0 | Target Type| Target  | Source |
+ *   28..26 | 25  24  |   23..16   |  15..8  |  7..0  |
+ *    110   |  1   1  | Target Type| Target  | Source |
+ * Priority
  */
 typedef union
 {
@@ -72,7 +73,7 @@ typedef union
 #define ISO15765_TARGET_PHYSICAL   218
 #define ISO15765_TARGET_FUNCTIONAL 219
 
-#define ISO15765_COMS 0x18
+#define ISO15765_COMS 0x1B
 
 #define ISO15765_SF 0x00
 #define ISO15765_FF 0x10
@@ -428,7 +429,7 @@ void sendFlowControlFrame(rx_buffer_t *rx_buffer, u8 flowStatus)
 	}
 }
 
-void iso15765_frame_handler(can_frame *rxMsg)
+void iso15765_frame_handler(can_frame *frame)
 {
 	u8 type;
 	u8 loop;
@@ -437,7 +438,7 @@ void iso15765_frame_handler(can_frame *rxMsg)
 	rx_buffer_t *rx_buffer;
 	tx_buffer_t *tx_buffer;
 
-	rx_msg_id.can_id = rxMsg->can_id;
+	rx_msg_id.can_id = frame->can_id;
 
 	if(rx_msg_id.bytes.destination != node_address) {
 		// L3 Message but not for this node - Ignore it
@@ -447,8 +448,8 @@ void iso15765_frame_handler(can_frame *rxMsg)
 
 	source = rx_msg_id.bytes.source;
 
-	LOG_D("iso15765_frame_handler() got a frame from 0x%x\n\r", source);
-	type = rxMsg->data[0] & 0xf0;
+	LOG_D("iso15765_frame_handler(0x%lx) got a frame from 0x%x\n\r",frame->can_id, source);
+	type = frame->data[0] & 0xf0;
 
 	if(type == ISO15765_SF) {
 		u8 length;
@@ -474,12 +475,12 @@ void iso15765_frame_handler(can_frame *rxMsg)
 		node_buffers[source].rx_buffer = rx_buffer;
 #endif // MCP - ES_LINUX
 		init_rx_buffer(rx_buffer);
-		length = rxMsg->data[0] & 0x0f;
+		length = frame->data[0] & 0x0f;
 		rx_buffer->bytes_expected = length;
 
 		if( (length > 0) && (length <= SINGLE_FRAME_SIZE)) {
 			rx_buffer->index = 0;
-			rx_buffer->protocol = rxMsg->data[1];
+			rx_buffer->protocol = frame->data[1];
 
 			LOG_D("Rx Protocol %d L3 Length %d\n\r",
 				   (u16)rx_buffer->protocol,
@@ -491,8 +492,8 @@ void iso15765_frame_handler(can_frame *rxMsg)
 			for (loop = 2; loop < 2 + rx_buffer->bytes_expected -1; loop++) {
 				LOG_D("Rx Data byte %d - 0x%x\n\r",
 					   rx_buffer->index,
-					   rxMsg->data[loop]);
-				rx_buffer->data[rx_buffer->index++] = rxMsg->data[loop];
+					   frame->data[loop]);
+				rx_buffer->data[rx_buffer->index++] = frame->data[loop];
 			}
 
 			rx_buffer->msg.protocol = rx_buffer->protocol;
@@ -538,9 +539,9 @@ void iso15765_frame_handler(can_frame *rxMsg)
 		init_rx_buffer(rx_buffer);
 		//  Could not get this single line to work so had to split it into 3
 		//        size = ((rxMsg->data[0] & 0x0f) << 8) | rxMsg->data[1];
-		size = rxMsg->data[0] & 0x0f;
+		size = frame->data[0] & 0x0f;
 		size = size << 8;
-		size = size | rxMsg->data[1];
+		size = size | frame->data[1];
 
 		if (size > ISO15765_MAX_MSG + 1) {
 			LOG_E("Message received overflows Max Size\n\r");
@@ -550,13 +551,13 @@ void iso15765_frame_handler(can_frame *rxMsg)
 
 		rx_buffer->bytes_expected = (u8)size - 1;   // Subtracl one for Protocol Byte
 		LOG_D("Size expected %d\n\r", rx_buffer->bytes_expected);
-		if(rxMsg->can_dlc == 8) {
+		if(frame->can_dlc == 8) {
 			rx_buffer->source = source;
-			rx_buffer->protocol = rxMsg->data[2];
+			rx_buffer->protocol = frame->data[2];
 
-			for (loop = 3; loop < rxMsg->can_dlc; loop++) {
+			for (loop = 3; loop < frame->can_dlc; loop++) {
 //                              LOG_D("Add Byte 0x%x\n\r", (UINT16)rxMsg->data[loop]);
-				rx_buffer->data[rx_buffer->index++] = rxMsg->data[loop];
+				rx_buffer->data[rx_buffer->index++] = frame->data[loop];
 				rx_buffer->bytes_received++;
 			}
 			rx_buffer->sequence = (rx_buffer->sequence + 1) % 0x0f;
@@ -568,8 +569,8 @@ void iso15765_frame_handler(can_frame *rxMsg)
 		}
 	} else if(type == ISO15765_CF) {
 		LOG_D("Rx Consecutive Frame\n\r");
-		for (loop = 0; loop < rxMsg->can_dlc; loop++)
-			LOG_D("Add Byte %d 0x%x\n\r", loop, rxMsg->data[loop]);
+		for (loop = 0; loop < frame->can_dlc; loop++)
+			LOG_D("Add Byte %d 0x%x\n\r", loop, frame->data[loop]);
 
 #if defined(MCP)
 		// If the Receiver isn't busy not sure why we're gettting a CF
@@ -589,11 +590,11 @@ void iso15765_frame_handler(can_frame *rxMsg)
 #endif // MCP - ES_LINUX
 		stopTimer_N_Cr(rx_buffer);
 		
-		LOG_D("Compare Seq Numbers 0x%x=0x%x?\n\r", rx_buffer->sequence, (rxMsg->data[0] & 0x0f));
-		if (rx_buffer->sequence == (rxMsg->data[0] & 0x0f)) {
-			for (loop = 1; loop < rxMsg->can_dlc; loop++) {
+		LOG_D("Compare Seq Numbers 0x%x=0x%x?\n\r", rx_buffer->sequence, (frame->data[0] & 0x0f));
+		if (rx_buffer->sequence == (frame->data[0] & 0x0f)) {
+			for (loop = 1; loop < frame->can_dlc; loop++) {
 //                    LOG_D("Add Byte 0x%x\n\r", (UINT16) rxMsg->data[loop]);
-				rx_buffer->data[rx_buffer->index++] = rxMsg->data[loop];
+				rx_buffer->data[rx_buffer->index++] = frame->data[loop];
 				rx_buffer->bytes_received++;
 			}
 			rx_buffer->sequence = (rx_buffer->sequence + 1) % 0x0f;
@@ -641,12 +642,12 @@ void iso15765_frame_handler(can_frame *rxMsg)
 			free(rx_buffer);
 #endif
 
-			LOG_D("Bad Sequence Number: expected 0x%x received 0x%x\n\r", rx_buffer->sequence, (rxMsg->data[0] & 0x0f));
+			LOG_D("Bad Sequence Number: expected 0x%x received 0x%x\n\r", rx_buffer->sequence, (frame->data[0] & 0x0f));
 		}
 	} else if(type == ISO15765_FC) {
 		u8 flowStatus;
-		LOG_D("Rx Flow Control Frame: BlockSize %d, Seperation time %x\n\r", rxMsg->data[1], rxMsg->data[2]);
-		LOG_D("BlockSize %d, Seperation time %x\n\r", rxMsg->data[1], rxMsg->data[2]);
+		LOG_D("Rx Flow Control Frame: BlockSize %d, Seperation time %x\n\r", frame->data[1], frame->data[2]);
+		LOG_D("BlockSize %d, Seperation time %x\n\r", frame->data[1], frame->data[2]);
 
 #if defined(MCP)
 		// If the Receiver isn't busy not sure why we're gettting a CF
@@ -666,10 +667,10 @@ void iso15765_frame_handler(can_frame *rxMsg)
 #endif // MCP - ES_LINUX
 
 		stopTimer_N_Bs(tx_buffer);
-		flowStatus = rxMsg->data[0] & 0x0f;
+		flowStatus = frame->data[0] & 0x0f;
 
-		tx_buffer->block_size = rxMsg->data[1];
-		tx_buffer->seperation_time = rxMsg->data[2];
+		tx_buffer->block_size = frame->data[1];
+		tx_buffer->seperation_time = frame->data[2];
 
 		switch(flowStatus) {
 		case FS_CTS:

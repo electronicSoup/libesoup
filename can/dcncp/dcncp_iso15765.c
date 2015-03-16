@@ -57,7 +57,6 @@ typedef enum {
     node_write_row         = 0x13,
     node_erase_page        = 0x14,
     node_reflash_finished  = 0x15
-
 } dcncp_iso15765_msg_t;
 
 void (*app_status)(char *, u16 *);
