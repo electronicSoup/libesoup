@@ -21,6 +21,7 @@
  */
 #include "system.h"
 #define DEBUG_FILE
+#include "es_lib/utils/flash.h"
 #include "es_lib/logger/serial_log.h"
 #include "es_lib/can/dcncp/cinnamonbun_info.h"
 
@@ -47,10 +48,12 @@ result_t cb_get_hardware_info(char *data, u16 *data_len)
 		return (rc);
 	}
 
+	LOG_D("Hw Manufacturer read as %s length %d\n\r", buffer, length);
 	loop = 0;
 	while (loop <= length && size < *data_len) {
 		*data_ptr++ = buffer[loop];
 		size++;
+		loop++;
 	}
 
 	if(size == *data_len) {
@@ -65,10 +68,12 @@ result_t cb_get_hardware_info(char *data, u16 *data_len)
 		return (rc);
 	}
 
+	LOG_D("HW Model read as %s, length %d\n\r", buffer, length);
 	loop = 0;
 	while (loop <= length && size < *data_len) {
 		*data_ptr++ = buffer[loop];
 		size++;
+		loop++;
 	}
 
 	if(size == *data_len) {
@@ -83,10 +88,12 @@ result_t cb_get_hardware_info(char *data, u16 *data_len)
 		return (rc);
 	}
 
+	LOG_D("HW Description read as %s length %d\n\r", buffer, length);
 	loop = 0;
 	while (loop <= length && size < *data_len) {
 		*data_ptr++ = buffer[loop];
 		size++;
+		loop++;
 	}
 
 	if(size == *data_len) {
@@ -101,10 +108,12 @@ result_t cb_get_hardware_info(char *data, u16 *data_len)
 		return(rc);
 	}
 
+	LOG_D("HW Version read as %s, lenght %d\n\r", buffer, length);
 	loop = 0;
 	while (loop <= length && size < *data_len) {
 		*data_ptr++ = buffer[loop];
 		size++;
+		loop++;
 	}
 
 	if(size == *data_len) {
@@ -119,10 +128,12 @@ result_t cb_get_hardware_info(char *data, u16 *data_len)
 		return(rc);
 	}
 
+	LOG_D("HW URI read as %s, length %d\n\r", buffer, length);
 	loop = 0;
 	while (loop <= length && size < *data_len) {
 		*data_ptr++ = buffer[loop];
 		size++;
+		loop++;
 	}
 
 	if(size == *data_len) {
