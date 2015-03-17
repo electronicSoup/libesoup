@@ -99,6 +99,7 @@ static void dcncp_iso15765_msg_handler(iso15765_msg_t *msg)
 	char          *status;
 	char           buffer[200];
 
+	LOG_D("Message from Node 0x%x\n\r", (UINT16) msg->address);
 	LOG_D("Message Protocol 0x%x\n\r", (UINT16) msg->protocol);
 	LOG_D("First Data Byte is 0x%x\n\r", (UINT16) msg->data[0]);
 
