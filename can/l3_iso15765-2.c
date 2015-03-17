@@ -476,6 +476,7 @@ void iso15765_frame_handler(can_frame *frame)
 #endif // MCP - ES_LINUX
 		init_rx_buffer(rx_buffer);
 		length = frame->data[0] & 0x0f;
+		rx_buffer->source = source;
 		rx_buffer->bytes_expected = length;
 
 		if( (length > 0) && (length <= SINGLE_FRAME_SIZE)) {
@@ -549,6 +550,7 @@ void iso15765_frame_handler(can_frame *frame)
 			return;
 		}
 
+		rx_buffer->source = source;
 		rx_buffer->bytes_expected = (u8)size - 1;   // Subtracl one for Protocol Byte
 		LOG_D("Size expected %d\n\r", rx_buffer->bytes_expected);
 		if(frame->can_dlc == 8) {

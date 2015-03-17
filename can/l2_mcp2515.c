@@ -1299,7 +1299,7 @@ static void can_l2_dispatcher_frame_handler(can_frame *message)
 	u8 loop;
 	BOOL found = FALSE;
 
-	LOG_D("L2_CanDispatcherL2MsgHandler 0x%lx\n\r", message->can_id);
+	LOG_I("L2_CanDispatcherL2MsgHandler 0x%lx\n\r", message->can_id);
 
 	for (loop = 0; loop < CAN_L2_HANDLER_ARRAY_SIZE; loop++) {
 
@@ -1322,7 +1322,7 @@ static void can_l2_dispatcher_frame_handler(can_frame *message)
 result_t can_l2_dispatch_reg_handler(can_l2_target_t *target)
 {
 	u8 loop;
-	LOG_D("sys_l2_can_dispatch_reg_handler mask 0x%lx, filter 0x%lx\n\r",
+	LOG_I("sys_l2_can_dispatch_reg_handler mask 0x%lx, filter 0x%lx\n\r",
 		   target->mask,
 		   target->filter);
 	/*
@@ -1337,7 +1337,7 @@ result_t can_l2_dispatch_reg_handler(can_l2_target_t *target)
 	// Find a free slot
 	for(loop = 0; loop < CAN_L2_HANDLER_ARRAY_SIZE; loop++) {
 		if(registered_handlers[loop].used == FALSE) {
-			LOG_D("Target stored at target %d\n\r", loop);
+			LOG_I("Target stored at target %d\n\r", loop);
 			registered_handlers[loop].used = TRUE;
 			registered_handlers[loop].target.mask = target->mask;
 			registered_handlers[loop].target.filter = target->filter;
