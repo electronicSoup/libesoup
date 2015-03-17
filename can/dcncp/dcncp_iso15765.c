@@ -32,6 +32,7 @@
 #include "es_lib/can/es_can.h"
 #include "es_lib/utils/flash.h"
 #include "es_lib/utils/eeprom.h"
+#include "es_lib/can/dcncp/cinnamonbun_info.h"
 
 #define DEBUG_FILE
 #include "es_lib/logger/serial_log.h"
@@ -96,6 +97,7 @@ static void dcncp_iso15765_msg_handler(iso15765_msg_t *msg)
 	u8             i = 0x00;
 	u32            flash_address;
 	char          *status;
+	char           buffer[200];
 
 	LOG_D("Message Protocol 0x%x\n\r", (UINT16) msg->protocol);
 	LOG_D("First Data Byte is 0x%x\n\r", (UINT16) msg->data[0]);
@@ -107,7 +109,26 @@ static void dcncp_iso15765_msg_handler(iso15765_msg_t *msg)
 
 	switch (msg->data[0]) {
 		case hw_info_request:
-			LOG_W("hw_info_request Ignored for the moment\n\r");
+			LOG_W("hw_info_request:\n\r");
+			length = 200;
+			rc = cb_get_hardware_info(buffer, &length);
+			if(rc != SUCCESS) {
+				LOG_E("Failed to read HW Info\n\r");
+				return;
+			}
+
+			response_buffer[0] = hw_info_response;
+			for (loop = 0; loop < length; loop++) {
+				response_buffer[loop + 1] = buffer[loop];
+			}
+
+
+			response.protocol = ISO15765_DCNCP_PROTOCOL_ID;
+			response.address = msg->address;
+			response.size = length + 1;
+			response.data = response_buffer;
+
+			iso15765_tx_msg(&response);
 #if 0
 			// The three items of data are 24 bytes long
 			// max L3 Message is 74
@@ -244,22 +265,22 @@ static void dcncp_iso15765_msg_handler(iso15765_msg_t *msg)
 
 			if (app_valid) {
 				length = 60;
-				app_status(data, &length);
-				LOG_D("Status returning - %s\n\r", data);
+				app_status(buffer, &length);
+				LOG_D("Status returning - %s\n\r", buffer);
 			} else {
 				LOG_D("Status Req no App installed\n\r");
 				length = 60;
-				flash_strcpy((char *) data, "No App Installed", &length);
+				flash_strcpy((char *) buffer, "No App Installed", &length);
 			}
 			LOG_D("Add App Status - length %d\n\r", length);
-			LOG_D("Add App Status - %s\n\r", data);
+			LOG_D("Add App Status - %s\n\r", buffer);
 
 			for (loop = 0; loop < length; loop++) {
 				if (response_index == ISO15765_MAX_MSG) {
 					LOG_E("Response Buffer Overflow\n\r");
 					break;
 				}
-				response_buffer[response_index++] = data[loop];
+				response_buffer[response_index++] = buffer[loop];
 			}
 			LOG_D("APP_STATUS_RESP size %d\n\r", (UINT16) response_index);
 			response.protocol = ISO15765_DCNCP_PROTOCOL_ID;
@@ -293,9 +314,9 @@ static void dcncp_iso15765_msg_handler(iso15765_msg_t *msg)
 			/*
 			 * Test the installed App to see if it's valid!
 			 */
-			if(  (flash_strlen((__prog__ char*)APP_AUTHOR_ADDRESS) < 40)
-			   && (flash_strlen((__prog__ char*)APP_SOFTWARE_ADDRESS) < 20)
-			   && (flash_strlen((__prog__ char*)APP_VERSION_ADDRESS) < 10)) {
+			if(  (flash_strlen((__prog__ char*)APP_AUTHOR_40_ADDRESS) < 40)
+			   && (flash_strlen((__prog__ char*)APP_SOFTWARE_50_ADDRESS) < 50)
+			   && (flash_strlen((__prog__ char*)APP_VERSION_10_ADDRESS) < 10)) {
 				LOG_D("App Strings are valid\n\r");
 				CALL_APP_INIT();
 				LOG_D("Back from app_init() call app_main()\n\r");
