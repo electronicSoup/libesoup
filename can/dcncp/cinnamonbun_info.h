@@ -37,7 +37,10 @@
 //extern __prog__ char hardware_version[10]      __attribute__ ((space(prog),address(HARDWARE_INFO_BASE + 24 + 24 + 50)));
 //extern __prog__ char hardware_uri[50]          __attribute__ ((space(prog),address(HARDWARE_INFO_BASE + 24 + 24 + 50 + 10)));
 
-
+#define BOOT_AUTHOR_40_ADDRESS           (HW_URI_50_ADDRESS + 50)
+#define BOOT_DESCRIPTION_50_ADDRESS      (BOOT_AUTHOR_40_ADDRESS + 40)
+#define BOOT_VERSION_10_ADDRESS          (BOOT_DESCRIPTION_50_ADDRESS + 50)
+#define BOOT_URI_50_ADDRESS              (BOOT_VERSION_10_ADDRESS + 10)
 //
 // Bootloader Info
 //
@@ -59,5 +62,7 @@
 #define APP_VERSION_10_ADDRESS      (APP_SOFTWARE_50_ADDRESS + 50)
 #define APP_URI_50_ADDRESS          (APP_VERSION_10_ADDRESS + 10)
 
-extern result_t cb_get_application_info(char *data, u16 *length);
 extern result_t cb_get_hardware_info(char *data, u16 *length);
+extern result_t cb_get_boot_info(char *data, u16 *data_len);
+extern result_t cb_get_firmware_info(char *data, u16 *data_len);
+extern result_t cb_get_application_info(char *data, u16 *length);

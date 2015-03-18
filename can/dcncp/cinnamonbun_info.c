@@ -24,6 +24,7 @@
 #include "es_lib/utils/flash.h"
 #include "es_lib/logger/serial_log.h"
 #include "es_lib/can/dcncp/cinnamonbun_info.h"
+#include "es_lib/firmware/firmware.h"
 
 #define TAG "CB_INFO"
 
@@ -143,6 +144,205 @@ result_t cb_get_hardware_info(char *data, u16 *data_len)
 
 	*data_len = size;
 	LOG_D("Hardware info length %d\n\r", size);
+	return (SUCCESS);
+}
+
+result_t cb_get_boot_info(char *data, u16 *data_len)
+{
+	char     buffer[200];
+	char    *data_ptr;
+	u16      size;
+	u16      length;
+	u16      loop;
+	result_t rc;
+
+	LOG_D("cb_get_boot_info()\n\r");
+
+	data_ptr = data;
+	size = 0;
+
+	length = 40;
+
+	rc = flash_strcpy(buffer, (__prog__ char *)BOOT_AUTHOR_40_ADDRESS, &length);
+	if (rc != SUCCESS) {
+		LOG_E("Failed to read HW Manufacturer\n\r");
+		return (rc);
+	}
+
+	LOG_D("Boot Author read as %s length %d\n\r", buffer, length);
+	loop = 0;
+	while (loop <= length && size < *data_len) {
+		*data_ptr++ = buffer[loop];
+		size++;
+		loop++;
+	}
+
+	if(size == *data_len) {
+		LOG_E("Oops Out of space. Size %d\n\r", size);
+		return(ERR_NO_RESOURCES);
+	}
+
+	length = 50;
+	rc = flash_strcpy(buffer, (__prog__ char *)BOOT_DESCRIPTION_50_ADDRESS, &length);
+	if (rc != SUCCESS) {
+		LOG_E("Failed to ready HW Model\n\r");
+		return (rc);
+	}
+
+	LOG_D("Boot Description read as %s, length %d\n\r", buffer, length);
+	loop = 0;
+	while (loop <= length && size < *data_len) {
+		*data_ptr++ = buffer[loop];
+		size++;
+		loop++;
+	}
+
+	if(size == *data_len) {
+		LOG_E("Oops Out of space size %d\n\r", size);
+		return(ERR_NO_RESOURCES);
+	}
+
+	length = 10;
+	rc = flash_strcpy(buffer, (__prog__ char *) BOOT_VERSION_10_ADDRESS, &length);
+	if(rc != SUCCESS) {
+		LOG_E("Failed to read the HW Verson\n\r");
+		return(rc);
+	}
+
+	LOG_D("Boot Version read as %s, length %d\n\r", buffer, length);
+	loop = 0;
+	while (loop <= length && size < *data_len) {
+		*data_ptr++ = buffer[loop];
+		size++;
+		loop++;
+	}
+
+	if(size == *data_len) {
+		LOG_E("Oops Out of space size %d\n\r", size);
+		return(ERR_NO_RESOURCES);
+	}
+
+	length = 50;
+	rc = flash_strcpy(buffer, (__prog__ char *)BOOT_URI_50_ADDRESS, &length);
+	if(rc != SUCCESS) {
+		LOG_E("Failed to read the HW URI\n\r");
+		return(rc);
+	}
+
+	LOG_D("Boot URI read as %s, length %d\n\r", buffer, length);
+	loop = 0;
+	while (loop <= length && size < *data_len) {
+		*data_ptr++ = buffer[loop];
+		size++;
+		loop++;
+	}
+
+	if(size == *data_len) {
+		LOG_E("Oops Out of space. Size %d\n\r", size);
+		return(ERR_NO_RESOURCES);
+	}
+
+	*data_len = size;
+	LOG_D("Boot info length %d\n\r", size);
+	return (SUCCESS);
+}
+
+result_t cb_get_firmware_info(char *data, u16 *data_len)
+{
+	char     buffer[200];
+	char    *data_ptr;
+	u16      size;
+	u16      length;
+	u16      loop;
+	result_t rc;
+
+	LOG_D("cb_get_firmware_info()\n\r");
+
+	data_ptr = data;
+	size = 0;
+
+	length = 40;
+	rc = flash_strcpy(buffer, (__prog__ char *)FIRMWARE_AUTHOR_40_ADDRESS, &length);
+	if (rc != SUCCESS) {
+		LOG_E("Failed to read HW Manufacturer\n\r");
+		return (rc);
+	}
+
+	LOG_D("Firmware Author read as %s length %d\n\r", buffer, length);
+	loop = 0;
+	while (loop <= length && size < *data_len) {
+		*data_ptr++ = buffer[loop];
+		size++;
+		loop++;
+	}
+
+	if(size == *data_len) {
+		LOG_E("Oops Out of space. Size %d\n\r", size);
+		return(ERR_NO_RESOURCES);
+	}
+
+	length = 50;
+	rc = flash_strcpy(buffer, (__prog__ char *)FIRMWARE_DESCRIPTION_50_ADDRESS, &length);
+	if (rc != SUCCESS) {
+		LOG_E("Failed to ready HW Model\n\r");
+		return (rc);
+	}
+
+	LOG_D("Firmware Description read as %s, length %d\n\r", buffer, length);
+	loop = 0;
+	while (loop <= length && size < *data_len) {
+		*data_ptr++ = buffer[loop];
+		size++;
+		loop++;
+	}
+
+	if(size == *data_len) {
+		LOG_E("Oops Out of space size %d\n\r", size);
+		return(ERR_NO_RESOURCES);
+	}
+
+	length = 10;
+	rc = flash_strcpy(buffer, (__prog__ char *) FIRMWARE_VERSION_10_ADDRESS, &length);
+	if(rc != SUCCESS) {
+		LOG_E("Failed to read the HW Verson\n\r");
+		return(rc);
+	}
+
+	LOG_D("Firmware Version read as %s, length %d\n\r", buffer, length);
+	loop = 0;
+	while (loop <= length && size < *data_len) {
+		*data_ptr++ = buffer[loop];
+		size++;
+		loop++;
+	}
+
+	if(size == *data_len) {
+		LOG_E("Oops Out of space size %d\n\r", size);
+		return(ERR_NO_RESOURCES);
+	}
+
+	length = 50;
+	rc = flash_strcpy(buffer, (__prog__ char *)FIRMWARE_URL_50_ADDRESS, &length);
+	if(rc != SUCCESS) {
+		LOG_E("Failed to read the HW URI\n\r");
+		return(rc);
+	}
+
+	LOG_D("Firmware URI read as %s, length %d\n\r", buffer, length);
+	loop = 0;
+	while (loop <= length && size < *data_len) {
+		*data_ptr++ = buffer[loop];
+		size++;
+		loop++;
+	}
+
+	if(size == *data_len) {
+		LOG_E("Oops Out of space. Size %d\n\r", size);
+		return(ERR_NO_RESOURCES);
+	}
+
+	*data_len = size;
+	LOG_D("Boot info length %d\n\r", size);
 	return (SUCCESS);
 }
 
