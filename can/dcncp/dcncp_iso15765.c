@@ -47,17 +47,19 @@ extern BOOL app_valid;
 typedef enum {
     hw_info_request        = 0x01,
     hw_info_response       = 0x02,
-    os_info_request        = 0x03,
-    os_info_response       = 0x04,
-    app_info_request       = 0x05,
-    app_info_response      = 0x06,
-    app_status_request     = 0x07,
-    app_status_response    = 0x08,
-    node_begin_reflash     = 0x11,
-    node_ready_next        = 0x12,
-    node_write_row         = 0x13,
-    node_erase_page        = 0x14,
-    node_reflash_finished  = 0x15
+    boot_info_request      = 0x03,
+    boot_info_response     = 0x04,
+    os_info_request        = 0x05,
+    os_info_response       = 0x06,
+    app_info_request       = 0x07,
+    app_info_response      = 0x08,
+    app_status_request     = 0x09,
+    app_status_response    = 0x0a,
+    node_begin_reflash     = 0x0b,
+    node_ready_next        = 0x0c,
+    node_write_row         = 0x0d,
+    node_erase_page        = 0x0e,
+    node_reflash_finished  = 0x0f
 } dcncp_iso15765_msg_t;
 
 void (*app_status)(char *, u16 *);
