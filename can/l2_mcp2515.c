@@ -1299,7 +1299,7 @@ static void can_l2_dispatcher_frame_handler(can_frame *message)
 	u8 loop;
 	BOOL found = FALSE;
 
-	LOG_I("L2_CanDispatcherL2MsgHandler 0x%lx\n\r", message->can_id);
+	LOG_D("L2_CanDispatcherL2MsgHandler 0x%lx\n\r", message->can_id);
 
 	for (loop = 0; loop < CAN_L2_HANDLER_ARRAY_SIZE; loop++) {
 
