@@ -264,7 +264,7 @@ result_t cb_get_firmware_info(char *data, u16 *data_len)
 	length = 40;
 	rc = flash_strcpy(buffer, (__prog__ char *)FIRMWARE_AUTHOR_40_ADDRESS, &length);
 	if (rc != SUCCESS) {
-		LOG_E("Failed to read HW Manufacturer\n\r");
+		LOG_E("Failed to read Firmware Author\n\r");
 		return (rc);
 	}
 
@@ -284,7 +284,7 @@ result_t cb_get_firmware_info(char *data, u16 *data_len)
 	length = 50;
 	rc = flash_strcpy(buffer, (__prog__ char *)FIRMWARE_DESCRIPTION_50_ADDRESS, &length);
 	if (rc != SUCCESS) {
-		LOG_E("Failed to ready HW Model\n\r");
+		LOG_E("Failed to ready FIrmware Desc\n\r");
 		return (rc);
 	}
 
@@ -304,7 +304,7 @@ result_t cb_get_firmware_info(char *data, u16 *data_len)
 	length = 10;
 	rc = flash_strcpy(buffer, (__prog__ char *) FIRMWARE_VERSION_10_ADDRESS, &length);
 	if(rc != SUCCESS) {
-		LOG_E("Failed to read the HW Verson\n\r");
+		LOG_E("Failed to read the Firmware Verson\n\r");
 		return(rc);
 	}
 
@@ -363,61 +363,80 @@ result_t cb_get_application_info(char *data, u16 *data_len)
 	length = 50;
 	rc = flash_strcpy(buffer, (__prog__ char *) APP_AUTHOR_40_ADDRESS, &length);
 	if (rc != SUCCESS) {
+		LOG_E("Failed to read the App Author\n\r");
 		return (rc);
 	}
+	LOG_D("Application Author read as %s, length %d\n\r", buffer, length);
 
 	loop = 0;
 	while (loop <= length && size < *data_len) {
 		*data_ptr++ = buffer[loop];
 		size++;
+		loop++;
 	}
 
 	if(size == *data_len) {
+		LOG_E("Oops Out of space. Size %d\n\r", size);
 		return(ERR_NO_RESOURCES);
 	}
 
 	length = 50;
 	rc = flash_strcpy(buffer, (__prog__ char *) APP_SOFTWARE_50_ADDRESS, &length);
 	if (rc != SUCCESS) {
+		LOG_E("Failed to read the App Software\n\r");
 		return (rc);
 	}
+	LOG_D("App Software read as %s, length %d\n\r", buffer, length);
 
 	loop = 0;
 	while (loop <= length && size < *data_len) {
 		*data_ptr++ = buffer[loop];
 		size++;
+		loop++;
 	}
 
 	if(size == *data_len) {
+		LOG_E("Oops Out of space. Size %d\n\r", size);
 		return(ERR_NO_RESOURCES);
 	}
 
 	length = 10;
 	rc = flash_strcpy(buffer, (__prog__ char *) APP_VERSION_10_ADDRESS, &length);
 	if (rc != SUCCESS) {
+		LOG_E("Failed to read the App Version\n\r");
 		return (rc);
 	}
+	LOG_D("App Version read as %s, length %d\n\r", buffer, length);
 
 	loop = 0;
 	while (loop <= length && size < *data_len) {
 		*data_ptr++ = buffer[loop];
 		size++;
+		loop++;
 	}
 
 	if(size == *data_len) {
+		LOG_E("Oops Out of space. Size %d\n\r", size);
 		return(ERR_NO_RESOURCES);
 	}
 
 	length = 50;
 	rc = flash_strcpy(buffer, (__prog__ char *) APP_URI_50_ADDRESS, &length);
+	if(rc != SUCCESS) {
+		LOG_E("Failed to read the App URI\n\r");
+		return(rc);
+	}
+	LOG_D("App URI read as %s, length %d\n\r", buffer, length);
 
 	loop = 0;
 	while (loop <= length && size < *data_len) {
 		*data_ptr++ = buffer[loop];
 		size++;
+		loop++;
 	}
 
 	if(size == *data_len) {
+		LOG_E("Oops Out of space. Size %d\n\r", size);
 		return(ERR_NO_RESOURCES);
 	}
 
