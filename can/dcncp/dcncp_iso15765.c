@@ -49,8 +49,8 @@ typedef enum {
     hw_info_response       = 0x02,
     boot_info_request      = 0x03,
     boot_info_response     = 0x04,
-    os_info_request        = 0x05,
-    os_info_response       = 0x06,
+    firmware_info_request  = 0x05,
+    firmware_info_response = 0x06,
     app_info_request       = 0x07,
     app_info_response      = 0x08,
     app_status_request     = 0x09,
@@ -111,7 +111,7 @@ static void dcncp_iso15765_msg_handler(iso15765_msg_t *msg)
 	}
 
 	switch (msg->data[0]) {
-		case hw_info_request:
+ 		case hw_info_request:
 			LOG_W("hw_info_request:\n\r");
 			length = 200;
 			rc = cb_get_hardware_info(buffer, &length);
@@ -125,6 +125,27 @@ static void dcncp_iso15765_msg_handler(iso15765_msg_t *msg)
 				response_buffer[loop + 1] = buffer[loop];
 			}
 
+			response.protocol = ISO15765_DCNCP_PROTOCOL_ID;
+			response.address = msg->address;
+			response.size = length + 1;
+			response.data = response_buffer;
+
+			iso15765_tx_msg(&response);
+			break;
+
+ 		case boot_info_request:
+			LOG_W("boot_info_request:\n\r");
+			length = 200;
+			rc = cb_get_boot_info(buffer, &length);
+			if(rc != SUCCESS) {
+				LOG_E("Failed to read Boot Info\n\r");
+				return;
+			}
+
+			response_buffer[0] = boot_info_response;
+			for (loop = 0; loop < length; loop++) {
+				response_buffer[loop + 1] = buffer[loop];
+			}
 
 			response.protocol = ISO15765_DCNCP_PROTOCOL_ID;
 			response.address = msg->address;
@@ -132,48 +153,28 @@ static void dcncp_iso15765_msg_handler(iso15765_msg_t *msg)
 			response.data = response_buffer;
 
 			iso15765_tx_msg(&response);
-#if 0
-			// The three items of data are 24 bytes long
-			// max L3 Message is 74
-			// 3*24 = 72
-			// Add on L3_ID and Resp Code and max'd out.
-			response_index = 0;
-			response_buffer[response_index++] = hw_info_response;
-
-			length = 60;
-			flash_strcpy((char *) data, manfacturer, length);
-			LOG_D("Add Manufacturer - %s\n\r", data);
-
-			for (loop = 0; loop <= length; loop++) {
-				if (response_index == ISO15765_MAX_MSG) {
-					LOG_E("Response Buffer Overflow\n\r");
-					break;
-				}
-				response_buffer[response_index++] = data[loop];
-			}
-
-			length = 60;
-			flash_strcpy((char *) data, hardware, &length);
-			LOG_D("Add Hardware - %s\n\r", data);
-			for (loop = 0; loop <= length; loop++) {
-				if (respIndex == ISO15765_MAX_MSG) {
-					LOG_E("Response Buffer Overflow\n\r");
-					break;
-				}
-				response_buffer[response_index++] = data[loop];
-			}
-
-			respMsg.protocol = ISO15765_DCNCP_PROTOCOL_ID;
-			respMsg.address = message->address;
-			respMsg.size = response_index;
-			respMsg.data = response_buffer;
-
-			iso15765_tx_msg(&respMsg);
-#endif
 			break;
 
-		case os_info_request:
-			LOG_W("os_info_request Ignored for the moment\n\r");
+		case firmware_info_request:
+			LOG_W("firmware_info_request\n\r");
+			length = 200;
+			rc = cb_get_firmware_info(buffer, &length);
+			if(rc != SUCCESS) {
+				LOG_E("Failed to read Firmware Info\n\r");
+				return;
+			}
+
+			response_buffer[0] = firmware_info_response;
+			for (loop = 0; loop < length; loop++) {
+				response_buffer[loop + 1] = buffer[loop];
+			}
+
+			response.protocol = ISO15765_DCNCP_PROTOCOL_ID;
+			response.address = msg->address;
+			response.size = length + 1;
+			response.data = response_buffer;
+
+			iso15765_tx_msg(&response);
 #if 0
 			response_index = 0;
 			response_buffer[response_index++] = os_info_response;
@@ -199,9 +200,9 @@ static void dcncp_iso15765_msg_handler(iso15765_msg_t *msg)
 #endif
 			break;
 
+#if 0
 		case app_info_request:
 			LOG_W("app_info_request Ignored for the moment\n\r");
-#if 0
 			response_index = 0;
 			response_buffer[response_index++] = app_info_response;
 
@@ -258,11 +259,30 @@ static void dcncp_iso15765_msg_handler(iso15765_msg_t *msg)
 			response.data = response_buffer;
 
 			iso15765_tx_msg(&response);
-#endif
 			break;
+#endif
 
-		case app_status_request:
-			LOG_D("AppStatusRequest\n\r");
+		case app_info_request:
+			LOG_D("AppInfoRequest\n\r");
+			length = 200;
+			rc = cb_get_application_info(buffer, &length);
+			if(rc != SUCCESS) {
+				LOG_E("Failed to read Application Info\n\r");
+				return;
+			}
+
+			response_buffer[0] = app_info_response;
+			for (loop = 0; loop < length; loop++) {
+				response_buffer[loop + 1] = buffer[loop];
+			}
+
+			response.protocol = ISO15765_DCNCP_PROTOCOL_ID;
+			response.address = msg->address;
+			response.size = length + 1;
+			response.data = response_buffer;
+
+			iso15765_tx_msg(&response);
+#if 0
 			response_index = 0;
 			response_buffer[response_index++] = app_status_response;
 
@@ -292,6 +312,7 @@ static void dcncp_iso15765_msg_handler(iso15765_msg_t *msg)
 			response.data = response_buffer;
 
 			iso15765_tx_msg(&response);
+#endif
 			break;
 
 		case node_begin_reflash:
