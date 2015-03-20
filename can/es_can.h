@@ -160,6 +160,16 @@ extern result_t iso15765_dispatch_set_unhandled_handler(iso15765_msg_handler_t h
 #endif
 
 #if defined(ISO11783)
+
+
+typedef enum {
+    ack            = 0x00,
+    nack           = 0x01,
+    denied         = 0x02,
+    cannot_respond = 0x03
+} iso11783_ack_t;
+
+
 extern result_t  iso11783_init(u8);
 
 extern result_t iso11783_tx_msg(iso11783_msg_t *msg);

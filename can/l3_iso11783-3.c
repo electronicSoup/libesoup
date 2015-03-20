@@ -88,10 +88,11 @@
 
 #define PGN_TP_CM                 0x00EC00
 
-#define PGN_REQUEST_TO_SEND       0x00CA00
-#define PGN_CLEAR_TO_SEND         0x00CA00
-#define PGN_CONNECTION_ABORT              0x00CA00
-#define PGN_BROADCAST_ANNOUNCE              0x00CA00
+#define TP_CM_RTS                 16
+#define TP_CM_CTS                 17
+#define TP_CM_End_Of_Msg_ACK      19
+#define TP_CM_BAM                 32
+#define TP_CM_Connection_Abort    255
 
 #define TIMER_Tr   200
 #define TIMER_Th   500
@@ -227,10 +228,10 @@ result_t iso11783_tx_msg(iso11783_msg_t *msg)
 	return(SUCCESS);
 }
 
-result_t iso11783_tx_request_pgn_data(u8 priority, u8 dst, u32 pgn)
+result_t iso11783_tx_pgn_request(u8 priority, u8 dst, u32 pgn)
 {
 	can_frame frame;
-	LOG_D("iso11783_tx_request_pgn_data()\n\r");
+	LOG_D("iso11783_tx_pgn_request()\n\r");
 
 	frame.can_id = pgn_to_canid(priority, PGN_REQUEST, dst);
 	frame.can_dlc = 0x03;
@@ -244,12 +245,12 @@ result_t iso11783_tx_request_pgn_data(u8 priority, u8 dst, u32 pgn)
 	return(SUCCESS);
 }
 
-result_t iso11783_tx_ack_pgn(u8 priority, u8 dst, u32 pgn, u8 ack_value)
+result_t iso11783_tx_ack_pgn(u8 priority, u8 dst, u32 pgn, iso11783_ack_t ack_value)
 {
 	u8        loop;
 	u32       tmp_pgn;
 	can_frame frame;
-	LOG_D("iso11783_tx_request_pgn_data()\n\r");
+	LOG_D("iso11783_tx_ack_pgn()\n\r");
 
 	frame.can_id = pgn_to_canid(priority, PGN_ACK, dst);
 	frame.can_dlc = 0x08;
