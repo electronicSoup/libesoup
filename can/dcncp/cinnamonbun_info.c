@@ -25,13 +25,14 @@
 #include "es_lib/logger/serial_log.h"
 #include "es_lib/can/dcncp/cinnamonbun_info.h"
 #include "es_lib/firmware/firmware.h"
+#include "es_lib/utils/eeprom.h"
 
 #define TAG "CB_INFO"
 
-result_t cb_get_hardware_info(char *data, u16 *data_len)
+result_t cb_get_hardware_info(u8 *data, u16 *data_len)
 {
-	char     buffer[200];
-	char    *data_ptr;
+	u8       buffer[200];
+	u8      *data_ptr;
 	u16      size;
 	u16      length;
 	u16      loop;
@@ -147,10 +148,10 @@ result_t cb_get_hardware_info(char *data, u16 *data_len)
 	return (SUCCESS);
 }
 
-result_t cb_get_boot_info(char *data, u16 *data_len)
+result_t cb_get_boot_info(u8 *data, u16 *data_len)
 {
-	char     buffer[200];
-	char    *data_ptr;
+	u8       buffer[200];
+	u8      *data_ptr;
 	u16      size;
 	u16      length;
 	u16      loop;
@@ -247,10 +248,10 @@ result_t cb_get_boot_info(char *data, u16 *data_len)
 	return (SUCCESS);
 }
 
-result_t cb_get_firmware_info(char *data, u16 *data_len)
+result_t cb_get_firmware_info(u8 *data, u16 *data_len)
 {
-	char     buffer[200];
-	char    *data_ptr;
+	u8       buffer[200];
+	u8      *data_ptr;
 	u16      size;
 	u16      length;
 	u16      loop;
@@ -346,10 +347,10 @@ result_t cb_get_firmware_info(char *data, u16 *data_len)
 	return (SUCCESS);
 }
 
-result_t cb_get_application_info(char *data, u16 *data_len)
+result_t cb_get_application_info(u8 *data, u16 *data_len)
 {
-	char     buffer[154];
-	char    *data_ptr;
+	u8       buffer[154];
+	u8      *data_ptr;
 	u16      size;
 	u16      length;
 	u16      loop;
@@ -442,5 +443,64 @@ result_t cb_get_application_info(char *data, u16 *data_len)
 
 	*data_len = size;
 	LOG_D("Application info length %d\n\r", size);
+	return (SUCCESS);
+}
+
+result_t cb_get_node_config_info(u8 *data, u16 *data_len)
+{
+	u8       buffer[200];
+	u8      *data_ptr;
+	u16      size;
+	u16      length;
+	u16      loop;
+	u8       value;
+	result_t rc;
+
+	LOG_D("cb_get_node_config_info()\n\r");
+
+	data_ptr = data;
+	size = 0;
+
+	eeprom_read(EEPROM_NODE_ADDRESS, (u8 *)&value);
+	LOG_D("Layer 3 Node Address 0x%x\n\r", value);
+	*data_ptr++ = (char)value;
+	size++;
+
+	eeprom_read(EEPROM_CAN_BAUD_RATE_ADDR, (u8 *)&value);
+	LOG_D("CAN Baud Rate 0x%x\n\r", value);
+	*data_ptr++ = (char)value;
+	size++;
+
+	eeprom_read(EEPROM_IO_ADDRESS_ADDR, (u8 *)&value);
+	LOG_D("I/O Address 0x%x\n\r", value);
+	*data_ptr++ = (char)value;
+	size++;
+
+	/*
+	 * The Node Descrition is limited to being a 30 Byte string
+	 * including the null terminator!
+	 */
+	length = 50;
+	rc = eeprom_str_read(EEPROM_NODE_DESCRIPTION_ADDR, buffer, &length);
+	if(rc != SUCCESS) {
+		LOG_E("Failed to read the node description\n\r");
+		return(rc);
+	}
+	LOG_D("Description: String Length %d string '%s'\n\r", length, buffer);
+
+	loop = 0;
+	while (loop <= length && size < *data_len) {
+		*data_ptr++ = buffer[loop];
+		size++;
+		loop++;
+	}
+
+	if(size == *data_len) {
+		LOG_E("Oops Out of space. Size %d\n\r", size);
+		return(ERR_NO_RESOURCES);
+	}
+
+	*data_len = size;
+	LOG_D("Node Config info length %d\n\r", size);
 	return (SUCCESS);
 }

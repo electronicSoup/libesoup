@@ -45,21 +45,23 @@
 extern BOOL app_valid;
 
 typedef enum {
-    hw_info_request        = 0x01,
-    hw_info_response       = 0x02,
-    boot_info_request      = 0x03,
-    boot_info_response     = 0x04,
-    firmware_info_request  = 0x05,
-    firmware_info_response = 0x06,
-    app_info_request       = 0x07,
-    app_info_response      = 0x08,
-    app_status_request     = 0x09,
-    app_status_response    = 0x0a,
-    node_begin_reflash     = 0x0b,
-    node_ready_next        = 0x0c,
-    node_write_row         = 0x0d,
-    node_erase_page        = 0x0e,
-    node_reflash_finished  = 0x0f
+    hw_info_request           = 0x01,
+    hw_info_response          = 0x02,
+    boot_info_request         = 0x03,
+    boot_info_response        = 0x04,
+    firmware_info_request     = 0x05,
+    firmware_info_response    = 0x06,
+    node_config_info_request  = 0x07,
+    node_config_info_response = 0x08,
+    app_info_request          = 0x09,
+    app_info_response         = 0x0a,
+    app_status_request        = 0x0b,
+    app_status_response       = 0x0c,
+    node_begin_reflash        = 0x0d,
+    node_ready_next           = 0x0e,
+    node_write_row            = 0x0f,
+    node_erase_page           = 0x10,
+    node_reflash_finished     = 0x11
 } dcncp_iso15765_msg_t;
 
 void (*app_status)(char *, u16 *);
@@ -175,92 +177,29 @@ static void dcncp_iso15765_msg_handler(iso15765_msg_t *msg)
 			response.data = response_buffer;
 
 			iso15765_tx_msg(&response);
-#if 0
-			response_index = 0;
-			response_buffer[response_index++] = os_info_response;
-
-			length = 60
-			flash_strcpy((char *) data, os_code, &length);
-			LOG_D("Add OS Code - %s\n\r", data);
-			for (loop = 0; loop <= length; loop++) {
-				if (respIndex == ISO15765_MAX_MSG) {
-					LOG_E("Response Buffer Overflow\n\r");
-					break;
-				}
-				response_buffer[response_index++] = data[loop];
-			}
-			LOG_D("OS_INFO_RESP size %d\n\r", response_index);
-
-			response.protocol = ISO15765_DCNCP_PROTOCOL_ID;
-			response.address = msg->address;
-			response.size = response_index;
-			response.data = response_buffer;
-
-			iso15765_tx_msg(&response);
-#endif
 			break;
 
-#if 0
-		case app_info_request:
-			LOG_W("app_info_request Ignored for the moment\n\r");
-			response_index = 0;
-			response_buffer[response_index++] = app_info_response;
+		case node_config_info_request:
+			LOG_W("node_config_info_request\n\r");
+			length = 200;
+			rc = cb_get_node_config_info(buffer, &length);
+			if(rc != SUCCESS) {
+				LOG_E("Failed to read Firmware Info\n\r");
+				return;
+			}
 
-			if (app_valid) {
-				length = 60;
-				flash_strcpy((char *) data, appAuthor, &length);
-				LOG_D("Add App Author - %s\n\r", data);
-				for (loop = 0; loop <= length; loop++) {
-					if (response_index == ISO15765_MAX_MSG) {
-						LOG_E("Response Buffer Overflow\n\r");
-						break;
-					}
-					response_buffer[response_index++] = data[loop];
-				}
-
-				length = 60;
-				flash_strcpy((char *) data, (const rom char *) appSoftware, &length);
-				LOG_D("Add App Software - %s\n\r", data);
-				for (loop = 0; loop <= length; loop++) {
-					if (respIndex == ISO15765_MAX_MSG) {
-						LOG_E("Response Buffer Overflow\n\r");
-						break;
-					}
-					response_buffer[response_index++] = data[loop];
-				}
-
-				length = 60;
-				flash_strcpy((char *) data, appVersion, &length);
-				LOG_D("Add app Version - %s\n\r", data);
-				for (loop = 0; loop <= length; loop++) {
-					if (response_index == ISO15765_MAX_MSG) {
-						LOG_E("Response Buffer Overflow\n\r");
-						break;
-					}
-					response_buffer[response_index++] = data[loop];
-				}
-				LOG_D("APP_INFO_RESP size %d\n\r", (UINT16) respIndex);
-			} else {
-				length = 60;
-				flash_strcpy((char *) data, "Invalid", &length);
-				serial_log(Debug, TAG, "App Invalid\n\r");
-				for (loop = 0; loop <= length; loop++) {
-					if (response_index == ISO15765_MAX_MSG) {
-						LOG_E("Response Buffer Overflow\n\r");
-						break;
-					}
-					response_buffer[response_index++] = data[loop];
-				}
+			response_buffer[0] = node_config_info_response;
+			for (loop = 0; loop < length; loop++) {
+				response_buffer[loop + 1] = buffer[loop];
 			}
 
 			response.protocol = ISO15765_DCNCP_PROTOCOL_ID;
 			response.address = msg->address;
-			response.size = response_index;
+			response.size = length + 1;
 			response.data = response_buffer;
 
 			iso15765_tx_msg(&response);
 			break;
-#endif
 
 		case app_info_request:
 			LOG_D("AppInfoRequest\n\r");
@@ -282,37 +221,6 @@ static void dcncp_iso15765_msg_handler(iso15765_msg_t *msg)
 			response.data = response_buffer;
 
 			iso15765_tx_msg(&response);
-#if 0
-			response_index = 0;
-			response_buffer[response_index++] = app_status_response;
-
-			if (app_valid) {
-				length = 60;
-				app_status(buffer, &length);
-				LOG_D("Status returning - %s\n\r", buffer);
-			} else {
-				LOG_D("Status Req no App installed\n\r");
-				length = 60;
-				flash_strcpy((char *) buffer, "No App Installed", &length);
-			}
-			LOG_D("Add App Status - length %d\n\r", length);
-			LOG_D("Add App Status - %s\n\r", buffer);
-
-			for (loop = 0; loop < length; loop++) {
-				if (response_index == ISO15765_MAX_MSG) {
-					LOG_E("Response Buffer Overflow\n\r");
-					break;
-				}
-				response_buffer[response_index++] = buffer[loop];
-			}
-			LOG_D("APP_STATUS_RESP size %d\n\r", (UINT16) response_index);
-			response.protocol = ISO15765_DCNCP_PROTOCOL_ID;
-			response.address = msg->address;
-			response.size = response_index;
-			response.data = response_buffer;
-
-			iso15765_tx_msg(&response);
-#endif
 			break;
 
 		case node_begin_reflash:
@@ -382,7 +290,6 @@ static void dcncp_iso15765_msg_handler(iso15765_msg_t *msg)
 			break;
 
 		case node_erase_page:
-			LOG_D("Erase Flash Page\n\r");
 			flash_address = 0x00;
 
 			for (i = 0x01; i <= 4; i++) {
