@@ -66,4 +66,6 @@ extern result_t cb_get_hardware_info(u8 *data, u16 *length);
 extern result_t cb_get_boot_info(u8 *data, u16 *data_len);
 extern result_t cb_get_firmware_info(u8 *data, u16 *data_len);
 extern result_t cb_get_application_info(u8 *data, u16 *length);
+#ifdef CAN_NODE_OS
 extern result_t cb_get_node_config_info(u8 *data, u16 *data_len);
+#endif // CAN_NODE_OS

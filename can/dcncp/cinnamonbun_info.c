@@ -446,6 +446,7 @@ result_t cb_get_application_info(u8 *data, u16 *data_len)
 	return (SUCCESS);
 }
 
+#ifdef CAN_NODE_OS
 result_t cb_get_node_config_info(u8 *data, u16 *data_len)
 {
 	u8       buffer[200];
@@ -504,3 +505,4 @@ result_t cb_get_node_config_info(u8 *data, u16 *data_len)
 	LOG_D("Node Config info length %d\n\r", size);
 	return (SUCCESS);
 }
+#endif // CAN_NODE_OS
