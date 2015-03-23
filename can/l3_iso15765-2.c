@@ -33,7 +33,7 @@
 #include "es_lib/timers/timers.h"
 
 #define DEBUG_FILE
-#define LOG_LEVEL LOG_INFO
+//#define LOG_LEVEL LOG_INFO
 #include "es_lib/logger/serial_log.h"
 
 #define TAG "ISO-15765"
@@ -267,6 +267,7 @@ result_t iso15765_tx_msg(iso15765_msg_t *msg)
 	for(loop = 0; loop < msg->size; loop++) {
 		printf("0x%2x,", *data_ptr++);
 	}
+	printf("\n\r");
 	
         if(!initialised) {
 		LOG_E("ISO15765 not Initialised\n\r");
