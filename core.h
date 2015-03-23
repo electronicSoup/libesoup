@@ -444,7 +444,7 @@ typedef struct
  * The maximum ISO15765 Message size is 74 Bytes including the protocol!
  * So one protocol Byte and 73 Data Bytes
  */
-#define ISO15765_MAX_MSG 199 // reduced by one make protocol seperate 74  //4095
+#define ISO15765_MAX_MSG 270 // reduced by one make protocol seperate 74  //4095
 
 /**
  * \brief iso15765_msg_t
@@ -452,9 +452,9 @@ typedef struct
  */
 typedef struct
 {
-    u8 address;
-    u8 size;
-    u8 protocol;
+    u8  address;
+    u16 size;
+    u8  protocol;
     u8 *data;
 } iso15765_msg_t;
 

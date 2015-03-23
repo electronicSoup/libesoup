@@ -33,6 +33,7 @@
 #include "es_lib/timers/timers.h"
 
 #define DEBUG_FILE
+#define LOG_LEVEL LOG_INFO
 #include "es_lib/logger/serial_log.h"
 
 #define TAG "ISO-15765"
@@ -93,34 +94,34 @@ typedef union
 static iso15765_id tx_frame_id;
 
 typedef struct {
-	u8 block_size;
-	u8 seperation_time;
-	can_frame frame;
-	u8 sequence;
-	u8 data[ISO15765_MAX_MSG];
-	u8 index;
-	u8 frames_sent_in_block;
-	u8 bytes_to_send;
-	u8 bytes_sent;
-	u8 destination;
-	es_timer consecutive_frame_timer;
-	es_timer timer_N_Bs;
+	u8             block_size;
+	u8             seperation_time;
+	can_frame      frame;
+	u8             sequence;
+	u8             data[ISO15765_MAX_MSG];
+	u16            index;
+	u8             frames_sent_in_block;
+	u16            bytes_to_send;
+	u16            bytes_sent;
+	u8             destination;
+	es_timer       consecutive_frame_timer;
+	es_timer       timer_N_Bs;
 } tx_buffer_t;
 
 typedef struct {
-	u8 block_size;
-	u8 seperation_time;
-	u8 data[ISO15765_MAX_MSG];
-	u8 index;
-	u8 sequence;
-	u8 protocol;
-	u8 bytes_expected;
-	u8 bytes_received;
-	u8 frames_received_in_block;
-	u8 source;
-	can_frame frame;
+	u8             block_size;
+	u8             seperation_time;
+	u8             data[ISO15765_MAX_MSG];
+	u16            index;
+	u8             sequence;
+	u8             protocol;
+	u16            bytes_expected;
+	u16            bytes_received;
+	u8             frames_received_in_block;
+	u8             source;
+	can_frame      frame;
 	iso15765_msg_t msg;
-	es_timer timer_N_Cr;
+	es_timer       timer_N_Cr;
 } rx_buffer_t;
 
 #if defined(MCP)
@@ -220,7 +221,7 @@ result_t iso15765_init(u8 address)
 	}
 #endif
         node_address = address;
-	LOG_D("l3_init() node address = 0x%x\n\r", node_address);
+	LOG_I("l3_init() node address = 0x%x\n\r", node_address);
 
 	/*
 	 * Initialise the static parts or our tx message header.
@@ -252,16 +253,21 @@ u8 iso15765_initialised(void)
 
 result_t iso15765_tx_msg(iso15765_msg_t *msg)
 {
-	u8 *dataPtr;
-	u8 loop;
-	iso15765_id id;
+	u8          *data_ptr;
+	u16          loop;
+	iso15765_id  id;
 	tx_buffer_t *tx_buffer;
 
-	LOG_D("Tx to 0x%x, Protocol-0x%x, len(0x%x)\n\r",
+	LOG_I("Tx to 0x%x, Protocol-0x%x, len(0x%x)\n\r",
 		   (u16)msg->address,
 		   (u16)msg->protocol,
 		   (u16)msg->size);
 
+	data_ptr = msg->data;
+	for(loop = 0; loop < msg->size; loop++) {
+		printf("0x%2x,", *data_ptr++);
+	}
+	
         if(!initialised) {
 		LOG_E("ISO15765 not Initialised\n\r");
 		return(ERR_UNINITIALISED);
@@ -313,10 +319,10 @@ result_t iso15765_tx_msg(iso15765_msg_t *msg)
 		tx_buffer->frame.data[0] = ISO15765_SF | ((msg->size + 1) & 0x0f);
 		tx_buffer->frame.data[1] = msg->protocol;
 
-		dataPtr = msg->data;
+		data_ptr = msg->data;
 		LOG_D("Tx Single Frame\n\r");
 		for(loop = 0; loop < msg->size; loop++) {
-			tx_buffer->frame.data[loop + 2] = *dataPtr++;
+			tx_buffer->frame.data[loop + 2] = *data_ptr++;
 			LOG_D("ISO15765 TX Byte 0x%x\n\r", tx_buffer->frame.data[loop + 2]);
 		}
 		can_l2_tx_frame(&(tx_buffer->frame));
@@ -551,7 +557,7 @@ void iso15765_frame_handler(can_frame *frame)
 		}
 
 		rx_buffer->source = source;
-		rx_buffer->bytes_expected = (u8)size - 1;   // Subtracl one for Protocol Byte
+		rx_buffer->bytes_expected = (u16)size - 1;   // Subtracl one for Protocol Byte
 		LOG_D("Size expected %d\n\r", rx_buffer->bytes_expected);
 		if(frame->can_dlc == 8) {
 			rx_buffer->source = source;
@@ -808,12 +814,19 @@ void exp_timer_N_Bs_Expired(timer_t timer_id __attribute__((unused)), union sigv
 
 void dispatcher_iso15765_msg_handler(iso15765_msg_t *message)
 {
-	u8 loop;
+	u16 loop;
+	u8  *data;
 
-	LOG_D("ISO15765 Dis from-0x%x Protocol-0x%x len(0x%x)\n\r",
+	LOG_I("ISO15765 Dis from-0x%x Protocol-0x%x len(0x%x)\n\r",
 		   (u16)message->address,
 		   (u16)message->protocol,
 		   (u16)message->size);
+
+	data = message->data;
+	for (loop = 0; loop < message->size; loop++) {
+		printf("0x%2x,", *data++);
+	}
+	printf("\n\r");
 
 	for (loop = 0; loop < ISO15765_REGISTER_ARRAY_SIZE; loop++) {
 		if (registered[loop].used && (message->protocol == registered[loop].protocol) ) {
@@ -831,7 +844,7 @@ result_t iso15765_dispatch_reg_handler(iso15765_target_t *target)
 
 	target->handler_id = 0xff;
 
-	LOG_D("iso15765_dispatch_register_handler(0x%x)\n\r", (u16)target->protocol);
+	LOG_I("iso15765_dispatch_register_handler(0x%x)\n\r", (u16)target->protocol);
 
 	/*
 	 * Find a free slot and add the Protocol
