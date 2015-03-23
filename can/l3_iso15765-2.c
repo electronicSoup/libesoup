@@ -257,6 +257,8 @@ result_t iso15765_tx_msg(iso15765_msg_t *msg)
 	u16          loop;
 	iso15765_id  id;
 	tx_buffer_t *tx_buffer;
+	u16          size;
+	u8           tmp;
 
 	LOG_I("Tx to 0x%x, Protocol-0x%x, len(0x%x)\n\r",
 		   (u16)msg->address,
@@ -344,8 +346,12 @@ result_t iso15765_tx_msg(iso15765_msg_t *msg)
 
 		tx_buffer->frame.can_id = id.can_id;
 	        tx_buffer->frame.can_dlc = CAN_DATA_LENGTH;
-		tx_buffer->frame.data[0] = ISO15765_FF;
-		tx_buffer->frame.data[1] = msg->size + 1; // Add one for Protocol Byte
+
+		size = msg->size + 1; // Add one for Protocol Byte
+		tmp = (u8)(size >> 8);
+		tmp = tmp & 0x0f;
+		tx_buffer->frame.data[0] = ISO15765_FF | tmp;
+		tx_buffer->frame.data[1] = (u8)(size & 0xff);
 		tx_buffer->frame.data[2] = msg->protocol;
 
 		for (loop = 3; loop < CAN_DATA_LENGTH; loop++) {
@@ -385,6 +391,7 @@ void exp_sendConsecutiveFrame(timer_t timer_id, union sigval data)
 			tx_buffer->frame.data[loop] = tx_buffer->data[tx_buffer->index++];
 			tx_buffer->bytes_sent++;
 
+			LOG_D("Bytes Sent %d Bytes to send %d\n\r", tx_buffer->bytes_sent, tx_buffer->bytes_to_send);
 			if(tx_buffer->bytes_sent == tx_buffer->bytes_to_send) {
 				loop++;
 				break;
@@ -578,13 +585,13 @@ void iso15765_frame_handler(can_frame *frame)
 		}
 	} else if(type == ISO15765_CF) {
 		LOG_D("Rx Consecutive Frame\n\r");
-		for (loop = 0; loop < frame->can_dlc; loop++)
+		for (loop = 0; loop < frame->can_dlc; loop++) {
 			LOG_D("Add Byte %d 0x%x\n\r", loop, frame->data[loop]);
-
+		}
 #if defined(MCP)
 		// If the Receiver isn't busy not sure why we're gettting a CF
 		if(!mcp_receiver_busy) {
-             LOG_E("ERROR: ISO15765 Received CF whilst RxBuffer NOT Busy\n\r");
+			LOG_E("ERROR: ISO15765 Received CF whilst RxBuffer NOT Busy\n\r");
 			return;
 		}
 
@@ -599,18 +606,18 @@ void iso15765_frame_handler(can_frame *frame)
 #endif // MCP - ES_LINUX
 		stopTimer_N_Cr(rx_buffer);
 		
-		LOG_D("Compare Seq Numbers 0x%x=0x%x?\n\r", rx_buffer->sequence, (frame->data[0] & 0x0f));
 		if (rx_buffer->sequence == (frame->data[0] & 0x0f)) {
 			for (loop = 1; loop < frame->can_dlc; loop++) {
-//                    LOG_D("Add Byte 0x%x\n\r", (UINT16) rxMsg->data[loop]);
 				rx_buffer->data[rx_buffer->index++] = frame->data[loop];
 				rx_buffer->bytes_received++;
 			}
 			rx_buffer->sequence = (rx_buffer->sequence + 1) % 0x0f;
 			rx_buffer->frames_received_in_block++;
 
+			LOG_D("received %d bytes expecting %d\n\r", rx_buffer->bytes_received, rx_buffer->bytes_expected);
+
 			if (rx_buffer->bytes_received == rx_buffer->bytes_expected) {
-			LOG_D("Complete Message\n\r");
+				LOG_D("Complete Message\n\r");
 				rx_buffer->msg.protocol = rx_buffer->protocol;
 				rx_buffer->msg.data = rx_buffer->data;
 				rx_buffer->msg.size = rx_buffer->bytes_expected;
