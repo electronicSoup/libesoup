@@ -101,7 +101,7 @@ static void dcncp_iso15765_msg_handler(iso15765_msg_t *msg)
 	u8             i = 0x00;
 	u32            flash_address;
 	char          *status;
-	char           buffer[200];
+	u8             buffer[200];
 
 	LOG_D("Message from Node 0x%x\n\r", (UINT16) msg->address);
 	LOG_D("Message Protocol 0x%x\n\r", (UINT16) msg->protocol);
@@ -269,7 +269,25 @@ static void dcncp_iso15765_msg_handler(iso15765_msg_t *msg)
 			break;
 
 		case node_write_row:
-			LOG_W("Write Flash Row Ignored for the moment\n\r");
+			LOG_W("Write Flash Row\n\r");
+
+			flash_address = 0x00;
+
+			for (i = 0x01; i <= 4; i++) {
+				flash_address = flash_address << 8;
+				flash_address = flash_address | msg->data[i];
+			}
+
+			if(  (flash_address < APP_START_FLASH_ADDRESS)
+			   &&((flash_address < APP_HANDLE_FLASH_ADDRESS) || (flash_address >= APP_HANDLE_FLASH_ADDRESS + FLASH_PAGE_SIZE))) {
+				LOG_E("Bad address to Write to row\n\r");
+			} else {
+				rc = flash_write_row(flash_address, &msg->data[5]);
+				if (rc != SUCCESS) {
+					LOG_E("write row to address 0x%lx\n\r", flash_address);
+				}
+				send_ready_response(msg->address);
+			}
 #if 0
 			flash_address = 0x00;
 
