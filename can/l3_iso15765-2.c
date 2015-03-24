@@ -33,7 +33,7 @@
 #include "es_lib/timers/timers.h"
 
 #define DEBUG_FILE
-//#define LOG_LEVEL LOG_INFO
+#define LOG_LEVEL LOG_INFO
 #include "es_lib/logger/serial_log.h"
 
 #define TAG "ISO-15765"
@@ -822,19 +822,19 @@ void exp_timer_N_Bs_Expired(timer_t timer_id __attribute__((unused)), union sigv
 void dispatcher_iso15765_msg_handler(iso15765_msg_t *message)
 {
 	u16 loop;
-	u8  *data;
+//	u8  *data;
 
 	LOG_I("ISO15765 Dis from-0x%x Protocol-0x%x len(0x%x)\n\r",
 		   (u16)message->address,
 		   (u16)message->protocol,
 		   (u16)message->size);
-
+#if 0
 	data = message->data;
 	for (loop = 0; loop < message->size; loop++) {
 		printf("0x%2x,", *data++);
 	}
 	printf("\n\r");
-
+#endif
 	for (loop = 0; loop < ISO15765_REGISTER_ARRAY_SIZE; loop++) {
 		if (registered[loop].used && (message->protocol == registered[loop].protocol) ) {
 			LOG_D(" => Dispatch\n\r");

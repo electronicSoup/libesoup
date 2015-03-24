@@ -35,6 +35,7 @@
 #include "es_lib/can/dcncp/cinnamonbun_info.h"
 
 #define DEBUG_FILE
+#define LOG_LEVEL LOG_INFO
 #include "es_lib/logger/serial_log.h"
 
 #define TAG "DCNCP_ISO15765"
@@ -241,19 +242,21 @@ static void dcncp_iso15765_msg_handler(iso15765_msg_t *msg)
 			break;
 
 		case node_reflash_finished:
-			LOG_D("ReFlash Finished\n\r");
+			LOG_I("ReFlash Finished\n\r");
 
 			/*
 			 * Test the installed App to see if it's valid!
 			 */
+			length = flash_strlen((__prog__ char*)APP_AUTHOR_40_ADDRESS);
+
 			if(  (flash_strlen((__prog__ char*)APP_AUTHOR_40_ADDRESS) < 40)
 			   && (flash_strlen((__prog__ char*)APP_SOFTWARE_50_ADDRESS) < 50)
 			   && (flash_strlen((__prog__ char*)APP_VERSION_10_ADDRESS) < 10)) {
-				LOG_D("App Strings are valid\n\r");
+				LOG_I("App Strings are valid\n\r");
 				CALL_APP_INIT();
-				LOG_D("Back from app_init() call app_main()\n\r");
+				LOG_I("Back from app_init() call app_main()\n\r");
 				CALL_APP_MAIN();
-				LOG_D("Application is valid\n\r");
+				LOG_I("Application is valid\n\r");
 				app_valid = TRUE;
 
 				if (eeprom_write(EEPROM_APP_VALID_MAGIC_ADDR_1, APP_VALID_MAGIC_VALUE) != SUCCESS) {
