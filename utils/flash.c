@@ -83,12 +83,12 @@ result_t flash_erase_page(UINT32 address)
 	unsigned int offset;
 
 	LOG_D("flash_erase_page(0x%lx)\n\r", address);
-
+#if 0
 	if(address >= 0x2a800) {
 		LOG_D("Ignoring that one\n\r");
 		return(SUCCESS);
 	}
-
+#endif
 	/*
 	 * Check that the given address is on a page boundary.
 	 */
@@ -139,7 +139,7 @@ result_t flash_write_row(u32 address, u8 *data)
 	u32 i;
 
 	LOG_D("flash_write(0x%lx)\n\r", address);
-
+#if 0
 	if(address >= 0x2a800) {
 		LOG_D("Ignoring that one\n\r");
 		return(SUCCESS);
@@ -153,7 +153,6 @@ result_t flash_write_row(u32 address, u8 *data)
 		}
 	}
 
-#if 0
 	if(address == 0x2ab80) {
 		tmp = data;
 		for (i = 0; i < FLASH_NUM_INSTRUCTION_PER_ROW * 4; i++) {
@@ -249,10 +248,14 @@ result_t flash_strcpy(char *dst, __prog__ char *src, UINT16 *length)
 
 u16 flash_strlen(__prog__ char *src)
 {
-	UINT16 i = 0;
+	u16 i = 0;
+	__prog__ char *ptr;
 
-	while ((*src != 0x00) && (*src != 0xff)) {
+	ptr = src;
+
+	while ((*ptr != 0x00) && (*ptr != 0xff)) {
 		i++;
+		ptr++;
 	}
 	return (i);
 }
