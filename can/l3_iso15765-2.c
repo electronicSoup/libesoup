@@ -269,6 +269,7 @@ result_t iso15765_tx_msg(iso15765_msg_t *msg)
 	for(loop = 0; loop < msg->size; loop++) {
 		printf("0x%2x,", *data_ptr++);
 	}
+	printf("\n\r");
 	
         if(!initialised) {
 		LOG_E("ISO15765 not Initialised\n\r");
