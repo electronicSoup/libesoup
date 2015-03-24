@@ -33,7 +33,7 @@
 #include "es_lib/timers/timers.h"
 
 #define DEBUG_FILE
-//#define LOG_LEVEL LOG_INFO
+#define LOG_LEVEL LOG_INFO
 #include "es_lib/logger/serial_log.h"
 
 #define TAG "ISO-15765"
