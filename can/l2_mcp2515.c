@@ -24,7 +24,7 @@
 
 
 #define DEBUG_FILE
-#define LOG_LEVEL LOG_INFO
+//#define LOG_LEVEL LOG_INFO
 #include "es_lib/logger/serial_log.h"
 #include "es_lib/can/es_can.h"
 #include "es_lib/can/dcncp/dcncp_can.h"
@@ -1294,18 +1294,22 @@ void test_can()
 }
 #endif
 
-static void can_l2_dispatcher_frame_handler(can_frame *message)
+static void can_l2_dispatcher_frame_handler(can_frame *frame)
 {
 	u8 loop;
 	BOOL found = FALSE;
 
-	LOG_D("L2_CanDispatcherL2MsgHandler 0x%lx\n\r", message->can_id);
+	printf("L2_CanDispatcherL2MsgHandler 0x%lx [", frame->can_id);
+	for(loop = 0; loop < frame->can_dlc; loop++) {
+		printf("0x%2x,", frame->data[loop]);
+	}
+	printf("]\n\r");
 
 	for (loop = 0; loop < CAN_L2_HANDLER_ARRAY_SIZE; loop++) {
 
 		if(registered_handlers[loop].used) {
-			if ((message->can_id & registered_handlers[loop].target.mask) == (registered_handlers[loop].target.filter & registered_handlers[loop].target.mask)) {
-				registered_handlers[loop].target.handler(message);
+			if ((frame->can_id & registered_handlers[loop].target.mask) == (registered_handlers[loop].target.filter & registered_handlers[loop].target.mask)) {
+				registered_handlers[loop].target.handler(frame);
 				found = TRUE;
 			}
 		}
@@ -1315,7 +1319,7 @@ static void can_l2_dispatcher_frame_handler(can_frame *message)
 		/*
 		 * No handler found so pass the received message to the Application
 		 */
-		LOG_D("No Handler for 0x%lx\n\r", message->can_id);
+		LOG_D("No Handler for 0x%lx\n\r", frame->can_id);
 	}
 }
 
