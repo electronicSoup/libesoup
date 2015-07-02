@@ -40,7 +40,7 @@ void serial_init(void)
 	/*
 	 * CinnamonBun is running a PIC24FJ256GB106 processor
 	 */
-#ifdef __PIC24FJ256GB106__
+#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__)
 	/*
 	 * Serial Port pin configuration should be defined 
 	 * in include file system.h

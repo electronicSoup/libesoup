@@ -93,5 +93,12 @@
 extern result_t timer_start(u16 duration, expiry_function fn, union sigval data, es_timer *timer);
 extern result_t timer_cancel(es_timer *timer);
 
+/*
+ * Simple macro to initialise the current statusof a timer to inactive.
+ * A timer should always be initialsed to an inactive status before it is used
+ * otherwise the timer might appear to be already active
+ */
+#define TIMER_INIT(timer) timer.status = INACTIVE;
+
 #endif
 

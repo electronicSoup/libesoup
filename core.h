@@ -22,12 +22,12 @@
 #ifndef ES_CAN_CORE_H
 #define ES_CAN_CORE_H
 
-#if defined (__18F2680) || defined(__18F4585)
+#if defined(__18F2680) || defined(__18F4585)
 //#include <p18cxxx.h>
 #include <xc.h>
 #endif // (__18F2680) || defined(__18F4585)
 
-#if defined (__PIC24FJ256GB106__)
+#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__)
 #include <p24Fxxxx.h>
 #endif // (__PIC24FJ256GB106__)
 
@@ -76,13 +76,6 @@ typedef enum {
     INACTIVE = 0x00,
     ACTIVE
 } timer_status_t;
-
-/*
- * Simple macro to initialise the current statusof a timer to inactive.
- * A timer should always be initialsed to an inactive status before it is used
- * otherwise the timer might appear to be already active
- */
-#define TIMER_INIT(timer) timer.status = INACTIVE;
 
 /*
  * timer_t Timer identifier
@@ -403,7 +396,7 @@ typedef u32 canid_t;
  * Structure to define the Layer 2 CAN Message. Simply the header above and
  * and array for the Data Bytes.
  */
-#ifdef __PIC24FJ256GB106__
+#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__)
 typedef struct __attribute__ ((packed))
 #endif //__PIC24FJ256GB106__
 #if defined(__18F2680) || defined(__18F4585)
