@@ -71,11 +71,11 @@ static void clear_write_in_progress(void)
 	BYTE status;
 
 	do {
-		EEPROM_Select();
+		EEPROM_Select;
 		Nop();
 		spi_write_byte(SPI_EEPROM_STATUS_READ);
 		status = spi_write_byte(0x00);
-		EEPROM_DeSelect();
+		EEPROM_DeSelect;
 	} while (status & EEPROM_STATUS_WIP);
 }
 
@@ -103,11 +103,11 @@ result_t eeprom_read(UINT16 address, BYTE *data)
 #endif
 	if(use_address <= EEPROM_MAX_ADDRESS) {
 		clear_write_in_progress();
-		EEPROM_Select();
+		EEPROM_Select;
 		spi_write_byte(SPI_EEPROM_READ);
 		spi_write_byte(use_address);
 		*data = spi_write_byte(0x00);
-		EEPROM_DeSelect();
+		EEPROM_DeSelect;
 		return(SUCCESS);
 	}
         LOG_E("eeprom_read Address Range Error!\n\r");
@@ -138,20 +138,20 @@ result_t eeprom_write(UINT16 address, BYTE data)
 #endif
 	if(use_address <= EEPROM_MAX_ADDRESS) {
 		clear_write_in_progress();
-		EEPROM_Select();
+		EEPROM_Select;
 		spi_write_byte(SPI_EEPROM_WRITE_ENABLE);
-		EEPROM_DeSelect();
+		EEPROM_DeSelect;
 		Nop();
-		EEPROM_Select();
+		EEPROM_Select;
 
 		spi_write_byte(SPI_EEPROM_WRITE);
 		spi_write_byte((BYTE)use_address);
 		spi_write_byte(data);
-		EEPROM_DeSelect();
+		EEPROM_DeSelect;
 		Nop();
-		EEPROM_Select();
+		EEPROM_Select;
 		spi_write_byte(SPI_EEPROM_WRITE_DISABLE);
-		EEPROM_DeSelect();
+		EEPROM_DeSelect;
 		return(SUCCESS);
         }
         LOG_E("eeprom_write Address Range Error!\n\r");
