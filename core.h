@@ -32,11 +32,12 @@
 //#define __18F4585
 //#define __PIC24FJ256GB106__
 
-#if defined (__18F2680) || defined(__18F4585)
+#if defined(__18F2680) || defined(__18F4585)
+//#include <p18cxxx.h>
 #include <xc.h>
 #endif // (__18F2680) || defined(__18F4585)
 
-#if defined (__PIC24FJ256GB106__)
+#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__)
 #include <p24Fxxxx.h>
 #endif // (__PIC24FJ256GB106__)
 
@@ -99,15 +100,8 @@ typedef enum {
     ACTIVE
 } timer_status_t;
 
-/**
- * @brief simple macro to initialise timer status.
- *
- * A timer should always be initialsed to an inactive status before it is used.
- */
-#define TIMER_INIT(timer) timer.status = INACTIVE;
-
-/**
- * @brief timer identifier type
+/*
+ * timer_t Timer identifier
  *
  * A Timer identifer should not be written directly by code but only by timer.c. 
  * It is part of the es_timer structure and can be read, if for some reason one
@@ -822,7 +816,7 @@ typedef u32 canid_t;
  * Structure to define the Layer 2 CAN Frame. Simply the CAN Identifier, Data
  * length info and an array for the Data Bytes.
  */
-#ifdef __PIC24FJ256GB106__
+#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__)
 typedef struct __attribute__ ((packed))
 #endif //__PIC24FJ256GB106__
 #if defined(__18F2680) || defined(__18F4585)
