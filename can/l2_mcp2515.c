@@ -24,7 +24,7 @@
 
 
 #define DEBUG_FILE
-#define LOG_LEVEL LOG_INFO
+//#define LOG_LEVEL LOG_INFO
 #include "es_lib/logger/serial_log.h"
 #include "es_lib/can/es_can.h"
 #include "es_lib/can/dcncp/dcncp_can.h"
@@ -59,7 +59,7 @@ typedef struct
 } can_register_t;
 
 static can_register_t registered_handlers[CAN_L2_HANDLER_ARRAY_SIZE];
-static can_l2_msg_handler_t unhandled_handler;
+static can_l2_frame_handler_t unhandled_handler;
 
 static u8 connecting_errors = 0;
 
@@ -70,7 +70,7 @@ static BOOL mcp2515_isr = FALSE;
  */
 //static u8 txrtsctrl = 0x00;
 
-#if defined(CAN_L2_IDLE_PING)
+#if defined(CAN_PING_PROTOCOL)
 /*
  * Idle duration before sending a Ping Message. Initialised to a random value
  * on powerup.
@@ -87,7 +87,7 @@ static void     exp_check_network_connection(timer_t timer_id, union sigval);
 #endif // CAN_BAUD_AUTO_DETECT
 static void     exp_finalise_baudrate_change(timer_t timer_id, union sigval data);
 static void     exp_resend_baudrate_change(timer_t timer_id, union sigval data);
-#if defined(CAN_L2_IDLE_PING)
+#if defined(CAN_PING_PROTOCOL)
 static void     exp_test_ping(timer_t timer_id, union sigval data);
 static void     restart_ping_timer(void);
 static es_timer ping_timer;
@@ -151,9 +151,9 @@ result_t can_l2_init(can_baud_rate_t arg_baud_rate,
 	u8        loop = 0x00;
 	u8        exit_mode = NORMAL_MODE;
 	u32       delay;
-#ifndef CAN_L2_IDLE_PING
+#ifndef CAN_PING_PROTOCOL
 	can_frame frame;
-#endif // CAN_L2_IDLE_PING
+#endif // CAN_PING_PROTOCOL
 	LOG_D("l2_init()\n\r");
 
 #ifndef CAN_BAUD_AUTO_DETECT
@@ -164,7 +164,7 @@ result_t can_l2_init(can_baud_rate_t arg_baud_rate,
 #endif // CAN_BAUD_AUTO_DETECT
 	mcp2515_isr = FALSE;
 
-	unhandled_handler = (can_l2_msg_handler_t)NULL;
+	unhandled_handler = (can_l2_frame_handler_t)NULL;
 
 	/*
          * Intialise the status info. and status_baud
@@ -175,9 +175,9 @@ result_t can_l2_init(can_baud_rate_t arg_baud_rate,
 #if defined(CAN_BAUD_AUTO_DETECT)
 	TIMER_INIT(listen_timer);
 #endif
-#if defined(CAN_L2_IDLE_PING)
+#if defined(CAN_PING_PROTOCOL)
 	TIMER_INIT(ping_timer);
-#endif // CAN_L2_IDLE_PING
+#endif // CAN_PING_PROTOCOL
 
         /*
          * Initialise the Handlers table
@@ -186,7 +186,7 @@ result_t can_l2_init(can_baud_rate_t arg_baud_rate,
 		registered_handlers[loop].used = FALSE;
 		registered_handlers[loop].target.mask = 0x00;
 		registered_handlers[loop].target.filter = 0x00;
-		registered_handlers[loop].target.handler = (can_l2_msg_handler_t)NULL;
+		registered_handlers[loop].target.handler = (can_l2_frame_handler_t)NULL;
 	}
 
 	status_handler = arg_status_handler;
@@ -241,7 +241,7 @@ result_t can_l2_init(can_baud_rate_t arg_baud_rate,
 			status_handler(L2_STATUS_MASK, status, status_baud);
 
 		/* Now wait and see if we have errors */
-		timer_start(CAN_BAUD_AUTO_DETECT_LISTEN_PERIOD, exp_check_network_connection, (union sigval)(void *)NULL, &listen_timer);
+		timer_start(SECONDS_TO_TICKS(CAN_BAUD_AUTO_DETECT_LISTEN_PERIOD), exp_check_network_connection, (union sigval)(void *)NULL, &listen_timer);
 #endif // CAN_BAUD_AUTO_DETECT
 	}
 	asm ("CLRWDT");
@@ -260,9 +260,8 @@ result_t can_l2_init(can_baud_rate_t arg_baud_rate,
 
 	// Create a random timer for firing the
 	// Network Idle Ping message
-#if defined(CAN_L2_IDLE_PING)
-	ping_time = (u16)((rand() % SECONDS_TO_TICKS(1)) + (CAN_L2_IDLE_PING_PERIOD - MILLI_SECONDS_TO_TICKS(500)));
-        LOG_D("Ping time set to %d Ticks, Ping Period %d - %d\n\r", ping_time, CAN_L2_IDLE_PING_PERIOD, MILLI_SECONDS_TO_TICKS(500));
+#if defined(CAN_PING_PROTOCOL)
+	ping_time = (u16)((rand() % SECONDS_TO_TICKS(1)) + (SECONDS_TO_TICKS(CAN_PING_PROTOCOL_PERIOD) - MILLI_SECONDS_TO_TICKS(500)));
         restart_ping_timer();
 #else
 	frame.can_id = DCNCP_CAN_NodePingMessage;
@@ -275,7 +274,7 @@ result_t can_l2_init(can_baud_rate_t arg_baud_rate,
 	return(SUCCESS);
 }
 
-#if defined(CAN_L2_IDLE_PING)
+#if defined(CAN_PING_PROTOCOL)
 void exp_test_ping(timer_t timer_id __attribute__((unused)), union sigval data __attribute__((unused)))
 {
         LOG_D("exp_test_ping()\n\r");
@@ -286,13 +285,11 @@ void exp_test_ping(timer_t timer_id __attribute__((unused)), union sigval data _
 }
 #endif
 
-#if defined(CAN_L2_IDLE_PING)
+#if defined(CAN_PING_PROTOCOL)
 void restart_ping_timer(void)
 {
 	if(ping_timer.status == ACTIVE) {
-#if defined(CAN_L2_PING_LOGGING)
-		LOG_D("Cancel running ping timer\n\r");
-#endif // CAN_L2_PING_LOGGING
+//		LOG_D("Cancel running ping timer\n\r");
  		if(timer_cancel(&ping_timer) != SUCCESS) {
 			LOG_E("Failed to cancel the Ping timer\n\r");
 			return;
@@ -349,7 +346,7 @@ void exp_check_network_connection(timer_t timer_id __attribute__((unused)), unio
 			status_handler(L2_STATUS_MASK, status, status_baud);
 
 		LOG_D("Restart timer\n\r");
-		result = timer_start(CAN_BAUD_AUTO_DETECT_LISTEN_PERIOD,
+		result = timer_start(SECONDS_TO_TICKS(CAN_BAUD_AUTO_DETECT_LISTEN_PERIOD),
 				     exp_check_network_connection,
 				     (union sigval)(void *)NULL,
 				     &listen_timer);
@@ -457,7 +454,7 @@ static void service_device(void)
 
 		if (flags & RX0IE) {
 			LOG_D("RX0IE\n\r");
-#if defined(CAN_L2_IDLE_PING)
+#if defined(CAN_PING_PROTOCOL)
 			restart_ping_timer();
 #endif
 			/*
@@ -481,7 +478,7 @@ static void service_device(void)
 
 		if (flags & RX1IE) {
 			LOG_D("RX1IE\n\r");
-#if defined(CAN_L2_IDLE_PING)
+#if defined(CAN_PING_PROTOCOL)
 			restart_ping_timer();
 #endif
 
@@ -633,7 +630,7 @@ result_t can_l2_tx_frame(can_frame  *frame)
 
 	LOG_D("L2 => Id %lx\n\r", frame->can_id);
 
-#if defined(CAN_L2_IDLE_PING)
+#if defined(CAN_PING_PROTOCOL)
         restart_ping_timer();
 #endif
 	if(connected_baudrate == no_baud) {
@@ -1294,18 +1291,22 @@ void test_can()
 }
 #endif
 
-static void can_l2_dispatcher_frame_handler(can_frame *message)
+static void can_l2_dispatcher_frame_handler(can_frame *frame)
 {
 	u8 loop;
 	BOOL found = FALSE;
 
-	LOG_D("L2_CanDispatcherL2MsgHandler 0x%lx\n\r", message->can_id);
+	printf("L2_CanDispatcherL2MsgHandler 0x%lx [", frame->can_id);
+	for(loop = 0; loop < frame->can_dlc; loop++) {
+		printf("0x%2x,", frame->data[loop]);
+	}
+	printf("]\n\r");
 
 	for (loop = 0; loop < CAN_L2_HANDLER_ARRAY_SIZE; loop++) {
 
 		if(registered_handlers[loop].used) {
-			if ((message->can_id & registered_handlers[loop].target.mask) == (registered_handlers[loop].target.filter & registered_handlers[loop].target.mask)) {
-				registered_handlers[loop].target.handler(message);
+			if ((frame->can_id & registered_handlers[loop].target.mask) == (registered_handlers[loop].target.filter & registered_handlers[loop].target.mask)) {
+				registered_handlers[loop].target.handler(frame);
 				found = TRUE;
 			}
 		}
@@ -1315,7 +1316,7 @@ static void can_l2_dispatcher_frame_handler(can_frame *message)
 		/*
 		 * No handler found so pass the received message to the Application
 		 */
-		LOG_D("No Handler for 0x%lx\n\r", message->can_id);
+		LOG_D("No Handler for 0x%lx\n\r", frame->can_id);
 	}
 }
 
@@ -1363,8 +1364,8 @@ result_t can_l2_dispatch_unreg_handler(u8 id)
 	return(ERR_GENERAL_CAN_ERROR);
 }
 
-result_t can_l2_dispatch_set_unhandled_handler(can_l2_msg_handler_t handler)
+result_t can_l2_dispatch_set_unhandled_handler(can_l2_frame_handler_t handler)
 {
-	unhandled_handler = (can_l2_msg_handler_t)handler;
+	unhandled_handler = (can_l2_frame_handler_t)handler;
 	return(SUCCESS);
 }

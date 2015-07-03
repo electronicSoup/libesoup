@@ -90,6 +90,11 @@
  * timer_start()
  * 
  */
+/**
+ * @brief function to start a timer
+ *
+ * @param in duration: duration of the timer in system ticks. @see SECONDS_TO_TICKS
+ */
 extern result_t timer_start(u16 duration, expiry_function fn, union sigval data, es_timer *timer);
 extern result_t timer_cancel(es_timer *timer);
 

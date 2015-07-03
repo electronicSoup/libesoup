@@ -59,7 +59,7 @@ result_t can_l2_init(can_baud_rate_t arg_baud_rate,
 		registered[loop].bitField.system = FALSE;
 		registered[loop].target.mask = 0x00;
 		registered[loop].target.filter = 0x00;
-		registered[loop].target.handler = (can_l2_msg_handler_t)NULL;
+		registered[loop].target.handler = (can_l2_frame_handler_t)NULL;
 	}
 
 	char *ifname = CAN_INTERFACE;

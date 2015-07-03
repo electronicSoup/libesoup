@@ -33,7 +33,7 @@ result_t (*eeprom_write)(UINT16 address, BYTE data);
 result_t (*can_l2_tx_frame)(can_frame *);
 result_t (*can_l2_dispatch_reg_handler)(can_l2_target_t *target);
 result_t (*can_l2_dispatch_unreg_handler)(u8 id);
-result_t (*can_l2_dispatch_set_unhandled_handler)(can_l2_msg_handler_t handler);
+result_t (*can_l2_dispatch_set_unhandled_handler)(can_l2_frame_handler_t handler);
 
 u8       (*dcncp_get_node_address)(void);
 
@@ -73,7 +73,7 @@ void os_init(void)
 	can_l2_tx_frame = (result_t(*)(can_frame *))(OS_FNS + 16);
 	can_l2_dispatch_reg_handler = (result_t(*)(can_l2_target_t *))(OS_FNS + 20);
 	can_l2_dispatch_unreg_handler = (result_t(*)(u8))(OS_FNS + 24);
-	can_l2_dispatch_set_unhandled_handler = (result_t(*)(can_l2_msg_handler_t handler))(OS_FNS + 28);
+	can_l2_dispatch_set_unhandled_handler = (result_t(*)(can_l2_frame_handler_t handler))(OS_FNS + 28);
 
 	dcncp_get_node_address = (u8 (*)(void))(OS_FNS + 32);
 
