@@ -27,10 +27,10 @@
  * For documentation define all switches. These Must always be commented out
  * unless documenting code with doxygen!
  */
-#define MCP
-#define ES_LINUX
-#define __18F4585
-#define __PIC24FJ256GB106__
+//#define MCP
+//#define ES_LINUX
+//#define __18F4585
+//#define __PIC24FJ256GB106__
 
 #if defined (__18F2680) || defined(__18F4585)
 #include <xc.h>
