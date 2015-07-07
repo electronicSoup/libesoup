@@ -24,7 +24,7 @@
 
 
 #define DEBUG_FILE
-#define LOG_LEVEL LOG_INFO
+//#define LOG_LEVEL LOG_INFO
 #include "es_lib/logger/serial_log.h"
 #include "es_lib/can/es_can.h"
 #include "es_lib/can/dcncp/dcncp_can.h"
@@ -193,7 +193,7 @@ result_t can_l2_init(can_baud_rate_t arg_baud_rate,
 
 	CAN_INTERRUPT_PIN_DIRECTION = INPUT_PIN;
 	CAN_CS_PIN_DIRECTION = OUTPUT_PIN;
-	CAN_DESELECT();
+	CAN_DESELECT
 
 	reset();
 
@@ -537,6 +537,7 @@ static void service_device(void)
 		}
 		flags = read_reg(CANINTF);
 	}
+	LOG_D("service_device() finished\n\r");
 }
 
 void can_l2_tasks(void)
@@ -598,9 +599,9 @@ void can_l2_tasks(void)
 #ifdef TEST
 	if(count == 0x00) {
 
-		CAN_SELECT();
+		CAN_SELECT
 		byte = read_reg(TXRTSCTRL);
-		CAN_DESELECT();
+		CAN_DESELECT
 
 		txrtsctrl = byte;
 	}
@@ -680,7 +681,7 @@ result_t can_l2_tx_frame(can_frame  *frame)
 	/*
 	 * Load up the transmit buffer
 	 */
-	CAN_SELECT();
+	CAN_SELECT
 	spi_write_byte(CAN_WRITE_REG);
 	spi_write_byte(can_buffer);
 
@@ -695,7 +696,7 @@ result_t can_l2_tx_frame(can_frame  *frame)
 	for(loop = 0; loop < frame->can_dlc; loop++, buff++) {
 		spi_write_byte(*buff);
 	}
-	CAN_DESELECT();
+	CAN_DESELECT
 
 	/*
 	 * Right all set for Transmission but check the current network status
@@ -903,9 +904,9 @@ static void checkSubErrors(void)
 static void reset(void)
 {
 	/* Reset the Can Chip */
-	CAN_SELECT();
+	CAN_SELECT
 	spi_write_byte(CAN_RESET);
-	CAN_DESELECT();
+	CAN_DESELECT
 }
 
 static void set_reg_mask_value(u8 reg, u8 mask, u8 value)
@@ -913,12 +914,12 @@ static void set_reg_mask_value(u8 reg, u8 mask, u8 value)
 	u8 fail;
 
         //    do {
-        CAN_SELECT();
+        CAN_SELECT
         spi_write_byte(CAN_BIT_MODIFY);
         spi_write_byte(reg);
         spi_write_byte(mask);
         spi_write_byte(value);
-        CAN_DESELECT();
+        CAN_DESELECT
        
         fail = (read_reg(reg) & mask) != value;
         if(fail) {
@@ -1183,22 +1184,22 @@ static void disable_rx_interrupts(void)
 static u8 read_reg(u8 reg)
 {
 	u8 value;
-	CAN_SELECT();
+	CAN_SELECT
 	spi_write_byte(CAN_READ_REG);
 	spi_write_byte(reg);
 	value = spi_write_byte(0x00);
-	CAN_DESELECT();
+	CAN_DESELECT
 
 	return(value);
 }
 
 static void write_reg(u8 reg, u8 value)
 {
-	CAN_SELECT();
+	CAN_SELECT
 	spi_write_byte(CAN_WRITE_REG);
 	spi_write_byte(reg);
 	spi_write_byte(value);
-	CAN_DESELECT();
+	CAN_DESELECT
 }
 
 static void read_rx_buffer(u8 reg, u8 *buffer)
@@ -1208,7 +1209,7 @@ static void read_rx_buffer(u8 reg, u8 *buffer)
 	u8 dataLength = 0x00;
 
 	ptr = buffer;
-	CAN_SELECT();
+	CAN_SELECT
 	spi_write_byte(CAN_READ_REG);
 	spi_write_byte(reg);
 
@@ -1228,7 +1229,7 @@ static void read_rx_buffer(u8 reg, u8 *buffer)
 		}
         }
 
-	CAN_DESELECT();
+	CAN_DESELECT
 }
 
 u8 find_free_tx_buffer(void)
@@ -1283,9 +1284,9 @@ void test_can()
 {
 	u8 byte;
 
-	CAN_SELECT();
+	CAN_SELECT
 	byte = read_reg(CANCTRL);
-	CAN_DESELECT();
+	CAN_DESELECT
 
 	LOG_D("Test read of CANCTRL - 0x%x\n\r", byte);
 }
