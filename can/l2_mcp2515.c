@@ -1297,7 +1297,7 @@ static void can_l2_dispatcher_frame_handler(can_frame *frame)
 	u8 loop;
 	BOOL found = FALSE;
 
-	LOG_D("L2_CanDispatcherL2MsgHandler 0x%lx [", frame->can_id);
+	printf("L2_CanDispatcherL2MsgHandler 0x%lx [", frame->can_id);
 	for(loop = 0; loop < frame->can_dlc; loop++) {
 		printf("0x%2x,", frame->data[loop]);
 	}
