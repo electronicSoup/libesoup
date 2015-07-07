@@ -9,3 +9,4 @@ ln -s /opt/microchip/mla/v2014_07_22/framework/usb/src/usb_host_android.c
 ln -s /opt/microchip/mla/v2014_07_22/framework/usb/src/usb_host.c
 ln -s /opt/microchip/mla/v2014_07_22/framework/usb/src/usb_host_local.h
 
+
