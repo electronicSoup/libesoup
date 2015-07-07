@@ -44,9 +44,9 @@ void example_set_app_connected_state(void)
 {
 	LOG_D("State -> App_connected\n\r");
 
-	current_state.process_msg = app_connected_process_msg;
-	current_state.main = app_connected_main;
-	current_state.process_usb_event = app_connected_process_usb_event;
+	android_state.process_msg = app_connected_process_msg;
+	android_state.main = app_connected_main;
+	android_state.process_usb_event = app_connected_process_usb_event;
 }
 
 /*
