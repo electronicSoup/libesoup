@@ -149,14 +149,15 @@ void status_handler(u8 mask, can_status_t status, can_baud_rate_t baud)
 #endif // DCNCP_ISO15765
 #endif // ISO15765
 
-#if defined(ISO11783)
-//		 	iso11783_init(dcncp_get_node_address());
-//			LOG_D("iso11783 Initialised\n\r");
-#endif  // ISO11783
 		}
 	}
 #endif // ISO15765 || ISO11783
 #endif // DCNCP_CAN
+
+#if defined(ISO11783)
+	iso11783_init(185);
+	LOG_D("iso11783 Initialised\n\r");
+#endif  // ISO11783
 }
 
 #if defined(MCP)
