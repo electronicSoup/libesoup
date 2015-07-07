@@ -28,7 +28,6 @@
 
 #include "system.h"
 
-#include "os_api.h"
 #include "es_lib/can/es_can.h"
 #include "es_lib/utils/flash.h"
 #include "es_lib/utils/eeprom.h"
@@ -78,7 +77,7 @@ void dcncp_iso15765_init()
 	iso15765_target_t target;
 
 	LOG_D("dcncp_iso15765_init()\n\r");
-
+#ifdef DCNCP_ISO15765
 	app_status = (void (*)(char *, u16))APP_STATUS_ADDRESS;
 
 	target.protocol = ISO15765_DCNCP_PROTOCOL_ID;
@@ -88,8 +87,10 @@ void dcncp_iso15765_init()
 	if(rc != SUCCESS) {
 		LOG_E("Failed to register Network Management iso15765 handler\n\r");
 	}
+#endif
 }
 
+#ifdef DCNCP_ISO15765
 static void dcncp_iso15765_msg_handler(iso15765_msg_t *msg)
 {
 	result_t       rc;
@@ -327,7 +328,9 @@ static void dcncp_iso15765_msg_handler(iso15765_msg_t *msg)
 			break;
 	}
 }
+#endif
 
+#ifdef DCNCP_ISO15765
 void send_ready_response(BYTE address)
 {
 	iso15765_msg_t response;
@@ -341,3 +344,4 @@ void send_ready_response(BYTE address)
 	response.data = response_buffer;
 	iso15765_tx_msg(&response);
 }
+#endif

@@ -100,7 +100,7 @@ typedef struct {
  * NUMBER_OF_TIMERS to a known value.
  */
 #ifdef MCP
-#if defined (__PIC24FJ256GB106__)
+#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__)
 #pragma udata
 #endif //__PIC24FJ256GB106__
 sys_timer_t timers[NUMBER_OF_TIMERS];
@@ -113,7 +113,7 @@ sys_timer_t timers[NUMBER_OF_TIMERS];
  * macro.
  */
 #ifdef MCP
-#if defined (__PIC24FJ256GB106__)
+#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__)
 void _ISR __attribute__((__no_auto_psv__)) _T1Interrupt(void)
 {
 	IFS0bits.T1IF = 0;
@@ -157,7 +157,7 @@ void timer_init(void)
 		timers[loop].function = (expiry_function)NULL;
 	}
 
-#if defined (__PIC24FJ256GB106__)
+#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__)
 	/*
 	 * Initialise Timer 1 for use as the timer tick 
 	 */

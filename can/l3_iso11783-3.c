@@ -316,7 +316,9 @@ void iso11783_frame_handler(can_frame *frame)
 	}
 
 	if(!handled) {
-		unhandled_handler(&msg);
+		if(unhandled_handler) {
+			unhandled_handler(&msg);
+		}
 	}
 }
 
