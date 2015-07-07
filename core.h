@@ -27,10 +27,10 @@
  * For documentation define all switches. These Must always be commented out
  * unless documenting code with doxygen!
  */
-#define MCP
-#define ES_LINUX
-#define __18F4585
-#define __PIC24FJ256GB106__
+//#define MCP
+//#define ES_LINUX
+//#define __18F4585
+//#define __PIC24FJ256GB106__
 
 #if defined (__18F2680) || defined(__18F4585)
 #include <xc.h>
@@ -288,8 +288,8 @@ typedef void (*expiry_function)(timer_t timer_id, union sigval);
  */
 #define EEPROM_CS_PIN_DIRECTION        TRISDbits.TRISD7
 #define EEPROM_CS                      LATDbits.LATD7
-#define EEPROM_Select                  EEPROM_CS = 0
-#define EEPROM_DeSelect                EEPROM_CS = 1
+#define EEPROM_Select                  EEPROM_CS = 0;
+#define EEPROM_DeSelect                EEPROM_CS = 1;
 
 /**
  * @def   CAN_INTERRUPT_PIN_DIRECTION
@@ -322,7 +322,7 @@ typedef void (*expiry_function)(timer_t timer_id, union sigval);
 #define CAN_CS_PIN_DIRECTION           TRISDbits.TRISD6
 #define CAN_CS                         LATDbits.LATD6
 #define CAN_SELECT                     CAN_CS = 0;
-#define CAN_DESELECT                   CAN_CS = 1
+#define CAN_DESELECT                   CAN_CS = 1;
 
 /**
  * SPI (Serial Peripheral Interface Definitions.
