@@ -173,7 +173,7 @@ void *create_read_thread(void *arg)
     		}
 
     		/* paranoid check ... */
-    		if (nbytes < sizeof(can_frame)) {
+    		if (nbytes < (int)sizeof(can_frame)) {
 			LOG_E("thread error in size of read data\n\r");
 			return((void *)NULL);
     		}
