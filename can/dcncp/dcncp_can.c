@@ -493,7 +493,7 @@ void exp_iso15765_logger_ping(timer_t timer_id __attribute__((unused)), union si
 	can_l2_tx_frame(&local_iso15765_logger_frame);
 	LOG_D("NetLogger message sent\n\r");
 	TIMER_INIT(local_iso15765_logger_timer);
-	timer_start(SECONDS_TO_TICKS(ISO15765_LOGGER_PING_PERIOD,
+	timer_start(SECONDS_TO_TICKS(ISO15765_LOGGER_PING_PERIOD),
                     exp_iso15765_logger_ping, 
                     (union sigval)(void *)NULL, 
                     &local_iso15765_logger_timer);
