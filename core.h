@@ -124,6 +124,15 @@ typedef struct
 } es_timer;
 
 /**
+ * @brief convience macro to initialise timer to inactive
+ *
+ * Simple macro to initialise the current statusof a timer to inactive.
+ * A timer should always be initialsed to an inactive status before it is used
+ * otherwise the timer might appear to be already active
+ */
+#define TIMER_INIT(timer) timer.status = INACTIVE;
+
+/**
  * @brief convience macro to convert a Seconds value to system ticks
  *
  * For portability code should always use this macro to calculate system ticks
