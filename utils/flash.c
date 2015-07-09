@@ -134,7 +134,6 @@ result_t flash_write_row(u32 address, u8 *data)
 {
 	u16  highWord = 0;
 	u16  lowWord = 0;
-	u8  *tmp;
 	u32 offset;
 	u32 i;
 
