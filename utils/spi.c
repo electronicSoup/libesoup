@@ -40,7 +40,7 @@ void spi_init(void)
 	 * Initialise the EEPROM Chip Select Pin
 	 */
 	EEPROM_CS_PIN_DIRECTION = OUTPUT_PIN;
-	EEPROM_DeSelect();
+	EEPROM_DeSelect
 
 	SPI_SCK_DIRECTION = OUTPUT_PIN;
 	SPI_MISO_DIRECTION = INPUT_PIN;

@@ -61,16 +61,16 @@ DEF_FIRMWARE_VERSION_10("v1.0")
 DEF_FIRMWARE_URL_50("www.test.com")
 
  */
-#define FIRMWARE_STRINGS_BASE          0x8800
-#define FIRMWARE_AUTHOR_40_ADDR        FIRMWARE_STRINGS_BASE
-#define FIRMWARE_DESCRIPTION_50_ADDR   FIRMWARE_AUTHOR_40_ADDR + 40
-#define FIRMWARE_VERSION_10_ADDR       FIRMWARE_DESCRIPTION_50_ADDR + 50
-#define FIRMWARE_URL_50_ADDR           FIRMWARE_VERSION_10_ADDR + 10
+#define FIRMWARE_STRINGS_BASE             0x8800
+#define FIRMWARE_AUTHOR_40_ADDRESS        FIRMWARE_STRINGS_BASE
+#define FIRMWARE_DESCRIPTION_50_ADDRESS   FIRMWARE_AUTHOR_40_ADDRESS + 40
+#define FIRMWARE_VERSION_10_ADDRESS       FIRMWARE_DESCRIPTION_50_ADDRESS + 50
+#define FIRMWARE_URL_50_ADDRESS           FIRMWARE_VERSION_10_ADDRESS + 10
 
-#define DEF_FIRMWARE_AUTHOR_40(x)      __prog__ char firmware_author[40]       __attribute__ ((space(prog),address(FIRMWARE_AUTHOR_40_ADDR))) = x;
-#define DEF_FIRMWARE_DESCRIPTION_50(x) __prog__ char firmware_description[50]  __attribute__ ((space(prog),address(FIRMWARE_DESCRIPTION_50_ADDR))) = x;
-#define DEF_FIRMWARE_VERSION_10(x)     __prog__ char firmware_version[10]      __attribute__ ((space(prog),address(FIRMWARE_VERSION_10_ADDR))) = x;
-#define DEF_FIRMWARE_URL_50(x)         __prog__ char firmware_uri[50]          __attribute__ ((space(prog),address(FIRMWARE_URL_50_ADDR))) = x;
+#define DEF_FIRMWARE_AUTHOR_40(x)      __prog__ char firmware_author[40]       __attribute__ ((space(prog),address(FIRMWARE_AUTHOR_40_ADDRESS))) = x;
+#define DEF_FIRMWARE_DESCRIPTION_50(x) __prog__ char firmware_description[50]  __attribute__ ((space(prog),address(FIRMWARE_DESCRIPTION_50_ADDRESS))) = x;
+#define DEF_FIRMWARE_VERSION_10(x)     __prog__ char firmware_version[10]      __attribute__ ((space(prog),address(FIRMWARE_VERSION_10_ADDRESS))) = x;
+#define DEF_FIRMWARE_URL_50(x)         __prog__ char firmware_uri[50]          __attribute__ ((space(prog),address(FIRMWARE_URL_50_ADDRESS))) = x;
 
 
 #endif // FIRMWARE_H

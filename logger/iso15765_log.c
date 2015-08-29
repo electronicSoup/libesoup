@@ -22,7 +22,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "system.h"
-#include "es_lib/can/dcncp/dcncp.h"
+#include "es_lib/can/dcncp/dcncp_can.h"
 #include "es_lib/can/es_can.h"
 
 #define DEBUG_FILE
@@ -75,7 +75,7 @@ result_t iso15765_logger_register_as_logger(void (*handler)(u8, log_level_t, cha
 			iso15765_logger_handler = handler;
 			iso15765_logger_level = level;
 
-			target.protocol = LOGGER_PROTOCOL_ID;
+			target.protocol = ISO15765_LOGGER_PROTOCOL_ID;
 			target.handler = iso15765_log_handler;
 			iso15765_dispatch_reg_handler(&target);
 
@@ -126,7 +126,7 @@ void iso15765_log(log_level_t level, char *string)
 		if(level <= iso15765_logger_level) {
 			if(strlen((char *)string) < ISO15765_MAX_MSG - 2) {
 				msg.address = iso15765_logger_address;
-				msg.protocol = LOGGER_PROTOCOL_ID;
+				msg.protocol = ISO15765_LOGGER_PROTOCOL_ID;
 				data[0] = level;
 
 				for(loop = 0; loop <= strlen(string); loop++) {

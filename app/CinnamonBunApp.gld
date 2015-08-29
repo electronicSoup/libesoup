@@ -31,10 +31,11 @@ MEMORY
 /*
  * Application Strings
  */
-  app_info  : ORIGIN = 0x18000,           LENGTH = 0x96
-  app_init  : ORIGIN = 0x18096,           LENGTH = 0x4
-  app_main  : ORIGIN = 0x1809A,           LENGTH = 0x4
-  app_ints  : ORIGIN = 0x1809E,           LENGTH = 0x1F8
+  app_info   : ORIGIN = 0x18400,           LENGTH = 0x96
+  app_init   : ORIGIN = 0x18496,           LENGTH = 0x4
+  app_main   : ORIGIN = 0x1849A,           LENGTH = 0x4
+  app_status : ORIGIN = 0x1849E,           LENGTH = 0x4
+  app_ints   : ORIGIN = 0x184A2,           LENGTH = 0x1F8
 
 /*
  * Original program line. Reduced to leave room for the app.
@@ -43,8 +44,9 @@ MEMORY
  * Reduced Line:
  *       program (xr)   : ORIGIN = 0x7ECE,           LENGTH = 0x2ABF6 - 0x18000
  *       program (xr)   : ORIGIN = 0x18200,          LENGTH = 0x2ABF6 - 0x18200
+ *       program (xr)   : ORIGIN = 0x1829A,          LENGTH = 0x2A3F6 - 0x1829A
  */
-  program (xr)   : ORIGIN = 0x18296,          LENGTH = 0x2A3F6 - 0x18296
+  program (xr)   : ORIGIN = 0x1869A,          LENGTH = 0x2A3F6 - 0x1869A
   CONFIG3        : ORIGIN = 0x2ABFA,          LENGTH = 0x2
   CONFIG2        : ORIGIN = 0x2ABFC,          LENGTH = 0x2
   CONFIG1        : ORIGIN = 0x2ABFE,          LENGTH = 0x2
@@ -105,6 +107,16 @@ SECTIONS
         SHORT(0);
   } >app_main
 
+  /*
+  ** app_status() Instruction
+  */
+  .app_status :
+  {
+        SHORT(ABSOLUTE(_app_status));
+        SHORT(0x04);
+        SHORT((ABSOLUTE(_app_status) >> 16) & 0x7F);
+        SHORT(0);
+  } >app_status
 
   /*
   ** User Code and Library Code
