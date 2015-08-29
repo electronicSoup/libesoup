@@ -574,7 +574,7 @@ typedef void (*expiry_function)(timer_t timer_id, union sigval);
  * End of the reserved Android -> cinnamonBun messages. This and all following 
  * Byte codes are application specific.
  */
-#define  APP_MSG_USER_OFFSET             0x0f
+#define  APP_MSG_USER_OFFSET             0x20
 
 /**
  * @def   BUN_MSG_ERROR
@@ -638,7 +638,7 @@ typedef void (*expiry_function)(timer_t timer_id, union sigval);
  *
  * This is the first user defined message identifier.
  */
-#define  BUN_MSG_USER_OFFSET             0x06
+#define  BUN_MSG_USER_OFFSET             0x20
 
 /** @}*/
 
