@@ -117,7 +117,6 @@ void android_init(void* data)
 void android_tasks(void)
 {
 	BYTE error_code = USB_SUCCESS;
-//	result_t rc = SUCCESS;
 	UINT16 loop = 0;
 	UINT32 size = 0;
 

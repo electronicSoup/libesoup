@@ -59,7 +59,7 @@ result_t can_l2_init(can_baud_rate_t arg_baud_rate,
 		registered[loop].bitField.system = FALSE;
 		registered[loop].target.mask = 0x00;
 		registered[loop].target.filter = 0x00;
-		registered[loop].target.handler = (can_l2_msg_handler_t)NULL;
+		registered[loop].target.handler = (can_l2_frame_handler_t)NULL;
 	}
 
 	char *ifname = CAN_INTERFACE;
@@ -125,7 +125,7 @@ result_t can_l2_tx_frame(can_frame *frame)
 	return (SUCCESS);
 }
 
-result_t can_l2_reg_handler(can_l2_target_t *target)
+result_t can_l2_dispatch_reg_handler(can_l2_target_t *target)
 {
 	int loop;
 
@@ -173,7 +173,7 @@ void *create_read_thread(void *arg)
     		}
 
     		/* paranoid check ... */
-    		if (nbytes < sizeof(can_frame)) {
+    		if (nbytes < (int)sizeof(can_frame)) {
 			LOG_E("thread error in size of read data\n\r");
 			return((void *)NULL);
     		}
