@@ -116,8 +116,10 @@ void iso11783_frame_handler(can_frame *frame)
 	u32 pgn;
 	u8  pf;
 	u8  ps;
-
-	LOG_D("iso11783_frame_handler(frame id 0x%x)\n\r", frame->can_id);
+	u8  sa;
+	u8  da;
+	u8  da_valid = 0x00;
+	u8  loop;
 
 	/*
 	 * Parameter Group Numbers PGN:
@@ -127,6 +129,8 @@ void iso11783_frame_handler(can_frame *frame)
 	 * if PDU_Format < 0xF0  then LSByte of PGN = 0x00
 	 */
 	pgn = 0x00;
+
+	sa = (u8)(frame->can_id & 0xff);
 
 	/*
 	 * EDP Bit is always 0! so move on to DP bit
@@ -138,24 +142,44 @@ void iso11783_frame_handler(can_frame *frame)
 	pf = (u8)((frame->can_id & PF_MASK) >> 16);
 
 	if(pf < PF_PDU_2_CUTOFF) {
-		ps = (u8) ((frame->can_id & PS_MASK) >> 8);
-	} else {
+		da = (u8) ((frame->can_id & PS_MASK) >> 8);
+		da_valid = 0x01;
 		ps = 0x00;
+	} else {
+		ps = (u8) ((frame->can_id & PS_MASK) >> 8);
 	}
 	pgn = (pgn << 8) | pf;
 	pgn = (pgn << 8) | ps;
 
-	LOG_D("iso11783_frame_handler received PGN %d  =  0x%x\n\r", pgn, pgn);
 
-	if(pgn == 128267) {
+	printf("iso11783:(frame id 0x%x) SA 0x%x,", frame->can_id, sa);
+	if(da_valid) {
+		printf(" DA 0x%x, ", da);
+	}
+	LOG_D(" PGN %d (0x%x) [", pgn, pgn);
+
+	for(loop = 0; loop < frame->can_dlc; loop++) {
+		printf("%x,", frame->data[loop]);
+	}	
+	printf("\n\r");
+
+	if(pgn == 126992) {
+		LOG_D("System Time\n\r");
+	} else if(pgn == 128267) {
 		LOG_D("Depth\n\r");
 	} else if(pgn == 129025) {
 		LOG_D("Position\n\r");
+	} else if(pgn == 129026) {
+		LOG_D("Corse Over Ground (COG) & Speed over Ground (SOG)\n\r");
 	} else if(pgn == 129027) {
 		LOG_D("Position Delta\n\r");
 	} else if(pgn == 129029) {
 		LOG_D("GNSS Position Data\n\r");
 	} else if(pgn == 129033) {
 		LOG_D("Time & Date\n\r");
+	} else if(pgn == 129539) {
+		LOG_D("GNSS and DOP Dilution Of Precision\n\r");
+	} else if(pgn == 129540) {
+		LOG_D("Satalites in View\n\r");
 	}
 }
