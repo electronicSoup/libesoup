@@ -23,8 +23,10 @@
  */
 
 #include "system.h"
-#include "usb/usb.h"
-#include "usb/usb_host_android.h"
+//#include "usb/usb.h"
+//#include "usb/usb_host_android.h"
+#include "usb/inc/usb.h"
+#include "usb/inc/usb_host_android.h"
 
 CLIENT_DRIVER_TABLE usbClientDrvTable[NUM_CLIENT_DRIVER_ENTRIES] =
 {                                        

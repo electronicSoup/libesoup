@@ -24,8 +24,10 @@
 /*
  * Microchip USB Includes
  */ 
-#include "usb/usb.h"
-#include "usb/usb_host_android.h"
+//#include "usb/usb.h"
+//#include "usb/usb_host_android.h"
+#include "usb/inc/usb.h"
+#include "usb/inc/usb_host_android.h"
 
 #include "es_lib/usb/android/state.h"
 
@@ -195,8 +197,14 @@ void android_tasks(void)
 		/*
 		 * Transmitter is busy so check if it's finished its current write.
 		 */
+		LOG_D("Transmitter is busy\n\r");
 		if (AndroidAppIsWriteComplete(device_handle, &error_code, &size) == TRUE) {
+			LOG_D("USB TX Write complete\n\r");
 			transmitter_busy = FALSE;
+		}
+
+		if(error_code != USB_SUCCESS) {
+			LOG_E("USB TX Write not complete Error code 0x%x\n\r", error_code);
 		}
 	}
 
@@ -212,6 +220,9 @@ void android_tasks(void)
 			tx_buffer_count--;
 		}
 		error_code = AndroidAppWrite(device_handle, tx_buffer, numberToSend);
+		if(error_code != USB_SUCCESS) {
+			LOG_E("AndroidAppWrite returned error 0x%x\n\r", error_code);
+		}
 		transmitter_busy = TRUE;
 	}
 
