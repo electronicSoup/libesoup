@@ -64,7 +64,7 @@ result_t can_l2_init(can_baud_rate_t arg_baud_rate,
 
 	char *ifname = CAN_INTERFACE;
 
-	LOG_D("l2_can_init()\n\r");
+	LOG_D("l2_can_init(%s)\n\r", CAN_INTERFACE);
  
 	if((can_socket = socket(PF_CAN, SOCK_RAW, CAN_RAW)) < 0) {
 		LOG_E("Error while opening socket\n\r");
@@ -166,7 +166,7 @@ void *create_read_thread(void *arg)
   
         while(1) {
 		nbytes = read(s, &frame, sizeof(can_frame));
- 
+
 		if (nbytes < 0) {
 			LOG_E("thread error in size of read data\n\r");
 			return((void *)NULL);
