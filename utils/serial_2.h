@@ -24,3 +24,4 @@
 
 extern void serial_2_init(void);
 extern void serial_2_putchar(char ch);
+extern void serial_2_printf(char *string);

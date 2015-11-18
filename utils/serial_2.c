@@ -51,6 +51,7 @@ void _ISR __attribute__((__no_auto_psv__)) _U2RXInterrupt(void)
 void _ISR __attribute__((__no_auto_psv__)) _U2TXInterrupt(void)
 {
 	LOG_D("U2 TX Interrupt\n\r");
+	IFS1bits.U2TXIF = 0;
 }
 
 void serial_2_init()
@@ -63,21 +64,14 @@ void serial_2_init()
 	 * Serial Port pin configuration should be defined
 	 * in include file system.h
 	 */
-#if defined(SERIAL_2_GndTxRx)
-	RPOR0bits.RP0R = 5;
-	RPINR19bits.U2RXR = 1;
-#elif defined(SERIAL_2_GndRxTx)
-	RPINR19bits.U2RXR = 0;
-	RPOR0bits.RP1R = 5;
-#endif
+
 	U2MODE = 0x8800;
 	
-	U2STA = 0x0410;
-
-//	U2MODEbits.LPBACK = 1;
+	U2STA  = 0x8410;
 
 	IEC1bits.U2RXIE = 1;
-//	IEC1bits.U2TXIE = 1;
+	IEC1bits.U2TXIE = 1;
+
 	/*
 	 * Desired Baud Rate = FCY/(16 (UxBRG + 1))
 	 *
@@ -87,49 +81,7 @@ void serial_2_init()
 	 *
 	 */
 	U2BRG = ((CLOCK_FREQ / SERIAL_2_BAUD) / 16) - 1;
-
-
 #endif
-
-	/*
-	 * Analogue Guage is running a PIC18F2680 processor
-	 */
-#if defined(__18F2680) || defined(__18F4585)
-//	UINT8 baud;
-//
-//	/*
-//	 * Initialise the TX Circular buffer
-//	 */
-//	tx_write_index = 0;
-//	tx_read_index = 0;
-//	tx_buffer_count = 0;
-//
-//	TRISCbits.TRISC6 = 0;
-//	TRISCbits.TRISC7 = 1;
-//
-//	TXSTAbits.TXEN = 1;    // Transmitter enabled
-//	TXSTAbits.SYNC = 0;    // Asynchronous mode
-//	TXSTAbits.BRGH = 0;    // High Baud Rate Select bit
-//
-//#if defined(ENABLE_USART_RX)
-//	RCSTAbits.CREN = 1;    // Enagle the Receiver
-//#endif
-//	RCSTAbits.SPEN = 1;
-//
-//	BAUDCONbits.BRG16 = 0; // 16-bit Baud Rate Register Enable bit
-//
-//	baud = ((CLOCK_FREQ / SERIAL_BAUD) / 64 ) - 1;
-//
-//	SPBRG = baud;
-//
-//	PIR1bits.TXIF = 0;
-//#if defined(ENABLE_USART_RX)
-//	PIR1bits.RCIF = 0;
-//	PIE1bits.RCIE = 1;
-//#endif // ENABLE_EUSART_RX
-//
-//	RCSTAbits.SPEN = 1;
-#endif // (__18F2680) || (__18F4585)
 }
 
 void serial_2_putchar(char ch)
@@ -138,5 +90,18 @@ void serial_2_putchar(char ch)
 		LOG_E("Transmit buffer full\n\r");
 	} else {
 		U2TXREG = ch;
+	}
+}
+
+void serial_2_printf(char *string)
+{
+	char *ptr;
+
+	LOG_D("serial_2_printf(%s)\n\r", string);
+
+	ptr = string;
+
+	while (*ptr) {
+		serial_2_putchar(*ptr++);
 	}
 }

@@ -985,4 +985,10 @@ typedef enum
 #define LOG_ERROR   3
 #define NO_LOGGING  4
 
+/*
+ * Microcontroller Pin Definitions
+ */
+#define RP0 0
+#define RP1 1
+
 #endif // _CORE_H
