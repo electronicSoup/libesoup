@@ -107,6 +107,7 @@
 #define CANNOT_RESPOND  3
 
 static u8 node_address;
+static u8 da_valid = 0x00;
 
 typedef struct
 {
@@ -153,13 +154,12 @@ result_t iso11783_init(u8 address)
 
 u32 pgn_to_canid(u8 priority, u32 pgn, u8 dst)
 {
-	u32 pgn;
+//	u32 pgn;
 	u8  pf;
-	u8  ps;
-	u8  sa;
-	u8  da;
-	u8  da_valid = 0x00;
-	u8  loop;
+//	u8  ps;
+//	u8  sa;
+//	u8  da;
+//	u8  loop;
 	u32 canid = 0x00;
 
 	canid = (priority & 0x07);
@@ -182,6 +182,7 @@ u32 pgn_to_canid(u8 priority, u32 pgn, u8 dst)
 u32 canid_to_pgn(u32 canid)
 {
 	u32 pgn = 0x00;
+#if 0
 	u8  pf;
 	u8  ps;
 
@@ -203,7 +204,7 @@ u32 canid_to_pgn(u32 canid)
 	}
 	pgn = (pgn << 8) | pf;
 	pgn = (pgn << 8) | ps;
-
+#endif
 	return(pgn);
 }
 
@@ -285,8 +286,8 @@ result_t iso11783_tx_ack_pgn(u8 priority, u8 dst, u32 pgn, iso11783_ack_t ack_va
 void iso11783_frame_handler(can_frame *frame)
 {
 	u32            pgn;
-	u8             pf;
-	u8             ps;
+//	u8             pf;
+//	u8             ps;
 	u16            loop;
 	u8             handled;
 	iso11783_msg_t msg;
@@ -304,10 +305,10 @@ void iso11783_frame_handler(can_frame *frame)
 
 	LOG_D("iso11783_frame_handler received PGN %d  =  0x%x\n\r", pgn, pgn);
 
-	printf("iso11783:(frame id 0x%x) SA 0x%x,", frame->can_id, sa);
-	if(da_valid) {
-		printf(" DA 0x%x, ", da);
-	}
+//	printf("iso11783:(frame id 0x%x) SA 0x%x,", frame->can_id, sa);
+//	if(da_valid) {
+//		printf(" DA 0x%x, ", da);
+//	}
 	LOG_D(" PGN %d (0x%x) [", pgn, pgn);
 
 	for(loop = 0; loop < frame->can_dlc; loop++) {
