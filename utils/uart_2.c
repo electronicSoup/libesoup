@@ -1,10 +1,10 @@
 /**
  *
- * \file es_lib/utils/serial_2.c
+ * \file es_lib/utils/uart_2.c
  *
- * Functions for using a second serial port.
+ * Functions for using a second uart port.
  *
- * The first serial port is used by the logger. See es_lib/logger
+ * The first uart port is used by the logger. See es_lib/logger
  *
  * Copyright 2015 John Whitmore <jwhitmore@electronicsoup.com>
  *
@@ -26,11 +26,21 @@
 #define DEBUG_FILE
 #include "es_lib/logger/serial_log.h"
 
-#define TAG "Serial-2"
+#define TAG "UART-2"
+
+static u8     rx_buffer[UART_2_RX_BUFFER_SIZE];
+static UINT16 rx_write_index = 0;
+static u8     rx_line_complete = 0;
+//static UINT16 rx_read_index = 0;
+//static UINT16 rx_buffer_count = 0;
+
+static void (*line_process)(u8 *line) = NULL;
 
 void _ISR __attribute__((__no_auto_psv__)) _U2RXInterrupt(void)
 {
 	u8 ch;
+
+	IFS1bits.U2RXIF = 0;
 
 	if (U2STAbits.OERR) {
 		LOG_E("RX Buffer overrun\n\r");
@@ -38,14 +48,28 @@ void _ISR __attribute__((__no_auto_psv__)) _U2RXInterrupt(void)
 
 	while (U2STAbits.URXDA) {
 		ch = U2RXREG;
-		LOG_D("U2 RX Interrupt %c\n\r", ch);
+
+		if(ch == '\r') {
+			rx_buffer[rx_write_index++] = '\0';
+			rx_line_complete = 1;
+			rx_write_index = 0;
+
+			/*
+			 * Disable interrupts till line processed
+			 */
+			IEC1bits.U2RXIE = 0;
+		} else {
+			rx_buffer[rx_write_index++] = ch;
+		}
+
+		if(rx_write_index == UART_2_RX_BUFFER_SIZE) {
+			LOG_E("UART 2 Overflow: Line too long\n\r");
+		}
 	}
 
 	if (U2STAbits.OERR) {
 		U2STAbits.OERR = 0;   /* Clear the error flag */
 	}
-
-	IFS1bits.U2RXIF = 0;
 }
 
 void _ISR __attribute__((__no_auto_psv__)) _U2TXInterrupt(void)
@@ -54,12 +78,35 @@ void _ISR __attribute__((__no_auto_psv__)) _U2TXInterrupt(void)
 	IFS1bits.U2TXIF = 0;
 }
 
-void serial_2_init()
+void uart_2_poll(void)
+{
+	if(rx_line_complete) {
+		LOG_D("uart_2_poll()\n\r");
+
+		if(line_process)
+			line_process(rx_buffer);
+	}
+	rx_line_complete = 0;
+	/*
+	 * Turn back on Interrupts
+	 */
+	IEC1bits.U2RXIE = 1;
+}
+
+void uart_2_init(void (*line_fn)(u8 *line))
 {
 	/*
 	 * CinnamonBun is running a PIC24FJ256GB106 processor
 	 */
 #if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__)
+
+	line_process = line_fn;
+
+	rx_write_index  = 0;
+	rx_line_complete = 0;
+//	rx_read_index   = 0;
+//	rx_buffer_count = 0;
+
 	/*
 	 * Serial Port pin configuration should be defined
 	 * in include file system.h
@@ -77,14 +124,14 @@ void serial_2_init()
 	 *
 	 * UxBRG = ((FCY/Desired Baud Rate)/16) - 1
 	 *
-	 * UxBRG = ((CLOCK/SERIAL_BAUD)/16) -1
+	 * UxBRG = ((CLOCK/UART_2_BAUD)/16) -1
 	 *
 	 */
-	U2BRG = ((CLOCK_FREQ / SERIAL_2_BAUD) / 16) - 1;
+	U2BRG = ((CLOCK_FREQ / UART_2_BAUD) / 16) - 1;
 #endif
 }
 
-void serial_2_putchar(char ch)
+void uart_2_putchar(char ch)
 {
 	if (U2STAbits.UTXBF) {
 		LOG_E("Transmit buffer full\n\r");
@@ -93,15 +140,15 @@ void serial_2_putchar(char ch)
 	}
 }
 
-void serial_2_printf(char *string)
+void uart_2_printf(char *string)
 {
 	char *ptr;
 
-	LOG_D("serial_2_printf(%s)\n\r", string);
+	LOG_D("uart_2_printf(%s)\n\r", string);
 
 	ptr = string;
 
 	while (*ptr) {
-		serial_2_putchar(*ptr++);
+		uart_2_putchar(*ptr++);
 	}
 }

@@ -1,10 +1,10 @@
 /**
  *
- * \file es_lib/utils/serial_2.h
+ * \file es_lib/utils/uart_2.h
  *
- * Function prototypes for using a second serial port.
+ * Function prototypes for using a second uart port.
  *
- * The first serial port is used by the logger. See es_lib/logger
+ * The first uart port is used by the logger. See es_lib/logger
  *
  * Copyright 2015 John Whitmore <jwhitmore@electronicsoup.com>
  *
@@ -22,6 +22,7 @@
  *
  */
 
-extern void serial_2_init(void);
-extern void serial_2_putchar(char ch);
-extern void serial_2_printf(char *string);
+extern void uart_2_init(void (*line_fn)(u8 *line));
+extern void uart_2_poll(void);
+extern void uart_2_putchar(char ch);
+extern void uart_2_printf(char *string);
