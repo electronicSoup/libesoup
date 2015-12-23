@@ -24,7 +24,8 @@
  * 
  */
 #include <stdio.h>
-#include <usb/usb.h>
+//#include <usb/usb.h>
+#include "usb/inc/usb.h"
 #include "usb_host_xpad_events.h"
 
 #include "system.h"

@@ -24,7 +24,8 @@
  * supported by this USB Driver. The TPL Structure has to be setup for
  * the Microchip Host stack.
  */
-#include "usb/usb.h"
+//#include "usb/usb.h"
+#include "usb/inc/usb.h"
 #include "usb_host_xpad.h"
 
 CLIENT_DRIVER_TABLE usbClientDrvTable[NUM_CLIENT_DRIVER_ENTRIES] =
