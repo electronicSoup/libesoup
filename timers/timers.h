@@ -97,6 +97,7 @@
  */
 extern result_t timer_start(u16 duration, expiry_function fn, union sigval data, es_timer *timer);
 extern result_t timer_cancel(es_timer *timer);
+extern result_t timer_cancel_all(void);
 
 #endif
 
