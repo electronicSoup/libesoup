@@ -36,6 +36,9 @@
 
 #define TAG "Android-Com"
 
+#ifdef ANDROID_RESET_ON_COMMS_ERROR
+extern void system_reset();
+#endif
 /*
  * Definitions of the Rx and Tx circular buffer sizes.
  */
@@ -205,6 +208,12 @@ void android_tasks(void)
 
 		if(error_code != USB_SUCCESS) {
 			LOG_E("USB TX Write not complete Error code 0x%x\n\r", error_code);
+#ifdef ANDROID_RESET_ON_COMMS_ERROR
+			if (error_code == USB_ENDPOINT_UNRESOLVED_STATE) {
+				LOG_E("USB Android resetting on a comms error\n\r");
+				system_reset();
+			}
+#endif
 		}
 	}
 
