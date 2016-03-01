@@ -395,3 +395,25 @@ result_t timer_cancel(es_timer *timer)
 #endif
 	return(SUCCESS);
 }
+
+/*
+ * timer_cancel_all
+ */
+result_t timer_cancel_all(void)
+{
+	u8 loop;
+	es_timer timer;
+
+	LOG_D("timer_cancel_all()\n\r");
+
+	for (loop = 0; loop < NUMBER_OF_TIMERS; loop++) {
+		if (timers[loop].active) {
+			timers[loop].active = FALSE;
+			timer.status = ACTIVE;
+			timer.timer_id = loop;
+
+			timer_cancel(&timer);
+		}
+	}
+	return (SUCCESS);
+}
