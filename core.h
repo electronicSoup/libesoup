@@ -51,6 +51,8 @@
     typedef UINT16   u16;
     typedef UINT32   u32;
 
+    typedef INT32    s32;
+
 #elif defined(ES_LINUX)
     #include <stdint.h>
 
@@ -990,5 +992,15 @@ typedef enum
  */
 #define RP0 0
 #define RP1 1
+
+/*
+ * UART Defs
+ */
+#define PARITY_NONE                 0
+#define PARITY_ODD                  1
+#define PARITY_EVEN                 2
+
+#define ONE_STOP_BIT                1
+#define TWO_STOP_BITS               2
 
 #endif // _CORE_H
