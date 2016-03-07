@@ -1003,4 +1003,7 @@ typedef enum
 #define ONE_STOP_BIT                1
 #define TWO_STOP_BITS               2
 
+#define IDLE_LOW                    0
+#define IDLE_HIGH                   1
+
 #endif // _CORE_H
