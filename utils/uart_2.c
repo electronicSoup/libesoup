@@ -27,27 +27,43 @@
 #include "es_lib/logger/serial_log.h"
 
 #define TAG "UART-2"
-#define UART_4
+#define UART_2
 
+#ifdef UART_2_RX
 static u8     rx_buffer[UART_2_RX_BUFFER_SIZE];
 static UINT16 rx_write_index = 0;
 static u8     rx_line_complete = 0;
 //static UINT16 rx_read_index = 0;
 //static UINT16 rx_buffer_count = 0;
 
-static u8 watch_trmt = FALSE;
+static void (*line_process)(u8 *line) = NULL;
+
+#endif // UART_2_RX
+//static u8 watch_trmt = FALSE;
 
 /*
  * Tx Buffer is a circular buffer
  */
+#ifdef UART_2_TX
 static u8     tx_buffer[UART_2_TX_BUFFER_SIZE];
 static UINT16 tx_write_index = 0;
 static UINT16 tx_read_index = 0;
 static UINT16 tx_count = 0;
+#endif // UART_2_TX
 
-static void (*line_process)(u8 *line) = NULL;
-
-#ifdef UART_3
+#ifdef UART_2
+#define UxSTAbits     U2STAbits
+#define UxMODE        U2MODE
+#define UxMODEbits    U2MODEbits
+#define UxSTA         U2STA
+#define UxBRG         U2BRG
+#define RX_ISR_FLAG   IFS5bits.U3RXIF
+#define TX_ISR_FLAG   IFS5bits.U3TXIF
+#define RX_ISR_ENABLE IEC5bits.U3RXIE
+#define TX_ISR_ENABLE IEC5bits.U3TXIE
+#define UxTXREG       U2TXREG
+#define UxRXREG       U2RXREG
+#elif UART_3
 #define UxSTAbits     U3STAbits
 #define UxMODE        U3MODE
 #define UxMODEbits    U3MODEbits
@@ -73,7 +89,8 @@ static void (*line_process)(u8 *line) = NULL;
 #define UxRXREG       U4RXREG
 #endif
 
-void _ISR __attribute__((__no_auto_psv__)) _U4RXInterrupt(void)
+#ifdef UART_2_RX
+void _ISR __attribute__((__no_auto_psv__)) _U2RXInterrupt(void)
 {
 	u8 ch;
 
@@ -109,8 +126,10 @@ void _ISR __attribute__((__no_auto_psv__)) _U4RXInterrupt(void)
 		UxSTAbits.OERR = 0;   /* Clear the error flag */
 	}
 }
+#endif //UART_2_RX
 
-void _ISR __attribute__((__no_auto_psv__)) _U4TXInterrupt(void)
+#ifdef UART_2_TX
+void _ISR __attribute__((__no_auto_psv__)) _U2TXInterrupt(void)
 {
 //	putchar('^');
 	/*
@@ -132,7 +151,7 @@ void _ISR __attribute__((__no_auto_psv__)) _U4TXInterrupt(void)
 				Nop();
 			}
 
-			RS485_RX
+//			RS485_RX
 //			putchar('+');
 //			RS485_RX
 //			LATBbits.LATB2 = 0;
@@ -170,6 +189,7 @@ void _ISR __attribute__((__no_auto_psv__)) _U4TXInterrupt(void)
 	 */
 	TX_ISR_FLAG = 0;
 }
+#endif //UART_2_TX
 
 void uart_2_poll(void)
 {
@@ -189,10 +209,10 @@ void uart_2_poll(void)
 	//	if(watch_trmt) {
 //		LOG_D("Monitoring TRMT\n\r");
 //	}
-	if (watch_trmt && UxSTAbits.TRMT == 1) {
-		watch_trmt = FALSE;
-		RS485_RX
-	}
+//	if (watch_trmt && UxSTAbits.TRMT == 1) {
+//		watch_trmt = FALSE;
+//		RS485_RX
+//	}
 }
 
 void uart_2_init(void (*line_fn)(u8 *line))
@@ -201,16 +221,41 @@ void uart_2_init(void (*line_fn)(u8 *line))
 	 * CinnamonBun is running a PIC24FJ256GB106 processor
 	 */
 #if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__)
-
+#ifdef UART_2_RX
 	line_process = line_fn;
 
 	rx_write_index  = 0;
 	rx_line_complete = 0;
 
+	switch (UART_2_RX_PIN) {
+		case RP0:
+			TRISBbits.TRISB0 = 1;
+			RPINR19bits.U2RXR = 0;
+			break;
+
+		case RP1:
+			TRISBbits.TRISB1 = 1;
+			RPINR19bits.U2RXR = 1;
+			break;
+	}
+#endif
+#ifdef UART_2_TX
 	tx_write_index = 0;
 	tx_read_index = 0;
 	tx_count = 0;
 
+	switch (UART_2_TX_PIN) {
+		case RP0:
+			TRISBbits.TRISB0 = 0;
+			RPOR0bits.RP0R = 5;
+			break;
+
+		case RP1:
+			TRISBbits.TRISB1 = 0;
+			RPOR0bits.RP1R = 5;
+			break;
+	}
+#endif
 	/*
 	 * Serial Port pin configuration should be defined
 	 * in include file system.h
@@ -239,8 +284,14 @@ void uart_2_init(void (*line_fn)(u8 *line))
 		LOG_E("Unrecognised Stop bits configuration\n\r");
 	}
 
-	UxSTA  = 0x8410;
+	if (UART_2_RX_IDLE_LEVEL == IDLE_LOW) {
+		UxMODEbits.RXINV = 0;
+	} else if (UART_2_RX_IDLE_LEVEL == IDLE_HIGH) {
+		UxMODEbits.RXINV = 1;
+	}
 
+	UxSTA  = 0x8410;
+#ifdef UART_2_TX
 	/*
 	 * Interrupt when a character is transferred to the Transmit Shift
 	 * Register (TSR), and as a result, the transmit buffer becomes empty
@@ -262,10 +313,14 @@ void uart_2_init(void (*line_fn)(u8 *line))
 	 */
 //	UxSTAbits.UTXISEL1 = 0;
 //	UxSTAbits.UTXISEL0 = 0;
+#endif
 
+#ifdef UART_2_RX
 	RX_ISR_ENABLE = 1;
+#endif
+#ifdef UART_2_TX
 	TX_ISR_ENABLE = 1;
-
+#endif
 	/*
 	 * Desired Baud Rate = FCY/(16 (UxBRG + 1))
 	 *
@@ -279,6 +334,7 @@ void uart_2_init(void (*line_fn)(u8 *line))
 #endif
 }
 
+#ifdef UART_2_TX
 void uart_2_putchar(u8 ch)
 {
 	u8 loop;
@@ -286,6 +342,7 @@ void uart_2_putchar(u8 ch)
 	/*
 	 * If the Transmitter queue is currently empty turn on chip select.
 	 */
+#if 0
 	if (UxSTAbits.TRMT) {
 		RS485_TX
 		for(loop = 0; loop < 100; loop++) {
@@ -295,7 +352,7 @@ void uart_2_putchar(u8 ch)
 //		LATBbits.LATB3 = 1;
 //		IEC1bits.U3RXIE = 0;
 	}
-
+#endif
 	if (tx_count || UxSTAbits.UTXBF) {
 		/*
 		 * Interrupt when a character is transferred to the Transmit Shift
@@ -317,6 +374,7 @@ void uart_2_putchar(u8 ch)
 		UxTXREG = ch;
 	}
 }
+#endif // UART_2_TX
 
 #if 0
 void uart_2_printf(char *string)
@@ -333,6 +391,7 @@ void uart_2_printf(char *string)
 }
 #endif
 
+#ifdef UART_2_TX
 void uart_2_tx_data(u8 *data, u16 len)
 {
 	u8 *ptr;
@@ -362,3 +421,4 @@ void uart_2_tx_data(u8 *data, u16 len)
 	RS485_RX
 #endif
 }
+#endif // UART_2_TX
