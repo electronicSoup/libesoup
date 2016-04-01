@@ -48,6 +48,8 @@
 /*
  * LOG_D  -> Log a Debug severity message.
  */
+#define DEBUG (defined(DEBUG_FILE) && LOG_LEVEL <= LOG_DEBUG)
+
 #if (defined(DEBUG_FILE) && LOG_LEVEL <= LOG_DEBUG)
 #define LOG_D printf("D :%s:", TAG); printf
 #else
