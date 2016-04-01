@@ -990,8 +990,11 @@ typedef enum
 /*
  * Microcontroller Pin Definitions
  */
-#define RP0 0
-#define RP1 1
+#define RP0  0
+#define RP1  1
+#define RP13 13
+#define RP25 25
+#define RP28 28
 
 /*
  * UART Defs
