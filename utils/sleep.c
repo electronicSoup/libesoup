@@ -47,8 +47,8 @@ void sleep_seconds(u16 seconds)
 {
 	u32 timer;
 
-	/*
-	 * Initialise Timer 2 for use as the 1.5 Character timer
+ 	/*
+	 * Initialise Timer 2
 	 */
 	T2CONbits.T32 = 1;      // 16 Bit Timer
 	T2CONbits.TCS = 0;      // Internal FOSC/2
