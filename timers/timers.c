@@ -168,8 +168,11 @@ void timer_init(void)
 	PR1 = ((CLOCK_FREQ / 8) / 1000) * SYSTEM_TICK_ms;
 
 	TMR1 = 0x00;
-	IEC0bits.T1IE = 1;
-    
+
+	/*
+	 * Interrup on and timer on
+	 */
+	IEC0bits.T1IE = 1;    
 	T1CONbits.TON = 1;
 #endif //__PIC24FJ256GB106__
 
