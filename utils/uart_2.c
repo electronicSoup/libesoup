@@ -32,11 +32,11 @@
 #ifdef UART_2_RX
 static u8     rx_buffer[UART_2_RX_BUFFER_SIZE];
 static UINT16 rx_write_index = 0;
-static u8     rx_line_complete = 0;
+//static u8     rx_line_complete = 0;
 //static UINT16 rx_read_index = 0;
 //static UINT16 rx_buffer_count = 0;
 
-static void (*line_process)(u8 *line) = NULL;
+static void (*line_process)(u8 *line, u16 len) = NULL;
 
 #endif // UART_2_RX
 //static u8 watch_trmt = FALSE;
@@ -52,15 +52,15 @@ static UINT16 tx_count = 0;
 #endif // UART_2_TX
 
 #ifdef UART_2
+#define UxSTA         U2STA
 #define UxSTAbits     U2STAbits
 #define UxMODE        U2MODE
 #define UxMODEbits    U2MODEbits
-#define UxSTA         U2STA
 #define UxBRG         U2BRG
-#define RX_ISR_FLAG   IFS5bits.U3RXIF
-#define TX_ISR_FLAG   IFS5bits.U3TXIF
-#define RX_ISR_ENABLE IEC5bits.U3RXIE
-#define TX_ISR_ENABLE IEC5bits.U3TXIE
+#define RX_ISR_FLAG   IFS1bits.U2RXIF
+#define TX_ISR_FLAG   IFS1bits.U2TXIF
+#define RX_ISR_ENABLE IEC1bits.U2RXIE
+#define TX_ISR_ENABLE IEC1bits.U2TXIE
 #define UxTXREG       U2TXREG
 #define UxRXREG       U2RXREG
 #elif UART_3
@@ -89,12 +89,74 @@ static UINT16 tx_count = 0;
 #define UxRXREG       U4RXREG
 #endif
 
+//#define TEST
+#ifdef TEST
+static u8 test_line[] = "DE,Ensen 4250,ID,1263897715,MO,4250,TI,42467.611111,BV,12.9,LE,0.005600,VE,0.02134,VSI,0,VSP,0,FL,0.000,VO,16402000,FV,16402000,RV,0.000000,SV,16402000,SS,1,B0,42440.643461,B0,42440.643414,B0,42440.640694,CS,11438";
+
+u16 strlen(u8 *str) {
+	u8 *ptr = str;
+	u16 count = 0;
+
+	while(*ptr++) count++;
+	return(count);
+}
+#endif
+
+#ifdef UART_2_TIME_END_OF_LINE
+void _ISR __attribute__((__no_auto_psv__)) _T5Interrupt(void)
+{
+	IFS1bits.T5IF = 0;
+	LOG_D("EOL Timer expired\n\r");
+	T4CONbits.TON = 0;
+
+	if (line_process) {
+#ifdef TEST
+		line_process(test_line, strlen(test_line));
+#else
+		line_process(rx_buffer, rx_write_index);
+#endif
+	} else {
+		LOG_D("No line processor function defined\n\r");
+	}
+	rx_write_index = 0;
+}
+
+static void eol_start_timer()
+{
+	u32 timer;
+
+//	LOG_D("eol_start_timer()\n\r");
+
+ 	/*
+	 * Initialise Timer 4
+	 */
+	T4CONbits.T32 = 1;      // 16 Bit Timer
+	T4CONbits.TCS = 0;      // Internal FOSC/2
+	T4CONbits.TCKPS1 = 1;   // Divide by 256
+	T4CONbits.TCKPS0 = 1;
+
+	timer = ((u32)((CLOCK_FREQ / 256) / 1000) * UART_2_EOL_TIMER_MS) ;
+	PR4 = (u16)(timer & 0xffff);
+	PR5 = (u16)((timer >> 16) & 0xffff);
+	TMR4 = 0x00;
+	TMR5 = 0x00;
+
+	IFS1bits.T5IF = 0;
+	IEC1bits.T5IE = 1;
+	T4CONbits.TON = 1;
+}
+#endif // UART_2_TIME_END_OF_LINE
+
 #ifdef UART_2_RX
 void _ISR __attribute__((__no_auto_psv__)) _U2RXInterrupt(void)
 {
 	u8 ch;
 
+//	putchar('R');
 	RX_ISR_FLAG = 0;
+#ifdef UART_2_TIME_END_OF_LINE
+	eol_start_timer();
+#endif // UART_2_TIME_END_OF_LINE
 
 	if (UxSTAbits.OERR) {
 		LOG_E("RX Buffer overrun\n\r");
@@ -102,28 +164,26 @@ void _ISR __attribute__((__no_auto_psv__)) _U2RXInterrupt(void)
 
 	while (UxSTAbits.URXDA) {
 		ch = UxRXREG;
-
+#ifdef UART_2_CR_END_OF_LINE
 		if(ch == '\r') {
 			rx_buffer[rx_write_index++] = '\0';
-			rx_line_complete = 1;
+			if (line_process) {
+				line_process(rx_buffer, rx_write_index);
+			} else {
+				LOG_D("No line processor function defined\n\r");
+			}
 			rx_write_index = 0;
-
-			/*
-			 * Disable interrupts till line processed
-			 */
-//			IEC1bits.U3RXIE = 0;
 		} else {
-			LOG_D("Rx*0x%x*\n\r", ch);
 			rx_buffer[rx_write_index++] = ch;
 		}
-
+#endif
+#ifdef UART_2_TIME_END_OF_LINE
+//		LOG_D("Rx*0x%x*\n\r", ch);
+		rx_buffer[rx_write_index++] = ch;
+#endif
 		if(rx_write_index == UART_2_RX_BUFFER_SIZE) {
 			LOG_E("UART 2 Overflow: Line too long\n\r");
 		}
-	}
-
-	if (UxSTAbits.OERR) {
-		UxSTAbits.OERR = 0;   /* Clear the error flag */
 	}
 }
 #endif //UART_2_RX
@@ -131,7 +191,8 @@ void _ISR __attribute__((__no_auto_psv__)) _U2RXInterrupt(void)
 #ifdef UART_2_TX
 void _ISR __attribute__((__no_auto_psv__)) _U2TXInterrupt(void)
 {
-//	putchar('^');
+//	putchar('T');
+	
 	/*
 	 * If the TX buffer is not full load it from the circular buffer
 	 */
@@ -143,19 +204,17 @@ void _ISR __attribute__((__no_auto_psv__)) _U2TXInterrupt(void)
 
 	if (!tx_count) {
 		/*
-		 * Can't use UxSTAbits.TRMT to detect when Tx Queue is empty
-		 * as it ain't reliable at all.
 		 */
 		if (UxSTAbits.UTXISEL0) {
 			while (!UxSTAbits.TRMT) {
 				Nop();
 			}
 
-//			RS485_RX
-//			putchar('+');
-//			RS485_RX
-//			LATBbits.LATB2 = 0;
-//			LATBbits.LATB3 = 0;
+			/*
+			 * Transmission of message finished.
+			 */
+//			putchar('*');
+//			TX_ISR_ENABLE = 0;
 
 			/*
 			 * Interrupt when a character is transferred to the Transmit Shift
@@ -180,42 +239,12 @@ void _ISR __attribute__((__no_auto_psv__)) _U2TXInterrupt(void)
 			UxSTAbits.UTXISEL1 = 0;
 			UxSTAbits.UTXISEL0 = 1;
 		}
-//		putchar('-');
-//		IEC1bits.U3RXIE = 1;
 	}
-
-	/*
-	 * If the Transmitter queue is currently empty turn off chip select.
-	 */
 	TX_ISR_FLAG = 0;
 }
 #endif //UART_2_TX
 
-void uart_2_poll(void)
-{
-	if(rx_line_complete) {
-		LOG_D("uart_2_poll()\n\r");
-
-		if(line_process)
-			line_process(rx_buffer);
-	}
-	rx_line_complete = 0;
-	/*
-	 * Turn back on Interrupts
-	 */
-
-	RX_ISR_ENABLE = 1;
-
-	//	if(watch_trmt) {
-//		LOG_D("Monitoring TRMT\n\r");
-//	}
-//	if (watch_trmt && UxSTAbits.TRMT == 1) {
-//		watch_trmt = FALSE;
-//		RS485_RX
-//	}
-}
-
-void uart_2_init(void (*line_fn)(u8 *line))
+void uart_2_init(void (*line_fn)(u8 *line, u16 len))
 {
 	/*
 	 * CinnamonBun is running a PIC24FJ256GB106 processor
@@ -225,7 +254,6 @@ void uart_2_init(void (*line_fn)(u8 *line))
 	line_process = line_fn;
 
 	rx_write_index  = 0;
-	rx_line_complete = 0;
 
 	switch (UART_2_RX_PIN) {
 		case RP0:
@@ -239,6 +267,7 @@ void uart_2_init(void (*line_fn)(u8 *line))
 			break;
 	}
 #endif
+
 #ifdef UART_2_TX
 	tx_write_index = 0;
 	tx_read_index = 0;
@@ -261,17 +290,18 @@ void uart_2_init(void (*line_fn)(u8 *line))
 	 * in include file system.h
 	 */
 	UxMODE = 0x8800;
+//	UxMODEbits.LPBACK = 1;
 
 	if (UART_2_DATA_BITS == 8) {
 		if (UART_2_PARITY == PARITY_NONE) {
-			UxMODEbits.PDSEL = 0x00;
+			UxMODEbits.PDSEL = 0b00;
 		} else if (UART_2_PARITY == PARITY_EVEN) {
-			UxMODEbits.PDSEL = 0x01;
+			UxMODEbits.PDSEL = 0b01;
 		} else if (UART_2_PARITY == PARITY_ODD) {
-			UxMODEbits.PDSEL = 0x10;
+			UxMODEbits.PDSEL = 0b10;
 		}
 	} else if (UART_2_DATA_BITS == 9) {
-		UxMODEbits.PDSEL = 0x11;
+		UxMODEbits.PDSEL = 0b11;
 	} else {
 		LOG_E("Unrecognised Data bit/Parity configuration\n\r");
 	}
@@ -296,15 +326,15 @@ void uart_2_init(void (*line_fn)(u8 *line))
 	 * Interrupt when a character is transferred to the Transmit Shift
 	 * Register (TSR), and as a result, the transmit buffer becomes empty
 	 */
-//	UxSTAbits.UTXISEL1 = 1;
-//	UxSTAbits.UTXISEL0 = 0;
+	UxSTAbits.UTXISEL1 = 1;
+	UxSTAbits.UTXISEL0 = 0;
 
 	/*
 	 * Interrupt when the last character is shifted out of the Transmit
 	 * Shift Register; all transmit operations are completed
 	 */
-	UxSTAbits.UTXISEL1 = 0;
-	UxSTAbits.UTXISEL0 = 1;
+//	UxSTAbits.UTXISEL1 = 0;
+//	UxSTAbits.UTXISEL0 = 1;
 
 	/*
 	 * Interrupt when a character is transferred to the Transmit Shift
@@ -313,13 +343,6 @@ void uart_2_init(void (*line_fn)(u8 *line))
 	 */
 //	UxSTAbits.UTXISEL1 = 0;
 //	UxSTAbits.UTXISEL0 = 0;
-#endif
-
-#ifdef UART_2_RX
-	RX_ISR_ENABLE = 1;
-#endif
-#ifdef UART_2_TX
-	TX_ISR_ENABLE = 1;
 #endif
 	/*
 	 * Desired Baud Rate = FCY/(16 (UxBRG + 1))
@@ -330,14 +353,23 @@ void uart_2_init(void (*line_fn)(u8 *line))
 	 *
 	 */
 	UxBRG = ((CLOCK_FREQ / UART_2_BAUD) / 16) - 1;
-// test	UxBRG = ((CLOCK_FREQ / UART_2_BAUD) / 16) + 5;
+
+#ifdef UART_2_RX
+	RX_ISR_FLAG = 0;
+	RX_ISR_ENABLE = 1;
 #endif
+#ifdef UART_2_TX
+	TX_ISR_FLAG = 0;
+	TX_ISR_ENABLE = 1;
+#endif
+
+#endif // __PIC24FJ256GB106__ || __PIC24FJ64GB106__
 }
 
 #ifdef UART_2_TX
 void uart_2_putchar(u8 ch)
 {
-	u8 loop;
+//	u8 loop;
 //	LOG_D("(0x%x)", ch);
 	/*
 	 * If the Transmitter queue is currently empty turn on chip select.
@@ -373,10 +405,11 @@ void uart_2_putchar(u8 ch)
 	} else {
 		UxTXREG = ch;
 	}
+	TX_ISR_ENABLE = 1;
 }
 #endif // UART_2_TX
 
-#if 0
+#ifdef UART_2_TX
 void uart_2_printf(char *string)
 {
 	char *ptr;
@@ -388,8 +421,14 @@ void uart_2_printf(char *string)
 	while (*ptr) {
 		uart_2_putchar(*ptr++);
 	}
+
+#ifdef TEST
+#ifdef UART_2_TIME_END_OF_LINE
+	eol_start_timer();
+#endif // UART_2_TIME_END_OF_LINE
+#endif // TEST
 }
-#endif
+#endif // UART_2_TX
 
 #ifdef UART_2_TX
 void uart_2_tx_data(u8 *data, u16 len)

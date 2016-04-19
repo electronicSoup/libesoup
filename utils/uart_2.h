@@ -22,7 +22,7 @@
  *
  */
 
-extern void uart_2_init(void (*line_fn)(u8 *line));
+extern void uart_2_init(void (*line_fn)(u8 *line, u16 len));
 extern void uart_2_poll(void);
 extern void uart_2_putchar(u8 ch);
 extern void uart_2_printf(char *string);
