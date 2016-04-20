@@ -131,7 +131,7 @@ u16 crc_calculate(u8 *data, u16 len)
 	while (len--) {      /* pass through message buffer */
 		             /* calculate the CRC */
 		asm ("CLRWDT");
-		LOG_D("crc byte 0x%x\n\r", *ptr);
+//		LOG_D("crc byte 0x%x\n\r", *ptr);
 		index = crc_high ^ *ptr++;
 		crc_high = crc_low ^ crc_high_bytes[index];
 		crc_low  = crc_low_bytes[index];
@@ -184,7 +184,7 @@ void _ISR __attribute__((__no_auto_psv__)) _T3Interrupt(void)
 	}
 }
 #endif //__PIC24FJ256GB106__
-
+#if 0
 #if defined(MODBUS_UART_2)
 void _ISR __attribute__((__no_auto_psv__)) _U2RXInterrupt(void)
 #elif defined(MODBUS_UART_3)
@@ -217,7 +217,8 @@ void _ISR __attribute__((__no_auto_psv__)) _U4RXInterrupt(void)
 		}
 	}
 }
-
+#endif // 0
+#if 0
 #if defined(MODBUS_UART_2)
 void _ISR __attribute__((__no_auto_psv__)) _U2TXInterrupt(void)
 #elif defined(MODBUS_UART_3)
@@ -277,12 +278,9 @@ void _ISR __attribute__((__no_auto_psv__)) _U4TXInterrupt(void)
 			UxSTAbits.UTXISEL0 = 1;
 		}
 	}
-
-	/*
-	 * If the Transmitter queue is currently empty turn off chip select.
-	 */
 	TX_ISR_FLAG = 0;
 }
+#endif //0
 
 void timers_init()
 {
@@ -547,6 +545,7 @@ void modbus_init()
 void modbus_putchar(u8 ch)
 {
 	u8 loop;
+
 	/*
 	 * If the Transmitter queue is currently empty turn on chip select.
 	 */
@@ -558,6 +557,10 @@ void modbus_putchar(u8 ch)
 		}
 	}
 
+	/*
+	 * If either the TX Buffer is full OR there are already characters in
+	 * our SW Buffer then add to SW buffer
+	 */
 	if (tx_count || UxSTAbits.UTXBF) {
 		/*
 		 * Interrupt when a character is transferred to the Transmit Shift
@@ -585,7 +588,7 @@ void modbus_tx_data(u8 *data, u16 len)
 	u8      *ptr;
 
 	crc = crc_calculate(data, len);
-	LOG_D("crc %x\n\r", crc);
+	LOG_D("tx_data crc %x\n\r", crc);
 
 	ptr = data;
 
@@ -593,8 +596,13 @@ void modbus_tx_data(u8 *data, u16 len)
 		modbus_putchar(*ptr++);
 	}
 
-	modbus_putchar((crc >> 8) & 0xff);
-	modbus_putchar((crc & 0xff));
+	if(MODBUS_ENDIAN == LITTLE_ENDIAN) {
+		modbus_putchar((crc & 0xff));
+		modbus_putchar((crc >> 8) & 0xff);
+	} else {
+		modbus_putchar((crc >> 8) & 0xff);
+		modbus_putchar((crc & 0xff));
+	}
 }
 
 result_t modbus_attempt_transmission(u8 *data, u16 len, modbus_response_function fn)

@@ -46,6 +46,7 @@ void process_timer_35_expiry(void)
 {
 	u8  start_index;
 	u16 loop;
+//	f32 flowrate;
 
 	RX_ISR_ENABLE = 0;
 	LOG_D("process_timer_35_expiry() msg length %d\n\r", rx_write_index);
