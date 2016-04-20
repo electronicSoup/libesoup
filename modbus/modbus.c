@@ -115,7 +115,10 @@ static u8 crc_low_bytes[] = {
 	0x82, 0x42, 0x43, 0x83, 0x41, 0x81, 0x80, 0x40
 } ;
 
+#ifdef MODBUS_15_TIMER
 void start_15_timer(void);
+#endif // MODBUS_15_TIMER
+
 void start_35_timer(void);
 static void resp_timeout_expiry_fn(timer_t timer_id, union sigval data);
 
@@ -131,7 +134,6 @@ u16 crc_calculate(u8 *data, u16 len)
 	while (len--) {      /* pass through message buffer */
 		             /* calculate the CRC */
 		asm ("CLRWDT");
-//		LOG_D("crc byte 0x%x\n\r", *ptr);
 		index = crc_high ^ *ptr++;
 		crc_high = crc_low ^ crc_high_bytes[index];
 		crc_low  = crc_low_bytes[index];
@@ -143,11 +145,7 @@ u8 crc_check(u8 *data, u16 len)
 {
 	u16 crc;
 
-	LOG_D("crc_check(len = %d)\n\r", len);
-
 	crc = crc_calculate(data, len - 2);
-
-	LOG_D("crc = 0x%x\n\r", crc);
 
 	if (  (((crc >> 8) & 0xff) == data[len - 2])
 	    &&((crc & 0xff) == data[len -1]) ) {
@@ -158,25 +156,11 @@ u8 crc_check(u8 *data, u16 len)
 }
 
 #if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__)
-void _ISR __attribute__((__no_auto_psv__)) _T2Interrupt(void)
+void _ISR __attribute__((__no_auto_psv__)) _T4Interrupt(void)
 {
-	IFS0bits.T2IF = 0;
-	T2CONbits.TON = 0;
-	TMR2 = 0x00;
-	if (modbus_state.process_timer_15_expiry) {
-		modbus_state.process_timer_15_expiry();
-	} else {
-		LOG_E("T15 in unknown state\n\r");
-	}
-}
-#endif //__PIC24FJ256GB106__
-
-#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__)
-void _ISR __attribute__((__no_auto_psv__)) _T3Interrupt(void)
-{
-	IFS0bits.T3IF = 0;
-	T3CONbits.TON = 0;
-	TMR3 = 0x00;
+	IFS1bits.T4IF = 0;
+	T4CONbits.TON = 0;
+	TMR4 = 0x00;
 	if (modbus_state.process_timer_35_expiry) {
 		modbus_state.process_timer_35_expiry();
 	} else {
@@ -184,7 +168,23 @@ void _ISR __attribute__((__no_auto_psv__)) _T3Interrupt(void)
 	}
 }
 #endif //__PIC24FJ256GB106__
-#if 0
+
+#ifdef MODBUS_15_TIMER
+#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__)
+void _ISR __attribute__((__no_auto_psv__)) _T5Interrupt(void)
+{
+	IFS1bits.T5IF = 0;
+	T5CONbits.TON = 0;
+	TMR5 = 0x00;
+	if (modbus_state.process_timer_15_expiry) {
+		modbus_state.process_timer_15_expiry();
+	} else {
+		LOG_E("T15 in unknown state\n\r");
+	}
+}
+#endif //__PIC24FJ256GB106__
+#endif // MODBUS_15_TIMER
+
 #if defined(MODBUS_UART_2)
 void _ISR __attribute__((__no_auto_psv__)) _U2RXInterrupt(void)
 #elif defined(MODBUS_UART_3)
@@ -203,11 +203,9 @@ void _ISR __attribute__((__no_auto_psv__)) _U4RXInterrupt(void)
 		UxSTAbits.OERR = 0;   /* Clear the error flag */
 	}
 
-//	putchar('@');
 	if (modbus_state.process_rx_character) {
 		while (UxSTAbits.URXDA) {
 			ch = UxRXREG;
-//			putchar(ch);
 			modbus_state.process_rx_character(ch);
 		}
 	} else {
@@ -217,8 +215,7 @@ void _ISR __attribute__((__no_auto_psv__)) _U4RXInterrupt(void)
 		}
 	}
 }
-#endif // 0
-#if 0
+
 #if defined(MODBUS_UART_2)
 void _ISR __attribute__((__no_auto_psv__)) _U2TXInterrupt(void)
 #elif defined(MODBUS_UART_3)
@@ -269,7 +266,6 @@ void _ISR __attribute__((__no_auto_psv__)) _U4TXInterrupt(void)
 //			UxSTAbits.UTXISEL1 = 0;
 //			UxSTAbits.UTXISEL0 = 0;
 		} else {
-//			putchar('-');
 			/*
 			 * Interrupt when the last character is shifted out of the Transmit
 			 * Shift Register; all transmit operations are completed
@@ -280,57 +276,60 @@ void _ISR __attribute__((__no_auto_psv__)) _U4TXInterrupt(void)
 	}
 	TX_ISR_FLAG = 0;
 }
-#endif //0
 
 void timers_init()
 {
 #if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__)
 	/*
-	 * Initialise Timer 2 for use as the 1.5 Character timer
+	 * Initialise Timer 4 for use as the 3.5 Character timer
 	 */
-	T2CONbits.T32 = 0;      // 16 Bit Timer
-	T2CONbits.TCS = 0;      // Internal FOSC/2
-	T2CONbits.TCKPS1 = 0;   // Divide by 1
-	T2CONbits.TCKPS0 = 0;
+	T4CONbits.T32 = 0;      // 16 Bit Timer
+	T4CONbits.TCS = 0;      // Internal FOSC/2
+	T4CONbits.TCKPS1 = 0;   // Divide by 1
+	T4CONbits.TCKPS0 = 0;
 
 	/*
 	 * Timer is off for the moment.
 	 */
-	IEC0bits.T2IE = 0;
-	T2CONbits.TON = 0;
+	IEC1bits.T4IE = 0;
+	T4CONbits.TON = 0;
 
+#ifdef MODBUS_15_TIMER
 	/*
-	 * Initialise Timer 3 for use as the 3.5 Character timer
+	 * Initialise Timer 5 for use as the 1.5 Character timer
 	 */
-	T3CONbits.TCS = 0;      // Internal FOSC/2
-	T3CONbits.TCKPS1 = 0;   // Divide by 1
-	T3CONbits.TCKPS0 = 0;
+	T5CONbits.TCS = 0;      // Internal FOSC/2
+	T5CONbits.TCKPS1 = 0;   // Divide by 1
+	T5CONbits.TCKPS0 = 0;
 
 	/*
 	 * Timer is off for the moment.
 	 */
-	IEC0bits.T3IE = 0;
-	T3CONbits.TON = 0;
+	IEC1bits.T5IE = 0;
+	T5CONbits.TON = 0;
+#endif // MODBUS_15_TIMER
 #endif
 }
 
+#ifdef MODBUS_15_TIMER
 void start_15_timer()
 {
-	PR2 = ((u16)((CLOCK_FREQ / MODBUS_BAUD) * 17) - 1) ;
-	TMR2 = 0x00;
+	PR5 = ((u16)((CLOCK_FREQ / MODBUS_BAUD) * 17) - 1) ;
+	TMR5 = 0x00;
 
-	IEC0bits.T2IE = 1;
-	T2CONbits.TON = 1;
+	IEC1bits.T5IE = 1;
+	T5CONbits.TON = 1;
 }
+#endif // MODBUS_15_TIMER
 
 void start_35_timer()
 {
-	T3CONbits.TON = 0;
-	PR2 = ((u16)((CLOCK_FREQ / MODBUS_BAUD) * 39) - 1) ;
-	TMR3 = 0x00;
+	T4CONbits.TON = 0;
+	PR4 = ((u16)((CLOCK_FREQ / MODBUS_BAUD) * 39) - 1) ;
+	TMR4 = 0x00;
 
-	IEC0bits.T3IE = 1;
-	T3CONbits.TON = 1;
+	IEC1bits.T4IE = 1;
+	T4CONbits.TON = 1;
 }
 
 void modbus_init()
@@ -359,10 +358,8 @@ void modbus_init()
 
 	switch (MODBUS_RX_PIN) {
 		case RP0:
-//			TRISDbits.TRISD4 = 1; // Test 25
 			TRISBbits.TRISB0 = 1;
 #if defined(MODBUS_UART_2)
-//			RPINR19bits.U2RXR = 25;
 			RPINR19bits.U2RXR = 0;
 #elif defined(MODBUS_UART_3)
 			RPINR17bits.U3RXR = 0;
@@ -372,10 +369,8 @@ void modbus_init()
 			break;
 
 		case RP1:
-//			TRISDbits.TRISD4 = 1; // Test 25
 			TRISBbits.TRISB1 = 1;
 #if defined(MODBUS_UART_2)
-//			RPINR19bits.U2RXR = 25;
 			RPINR19bits.U2RXR = 1;
 #elif defined(MODBUS_UART_3)
 			RPINR17bits.U3RXR = 1;

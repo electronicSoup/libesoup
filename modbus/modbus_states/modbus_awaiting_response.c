@@ -13,11 +13,6 @@ static void process_rx_character(u8 ch);
 
 static u8  rx_buffer[MODBUS_RX_BUFFER_SIZE];
 static u16 rx_write_index;
-//static u8     rx_line_complete = 0;
-//static UINT16 rx_read_index = 0;
-//static UINT16 rx_buffer_count = 0;
-
-//static u8 watch_trmt = FALSE;
 
 static u8 address;
 static modbus_response_function process_response;
@@ -46,19 +41,12 @@ void process_timer_35_expiry(void)
 {
 	u8  start_index;
 	u16 loop;
-//	f32 flowrate;
 
 	RX_ISR_ENABLE = 0;
 	LOG_D("process_timer_35_expiry() msg length %d\n\r", rx_write_index);
 	set_modbus_idle_state();
 
 	if(rx_write_index > 2) {
-#ifdef DEBUG
-		for (loop = 0; loop < rx_write_index; loop++) {
-			asm ("CLRWDT");
-			LOG_D("char %d - 0x%x - %c\n\r", loop, rx_buffer[loop], rx_buffer[loop]);
-		}
-#endif
 		if(rx_buffer[0] == address) {
 			start_index = 0;
 		} else if (rx_buffer[1] == address) {
@@ -67,11 +55,10 @@ void process_timer_35_expiry(void)
 			LOG_D("message from wrong address\n\r");
 			return;
 		}
-		LOG_D("start index is %d\n\r", start_index);
 
 		if (crc_check(&rx_buffer[start_index], rx_write_index - start_index)) {
-			LOG_D("Message Rx'd good\n\r");
 			/*
+			 * Response Good
 			 * Subtract 2 for the CRC
 			 */
 			process_response(&rx_buffer[start_index], rx_write_index - (start_index + 2));
@@ -87,10 +74,7 @@ void process_timer_35_expiry(void)
 
 void process_rx_character(u8 ch)
 {
-//	LOG_D("process_rx_character(0x%x)\n\r", ch);
-
 	if ((rx_write_index == 0) && (ch == 0x00)) {
-//		putchar('%');
 		return;
 	}
 	cancel_response_timer();
@@ -105,7 +89,6 @@ void process_rx_character(u8 ch)
 
 static void process_response_timeout(void)
 {
-//	LOG_D("process_response_timout()\n\r");
 	set_modbus_idle_state();
 	process_response(NULL, 0);
 }
