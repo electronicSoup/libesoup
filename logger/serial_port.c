@@ -19,9 +19,14 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  *
  */
+#define DEBUG_FILE
+#define TAG "serial"
+
 #include "system.h"
 
 #include "es_lib/logger/serial_port.h"
+#include "es_lib/logger/serial_log.h"
+
 
 #if defined(__18F2680) || defined(__18F4585)
 /*
@@ -35,6 +40,19 @@ static UINT16 tx_read_index = 0;
 static UINT16 tx_buffer_count = 0;
 #endif // (__18F2680) || (__18F4585)
 
+void _ISR __attribute__((__no_auto_psv__)) _U1RXInterrupt(void)
+{
+	u8 ch;
+	LOG_D("_U1RXInterrupt\n\r");
+	while (U1STAbits.URXDA) {
+		ch = U1RXREG;
+
+		LOG_D("Rx*0x%x*\n\r", ch);
+	}
+
+	IFS0bits.U1RXIF = 0;
+}
+
 void serial_init(void)
 {
 	/*
@@ -47,13 +65,19 @@ void serial_init(void)
 	 */
 #if defined(SERIAL_PORT_GndTxRx)
 	RPOR12bits.RP25R = 3;
+	RPINR18bits.U1RXR = 20;
 #elif defined(SERIAL_PORT_GndRxTx)
+	TRISDbits.TRISD4 = 1;
+
 	RPOR10bits.RP20R = 3;
+	RPINR18bits.U1RXR = 25;
 #endif
 
 	U1MODE = 0x8800;
 	U1STA = 0x0410;
 
+	IEC0bits.U1RXIE = 1;
+	
 	/*
 	 * Desired Baud Rate = FCY/(16 (UxBRG + 1))
 	 *

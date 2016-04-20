@@ -72,6 +72,14 @@
     #define can_frame struct can_frame
 #endif
 
+/*
+ * Union for converting byte stream to floats
+ */
+typedef union {
+	u8 bytes[4];
+	float value;
+} f32;
+
 /**
  * @brief Clock Frequency of the Hardware Device.
  */
@@ -990,8 +998,11 @@ typedef enum
 /*
  * Microcontroller Pin Definitions
  */
-#define RP0 0
-#define RP1 1
+#define RP0  0
+#define RP1  1
+#define RP13 13
+#define RP25 25
+#define RP28 28
 
 /*
  * UART Defs
@@ -1005,5 +1016,8 @@ typedef enum
 
 #define IDLE_LOW                    0
 #define IDLE_HIGH                   1
+
+#define LITTLE_ENDIAN               0
+#define BIG_ENDIAN                  1
 
 #endif // _CORE_H

@@ -170,10 +170,14 @@ void timer_init(void)
 	TMR1 = 0x00;
 
 	/*
-	 * Interrup on and timer on
+	 * Interrup on
 	 */
 	IEC0bits.T1IE = 1;    
-	T1CONbits.TON = 1;
+
+	/*
+	 * Leave timer off until somebody starts a timer.
+	 */
+	T1CONbits.TON = 0;
 #endif //__PIC24FJ256GB106__
 
 #if defined( __18F2680) || defined(__18F4585)
@@ -211,10 +215,12 @@ void timer_init(void)
 #ifdef MCP
 void timer_tick(void)
 {
+	u16 active_timers;
 	BYTE loop;
 	expiry_function function;
 	union sigval data;
 
+	active_timers = 0;
 	timer_ticked = FALSE;
 	timer_counter++;
 
@@ -222,21 +228,31 @@ void timer_tick(void)
 	 * Check for expired timers
 	 */
 	for(loop=0; loop < NUMBER_OF_TIMERS; loop++) {
-		if (  (timers[loop].active)
-		    &&(timers[loop].expiry_count == timer_counter) ) {
+		if (timers[loop].active) {
+			active_timers++;
 
-			/*
-			 * timer expired so call expiry function.
-			 */
-			timers[loop].active = FALSE;
+			if (timers[loop].expiry_count == timer_counter) {
 
-			function = timers[loop].function;
-			data = timers[loop].expiry_data;
+				/*
+				 * timer expired so call expiry function.
+				 */
+				timers[loop].active = FALSE;
 
-			timers[loop].expiry_count = 0;
-			timers[loop].function = (expiry_function)NULL;
-			function(loop, data);
+				function = timers[loop].function;
+				data = timers[loop].expiry_data;
+
+				timers[loop].expiry_count = 0;
+				timers[loop].function = (expiry_function) NULL;
+				function(loop, data);
+			}
 		}
+	}
+
+	if(active_timers == 0) {
+		/*
+		 * Turn the timer off as there's no active timers.
+		 */
+		T1CONbits.TON = 0;
 	}
 }
 #endif // MCP
@@ -288,6 +304,11 @@ result_t timer_start(u16 ticks,
 		LOG_E("start_timer() ERR_TIMER_ACTIVE\n\r");
 		return(ERR_TIMER_ACTIVE);
 	}
+
+	/*
+	 * We're activating a timer so make sure the system is ticking
+	 */
+	T1CONbits.TON = 1;
 
 	/*
 	 * Find the First empty timer
