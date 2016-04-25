@@ -6,6 +6,8 @@
 #define TIMER_4 3
 #define TIMER_5 4
 
+#define BAD_TIMER 0xff
+
 typedef enum {
     uSeconds,
     mSeconds,

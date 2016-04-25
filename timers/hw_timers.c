@@ -29,16 +29,18 @@
 #include "es_lib/logger/serial_log.h"
 
 struct hw_timer_data {
-	u8 active:1;
-	u8 repeat:1;
+	u8  active:1;
+	u8  repeat:1;
+	u16 repeats;
+	u16 remainder;
 	void (*expiry_function)(void);
 };
 
 static struct hw_timer_data timers[NUMBER_HW_TIMERS];
 
-static void hw_timer_isr(u8 timer);
 static u8   start_timer(u8 timer, ty_time_units units, u16 time, u8 repeat, void (*expiry_function)(void));
 static void set_clock_divide(u8 timer, u16 clock_divide);
+static void check_timer(u8 timer);
 
 void _ISR __attribute__((__no_auto_psv__)) _T1Interrupt(void)
 {
@@ -53,7 +55,7 @@ void _ISR __attribute__((__no_auto_psv__)) _T1Interrupt(void)
 		T1CONbits.TON = 0;
 	}
 
-	hw_timer_isr(TIMER_1);
+	check_timer(TIMER_1);
 }
 
 void _ISR __attribute__((__no_auto_psv__)) _T2Interrupt(void)
@@ -69,7 +71,7 @@ void _ISR __attribute__((__no_auto_psv__)) _T2Interrupt(void)
 		T2CONbits.TON = 0;
 	}
 
-	hw_timer_isr(TIMER_2);
+	check_timer(TIMER_2);
 }
 
 void _ISR __attribute__((__no_auto_psv__)) _T3Interrupt(void)
@@ -84,7 +86,7 @@ void _ISR __attribute__((__no_auto_psv__)) _T3Interrupt(void)
 		IEC0bits.T3IE = 0;
 		T3CONbits.TON = 0;
 	}
-	hw_timer_isr(TIMER_3);
+	check_timer(TIMER_3);
 }
 
 void _ISR __attribute__((__no_auto_psv__)) _T4Interrupt(void)
@@ -99,7 +101,7 @@ void _ISR __attribute__((__no_auto_psv__)) _T4Interrupt(void)
 		IEC1bits.T4IE = 0;
 		T4CONbits.TON = 0;
 	}
-	hw_timer_isr(TIMER_4);
+	check_timer(TIMER_4);
 }
 
 void _ISR __attribute__((__no_auto_psv__)) _T5Interrupt(void)
@@ -114,12 +116,7 @@ void _ISR __attribute__((__no_auto_psv__)) _T5Interrupt(void)
 		IEC1bits.T5IE = 0;
 		T5CONbits.TON = 0;
 	}
-	hw_timer_isr(TIMER_5);
-}
-
-static void hw_timer_isr(u8 timer)
-{
-
+	check_timer(TIMER_5);
 }
 
 void hw_timer_init(void)
@@ -132,6 +129,8 @@ void hw_timer_init(void)
 		timers[loop].active = 0;
 		timers[loop].repeat = 0;
 		timers[loop].expiry_function = (void (*)(void))NULL;
+		timers[loop].repeats = 0;
+		timers[loop].remainder = 0;
 	}
 
 	/*
@@ -149,7 +148,6 @@ void hw_timer_init(void)
 u8 hw_timer_start(ty_time_units units, u16 time, u8 repeat, void (*expiry_function)(void))
 {
 	u8 loop;
-	u8 started = FALSE;
 
 	LOG_D("start_hw_timer()\n\r");
 
@@ -158,12 +156,17 @@ u8 hw_timer_start(ty_time_units units, u16 time, u8 repeat, void (*expiry_functi
 	 */
 	loop = 0;
 
-	while((loop < NUMBER_HW_TIMERS) && !started) {
+	while(loop < NUMBER_HW_TIMERS) {
 		if(!timers[loop].active) {
-			started = start_timer(loop, units, time, repeat, expiry_function);
+			if(start_timer(loop, units, time, repeat, expiry_function)) {
+				return(loop);
+			}
 		}
 		loop++;
 	}
+
+	LOG_E("Failed to start the HW Timer\n\r");
+	return(BAD_TIMER);
 }
 
 
@@ -176,8 +179,6 @@ static u8   start_timer(u8 timer, ty_time_units units, u16 time, u8 repeat, void
 {
 	u16 clock_divide;
 	u32 ticks;
-	u16 repeats;
-	u16 remainder;
 
 	LOG_D("start_timer()\n\r");
 
@@ -193,12 +194,20 @@ static u8   start_timer(u8 timer, ty_time_units units, u16 time, u8 repeat, void
 
 	set_clock_divide(timer, clock_divide);
 
-	ticks = (u32)((CLOCK_FREQ / clock_divide) * units);
+	ticks = (u32)((u32)(((u32)CLOCK_FREQ) / clock_divide) * time);
 
-	repeats = (u16) ticks / 0xffff;
-	remainder = (u16) ticks % 0xffff;
+	if(ticks) {
+		timers[timer].active = TRUE;
+		timers[timer].repeat = repeat;
+		timers[timer].expiry_function = expiry_function;
 
-	LOG_D("repeats 0x%x, remainder 0x%x\n\r", repeats, remainder);
+		timers[timer].repeats = (u16) (ticks / 0xffff);
+		timers[timer].remainder = (u16) (ticks % 0xffff);
+
+		check_timer(timer);
+	}
+
+	return(ticks);
 }
 
 void set_clock_divide(u8 timer, u16 clock_divide)
@@ -301,5 +310,156 @@ void set_clock_divide(u8 timer, u16 clock_divide)
 			break;
 
 	}
+}
 
+static void check_timer(u8 timer)
+{
+	LOG_D("check_timer(%d) repeats 0x%x, remainder 0x%x\n\r", timer, timers[timer].repeats, timers[timer].remainder);
+
+	if(timers[timer].repeats) {
+		switch (timer) {
+			case TIMER_1:
+				TMR1 = 0x00;
+				PR1 = 0xffff;
+
+				IEC0bits.T1IE = 1;
+				T1CONbits.TON = 1;
+				break;
+
+			case TIMER_2:
+				TMR2 = 0x00;
+				PR2 = 0xffff;
+
+				IEC0bits.T2IE = 1;
+				T2CONbits.TON = 1;
+				break;
+
+			case TIMER_3:
+				TMR3 = 0x00;
+				PR3 = 0xffff;
+
+				IEC0bits.T3IE = 1;
+				T3CONbits.TON = 1;
+				break;
+
+			case TIMER_4:
+				TMR4 = 0x00;
+				PR4 = 0xffff;
+
+				IEC1bits.T4IE = 1;
+				T4CONbits.TON = 1;
+				break;
+
+			case TIMER_5:
+				TMR5 = 0x00;
+				PR5 = 0xffff;
+
+				IEC1bits.T5IE = 1;
+				T5CONbits.TON = 1;
+				break;
+
+			default:
+				LOG_E("Unknown Timer\n\r");
+				break;
+		}
+		timers[timer].repeats--;
+	} else if(timers[timer].remainder) {
+		switch (timer) {
+			case TIMER_1:
+				TMR1 = 0x00;
+				PR1 = timers[timer].remainder;
+
+				IEC0bits.T1IE = 1;
+				T1CONbits.TON = 1;
+				break;
+
+			case TIMER_2:
+				TMR2 = 0x00;
+				PR2 = timers[timer].remainder;
+
+				IEC0bits.T2IE = 1;
+				T2CONbits.TON = 1;
+				break;
+
+			case TIMER_3:
+				TMR3 = 0x00;
+				PR3 = timers[timer].remainder;
+
+				IEC0bits.T3IE = 1;
+				T3CONbits.TON = 1;
+				break;
+
+			case TIMER_4:
+				TMR4 = 0x00;
+				PR4 = timers[timer].remainder;
+
+				IEC1bits.T4IE = 1;
+				T4CONbits.TON = 1;
+				break;
+
+			case TIMER_5:
+				TMR5 = 0x00;
+				PR5 = timers[timer].remainder;
+
+				IEC1bits.T5IE = 1;
+				T5CONbits.TON = 1;
+				break;
+
+			default:
+				LOG_E("Unknown Timer\n\r");
+				break;
+		}
+		timers[timer].remainder = 0;
+
+	} else {
+		switch (timer) {
+			case TIMER_1:
+				TMR1 = 0x00;
+
+				IEC0bits.T1IE = 0;
+				T1CONbits.TON = 0;
+				break;
+
+			case TIMER_2:
+				TMR2 = 0x00;
+
+				IEC0bits.T2IE = 0;
+				T2CONbits.TON = 0;
+				break;
+
+			case TIMER_3:
+				TMR3 = 0x00;
+
+				IEC0bits.T3IE = 0;
+				T3CONbits.TON = 0;
+				break;
+
+			case TIMER_4:
+				TMR4 = 0x00;
+
+				IEC1bits.T4IE = 0;
+				T4CONbits.TON = 0;
+				break;
+
+			case TIMER_5:
+				TMR5 = 0x00;
+
+				IEC1bits.T5IE = 0;
+				T5CONbits.TON = 0;
+				break;
+
+			default:
+				LOG_E("Unknown Timer\n\r");
+				break;
+		}
+
+		if(timers[timer].expiry_function != NULL) {
+			timers[timer].expiry_function();
+		}
+		timers[timer].active = 0;
+		timers[timer].repeat = 0;
+		timers[timer].expiry_function = (void (*)(void))NULL;
+		timers[timer].repeats = 0;
+		timers[timer].remainder = 0;
+	}
 }
