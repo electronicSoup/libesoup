@@ -38,6 +38,7 @@ static struct hw_timer_data timers[NUMBER_HW_TIMERS];
 
 static void hw_timer_isr(u8 timer);
 static u8   start_timer(u8 timer, ty_time_units units, u16 time, u8 repeat, void (*expiry_function)(void));
+static void set_clock_divide(u8 timer, u16 clock_divide);
 
 void _ISR __attribute__((__no_auto_psv__)) _T1Interrupt(void)
 {
@@ -132,6 +133,17 @@ void hw_timer_init(void)
 		timers[loop].repeat = 0;
 		timers[loop].expiry_function = (void (*)(void))NULL;
 	}
+
+	/*
+	 * Initialise the timers to 16 bit and their clock source
+	 */
+	T1CONbits.TCS = 0;      // Internal FOSC/2
+	T2CONbits.T32 = 0;      // 16 Bit Timer
+	T2CONbits.TCS = 0;      // Internal FOSC/2
+	T3CONbits.TCS = 0;      // Internal FOSC/2
+	T4CONbits.T32 = 0;      // 16 Bit Timer
+	T4CONbits.TCS = 0;      // Internal FOSC/2
+	T5CONbits.TCS = 0;      // Internal FOSC/2
 }
 
 u8 hw_timer_start(ty_time_units units, u16 time, u8 repeat, void (*expiry_function)(void))
@@ -162,5 +174,132 @@ void hw_timer_cancel(u8 timer)
 
 static u8   start_timer(u8 timer, ty_time_units units, u16 time, u8 repeat, void (*expiry_function)(void))
 {
+	u16 clock_divide;
+	u32 ticks;
+	u16 repeats;
+	u16 remainder;
+
+	LOG_D("start_timer()\n\r");
+
+	switch(units) {
+		case Seconds:
+			clock_divide = 256;
+			break;
+
+		default:
+			LOG_E("Unknown Timer Units\n\r");
+			return(FALSE);
+	}
+
+	set_clock_divide(timer, clock_divide);
+
+	ticks = (u32)((CLOCK_FREQ / clock_divide) * units);
+
+	repeats = (u16) ticks / 0xffff;
+	remainder = (u16) ticks % 0xffff;
+
+	LOG_D("repeats 0x%x, remainder 0x%x\n\r", repeats, remainder);
+}
+
+void set_clock_divide(u8 timer, u16 clock_divide)
+{
+	LOG_D("set_clock_divide()\n\r");
+
+	switch(timer) {
+		case TIMER_1:
+			if(clock_divide == 1) {
+				T1CONbits.TCKPS1 = 0; // Divide by 1
+				T1CONbits.TCKPS0 = 0;
+			} else if(clock_divide == 8) {
+				T1CONbits.TCKPS1 = 0; // Divide by 8
+				T1CONbits.TCKPS0 = 1;
+			} else if(clock_divide == 64) {
+				T1CONbits.TCKPS1 = 1; // Divide by 64
+				T1CONbits.TCKPS0 = 0;
+			} else if(clock_divide == 256) {
+				T1CONbits.TCKPS1 = 1; // Divide by 256
+				T1CONbits.TCKPS0 = 1;
+			} else {
+				LOG_E("Bad clock divider!\n\r");
+			}
+			break;
+
+		case TIMER_2:
+			if(clock_divide == 1) {
+				T2CONbits.TCKPS1 = 0; // Divide by 1
+				T2CONbits.TCKPS0 = 0;
+			} else if(clock_divide == 8) {
+				T2CONbits.TCKPS1 = 0; // Divide by 8
+				T2CONbits.TCKPS0 = 1;
+			} else if(clock_divide == 64) {
+				T2CONbits.TCKPS1 = 1; // Divide by 64
+				T2CONbits.TCKPS0 = 0;
+			} else if(clock_divide == 256) {
+				T2CONbits.TCKPS1 = 1; // Divide by 256
+				T2CONbits.TCKPS0 = 1;
+			} else {
+				LOG_E("Bad clock divider!\n\r");
+			}
+			break;
+
+		case TIMER_3:
+			if(clock_divide == 1) {
+				T3CONbits.TCKPS1 = 0; // Divide by 1
+				T3CONbits.TCKPS0 = 0;
+			} else if(clock_divide == 8) {
+				T3CONbits.TCKPS1 = 0; // Divide by 8
+				T3CONbits.TCKPS0 = 1;
+			} else if(clock_divide == 64) {
+				T3CONbits.TCKPS1 = 1; // Divide by 64
+				T3CONbits.TCKPS0 = 0;
+			} else if(clock_divide == 256) {
+				T3CONbits.TCKPS1 = 1; // Divide by 256
+				T3CONbits.TCKPS0 = 1;
+			} else {
+				LOG_E("Bad clock divider!\n\r");
+			}
+			break;
+
+		case TIMER_4:
+			if(clock_divide == 1) {
+				T4CONbits.TCKPS1 = 0; // Divide by 1
+				T4CONbits.TCKPS0 = 0;
+			} else if(clock_divide == 8) {
+				T4CONbits.TCKPS1 = 0; // Divide by 8
+				T4CONbits.TCKPS0 = 1;
+			} else if(clock_divide == 64) {
+				T4CONbits.TCKPS1 = 1; // Divide by 64
+				T4CONbits.TCKPS0 = 0;
+			} else if(clock_divide == 256) {
+				T4CONbits.TCKPS1 = 1; // Divide by 256
+				T4CONbits.TCKPS0 = 1;
+			} else {
+				LOG_E("Bad clock divider!\n\r");
+			}
+			break;
+
+		case TIMER_5:
+			if(clock_divide == 1) {
+				T5CONbits.TCKPS1 = 0; // Divide by 1
+				T5CONbits.TCKPS0 = 0;
+			} else if(clock_divide == 8) {
+				T5CONbits.TCKPS1 = 0; // Divide by 8
+				T5CONbits.TCKPS0 = 1;
+			} else if(clock_divide == 64) {
+				T5CONbits.TCKPS1 = 1; // Divide by 64
+				T5CONbits.TCKPS0 = 0;
+			} else if(clock_divide == 256) {
+				T5CONbits.TCKPS1 = 1; // Divide by 256
+				T5CONbits.TCKPS0 = 1;
+			} else {
+				LOG_E("Bad clock divider!\n\r");
+			}
+			break;
+
+		default:
+			LOG_E("Unknown Timer\n\r");
+			break;
+
+	}
 
 }
