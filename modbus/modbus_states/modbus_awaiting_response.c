@@ -40,7 +40,6 @@ void set_modbus_awaiting_response_state(u8 addr, modbus_response_function fn)
 void process_timer_35_expiry(void)
 {
 	u8  start_index;
-	u16 loop;
 
 	RX_ISR_ENABLE = 0;
 	LOG_D("process_timer_35_expiry() msg length %d\n\r", rx_write_index);
