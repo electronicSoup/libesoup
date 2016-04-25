@@ -175,7 +175,48 @@ u8 hw_timer_start(ty_time_units units, u16 time, u8 repeat, void (*expiry_functi
 
 void hw_timer_cancel(u8 timer)
 {
+	switch (timer) {
+		case TIMER_1:
+			TMR1 = 0x00;
+			IEC0bits.T1IE = 0;
+			T1CONbits.TON = 0;
+			break;
 
+		case TIMER_2:
+			TMR2 = 0x00;
+			IEC0bits.T2IE = 0;
+			T2CONbits.TON = 0;
+			break;
+
+		case TIMER_3:
+			TMR3 = 0x00;
+			IEC0bits.T3IE = 0;
+			T3CONbits.TON = 0;
+			break;
+
+		case TIMER_4:
+			TMR4 = 0x00;
+			IEC1bits.T4IE = 0;
+			T4CONbits.TON = 0;
+			break;
+
+		case TIMER_5:
+			TMR5 = 0x00;
+			IEC1bits.T5IE = 0;
+			T5CONbits.TON = 0;
+			break;
+
+		default:
+			LOG_E("Unknown Timer\n\r");
+			break;
+	}
+
+	timers[timer].active = 0;
+	timers[timer].repeat = 0;
+	timers[timer].time = 0;
+	timers[timer].expiry_function = (void (*)(void))NULL;
+	timers[timer].repeats = 0;
+	timers[timer].remainder = 0;
 }
 
 static u8   start_timer(u8 timer, ty_time_units units, u16 time, u8 repeat, void (*expiry_function)(void))

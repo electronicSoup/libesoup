@@ -25,6 +25,7 @@
 
 #define DEBUG_FILE
 #include "es_lib/logger/serial_log.h"
+#include "es_lib/timers/hw_timers.h"
 #include "es_lib/timers/timers.h"
 #include "es_lib/modbus/modbus.h"
 
@@ -38,6 +39,10 @@ static UINT16 tx_write_index = 0;
 static UINT16 tx_read_index = 0;
 static UINT16 tx_count = 0;
 
+/*
+ * Have to keep the 35 timer global in file as it'll be canceled.
+ */
+static u8 hw_35_timer = BAD_TIMER;
 static es_timer resp_timer;
 
 
@@ -115,10 +120,7 @@ static u8 crc_low_bytes[] = {
 	0x82, 0x42, 0x43, 0x83, 0x41, 0x81, 0x80, 0x40
 } ;
 
-#ifdef MODBUS_15_TIMER
 void start_15_timer(void);
-#endif // MODBUS_15_TIMER
-
 void start_35_timer(void);
 static void resp_timeout_expiry_fn(timer_t timer_id, union sigval data);
 
@@ -155,35 +157,25 @@ u8 crc_check(u8 *data, u16 len)
 	}
 }
 
-#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__)
-void _ISR __attribute__((__no_auto_psv__)) _T4Interrupt(void)
+static void hw_35_expiry_function(void)
 {
-	IFS1bits.T4IF = 0;
-	T4CONbits.TON = 0;
-	TMR4 = 0x00;
+	hw_35_timer = BAD_TIMER;
+
 	if (modbus_state.process_timer_35_expiry) {
 		modbus_state.process_timer_35_expiry();
 	} else {
 		LOG_E("T35 in unknown state\n\r");
 	}
 }
-#endif //__PIC24FJ256GB106__
 
-#ifdef MODBUS_15_TIMER
-#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__)
-void _ISR __attribute__((__no_auto_psv__)) _T5Interrupt(void)
+static void hw_15_expiry_function(void)
 {
-	IFS1bits.T5IF = 0;
-	T5CONbits.TON = 0;
-	TMR5 = 0x00;
 	if (modbus_state.process_timer_15_expiry) {
 		modbus_state.process_timer_15_expiry();
 	} else {
 		LOG_E("T15 in unknown state\n\r");
 	}
 }
-#endif //__PIC24FJ256GB106__
-#endif // MODBUS_15_TIMER
 
 #if defined(MODBUS_UART_2)
 void _ISR __attribute__((__no_auto_psv__)) _U2RXInterrupt(void)
@@ -277,67 +269,31 @@ void _ISR __attribute__((__no_auto_psv__)) _U4TXInterrupt(void)
 	TX_ISR_FLAG = 0;
 }
 
-void timers_init()
-{
-#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__)
-	/*
-	 * Initialise Timer 4 for use as the 3.5 Character timer
-	 */
-	T4CONbits.T32 = 0;      // 16 Bit Timer
-	T4CONbits.TCS = 0;      // Internal FOSC/2
-	T4CONbits.TCKPS1 = 0;   // Divide by 1
-	T4CONbits.TCKPS0 = 0;
-
-	/*
-	 * Timer is off for the moment.
-	 */
-	IEC1bits.T4IE = 0;
-	T4CONbits.TON = 0;
-
-#ifdef MODBUS_15_TIMER
-	/*
-	 * Initialise Timer 5 for use as the 1.5 Character timer
-	 */
-	T5CONbits.TCS = 0;      // Internal FOSC/2
-	T5CONbits.TCKPS1 = 0;   // Divide by 1
-	T5CONbits.TCKPS0 = 0;
-
-	/*
-	 * Timer is off for the moment.
-	 */
-	IEC1bits.T5IE = 0;
-	T5CONbits.TON = 0;
-#endif // MODBUS_15_TIMER
-#endif
-}
-
-#ifdef MODBUS_15_TIMER
 void start_15_timer()
 {
-	PR5 = ((u16)((CLOCK_FREQ / MODBUS_BAUD) * 17) - 1) ;
-	TMR5 = 0x00;
+	u8 hw_timer;
 
-	IEC1bits.T5IE = 1;
-	T5CONbits.TON = 1;
+	//	PR5 = ((u16)((CLOCK_FREQ / MODBUS_BAUD) * 17) - 1) ;
+
+	hw_timer = hw_timer_start(uSeconds, ((1000000 * 17)/MODBUS_BAUD), FALSE, hw_15_expiry_function);
 }
-#endif // MODBUS_15_TIMER
 
 void start_35_timer()
 {
-	T4CONbits.TON = 0;
-	PR4 = ((u16)((CLOCK_FREQ / MODBUS_BAUD) * 39) - 1) ;
-	TMR4 = 0x00;
+	if(hw_35_timer != BAD_TIMER) {
+		hw_timer_cancel(hw_35_timer);
+	}
 
-	IEC1bits.T4IE = 1;
-	T4CONbits.TON = 1;
+//	PR4 = ((u16)((CLOCK_FREQ / MODBUS_BAUD) * 39) - 1) ;
+	hw_35_timer = hw_timer_start(uSeconds, ((1000000 * 39)/MODBUS_BAUD), FALSE, hw_35_expiry_function);
 }
 
 void modbus_init()
 {
 	/*
-	 * Initialise the HW Timers
+	 * Initialise the 35 timer so it can't be canceled by mistake
 	 */
-	timers_init();
+	hw_35_timer = BAD_TIMER;
 
 	/*
 	 * Initialise the SW Timer used for response timeout
