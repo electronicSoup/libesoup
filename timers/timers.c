@@ -62,6 +62,7 @@
  *
  */
 #include "system.h"
+#include "es_lib/timers/hw_timers.h"
 #include "es_lib/timers/timers.h"
 
 #ifdef ES_LINUX

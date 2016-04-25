@@ -25,6 +25,7 @@
 #define TAG "SLEEP"
 
 #include "es_lib/logger/serial_log.h"
+#include "es_lib/timers/hw_timers.h"
 
 static volatile u8 sleep_over;
 
