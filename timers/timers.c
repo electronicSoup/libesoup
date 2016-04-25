@@ -114,11 +114,8 @@ sys_timer_t timers[NUMBER_OF_TIMERS];
  */
 #ifdef MCP
 #if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__)
-void _ISR __attribute__((__no_auto_psv__)) _T1Interrupt(void)
+static void hw_expiry_function(void)
 {
-	IFS0bits.T1IF = 0;
-	TMR1 = 0x00;
-
 	timer_ticked = TRUE;
 }
 #endif //__PIC24FJ256GB106__
@@ -147,6 +144,7 @@ void timer_isr(void)
 void timer_init(void)
 {
 	BYTE loop;
+	u8   hw_timer;
 
 	/*
 	 * Initialise our Data Structures
@@ -158,26 +156,7 @@ void timer_init(void)
 	}
 
 #if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__)
-	/*
-	 * Initialise Timer 1 for use as the timer tick 
-	 */
-	T1CONbits.TCS = 0;      // Internal FOSC/2
-	T1CONbits.TCKPS1 = 0;   // Divide by 8
-	T1CONbits.TCKPS0 = 1;
-
-	PR1 = ((CLOCK_FREQ / 8) / 1000) * SYSTEM_TICK_ms;
-
-	TMR1 = 0x00;
-
-	/*
-	 * Interrup on
-	 */
-	IEC0bits.T1IE = 1;    
-
-	/*
-	 * Leave timer off until somebody starts a timer.
-	 */
-	T1CONbits.TON = 0;
+	hw_timer = hw_timer_start(mSeconds, 5, TRUE, hw_expiry_function);
 #endif //__PIC24FJ256GB106__
 
 #if defined( __18F2680) || defined(__18F4585)
@@ -247,13 +226,6 @@ void timer_tick(void)
 			}
 		}
 	}
-
-	if(active_timers == 0) {
-		/*
-		 * Turn the timer off as there's no active timers.
-		 */
-		T1CONbits.TON = 0;
-	}
 }
 #endif // MCP
 
@@ -304,11 +276,6 @@ result_t timer_start(u16 ticks,
 		LOG_E("start_timer() ERR_TIMER_ACTIVE\n\r");
 		return(ERR_TIMER_ACTIVE);
 	}
-
-	/*
-	 * We're activating a timer so make sure the system is ticking
-	 */
-	T1CONbits.TON = 1;
 
 	/*
 	 * Find the First empty timer

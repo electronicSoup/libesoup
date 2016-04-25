@@ -191,8 +191,8 @@ static u8   start_timer(u8 timer, ty_time_units units, u16 time, u8 repeat, void
 			break;
 
 		case mSeconds:
-			set_clock_divide(timer, 256);
-			ticks = (u32) ((u32) (((u32) CLOCK_FREQ) / 256) * time);
+			set_clock_divide(timer, 64);
+			ticks = (u32) ((u32) (((u32) CLOCK_FREQ) / 64000 ) * time);
 			break;
 
 		case Seconds:

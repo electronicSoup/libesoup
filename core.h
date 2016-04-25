@@ -96,6 +96,12 @@ typedef union {
  */
 #define SYSTEM_TICK_ms 5 //5 mS
 
+typedef enum {
+    uSeconds,
+    mSeconds,
+    Seconds
+} ty_time_units;
+
 /*
  * Timer definitions
  */
