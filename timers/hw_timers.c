@@ -180,24 +180,30 @@ void hw_timer_cancel(u8 timer)
 
 static u8   start_timer(u8 timer, ty_time_units units, u16 time, u8 repeat, void (*expiry_function)(void))
 {
-	u16 clock_divide;
 	u32 ticks;
 
-	LOG_D("start_timer()\n\r");
+//	LOG_D("start_timer()\n\r");
 
 	switch(units) {
+		case uSeconds:
+			set_clock_divide(timer, 8);
+			ticks = (u32) ((u32) (((u32) CLOCK_FREQ) / 8000000) * time);
+			break;
+
+		case mSeconds:
+			set_clock_divide(timer, 256);
+			ticks = (u32) ((u32) (((u32) CLOCK_FREQ) / 256) * time);
+			break;
+
 		case Seconds:
-			clock_divide = 256;
+			set_clock_divide(timer, 256);
+			ticks = (u32) ((u32) (((u32) CLOCK_FREQ) / 256) * time);
 			break;
 
 		default:
 			LOG_E("Unknown Timer Units\n\r");
 			return(FALSE);
 	}
-
-	set_clock_divide(timer, clock_divide);
-
-	ticks = (u32)((u32)(((u32)CLOCK_FREQ) / clock_divide) * time);
 
 	if(ticks) {
 		timers[timer].active = TRUE;
@@ -217,7 +223,7 @@ static u8   start_timer(u8 timer, ty_time_units units, u16 time, u8 repeat, void
 
 void set_clock_divide(u8 timer, u16 clock_divide)
 {
-	LOG_D("set_clock_divide()\n\r");
+//	LOG_D("set_clock_divide()\n\r");
 
 	switch(timer) {
 		case TIMER_1:
