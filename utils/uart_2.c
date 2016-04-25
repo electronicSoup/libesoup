@@ -25,6 +25,7 @@
 
 #define DEBUG_FILE
 #include "es_lib/logger/serial_log.h"
+#include "es_lib/timers/hw_timers.h"
 
 #define TAG "UART-2"
 #define UART_2
@@ -103,11 +104,9 @@ u16 strlen(u8 *str) {
 #endif
 
 #ifdef UART_2_TIME_END_OF_LINE
-void _ISR __attribute__((__no_auto_psv__)) _T5Interrupt(void)
+static void hw_eol_expiry_function(void)
 {
-	IFS1bits.T5IF = 0;
 	LOG_D("EOL Timer expired\n\r");
-	T4CONbits.TON = 0;
 
 	if (line_process) {
 #ifdef TEST
@@ -123,27 +122,11 @@ void _ISR __attribute__((__no_auto_psv__)) _T5Interrupt(void)
 
 static void eol_start_timer()
 {
-	u32 timer;
+	u8  hw_timer;
 
 //	LOG_D("eol_start_timer()\n\r");
 
- 	/*
-	 * Initialise Timer 4
-	 */
-	T4CONbits.T32 = 1;      // 16 Bit Timer
-	T4CONbits.TCS = 0;      // Internal FOSC/2
-	T4CONbits.TCKPS1 = 1;   // Divide by 256
-	T4CONbits.TCKPS0 = 1;
-
-	timer = ((u32)((CLOCK_FREQ / 256) / 1000) * UART_2_EOL_TIMER_MS) ;
-	PR4 = (u16)(timer & 0xffff);
-	PR5 = (u16)((timer >> 16) & 0xffff);
-	TMR4 = 0x00;
-	TMR5 = 0x00;
-
-	IFS1bits.T5IF = 0;
-	IEC1bits.T5IE = 1;
-	T4CONbits.TON = 1;
+	hw_timer = hw_timer_start(mSeconds, UART_2_EOL_TIMER_MS, FALSE, hw_eol_expiry_function);
 }
 #endif // UART_2_TIME_END_OF_LINE
 
@@ -374,17 +357,6 @@ void uart_2_putchar(u8 ch)
 	/*
 	 * If the Transmitter queue is currently empty turn on chip select.
 	 */
-#if 0
-	if (UxSTAbits.TRMT) {
-		RS485_TX
-		for(loop = 0; loop < 100; loop++) {
-			Nop();
-		}
-//		LATBbits.LATB2 = 1;
-//		LATBbits.LATB3 = 1;
-//		IEC1bits.U3RXIE = 0;
-	}
-#endif
 	if (tx_count || UxSTAbits.UTXBF) {
 		/*
 		 * Interrupt when a character is transferred to the Transmit Shift
