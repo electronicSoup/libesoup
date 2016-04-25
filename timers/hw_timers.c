@@ -29,11 +29,13 @@
 #include "es_lib/logger/serial_log.h"
 
 struct hw_timer_data {
-	u8  active:1;
-	u8  repeat:1;
-	u16 repeats;
-	u16 remainder;
-	void (*expiry_function)(void);
+	u8            active:1;
+	u8            repeat:1;
+	ty_time_units units;
+	u16           time;
+	u16           repeats;
+	u16           remainder;
+	void        (*expiry_function)(void);
 };
 
 static struct hw_timer_data timers[NUMBER_HW_TIMERS];
@@ -128,6 +130,7 @@ void hw_timer_init(void)
 	for(loop = 0; loop < NUMBER_HW_TIMERS; loop++) {
 		timers[loop].active = 0;
 		timers[loop].repeat = 0;
+		timers[loop].time = 0;
 		timers[loop].expiry_function = (void (*)(void))NULL;
 		timers[loop].repeats = 0;
 		timers[loop].remainder = 0;
@@ -199,6 +202,8 @@ static u8   start_timer(u8 timer, ty_time_units units, u16 time, u8 repeat, void
 	if(ticks) {
 		timers[timer].active = TRUE;
 		timers[timer].repeat = repeat;
+		timers[timer].units = units;
+		timers[timer].time = time;
 		timers[timer].expiry_function = expiry_function;
 
 		timers[timer].repeats = (u16) (ticks / 0xffff);
@@ -314,7 +319,7 @@ void set_clock_divide(u8 timer, u16 clock_divide)
 
 static void check_timer(u8 timer)
 {
-	LOG_D("check_timer(%d) repeats 0x%x, remainder 0x%x\n\r", timer, timers[timer].repeats, timers[timer].remainder);
+//	LOG_D("check_timer(%d) repeats 0x%x, remainder 0x%x\n\r", timer, timers[timer].repeats, timers[timer].remainder);
 
 	if(timers[timer].repeats) {
 		switch (timer) {
@@ -456,10 +461,15 @@ static void check_timer(u8 timer)
 		if(timers[timer].expiry_function != NULL) {
 			timers[timer].expiry_function();
 		}
-		timers[timer].active = 0;
-		timers[timer].repeat = 0;
-		timers[timer].expiry_function = (void (*)(void))NULL;
-		timers[timer].repeats = 0;
-		timers[timer].remainder = 0;
+
+		if(timers[timer].repeat) {
+			start_timer(timer, timers[timer].units, timers[timer].time, timers[timer].repeat, timers[timer].expiry_function);
+		} else {
+			timers[timer].active = 0;
+			timers[timer].repeat = 0;
+			timers[timer].expiry_function = (void (*)(void))NULL;
+			timers[timer].repeats = 0;
+			timers[timer].remainder = 0;
+		}
 	}
 }
