@@ -28,46 +28,19 @@
 
 static volatile u8 sleep_over;
 
-#ifdef MCP
-#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__)
-void _ISR __attribute__((__no_auto_psv__)) _T3Interrupt(void)
+static void hw_expiry_function(void)
 {
-	IFS0bits.T3IF = 0;
 	sleep_over = TRUE;
-
-	/*
-	 * Timer is off for the moment.
-	 */
-	IEC0bits.T3IE = 0;
-	T2CONbits.TON = 0;
 }
-#endif //__PIC24FJ256GB106__
 
-void sleep_seconds(u16 seconds)
+void sleep(ty_time_units units, u16 time)
 {
-	u32 timer;
-
- 	/*
-	 * Initialise Timer 2
-	 */
-	T2CONbits.T32 = 1;      // 16 Bit Timer
-	T2CONbits.TCS = 0;      // Internal FOSC/2
-	T2CONbits.TCKPS1 = 1;   // Divide by 256
-	T2CONbits.TCKPS0 = 1;
-
-	timer = ((u32)((CLOCK_FREQ / 256) * seconds) - 1) ;
-	PR2 = (u16)(timer & 0xffff);
-	PR3 = (u16)((timer >> 16) & 0xffff);
-	TMR2 = 0x00;
-	TMR3 = 0x00;
-
-	IEC0bits.T3IE = 1;
-	T2CONbits.TON = 1;
+	u8 hw_timer;
 
 	sleep_over = FALSE;
+	hw_timer = hw_timer_start(units, time, FALSE, hw_expiry_function);
 
 	while(!sleep_over) {
 		asm ("CLRWDT");
 	}
 }
-#endif

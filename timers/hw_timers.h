@@ -8,12 +8,6 @@
 
 #define BAD_TIMER 0xff
 
-typedef enum {
-    uSeconds,
-    mSeconds,
-    Seconds
-} ty_time_units;
-
 extern void hw_timer_init(void);
 extern u8 hw_timer_start(ty_time_units units, u16 time, u8 repeat, void (*expiry_function)(void));
 extern void hw_timer_cancel(u8 timer);
