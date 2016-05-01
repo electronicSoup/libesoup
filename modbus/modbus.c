@@ -177,6 +177,7 @@ static void hw_15_expiry_function(void)
 	}
 }
 
+#if 0
 #if defined(MODBUS_UART_2)
 void _ISR __attribute__((__no_auto_psv__)) _U2RXInterrupt(void)
 #elif defined(MODBUS_UART_3)
@@ -207,7 +208,9 @@ void _ISR __attribute__((__no_auto_psv__)) _U4RXInterrupt(void)
 		}
 	}
 }
+#endif
 
+#if 0
 #if defined(MODBUS_UART_2)
 void _ISR __attribute__((__no_auto_psv__)) _U2TXInterrupt(void)
 #elif defined(MODBUS_UART_3)
@@ -268,6 +271,7 @@ void _ISR __attribute__((__no_auto_psv__)) _U4TXInterrupt(void)
 	}
 	TX_ISR_FLAG = 0;
 }
+#endif
 
 void start_15_timer()
 {
