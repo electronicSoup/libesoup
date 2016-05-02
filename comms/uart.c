@@ -22,6 +22,7 @@
 #define UART_2           0x00
 #define UART_3           0x01
 #define UART_4           0x02
+#define UART_BAD         0xff
 
 #define NUM_UARTS        3
 
@@ -44,6 +45,10 @@ struct uart {
 	enum uart_status status;
 	u16              magic;
 	uart_data       *data;
+	u8               tx_buffer[UART_TX_BUFFER_SIZE];
+	u16              tx_write_index;
+	u16              tx_read_index;
+	u16              tx_count;
 } uart;
 
 struct uart uarts[NUM_UARTS];
@@ -57,10 +62,12 @@ static void uart_set_rx_pin(u8 uart, u8 pin);
 static void uart_set_tx_pin(u8 uart, u8 pin);
 static void uart_set_com_config(uart_data *com);
 
+static void uart_putchar(u8 uart, u8 ch);
+
 /*
  * Returns the number of bytes still waiting to be loaded in HW TX Buffer.
  */
-static u16 load_tx_buffer(uart_data *com);
+static u16 load_tx_buffer(u8 uart);
 
 /*
  * Interrupt Service Routines
@@ -91,8 +98,6 @@ void _ISR __attribute__((__no_auto_psv__)) _U4TXInterrupt(void)
 
 static void uart_tx_isr(u8 uart)
 {
-	uart_data *com;
-
 	LOG_D("uart_tx_isr()\n\r");
 
 	if ((uarts[uart].data == NULL) || (uarts[uart].status != UART_BUSY)) {
@@ -100,28 +105,101 @@ static void uart_tx_isr(u8 uart)
 		return;
 	}
 
-	com = uarts[uart].data;
-
 	/*
 	 * If the TX buffer is not full load it from the tx buffer
 	 */
-	if (!load_tx_buffer(com)) {
+	if (!load_tx_buffer(uart)) {
 		switch(uart) {
 			case UART_2:
-				while (!U2STAbits.TRMT) {
-					Nop();
+				/*
+				 * Can't use U2STAbits.TRMT to detect when Tx Queue is empty
+				 * as it ain't reliable at all.
+				 */
+				if (U2STAbits.UTXISEL0) {
+					while (!U2STAbits.TRMT) {
+						Nop();
+					}
+
+					/*
+					 * Inform the higher layer we're finished
+					 */
+					uarts[uart].data->tx_finished();
+
+					/*
+					 * Interrupt when a character is transferred to the Transmit Shift
+					 * Register (TSR), and as a result, the transmit buffer becomes empty
+					 */
+					U2STAbits.UTXISEL1 = 1;
+					U2STAbits.UTXISEL0 = 0;
+				} else {
+					/*
+					 * Interrupt when the last character is shifted out of the Transmit
+					 * Shift Register; all transmit operations are completed
+					 */
+					U2STAbits.UTXISEL1 = 0;
+					U2STAbits.UTXISEL0 = 1;
 				}
 				break;
 
 			case UART_3:
-				while (!U3STAbits.TRMT) {
-					Nop();
+				/*
+				 * Can't use U2STAbits.TRMT to detect when Tx Queue is empty
+				 * as it ain't reliable at all.
+				 */
+				if (U3STAbits.UTXISEL0) {
+					while (!U3STAbits.TRMT) {
+						Nop();
+					}
+
+					/*
+					 * Inform the higher layer we're finished
+					 */
+					uarts[uart].data->tx_finished();
+
+					/*
+					 * Interrupt when a character is transferred to the Transmit Shift
+					 * Register (TSR), and as a result, the transmit buffer becomes empty
+					 */
+					U3STAbits.UTXISEL1 = 1;
+					U3STAbits.UTXISEL0 = 0;
+				} else {
+					/*
+					 * Interrupt when the last character is shifted out of the Transmit
+					 * Shift Register; all transmit operations are completed
+					 */
+					U3STAbits.UTXISEL1 = 0;
+					U3STAbits.UTXISEL0 = 1;
 				}
 				break;
 
 			case UART_4:
-				while (!U4STAbits.TRMT) {
-					Nop();
+				/*
+				 * Can't use U2STAbits.TRMT to detect when Tx Queue is empty
+				 * as it ain't reliable at all.
+				 */
+				if (U4STAbits.UTXISEL0) {
+					while (!U4STAbits.TRMT) {
+						Nop();
+					}
+
+					/*
+					 * Inform the higher layer we're finished
+					 */
+					uarts[uart].data->tx_finished();
+
+					/*
+					 * Interrupt when a character is transferred to the Transmit Shift
+					 * Register (TSR), and as a result, the transmit buffer becomes empty
+					 */
+					U4STAbits.UTXISEL1 = 1;
+					U4STAbits.UTXISEL0 = 0;
+				} else {
+					/*
+					 * Interrupt when the last character is shifted out of the Transmit
+					 * Shift Register; all transmit operations are completed
+					 */
+					U4STAbits.UTXISEL1 = 0;
+					U4STAbits.UTXISEL0 = 1;
 				}
 				break;
 
@@ -132,15 +210,76 @@ static void uart_tx_isr(u8 uart)
 	}
 }
 
+/*
+ * Receive Interrupt Service Routines
+ */
+void _ISR __attribute__((__no_auto_psv__)) _U2RXInterrupt(void)
+{
+	u8 ch;
+
+	U2_RX_ISR_FLAG = 0;
+
+	asm ("CLRWDT");
+
+	if (U2STAbits.OERR) {
+		LOG_E("RX Buffer overrun\n\r");
+		U2STAbits.OERR = 0;   /* Clear the error flag */
+	}
+
+	while (U2STAbits.URXDA) {
+		ch = U2RXREG;
+		uarts[UART_2].data->process_rx_char(ch);
+	}
+}
+
+void _ISR __attribute__((__no_auto_psv__)) _U3RXInterrupt(void)
+{
+	u8 ch;
+
+	U3_RX_ISR_FLAG = 0;
+
+	asm ("CLRWDT");
+
+	if (U3STAbits.OERR) {
+		LOG_E("RX Buffer overrun\n\r");
+		U3STAbits.OERR = 0;   /* Clear the error flag */
+	}
+
+	while (U3STAbits.URXDA) {
+		ch = U3RXREG;
+		uarts[UART_3].data->process_rx_char(ch);
+	}
+}
+
+void _ISR __attribute__((__no_auto_psv__)) _U4RXInterrupt(void)
+{
+	u8 ch;
+
+	U4_RX_ISR_FLAG = 0;
+
+	asm ("CLRWDT");
+
+	if (U4STAbits.OERR) {
+		LOG_E("RX Buffer overrun\n\r");
+		U4STAbits.OERR = 0;   /* Clear the error flag */
+	}
+
+	while (U4STAbits.URXDA) {
+		ch = U4RXREG;
+		uarts[UART_4].data->process_rx_char(ch);
+	}
+}
+
+
+/*
+ * Initialisation
+ */
 void uart_init(void)
 {
 	u8 loop;
 
-	random_init();
-
 	for(loop = 0; loop < NUM_UARTS; loop++) {
 		uarts[loop].status = UART_FREE;
-		uarts[loop].magic = 0x0000;
 		uarts[loop].data = NULL;
 	}
 }
@@ -151,20 +290,18 @@ result_t uart_reserve(uart_data *data)
 	 * Find a free uart to use
 	 */
 	u8  loop;
-	u32 long_magic = 0x00;
 
 	for(loop = 0; loop < NUM_UARTS; loop++) {
 		if(uarts[loop].status == UART_FREE) {
 
-			while(long_magic == 0x00) {
-				long_magic = rand();
-			}
 			uarts[loop].data = data;
 			uarts[loop].status = UART_BUSY;
-			uarts[loop].magic = (u16)(long_magic & 0xffff);
 
 			data->uart = loop;
-			data->magic = uarts[loop].magic;
+
+			uarts[loop].tx_write_index = 0;
+			uarts[loop].tx_read_index = 0;
+			uarts[loop].tx_count = 0;
 
 			AD1PCFGL = 0xffff;
 
@@ -176,13 +313,6 @@ result_t uart_reserve(uart_data *data)
 
 			uart_set_com_config(data);
 
-			data->tx_buffer_read_index = 0;
-
-			/*
-			 * Load up the transmit buffer
-			 */
-			load_tx_buffer(data);
-
 			return(SUCCESS);
 		}
 	}
@@ -190,6 +320,136 @@ result_t uart_reserve(uart_data *data)
 	return(ERR_NO_RESOURCES);
 }
 
+result_t uart_release(uart_data *data)
+{
+	u8  uart;
+
+	uart = data->uart;
+
+	if(uarts[uart].data != data) {
+		LOG_E("uart_tx called with bad data pointer\n\r");
+		return(ERR_BAD_INPUT_PARAMETER);
+	}
+
+	uarts[uart].data = data;
+	uarts[uart].status = UART_BUSY;
+
+	data->uart = UART_BAD;
+
+	return(SUCCESS);
+}
+
+result_t uart_tx(uart_data *data, u8 *buffer, u16 len)
+{
+	u8  uart;
+	u8 *ptr;
+
+	uart = data->uart;
+
+	if(uarts[uart].data != data) {
+		LOG_E("uart_tx called with bad data pointer\n\r");
+		return(ERR_BAD_INPUT_PARAMETER);
+	}
+
+	ptr = data;
+
+	while(len--) {
+		uart_putchar(uart, *ptr++);
+	}
+	return(SUCCESS);
+}
+
+static void uart_putchar(u8 uart, u8 ch)
+{
+//	u8 loop;
+
+	/*
+	 * If the Transmitter queue is currently empty turn on chip select.
+	 */
+	switch(uart) {
+		case UART_2:
+			/*
+			 * If either the TX Buffer is full OR there are already characters in
+			 * our SW Buffer then add to SW buffer
+			 */
+			if (uarts[uart].tx_count || U2STAbits.UTXBF) {
+				/*
+				 * Interrupt when a character is transferred to the Transmit Shift
+				 * Register (TSR), and as a result, the transmit buffer becomes empty
+				 */
+				U2STAbits.UTXISEL1 = 1;
+				U2STAbits.UTXISEL0 = 0;
+
+				if(uarts[uart].tx_count == UART_TX_BUFFER_SIZE) {
+					LOG_E("Circular buffer full!");
+					return;
+				}
+
+				uarts[uart].tx_buffer[uarts[uart].tx_write_index] = ch;
+				uarts[uart].tx_write_index = (++(uarts[uart].tx_write_index) % MODBUS_TX_BUFFER_SIZE);
+				uarts[uart].tx_count++;
+			} else {
+				U2TXREG = ch;
+			}
+			break;
+
+		case UART_3:
+			/*
+			 * If either the TX Buffer is full OR there are already characters in
+			 * our SW Buffer then add to SW buffer
+			 */
+			if (uarts[uart].tx_count || U3STAbits.UTXBF) {
+				/*
+				 * Interrupt when a character is transferred to the Transmit Shift
+				 * Register (TSR), and as a result, the transmit buffer becomes empty
+				 */
+				U3STAbits.UTXISEL1 = 1;
+				U3STAbits.UTXISEL0 = 0;
+
+				if(uarts[uart].tx_count == UART_TX_BUFFER_SIZE) {
+					LOG_E("Circular buffer full!");
+					return;
+				}
+
+				uarts[uart].tx_buffer[uarts[uart].tx_write_index] = ch;
+				uarts[uart].tx_write_index = (++(uarts[uart].tx_write_index) % MODBUS_TX_BUFFER_SIZE);
+				uarts[uart].tx_count++;
+			} else {
+				U3TXREG = ch;
+			}
+			break;
+
+		case UART_4:
+			/*
+			 * If either the TX Buffer is full OR there are already characters in
+			 * our SW Buffer then add to SW buffer
+			 */
+			if (uarts[uart].tx_count || U4STAbits.UTXBF) {
+				/*
+				 * Interrupt when a character is transferred to the Transmit Shift
+				 * Register (TSR), and as a result, the transmit buffer becomes empty
+				 */
+				U4STAbits.UTXISEL1 = 1;
+				U4STAbits.UTXISEL0 = 0;
+
+				if(uarts[uart].tx_count == UART_TX_BUFFER_SIZE) {
+					LOG_E("Circular buffer full!");
+					return;
+				}
+
+				uarts[uart].tx_buffer[uarts[uart].tx_write_index] = ch;
+				uarts[uart].tx_write_index = (++(uarts[uart].tx_write_index) % MODBUS_TX_BUFFER_SIZE);
+				uarts[uart].tx_count++;
+			} else {
+				U4TXREG = ch;
+			}
+			break;
+
+		default:
+			LOG_E("Unrecognised UART in putchar()\n\r");
+			break;
+	}
+}
 
 static void uart_set_rx_pin(u8 uart, u8 pin)
 {
@@ -404,9 +664,9 @@ static void uart_set_com_config(uart_data *com)
 /*
  * Returns the number of bytes still waiting to be loaded in HW TX Buffer.
  */
-static u16 load_tx_buffer(uart_data *com)
+static u16 load_tx_buffer(u8 uart)
 {
-	switch (com->uart) {
+	switch (uart) {
 //		case UART_1:
 //			while(!U1STAbits.UTXBF && (com->tx_buffer_read_index < com->tx_buffer_size)) {
 //				U1TXREG = com->tx_buffer[com->tx_buffer_read_index++];
@@ -430,6 +690,14 @@ static u16 load_tx_buffer(uart_data *com)
 //			break;
 //
 		case UART_2:
+			/*
+			 * If the TX buffer is not full load it from the circular buffer
+			 */
+			while ((!U2STAbits.UTXBF) && (uarts[uart].tx_count)) {
+				U2TXREG = uarts[uart].tx_buffer[uarts[uart].tx_read_index];
+				uarts[uart].tx_read_index = (++(uarts[uart].tx_read_index) % UART_TX_BUFFER_SIZE);
+				uarts[uart].tx_count--;
+			}
 			break;
 
 		case UART_3:
@@ -439,5 +707,6 @@ static u16 load_tx_buffer(uart_data *com)
 			break;
 	}
 
-	return(com->tx_buffer_size - com->tx_buffer_read_index);
+//	return(com->tx_buffer_size - com->tx_buffer_read_index);
+	return(0);
 }
