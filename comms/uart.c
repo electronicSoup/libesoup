@@ -1,3 +1,26 @@
+/**
+ *
+ * \file es_lib/comms/uart.c
+ *
+ * UART functionalty for the electronicSoup Cinnamon Bun
+ *
+ * Copyright 2016 John Whitmore <jwhitmore@electronicsoup.com>
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the version 2 of the GNU General Public License
+ * as published by the Free Software Foundation
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, see <http://www.gnu.org/licenses/>.
+ *
+ *******************************************************************************
+ *
+ */
 
 #define U1_RX_ISR_FLAG   IFS0bits.U1RXIF
 #define U1_TX_ISR_FLAG   IFS0bits.U1TXIF
@@ -710,3 +733,78 @@ static u16 load_tx_buffer(u8 uart)
 //	return(com->tx_buffer_size - com->tx_buffer_read_index);
 	return(0);
 }
+
+#if 0
+
+	/*
+	 * Serial Port pin configuration should be defined
+	 * in include file system.h
+	 */
+	UxMODE = 0x8800;
+//	UxMODEbits.LPBACK = 1;
+
+	if (MODBUS_DATA_BITS == 8) {
+		if (MODBUS_PARITY == PARITY_NONE) {
+			UxMODEbits.PDSEL = 0x00;
+		} else if (MODBUS_PARITY == PARITY_EVEN) {
+			UxMODEbits.PDSEL = 0x01;
+		} else if (MODBUS_PARITY == PARITY_ODD) {
+			UxMODEbits.PDSEL = 0x10;
+		}
+	} else if (MODBUS_DATA_BITS == 9) {
+		UxMODEbits.PDSEL = 0x11;
+	} else {
+		LOG_E("Unrecognised Data bit/Parity configuration\n\r");
+	}
+
+	if (MODBUS_STOP_BITS == ONE_STOP_BIT) {
+		UxMODEbits.STSEL = 0;
+	} else if (MODBUS_STOP_BITS == TWO_STOP_BITS) {
+		UxMODEbits.STSEL = 1;
+	} else {
+		LOG_E("Unrecognised Stop bits configuration\n\r");
+	}
+
+	if (MODBUS_RX_IDLE_LEVEL == IDLE_LOW) {
+		UxMODEbits.RXINV = 0;
+	} else if (MODBUS_RX_IDLE_LEVEL == IDLE_HIGH) {
+		UxMODEbits.RXINV = 1;
+	}
+
+	UxSTA  = 0x8410;
+
+	/*
+	 * Interrupt when a character is transferred to the Transmit Shift
+	 * Register (TSR), and as a result, the transmit buffer becomes empty
+	 */
+	UxSTAbits.UTXISEL1 = 1;
+	UxSTAbits.UTXISEL0 = 0;
+
+	/*
+	 * Interrupt when the last character is shifted out of the Transmit
+	 * Shift Register; all transmit operations are completed
+	 */
+//	UxSTAbits.UTXISEL1 = 0;
+//	UxSTAbits.UTXISEL0 = 1;
+
+	/*
+	 * Interrupt when a character is transferred to the Transmit Shift
+	 * Register (this implies there is at least one character open in
+	 * the transmit buffer)
+	 */
+//	UxSTAbits.UTXISEL1 = 0;
+//	UxSTAbits.UTXISEL0 = 0;
+
+	RX_ISR_ENABLE = 0;
+	TX_ISR_ENABLE = 1;
+
+	/*
+	 * Desired Baud Rate = FCY/(16 (UxBRG + 1))
+	 *
+	 * UxBRG = ((FCY/Desired Baud Rate)/16) - 1
+	 *
+	 * UxBRG = ((CLOCK/MODBUS_BAUD)/16) -1
+	 *
+	 */
+	UxBRG = ((CLOCK_FREQ / MODBUS_BAUD) / 16) - 1;
+#endif
