@@ -129,8 +129,6 @@ void hw_timer_init(void)
 {
 	u8 loop;
 
-	LOG_D("hw_timer_init()\n\r");
-
 	for(loop = 0; loop < NUMBER_HW_TIMERS; loop++) {
 		timers[loop].status = TIMER_UNUSED;
 		timers[loop].repeat = 0;
@@ -154,7 +152,8 @@ void hw_timer_init(void)
 
 u8 hw_timer_start(ty_time_units units, u16 time, u8 repeat, void (*expiry_function)(void))
 {
-	u8 loop;
+	result_t rc;
+	u8       loop;
 
 //	LOG_D("start_hw_timer()\n\r");
 
@@ -164,9 +163,12 @@ u8 hw_timer_start(ty_time_units units, u16 time, u8 repeat, void (*expiry_functi
 	loop = 0;
 
 	while(loop < NUMBER_HW_TIMERS) {
-		if(!timers[loop].status) {
-			if(start_timer(loop, units, time, repeat, expiry_function)) {
+		if(timers[loop].status == TIMER_UNUSED) {
+			rc = start_timer(loop, units, time, repeat, expiry_function);
+			if(rc == SUCCESS) {
 				return(loop);
+			} else {
+				LOG_E("Failed to start HW Timer rc 0x%x\n\r", rc);
 			}
 		}
 		loop++;
@@ -178,22 +180,20 @@ u8 hw_timer_start(ty_time_units units, u16 time, u8 repeat, void (*expiry_functi
 
 result_t hw_timer_restart(u8 timer, ty_time_units units, u16 time, u8 repeat, void (*expiry_function)(void))
 {
+	result_t rc;
+
 	if(timer >= NUMBER_HW_TIMERS) {
 		LOG_E("Bad time passed to hw_timer_restart()\n\r!");
 		return(ERR_BAD_INPUT_PARAMETER);
 	}
 
-	if(start_timer(timer, units, time, repeat, expiry_function)) {
-		return (SUCCESS);
-	}
-
-	return(ERR_GENERAL_ERROR);
+	return(start_timer(timer, units, time, repeat, expiry_function));
 }
 
 result_t hw_timer_pause(u8 timer)
 {
 	if(timer >= NUMBER_HW_TIMERS) {
-		LOG_E("Bad timer passed to hw_timer_pause()\n\r!");
+		LOG_E("Bad timer passed to hw_timer_pause(0x%x)\n\r!", timer);
 		return(ERR_BAD_INPUT_PARAMETER);
 	}
 
@@ -254,6 +254,24 @@ void hw_timer_cancel(u8 timer)
 	timers[timer].remainder = 0;
 }
 
+void hw_timer_cancel_all()
+{
+	IEC0bits.T1IE = 0;
+	T1CONbits.TON = 0;
+
+	IEC0bits.T2IE = 0;
+	T2CONbits.TON = 0;
+
+	IEC0bits.T3IE = 0;
+	T3CONbits.TON = 0;
+
+	IEC1bits.T4IE = 0;
+	T4CONbits.TON = 0;
+
+	IEC1bits.T5IE = 0;
+	T5CONbits.TON = 0;
+}
+
 result_t start_timer(u8 timer, ty_time_units units, u16 time, u8 repeat, void (*expiry_function)(void))
 {
 	u32 ticks;
@@ -279,6 +297,7 @@ result_t start_timer(u8 timer, ty_time_units units, u16 time, u8 repeat, void (*
 		default:
 			LOG_E("Unknown Timer Units\n\r");
 			return(ERR_BAD_INPUT_PARAMETER);
+			break;
 	}
 
 	if(ticks) {

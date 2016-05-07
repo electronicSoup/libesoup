@@ -14,3 +14,4 @@ extern result_t hw_timer_restart(u8 hw_timer, ty_time_units units, u16 time, u8 
 extern result_t hw_timer_pause(u8 timer);
 
 extern void     hw_timer_cancel(u8 timer);
+extern void     hw_timer_cancel_all();
