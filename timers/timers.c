@@ -162,7 +162,11 @@ void timer_init(void)
 	if(hw_timer != BAD_TIMER) {
 		LOG_E("Unecpected value for hw_timer!\n\r");
 	}
+
 	hw_timer = hw_timer_start(mSeconds, 5, TRUE, hw_expiry_function);
+	if(hw_timer == BAD_TIMER) {
+		LOG_E("Failed to start the HW timer for SW timers!\n\r");
+	}
 	hw_timer_paused = FALSE;
 #endif //__PIC24FJ256GB106__
 
@@ -234,7 +238,7 @@ void timer_tick(void)
 		}
 	}
 
-	if(!active_timers) {
+	if(!active_timers && !hw_timer_paused) {
 		/*
 		 * No active timers in the system so might as well pause the
 		 * HW Timer.
@@ -319,7 +323,10 @@ result_t timer_start(u16 ticks,
 			 * If our hw_timer isn't running restart it:
 			 */
 			if(hw_timer_paused) {
-				hw_timer_restart(hw_timer, mSeconds, 5, TRUE, hw_expiry_function);
+				LOG_D("Restart the HW Timer\n\r");
+				if(hw_timer_restart(hw_timer, mSeconds, 5, TRUE, hw_expiry_function) != SUCCESS) {
+					LOG_E("Failed to restart HW timer\n\r");
+				}
 				hw_timer_paused = FALSE;
 			}
 			return(SUCCESS);
