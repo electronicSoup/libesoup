@@ -152,7 +152,7 @@ u8 hw_timer_start(ty_time_units units, u16 time, u8 repeat, void (*expiry_functi
 {
 	u8 loop;
 
-	LOG_D("start_hw_timer()\n\r");
+//	LOG_D("start_hw_timer()\n\r");
 
 	/*
 	 * Find a free timer
