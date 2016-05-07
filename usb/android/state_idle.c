@@ -59,6 +59,7 @@ void idle_process_usb_event(USB_EVENT event);
  */
 void set_idle_state(void)
 {
+	LOG_I("Android state -> Idle\n\r");
 	android_state.process_msg = idle_process_msg;
 	android_state.main = idle_main;
 	android_state.process_usb_event = idle_process_usb_event;
