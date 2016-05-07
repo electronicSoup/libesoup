@@ -19,25 +19,36 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  *
  */
-//#define DEBUG_FILE
-#define TAG "RTC"
+/*
+ * To use this code the system.h file must define SW_RTC_TICK_SECS
+ * 
+ * SW_RTC_TICK_SECS - This is the rtc period of a tick in seconds
+ */
+#define DEBUG_FILE
+#define TAG "SW_RTC"
 
 #include "system.h"
 #include "es_lib/logger/serial_log.h"
-#include "es_lib/timers/rtc.h"
+#include "es_lib/timers/hw_timers.h"
+#include "es_lib/timers/sw_rtc.h"
 
 static struct datetime current_datetime;
 static u8  current_datetime_valid = FALSE;
 
 static u16 current_isr_secs = 0;
-static u16 sleep_request_secs = 0;
+//static u16 sleep_request_secs = 0;
 
+static u8               alarm_set = FALSE;
+static struct datetime  alarm_datetime;
+static void           (*alarm_expiry_fn)(void) = NULL;
 /*
  * Function prototypes
  */
-static void rtc_10_sec_isr();
+//static void rtc_10_sec_isr();
 static void increment_current_time(u16 current_isr_secs);
+static void check_alarm();
 
+#if 0
 #ifdef MCP
 #if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__)
 void _ISR __attribute__((__no_auto_psv__)) _T5Interrupt(void)
@@ -58,7 +69,9 @@ void _ISR __attribute__((__no_auto_psv__)) _T5Interrupt(void)
 }
 #endif //__PIC24FJ256GB106__
 #endif
+#endif
 
+#if 0
 void rtc_init()
 {
 	u32 timer;
@@ -80,7 +93,9 @@ void rtc_init()
 	IEC1bits.T5IE = 1;
 	T4CONbits.TON = 1;
 }
+#endif
 
+#if 0
 static void rtc_10_sec_isr()
 {
 	u32 timer;
@@ -92,6 +107,20 @@ static void rtc_10_sec_isr()
 	TMR5 = 0x00;
 
 	current_isr_secs = 10;
+}
+#endif
+
+void timer_expiry(void)
+{
+	increment_current_time(current_isr_secs);
+
+	current_isr_secs = SW_RTC_TICK_SECS;
+
+	hw_timer_start(Seconds, current_isr_secs, FALSE, timer_expiry);
+
+	if(alarm_set) {
+		check_alarm();
+	}
 }
 
 static void increment_current_time(u16 secs)
@@ -119,7 +148,7 @@ static void increment_current_time(u16 secs)
 
 result_t rtc_update_current_datetime(u8 *data, u16 len)
 {
-	u32 timer;
+//	u32 timer;
 
 	LOG_D("rtc_update_current_datetime()\n\r");
 
@@ -127,11 +156,12 @@ result_t rtc_update_current_datetime(u8 *data, u16 len)
 		LOG_E("Bad input datetime\n\r");
 		return(ERR_BAD_INPUT_PARAMETER);
 	}
+#if 0
 	/*
 	 * Turn off the RTC till we calcualte secs to till next isr
 	 */
 	T4CONbits.TON = 0;
-
+#endif
 	current_datetime.year    = ((data[0] - '0') * 1000) + ((data[1] -'0') * 100) + ((data[2] -'0') * 10) + (data[3] - '0');
 	current_datetime.month   = ((data[4] - '0') * 10) + (data[5] - '0');
 	current_datetime.day     = ((data[6] - '0') * 10) + (data[7] - '0');
@@ -149,9 +179,18 @@ result_t rtc_update_current_datetime(u8 *data, u16 len)
 		current_datetime.minutes,
 		current_datetime.seconds);
 
-	current_isr_secs = (10 - (data[16] - '0'));
-//	LOG_D("Current isr secs %d last digit %d\n\r", current_isr_secs, (data[16] - '0'));
+	if (SW_RTC_TICK_SECS > current_datetime.seconds) {
+		current_isr_secs = SW_RTC_TICK_SECS - current_datetime.seconds;
+	} else if(SW_RTC_TICK_SECS == current_datetime.seconds) {
+		current_isr_secs = SW_RTC_TICK_SECS;
+	} else {
+		current_isr_secs = current_datetime.seconds % SW_RTC_TICK_SECS;
+	}
 
+	hw_timer_start(Seconds, current_isr_secs, FALSE, timer_expiry);
+
+//	LOG_D("Current isr secs %d last digit %d\n\r", current_isr_secs, (data[16] - '0'));
+#if 0
 	timer = (u32)(((CLOCK_FREQ / 256) * current_isr_secs) - 1);
 	PR4 = (u16)(timer & 0xffff);
 	PR5 = (u16)((timer >> 16) & 0xffff);
@@ -162,6 +201,44 @@ result_t rtc_update_current_datetime(u8 *data, u16 len)
 	 * Turn timer back on
 	 */
 	T4CONbits.TON = 1;
+#endif
 
 	return(SUCCESS);
+}
+
+result_t rtc_set_alarm(ty_time_units units, u16 time, u8 nice, void (*expiry_function)(void))
+{
+	u16 tmp_minutes;
+	u16 tmp_hours;
+	u16 tmp_day;
+
+	LOG_D("rtc_set_alarm()\n\r");
+
+	alarm_datetime.hours   = current_datetime.hours;
+	alarm_datetime.minutes = current_datetime.minutes;
+	alarm_datetime.seconds = current_datetime.seconds;
+
+	if(units == Minutes) {
+		tmp_minutes = current_datetime.minutes + time;
+		tmp_hours   = current_datetime.hours + tmp_minutes / 60;
+		tmp_day     = current_datetime.day + tmp_hours / 24;
+
+		alarm_datetime.minutes = tmp_minutes % 60;
+		alarm_datetime.hours = tmp_hours % 24;
+		
+	}
+	alarm_set = TRUE;
+	alarm_expiry_fn = expiry_function;
+}
+
+static void check_alarm()
+{
+	LOG_D("check_alarm()\n\r");
+
+	if(  (alarm_datetime.hours == current_datetime.hours)
+	   &&(alarm_datetime.minutes = current_datetime.minutes)
+	   &&(alarm_datetime.seconds = current_datetime.seconds)) {
+		alarm_set = FALSE;
+		alarm_expiry_fn();
+	}
 }

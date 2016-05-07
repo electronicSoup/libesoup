@@ -27,12 +27,17 @@
 
 #define TAG "RAND"
 
+static u8 initialised = FALSE;
 
 void random_init(void)
 {
 	u16  loop;
 	u32  seed;
 	u8  *data;
+
+	if(initialised) {
+		return;
+	}
 
 	LOG_D("random_init()\n\r");
 	data = (u8 *)&IC1TMR;  //0x146

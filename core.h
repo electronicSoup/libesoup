@@ -99,7 +99,8 @@ typedef union {
 typedef enum {
     uSeconds,
     mSeconds,
-    Seconds
+    Seconds,
+    Minutes
 } ty_time_units;
 
 /*

@@ -20,14 +20,4 @@
  *
  */
 
-struct datetime {
-    u16 year;
-    u8  month;
-    u8  day;
-    u8  hours;
-    u8  minutes;
-    u8  seconds;
-};
-
-extern void rtc_init();
 extern result_t rtc_update_current_datetime(u8 *data, u16 len);
