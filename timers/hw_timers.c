@@ -28,8 +28,12 @@
 #include "es_lib/timers/hw_timers.h"
 #include "es_lib/logger/serial_log.h"
 
+#define TIMER_UNUSED  0b00
+#define TIMER_RUNNING 0b01
+#define TIMER_PAUSED  0b10
+
 struct hw_timer_data {
-	u8            active:1;
+	u8            status:2;
 	u8            repeat:1;
 	ty_time_units units;
 	u16           time;
@@ -40,9 +44,9 @@ struct hw_timer_data {
 
 static struct hw_timer_data timers[NUMBER_HW_TIMERS];
 
-static u8   start_timer(u8 timer, ty_time_units units, u16 time, u8 repeat, void (*expiry_function)(void));
-static void set_clock_divide(u8 timer, u16 clock_divide);
-static void check_timer(u8 timer);
+static result_t  start_timer(u8 timer, ty_time_units units, u16 time, u8 repeat, void (*expiry_function)(void));
+static void      set_clock_divide(u8 timer, u16 clock_divide);
+static void      check_timer(u8 timer);
 
 void _ISR __attribute__((__no_auto_psv__)) _T1Interrupt(void)
 {
@@ -128,7 +132,7 @@ void hw_timer_init(void)
 	LOG_D("hw_timer_init()\n\r");
 
 	for(loop = 0; loop < NUMBER_HW_TIMERS; loop++) {
-		timers[loop].active = 0;
+		timers[loop].status = TIMER_UNUSED;
 		timers[loop].repeat = 0;
 		timers[loop].time = 0;
 		timers[loop].expiry_function = (void (*)(void))NULL;
@@ -160,7 +164,7 @@ u8 hw_timer_start(ty_time_units units, u16 time, u8 repeat, void (*expiry_functi
 	loop = 0;
 
 	while(loop < NUMBER_HW_TIMERS) {
-		if(!timers[loop].active) {
+		if(!timers[loop].status) {
 			if(start_timer(loop, units, time, repeat, expiry_function)) {
 				return(loop);
 			}
@@ -172,9 +176,32 @@ u8 hw_timer_start(ty_time_units units, u16 time, u8 repeat, void (*expiry_functi
 	return(BAD_TIMER);
 }
 
-
-void hw_timer_cancel(u8 timer)
+result_t hw_timer_restart(u8 timer, ty_time_units units, u16 time, u8 repeat, void (*expiry_function)(void))
 {
+	if(timer >= NUMBER_HW_TIMERS) {
+		LOG_E("Bad time passed to hw_timer_restart()\n\r!");
+		return(ERR_BAD_INPUT_PARAMETER);
+	}
+
+	if(start_timer(timer, units, time, repeat, expiry_function)) {
+		return (SUCCESS);
+	}
+
+	return(ERR_GENERAL_ERROR);
+}
+
+result_t hw_timer_pause(u8 timer)
+{
+	if(timer >= NUMBER_HW_TIMERS) {
+		LOG_E("Bad timer passed to hw_timer_pause()\n\r!");
+		return(ERR_BAD_INPUT_PARAMETER);
+	}
+
+	if(timers[timer].status == TIMER_UNUSED) {
+		LOG_E("Timer passed to hw_timer_pause() is NOT in use\n\r");
+		return(ERR_BAD_INPUT_PARAMETER);
+	}
+
 	switch (timer) {
 		case TIMER_1:
 			TMR1 = 0x00;
@@ -211,7 +238,15 @@ void hw_timer_cancel(u8 timer)
 			break;
 	}
 
-	timers[timer].active = 0;
+	timers[timer].status = TIMER_PAUSED;
+	return(SUCCESS);
+}
+
+void hw_timer_cancel(u8 timer)
+{
+	hw_timer_pause(timer);
+
+	timers[timer].status = TIMER_UNUSED;
 	timers[timer].repeat = 0;
 	timers[timer].time = 0;
 	timers[timer].expiry_function = (void (*)(void))NULL;
@@ -219,7 +254,7 @@ void hw_timer_cancel(u8 timer)
 	timers[timer].remainder = 0;
 }
 
-static u8   start_timer(u8 timer, ty_time_units units, u16 time, u8 repeat, void (*expiry_function)(void))
+result_t start_timer(u8 timer, ty_time_units units, u16 time, u8 repeat, void (*expiry_function)(void))
 {
 	u32 ticks;
 
@@ -243,11 +278,11 @@ static u8   start_timer(u8 timer, ty_time_units units, u16 time, u8 repeat, void
 
 		default:
 			LOG_E("Unknown Timer Units\n\r");
-			return(FALSE);
+			return(ERR_BAD_INPUT_PARAMETER);
 	}
 
 	if(ticks) {
-		timers[timer].active = TRUE;
+		timers[timer].status = TIMER_RUNNING;
 		timers[timer].repeat = repeat;
 		timers[timer].units = units;
 		timers[timer].time = time;
@@ -259,7 +294,7 @@ static u8   start_timer(u8 timer, ty_time_units units, u16 time, u8 repeat, void
 		check_timer(timer);
 	}
 
-	return(ticks);
+	return(SUCCESS);
 }
 
 void set_clock_divide(u8 timer, u16 clock_divide)
@@ -512,7 +547,7 @@ static void check_timer(u8 timer)
 		if(timers[timer].repeat) {
 			start_timer(timer, timers[timer].units, timers[timer].time, timers[timer].repeat, timers[timer].expiry_function);
 		} else {
-			timers[timer].active = 0;
+			timers[timer].status = TIMER_UNUSED;
 			timers[timer].repeat = 0;
 			timers[timer].expiry_function = (void (*)(void))NULL;
 			timers[timer].repeats = 0;

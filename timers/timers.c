@@ -81,6 +81,9 @@ static UINT16 timer_counter = 0;
 
 volatile BOOL timer_ticked = FALSE;
 
+static u8 hw_timer_paused = FALSE;
+static u8 hw_timer = BAD_TIMER;
+
 /*
  * Data structure for a Timer on the Cinnamon Bun.
  */
@@ -145,7 +148,6 @@ void timer_isr(void)
 void timer_init(void)
 {
 	BYTE loop;
-	u8   hw_timer;
 
 	/*
 	 * Initialise our Data Structures
@@ -157,7 +159,11 @@ void timer_init(void)
 	}
 
 #if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__)
+	if(hw_timer != BAD_TIMER) {
+		LOG_E("Unecpected value for hw_timer!\n\r");
+	}
 	hw_timer = hw_timer_start(mSeconds, 5, TRUE, hw_expiry_function);
+	hw_timer_paused = FALSE;
 #endif //__PIC24FJ256GB106__
 
 #if defined( __18F2680) || defined(__18F4585)
@@ -227,6 +233,16 @@ void timer_tick(void)
 			}
 		}
 	}
+
+	if(!active_timers) {
+		/*
+		 * No active timers in the system so might as well pause the
+		 * HW Timer.
+		 */
+		hw_timer_paused = TRUE;
+		hw_timer_pause(hw_timer);
+	}
+
 }
 #endif // MCP
 
@@ -298,6 +314,14 @@ result_t timer_start(u16 ticks,
 
 			timer->status = ACTIVE;
 			timer->timer_id = loop;
+
+			/*
+			 * If our hw_timer isn't running restart it:
+			 */
+			if(hw_timer_paused) {
+				hw_timer_restart(hw_timer, mSeconds, 5, TRUE, hw_expiry_function);
+				hw_timer_paused = FALSE;
+			}
 			return(SUCCESS);
 		}
 	}

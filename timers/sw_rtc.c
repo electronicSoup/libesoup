@@ -19,6 +19,11 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  *
  */
+/*
+ * To use this code the system.h file must define SW_RTC_TICK_SECS
+ * 
+ * SW_RTC_TICK_SECS - This is the rtc period of a tick in seconds
+ */
 #define DEBUG_FILE
 #define TAG "SW_RTC"
 
@@ -31,13 +36,17 @@ static struct datetime current_datetime;
 static u8  current_datetime_valid = FALSE;
 
 static u16 current_isr_secs = 0;
-static u16 sleep_request_secs = 0;
+//static u16 sleep_request_secs = 0;
 
+static u8               alarm_set = FALSE;
+static struct datetime  alarm_datetime;
+static void           (*alarm_expiry_fn)(void) = NULL;
 /*
  * Function prototypes
  */
-static void rtc_10_sec_isr();
+//static void rtc_10_sec_isr();
 static void increment_current_time(u16 current_isr_secs);
+static void check_alarm();
 
 #if 0
 #ifdef MCP
@@ -105,9 +114,13 @@ void timer_expiry(void)
 {
 	increment_current_time(current_isr_secs);
 
-	current_isr_secs = 10;
+	current_isr_secs = SW_RTC_TICK_SECS;
 
 	hw_timer_start(Seconds, current_isr_secs, FALSE, timer_expiry);
+
+	if(alarm_set) {
+		check_alarm();
+	}
 }
 
 static void increment_current_time(u16 secs)
@@ -166,7 +179,13 @@ result_t rtc_update_current_datetime(u8 *data, u16 len)
 		current_datetime.minutes,
 		current_datetime.seconds);
 
-	current_isr_secs = (10 - (data[16] - '0'));
+	if (SW_RTC_TICK_SECS > current_datetime.seconds) {
+		current_isr_secs = SW_RTC_TICK_SECS - current_datetime.seconds;
+	} else if(SW_RTC_TICK_SECS == current_datetime.seconds) {
+		current_isr_secs = SW_RTC_TICK_SECS;
+	} else {
+		current_isr_secs = current_datetime.seconds % SW_RTC_TICK_SECS;
+	}
 
 	hw_timer_start(Seconds, current_isr_secs, FALSE, timer_expiry);
 
@@ -185,4 +204,41 @@ result_t rtc_update_current_datetime(u8 *data, u16 len)
 #endif
 
 	return(SUCCESS);
+}
+
+result_t rtc_set_alarm(ty_time_units units, u16 time, u8 nice, void (*expiry_function)(void))
+{
+	u16 tmp_minutes;
+	u16 tmp_hours;
+	u16 tmp_day;
+
+	LOG_D("rtc_set_alarm()\n\r");
+
+	alarm_datetime.hours   = current_datetime.hours;
+	alarm_datetime.minutes = current_datetime.minutes;
+	alarm_datetime.seconds = current_datetime.seconds;
+
+	if(units == Minutes) {
+		tmp_minutes = current_datetime.minutes + time;
+		tmp_hours   = current_datetime.hours + tmp_minutes / 60;
+		tmp_day     = current_datetime.day + tmp_hours / 24;
+
+		alarm_datetime.minutes = tmp_minutes % 60;
+		alarm_datetime.hours = tmp_hours % 24;
+		
+	}
+	alarm_set = TRUE;
+	alarm_expiry_fn = expiry_function;
+}
+
+static void check_alarm()
+{
+	LOG_D("check_alarm()\n\r");
+
+	if(  (alarm_datetime.hours == current_datetime.hours)
+	   &&(alarm_datetime.minutes = current_datetime.minutes)
+	   &&(alarm_datetime.seconds = current_datetime.seconds)) {
+		alarm_set = FALSE;
+		alarm_expiry_fn();
+	}
 }
