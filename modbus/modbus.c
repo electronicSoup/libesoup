@@ -319,9 +319,9 @@ result_t start_response_timer(struct modbus_channel *channel)
 	timer_data.sival_int = channel->uart->uart;
 
 	if (channel->address == 0) {
-		ticks = ISCO_SIGNATURE_MODBUS_RESPONSE_BROADCAST_TIMEOUT;
+		ticks = MODBUS_RESPONSE_BROADCAST_TIMEOUT;
 	} else {
-		ticks = ISCO_SIGNATURE_MODBUS_RESPONSE_TIMEOUT;
+		ticks = MODBUS_RESPONSE_TIMEOUT;
 	}
 	return(timer_start(ticks,
 		           resp_timeout_expiry_fn,

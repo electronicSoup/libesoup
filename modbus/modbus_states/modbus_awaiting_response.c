@@ -71,7 +71,7 @@ void process_rx_character(struct modbus_channel *channel, u8 ch)
 
 	channel->rx_buffer[channel->rx_write_index++] = ch;
 
-	if (channel->rx_write_index == ISCO_SIGNATURE_RX_BUFFER_SIZE) {
+	if (channel->rx_write_index == MODBUS_RX_BUFFER_SIZE) {
 		LOG_E("UART 2 Overflow: Line too long\n\r");
 	}
 }

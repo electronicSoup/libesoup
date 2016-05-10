@@ -31,7 +31,7 @@ struct modbus_channel {
     u8 hw_35_timer;
     es_timer resp_timer;
     u8 address;
-    u8 rx_buffer[ISCO_SIGNATURE_RX_BUFFER_SIZE];
+    u8 rx_buffer[MODBUS_RX_BUFFER_SIZE];
     u16 rx_write_index;
     modbus_response_function process_response;
     void (*tx_finished)(u8 channel);
