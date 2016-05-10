@@ -110,7 +110,7 @@ static void rtc_10_sec_isr()
 }
 #endif
 
-void timer_expiry(void)
+void timer_expiry(u8 data)
 {
 	increment_current_time(current_isr_secs);
 
@@ -212,7 +212,10 @@ result_t rtc_set_alarm(ty_time_units units, u16 time, u8 nice, void (*expiry_fun
 	u16 tmp_hours;
 	u16 tmp_day;
 
-	LOG_D("rtc_set_alarm()\n\r");
+	if(alarm_set) {
+		LOG_E("Alarm is already set. Ingoring second request!");
+		return(ERR_NO_RESOURCES);
+	}
 
 	alarm_datetime.hours   = current_datetime.hours;
 	alarm_datetime.minutes = current_datetime.minutes;
@@ -225,19 +228,30 @@ result_t rtc_set_alarm(ty_time_units units, u16 time, u8 nice, void (*expiry_fun
 
 		alarm_datetime.minutes = tmp_minutes % 60;
 		alarm_datetime.hours = tmp_hours % 24;
-		
+
+		LOG_D("rtc_set_alarm(+%d minutes) = %d:%d\n\r", time, alarm_datetime.hours, alarm_datetime.minutes);
+	} else {
+		LOG_E("Uncoded branch! Only processing Minute Interval Alarms\n\r");
 	}
 	alarm_set = TRUE;
 	alarm_expiry_fn = expiry_function;
+
+	return(SUCCESS);
 }
 
 static void check_alarm()
 {
-	LOG_D("check_alarm()\n\r");
+	LOG_D("check_alarm() Compare Current time %d:%d:%d with Alarm %d:%d:%d\n\r",
+		current_datetime.hours,
+		current_datetime.minutes,
+		current_datetime.seconds,
+		alarm_datetime.hours,
+		alarm_datetime.minutes,
+		alarm_datetime.seconds);
 
 	if(  (alarm_datetime.hours == current_datetime.hours)
-	   &&(alarm_datetime.minutes = current_datetime.minutes)
-	   &&(alarm_datetime.seconds = current_datetime.seconds)) {
+	   &&(alarm_datetime.minutes == current_datetime.minutes)) {
+//	   &&(alarm_datetime.seconds == current_datetime.seconds)) {
 		alarm_set = FALSE;
 		alarm_expiry_fn();
 	}
