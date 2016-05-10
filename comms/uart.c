@@ -55,7 +55,7 @@
 #include "es_lib/logger/serial_log.h"
 #include "es_lib/utils/rand.h"
 
-#include "uart.h"
+#include "es_lib/comms/uart.h"
 
 
 enum uart_status {
