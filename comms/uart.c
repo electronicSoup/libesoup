@@ -624,7 +624,7 @@ static void uart_set_com_config(uart_data *com)
 			 */
 			U2BRG = ((CLOCK_FREQ / com->baud) / 16) - 1;
 
-			U2_RX_ISR_ENABLE = 0;
+			U2_RX_ISR_ENABLE = 1;
 			U2_TX_ISR_ENABLE = 1;
 			break;
 
@@ -651,7 +651,7 @@ static void uart_set_com_config(uart_data *com)
 			 */
 			U3BRG = ((CLOCK_FREQ / com->baud) / 16) - 1;
 
-			U3_RX_ISR_ENABLE = 0;
+			U3_RX_ISR_ENABLE = 1;
 			U3_TX_ISR_ENABLE = 1;
 			break;
 
@@ -678,7 +678,7 @@ static void uart_set_com_config(uart_data *com)
 			 */
 			U4BRG = ((CLOCK_FREQ / com->baud) / 16) - 1;
 
-			U4_RX_ISR_ENABLE = 0;
+			U4_RX_ISR_ENABLE = 1;
 			U4_TX_ISR_ENABLE = 1;
 			break;
 	}
