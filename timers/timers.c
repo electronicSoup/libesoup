@@ -323,7 +323,6 @@ result_t timer_start(u16 ticks,
 			 * If our hw_timer isn't running restart it:
 			 */
 			if(hw_timer_paused) {
-				LOG_D("Restart the HW Timer\n\r");
 				if(hw_timer_restart(hw_timer, mSeconds, 5, TRUE, hw_expiry_function, 0) != SUCCESS) {
 					LOG_E("Failed to restart HW timer\n\r");
 				}
