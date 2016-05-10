@@ -59,10 +59,6 @@ extern void set_modbus_awaiting_response_state(struct modbus_channel *channel);
 extern void start_15_timer(struct modbus_channel *channel);
 extern void start_35_timer(struct modbus_channel *channel);
 
-extern void modbus_init();
-//extern result_t modbus_tx(uart_data *uart, u8 *data, u16 len, modbus_response_function fn);
-
-//extern void modbus_putchar(u8 ch);
 extern result_t modbus_reserve(uart_data *uart);
 extern void modbus_tx_data(struct modbus_channel *channel, u8 *data, u16 len);
 extern result_t modbus_attempt_transmission(uart_data *uart, u8 *data, u16 len, modbus_response_function fn);
