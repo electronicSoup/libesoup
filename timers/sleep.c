@@ -29,7 +29,7 @@
 
 static volatile u8 sleep_over;
 
-static void hw_expiry_function(void)
+static void hw_expiry_function(u8 data)
 {
 	sleep_over = TRUE;
 }
@@ -39,7 +39,7 @@ void sleep(ty_time_units units, u16 time)
 	u8 hw_timer;
 
 	sleep_over = FALSE;
-	hw_timer = hw_timer_start(units, time, FALSE, hw_expiry_function);
+	hw_timer = hw_timer_start(units, time, FALSE, hw_expiry_function, 0);
 
 	while(!sleep_over) {
 		asm ("CLRWDT");

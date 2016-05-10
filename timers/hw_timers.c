@@ -39,12 +39,13 @@ struct hw_timer_data {
 	u16           time;
 	u16           repeats;
 	u16           remainder;
-	void        (*expiry_function)(void);
+	void        (*expiry_function)(u8 data);
+	u8            data;
 };
 
 static struct hw_timer_data timers[NUMBER_HW_TIMERS];
 
-static result_t  start_timer(u8 timer, ty_time_units units, u16 time, u8 repeat, void (*expiry_function)(void));
+static result_t  start_timer(u8 timer, ty_time_units units, u16 time, u8 repeat, void (*expiry_function)(u8), u8 data);
 static void      set_clock_divide(u8 timer, u16 clock_divide);
 static void      check_timer(u8 timer);
 
@@ -133,7 +134,8 @@ void hw_timer_init(void)
 		timers[loop].status = TIMER_UNUSED;
 		timers[loop].repeat = 0;
 		timers[loop].time = 0;
-		timers[loop].expiry_function = (void (*)(void))NULL;
+		timers[loop].expiry_function = (void (*)(u8))NULL;
+		timers[loop].data = 0;
 		timers[loop].repeats = 0;
 		timers[loop].remainder = 0;
 	}
@@ -150,7 +152,7 @@ void hw_timer_init(void)
 	T5CONbits.TCS = 0;      // Internal FOSC/2
 }
 
-u8 hw_timer_start(ty_time_units units, u16 time, u8 repeat, void (*expiry_function)(void))
+u8 hw_timer_start(ty_time_units units, u16 time, u8 repeat, void (*expiry_function)(u8), u8 data)
 {
 	result_t rc;
 	u8       loop;
@@ -164,7 +166,7 @@ u8 hw_timer_start(ty_time_units units, u16 time, u8 repeat, void (*expiry_functi
 
 	while(loop < NUMBER_HW_TIMERS) {
 		if(timers[loop].status == TIMER_UNUSED) {
-			rc = start_timer(loop, units, time, repeat, expiry_function);
+			rc = start_timer(loop, units, time, repeat, expiry_function, data);
 			if(rc == SUCCESS) {
 				return(loop);
 			} else {
@@ -178,16 +180,14 @@ u8 hw_timer_start(ty_time_units units, u16 time, u8 repeat, void (*expiry_functi
 	return(BAD_TIMER);
 }
 
-result_t hw_timer_restart(u8 timer, ty_time_units units, u16 time, u8 repeat, void (*expiry_function)(void))
+result_t hw_timer_restart(u8 timer, ty_time_units units, u16 time, u8 repeat, void (*expiry_function)(u8), u8 data)
 {
-	result_t rc;
-
 	if(timer >= NUMBER_HW_TIMERS) {
 		LOG_E("Bad time passed to hw_timer_restart()\n\r!");
 		return(ERR_BAD_INPUT_PARAMETER);
 	}
 
-	return(start_timer(timer, units, time, repeat, expiry_function));
+	return(start_timer(timer, units, time, repeat, expiry_function, data));
 }
 
 result_t hw_timer_pause(u8 timer)
@@ -249,7 +249,8 @@ void hw_timer_cancel(u8 timer)
 	timers[timer].status = TIMER_UNUSED;
 	timers[timer].repeat = 0;
 	timers[timer].time = 0;
-	timers[timer].expiry_function = (void (*)(void))NULL;
+	timers[timer].expiry_function = (void (*)(u8))NULL;
+	timers[timer].data = 0;
 	timers[timer].repeats = 0;
 	timers[timer].remainder = 0;
 }
@@ -272,7 +273,7 @@ void hw_timer_cancel_all()
 	T5CONbits.TON = 0;
 }
 
-result_t start_timer(u8 timer, ty_time_units units, u16 time, u8 repeat, void (*expiry_function)(void))
+result_t start_timer(u8 timer, ty_time_units units, u16 time, u8 repeat, void (*expiry_function)(u8), u8 data)
 {
 	u32 ticks;
 
@@ -301,14 +302,15 @@ result_t start_timer(u8 timer, ty_time_units units, u16 time, u8 repeat, void (*
 	}
 
 	if(ticks) {
-		timers[timer].status = TIMER_RUNNING;
-		timers[timer].repeat = repeat;
-		timers[timer].units = units;
-		timers[timer].time = time;
+		timers[timer].status          = TIMER_RUNNING;
+		timers[timer].repeat          = repeat;
+		timers[timer].units           = units;
+		timers[timer].time            = time;
 		timers[timer].expiry_function = expiry_function;
+		timers[timer].data            = data;
 
-		timers[timer].repeats = (u16) (ticks / 0xffff);
-		timers[timer].remainder = (u16) (ticks % 0xffff);
+		timers[timer].repeats         = (u16) (ticks / 0xffff);
+		timers[timer].remainder       = (u16) (ticks % 0xffff);
 
 		check_timer(timer);
 	}
@@ -560,15 +562,16 @@ static void check_timer(u8 timer)
 		}
 
 		if(timers[timer].expiry_function != NULL) {
-			timers[timer].expiry_function();
+			timers[timer].expiry_function(timers[timer].data);
 		}
 
 		if(timers[timer].repeat) {
-			start_timer(timer, timers[timer].units, timers[timer].time, timers[timer].repeat, timers[timer].expiry_function);
+			start_timer(timer, timers[timer].units, timers[timer].time, timers[timer].repeat, timers[timer].expiry_function, timers[timer].data);
 		} else {
 			timers[timer].status = TIMER_UNUSED;
 			timers[timer].repeat = 0;
-			timers[timer].expiry_function = (void (*)(void))NULL;
+			timers[timer].expiry_function = (void (*)(u8))NULL;
+			timers[timer].data = 0;
 			timers[timer].repeats = 0;
 			timers[timer].remainder = 0;
 		}

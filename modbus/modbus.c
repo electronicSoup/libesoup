@@ -28,19 +28,15 @@
 #include "es_lib/timers/hw_timers.h"
 #include "es_lib/timers/timers.h"
 #include "es_lib/modbus/modbus.h"
+#include "es_lib/comms/uart.h"
 
 #define TAG "MODBUS"
 
+struct modbus_channel modbus_channels[NUM_UARTS];
 
 /*
- * Have to keep the 35 timer global in file as it'll be canceled.
+ *  Table of CRC values for high?order byte
  */
-static u8 hw_35_timer = BAD_TIMER;
-static es_timer resp_timer;
-
-
-/* Table of CRC values for high?order byte
-*/
 static u8 crc_high_bytes[] = {
 	0x00, 0xC1, 0x81, 0x40, 0x01, 0xC0, 0x80, 0x41,
 	0x01, 0xC0, 0x80, 0x41, 0x00, 0xC1, 0x81, 0x40,
@@ -113,11 +109,10 @@ static u8 crc_low_bytes[] = {
 	0x82, 0x42, 0x43, 0x83, 0x41, 0x81, 0x80, 0x40
 } ;
 
-void start_15_timer(void);
-void start_35_timer(void);
-static void resp_timeout_expiry_fn(timer_t timer_id, union sigval data);
+void start_15_timer(struct modbus_channel *channel);
+void start_35_timer(struct modbus_channel *channel);
 
-struct modbus_state modbus_state;
+static void resp_timeout_expiry_fn(timer_t timer_id, union sigval data);
 
 u16 crc_calculate(u8 *data, u16 len)
 {
@@ -150,70 +145,138 @@ u8 crc_check(u8 *data, u16 len)
 	}
 }
 
-static void hw_35_expiry_function(void)
+static void hw_35_expiry_function(u8 channel_id)
 {
-	hw_35_timer = BAD_TIMER;
+	modbus_channels[channel_id].hw_35_timer = BAD_TIMER;
 
-	if (modbus_state.process_timer_35_expiry) {
-		modbus_state.process_timer_35_expiry();
+	if (modbus_channels[channel_id].process_timer_35_expiry) {
+		modbus_channels[channel_id].process_timer_35_expiry(&modbus_channels[channel_id]);
 	} else {
 		LOG_E("T35 in unknown state\n\r");
 	}
 }
 
-static void hw_15_expiry_function(void)
+static void hw_15_expiry_function(u8 channel_id)
 {
-	if (modbus_state.process_timer_15_expiry) {
-		modbus_state.process_timer_15_expiry();
+	if (modbus_channels[channel_id].process_timer_15_expiry) {
+		modbus_channels[channel_id].process_timer_15_expiry(&modbus_channels[channel_id]);
 	} else {
 		LOG_E("T15 in unknown state\n\r");
 	}
 }
 
-void start_15_timer()
+void start_15_timer(struct modbus_channel *channel)
 {
-	u8 hw_timer;
-
-	hw_timer = hw_timer_start(uSeconds, ((1000000 * 17)/MODBUS_BAUD), FALSE, hw_15_expiry_function);
+	channel->hw_15_timer = hw_timer_start(uSeconds, ((1000000 * 17)/channel->uart->baud), FALSE, hw_15_expiry_function, channel->uart->uart);
 }
 
-void start_35_timer()
+void start_35_timer(struct modbus_channel *channel)
 {
-	if(hw_35_timer != BAD_TIMER) {
-		hw_timer_cancel(hw_35_timer);
+	if(channel->hw_35_timer != BAD_TIMER) {
+		hw_timer_cancel(channel->hw_35_timer);
 	}
 
-	hw_35_timer = hw_timer_start(uSeconds, ((1000000 * 39)/MODBUS_BAUD), FALSE, hw_35_expiry_function);
+	channel->hw_35_timer = hw_timer_start(uSeconds, ((1000000 * 39)/channel->uart->baud), FALSE, hw_35_expiry_function, channel->uart->uart);
 }
 
-void modbus_init()
+static void modbus_process_rx_character(u8 channel_id, u8 ch)
 {
+	modbus_channels[channel_id].process_rx_character(&modbus_channels[channel_id], ch);
+}
+
+void modbus_tx_finished(u8 channel_id)
+{
+	LOG_D("modbus_tx_finished(channel %d)\n\r", channel_id);
+
+	if(!modbus_channels[channel_id].uart) {
+		LOG_E("Error tx_finished channel %d no UART struct\n\r", channel_id);
+		return;
+	} else if(channel_id != modbus_channels[channel_id].uart->uart) {
+		LOG_E("Error tx_finished channel %d not correct UART\n\r", channel_id);
+		return;
+	}
+
+	/*
+	 * Call the higher tx_finished function
+	 */
+	if(modbus_channels[channel_id].tx_finished) {
+		modbus_channels[channel_id].tx_finished(channel_id);
+	}
+
+	if(modbus_channels[channel_id].process_tx_finished) {
+		modbus_channels[channel_id].process_tx_finished(&modbus_channels[channel_id]);
+	} else {
+		LOG_E("Error processing tx_finished\n\r");
+	}
+}
+
+result_t modbus_reserve(uart_data *uart)
+{
+	result_t rc;
+	void (*tx_finished)(u8 channel);
+
+	LOG_D("modbus_reserve()\n\r");
+
+	tx_finished = uart->tx_finished;
+
+	uart->process_rx_char = modbus_process_rx_character;
+	uart->tx_finished = modbus_tx_finished;
+
+	/*
+	 * Reserve a UART for the channel
+	 */
+	rc = uart_reserve(uart);
+
+	if(rc != SUCCESS) {
+		return(rc);
+	}
+
+	modbus_channels[uart->uart].tx_finished = tx_finished;
+	modbus_channels[uart->uart].uart = uart;
+
 	/*
 	 * Initialise the 35 timer so it can't be canceled by mistake
 	 */
-	hw_35_timer = BAD_TIMER;
+	modbus_channels[uart->uart].hw_35_timer = BAD_TIMER;
 
 	/*
 	 * Initialise the SW Timer used for response timeout
 	 */
-	TIMER_INIT(resp_timer);
+	TIMER_INIT(modbus_channels[uart->uart].resp_timer);
 
 	/*
 	 * Set the starting state.
 	 */
-	set_modbus_starting_state();
+	set_modbus_starting_state(&modbus_channels[uart->uart]);
+
+	return(SUCCESS);
 }
 
-void modbus_tx_data(u8 *data, u16 len)
+void modbus_tx_data(struct modbus_channel *channel, u8 *data, u16 len)
 {
 	u16      crc;
 	u8      *ptr;
+	u16      loop;
+	u8       buffer[UART_TX_BUFFER_SIZE];
+	result_t rc;
+
+	ptr = data;
 
 	crc = crc_calculate(data, len);
 	LOG_D("tx_data crc %x\n\r", crc);
 
-	ptr = data;
+	for(loop = 0; loop < len; loop++) {
+		buffer[loop] = *ptr++;
+	}
 
+	buffer[loop++] = (crc >> 8) & 0xff;
+	buffer[loop++] = crc & 0xff;
+
+	rc = uart_tx(channel->uart, buffer, loop);
+
+	if(rc != SUCCESS) {
+		LOG_E("Failed to transmit modbus data\n\r");
+	}
 #if 0
 	while(len--) {
 		modbus_putchar(*ptr++);
@@ -229,10 +292,10 @@ void modbus_tx_data(u8 *data, u16 len)
 #endif
 }
 
-result_t modbus_attempt_transmission(u8 *data, u16 len, modbus_response_function fn)
+result_t modbus_attempt_transmission(uart_data *uart, u8 *data, u16 len, modbus_response_function fn)
 {
-	if (modbus_state.transmit) {
-		modbus_state.transmit(data, len, fn);
+	if (modbus_channels[uart->uart].transmit) {
+		modbus_channels[uart->uart].transmit(&modbus_channels[uart->uart], data, len, fn);
 		return(SUCCESS);
 	} else {
 		LOG_E("Tx Attempted in unknown state\n\r");
@@ -240,47 +303,45 @@ result_t modbus_attempt_transmission(u8 *data, u16 len, modbus_response_function
 	}
 }
 
-result_t start_response_timer(u8 address)
+result_t start_response_timer(struct modbus_channel *channel)
 {
-	u8           ch;
 	u16          ticks;
 	union sigval timer_data;
 
 	/*
 	 * Clear the RX ISR conditions and enable ISR
 	 */
-	while (UxSTAbits.URXDA) {
-		ch = UxRXREG;
-	}
-	RX_ISR_ENABLE = 1;
+//	while (UxSTAbits.URXDA) {
+//		ch = UxRXREG;
+//	}
+//	RX_ISR_ENABLE = 1;
 
-	timer_data.sival_int = 0;
+	timer_data.sival_int = channel->uart->uart;
 
-	if (address == 0) {
-		ticks = MODBUS_RESPONSE_BROADCAST_TIMEOUT;
+	if (channel->address == 0) {
+		ticks = ISCO_SIGNATURE_MODBUS_RESPONSE_BROADCAST_TIMEOUT;
 	} else {
-		ticks = MODBUS_RESPONSE_TIMEOUT;
+		ticks = ISCO_SIGNATURE_MODBUS_RESPONSE_TIMEOUT;
 	}
 	return(timer_start(ticks,
 		           resp_timeout_expiry_fn,
 		           timer_data,
-		           &resp_timer));
-
+		           &channel->resp_timer));
 }
 
-result_t cancel_response_timer(void)
+result_t cancel_response_timer(struct modbus_channel *channel)
 {
-	return(timer_cancel(&resp_timer));
+	return(timer_cancel(&(channel->resp_timer)));
 }
 
 static void resp_timeout_expiry_fn(timer_t timer_id, union sigval data)
 {
 //	LOG_D("resp_timeout_expiry_fn()\n\r");
 
-	TIMER_INIT(resp_timer);
+	TIMER_INIT(modbus_channels[data.sival_int].resp_timer);
 
-	if (modbus_state.process_response_timeout) {
-		modbus_state.process_response_timeout();
+	if (modbus_channels[data.sival_int].process_response_timeout) {
+		modbus_channels[data.sival_int].process_response_timeout(&modbus_channels[data.sival_int]);
 	} else {
 		LOG_E("Response Timout in unknown state\n\r");
 	}

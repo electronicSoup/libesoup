@@ -8,25 +8,25 @@
 
 extern struct modbus_state modbus_state;
 
-static void process_timer_35_expiry(void);
+static void process_timer_35_expiry(struct modbus_channel *channel);
 
-void set_modbus_starting_state(void)
+void set_modbus_starting_state(struct modbus_channel *channel)
 {
-	LOG_D("set_modbus_starting_state()\n\r");
+	LOG_D("set_modbus_starting_state(channel %d)\n\r", channel->uart->uart);
 
-	modbus_state.process_timer_15_expiry = NULL;
-	modbus_state.process_timer_35_expiry = process_timer_35_expiry;
-	modbus_state.transmit = NULL;
-	modbus_state.process_tx_finished = NULL;
-	modbus_state.process_rx_character = NULL;
-	modbus_state.process_response_timeout = NULL;
+	channel->process_timer_15_expiry = NULL;
+	channel->process_timer_35_expiry = process_timer_35_expiry;
+	channel->transmit = NULL;
+	channel->process_tx_finished = NULL;
+	channel->process_rx_character = NULL;
+	channel->process_response_timeout = NULL;
 
-	start_35_timer();
+	start_35_timer(channel);
 }
 
-static void process_timer_35_expiry(void)
+static void process_timer_35_expiry(struct modbus_channel *channel)
 {
-	LOG_D("process_timer_35_expiry()\n\r");
+	LOG_D("process_timer_35_expiry(channel %d)\n\r", channel->uart->uart);
 
-	set_modbus_idle_state();
+	set_modbus_idle_state(channel);
 }

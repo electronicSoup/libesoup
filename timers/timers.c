@@ -118,7 +118,7 @@ sys_timer_t timers[NUMBER_OF_TIMERS];
  */
 #ifdef MCP
 #if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__)
-static void hw_expiry_function(void)
+static void hw_expiry_function(u8 data)
 {
 	timer_ticked = TRUE;
 }
@@ -163,7 +163,7 @@ void timer_init(void)
 		LOG_E("Unecpected value for hw_timer!\n\r");
 	}
 
-	hw_timer = hw_timer_start(mSeconds, 5, TRUE, hw_expiry_function);
+	hw_timer = hw_timer_start(mSeconds, 5, TRUE, hw_expiry_function, 0);
 	if(hw_timer == BAD_TIMER) {
 		LOG_E("Failed to start the HW timer for SW timers!\n\r");
 	}
@@ -324,7 +324,7 @@ result_t timer_start(u16 ticks,
 			 */
 			if(hw_timer_paused) {
 				LOG_D("Restart the HW Timer\n\r");
-				if(hw_timer_restart(hw_timer, mSeconds, 5, TRUE, hw_expiry_function) != SUCCESS) {
+				if(hw_timer_restart(hw_timer, mSeconds, 5, TRUE, hw_expiry_function, 0) != SUCCESS) {
 					LOG_E("Failed to restart HW timer\n\r");
 				}
 				hw_timer_paused = FALSE;

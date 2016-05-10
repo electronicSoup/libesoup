@@ -42,12 +42,11 @@
 #define U4_RX_ISR_ENABLE IEC5bits.U4RXIE
 #define U4_TX_ISR_ENABLE IEC5bits.U4TXIE
 
+// WARNING #define NUM_UARTS        3 is in .h file
 #define UART_2           0x00
 #define UART_3           0x01
 #define UART_4           0x02
 #define UART_BAD         0xff
-
-#define NUM_UARTS        3
 
 #define DEBUG_FILE
 #define TAG "UART"
@@ -98,31 +97,29 @@ static u16 load_tx_buffer(u8 uart);
 void _ISR __attribute__((__no_auto_psv__)) _U2TXInterrupt(void)
 {
 	while(U2_TX_ISR_FLAG) {
-		U2_TX_ISR_FLAG = 0;
 		uart_tx_isr(UART_2);
+		U2_TX_ISR_FLAG = 0;
 	}
 }
 
 void _ISR __attribute__((__no_auto_psv__)) _U3TXInterrupt(void)
 {
 	while(U3_TX_ISR_FLAG) {
-		U3_TX_ISR_FLAG = 0;
 		uart_tx_isr(UART_3);
+		U3_TX_ISR_FLAG = 0;
 	}
 }
 
 void _ISR __attribute__((__no_auto_psv__)) _U4TXInterrupt(void)
 {
 	while(U4_TX_ISR_FLAG) {
-		U4_TX_ISR_FLAG = 0;
 		uart_tx_isr(UART_4);
+		U4_TX_ISR_FLAG = 0;
 	}
 }
 
 static void uart_tx_isr(u8 uart)
 {
-	LOG_D("uart_tx_isr()\n\r");
-
 	if ((uarts[uart].data == NULL) || (uarts[uart].status != UART_BUSY)) {
 		LOG_E("UART Null in ISR!\n\r");
 		return;
@@ -146,7 +143,7 @@ static void uart_tx_isr(u8 uart)
 					/*
 					 * Inform the higher layer we're finished
 					 */
-					uarts[uart].data->tx_finished();
+					uarts[uart].data->tx_finished(UART_2);
 
 					/*
 					 * Interrupt when a character is transferred to the Transmit Shift
@@ -177,7 +174,7 @@ static void uart_tx_isr(u8 uart)
 					/*
 					 * Inform the higher layer we're finished
 					 */
-					uarts[uart].data->tx_finished();
+					uarts[uart].data->tx_finished(UART_3);
 
 					/*
 					 * Interrupt when a character is transferred to the Transmit Shift
@@ -208,7 +205,7 @@ static void uart_tx_isr(u8 uart)
 					/*
 					 * Inform the higher layer we're finished
 					 */
-					uarts[uart].data->tx_finished();
+					uarts[uart].data->tx_finished(UART_4);
 
 					/*
 					 * Interrupt when a character is transferred to the Transmit Shift
@@ -251,7 +248,7 @@ void _ISR __attribute__((__no_auto_psv__)) _U2RXInterrupt(void)
 
 	while (U2STAbits.URXDA) {
 		ch = U2RXREG;
-		uarts[UART_2].data->process_rx_char(ch);
+		uarts[UART_2].data->process_rx_char(UART_2, ch);
 	}
 }
 
@@ -270,7 +267,7 @@ void _ISR __attribute__((__no_auto_psv__)) _U3RXInterrupt(void)
 
 	while (U3STAbits.URXDA) {
 		ch = U3RXREG;
-		uarts[UART_3].data->process_rx_char(ch);
+		uarts[UART_3].data->process_rx_char(UART_3, ch);
 	}
 }
 
@@ -289,7 +286,7 @@ void _ISR __attribute__((__no_auto_psv__)) _U4RXInterrupt(void)
 
 	while (U4STAbits.URXDA) {
 		ch = U4RXREG;
-		uarts[UART_4].data->process_rx_char(ch);
+		uarts[UART_4].data->process_rx_char(UART_4, ch);
 	}
 }
 
@@ -374,7 +371,7 @@ result_t uart_tx(uart_data *data, u8 *buffer, u16 len)
 		return(ERR_BAD_INPUT_PARAMETER);
 	}
 
-	ptr = data;
+	ptr = buffer;
 
 	while(len--) {
 		uart_putchar(uart, *ptr++);
@@ -409,7 +406,7 @@ static void uart_putchar(u8 uart, u8 ch)
 				}
 
 				uarts[uart].tx_buffer[uarts[uart].tx_write_index] = ch;
-				uarts[uart].tx_write_index = (++(uarts[uart].tx_write_index) % MODBUS_TX_BUFFER_SIZE);
+				uarts[uart].tx_write_index = (++(uarts[uart].tx_write_index) % UART_TX_BUFFER_SIZE);
 				uarts[uart].tx_count++;
 			} else {
 				U2TXREG = ch;
@@ -435,7 +432,7 @@ static void uart_putchar(u8 uart, u8 ch)
 				}
 
 				uarts[uart].tx_buffer[uarts[uart].tx_write_index] = ch;
-				uarts[uart].tx_write_index = (++(uarts[uart].tx_write_index) % MODBUS_TX_BUFFER_SIZE);
+				uarts[uart].tx_write_index = (++(uarts[uart].tx_write_index) % UART_TX_BUFFER_SIZE);
 				uarts[uart].tx_count++;
 			} else {
 				U3TXREG = ch;
@@ -461,7 +458,7 @@ static void uart_putchar(u8 uart, u8 ch)
 				}
 
 				uarts[uart].tx_buffer[uarts[uart].tx_write_index] = ch;
-				uarts[uart].tx_write_index = (++(uarts[uart].tx_write_index) % MODBUS_TX_BUFFER_SIZE);
+				uarts[uart].tx_write_index = (++(uarts[uart].tx_write_index) % UART_TX_BUFFER_SIZE);
 				uarts[uart].tx_count++;
 			} else {
 				U4TXREG = ch;
@@ -606,6 +603,7 @@ static void uart_set_com_config(uart_data *com)
 //
 		case UART_2:
 			U2MODE = com->uart_mode;
+			U2MODEbits.UARTEN = 1;
 
 			U2STA = 0x8410;
 
@@ -632,6 +630,7 @@ static void uart_set_com_config(uart_data *com)
 
 		case UART_3:
 			U3MODE = com->uart_mode;
+			U3MODEbits.UARTEN = 1;
 
 			U3STA = 0x8410;
 
@@ -658,6 +657,7 @@ static void uart_set_com_config(uart_data *com)
 
 		case UART_4:
 			U4MODE = com->uart_mode;
+			U4MODEbits.UARTEN = 1;
 
 			U4STA = 0x8410;
 
@@ -721,16 +721,39 @@ static u16 load_tx_buffer(u8 uart)
 				uarts[uart].tx_read_index = (++(uarts[uart].tx_read_index) % UART_TX_BUFFER_SIZE);
 				uarts[uart].tx_count--;
 			}
+
+			return(uarts[uart].tx_count);
 			break;
 
 		case UART_3:
+			/*
+			 * If the TX buffer is not full load it from the circular buffer
+			 */
+			while ((!U3STAbits.UTXBF) && (uarts[uart].tx_count)) {
+				U3TXREG = uarts[uart].tx_buffer[uarts[uart].tx_read_index];
+				uarts[uart].tx_read_index = (++(uarts[uart].tx_read_index) % UART_TX_BUFFER_SIZE);
+				uarts[uart].tx_count--;
+			}
+
+			return(uarts[uart].tx_count);
 			break;
 
 		case UART_4:
+			/*
+			 * If the TX buffer is not full load it from the circular buffer
+			 */
+			while ((!U4STAbits.UTXBF) && (uarts[uart].tx_count)) {
+				U4TXREG = uarts[uart].tx_buffer[uarts[uart].tx_read_index];
+				uarts[uart].tx_read_index = (++(uarts[uart].tx_read_index) % UART_TX_BUFFER_SIZE);
+				uarts[uart].tx_count--;
+			}
+
+			return(uarts[uart].tx_count);
 			break;
 	}
 
 //	return(com->tx_buffer_size - com->tx_buffer_read_index);
+	LOG_E("load_tx_buffer() Bad UART\n\r");
 	return(0);
 }
 
