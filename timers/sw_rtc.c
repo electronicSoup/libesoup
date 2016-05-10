@@ -116,7 +116,7 @@ void timer_expiry(void)
 
 	current_isr_secs = SW_RTC_TICK_SECS;
 
-	hw_timer_start(Seconds, current_isr_secs, FALSE, timer_expiry);
+	hw_timer_start(Seconds, current_isr_secs, FALSE, timer_expiry, 0);
 
 	if(alarm_set) {
 		check_alarm();
@@ -187,7 +187,7 @@ result_t rtc_update_current_datetime(u8 *data, u16 len)
 		current_isr_secs = current_datetime.seconds % SW_RTC_TICK_SECS;
 	}
 
-	hw_timer_start(Seconds, current_isr_secs, FALSE, timer_expiry);
+	hw_timer_start(Seconds, current_isr_secs, FALSE, timer_expiry, 0);
 
 //	LOG_D("Current isr secs %d last digit %d\n\r", current_isr_secs, (data[16] - '0'));
 #if 0
