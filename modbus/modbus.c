@@ -186,7 +186,7 @@ static void modbus_process_rx_character(u8 channel_id, u8 ch)
 
 void modbus_tx_finished(u8 channel_id)
 {
-	LOG_D("modbus_tx_finished(channel %d)\n\r", channel_id);
+//	LOG_D("modbus_tx_finished(channel %d)\n\r", channel_id);
 
 	if(!modbus_channels[channel_id].uart) {
 		LOG_E("Error tx_finished channel %d no UART struct\n\r", channel_id);
