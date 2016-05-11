@@ -181,7 +181,10 @@ void start_35_timer(struct modbus_channel *channel)
 
 static void modbus_process_rx_character(u8 channel_id, u8 ch)
 {
-	modbus_channels[channel_id].process_rx_character(&modbus_channels[channel_id], ch);
+	if(modbus_channels[channel_id].process_rx_character) {
+		modbus_channels[channel_id].process_rx_character(&modbus_channels[channel_id], ch);
+	}
+
 }
 
 void modbus_tx_finished(u8 channel_id)
@@ -214,8 +217,6 @@ result_t modbus_reserve(uart_data *uart)
 {
 	result_t rc;
 	void (*tx_finished)(u8 channel);
-
-	LOG_D("modbus_reserve()\n\r");
 
 	tx_finished = uart->tx_finished;
 
