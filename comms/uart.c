@@ -306,6 +306,8 @@ void uart_init(void)
 
 result_t uart_reserve(uart_data *data)
 {
+	LOG_D("uart_reserve()\n\r");
+
 	/*
 	 * Find a free uart to use
 	 */
@@ -351,8 +353,28 @@ result_t uart_release(uart_data *data)
 		return(ERR_BAD_INPUT_PARAMETER);
 	}
 
-	uarts[uart].data = data;
-	uarts[uart].status = UART_BUSY;
+	uarts[uart].data = NULL;
+	uarts[uart].status = UART_FREE;
+
+	switch (uart) {
+		case UART_2:
+			U2MODEbits.UARTEN = 0;
+			U2_RX_ISR_ENABLE = 0;
+			U2_TX_ISR_ENABLE = 0;
+			break;
+
+		case UART_3:
+			U3MODEbits.UARTEN = 0;
+			U3_RX_ISR_ENABLE = 0;
+			U3_TX_ISR_ENABLE = 0;
+			break;
+
+		case UART_4:
+			U4MODEbits.UARTEN = 0;
+			U4_RX_ISR_ENABLE = 0;
+			U4_TX_ISR_ENABLE = 0;
+			break;
+	}
 
 	data->uart = UART_BAD;
 
@@ -575,32 +597,6 @@ static void uart_set_tx_pin(u8 uart, u8 pin)
 static void uart_set_com_config(uart_data *com)
 {
 	switch (com->uart) {
-//		case UART_1:
-//			U1MODE = com->uart_mode;
-//
-//			U1STA = 0x8410;
-//
-//			/*
-//			 * Interrupt when a character is transferred to the Transmit Shift
-//			 * Register (TSR), and as a result, the transmit buffer becomes empty
-//			 */
-//			U1STAbits.UTXISEL1 = 1;
-//			U1STAbits.UTXISEL0 = 0;
-//
-//			/*
-//			 * Desired Baud Rate = FCY/(16 (UxBRG + 1))
-//			 *
-//			 * UxBRG = ((FCY/Desired Baud Rate)/16) - 1
-//			 *
-//			 * UxBRG = ((CLOCK/MODBUS_BAUD)/16) -1
-//			 *
-//			 */
-//			U1BRG = ((CLOCK_FREQ / com->baud) / 16) - 1;
-//
-//			U1_RX_ISR_ENABLE = 0;
-//			U1_TX_ISR_ENABLE = 1;
-//			break;
-//
 		case UART_2:
 			U2MODE = com->uart_mode;
 			U2MODEbits.UARTEN = 1;
@@ -623,6 +619,7 @@ static void uart_set_com_config(uart_data *com)
 			 *
 			 */
 			U2BRG = ((CLOCK_FREQ / com->baud) / 16) - 1;
+
 
 			U2_RX_ISR_ENABLE = 1;
 			U2_TX_ISR_ENABLE = 1;
@@ -681,7 +678,12 @@ static void uart_set_com_config(uart_data *com)
 			U4_RX_ISR_ENABLE = 1;
 			U4_TX_ISR_ENABLE = 1;
 			break;
+
+		default:
+			LOG_E("Bad UART passed\n\r");
+			break;
 	}
+	LOG_D("Return from setting com\n\r");
 }
 
 /*
