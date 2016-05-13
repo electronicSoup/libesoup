@@ -20,6 +20,10 @@ void set_modbus_idle_state(struct modbus_channel *channel)
 	channel->process_tx_finished = NULL;
 	channel->process_rx_character = NULL;
 	channel->process_response_timeout = NULL;
+
+	if(channel->idle_callback) {
+		channel->idle_callback(channel->idle_callback_data);
+	}
 }
 
 void transmit(struct modbus_channel *channel, u8 *data, u16 len, modbus_response_function fn)
