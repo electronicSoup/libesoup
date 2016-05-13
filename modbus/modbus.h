@@ -26,15 +26,17 @@
 typedef void (*modbus_response_function)(u8 *data, u8 size);
 
 struct modbus_channel {
-    uart_data *uart;
-    u8 hw_15_timer;
-    u8 hw_35_timer;
-    es_timer resp_timer;
-    u8 address;
-    u8 rx_buffer[MODBUS_RX_BUFFER_SIZE];
-    u16 rx_write_index;
+    struct uart_data        *uart;
+    u8                       hw_15_timer;
+    u8                       hw_35_timer;
+    es_timer                 resp_timer;
+    u8                       address;
+    u8                       rx_buffer[MODBUS_RX_BUFFER_SIZE];
+    u16                      rx_write_index;
     modbus_response_function process_response;
-    void (*tx_finished)(u8 channel);
+    void                   (*idle_callback)(void*);
+    void                    *idle_callback_data;
+    void                   (*tx_finished)(u8 channel);
     void (*process_timer_15_expiry)(struct modbus_channel *channel);
     void (*process_timer_35_expiry)(struct modbus_channel *channel);
     void (*transmit)(struct modbus_channel *channel, u8 *data, u16 len, modbus_response_function fn);
@@ -46,9 +48,10 @@ struct modbus_channel {
 };
 
 
-#define MODBUS_READ_CONFIG 0x03
-#define MODBUS_READ_DATA   0x04
-#define MODBUS_WRITE_DATA  0x06
+#define MODBUS_READ_CONFIG     0x03
+#define MODBUS_READ_DATA       0x04
+#define MODBUS_WRITE_CONFIG    0x06
+#define MODBUS_WRITE_MULTIPLE  0x10
 
 
 extern void set_modbus_starting_state(struct modbus_channel *channel);
@@ -59,9 +62,10 @@ extern void set_modbus_awaiting_response_state(struct modbus_channel *channel);
 extern void start_15_timer(struct modbus_channel *channel);
 extern void start_35_timer(struct modbus_channel *channel);
 
-extern result_t modbus_reserve(uart_data *uart);
+extern result_t modbus_reserve(struct uart_data *uart, void (*idle_callback)(void *), void *);
+extern result_t modbus_release(struct uart_data *uart);
 extern void modbus_tx_data(struct modbus_channel *channel, u8 *data, u16 len);
-extern result_t modbus_attempt_transmission(uart_data *uart, u8 *data, u16 len, modbus_response_function fn);
+extern result_t modbus_attempt_transmission(struct uart_data *uart, u8 *data, u16 len, modbus_response_function fn);
 
 extern u16 crc_calculate(u8 *data, u16 len);
 extern u8 crc_check(u8 *data, u16 len);
