@@ -40,8 +40,12 @@
 #define STSEL_MASK       0x0001
 
 #define NUM_UARTS        3
+#define UART_2           0x00
+#define UART_3           0x01
+#define UART_4           0x02
+#define UART_BAD         0xff
 
-typedef struct {
+struct uart_data {
     u8            tx_pin;
     u8            rx_pin;
     u8            uart;
@@ -49,12 +53,13 @@ typedef struct {
     u16           baud;
     void        (*tx_finished)(u8 channel);
     void        (*process_rx_char)(u8, u8);
-} uart_data;
+};
 
 
+extern u16      uart_calculate_mode(u8 databits, u8 parity, u8 stopbits, u8 rx_idle_level);
 extern void     uart_init(void);
-extern result_t uart_reserve(uart_data *data);
-extern result_t uart_release(uart_data *data);
-extern result_t uart_tx(uart_data *data, u8 *buffer, u16 len);
+extern result_t uart_reserve(struct uart_data *data);
+extern result_t uart_release(struct uart_data *data);
+extern result_t uart_tx(struct uart_data *data, u8 *buffer, u16 len);
 
 #endif // ES_LIB_UART_H

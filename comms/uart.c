@@ -42,12 +42,6 @@
 #define U4_RX_ISR_ENABLE IEC5bits.U4RXIE
 #define U4_TX_ISR_ENABLE IEC5bits.U4TXIE
 
-// WARNING #define NUM_UARTS        3 is in .h file
-#define UART_2           0x00
-#define UART_3           0x01
-#define UART_4           0x02
-#define UART_BAD         0xff
-
 #define DEBUG_FILE
 #define TAG "UART"
 
@@ -64,13 +58,13 @@ enum uart_status {
 };
 
 struct uart {
-	enum uart_status status;
-	u16              magic;
-	uart_data       *data;
-	u8               tx_buffer[UART_TX_BUFFER_SIZE];
-	u16              tx_write_index;
-	u16              tx_read_index;
-	u16              tx_count;
+	enum uart_status  status;
+	u16               magic;
+	struct uart_data *data;
+	u8                tx_buffer[UART_TX_BUFFER_SIZE];
+	u16               tx_write_index;
+	u16               tx_read_index;
+	u16               tx_count;
 } uart;
 
 struct uart uarts[NUM_UARTS];
@@ -82,7 +76,7 @@ static void uart_tx_isr(u8);
 
 static void uart_set_rx_pin(u8 uart, u8 pin);
 static void uart_set_tx_pin(u8 uart, u8 pin);
-static void uart_set_com_config(uart_data *com);
+static void uart_set_com_config(struct uart_data *com);
 
 static void uart_putchar(u8 uart, u8 ch);
 
@@ -290,6 +284,35 @@ void _ISR __attribute__((__no_auto_psv__)) _U4RXInterrupt(void)
 	}
 }
 
+u16 uart_calculate_mode(u8 databits,	u8 parity, u8 stopbits, u8 rx_idle_level)
+{
+	u16 mode = 0x00;
+
+	mode |= UARTEN_MASK;
+
+	if (databits == 8) {
+		if (parity == PARITY_EVEN) {
+			mode |= PDSEL0_MASK;
+		} else if (parity == PARITY_ODD) {
+			mode |= PDSEL1_MASK;
+		}
+	} else if (databits == 9) {
+		mode |= PDSEL1_MASK;
+		mode |= PDSEL0_MASK;
+	} else {
+		LOG_E("Unrecognised Data bit/Parity configuration\n\r");
+	}
+
+	if (stopbits == TWO_STOP_BITS) {
+		mode |= STSEL_MASK;
+	}
+
+	if (rx_idle_level == IDLE_HIGH) {
+		mode |= RXINV_MASK;
+	}
+
+	return(mode);
+}
 
 /*
  * Initialisation
@@ -304,9 +327,9 @@ void uart_init(void)
 	}
 }
 
-result_t uart_reserve(uart_data *data)
+result_t uart_reserve(struct uart_data *data)
 {
-	LOG_D("uart_reserve()\n\r");
+//	LOG_D("uart_reserve()\n\r");
 
 	/*
 	 * Find a free uart to use
@@ -342,11 +365,13 @@ result_t uart_reserve(uart_data *data)
 	return(ERR_NO_RESOURCES);
 }
 
-result_t uart_release(uart_data *data)
+result_t uart_release(struct uart_data *data)
 {
 	u8  uart;
 
 	uart = data->uart;
+
+	LOG_D("uart_release()  %d\n\r", uart);
 
 	if(uarts[uart].data != data) {
 		LOG_E("uart_tx called with bad data pointer\n\r");
@@ -378,10 +403,12 @@ result_t uart_release(uart_data *data)
 
 	data->uart = UART_BAD;
 
+	LOG_D("uart released\n\r");
+
 	return(SUCCESS);
 }
 
-result_t uart_tx(uart_data *data, u8 *buffer, u16 len)
+result_t uart_tx(struct uart_data *data, u8 *buffer, u16 len)
 {
 	u8  uart;
 	u8 *ptr;
@@ -594,7 +621,7 @@ static void uart_set_tx_pin(u8 uart, u8 pin)
 	}
 }
 
-static void uart_set_com_config(uart_data *com)
+static void uart_set_com_config(struct uart_data *com)
 {
 	switch (com->uart) {
 		case UART_2:
@@ -683,7 +710,6 @@ static void uart_set_com_config(uart_data *com)
 			LOG_E("Bad UART passed\n\r");
 			break;
 	}
-	LOG_D("Return from setting com\n\r");
 }
 
 /*
