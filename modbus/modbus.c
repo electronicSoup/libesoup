@@ -237,6 +237,7 @@ result_t modbus_reserve(struct uart_data *uart, void (*idle_callback)(void *), v
 	modbus_channels[uart->uart].idle_callback_data = data;
 	modbus_channels[uart->uart].tx_finished = tx_finished;
 	modbus_channels[uart->uart].uart = uart;
+	modbus_channels[uart->uart].response_callback_data = NULL;
 
 	/*
 	 * Initialise the 35 timer so it can't be canceled by mistake
@@ -258,7 +259,7 @@ result_t modbus_reserve(struct uart_data *uart, void (*idle_callback)(void *), v
 
 result_t modbus_release(struct uart_data *data)
 {
-	result_t rc;
+//	result_t rc;
 	u8 uart;
 
 	uart = data->uart;
@@ -321,10 +322,10 @@ void modbus_tx_data(struct modbus_channel *channel, u8 *data, u16 len)
 #endif
 }
 
-result_t modbus_attempt_transmission(struct uart_data *uart, u8 *data, u16 len, modbus_response_function fn)
+result_t modbus_attempt_transmission(struct uart_data *uart, u8 *data, u16 len, modbus_response_function fn, void *callback_data)
 {
 	if (modbus_channels[uart->uart].transmit) {
-		modbus_channels[uart->uart].transmit(&modbus_channels[uart->uart], data, len, fn);
+		modbus_channels[uart->uart].transmit(&modbus_channels[uart->uart], data, len, fn, callback_data);
 		return(SUCCESS);
 	} else {
 		LOG_E("Tx Attempted in unknown state\n\r");

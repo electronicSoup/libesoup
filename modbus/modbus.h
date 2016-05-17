@@ -23,7 +23,7 @@
  */
 #include "es_lib/comms/uart.h"
 
-typedef void (*modbus_response_function)(u8 *data, u8 size);
+typedef void (*modbus_response_function)(u8 *msg, u8 size, void *data);
 
 struct modbus_channel {
     struct uart_data        *uart;
@@ -34,12 +34,13 @@ struct modbus_channel {
     u8                       rx_buffer[MODBUS_RX_BUFFER_SIZE];
     u16                      rx_write_index;
     modbus_response_function process_response;
+    void                    *response_callback_data;
     void                   (*idle_callback)(void*);
     void                    *idle_callback_data;
     void                   (*tx_finished)(u8 channel);
     void (*process_timer_15_expiry)(struct modbus_channel *channel);
     void (*process_timer_35_expiry)(struct modbus_channel *channel);
-    void (*transmit)(struct modbus_channel *channel, u8 *data, u16 len, modbus_response_function fn);
+    void (*transmit)(struct modbus_channel *channel, u8 *data, u16 len, modbus_response_function fn, void *callback_data);
     void (*process_tx_finished)(struct modbus_channel *channel);
     void (*process_rx_character)(struct modbus_channel *channel, u8 ch);
     void (*process_response_timeout)();
@@ -52,7 +53,7 @@ struct modbus_channel {
 #define MODBUS_READ_DATA       0x04
 #define MODBUS_WRITE_CONFIG    0x06
 #define MODBUS_WRITE_MULTIPLE  0x10
-
+#define MODBUS_ID_REQUEST      0x11
 
 extern void set_modbus_starting_state(struct modbus_channel *channel);
 extern void set_modbus_idle_state(struct modbus_channel *channel);
@@ -65,7 +66,7 @@ extern void start_35_timer(struct modbus_channel *channel);
 extern result_t modbus_reserve(struct uart_data *uart, void (*idle_callback)(void *), void *);
 extern result_t modbus_release(struct uart_data *uart);
 extern void modbus_tx_data(struct modbus_channel *channel, u8 *data, u16 len);
-extern result_t modbus_attempt_transmission(struct uart_data *uart, u8 *data, u16 len, modbus_response_function fn);
+extern result_t modbus_attempt_transmission(struct uart_data *uart, u8 *data, u16 len, modbus_response_function fn, void *callback_data);
 
 extern u16 crc_calculate(u8 *data, u16 len);
 extern u8 crc_check(u8 *data, u16 len);

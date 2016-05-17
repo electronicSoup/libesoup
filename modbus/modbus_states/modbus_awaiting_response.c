@@ -14,7 +14,6 @@ static void process_response_timeout(struct modbus_channel *channel);
 
 void set_modbus_awaiting_response_state(struct modbus_channel *channel)
 {
-//	LOG_D("set_modbus_awaiting_response_state()\n\r");
 	channel->rx_write_index = 0;
 
 	channel->process_timer_15_expiry = NULL;
@@ -30,18 +29,25 @@ void set_modbus_awaiting_response_state(struct modbus_channel *channel)
 void process_timer_35_expiry(struct modbus_channel *channel)
 {
 	u8  start_index;
+//	u16 loop;
 
 //	RX_ISR_ENABLE = 0;
-	LOG_D("process_timer_35_expiry() channel %d msg length %d\n\r", channel->uart->uart, channel->rx_write_index);
 	set_modbus_idle_state(channel);
 
+	LOG_D("process_timer_35_expiry() channel %d msg length %d\n\r", channel->uart->uart, channel->rx_write_index);
+
+//	for(loop = 0; loop < channel->rx_write_index; loop++) {
+//		LOG_D("Char %d - 0x%x\n\r", loop, channel->rx_buffer[loop]);
+//	}
 	if(channel->rx_write_index > 2) {
 		if(channel->rx_buffer[0] == channel->address) {
 			start_index = 0;
 		} else if (channel->rx_buffer[1] == channel->address) {
 			start_index = 1;
 		} else {
-			LOG_D("message from wrong address\n\r");
+			LOG_D("message from wrong address channel Address 0x%x\n\r", channel->address);
+			LOG_D("channel->rx_buffer[0] = 0x%x\n\r", channel->rx_buffer[0]);
+			LOG_D("channel->rx_buffer[1] = 0x%x\n\r", channel->rx_buffer[1]);
 			return;
 		}
 
@@ -50,14 +56,14 @@ void process_timer_35_expiry(struct modbus_channel *channel)
 			 * Response Good
 			 * Subtract 2 for the CRC
 			 */
-			channel->process_response(&(channel->rx_buffer[start_index]), channel->rx_write_index - (start_index + 2));
+			channel->process_response(&(channel->rx_buffer[start_index]), channel->rx_write_index - (start_index + 2), channel->response_callback_data);
 		} else {
 			LOG_D("Message bad!\n\r");
-			channel->process_response(NULL, 0);
+			channel->process_response(NULL, 0, channel->response_callback_data);
 		}
 	} else {
 		LOG_D("Message too short\n\r");
-		channel->process_response(NULL, 0);
+		channel->process_response(NULL, 0, channel->response_callback_data);
 	}
 }
 
@@ -80,7 +86,7 @@ static void process_response_timeout(struct modbus_channel *channel)
 {
 	set_modbus_starting_state(channel);
 	if(channel->process_response) {
-		channel->process_response(NULL, 0);
+		channel->process_response(NULL, 0, channel->response_callback_data);
 	} else {
 		LOG_E("No response Function\n\r");
 	}

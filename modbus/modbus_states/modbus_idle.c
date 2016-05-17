@@ -8,7 +8,7 @@
 
 extern struct modbus_state modbus_state;
 
-static void transmit(struct modbus_channel *channel, u8 *data, u16 len, modbus_response_function fn);
+static void transmit(struct modbus_channel *channel, u8 *data, u16 len, modbus_response_function fn, void* callback_data);
 
 void set_modbus_idle_state(struct modbus_channel *channel)
 {
@@ -26,7 +26,7 @@ void set_modbus_idle_state(struct modbus_channel *channel)
 	}
 }
 
-void transmit(struct modbus_channel *channel, u8 *data, u16 len, modbus_response_function fn)
+void transmit(struct modbus_channel *channel, u8 *data, u16 len, modbus_response_function fn, void *callback_data)
 {
 	LOG_D("Modbus Idle state Transmit()\n\r");
 
@@ -36,6 +36,7 @@ void transmit(struct modbus_channel *channel, u8 *data, u16 len, modbus_response
 	 */
 	channel->address = data[0];
 	channel->process_response = fn;
+	channel->response_callback_data = callback_data;
 	set_modbus_transmitting_state(channel);
 	modbus_tx_data(channel, data, len);
 }
