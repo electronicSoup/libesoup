@@ -51,6 +51,7 @@
     typedef UINT16   u16;
     typedef UINT32   u32;
 
+    typedef INT8     s8;
     typedef INT32    s32;
 
 #elif defined(ES_LINUX)
@@ -100,7 +101,8 @@ typedef enum {
     uSeconds,
     mSeconds,
     Seconds,
-    Minutes
+    Minutes,
+    Hours
 } ty_time_units;
 
 /*
