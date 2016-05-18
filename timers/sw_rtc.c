@@ -30,7 +30,7 @@
 #include "system.h"
 #include "es_lib/logger/serial_log.h"
 #include "es_lib/timers/hw_timers.h"
-#include "es_lib/timers/sw_rtc.h"
+#include "es_lib/timers/rtc.h"
 
 static struct datetime current_datetime;
 static u8  current_datetime_valid = FALSE;
@@ -255,4 +255,13 @@ static void check_alarm()
 		alarm_set = FALSE;
 		alarm_expiry_fn();
 	}
+}
+
+result_t rtc_get_current_datetime(struct datetime *dt)
+{
+	dt->hours = current_datetime.hours;
+	dt->minutes = current_datetime.minutes;
+	dt->seconds = current_datetime.seconds;
+
+	return(SUCCESS);
 }

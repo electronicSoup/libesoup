@@ -19,5 +19,23 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  *
  */
+#ifndef RTC_H
+#define RTC_H
 
+struct datetime {
+    u16 year;
+    u8  month;
+    u8  day;
+    u8  hours;
+    u8  minutes;
+    u8  seconds;
+};
+
+extern void rtc_init();
 extern result_t rtc_update_current_datetime(u8 *data, u16 len);
+
+extern result_t rtc_set_alarm(ty_time_units units, u16 time, u8 nice, void (*expiry_function)(void));
+
+extern result_t rtc_get_current_datetime(struct datetime *dt);
+
+#endif // RTC_H
