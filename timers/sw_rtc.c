@@ -45,7 +45,6 @@ static struct alarm_data *alarm_list = NULL;
 static struct datetime    current_datetime;
 static u8                 current_datetime_valid = FALSE;
 static u16                current_isr_secs = 0;
-static u8                 alarm_set = FALSE;
 
 /*
  * Function prototypes
@@ -53,7 +52,7 @@ static u8                 alarm_set = FALSE;
 static void increment_current_time(u16 current_isr_secs);
 static void check_alarm();
 static void add_alarm_to_list(struct alarm_data *alarm);
-static s8 alarm_cmp(struct alarm_data *a, struct alarm_data *b);
+static s8 datetime_cmp(struct datetime *a, struct datetime *b);
 
 void rtc_init(void)
 {
@@ -68,7 +67,7 @@ void timer_expiry(u8 data)
 
 	hw_timer_start(Seconds, current_isr_secs, FALSE, timer_expiry, 0);
 
-	if(alarm_set) {
+	if(alarm_list) {
 		check_alarm();
 	}
 }
@@ -132,6 +131,7 @@ result_t rtc_update_current_datetime(u8 *data, u16 len)
 		current_isr_secs = current_datetime.seconds % SW_RTC_TICK_SECS;
 	}
 
+	LOG_D("RTC set so starting hw timer\n\r");
 	hw_timer_start(Seconds, current_isr_secs, FALSE, timer_expiry, 0);
 
 //	LOG_D("Current isr secs %d last digit %d\n\r", current_isr_secs, (data[16] - '0'));
@@ -205,12 +205,13 @@ static void add_alarm_to_list(struct alarm_data *alarm)
 	LOG_D("add_alarm_to_list()\n\r");
 
 	if (alarm_list == NULL) {
+		LOG_D("Alarm list null so adding to head\n\r");
 		alarm_list = alarm;
 		return;
 	} else {
 		next = alarm_list;
 
-		if(alarm_cmp(alarm, next) <= 0) {
+		if(datetime_cmp(&alarm->datetime, &next->datetime) <= 0) {
 			/*
 			 * Insert at head of list
 			 */
@@ -222,7 +223,7 @@ static void add_alarm_to_list(struct alarm_data *alarm)
 			next = prev->next;
 
 			while(next) {
-				if (alarm_cmp(alarm, next) <= 0) {
+				if (datetime_cmp(&alarm->datetime, &next->datetime) <= 0) {
 					/*
 					 * Insert at head of list
 					 */
@@ -238,60 +239,48 @@ static void add_alarm_to_list(struct alarm_data *alarm)
 	}
 }
 
-static s8 alarm_cmp(struct alarm_data *a, struct alarm_data *b)
+static s8 datetime_cmp(struct datetime *a, struct datetime *b)
 {
 	/*
 	 * Compare years
 	 */
-	if(a->datetime.year < b->datetime.year) {
-		return(-1);
-	} else if (a->datetime.year > b->datetime.year) {
-		return(1);
+	if(a->year != b->year) {
+		return(a->year - b->year);
 	}
 
 	/*
 	 * Compare months
 	 */
-	if(a->datetime.month < b->datetime.month) {
-		return(-1);
-	} else if (a->datetime.month > b->datetime.month) {
-		return(1);
+	if(a->month != b->month) {
+		return(a->month - b->month);
 	}
 
 	/*
 	 * Compare day
 	 */
-	if(a->datetime.day < b->datetime.day) {
-		return(-1);
-	} else if (a->datetime.day > b->datetime.day) {
-		return(1);
+	if(a->day != b->day) {
+		return(a->day - b->day);
 	}
 
 	/*
 	 * Compare hours
 	 */
-	if(a->datetime.hours < b->datetime.hours) {
-		return(-1);
-	} else if (a->datetime.hours > b->datetime.hours) {
-		return(1);
+	if(a->hours != b->hours) {
+		return(a->hours - b->hours);
 	}
 
 	/*
 	 * Compare minutes
 	 */
-	if(a->datetime.minutes < b->datetime.minutes) {
-		return(-1);
-	} else if (a->datetime.minutes > b->datetime.minutes) {
-		return(1);
+	if(a->minutes != b->minutes) {
+		return(a->minutes - b->minutes);
 	}
 
 	/*
 	 * Compare seconds
 	 */
-	if(a->datetime.seconds < b->datetime.seconds) {
-		return(-1);
-	} else if (a->datetime.seconds > b->datetime.seconds) {
-		return(1);
+	if(a->seconds != b->seconds) {
+		return(a->seconds - b->seconds);
 	}
 
 	/*
@@ -319,7 +308,7 @@ static void check_alarm()
 			alarm_list->datetime.minutes,
 			alarm_list->datetime.seconds);
 
-		if(alarm_cmp(alarm_list, &current_datetime) <= 0) {
+		if(datetime_cmp(&alarm_list->datetime, &current_datetime) <= 0) {
 			/*
 			 * Call the expiry function
 			 */
@@ -337,17 +326,29 @@ static void check_alarm()
 			finished = TRUE;
 		}
 	}
-
-	if(!alarm_list) {
-		alarm_set = FALSE;
-	}
 }
 
 result_t rtc_get_current_datetime(struct datetime *dt)
 {
-	dt->hours = current_datetime.hours;
-	dt->minutes = current_datetime.minutes;
-	dt->seconds = current_datetime.seconds;
+	if(current_datetime_valid) {
+		dt->hours = current_datetime.hours;
+		dt->minutes = current_datetime.minutes;
+		dt->seconds = current_datetime.seconds;
 
-	return(SUCCESS);
+		return (SUCCESS);
+	} else {
+		return(ERR_NOT_READY);
+	}
+}
+
+result_t rtc_get_dummy_datetime(struct datetime *dt)
+{
+	dt->year    = 2000;
+	dt->month   = 1;
+	dt->day     = 1;
+	dt->hours   = 00;
+	dt->minutes = 00;
+	dt->seconds = 00;
+
+	return (SUCCESS);
 }

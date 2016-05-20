@@ -37,5 +37,6 @@ extern result_t rtc_update_current_datetime(u8 *data, u16 len);
 extern result_t rtc_set_alarm_offset(ty_time_units units, u16 time, u8 nice, void (*expiry_fn)(void *), void *expiry_data);
 
 extern result_t rtc_get_current_datetime(struct datetime *dt);
+extern result_t rtc_get_dummy_datetime(struct datetime *dt);
 
 #endif // RTC_H
