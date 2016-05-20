@@ -244,43 +244,43 @@ static s8 datetime_cmp(struct datetime *a, struct datetime *b)
 	/*
 	 * Compare years
 	 */
-	if(a->year != b->year) {
-		return(a->year - b->year);
+	if(b->year != a->year) {
+		return(b->year - a->year);
 	}
 
 	/*
 	 * Compare months
 	 */
-	if(a->month != b->month) {
-		return(a->month - b->month);
+	if(b->month != a->month) {
+		return(b->month - a->month);
 	}
 
 	/*
 	 * Compare day
 	 */
-	if(a->day != b->day) {
-		return(a->day - b->day);
+	if(b->day != a->day) {
+		return(b->day - a->day);
 	}
 
 	/*
 	 * Compare hours
 	 */
-	if(a->hours != b->hours) {
-		return(a->hours - b->hours);
+	if(b->hours != a->hours) {
+		return(b->hours - a->hours);
 	}
 
 	/*
 	 * Compare minutes
 	 */
-	if(a->minutes != b->minutes) {
-		return(a->minutes - b->minutes);
+	if(b->minutes != a->minutes) {
+		return(b->minutes - a->minutes);
 	}
 
 	/*
 	 * Compare seconds
 	 */
-	if(a->seconds != b->seconds) {
-		return(a->seconds - b->seconds);
+	if(b->seconds != a->seconds) {
+		return(b->seconds - a->seconds);
 	}
 
 	/*
@@ -308,7 +308,7 @@ static void check_alarm()
 			alarm_list->datetime.minutes,
 			alarm_list->datetime.seconds);
 
-		if(datetime_cmp(&alarm_list->datetime, &current_datetime) <= 0) {
+		if(datetime_cmp(&current_datetime, &alarm_list->datetime) <= 0) {
 			/*
 			 * Call the expiry function
 			 */
