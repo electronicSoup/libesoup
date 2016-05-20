@@ -139,7 +139,7 @@ result_t rtc_update_current_datetime(u8 *data, u16 len)
 	return(SUCCESS);
 }
 
-result_t rtc_set_alarm_offset(ty_time_units units, u16 time, u8 nice, void (*expiry_fn)(void *), void *expiry_data)
+void *rtc_set_alarm_offset(ty_time_units units, u16 time, u8 nice, void (*expiry_fn)(void *), void *expiry_data)
 {
 	struct datetime tmp_datetime;
 	struct alarm_data *alarm;
@@ -170,7 +170,7 @@ result_t rtc_set_alarm_offset(ty_time_units units, u16 time, u8 nice, void (*exp
 		tmp_datetime.hours   = tmp_datetime.hours % 24;
 	} else {
 		LOG_E("Unrecognised Alarm offset units\n\r");
-		return(ERR_BAD_INPUT_PARAMETER);
+		return(NULL);
 	}
 
 	/*
@@ -194,7 +194,7 @@ result_t rtc_set_alarm_offset(ty_time_units units, u16 time, u8 nice, void (*exp
 	 */
 	add_alarm_to_list(alarm);
 
-	return(SUCCESS);
+	return((void *)alarm);
 }
 
 static void add_alarm_to_list(struct alarm_data *alarm)
