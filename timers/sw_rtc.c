@@ -29,6 +29,10 @@
 #define DEBUG_FILE
 #define TAG "SW_RTC"
 
+#define SECONDS_PER_MINUTE  60
+#define MINUTES_PER_HOUR    60
+#define HOURS_PER_DAY       24
+
 #include "system.h"
 #include "es_lib/logger/serial_log.h"
 #include "es_lib/timers/hw_timers.h"
@@ -80,18 +84,18 @@ static void increment_current_time(u16 secs)
 	u16 tmp_day;
 
 	tmp_seconds = current_datetime.seconds + secs;
-	tmp_minutes = current_datetime.minutes + tmp_seconds / 60;
-	tmp_hours   = current_datetime.hours + tmp_minutes / 60;
-	tmp_day     = current_datetime.day + tmp_hours / 24;
+	tmp_minutes = current_datetime.minutes + tmp_seconds / SECONDS_PER_MINUTE;
+	tmp_hours   = current_datetime.hours + tmp_minutes / MINUTES_PER_HOUR;
+	tmp_day     = current_datetime.day + tmp_hours / HOURS_PER_DAY;
 
 //	LOG_D("Current seconds is %d\n\r", current_datetime.seconds);
 //	LOG_D("Add on %d Seconds\n\r", secs);
 //	LOG_D("tmp_seconds is %d\n\r", tmp_seconds);
 //	LOG_D("/ is %d remainder is %d \n\r", tmp_seconds / 60, tmp_seconds % 60);
 
-	current_datetime.seconds = tmp_seconds % 60;
-	current_datetime.minutes = tmp_minutes % 60;
-	current_datetime.hours   = tmp_hours % 24;
+	current_datetime.seconds = tmp_seconds % SECONDS_PER_MINUTE;
+	current_datetime.minutes = tmp_minutes % MINUTES_PER_HOUR;
+	current_datetime.hours   = tmp_hours % HOURS_PER_DAY;
 	current_datetime.day     = tmp_day;
 }
 
@@ -131,7 +135,6 @@ result_t rtc_update_current_datetime(u8 *data, u16 len)
 		current_isr_secs = current_datetime.seconds % SW_RTC_TICK_SECS;
 	}
 
-	LOG_D("RTC set so starting hw timer\n\r");
 	hw_timer_start(Seconds, current_isr_secs, FALSE, timer_expiry, 0);
 
 //	LOG_D("Current isr secs %d last digit %d\n\r", current_isr_secs, (data[16] - '0'));
@@ -141,11 +144,21 @@ result_t rtc_update_current_datetime(u8 *data, u16 len)
 
 void *rtc_set_alarm_offset(ty_time_units units, u16 time, u8 nice, void (*expiry_fn)(void *), void *expiry_data)
 {
-	struct datetime tmp_datetime;
+	u16                current_minutes;
+	u16                total_alarm_minutes;
+	struct datetime    tmp_datetime;
 	struct alarm_data *alarm;
+
+	tmp_datetime.year    = current_datetime.year;
+	tmp_datetime.month   = current_datetime.month;
+	tmp_datetime.day     = current_datetime.day;
+	tmp_datetime.hours   = 0;
+	tmp_datetime.minutes = 0;
+	tmp_datetime.seconds = 0;
 
 	/*
 	 * Calculate the Alarm Datetime
+	 *
 	 */
 	if (units == Seconds) {
 		tmp_datetime.seconds = current_datetime.seconds + time;
@@ -156,18 +169,34 @@ void *rtc_set_alarm_offset(ty_time_units units, u16 time, u8 nice, void (*expiry
 		tmp_datetime.day     = current_datetime.day + tmp_datetime.hours / 24;
 		tmp_datetime.hours   = tmp_datetime.hours % 24;
 	} else if (units == Minutes) {
-		tmp_datetime.seconds = current_datetime.seconds;
-		tmp_datetime.minutes = current_datetime.minutes + time;
-		tmp_datetime.hours   = current_datetime.hours + tmp_datetime.minutes / 60;
-		tmp_datetime.minutes = tmp_datetime.minutes % 60;
-		tmp_datetime.day     = current_datetime.day + tmp_datetime.hours / 24;
-		tmp_datetime.hours   = tmp_datetime.hours % 24;
+		LOG_D("rtc_set_alarm_offset(Minutes, %d)\n\r", time);
+		tmp_datetime.seconds = 0;
+
+		if(nice) {
+			if(time < MINUTES_PER_HOUR) {
+				if((MINUTES_PER_HOUR % time) == 0) {
+					tmp_datetime.minutes = ((current_datetime.minutes / time) + 1) * time;
+				} else {
+					current_minutes = (MINUTES_PER_HOUR * current_datetime.hours) + current_datetime.minutes;
+					total_alarm_minutes = ((current_minutes / time) + 1) * time;
+					tmp_datetime.minutes = total_alarm_minutes % MINUTES_PER_HOUR;
+					tmp_datetime.hours = total_alarm_minutes / MINUTES_PER_HOUR;
+				}
+			}
+		} else {
+			tmp_datetime.minutes = current_datetime.minutes + time;
+		}
+
+		tmp_datetime.hours = tmp_datetime.hours + current_datetime.hours + (tmp_datetime.minutes / MINUTES_PER_HOUR);
+		tmp_datetime.minutes = tmp_datetime.minutes % MINUTES_PER_HOUR;
+		tmp_datetime.day = current_datetime.day + tmp_datetime.hours / HOURS_PER_DAY;
+		tmp_datetime.hours = tmp_datetime.hours % HOURS_PER_DAY;
 	} else if (units == Hours) {
 		tmp_datetime.seconds = current_datetime.seconds;
 		tmp_datetime.minutes = current_datetime.minutes;
 		tmp_datetime.hours   = current_datetime.hours + time;
-		tmp_datetime.day     = current_datetime.day + tmp_datetime.hours / 24;
-		tmp_datetime.hours   = tmp_datetime.hours % 24;
+		tmp_datetime.day     = current_datetime.day + tmp_datetime.hours / HOURS_PER_DAY;
+		tmp_datetime.hours   = tmp_datetime.hours % HOURS_PER_DAY;
 	} else {
 		LOG_E("Unrecognised Alarm offset units\n\r");
 		return(NULL);
@@ -201,23 +230,23 @@ static void add_alarm_to_list(struct alarm_data *alarm)
 {
 	struct alarm_data *next = NULL;
 	struct alarm_data *prev = NULL;
+	u16                count = 0;
 
-	LOG_D("add_alarm_to_list()\n\r");
+	LOG_D("add_alarm_to_list(%2d:%2d)\n\r", alarm->datetime.hours, alarm->datetime.minutes);
 
 	if (alarm_list == NULL) {
 		LOG_D("Alarm list null so adding to head\n\r");
 		alarm_list = alarm;
-		return;
 	} else {
 		next = alarm_list;
 
 		if(datetime_cmp(&alarm->datetime, &next->datetime) <= 0) {
+			LOG_D("Alarm should be first so inserting to head\n\r");
 			/*
 			 * Insert at head of list
 			 */
 			alarm->next = alarm_list;
 			alarm_list = alarm;
-			return;
 		} else {
 			prev = alarm_list;
 			next = prev->next;
@@ -225,62 +254,85 @@ static void add_alarm_to_list(struct alarm_data *alarm)
 			while(next) {
 				if (datetime_cmp(&alarm->datetime, &next->datetime) <= 0) {
 					/*
-					 * Insert at head of list
+					 * Insert
 					 */
 					prev->next = alarm;
 					alarm->next = next;
-					return;
 				} else {
 					prev = next;
 					next = prev->next;
 				}
 			}
+
+			if(!next) {
+				prev->next = alarm;
+				alarm->next = NULL;
+			}
 		}
 	}
+
+	next = alarm_list;
+	while(next) {
+		next = next->next;
+		count++;
+	}
+
+	LOG_D("Alarm count %d\n\r", count);
 }
 
+/*
+ * if Return value < 0 then it indicates datetime a is before datetime b.
+ * if Return value > 0 then it indicates datetime b is before datetime a.
+ * if Return value = 0 then it indicates datetime a is the same as datetime b
+ */
 static s8 datetime_cmp(struct datetime *a, struct datetime *b)
 {
 	/*
 	 * Compare years
 	 */
-	if(b->year != a->year) {
-		return(b->year - a->year);
+	if(a->year != b->year) {
+		LOG_D("Comparison on year %d %d\n\r", a->year, b->year);
+		return(a->year - b->year);
 	}
 
 	/*
 	 * Compare months
 	 */
-	if(b->month != a->month) {
-		return(b->month - a->month);
+	if(a->month != b->month) {
+		LOG_D("Comparison on Month %d %d\n\r", a->month, b->month);
+		return(a->month - b->month);
 	}
 
 	/*
 	 * Compare day
 	 */
-	if(b->day != a->day) {
-		return(b->day - a->day);
+	if(a->day != b->day) {
+		LOG_D("Comparison on day %d %d\n\r", a->day, b->day);
+		return(a->day - b->day);
 	}
 
 	/*
 	 * Compare hours
 	 */
-	if(b->hours != a->hours) {
-		return(b->hours - a->hours);
+	if(a->hours != b->hours) {
+		LOG_D("Comparison on Hours %d %d\n\r", a->hours, b->hours);
+		return(a->hours - b->hours);
 	}
 
 	/*
 	 * Compare minutes
 	 */
-	if(b->minutes != a->minutes) {
-		return(b->minutes - a->minutes);
+	if(a->minutes != b->minutes) {
+		LOG_D("Comparison on minutes %d %d\n\r", a->minutes, b->minutes);
+		return(a->minutes - b->minutes);
 	}
 
 	/*
 	 * Compare seconds
 	 */
-	if(b->seconds != a->seconds) {
-		return(b->seconds - a->seconds);
+	if(a->seconds != b->seconds) {
+		LOG_D("Comparison on seconds %d %d\n\r", a->seconds, b->seconds);
+		return(a->seconds - b->seconds);
 	}
 
 	/*
@@ -291,7 +343,8 @@ static s8 datetime_cmp(struct datetime *a, struct datetime *b)
 
 static void check_alarm()
 {
-	u8 finished = FALSE;
+	u8                 finished = FALSE;
+	u16                count = 0;
 	struct alarm_data *tmp_alarm;
 
 	LOG_D("check_alarm() Compare Current time %d:%d:%d\n\r",
@@ -303,29 +356,46 @@ static void check_alarm()
 	 * While loop as a number of alarms could have the same time
 	 */
 	while (alarm_list && !finished) {
+		asm ("CLRWDT");
 		LOG_D("Check alarm - %d:%d:%d\n\r",
 			alarm_list->datetime.hours,
 			alarm_list->datetime.minutes,
 			alarm_list->datetime.seconds);
 
-		if(datetime_cmp(&current_datetime, &alarm_list->datetime) <= 0) {
+		if(datetime_cmp(&current_datetime, &alarm_list->datetime) >= 0) {
 			/*
 			 * Call the expiry function
 			 */
 			alarm_list->expiry_fn(alarm_list->expiry_data);
 
+			LOG_D("Back from expiry function\n\r");
 			/*
 			 * Remove the alarm from the Queue
 			 */
 			tmp_alarm = alarm_list;
 			
 			alarm_list = tmp_alarm->next;
-			
+
+			LOG_D("Free the alarm at head of list\n\r");
 			free(tmp_alarm);
 		} else {
+			LOG_D("Finished the checking\n\r");
 			finished = TRUE;
 		}
 	}
+
+	tmp_alarm = alarm_list;
+	count = 0;
+	while(tmp_alarm) {
+		LOG_D("alarm - %d:%d:%d\n\r",
+			tmp_alarm->datetime.hours,
+			tmp_alarm->datetime.minutes,
+			tmp_alarm->datetime.seconds);
+
+		tmp_alarm = tmp_alarm->next;
+		count++;
+	}
+	LOG_D("Alarm count %d\n\r", count);
 }
 
 result_t rtc_get_current_datetime(struct datetime *dt)
