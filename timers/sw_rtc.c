@@ -235,13 +235,13 @@ static void add_alarm_to_list(struct alarm_data *alarm)
 	LOG_D("add_alarm_to_list(%2d:%2d)\n\r", alarm->datetime.hours, alarm->datetime.minutes);
 
 	if (alarm_list == NULL) {
-		LOG_D("Alarm list null so adding to head\n\r");
+//		LOG_D("Alarm list null so adding to head\n\r");
 		alarm_list = alarm;
 	} else {
 		next = alarm_list;
 
 		if(datetime_cmp(&alarm->datetime, &next->datetime) <= 0) {
-			LOG_D("Alarm should be first so inserting to head\n\r");
+//			LOG_D("Alarm should be first so inserting to head\n\r");
 			/*
 			 * Insert at head of list
 			 */
@@ -270,7 +270,7 @@ static void add_alarm_to_list(struct alarm_data *alarm)
 			}
 		}
 	}
-
+#if 0
 	next = alarm_list;
 	while(next) {
 		next = next->next;
@@ -278,6 +278,7 @@ static void add_alarm_to_list(struct alarm_data *alarm)
 	}
 
 	LOG_D("Alarm count %d\n\r", count);
+#endif
 }
 
 /*
@@ -291,7 +292,7 @@ static s8 datetime_cmp(struct datetime *a, struct datetime *b)
 	 * Compare years
 	 */
 	if(a->year != b->year) {
-		LOG_D("Comparison on year %d %d\n\r", a->year, b->year);
+//		LOG_D("Comparison on year %d %d\n\r", a->year, b->year);
 		return(a->year - b->year);
 	}
 
@@ -299,7 +300,7 @@ static s8 datetime_cmp(struct datetime *a, struct datetime *b)
 	 * Compare months
 	 */
 	if(a->month != b->month) {
-		LOG_D("Comparison on Month %d %d\n\r", a->month, b->month);
+//		LOG_D("Comparison on Month %d %d\n\r", a->month, b->month);
 		return(a->month - b->month);
 	}
 
@@ -307,7 +308,7 @@ static s8 datetime_cmp(struct datetime *a, struct datetime *b)
 	 * Compare day
 	 */
 	if(a->day != b->day) {
-		LOG_D("Comparison on day %d %d\n\r", a->day, b->day);
+//		LOG_D("Comparison on day %d %d\n\r", a->day, b->day);
 		return(a->day - b->day);
 	}
 
@@ -315,7 +316,7 @@ static s8 datetime_cmp(struct datetime *a, struct datetime *b)
 	 * Compare hours
 	 */
 	if(a->hours != b->hours) {
-		LOG_D("Comparison on Hours %d %d\n\r", a->hours, b->hours);
+//		LOG_D("Comparison on Hours %d %d\n\r", a->hours, b->hours);
 		return(a->hours - b->hours);
 	}
 
@@ -323,7 +324,7 @@ static s8 datetime_cmp(struct datetime *a, struct datetime *b)
 	 * Compare minutes
 	 */
 	if(a->minutes != b->minutes) {
-		LOG_D("Comparison on minutes %d %d\n\r", a->minutes, b->minutes);
+//		LOG_D("Comparison on minutes %d %d\n\r", a->minutes, b->minutes);
 		return(a->minutes - b->minutes);
 	}
 
@@ -331,7 +332,7 @@ static s8 datetime_cmp(struct datetime *a, struct datetime *b)
 	 * Compare seconds
 	 */
 	if(a->seconds != b->seconds) {
-		LOG_D("Comparison on seconds %d %d\n\r", a->seconds, b->seconds);
+//		LOG_D("Comparison on seconds %d %d\n\r", a->seconds, b->seconds);
 		return(a->seconds - b->seconds);
 	}
 
@@ -347,28 +348,20 @@ static void check_alarm()
 	u16                count = 0;
 	struct alarm_data *tmp_alarm;
 
-	LOG_D("check_alarm() Compare Current time %d:%d:%d\n\r",
-		current_datetime.hours,
-		current_datetime.minutes,
-		current_datetime.seconds);
+//	LOG_D("check_alarm() Compare Current time %d:%d:%d\n\r",
+//		current_datetime.hours,
+//		current_datetime.minutes,
+//		current_datetime.seconds);
 
 	/*
 	 * While loop as a number of alarms could have the same time
 	 */
 	while (alarm_list && !finished) {
-		asm ("CLRWDT");
-		LOG_D("Check alarm - %d:%d:%d\n\r",
-			alarm_list->datetime.hours,
-			alarm_list->datetime.minutes,
-			alarm_list->datetime.seconds);
-
 		if(datetime_cmp(&current_datetime, &alarm_list->datetime) >= 0) {
-			/*
-			 * Call the expiry function
-			 */
-			alarm_list->expiry_fn(alarm_list->expiry_data);
-
-			LOG_D("Back from expiry function\n\r");
+			LOG_D("Alarm Expired - %d:%d:%d\n\r",
+				alarm_list->datetime.hours,
+				alarm_list->datetime.minutes,
+				alarm_list->datetime.seconds);
 			/*
 			 * Remove the alarm from the Queue
 			 */
@@ -376,14 +369,21 @@ static void check_alarm()
 			
 			alarm_list = tmp_alarm->next;
 
-			LOG_D("Free the alarm at head of list\n\r");
+			/*
+			 * Call the expiry function
+			 */
+			tmp_alarm->expiry_fn(tmp_alarm->expiry_data);
+
+            /*
+             * And free the expired alarm
+             */
 			free(tmp_alarm);
+
 		} else {
-			LOG_D("Finished the checking\n\r");
 			finished = TRUE;
 		}
 	}
-
+#if 0
 	tmp_alarm = alarm_list;
 	count = 0;
 	while(tmp_alarm) {
@@ -396,6 +396,7 @@ static void check_alarm()
 		count++;
 	}
 	LOG_D("Alarm count %d\n\r", count);
+#endif
 }
 
 result_t rtc_get_current_datetime(struct datetime *dt)
