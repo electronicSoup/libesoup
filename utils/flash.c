@@ -30,21 +30,21 @@
 #define TAG "FLASH"
 
 /*
- * BOOL flash_page_empty(UINT32 address)
+ * BOOL flash_page_empty(u32 address)
  *
  * Function simply checks that a Flash page is empty. If the address is invalid False is returned.
  *
- * Input  : UINT16 address - Flash page address check
+ * Input  : u16 address - Flash page address check
  *
  * Return : True if the given FLASH Page is Valid address and empty. False otherwise.
  *
  */
-BOOL flash_page_empty(UINT32 address)
+BOOL flash_page_empty(u32 address)
 {
-	UINT16 loop = 0;
-	UINT16 offset;
-	UINT16 highWord;
-	UINT16 lowWord;
+	u16 loop = 0;
+	u16 offset;
+	u16 highWord;
+	u16 lowWord;
 
 	/*
 	 * Check that the given address is on a page boundary.
@@ -69,16 +69,16 @@ BOOL flash_page_empty(UINT32 address)
 }
 
 /*
- * result_t flash_erase_page(UINT32 address)
+ * result_t flash_erase_page(u32 address)
  *
  * Function Erase a Flash page.
  *
- * Input  : UINT16 address - Flash page to erase.
+ * Input  : u16 address - Flash page to erase.
  *
  * Return : result_t  -  ERR_ADDRESS_RANGE if the passed address is incorrect.
  *                    -  SUCCESS if the page has been erased.
  */
-result_t flash_erase_page(UINT32 address)
+result_t flash_erase_page(u32 address)
 {
 	unsigned int offset;
 
@@ -119,13 +119,13 @@ result_t flash_erase_page(UINT32 address)
 }
 
 /*
- * result_t flash_write_row(UINT32 address, BYTE *data)
+ * result_t flash_write_row(u32 address, u8 *data)
  *
  * Function Write a Row of Flash.
  *
- * Input  : UINT16 address - Address of the Row to write.
+ * Input  : u16 address - Address of the Row to write.
  *
- * Input  : BYTE *data     - The row of data to be written to the Flash Page.
+ * Input  : u8 *data     - The row of data to be written to the Flash Page.
  *
  * Return : result_t  -  ERR_ADDRESS_RANGE if the passed address is incorrect.
  *                    -  SUCCESS if the Row has been written.
@@ -211,7 +211,7 @@ result_t flash_write_row(u32 address, u8 *data)
 }
 
 /*
- * result_t flash_write_row(UINT32 address, BYTE *data)
+ * result_t flash_write_row(u32 address, u8 *data)
  *
  * Function to copy a C null terminated string from Flash into RAM memory.
  *
@@ -224,16 +224,16 @@ result_t flash_write_row(u32 address, u8 *data)
  *
  * Input  : char *src - Flash Address where string is copied from.
  *
- * Input/Output : UINT16 *length - Input as the length of the destination buffer
+ * Input/Output : u16 *length - Input as the length of the destination buffer
  *                               - Output as the number of characters written to buffer.
  *
  * Return : result_t  -  SUCCESS
  */
-result_t flash_strcpy(char *dst, __prog__ char *src, UINT16 *length)
+result_t flash_strcpy(char *dst, __prog__ char *src, u16 *length)
 {
 	char *dst_p = dst;
 
-	UINT16 i = 0;
+	u16 i = 0;
 
 	while ((*src != 0x00) && (*src != 0xff) && (i < (*length) - 1)) {
 		*dst_p++ = *src++;

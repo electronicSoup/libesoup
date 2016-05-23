@@ -77,7 +77,7 @@
 #define TAG "TIMERS"
 
 #ifdef MCP
-static UINT16 timer_counter = 0;
+static u16 timer_counter = 0;
 
 volatile BOOL timer_ticked = FALSE;
 
@@ -89,7 +89,7 @@ static u8 hw_timer = BAD_TIMER;
  */
 typedef struct {
 	BOOL active;
-	UINT16 expiry_count;
+	u16 expiry_count;
 	expiry_function function;
 	union sigval expiry_data;
 } sys_timer_t;
@@ -147,7 +147,7 @@ void timer_isr(void)
 #ifdef MCP
 void timer_init(void)
 {
-	BYTE loop;
+	u8 loop;
 
 	/*
 	 * Initialise our Data Structures
@@ -206,7 +206,7 @@ void timer_init(void)
 void timer_tick(void)
 {
 	u16 active_timers;
-	BYTE loop;
+	u8 loop;
 	expiry_function function;
 	union sigval data;
 
@@ -251,14 +251,14 @@ void timer_tick(void)
 #endif // MCP
 
 /*
- * result_t timer_start(UINT16 ticks,
+ * result_t timer_start(u16 ticks,
  *                      expiry_function function,
  *                      union sigval data,
  *                      es_timer *timer)
  *
  * Function to start a timer on the system.
  *
- * Input  : UINT16 ticks
+ * Input  : u16 ticks
  *              The duration of the timer in system timer ticks.
  *              The two convienence macros (SECONDS_TO_TICKS and
  *              MILLI_SECONDS_TO_TICKS) should be used to calculate

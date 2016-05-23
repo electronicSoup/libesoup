@@ -25,10 +25,10 @@
 
 #include "system.h"
 
-extern BOOL     flash_page_empty(UINT32 address);
-extern result_t flash_erase_page(UINT32 address);
-extern result_t flash_write_row(UINT32 address, BYTE *data);
-extern result_t flash_strcpy(char *dst, __prog__ char *src, UINT16 *length);
+extern BOOL     flash_page_empty(u32 address);
+extern result_t flash_erase_page(u32 address);
+extern result_t flash_write_row(u32 address, u8 *data);
+extern result_t flash_strcpy(char *dst, __prog__ char *src, u16 *length);
 extern u16      flash_strlen(__prog__ char *src);
 
 #endif //FLASH_H

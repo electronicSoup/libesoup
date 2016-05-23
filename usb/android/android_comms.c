@@ -48,27 +48,27 @@ extern void system_reset();
 /*
  * Forward declaration of funcitons in file
  */
-static BOOL android_receive(BYTE *id, BYTE *data, UINT16 *data_size, BYTE *error_code);
+static BOOL android_receive(u8 *id, u8 *data, u16 *data_size, u8 *error_code);
 static void process_msg_from_android(void);
 
 /*
  * Definitions for the two Circular buffers being used for Tx and Rx
  * messages To and From the connected Android device
  */
-static BYTE rx_buffer[RX_BUFFER_SIZE];
-static BYTE rx_circular_buffer[RX_BUFFER_SIZE];
+static u8 rx_buffer[RX_BUFFER_SIZE];
+static u8 rx_circular_buffer[RX_BUFFER_SIZE];
 
-static UINT16 rx_write_index = 0;
-static UINT16 rx_read_index = 0;
-static UINT16 rx_buffer_count = 0;
+static u16 rx_write_index = 0;
+static u16 rx_read_index = 0;
+static u16 rx_buffer_count = 0;
 static BOOL receiver_busy = FALSE;
 
-static BYTE tx_buffer[TX_BUFFER_SIZE];
-static BYTE tx_circular_buffer[TX_BUFFER_SIZE];
+static u8 tx_buffer[TX_BUFFER_SIZE];
+static u8 tx_circular_buffer[TX_BUFFER_SIZE];
 
-static UINT16 tx_write_index = 0;
-static UINT16 tx_read_index = 0;
-static UINT16 tx_buffer_count = 0;
+static u16 tx_write_index = 0;
+static u16 tx_read_index = 0;
+static u16 tx_buffer_count = 0;
 static BOOL transmitter_busy = FALSE;
 
 /*
@@ -121,9 +121,9 @@ void android_init(void* data)
  */
 void android_tasks(void)
 {
-	BYTE error_code = USB_SUCCESS;
-	UINT16 loop = 0;
-	UINT32 size = 0;
+	u8 error_code = USB_SUCCESS;
+	u16 loop = 0;
+	u32 size = 0;
 
 	/*
 	 * If there is not connected Android Device then simply perform state 
@@ -144,7 +144,7 @@ void android_tasks(void)
 	 * Android Device.
 	 */
 	if (!receiver_busy) {
-		error_code = AndroidAppRead(device_handle, (BYTE*) & rx_buffer, (UINT32)sizeof (rx_buffer));
+		error_code = AndroidAppRead(device_handle, (u8*) & rx_buffer, (u32)sizeof (rx_buffer));
 
 		if (error_code != USB_SUCCESS) {
 			if (error_code != USB_ENDPOINT_BUSY) {
@@ -222,7 +222,7 @@ void android_tasks(void)
 	 * then send buffer then send the next message.
 	 */
 	if (!transmitter_busy && (tx_buffer_count > 0)) {
-		UINT16 numberToSend = tx_buffer_count;
+		u16 numberToSend = tx_buffer_count;
 		for (loop = 0; loop < numberToSend; loop++) {
 			tx_buffer[loop] = tx_circular_buffer[tx_read_index];
 			tx_read_index = (++tx_read_index % TX_BUFFER_SIZE);
@@ -247,7 +247,7 @@ void android_tasks(void)
 }
 
 /*
- * static BOOL android_receive(BYTE *buffer, UINT16 *size, BYTE *error_code)
+ * static BOOL android_receive(BYTE *buffer, u16 *size, BYTE *error_code)
  *
  * Function if there is a complete message in the Receive circular buffer then
  * remove the message from the circular buffer and place it in the Input buffer
@@ -255,19 +255,19 @@ void android_tasks(void)
  *
  * Input/Output : BYTE *buffer - location where received message should be copied.
  *
- * Input/Output : UINT16 *size - Input size of input buffer.
+ * Input/Output : u16 *size - Input size of input buffer.
  *                               Output size of the received message.
  *
  * Output       : BYTE *error_code - Error code if an error occured.
  *
  * Return       : True if a message was received successfully
- *                Flase if no message was received or there was an error.
+ *                False if no message was received or there was an error.
  *
  */
-static BOOL android_receive(BYTE *id, BYTE *data, UINT16 *data_size, BYTE *error_code)
+static BOOL android_receive(u8 *id, u8 *data, u16 *data_size, u8 *error_code)
 {
-	UINT16 msg_size;
-	UINT16 loop;
+	u16 msg_size;
+	u16 loop;
 	*error_code = USB_SUCCESS;
 
 	/*
@@ -347,7 +347,7 @@ static BOOL android_receive(BYTE *id, BYTE *data, UINT16 *data_size, BYTE *error
 }
 
 /*
- * static BYTE android_transmit(BYTE *buffer, BYTE size)
+ * static u8 android_transmit(u8 *buffer, u8 size)
  *
  * Function to load the Transmit Circular buffer with a given message for
  * future transmission to the Android Device.
@@ -360,10 +360,10 @@ static BOOL android_receive(BYTE *id, BYTE *data, UINT16 *data_size, BYTE *error
  *          USB_SUCCESS            Message queued for future transmission.
  *
  */
-BYTE android_transmit(BYTE *buffer, BYTE size)
+u8 android_transmit(u8 *buffer, u8 size)
 {
-	UINT16 loop;
-	BYTE *buffer_ptr;
+	u16 loop;
+	u8 *buffer_ptr;
 
 	LOG_I("android_transmit(%d bytes)\n\r", size);
 	
@@ -397,13 +397,13 @@ BYTE android_transmit(BYTE *buffer, BYTE size)
  */
 static void process_msg_from_android(void)
 {
-	UINT16 data_size = 0;
-	BYTE id;
-	BYTE data[300];
-	BYTE error_code = USB_SUCCESS;
+	u16 data_size = 0;
+	u8 id;
+	u8 data[300];
+	u8 error_code = USB_SUCCESS;
 
-	data_size = (UINT16)sizeof(data);
-	while (android_receive((BYTE *)&id, (BYTE*)&data, (UINT16 *)&data_size, &error_code)) {
+	data_size = (u16)sizeof(data);
+	while (android_receive((u8 *)&id, (u8*)&data, (u16 *)&data_size, &error_code)) {
 		if (error_code != USB_SUCCESS) {
 			LOG_E("android_receive raised an error %x\n\r", error_code);
 		}

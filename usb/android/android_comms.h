@@ -24,7 +24,7 @@
 
 extern void android_init(void* data);
 extern void android_tasks(void);
-extern BYTE android_transmit(BYTE *buffer, BYTE size);
+extern u8   android_transmit(u8 *buffer, u8 size);
 
 
 #endif /* SEND_ANDROID_H */
