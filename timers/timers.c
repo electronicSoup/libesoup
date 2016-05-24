@@ -159,22 +159,15 @@ void timer_init(void)
 	}
 
 #if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__)
-	if(hw_timer != BAD_TIMER) {
-		LOG_E("Unecpected value for hw_timer!\n\r");
-	}
-
-	hw_timer = hw_timer_start(mSeconds, 5, TRUE, hw_expiry_function, 0);
-	if(hw_timer == BAD_TIMER) {
-		LOG_E("Failed to start the HW timer for SW timers!\n\r");
-	}
-	hw_timer_paused = FALSE;
+	hw_timer = BAD_TIMER;
+	hw_timer_paused = TRUE;
 #endif //__PIC24FJ256GB106__
 
 #if defined( __18F2680) || defined(__18F4585)
 	/*
 	 * Timer 0 set up
 	 */
-	T0CONbits.T08BIT = 0;   // 16 bit opperation
+	T0CONbits.T08BIT = 0;   // 16 bit operation
 	T0CONbits.T0CS = 0;     // Timer 0 Off internal clock
 	T0CONbits.PSA = 1;      // Disable prescaler for Timer 0
 
