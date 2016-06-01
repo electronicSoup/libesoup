@@ -307,19 +307,6 @@ void modbus_tx_data(struct modbus_channel *channel, u8 *data, u16 len)
 	if(rc != SUCCESS) {
 		LOG_E("Failed to transmit modbus data\n\r");
 	}
-#if 0
-	while(len--) {
-		modbus_putchar(*ptr++);
-	}
-
-	if(MODBUS_ENDIAN == LITTLE_ENDIAN) {
-		modbus_putchar((crc & 0xff));
-		modbus_putchar((crc >> 8) & 0xff);
-	} else {
-		modbus_putchar((crc >> 8) & 0xff);
-		modbus_putchar((crc & 0xff));
-	}
-#endif
 }
 
 result_t modbus_attempt_transmission(struct uart_data *uart, u8 *data, u16 len, modbus_response_function fn, void *callback_data)
