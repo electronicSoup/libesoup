@@ -744,7 +744,8 @@ typedef enum {
     ERR_CAN_BAUDRATE,
     ERR_CAN_NO_FREE_BUFFER,
     ERR_UNINITIALISED,
-    ERR_BUSY
+    ERR_BUSY,
+    ERR_NOTHING_TO_DO
 } result_t;
 
 /** @}*/
