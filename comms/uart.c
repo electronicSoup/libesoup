@@ -348,7 +348,7 @@ result_t uart_reserve(struct uart_data *data)
 			uarts[loop].tx_read_index = 0;
 			uarts[loop].tx_count = 0;
 
-			AD1PCFGL = 0xffff;
+//			AD1PCFGL = 0xffff;
 
 			/*
 			 * Set up the Rx & Tx pins
@@ -413,6 +413,7 @@ result_t uart_tx(struct uart_data *data, u8 *buffer, u16 len)
 	u8  uart;
 	u8 *ptr;
 
+	LOG_D("uart_tx(%d)\n\r", len);
 	uart = data->uart;
 
 	if(uarts[uart].data != data) {
@@ -441,14 +442,16 @@ static void uart_putchar(u8 uart, u8 ch)
 			 * If either the TX Buffer is full OR there are already characters in
 			 * our SW Buffer then add to SW buffer
 			 */
-			if (uarts[uart].tx_count || U2STAbits.UTXBF) {
-				/*
-				 * Interrupt when a character is transferred to the Transmit Shift
-				 * Register (TSR), and as a result, the transmit buffer becomes empty
-				 */
-				U2STAbits.UTXISEL1 = 1;
-				U2STAbits.UTXISEL0 = 0;
-
+			if(U2STAbits.UTXBF || uarts[uart].tx_count) {
+				if (uarts[uart].tx_count == 0) {
+					/*
+					 * Interrupt when a character is transferred to the Transmit Shift
+					 * Register (TSR), and as a result, the transmit buffer becomes empty
+					 */
+					U2STAbits.UTXISEL1 = 1;
+					U2STAbits.UTXISEL0 = 0;
+				}
+				
 				if(uarts[uart].tx_count == UART_TX_BUFFER_SIZE) {
 					LOG_E("Circular buffer full!");
 					return;
@@ -467,14 +470,16 @@ static void uart_putchar(u8 uart, u8 ch)
 			 * If either the TX Buffer is full OR there are already characters in
 			 * our SW Buffer then add to SW buffer
 			 */
-			if (uarts[uart].tx_count || U3STAbits.UTXBF) {
-				/*
-				 * Interrupt when a character is transferred to the Transmit Shift
-				 * Register (TSR), and as a result, the transmit buffer becomes empty
-				 */
-				U3STAbits.UTXISEL1 = 1;
-				U3STAbits.UTXISEL0 = 0;
-
+			if(U3STAbits.UTXBF || uarts[uart].tx_count) {
+				if (uarts[uart].tx_count == 0) {
+					/*
+					 * Interrupt when a character is transferred to the Transmit Shift
+					 * Register (TSR), and as a result, the transmit buffer becomes empty
+					 */
+					U3STAbits.UTXISEL1 = 1;
+					U3STAbits.UTXISEL0 = 0;
+				}
+				
 				if(uarts[uart].tx_count == UART_TX_BUFFER_SIZE) {
 					LOG_E("Circular buffer full!");
 					return;
@@ -493,14 +498,16 @@ static void uart_putchar(u8 uart, u8 ch)
 			 * If either the TX Buffer is full OR there are already characters in
 			 * our SW Buffer then add to SW buffer
 			 */
-			if (uarts[uart].tx_count || U4STAbits.UTXBF) {
-				/*
-				 * Interrupt when a character is transferred to the Transmit Shift
-				 * Register (TSR), and as a result, the transmit buffer becomes empty
-				 */
-				U4STAbits.UTXISEL1 = 1;
-				U4STAbits.UTXISEL0 = 0;
-
+			if(U4STAbits.UTXBF || uarts[uart].tx_count) {
+				if (uarts[uart].tx_count == 0) {
+					/*
+					 * Interrupt when a character is transferred to the Transmit Shift
+					 * Register (TSR), and as a result, the transmit buffer becomes empty
+					 */
+					U4STAbits.UTXISEL1 = 1;
+					U4STAbits.UTXISEL0 = 0;
+				}
+				
 				if(uarts[uart].tx_count == UART_TX_BUFFER_SIZE) {
 					LOG_E("Circular buffer full!");
 					return;
