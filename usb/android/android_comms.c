@@ -24,8 +24,6 @@
 /*
  * Microchip USB Includes
  */ 
-//#include "usb/usb.h"
-//#include "usb/usb_host_android.h"
 #include "usb/inc/usb.h"
 #include "usb/inc/usb_host_android.h"
 
@@ -204,6 +202,13 @@ void android_tasks(void)
 		if (AndroidAppIsWriteComplete(device_handle, &error_code, &size) == TRUE) {
 			LOG_D("USB TX Write complete\n\r");
 			transmitter_busy = FALSE;
+
+			if(tx_buffer_count == 0) {
+				LOG_D("Tx Freed Up and Queue empty Signal -> ???\n\r");
+				if(android_state.tx_free) {
+					android_state.tx_free();
+				}
+			}
 		}
 
 		if(error_code != USB_SUCCESS) {
