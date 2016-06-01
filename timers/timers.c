@@ -160,7 +160,9 @@ void timer_init(void)
 
 #if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__)
 	hw_timer = BAD_TIMER;
-	hw_timer_paused = TRUE;
+
+	hw_timer = hw_timer_start(mSeconds, 5, TRUE, hw_expiry_function, 0);
+	hw_timer_paused = FALSE;
 #endif //__PIC24FJ256GB106__
 
 #if defined( __18F2680) || defined(__18F4585)
