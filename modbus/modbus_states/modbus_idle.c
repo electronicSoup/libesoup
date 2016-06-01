@@ -28,7 +28,7 @@ void set_modbus_idle_state(struct modbus_channel *channel)
 
 void transmit(struct modbus_channel *channel, u8 *data, u16 len, modbus_response_function fn, void *callback_data)
 {
-	LOG_D("Modbus Idle state Transmit()\n\r");
+	LOG_D("Modbus Idle state Transmit(%d)\n\r", channel->uart->uart);
 
 	/*
 	 * The response timeout timer is started when the transmission is
