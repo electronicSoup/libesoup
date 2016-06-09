@@ -46,6 +46,10 @@
  */
 #if defined(MCP)
     #include <stdint.h>
+#ifndef	NULL
+#define NULL (0)
+#endif	/* NULL */
+
     typedef uint8_t    BOOL;
 #define FALSE 0x00
 #define TRUE (!FALSE)
