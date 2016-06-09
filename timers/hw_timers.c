@@ -39,13 +39,13 @@ struct hw_timer_data {
 	u16           time;
 	u16           repeats;
 	u16           remainder;
-	void        (*expiry_function)(u8 data);
-	u8            data;
+	void        (*expiry_function)(void *data);
+	void         *data;
 };
 
 static struct hw_timer_data timers[NUMBER_HW_TIMERS];
 
-static result_t  start_timer(u8 timer, ty_time_units units, u16 time, u8 repeat, void (*expiry_function)(u8), u8 data);
+static result_t  start_timer(u8 timer, ty_time_units units, u16 time, u8 repeat, void (*expiry_function)(void *), void *data);
 static void      set_clock_divide(u8 timer, u16 clock_divide);
 static void      check_timer(u8 timer);
 
@@ -152,7 +152,7 @@ void hw_timer_init(void)
 	T5CONbits.TCS = 0;      // Internal FOSC/2
 }
 
-u8 hw_timer_start(ty_time_units units, u16 time, u8 repeat, void (*expiry_function)(u8), u8 data)
+u8 hw_timer_start(ty_time_units units, u16 time, u8 repeat, void (*expiry_function)(void *), void *data)
 {
 	result_t rc;
 	u8       loop;
@@ -180,7 +180,7 @@ u8 hw_timer_start(ty_time_units units, u16 time, u8 repeat, void (*expiry_functi
 	return(BAD_TIMER);
 }
 
-result_t hw_timer_restart(u8 timer, ty_time_units units, u16 time, u8 repeat, void (*expiry_function)(u8), u8 data)
+result_t hw_timer_restart(u8 timer, ty_time_units units, u16 time, u8 repeat, void (*expiry_function)(void *), void *data)
 {
 	if(timer >= NUMBER_HW_TIMERS) {
 		LOG_E("Bad time passed to hw_timer_restart()\n\r!");
@@ -273,7 +273,7 @@ void hw_timer_cancel_all()
 	T5CONbits.TON = 0;
 }
 
-result_t start_timer(u8 timer, ty_time_units units, u16 time, u8 repeat, void (*expiry_function)(u8), u8 data)
+result_t start_timer(u8 timer, ty_time_units units, u16 time, u8 repeat, void (*expiry_function)(void *), void *data)
 {
 	u32 ticks;
 

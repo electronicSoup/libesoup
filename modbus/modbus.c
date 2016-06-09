@@ -145,21 +145,25 @@ u8 crc_check(u8 *data, u16 len)
 	}
 }
 
-static void hw_35_expiry_function(u8 channel_id)
+static void hw_35_expiry_function(void *chan)
 {
-	modbus_channels[channel_id].hw_35_timer = BAD_TIMER;
+	struct modbus_channel *modbus_chan = (struct modbus_channel *)chan;
+	
+	modbus_chan->hw_35_timer = BAD_TIMER;
 
-	if (modbus_channels[channel_id].process_timer_35_expiry) {
-		modbus_channels[channel_id].process_timer_35_expiry(&modbus_channels[channel_id]);
+	if (modbus_chan->process_timer_35_expiry) {
+		modbus_chan->process_timer_35_expiry(modbus_chan);
 	} else {
 		LOG_E("T35 in unknown state\n\r");
 	}
 }
 
-static void hw_15_expiry_function(u8 channel_id)
+static void hw_15_expiry_function(void *chan)
 {
-	if (modbus_channels[channel_id].process_timer_15_expiry) {
-		modbus_channels[channel_id].process_timer_15_expiry(&modbus_channels[channel_id]);
+	struct modbus_channel *modbus_chan = (struct modbus_channel *)chan;
+
+	if (modbus_chan->process_timer_15_expiry) {
+		modbus_chan->process_timer_15_expiry(modbus_chan);
 	} else {
 		LOG_E("T15 in unknown state\n\r");
 	}
@@ -167,7 +171,7 @@ static void hw_15_expiry_function(u8 channel_id)
 
 void start_15_timer(struct modbus_channel *channel)
 {
-	channel->hw_15_timer = hw_timer_start(uSeconds, ((1000000 * 17)/channel->uart->baud), FALSE, hw_15_expiry_function, channel->uart->uart);
+	channel->hw_15_timer = hw_timer_start(uSeconds, ((1000000 * 17)/channel->uart->baud), FALSE, hw_15_expiry_function, (void *)channel);
 }
 
 void start_35_timer(struct modbus_channel *channel)
@@ -176,7 +180,7 @@ void start_35_timer(struct modbus_channel *channel)
 		hw_timer_cancel(channel->hw_35_timer);
 	}
 
-	channel->hw_35_timer = hw_timer_start(uSeconds, ((1000000 * 39)/channel->uart->baud), FALSE, hw_35_expiry_function, channel->uart->uart);
+	channel->hw_35_timer = hw_timer_start(uSeconds, ((1000000 * 39)/channel->uart->baud), FALSE, hw_35_expiry_function, (void *)channel);
 }
 
 static void modbus_process_rx_character(u8 channel_id, u8 ch)
