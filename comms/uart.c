@@ -45,6 +45,8 @@
 #define DEBUG_FILE
 #define TAG "UART"
 
+#include <stdio.h>
+
 #include "system.h"
 #include "es_lib/logger/serial_log.h"
 #include "es_lib/utils/rand.h"
@@ -135,16 +137,16 @@ static void uart_tx_isr(u8 uart)
 					}
 
 					/*
-					 * Inform the higher layer we're finished
-					 */
-					uarts[uart].data->tx_finished(UART_2);
-
-					/*
 					 * Interrupt when a character is transferred to the Transmit Shift
 					 * Register (TSR), and as a result, the transmit buffer becomes empty
 					 */
 					U2STAbits.UTXISEL1 = 1;
 					U2STAbits.UTXISEL0 = 0;
+
+                                        /*
+                                         * Inform the higher layer we're finished
+                                         */
+                                        uarts[uart].data->tx_finished(uarts[uart].data);
 				} else {
 					/*
 					 * Interrupt when the last character is shifted out of the Transmit
@@ -166,16 +168,16 @@ static void uart_tx_isr(u8 uart)
 					}
 
 					/*
-					 * Inform the higher layer we're finished
-					 */
-					uarts[uart].data->tx_finished(UART_3);
-
-					/*
 					 * Interrupt when a character is transferred to the Transmit Shift
 					 * Register (TSR), and as a result, the transmit buffer becomes empty
 					 */
 					U3STAbits.UTXISEL1 = 1;
 					U3STAbits.UTXISEL0 = 0;
+
+                                        /*
+                                         * Inform the higher layer we're finished
+                                         */
+                                        uarts[uart].data->tx_finished(uarts[uart].data);
 				} else {
 					/*
 					 * Interrupt when the last character is shifted out of the Transmit
@@ -197,16 +199,16 @@ static void uart_tx_isr(u8 uart)
 					}
 
 					/*
-					 * Inform the higher layer we're finished
-					 */
-					uarts[uart].data->tx_finished(UART_4);
-
-					/*
 					 * Interrupt when a character is transferred to the Transmit Shift
 					 * Register (TSR), and as a result, the transmit buffer becomes empty
 					 */
 					U4STAbits.UTXISEL1 = 1;
 					U4STAbits.UTXISEL0 = 0;
+
+                                        /*
+                                         * Inform the higher layer we're finished
+                                         */
+                                        uarts[uart].data->tx_finished(uarts[uart].data);
 				} else {
 					/*
 					 * Interrupt when the last character is shifted out of the Transmit
@@ -219,6 +221,7 @@ static void uart_tx_isr(u8 uart)
 
 			default:
 				LOG_E("Bad comm port given!\n\r");
+				return;
 				break;
 		}
 	}
@@ -329,7 +332,7 @@ void uart_init(void)
 
 result_t uart_reserve(struct uart_data *data)
 {
-//	LOG_D("uart_reserve()\n\r");
+	LOG_D("uart_reserve()\n\r");
 
 	/*
 	 * Find a free uart to use
@@ -402,8 +405,6 @@ result_t uart_release(struct uart_data *data)
 	}
 
 	data->uart = UART_BAD;
-
-	LOG_D("uart released\n\r");
 
 	return(SUCCESS);
 }
@@ -655,6 +656,8 @@ static void uart_set_com_config(struct uart_data *com)
 			U2BRG = ((CLOCK_FREQ / com->baud) / 16) - 1;
 
 
+                        U2_RX_ISR_FLAG = 0;
+                        U2_TX_ISR_FLAG = 0;
 			U2_RX_ISR_ENABLE = 1;
 			U2_TX_ISR_ENABLE = 1;
 			break;
@@ -682,6 +685,8 @@ static void uart_set_com_config(struct uart_data *com)
 			 */
 			U3BRG = ((CLOCK_FREQ / com->baud) / 16) - 1;
 
+                        U3_RX_ISR_FLAG = 0;
+                        U3_TX_ISR_FLAG = 0;
 			U3_RX_ISR_ENABLE = 1;
 			U3_TX_ISR_ENABLE = 1;
 			break;
@@ -709,6 +714,8 @@ static void uart_set_com_config(struct uart_data *com)
 			 */
 			U4BRG = ((CLOCK_FREQ / com->baud) / 16) - 1;
 
+                        U4_RX_ISR_FLAG = 0;
+                        U4_TX_ISR_FLAG = 0;
 			U4_RX_ISR_ENABLE = 1;
 			U4_TX_ISR_ENABLE = 1;
 			break;
@@ -725,28 +732,6 @@ static void uart_set_com_config(struct uart_data *com)
 static u16 load_tx_buffer(u8 uart)
 {
 	switch (uart) {
-//		case UART_1:
-//			while(!U1STAbits.UTXBF && (com->tx_buffer_read_index < com->tx_buffer_size)) {
-//				U1TXREG = com->tx_buffer[com->tx_buffer_read_index++];
-//			}
-//
-//			if(com->tx_buffer_read_index < com->tx_buffer_size) {
-//				/*
-//				 * Interrupt when a character is transferred to the Transmit Shift
-//				 * Register (TSR), and as a result, the transmit buffer becomes empty
-//				 */
-//				U1STAbits.UTXISEL1 = 1;
-//				U1STAbits.UTXISEL0 = 0;
-//			} else {
-//				/*
-//				 * Interrupt when the last character is shifted out of the Transmit
-//				 * Shift Register; all transmit operations are completed
-//				 */
-//				U1STAbits.UTXISEL1 = 0;
-//				U1STAbits.UTXISEL0 = 1;
-//			}
-//			break;
-//
 		case UART_2:
 			/*
 			 * If the TX buffer is not full load it from the circular buffer
