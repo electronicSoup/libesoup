@@ -51,7 +51,7 @@ struct uart_data {
     u8            uart;
     u16           uart_mode;
     u16           baud;
-    void        (*tx_finished)(u8 channel);
+    void        (*tx_finished)(void *);
     void        (*process_rx_char)(u8, u8);
 };
 

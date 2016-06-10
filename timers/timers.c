@@ -118,7 +118,7 @@ sys_timer_t timers[NUMBER_OF_TIMERS];
  */
 #ifdef MCP
 #if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__)
-static void hw_expiry_function(u8 data)
+static void hw_expiry_function(void *data)
 {
 	timer_ticked = TRUE;
 }
@@ -161,7 +161,7 @@ void timer_init(void)
 #if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__)
 	hw_timer = BAD_TIMER;
 
-	hw_timer = hw_timer_start(mSeconds, 5, TRUE, hw_expiry_function, 0);
+	hw_timer = hw_timer_start(mSeconds, 5, TRUE, hw_expiry_function, NULL);
 	hw_timer_paused = FALSE;
 #endif //__PIC24FJ256GB106__
 
@@ -318,7 +318,7 @@ result_t timer_start(u16 ticks,
 			 * If our hw_timer isn't running restart it:
 			 */
 			if(hw_timer_paused) {
-				if(hw_timer_restart(hw_timer, mSeconds, 5, TRUE, hw_expiry_function, 0) != SUCCESS) {
+				if(hw_timer_restart(hw_timer, mSeconds, 5, TRUE, hw_expiry_function, NULL) != SUCCESS) {
 					LOG_E("Failed to restart HW timer\n\r");
 				}
 				hw_timer_paused = FALSE;

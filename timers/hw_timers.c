@@ -134,7 +134,7 @@ void hw_timer_init(void)
 		timers[loop].status = TIMER_UNUSED;
 		timers[loop].repeat = 0;
 		timers[loop].time = 0;
-		timers[loop].expiry_function = (void (*)(u8))NULL;
+		timers[loop].expiry_function = NULL;
 		timers[loop].data = 0;
 		timers[loop].repeats = 0;
 		timers[loop].remainder = 0;
@@ -249,7 +249,7 @@ void hw_timer_cancel(u8 timer)
 	timers[timer].status = TIMER_UNUSED;
 	timers[timer].repeat = 0;
 	timers[timer].time = 0;
-	timers[timer].expiry_function = (void (*)(u8))NULL;
+	timers[timer].expiry_function = NULL;
 	timers[timer].data = 0;
 	timers[timer].repeats = 0;
 	timers[timer].remainder = 0;
@@ -570,7 +570,7 @@ static void check_timer(u8 timer)
 		} else {
 			timers[timer].status = TIMER_UNUSED;
 			timers[timer].repeat = 0;
-			timers[timer].expiry_function = (void (*)(u8))NULL;
+			timers[timer].expiry_function = NULL;
 			timers[timer].data = 0;
 			timers[timer].repeats = 0;
 			timers[timer].remainder = 0;

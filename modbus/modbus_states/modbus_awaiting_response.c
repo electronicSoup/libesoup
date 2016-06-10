@@ -8,26 +8,35 @@
 
 extern struct modbus_state modbus_state;
 
-static void process_timer_35_expiry(struct modbus_channel *channel);
+static void process_timer_35_expiry(void *);
 static void process_rx_character(struct modbus_channel *channel, u8 ch);
 static void process_response_timeout(struct modbus_channel *channel);
 
 void set_modbus_awaiting_response_state(struct modbus_channel *channel)
 {
+        result_t rc;
+        
+	LOG_D("set_modbus_awaiting_response_state()\n\r");
 	channel->rx_write_index = 0;
 
 	channel->process_timer_15_expiry = NULL;
 	channel->process_timer_35_expiry = process_timer_35_expiry;
 	channel->transmit = NULL;
-	channel->process_tx_finished = NULL;
+	channel->modbus_tx_finished = NULL;
 	channel->process_rx_character = process_rx_character;
 	channel->process_response_timeout = process_response_timeout;
 
-	start_response_timer(channel);
+	rc = start_response_timer(channel);
+        
+        if(rc != SUCCESS) {
+                LOG_E("Failed to start response timer\n\r");
+        }
 }
 
-void process_timer_35_expiry(struct modbus_channel *channel)
+void process_timer_35_expiry(void *data)
 {
+        struct modbus_channel *channel = (struct modbus_channel *)data;
+        
 	u8  start_index;
 //	u16 loop;
 
@@ -84,6 +93,7 @@ void process_rx_character(struct modbus_channel *channel, u8 ch)
 
 static void process_response_timeout(struct modbus_channel *channel)
 {
+	LOG_D("process_response_timeout()\n\r");
 	set_modbus_starting_state(channel);
 	if(channel->process_response) {
 		channel->process_response(NULL, 0, channel->response_callback_data);

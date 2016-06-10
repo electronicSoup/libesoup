@@ -29,6 +29,7 @@
 #include "es_lib/timers/timers.h"
 #include "es_lib/modbus/modbus.h"
 #include "es_lib/comms/uart.h"
+#include "es_lib/jobs/jobs.h"
 
 #define TAG "MODBUS"
 
@@ -117,8 +118,8 @@ static void resp_timeout_expiry_fn(timer_t timer_id, union sigval data);
 u16 crc_calculate(u8 *data, u16 len)
 {
 	u8 *ptr = data;
-	u8  crc_high = 0xFF; /* high byte of CRC initialized */
-	u8  crc_low  = 0xFF; /* low byte of CRC initialized */
+	u8  crc_high = 0xFF; /* high byte of CRC initialised */
+	u8  crc_low  = 0xFF; /* low byte of CRC initialised */
 	u16 index;           /* will index into CRC lookup table */
 
 	while (len--) {      /* pass through message buffer */
@@ -133,7 +134,7 @@ u16 crc_calculate(u8 *data, u16 len)
 
 u8 crc_check(u8 *data, u16 len)
 {
-	u16 crc;
+        u16 crc;
 
 	crc = crc_calculate(data, len - 2);
 
@@ -152,7 +153,8 @@ static void hw_35_expiry_function(void *chan)
 	modbus_chan->hw_35_timer = BAD_TIMER;
 
 	if (modbus_chan->process_timer_35_expiry) {
-		modbus_chan->process_timer_35_expiry(modbus_chan);
+		// modbus_chan->process_timer_35_expiry(modbus_chan);
+		jobs_add(modbus_chan->process_timer_35_expiry, (void *)modbus_chan);
 	} else {
 		LOG_E("T35 in unknown state\n\r");
 	}
@@ -163,7 +165,8 @@ static void hw_15_expiry_function(void *chan)
 	struct modbus_channel *modbus_chan = (struct modbus_channel *)chan;
 
 	if (modbus_chan->process_timer_15_expiry) {
-		modbus_chan->process_timer_15_expiry(modbus_chan);
+		// modbus_chan->process_timer_15_expiry(modbus_chan);
+		jobs_add(modbus_chan->process_timer_15_expiry, (void *)modbus_chan);
 	} else {
 		LOG_E("T15 in unknown state\n\r");
 	}
@@ -191,38 +194,44 @@ static void modbus_process_rx_character(u8 channel_id, u8 ch)
 
 }
 
-void modbus_tx_finished(u8 channel_id)
+/*
+ * Called from UART ISR
+ */
+void modbus_tx_finished(void *data)
 {
-//	LOG_D("modbus_tx_finished(channel %d)\n\r", channel_id);
-
-	if(!modbus_channels[channel_id].uart) {
-		LOG_E("Error tx_finished channel %d no UART struct\n\r", channel_id);
-		return;
-	} else if(channel_id != modbus_channels[channel_id].uart->uart) {
-		LOG_E("Error tx_finished channel %d not correct UART\n\r", channel_id);
+        struct uart_data *uart = (struct uart_data *)data;
+        
+	if(!modbus_channels[uart->uart].uart) {
+		LOG_E("Error tx_finished channel %d no UART struct\n\r", uart->uart);
 		return;
 	}
 
 	/*
-	 * Call the higher tx_finished function
+	 * Call the Modbus state machine's Tx finished function 
 	 */
-	if(modbus_channels[channel_id].tx_finished) {
-		modbus_channels[channel_id].tx_finished(channel_id);
-	}
-
-	if(modbus_channels[channel_id].process_tx_finished) {
-		modbus_channels[channel_id].process_tx_finished(&modbus_channels[channel_id]);
+	if(modbus_channels[uart->uart].modbus_tx_finished) {
+		//modbus_channels[channel_id].process_tx_finished(&modbus_channels[channel_id]);
+		jobs_add(modbus_channels[uart->uart].modbus_tx_finished, (void *)&modbus_channels[uart->uart]);
 	} else {
 		LOG_E("Error processing tx_finished\n\r");
+	}
+
+	/*
+	 * Call the higher Application tx_finished function
+	 */
+	if(modbus_channels[uart->uart].app_tx_finished) {
+		//modbus_channels[uart->uart].app_tx_finished(channel_id);
+		jobs_add(modbus_channels[uart->uart].app_tx_finished, (void *)uart);
 	}
 }
 
 result_t modbus_reserve(struct uart_data *uart, void (*idle_callback)(void *), void *data)
 {
 	result_t rc;
-	void (*tx_finished)(u8 channel);
+	void (*app_tx_finished)(void *data);
 
-	tx_finished = uart->tx_finished;
+        LOG_D("modbus_reserve()\n\r");
+	app_tx_finished = uart->tx_finished;
 
 	uart->process_rx_char = modbus_process_rx_character;
 	uart->tx_finished = modbus_tx_finished;
@@ -239,12 +248,12 @@ result_t modbus_reserve(struct uart_data *uart, void (*idle_callback)(void *), v
 
 	modbus_channels[uart->uart].idle_callback = idle_callback;
 	modbus_channels[uart->uart].idle_callback_data = data;
-	modbus_channels[uart->uart].tx_finished = tx_finished;
+	modbus_channels[uart->uart].app_tx_finished = app_tx_finished;
 	modbus_channels[uart->uart].uart = uart;
 	modbus_channels[uart->uart].response_callback_data = NULL;
 
 	/*
-	 * Initialise the 35 timer so it can't be canceled by mistake
+	 * Initialise the 35 timer so it can't be cancelled by mistake
 	 */
 	modbus_channels[uart->uart].hw_35_timer = BAD_TIMER;
 
@@ -270,9 +279,14 @@ result_t modbus_release(struct uart_data *data)
 
 	LOG_D("modbus_relase() UART %d\n\r", uart);
 
+	if(modbus_channels[uart].hw_35_timer != BAD_TIMER) {
+		hw_timer_cancel(modbus_channels[uart].hw_35_timer);
+	}
+
+        modbus_channels[uart].uart = NULL;
 	modbus_channels[uart].idle_callback = NULL;
 	modbus_channels[uart].idle_callback_data = NULL;
-	modbus_channels[uart].tx_finished = NULL;
+	modbus_channels[uart].app_tx_finished = NULL;
 	modbus_channels[uart].process_timer_15_expiry = NULL;
 	modbus_channels[uart].process_timer_35_expiry = NULL;
 	modbus_channels[uart].transmit = NULL;

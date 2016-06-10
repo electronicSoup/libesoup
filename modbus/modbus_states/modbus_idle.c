@@ -17,7 +17,7 @@ void set_modbus_idle_state(struct modbus_channel *channel)
 	channel->process_timer_15_expiry = NULL;
 	channel->process_timer_35_expiry = NULL;
 	channel->transmit = transmit;
-	channel->process_tx_finished = NULL;
+	channel->modbus_tx_finished = NULL;
 	channel->process_rx_character = NULL;
 	channel->process_response_timeout = NULL;
 

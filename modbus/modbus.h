@@ -37,13 +37,19 @@ struct modbus_channel {
     void                    *response_callback_data;
     void                   (*idle_callback)(void*);
     void                    *idle_callback_data;
-    void                   (*tx_finished)(u8 channel);
-    void (*process_timer_15_expiry)(struct modbus_channel *channel);
-    void (*process_timer_35_expiry)(struct modbus_channel *channel);
-    void (*transmit)(struct modbus_channel *channel, u8 *data, u16 len, modbus_response_function fn, void *callback_data);
-    void (*process_tx_finished)(struct modbus_channel *channel);
-    void (*process_rx_character)(struct modbus_channel *channel, u8 ch);
-    void (*process_response_timeout)();
+    
+    /*
+     * The higher layer applicaton code will pass in a tx_finished() in the 
+     * uart structure. Modbus code will hijack that function and call it from 
+     * the modbus finished function.
+     */
+    void                   (*app_tx_finished)(void *);
+    void                   (*modbus_tx_finished)(void *);
+    void                   (*process_timer_15_expiry)(void *);
+    void                   (*process_timer_35_expiry)(void *);
+    void                   (*transmit)(struct modbus_channel *channel, u8 *data, u16 len, modbus_response_function fn, void *callback_data);
+    void                   (*process_rx_character)(struct modbus_channel *channel, u8 ch);
+    void                   (*process_response_timeout)();
 //    void (*resp_timeout_expiry_fn(timer_t timer_id, union sigval data);
 
 };

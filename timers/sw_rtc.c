@@ -37,6 +37,7 @@
 #include "es_lib/logger/serial_log.h"
 #include "es_lib/timers/hw_timers.h"
 #include "es_lib/timers/rtc.h"
+#include "es_lib/jobs/jobs.h"
 
 struct alarm_data {
 	struct alarm_data *next;
@@ -63,13 +64,13 @@ void rtc_init(void)
 	alarm_list = NULL;
 }
 
-void timer_expiry(u8 data)
+void timer_expiry(void *data)
 {
 	increment_current_time(current_isr_secs);
 
 	current_isr_secs = SW_RTC_TICK_SECS;
 
-	hw_timer_start(Seconds, current_isr_secs, FALSE, timer_expiry, 0);
+	hw_timer_start(Seconds, current_isr_secs, FALSE, timer_expiry, NULL);
 
 	if(alarm_list) {
 		check_alarm();
@@ -135,7 +136,7 @@ result_t rtc_update_current_datetime(u8 *data, u16 len)
 		current_isr_secs = current_datetime.seconds % SW_RTC_TICK_SECS;
 	}
 
-	hw_timer_start(Seconds, current_isr_secs, FALSE, timer_expiry, 0);
+	hw_timer_start(Seconds, current_isr_secs, FALSE, timer_expiry, NULL);
 
 //	LOG_D("Current isr secs %d last digit %d\n\r", current_isr_secs, (data[16] - '0'));
 
@@ -230,7 +231,7 @@ static void add_alarm_to_list(struct alarm_data *alarm)
 {
 	struct alarm_data *next = NULL;
 	struct alarm_data *prev = NULL;
-	u16                count = 0;
+//	u16                count = 0;
 
 	LOG_D("add_alarm_to_list(%2d:%2d)\n\r", alarm->datetime.hours, alarm->datetime.minutes);
 
@@ -345,7 +346,7 @@ static s8 datetime_cmp(struct datetime *a, struct datetime *b)
 static void check_alarm()
 {
 	u8                 finished = FALSE;
-	u16                count = 0;
+//	u16                count = 0;
 	struct alarm_data *tmp_alarm;
 
 //	LOG_D("check_alarm() Compare Current time %d:%d:%d\n\r",
@@ -372,11 +373,12 @@ static void check_alarm()
 			/*
 			 * Call the expiry function
 			 */
-			tmp_alarm->expiry_fn(tmp_alarm->expiry_data);
+			// tmp_alarm->expiry_fn(tmp_alarm->expiry_data);
+			jobs_add(tmp_alarm->expiry_fn, (void *)tmp_alarm->expiry_data);
 
-            /*
-             * And free the expired alarm
-             */
+                        /*
+                         * And free the expired alarm
+                         */
 			free(tmp_alarm);
 
 		} else {
