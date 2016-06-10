@@ -22,11 +22,6 @@
  *
  */
 
-struct job {
-    void (*function)(void *);
-    void *data;
-};
-
 extern void     jobs_init(void);
 extern result_t jobs_add(void (*function)(void *), void *data);
 extern result_t jobs_execute(void);

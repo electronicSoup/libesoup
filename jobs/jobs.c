@@ -28,11 +28,23 @@
 #include "es_lib/logger/serial_log.h"
 #include "es_lib/jobs/jobs.h"
 
+struct job {
+    void (*function)(void *);
+    void *data;
+};
+
 struct job jobs[NUMBER_OF_JOBS];
+static u8 write_index;
+static u8 read_index;
+static u8 count;
 
 void jobs_init(void)
 {
 	u16 loop;
+
+        write_index = 0;
+        read_index = 0;
+        count = 0;
 	
 	for(loop = 0; loop < NUMBER_OF_JOBS; loop++) {
 		jobs[loop].function = NULL;
@@ -43,32 +55,38 @@ void jobs_init(void)
 result_t jobs_add(void (*function)(void *), void *data)
 {
 	result_t rc = SUCCESS;
-	u16      loop = 0;
 
-	while((jobs[loop].function) && (loop < NUMBER_OF_JOBS)) {
-		loop++;
-	}
-
-	if(loop < NUMBER_OF_JOBS) {
-		jobs[loop].function = function;
-		jobs[loop].data = data;
-	} else {
-		LOG_E("No space for system job\n\r");
-		rc = ERR_NO_RESOURCES;
-	}
+        __builtin_disi(0x3FFF); /* disable interrupts */
+        jobs[write_index].function = function;
+        jobs[write_index].data = data;
+        write_index = (write_index + 1) % NUMBER_OF_JOBS;
+        count++;
+        __builtin_disi(0x0000); /* enable interrupts */
 	return(rc);
 }
 
 result_t jobs_execute(void)
 {
-	result_t rc = SUCCESS;
-	u16      loop = 0;
+	result_t  rc = SUCCESS;
+        void    (*function)(void *);
+        void     *data;
 
-	while((jobs[loop].function) && (loop < NUMBER_OF_JOBS)) {
-		jobs[loop].function(jobs[loop].data);
-		jobs[loop].function = NULL;
-		jobs[loop].data = NULL;
-		loop++;
+	while(count) {
+                if(jobs[read_index].function) {
+                        LOG_D("Execute Job(%d)\n\r", read_index);
+                        function = jobs[read_index].function;
+                        data     = jobs[read_index].data;
+
+                        jobs[read_index].function = NULL;
+                        jobs[read_index].data = NULL;
+                        read_index = (read_index + 1) % NUMBER_OF_JOBS;
+                        count--;
+                        
+                        function(data);
+                } else {
+                        LOG_E("Bad job at %d\n\r", read_index);
+                        rc = ERR_GENERAL_ERROR;
+                }
 	}
 
 	return(rc);
