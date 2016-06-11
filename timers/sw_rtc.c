@@ -21,7 +21,7 @@
  */
 /*
  * To use this code the system.h file must define SW_RTC_TICK_SECS
- * 
+ *
  * SW_RTC_TICK_SECS - This is the rtc period of a tick in seconds
  */
 #include <stdlib.h>
@@ -367,7 +367,7 @@ static void check_alarm()
 			 * Remove the alarm from the Queue
 			 */
 			tmp_alarm = alarm_list;
-			
+
 			alarm_list = tmp_alarm->next;
 
 			/*
@@ -404,7 +404,10 @@ static void check_alarm()
 result_t rtc_get_current_datetime(struct datetime *dt)
 {
 	if(current_datetime_valid) {
-		dt->hours = current_datetime.hours;
+                dt->year    = current_datetime.year;
+                dt->month   = current_datetime.month;
+                dt->day     = current_datetime.day;
+		dt->hours   = current_datetime.hours;
 		dt->minutes = current_datetime.minutes;
 		dt->seconds = current_datetime.seconds;
 
