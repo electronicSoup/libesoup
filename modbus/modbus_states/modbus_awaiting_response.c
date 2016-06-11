@@ -40,6 +40,7 @@ void process_timer_35_expiry(void *data)
 	u8  start_index;
 //	u16 loop;
 
+	LOG_D("process_timer_35_expiry()\n\r");
 //	RX_ISR_ENABLE = 0;
 	set_modbus_idle_state(channel);
 

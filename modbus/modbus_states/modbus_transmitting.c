@@ -12,7 +12,7 @@ static void tx_finished(void *);
 
 void set_modbus_transmitting_state(struct modbus_channel *channel)
 {
-//	LOG_D("set_modbus_transmitting_state()\n\r");
+	LOG_D("set_modbus_transmitting_state()\n\r");
 
 	channel->process_timer_15_expiry = NULL;
 	channel->process_timer_35_expiry = NULL;
