@@ -225,7 +225,7 @@ void modbus_tx_finished(void *data)
 	}
 }
 
-result_t modbus_reserve(struct uart_data *uart, void (*idle_callback)(void *), void *data)
+result_t modbus_reserve(struct uart_data *uart, void (*idle_callback)(void *), modbus_response_function unsolicited, void *data)
 {
 	result_t rc;
 	void (*app_tx_finished)(void *data);
@@ -246,6 +246,7 @@ result_t modbus_reserve(struct uart_data *uart, void (*idle_callback)(void *), v
 	}
 	LOG_D("modbus_reserve took UART %d\n\r", uart->uart);
 
+	modbus_channels[uart->uart].process_unsolicited_msg = unsolicited;
 	modbus_channels[uart->uart].idle_callback = idle_callback;
 	modbus_channels[uart->uart].idle_callback_data = data;
 	modbus_channels[uart->uart].app_tx_finished = app_tx_finished;
@@ -286,6 +287,7 @@ result_t modbus_release(struct uart_data *uart)
         uart->tx_finished = modbus_channels[uart->uart].app_tx_finished;
 
         modbus_channels[uart->uart].uart = NULL;
+	modbus_channels[uart->uart].process_unsolicited_msg = NULL;
 	modbus_channels[uart->uart].idle_callback = NULL;
 	modbus_channels[uart->uart].idle_callback_data = NULL;
 	modbus_channels[uart->uart].app_tx_finished = NULL;

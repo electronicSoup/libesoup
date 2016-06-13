@@ -33,6 +33,15 @@ struct modbus_channel {
     u8                       address;
     u8                       rx_buffer[MODBUS_RX_BUFFER_SIZE];
     u16                      rx_write_index;
+
+    /*
+     * function to process unsolicited messages
+     */
+    modbus_response_function process_unsolicited_msg;
+
+    /*
+     * function to process response to sent messages
+     */
     modbus_response_function process_response;
     void                    *response_callback_data;
     void                   (*idle_callback)(void*);
@@ -69,7 +78,7 @@ extern void set_modbus_awaiting_response_state(struct modbus_channel *channel);
 extern void start_15_timer(struct modbus_channel *channel);
 extern void start_35_timer(struct modbus_channel *channel);
 
-extern result_t modbus_reserve(struct uart_data *uart, void (*idle_callback)(void *), void *);
+extern result_t modbus_reserve(struct uart_data *uart, void (*idle_callback)(void *), modbus_response_function, void *);
 extern result_t modbus_release(struct uart_data *uart);
 extern void modbus_tx_data(struct modbus_channel *channel, u8 *data, u16 len);
 extern result_t modbus_attempt_transmission(struct uart_data *uart, u8 *data, u16 len, modbus_response_function fn, void *callback_data);
