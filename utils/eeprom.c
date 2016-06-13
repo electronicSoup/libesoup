@@ -21,14 +21,14 @@
  *******************************************************************************
  *
  * The Cinnamon Bun uses an SPI EEPROM chip with 128 Bytes of memory. The max
- * address is defined in core.h as EEPROM_MAX_ADDRESS any address passed to 
+ * address is defined in core.h as EEPROM_MAX_ADDRESS any address passed to
  * the eeprom functions exceedign this maximum address will cause a returned
  * error code of ERR_ADDRESS_RANGE. The error code type is also defined in
  * core.h of es_lib.
  *
  * The eeprom address map is split into two sections with the first 32 Bytes
  * being reserved for a Bootloader. This size is specified in core.h by the
- * constant EEPROM_BOOT_PAGE_SIZE. If your project is not using a Bootloader, 
+ * constant EEPROM_BOOT_PAGE_SIZE. If your project is not using a Bootloader,
  * i.e. is being programmed directly into the PIC Processor using a PicKit3, or
  * similar flash programmer, then defining the switch EEPROM_USE_BOOT_PAGE in
  * your system.h file will ignore this restriction and allow access to the full
@@ -68,7 +68,7 @@
 
 static void clear_write_in_progress(void)
 {
-	BYTE status;
+	u8 status;
 
 	do {
 		EEPROM_Select
@@ -92,14 +92,14 @@ static void clear_write_in_progress(void)
  *          otherwise SUCCESS
  *
  */
-result_t eeprom_read(UINT16 address, BYTE *data)
+result_t eeprom_read(u16 address, u8 *data)
 {
-	BYTE use_address;
+	u8 use_address;
 
 #ifdef EEPROM_USE_BOOT_PAGE
-	use_address = (BYTE)address;
+	use_address = (u8)address;
 #else
-	use_address = (BYTE)(address + EEPROM_BOOT_PAGE_SIZE);
+	use_address = (u8)(address + EEPROM_BOOT_PAGE_SIZE);
 #endif
 	if(use_address <= EEPROM_MAX_ADDRESS) {
 		clear_write_in_progress();
@@ -127,14 +127,14 @@ result_t eeprom_read(UINT16 address, BYTE *data)
  *          otherwise SUCCESS
  *
  */
-result_t eeprom_write(UINT16 address, BYTE data)
+result_t eeprom_write(u16 address, u8 data)
 {
-	BYTE use_address;
+	u8 use_address;
 
 #ifdef EEPROM_USE_BOOT_PAGE
-	use_address = (BYTE)address;
+	use_address = (u8)address;
 #else
-	use_address = (BYTE)(address + EEPROM_BOOT_PAGE_SIZE);
+	use_address = (u8)(address + EEPROM_BOOT_PAGE_SIZE);
 #endif
 	if(use_address <= EEPROM_MAX_ADDRESS) {
 		clear_write_in_progress();
@@ -145,7 +145,7 @@ result_t eeprom_write(UINT16 address, BYTE data)
 		EEPROM_Select
 
 		spi_write_byte(SPI_EEPROM_WRITE);
-		spi_write_byte((BYTE)use_address);
+		spi_write_byte((u8)use_address);
 		spi_write_byte(data);
 		EEPROM_DeSelect
 		Nop();
@@ -169,7 +169,7 @@ result_t eeprom_write(UINT16 address, BYTE data)
  *          otherwise SUCCESS
  *
  */
-result_t eeprom_erase(UINT16 start_address)
+result_t eeprom_erase(u16 start_address)
 {
 	u16 loop;
 
@@ -185,35 +185,35 @@ result_t eeprom_erase(UINT16 start_address)
 		}
 
 		return (SUCCESS);
-	}	
+	}
         LOG_E("eeprom_erase Address Range Error!\n\r");
 	return (ERR_ADDRESS_RANGE);
 }
 
 /*
  * result_t eeprom_str_read(UINT16 address, BYTE *buffer, UINT16 *length)
- * 
+ *
  * Function to read a null terminated C String from an address in EEPROM
- * 
+ *
  * Input  : UINT16 address       - start EEPROM address of null terminated string
- * 
+ *
  * Output : BYTE *buffer         - Data Buffer to write string into.
- * 
+ *
  * Input/Output : UINT16 *length - Inputs the size of the input buffer so function
  *                                 leaves space for null termination and will not
  *                                 overflow the buffer.
  *                                 Outputs the actual number of characters written
  *                                 to the buffer
- *  
+ *
  * Return : ERR_ADDRESS_RANGE if the input address exceeds EEPROM_MAX_ADDRESS
  *          otherwise SUCCESS
  *
  */
-result_t eeprom_str_read(UINT16 address, BYTE *buffer, UINT16 *length)
+result_t eeprom_str_read(u16 address, u8 *buffer, u16 *length)
 {
-	BYTE character;
-	BYTE *ptr;
-	BYTE num_read = 0;
+	u8       character;
+	u8      *ptr;
+	u8       num_read = 0;
 	result_t rc;
 
 	LOG_D("eeprom_str_read()\n\r");
@@ -240,23 +240,23 @@ result_t eeprom_str_read(UINT16 address, BYTE *buffer, UINT16 *length)
 
 /*
  * result_t  eeprom_str_write(UINT16 address, BYTE *buffer, UINT16 *length)
- * 
+ *
  * Function to write a null terminated C String to an address in EEPROM
- * 
+ *
  * Input  : UINT16 address - start EEPROM address to write string to
- * 
+ *
  * Input  : BYTE *buffer   - String to be written to EEPROM
- * 
+ *
  * Output : UINT16 *length - The number of characters written to EEPROM
- *  
+ *
  * Return : ERR_ADDRESS_RANGE if the input address exceeds EEPROM_MAX_ADDRESS
  *          otherwise SUCCESS
  *
  */
-result_t  eeprom_str_write(UINT16 address, BYTE *buffer, UINT16 *length)
+result_t  eeprom_str_write(u16 address, u8 *buffer, u16 *length)
 {
-	BYTE     *ptr;
-	UINT16   copied = 0;
+	u8      *ptr;
+	u16      copied = 0;
 	result_t rc = SUCCESS;
 
 	LOG_D("eeprom_str_write()\n\r");
