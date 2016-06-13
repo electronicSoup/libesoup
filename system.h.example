@@ -50,7 +50,7 @@
  *
  * Default set to 19k2
  */
-#define SERIAL_BAUD 19200
+#define SERIAL_LOGGING_BAUD 19200
 
 /**
  * @brief Physical Pin configuration of the Serial Logging port.
@@ -106,6 +106,15 @@
  */
 #define NUMBER_OF_TIMERS 20     // Default disabled
 
+/*
+ * System jobs
+ */
+#define NUMBER_OF_JOBS 10
+
+#define UART_TX_BUFFER_SIZE                    64
+#define MODBUS_RX_BUFFER_SIZE                  256
+#define MODBUS_RESPONSE_TIMEOUT                SECONDS_TO_TICKS(1)
+#define MODBUS_RESPONSE_BROADCAST_TIMEOUT      MILLI_SECONDS_TO_TICKS(500)
 /*
  * CAN Definitions
  */

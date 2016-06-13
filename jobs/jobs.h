@@ -1,10 +1,12 @@
 /**
  *
- * \file es_lib/timers/rtc.c
+ * \file es_lib/jobs/jobs.h
  *
- * This file contains code for dealing with Real Date Time values
+ * Functions for using a MODBUS Comms.
  *
- * Copyright 2016 John Whitmore <jwhitmore@electronicsoup.com>
+ * The first uart port is used by the logger. See es_lib/logger
+ *
+ * Copyright 2015 John Whitmore <jwhitmore@electronicsoup.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 2 of the GNU General Public License
@@ -20,4 +22,6 @@
  *
  */
 
-extern result_t rtc_update_current_datetime(u8 *data, u16 len);
+extern void     jobs_init(void);
+extern result_t jobs_add(void (*function)(void *), void *data);
+extern result_t jobs_execute(void);

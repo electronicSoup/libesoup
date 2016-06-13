@@ -77,7 +77,7 @@
 #define TAG "TIMERS"
 
 #ifdef MCP
-static UINT16 timer_counter = 0;
+static u16 timer_counter = 0;
 
 volatile BOOL timer_ticked = FALSE;
 
@@ -89,7 +89,7 @@ static u8 hw_timer = BAD_TIMER;
  */
 typedef struct {
 	BOOL active;
-	UINT16 expiry_count;
+	u16 expiry_count;
 	expiry_function function;
 	union sigval expiry_data;
 } sys_timer_t;
@@ -118,7 +118,7 @@ sys_timer_t timers[NUMBER_OF_TIMERS];
  */
 #ifdef MCP
 #if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__)
-static void hw_expiry_function(u8 data)
+static void hw_expiry_function(void *data)
 {
 	timer_ticked = TRUE;
 }
@@ -147,7 +147,7 @@ void timer_isr(void)
 #ifdef MCP
 void timer_init(void)
 {
-	BYTE loop;
+	u8 loop;
 
 	/*
 	 * Initialise our Data Structures
@@ -159,14 +159,9 @@ void timer_init(void)
 	}
 
 #if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__)
-	if(hw_timer != BAD_TIMER) {
-		LOG_E("Unecpected value for hw_timer!\n\r");
-	}
+	hw_timer = BAD_TIMER;
 
-	hw_timer = hw_timer_start(mSeconds, 5, TRUE, hw_expiry_function, 0);
-	if(hw_timer == BAD_TIMER) {
-		LOG_E("Failed to start the HW timer for SW timers!\n\r");
-	}
+	hw_timer = hw_timer_start(mSeconds, 5, TRUE, hw_expiry_function, NULL);
 	hw_timer_paused = FALSE;
 #endif //__PIC24FJ256GB106__
 
@@ -174,7 +169,7 @@ void timer_init(void)
 	/*
 	 * Timer 0 set up
 	 */
-	T0CONbits.T08BIT = 0;   // 16 bit opperation
+	T0CONbits.T08BIT = 0;   // 16 bit operation
 	T0CONbits.T0CS = 0;     // Timer 0 Off internal clock
 	T0CONbits.PSA = 1;      // Disable prescaler for Timer 0
 
@@ -206,7 +201,7 @@ void timer_init(void)
 void timer_tick(void)
 {
 	u16 active_timers;
-	BYTE loop;
+	u8 loop;
 	expiry_function function;
 	union sigval data;
 
@@ -251,14 +246,14 @@ void timer_tick(void)
 #endif // MCP
 
 /*
- * result_t timer_start(UINT16 ticks,
+ * result_t timer_start(u16 ticks,
  *                      expiry_function function,
  *                      union sigval data,
  *                      es_timer *timer)
  *
  * Function to start a timer on the system.
  *
- * Input  : UINT16 ticks
+ * Input  : u16 ticks
  *              The duration of the timer in system timer ticks.
  *              The two convienence macros (SECONDS_TO_TICKS and
  *              MILLI_SECONDS_TO_TICKS) should be used to calculate
@@ -323,7 +318,7 @@ result_t timer_start(u16 ticks,
 			 * If our hw_timer isn't running restart it:
 			 */
 			if(hw_timer_paused) {
-				if(hw_timer_restart(hw_timer, mSeconds, 5, TRUE, hw_expiry_function, 0) != SUCCESS) {
+				if(hw_timer_restart(hw_timer, mSeconds, 5, TRUE, hw_expiry_function, NULL) != SUCCESS) {
 					LOG_E("Failed to restart HW timer\n\r");
 				}
 				hw_timer_paused = FALSE;

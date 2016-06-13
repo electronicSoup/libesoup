@@ -86,7 +86,7 @@ void serial_init(void)
 	 * UxBRG = ((CLOCK/SERIAL_BAUD)/16) -1
 	 *
 	 */
-	U1BRG = ((CLOCK_FREQ / SERIAL_BAUD) / 16) - 1;
+	U1BRG = ((CLOCK_FREQ / SERIAL_LOGGING_BAUD) / 16) - 1;
 #endif
 
 	/*

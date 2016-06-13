@@ -42,14 +42,10 @@
 #define U4_RX_ISR_ENABLE IEC5bits.U4RXIE
 #define U4_TX_ISR_ENABLE IEC5bits.U4TXIE
 
-// WARNING #define NUM_UARTS        3 is in .h file
-#define UART_2           0x00
-#define UART_3           0x01
-#define UART_4           0x02
-#define UART_BAD         0xff
-
 #define DEBUG_FILE
 #define TAG "UART"
+
+#include <stdio.h>
 
 #include "system.h"
 #include "es_lib/logger/serial_log.h"
@@ -64,13 +60,13 @@ enum uart_status {
 };
 
 struct uart {
-	enum uart_status status;
-	u16              magic;
-	uart_data       *data;
-	u8               tx_buffer[UART_TX_BUFFER_SIZE];
-	u16              tx_write_index;
-	u16              tx_read_index;
-	u16              tx_count;
+	enum uart_status  status;
+	u16               magic;
+	struct uart_data *data;
+	u8                tx_buffer[UART_TX_BUFFER_SIZE];
+	u16               tx_write_index;
+	u16               tx_read_index;
+	u16               tx_count;
 } uart;
 
 struct uart uarts[NUM_UARTS];
@@ -82,7 +78,7 @@ static void uart_tx_isr(u8);
 
 static void uart_set_rx_pin(u8 uart, u8 pin);
 static void uart_set_tx_pin(u8 uart, u8 pin);
-static void uart_set_com_config(uart_data *com);
+static void uart_set_com_config(struct uart_data *com);
 
 static void uart_putchar(u8 uart, u8 ch);
 
@@ -141,16 +137,16 @@ static void uart_tx_isr(u8 uart)
 					}
 
 					/*
-					 * Inform the higher layer we're finished
-					 */
-					uarts[uart].data->tx_finished(UART_2);
-
-					/*
 					 * Interrupt when a character is transferred to the Transmit Shift
 					 * Register (TSR), and as a result, the transmit buffer becomes empty
 					 */
 					U2STAbits.UTXISEL1 = 1;
 					U2STAbits.UTXISEL0 = 0;
+
+                                        /*
+                                         * Inform the higher layer we're finished
+                                         */
+                                        uarts[uart].data->tx_finished(uarts[uart].data);
 				} else {
 					/*
 					 * Interrupt when the last character is shifted out of the Transmit
@@ -172,16 +168,16 @@ static void uart_tx_isr(u8 uart)
 					}
 
 					/*
-					 * Inform the higher layer we're finished
-					 */
-					uarts[uart].data->tx_finished(UART_3);
-
-					/*
 					 * Interrupt when a character is transferred to the Transmit Shift
 					 * Register (TSR), and as a result, the transmit buffer becomes empty
 					 */
 					U3STAbits.UTXISEL1 = 1;
 					U3STAbits.UTXISEL0 = 0;
+
+                                        /*
+                                         * Inform the higher layer we're finished
+                                         */
+                                        uarts[uart].data->tx_finished(uarts[uart].data);
 				} else {
 					/*
 					 * Interrupt when the last character is shifted out of the Transmit
@@ -203,16 +199,16 @@ static void uart_tx_isr(u8 uart)
 					}
 
 					/*
-					 * Inform the higher layer we're finished
-					 */
-					uarts[uart].data->tx_finished(UART_4);
-
-					/*
 					 * Interrupt when a character is transferred to the Transmit Shift
 					 * Register (TSR), and as a result, the transmit buffer becomes empty
 					 */
 					U4STAbits.UTXISEL1 = 1;
 					U4STAbits.UTXISEL0 = 0;
+
+                                        /*
+                                         * Inform the higher layer we're finished
+                                         */
+                                        uarts[uart].data->tx_finished(uarts[uart].data);
 				} else {
 					/*
 					 * Interrupt when the last character is shifted out of the Transmit
@@ -225,6 +221,7 @@ static void uart_tx_isr(u8 uart)
 
 			default:
 				LOG_E("Bad comm port given!\n\r");
+				return;
 				break;
 		}
 	}
@@ -290,6 +287,35 @@ void _ISR __attribute__((__no_auto_psv__)) _U4RXInterrupt(void)
 	}
 }
 
+u16 uart_calculate_mode(u8 databits,	u8 parity, u8 stopbits, u8 rx_idle_level)
+{
+	u16 mode = 0x00;
+
+	mode |= UARTEN_MASK;
+
+	if (databits == 8) {
+		if (parity == PARITY_EVEN) {
+			mode |= PDSEL0_MASK;
+		} else if (parity == PARITY_ODD) {
+			mode |= PDSEL1_MASK;
+		}
+	} else if (databits == 9) {
+		mode |= PDSEL1_MASK;
+		mode |= PDSEL0_MASK;
+	} else {
+		LOG_E("Unrecognised Data bit/Parity configuration\n\r");
+	}
+
+	if (stopbits == TWO_STOP_BITS) {
+		mode |= STSEL_MASK;
+	}
+
+	if (rx_idle_level == IDLE_HIGH) {
+		mode |= RXINV_MASK;
+	}
+
+	return(mode);
+}
 
 /*
  * Initialisation
@@ -304,7 +330,7 @@ void uart_init(void)
 	}
 }
 
-result_t uart_reserve(uart_data *data)
+result_t uart_reserve(struct uart_data *data)
 {
 	LOG_D("uart_reserve()\n\r");
 
@@ -325,7 +351,7 @@ result_t uart_reserve(uart_data *data)
 			uarts[loop].tx_read_index = 0;
 			uarts[loop].tx_count = 0;
 
-			AD1PCFGL = 0xffff;
+//			AD1PCFGL = 0xffff;
 
 			/*
 			 * Set up the Rx & Tx pins
@@ -342,11 +368,13 @@ result_t uart_reserve(uart_data *data)
 	return(ERR_NO_RESOURCES);
 }
 
-result_t uart_release(uart_data *data)
+result_t uart_release(struct uart_data *data)
 {
 	u8  uart;
 
 	uart = data->uart;
+
+	LOG_D("uart_release()  %d\n\r", uart);
 
 	if(uarts[uart].data != data) {
 		LOG_E("uart_tx called with bad data pointer\n\r");
@@ -381,11 +409,12 @@ result_t uart_release(uart_data *data)
 	return(SUCCESS);
 }
 
-result_t uart_tx(uart_data *data, u8 *buffer, u16 len)
+result_t uart_tx(struct uart_data *data, u8 *buffer, u16 len)
 {
 	u8  uart;
 	u8 *ptr;
 
+	LOG_D("uart_tx(%d)\n\r", len);
 	uart = data->uart;
 
 	if(uarts[uart].data != data) {
@@ -414,14 +443,16 @@ static void uart_putchar(u8 uart, u8 ch)
 			 * If either the TX Buffer is full OR there are already characters in
 			 * our SW Buffer then add to SW buffer
 			 */
-			if (uarts[uart].tx_count || U2STAbits.UTXBF) {
-				/*
-				 * Interrupt when a character is transferred to the Transmit Shift
-				 * Register (TSR), and as a result, the transmit buffer becomes empty
-				 */
-				U2STAbits.UTXISEL1 = 1;
-				U2STAbits.UTXISEL0 = 0;
-
+			if(U2STAbits.UTXBF || uarts[uart].tx_count) {
+				if (uarts[uart].tx_count == 0) {
+					/*
+					 * Interrupt when a character is transferred to the Transmit Shift
+					 * Register (TSR), and as a result, the transmit buffer becomes empty
+					 */
+					U2STAbits.UTXISEL1 = 1;
+					U2STAbits.UTXISEL0 = 0;
+				}
+				
 				if(uarts[uart].tx_count == UART_TX_BUFFER_SIZE) {
 					LOG_E("Circular buffer full!");
 					return;
@@ -440,14 +471,16 @@ static void uart_putchar(u8 uart, u8 ch)
 			 * If either the TX Buffer is full OR there are already characters in
 			 * our SW Buffer then add to SW buffer
 			 */
-			if (uarts[uart].tx_count || U3STAbits.UTXBF) {
-				/*
-				 * Interrupt when a character is transferred to the Transmit Shift
-				 * Register (TSR), and as a result, the transmit buffer becomes empty
-				 */
-				U3STAbits.UTXISEL1 = 1;
-				U3STAbits.UTXISEL0 = 0;
-
+			if(U3STAbits.UTXBF || uarts[uart].tx_count) {
+				if (uarts[uart].tx_count == 0) {
+					/*
+					 * Interrupt when a character is transferred to the Transmit Shift
+					 * Register (TSR), and as a result, the transmit buffer becomes empty
+					 */
+					U3STAbits.UTXISEL1 = 1;
+					U3STAbits.UTXISEL0 = 0;
+				}
+				
 				if(uarts[uart].tx_count == UART_TX_BUFFER_SIZE) {
 					LOG_E("Circular buffer full!");
 					return;
@@ -466,14 +499,16 @@ static void uart_putchar(u8 uart, u8 ch)
 			 * If either the TX Buffer is full OR there are already characters in
 			 * our SW Buffer then add to SW buffer
 			 */
-			if (uarts[uart].tx_count || U4STAbits.UTXBF) {
-				/*
-				 * Interrupt when a character is transferred to the Transmit Shift
-				 * Register (TSR), and as a result, the transmit buffer becomes empty
-				 */
-				U4STAbits.UTXISEL1 = 1;
-				U4STAbits.UTXISEL0 = 0;
-
+			if(U4STAbits.UTXBF || uarts[uart].tx_count) {
+				if (uarts[uart].tx_count == 0) {
+					/*
+					 * Interrupt when a character is transferred to the Transmit Shift
+					 * Register (TSR), and as a result, the transmit buffer becomes empty
+					 */
+					U4STAbits.UTXISEL1 = 1;
+					U4STAbits.UTXISEL0 = 0;
+				}
+				
 				if(uarts[uart].tx_count == UART_TX_BUFFER_SIZE) {
 					LOG_E("Circular buffer full!");
 					return;
@@ -594,7 +629,7 @@ static void uart_set_tx_pin(u8 uart, u8 pin)
 	}
 }
 
-static void uart_set_com_config(uart_data *com)
+static void uart_set_com_config(struct uart_data *com)
 {
 	switch (com->uart) {
 		case UART_2:
@@ -621,6 +656,8 @@ static void uart_set_com_config(uart_data *com)
 			U2BRG = ((CLOCK_FREQ / com->baud) / 16) - 1;
 
 
+                        U2_RX_ISR_FLAG = 0;
+                        U2_TX_ISR_FLAG = 0;
 			U2_RX_ISR_ENABLE = 1;
 			U2_TX_ISR_ENABLE = 1;
 			break;
@@ -648,6 +685,8 @@ static void uart_set_com_config(uart_data *com)
 			 */
 			U3BRG = ((CLOCK_FREQ / com->baud) / 16) - 1;
 
+                        U3_RX_ISR_FLAG = 0;
+                        U3_TX_ISR_FLAG = 0;
 			U3_RX_ISR_ENABLE = 1;
 			U3_TX_ISR_ENABLE = 1;
 			break;
@@ -675,6 +714,8 @@ static void uart_set_com_config(uart_data *com)
 			 */
 			U4BRG = ((CLOCK_FREQ / com->baud) / 16) - 1;
 
+                        U4_RX_ISR_FLAG = 0;
+                        U4_TX_ISR_FLAG = 0;
 			U4_RX_ISR_ENABLE = 1;
 			U4_TX_ISR_ENABLE = 1;
 			break;
@@ -683,7 +724,6 @@ static void uart_set_com_config(uart_data *com)
 			LOG_E("Bad UART passed\n\r");
 			break;
 	}
-	LOG_D("Return from setting com\n\r");
 }
 
 /*
@@ -692,28 +732,6 @@ static void uart_set_com_config(uart_data *com)
 static u16 load_tx_buffer(u8 uart)
 {
 	switch (uart) {
-//		case UART_1:
-//			while(!U1STAbits.UTXBF && (com->tx_buffer_read_index < com->tx_buffer_size)) {
-//				U1TXREG = com->tx_buffer[com->tx_buffer_read_index++];
-//			}
-//
-//			if(com->tx_buffer_read_index < com->tx_buffer_size) {
-//				/*
-//				 * Interrupt when a character is transferred to the Transmit Shift
-//				 * Register (TSR), and as a result, the transmit buffer becomes empty
-//				 */
-//				U1STAbits.UTXISEL1 = 1;
-//				U1STAbits.UTXISEL0 = 0;
-//			} else {
-//				/*
-//				 * Interrupt when the last character is shifted out of the Transmit
-//				 * Shift Register; all transmit operations are completed
-//				 */
-//				U1STAbits.UTXISEL1 = 0;
-//				U1STAbits.UTXISEL0 = 1;
-//			}
-//			break;
-//
 		case UART_2:
 			/*
 			 * If the TX buffer is not full load it from the circular buffer

@@ -48,8 +48,8 @@ android_state_t android_state;
 /*
  * Forward declarations of the states functions.
  */
-//void idle_process_msg(android_command_t, void *, UINT16);
-void idle_process_msg(BYTE, void *, UINT16);
+//void idle_process_msg(android_command_t, void *, u16);
+void idle_process_msg(u8, void *, u16);
 void idle_main(void);
 void idle_process_usb_event(USB_EVENT event);
 
@@ -69,7 +69,7 @@ void set_idle_state(void)
  * When in the Idle state there is no Android Device connected so we'd
  * not expect to receive any messages from the Android for processing.
  */
-void idle_process_msg(BYTE cmd, void *data, UINT16 data_len)
+void idle_process_msg(u8 cmd, void *data, u16 data_len)
 {
 	if (cmd == APP_MSG_APP_CONNECT) {
 		ANDROID_SET_APPLICATION_CONNECTED_STATE

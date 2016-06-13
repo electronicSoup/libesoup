@@ -21,104 +21,58 @@
  */
 /*
  * To use this code the system.h file must define SW_RTC_TICK_SECS
- * 
+ *
  * SW_RTC_TICK_SECS - This is the rtc period of a tick in seconds
  */
+#include <stdlib.h>
+
 #define DEBUG_FILE
 #define TAG "SW_RTC"
+
+#define SECONDS_PER_MINUTE  60
+#define MINUTES_PER_HOUR    60
+#define HOURS_PER_DAY       24
 
 #include "system.h"
 #include "es_lib/logger/serial_log.h"
 #include "es_lib/timers/hw_timers.h"
-#include "es_lib/timers/sw_rtc.h"
+#include "es_lib/timers/rtc.h"
+#include "es_lib/jobs/jobs.h"
 
-static struct datetime current_datetime;
-static u8  current_datetime_valid = FALSE;
+struct alarm_data {
+	struct alarm_data *next;
+	struct datetime    datetime;
+	void             (*expiry_fn)(void *);
+	void              *expiry_data;
+};
 
-static u16 current_isr_secs = 0;
-//static u16 sleep_request_secs = 0;
+static struct alarm_data *alarm_list = NULL;
+static struct datetime    current_datetime;
+static u8                 current_datetime_valid = FALSE;
+static u16                current_isr_secs = 0;
 
-static u8               alarm_set = FALSE;
-static struct datetime  alarm_datetime;
-static void           (*alarm_expiry_fn)(void) = NULL;
 /*
  * Function prototypes
  */
-//static void rtc_10_sec_isr();
 static void increment_current_time(u16 current_isr_secs);
 static void check_alarm();
+static void add_alarm_to_list(struct alarm_data *alarm);
+static s8 datetime_cmp(struct datetime *a, struct datetime *b);
 
-#if 0
-#ifdef MCP
-#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__)
-void _ISR __attribute__((__no_auto_psv__)) _T5Interrupt(void)
+void rtc_init(void)
 {
-	IFS1bits.T5IF = 0;
-
-	increment_current_time(current_isr_secs);
-	current_isr_secs = 0;
-
-	rtc_10_sec_isr();
-
-	LOG_D("Current datetime set to %d%d%d-%d:%d:%d\n\r", current_datetime.year,
-		current_datetime.month,
-		current_datetime.day,
-		current_datetime.hours,
-		current_datetime.minutes,
-		current_datetime.seconds);
+	alarm_list = NULL;
 }
-#endif //__PIC24FJ256GB106__
-#endif
-#endif
 
-#if 0
-void rtc_init()
-{
-	u32 timer;
-
-	LOG_D("rtc_init()\n\r");
-	current_datetime_valid = FALSE;
-
- 	/*
-	 * Initialise Timer 4
-	 */
-	T4CONbits.T32 = 1;      // 16 Bit Timer
-	T4CONbits.TCS = 0;      // Internal FOSC/2
-	T4CONbits.TCKPS1 = 1;   // Divide by 256
-	T4CONbits.TCKPS0 = 1;
-
-	increment_current_time(current_isr_secs);
-	rtc_10_sec_isr();
-
-	IEC1bits.T5IE = 1;
-	T4CONbits.TON = 1;
-}
-#endif
-
-#if 0
-static void rtc_10_sec_isr()
-{
-	u32 timer;
-
-	timer = ((u32)((CLOCK_FREQ / 256) * 10) - 1) ;
-	PR4 = (u16)(timer & 0xffff);
-	PR5 = (u16)((timer >> 16) & 0xffff);
-	TMR4 = 0x00;
-	TMR5 = 0x00;
-
-	current_isr_secs = 10;
-}
-#endif
-
-void timer_expiry(u8 data)
+void timer_expiry(void *data)
 {
 	increment_current_time(current_isr_secs);
 
 	current_isr_secs = SW_RTC_TICK_SECS;
 
-	hw_timer_start(Seconds, current_isr_secs, FALSE, timer_expiry, 0);
+	hw_timer_start(Seconds, current_isr_secs, FALSE, timer_expiry, NULL);
 
-	if(alarm_set) {
+	if(alarm_list) {
 		check_alarm();
 	}
 }
@@ -131,18 +85,18 @@ static void increment_current_time(u16 secs)
 	u16 tmp_day;
 
 	tmp_seconds = current_datetime.seconds + secs;
-	tmp_minutes = current_datetime.minutes + tmp_seconds / 60;
-	tmp_hours   = current_datetime.hours + tmp_minutes / 60;
-	tmp_day     = current_datetime.day + tmp_hours / 24;
+	tmp_minutes = current_datetime.minutes + tmp_seconds / SECONDS_PER_MINUTE;
+	tmp_hours   = current_datetime.hours + tmp_minutes / MINUTES_PER_HOUR;
+	tmp_day     = current_datetime.day + tmp_hours / HOURS_PER_DAY;
 
 //	LOG_D("Current seconds is %d\n\r", current_datetime.seconds);
 //	LOG_D("Add on %d Seconds\n\r", secs);
 //	LOG_D("tmp_seconds is %d\n\r", tmp_seconds);
 //	LOG_D("/ is %d remainder is %d \n\r", tmp_seconds / 60, tmp_seconds % 60);
 
-	current_datetime.seconds = tmp_seconds % 60;
-	current_datetime.minutes = tmp_minutes % 60;
-	current_datetime.hours   = tmp_hours % 24;
+	current_datetime.seconds = tmp_seconds % SECONDS_PER_MINUTE;
+	current_datetime.minutes = tmp_minutes % MINUTES_PER_HOUR;
+	current_datetime.hours   = tmp_hours % HOURS_PER_DAY;
 	current_datetime.day     = tmp_day;
 }
 
@@ -156,12 +110,7 @@ result_t rtc_update_current_datetime(u8 *data, u16 len)
 		LOG_E("Bad input datetime\n\r");
 		return(ERR_BAD_INPUT_PARAMETER);
 	}
-#if 0
-	/*
-	 * Turn off the RTC till we calcualte secs to till next isr
-	 */
-	T4CONbits.TON = 0;
-#endif
+
 	current_datetime.year    = ((data[0] - '0') * 1000) + ((data[1] -'0') * 100) + ((data[2] -'0') * 10) + (data[3] - '0');
 	current_datetime.month   = ((data[4] - '0') * 10) + (data[5] - '0');
 	current_datetime.day     = ((data[6] - '0') * 10) + (data[7] - '0');
@@ -187,72 +136,295 @@ result_t rtc_update_current_datetime(u8 *data, u16 len)
 		current_isr_secs = current_datetime.seconds % SW_RTC_TICK_SECS;
 	}
 
-	hw_timer_start(Seconds, current_isr_secs, FALSE, timer_expiry, 0);
+	hw_timer_start(Seconds, current_isr_secs, FALSE, timer_expiry, NULL);
 
 //	LOG_D("Current isr secs %d last digit %d\n\r", current_isr_secs, (data[16] - '0'));
-#if 0
-	timer = (u32)(((CLOCK_FREQ / 256) * current_isr_secs) - 1);
-	PR4 = (u16)(timer & 0xffff);
-	PR5 = (u16)((timer >> 16) & 0xffff);
-	TMR4 = 0x00;
-	TMR5 = 0x00;
-
-	/*
-	 * Turn timer back on
-	 */
-	T4CONbits.TON = 1;
-#endif
 
 	return(SUCCESS);
 }
 
-result_t rtc_set_alarm(ty_time_units units, u16 time, u8 nice, void (*expiry_function)(void))
+void *rtc_set_alarm_offset(ty_time_units units, u16 time, u8 nice, void (*expiry_fn)(void *), void *expiry_data)
 {
-	u16 tmp_minutes;
-	u16 tmp_hours;
-	u16 tmp_day;
+	u16                current_minutes;
+	u16                total_alarm_minutes;
+	struct datetime    tmp_datetime;
+	struct alarm_data *alarm;
 
-	if(alarm_set) {
-		LOG_E("Alarm is already set. Ingoring second request!");
-		return(ERR_NO_RESOURCES);
-	}
+	tmp_datetime.year    = current_datetime.year;
+	tmp_datetime.month   = current_datetime.month;
+	tmp_datetime.day     = current_datetime.day;
+	tmp_datetime.hours   = 0;
+	tmp_datetime.minutes = 0;
+	tmp_datetime.seconds = 0;
 
-	alarm_datetime.hours   = current_datetime.hours;
-	alarm_datetime.minutes = current_datetime.minutes;
-	alarm_datetime.seconds = current_datetime.seconds;
+	/*
+	 * Calculate the Alarm Datetime
+	 *
+	 */
+	if (units == Seconds) {
+		tmp_datetime.seconds = current_datetime.seconds + time;
+		tmp_datetime.minutes = current_datetime.minutes + tmp_datetime.seconds / 60;
+		tmp_datetime.seconds = tmp_datetime.seconds % 60;
+		tmp_datetime.hours   = current_datetime.hours + tmp_datetime.minutes / 60;
+		tmp_datetime.minutes = tmp_datetime.minutes % 60;
+		tmp_datetime.day     = current_datetime.day + tmp_datetime.hours / 24;
+		tmp_datetime.hours   = tmp_datetime.hours % 24;
+	} else if (units == Minutes) {
+		LOG_D("rtc_set_alarm_offset(Minutes, %d)\n\r", time);
+		tmp_datetime.seconds = 0;
 
-	if(units == Minutes) {
-		tmp_minutes = current_datetime.minutes + time;
-		tmp_hours   = current_datetime.hours + tmp_minutes / 60;
-		tmp_day     = current_datetime.day + tmp_hours / 24;
+		if(nice) {
+			if(time < MINUTES_PER_HOUR) {
+				if((MINUTES_PER_HOUR % time) == 0) {
+					tmp_datetime.minutes = ((current_datetime.minutes / time) + 1) * time;
+				} else {
+					current_minutes = (MINUTES_PER_HOUR * current_datetime.hours) + current_datetime.minutes;
+					total_alarm_minutes = ((current_minutes / time) + 1) * time;
+					tmp_datetime.minutes = total_alarm_minutes % MINUTES_PER_HOUR;
+					tmp_datetime.hours = total_alarm_minutes / MINUTES_PER_HOUR;
+				}
+			}
+		} else {
+			tmp_datetime.minutes = current_datetime.minutes + time;
+		}
 
-		alarm_datetime.minutes = tmp_minutes % 60;
-		alarm_datetime.hours = tmp_hours % 24;
-
-		LOG_D("rtc_set_alarm(+%d minutes) = %d:%d\n\r", time, alarm_datetime.hours, alarm_datetime.minutes);
+		tmp_datetime.hours = tmp_datetime.hours + current_datetime.hours + (tmp_datetime.minutes / MINUTES_PER_HOUR);
+		tmp_datetime.minutes = tmp_datetime.minutes % MINUTES_PER_HOUR;
+		tmp_datetime.day = current_datetime.day + tmp_datetime.hours / HOURS_PER_DAY;
+		tmp_datetime.hours = tmp_datetime.hours % HOURS_PER_DAY;
+	} else if (units == Hours) {
+		tmp_datetime.seconds = current_datetime.seconds;
+		tmp_datetime.minutes = current_datetime.minutes;
+		tmp_datetime.hours   = current_datetime.hours + time;
+		tmp_datetime.day     = current_datetime.day + tmp_datetime.hours / HOURS_PER_DAY;
+		tmp_datetime.hours   = tmp_datetime.hours % HOURS_PER_DAY;
 	} else {
-		LOG_E("Uncoded branch! Only processing Minute Interval Alarms\n\r");
+		LOG_E("Unrecognised Alarm offset units\n\r");
+		return(NULL);
 	}
-	alarm_set = TRUE;
-	alarm_expiry_fn = expiry_function;
 
-	return(SUCCESS);
+	/*
+	 * Create a new alarm data structure
+	 */
+	alarm = malloc(sizeof(struct alarm_data));
+
+	alarm->next             = NULL;
+	alarm->datetime.year    = tmp_datetime.year;
+	alarm->datetime.month   = tmp_datetime.month;
+	alarm->datetime.day     = tmp_datetime.day;
+	alarm->datetime.hours   = tmp_datetime.hours;
+	alarm->datetime.minutes = tmp_datetime.minutes;
+	alarm->datetime.seconds = tmp_datetime.seconds;
+
+	alarm->expiry_fn   = expiry_fn;
+	alarm->expiry_data = expiry_data;
+
+	/*
+	 * Add the alarm to the list in order
+	 */
+	add_alarm_to_list(alarm);
+
+	return((void *)alarm);
+}
+
+static void add_alarm_to_list(struct alarm_data *alarm)
+{
+	struct alarm_data *next = NULL;
+	struct alarm_data *prev = NULL;
+//	u16                count = 0;
+
+	LOG_D("add_alarm_to_list(%2d:%2d)\n\r", alarm->datetime.hours, alarm->datetime.minutes);
+
+	if (alarm_list == NULL) {
+//		LOG_D("Alarm list null so adding to head\n\r");
+		alarm_list = alarm;
+	} else {
+		next = alarm_list;
+
+		if(datetime_cmp(&alarm->datetime, &next->datetime) <= 0) {
+//			LOG_D("Alarm should be first so inserting to head\n\r");
+			/*
+			 * Insert at head of list
+			 */
+			alarm->next = alarm_list;
+			alarm_list = alarm;
+		} else {
+			prev = alarm_list;
+			next = prev->next;
+
+			while(next) {
+				if (datetime_cmp(&alarm->datetime, &next->datetime) <= 0) {
+					/*
+					 * Insert
+					 */
+					prev->next = alarm;
+					alarm->next = next;
+				} else {
+					prev = next;
+					next = prev->next;
+				}
+			}
+
+			if(!next) {
+				prev->next = alarm;
+				alarm->next = NULL;
+			}
+		}
+	}
+#if 0
+	next = alarm_list;
+	while(next) {
+		next = next->next;
+		count++;
+	}
+
+	LOG_D("Alarm count %d\n\r", count);
+#endif
+}
+
+/*
+ * if Return value < 0 then it indicates datetime a is before datetime b.
+ * if Return value > 0 then it indicates datetime b is before datetime a.
+ * if Return value = 0 then it indicates datetime a is the same as datetime b
+ */
+static s8 datetime_cmp(struct datetime *a, struct datetime *b)
+{
+	/*
+	 * Compare years
+	 */
+	if(a->year != b->year) {
+//		LOG_D("Comparison on year %d %d\n\r", a->year, b->year);
+		return(a->year - b->year);
+	}
+
+	/*
+	 * Compare months
+	 */
+	if(a->month != b->month) {
+//		LOG_D("Comparison on Month %d %d\n\r", a->month, b->month);
+		return(a->month - b->month);
+	}
+
+	/*
+	 * Compare day
+	 */
+	if(a->day != b->day) {
+//		LOG_D("Comparison on day %d %d\n\r", a->day, b->day);
+		return(a->day - b->day);
+	}
+
+	/*
+	 * Compare hours
+	 */
+	if(a->hours != b->hours) {
+//		LOG_D("Comparison on Hours %d %d\n\r", a->hours, b->hours);
+		return(a->hours - b->hours);
+	}
+
+	/*
+	 * Compare minutes
+	 */
+	if(a->minutes != b->minutes) {
+//		LOG_D("Comparison on minutes %d %d\n\r", a->minutes, b->minutes);
+		return(a->minutes - b->minutes);
+	}
+
+	/*
+	 * Compare seconds
+	 */
+	if(a->seconds != b->seconds) {
+//		LOG_D("Comparison on seconds %d %d\n\r", a->seconds, b->seconds);
+		return(a->seconds - b->seconds);
+	}
+
+	/*
+	 * Both must be equal
+	 */
+	return(0);
 }
 
 static void check_alarm()
 {
-	LOG_D("check_alarm() Compare Current time %d:%d:%d with Alarm %d:%d:%d\n\r",
-		current_datetime.hours,
-		current_datetime.minutes,
-		current_datetime.seconds,
-		alarm_datetime.hours,
-		alarm_datetime.minutes,
-		alarm_datetime.seconds);
+	u8                 finished = FALSE;
+//	u16                count = 0;
+	struct alarm_data *tmp_alarm;
 
-	if(  (alarm_datetime.hours == current_datetime.hours)
-	   &&(alarm_datetime.minutes == current_datetime.minutes)) {
-//	   &&(alarm_datetime.seconds == current_datetime.seconds)) {
-		alarm_set = FALSE;
-		alarm_expiry_fn();
+//	LOG_D("check_alarm() Compare Current time %d:%d:%d\n\r",
+//		current_datetime.hours,
+//		current_datetime.minutes,
+//		current_datetime.seconds);
+
+	/*
+	 * While loop as a number of alarms could have the same time
+	 */
+	while (alarm_list && !finished) {
+		if(datetime_cmp(&current_datetime, &alarm_list->datetime) >= 0) {
+			LOG_D("Alarm Expired - %d:%d:%d\n\r",
+				alarm_list->datetime.hours,
+				alarm_list->datetime.minutes,
+				alarm_list->datetime.seconds);
+			/*
+			 * Remove the alarm from the Queue
+			 */
+			tmp_alarm = alarm_list;
+
+			alarm_list = tmp_alarm->next;
+
+			/*
+			 * Call the expiry function
+			 */
+			// tmp_alarm->expiry_fn(tmp_alarm->expiry_data);
+			jobs_add(tmp_alarm->expiry_fn, (void *)tmp_alarm->expiry_data);
+
+                        /*
+                         * And free the expired alarm
+                         */
+			free(tmp_alarm);
+
+		} else {
+			finished = TRUE;
+		}
 	}
+#if 0
+	tmp_alarm = alarm_list;
+	count = 0;
+	while(tmp_alarm) {
+		LOG_D("alarm - %d:%d:%d\n\r",
+			tmp_alarm->datetime.hours,
+			tmp_alarm->datetime.minutes,
+			tmp_alarm->datetime.seconds);
+
+		tmp_alarm = tmp_alarm->next;
+		count++;
+	}
+	LOG_D("Alarm count %d\n\r", count);
+#endif
+}
+
+result_t rtc_get_current_datetime(struct datetime *dt)
+{
+	if(current_datetime_valid) {
+                dt->year    = current_datetime.year;
+                dt->month   = current_datetime.month;
+                dt->day     = current_datetime.day;
+		dt->hours   = current_datetime.hours;
+		dt->minutes = current_datetime.minutes;
+		dt->seconds = current_datetime.seconds;
+
+		return (SUCCESS);
+	} else {
+		return(ERR_NOT_READY);
+	}
+}
+
+result_t rtc_get_dummy_datetime(struct datetime *dt)
+{
+	dt->year    = 2000;
+	dt->month   = 1;
+	dt->day     = 1;
+	dt->hours   = 00;
+	dt->minutes = 00;
+	dt->seconds = 00;
+
+	return (SUCCESS);
 }

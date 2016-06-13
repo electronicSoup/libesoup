@@ -45,14 +45,33 @@
  * Include MicroChip's definitions
  */
 #if defined(MCP)
-    #include <GenericTypeDefs.h>
+    #include <stdint.h>
+#ifndef	NULL
+#define NULL (0)
+#endif	/* NULL */
+
+    typedef uint8_t    BOOL;
+#define FALSE 0x00
+#define TRUE (!FALSE)
+
+    typedef uint8_t    u8;
+    typedef uint16_t   u16;
+    typedef uint32_t   u32;
+
+    typedef int8_t     s8;
+    typedef int16_t    s16;
+    typedef int32_t    s32;
+#if 0
+#include <GenericTypeDefs.h>
 
     typedef UINT8    u8;
     typedef UINT16   u16;
     typedef UINT32   u32;
 
+    typedef INT8     s8;
+    typedef INT16    s16;
     typedef INT32    s32;
-
+#endif
 #elif defined(ES_LINUX)
     #include <stdint.h>
 
@@ -100,7 +119,8 @@ typedef enum {
     uSeconds,
     mSeconds,
     Seconds,
-    Minutes
+    Minutes,
+    Hours
 } ty_time_units;
 
 /*
@@ -728,7 +748,8 @@ typedef enum {
     ERR_CAN_BAUDRATE,
     ERR_CAN_NO_FREE_BUFFER,
     ERR_UNINITIALISED,
-    ERR_BUSY
+    ERR_BUSY,
+    ERR_NOTHING_TO_DO
 } result_t;
 
 /** @}*/
