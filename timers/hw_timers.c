@@ -182,6 +182,9 @@ u8 hw_timer_start(ty_time_units units, u16 time, u8 repeat, void (*expiry_functi
 
 result_t hw_timer_restart(u8 timer, ty_time_units units, u16 time, u8 repeat, void (*expiry_function)(void *), void *data)
 {
+	if(timer == BAD_TIMER) {
+		return(hw_timer_start(units, time, repeat, expiry_function, data));
+	}
 	if(timer >= NUMBER_HW_TIMERS) {
 		LOG_E("Bad time passed to hw_timer_restart()\n\r!");
 		return(ERR_BAD_INPUT_PARAMETER);

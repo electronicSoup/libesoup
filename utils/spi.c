@@ -27,7 +27,7 @@
 
 void spi_init(void)
 {
-	BYTE loop;
+	u8 loop;
 
 	LOG_D("spi_init()\n\r");
 
@@ -52,7 +52,7 @@ void spi_init(void)
 	 * RD2 = RP23 - SPI1 Data Input RPINR20 SDI1R<5:0>
 	 */
 	RPINR20bits.SDI1R = 23;
-	
+
 	/*
 	 * OUTPUTS:
 	 *  RD3 = RP22 -  SO  - SPI1 Data Output Function 7
@@ -62,7 +62,7 @@ void spi_init(void)
 	RPOR11bits.RP22R = 7;     //SPI1 SO
 	RPOR12bits.RP24R = 8;     //SPI1 SCK
 
-	/* 
+	/*
 	 * Init the SPI Config
 	 */
 	SPI1CON1bits.SSEN = 0;    // Don't use SPIs chip select it's extrnal
@@ -72,7 +72,7 @@ void spi_init(void)
 
 	SPI1CON1bits.CKE = 0;
 	SPI1CON1bits.CKP = 1;
-	
+
 	SPI1CON2 = 0x00;
 	SPI1STATbits.SPIEN = 1;   // Enable the SPI
 }
