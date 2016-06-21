@@ -19,6 +19,7 @@ void set_modbus_idle_state(struct modbus_channel *channel)
 	channel->process_timer_15_expiry = NULL;
 	channel->process_timer_35_expiry = process_timer_35_expiry;
 	channel->transmit = transmit;
+        channel->rx_write_index = 0;
 	channel->modbus_tx_finished = NULL;
 	channel->process_rx_character = process_rx_character;
 	channel->process_response_timeout = NULL;
@@ -48,47 +49,51 @@ void process_timer_35_expiry(void *data)
         struct modbus_channel *channel = (struct modbus_channel *)data;
 
 	u8  start_index;
-//	u16 loop;
+	u16 loop;
 
 	LOG_D("process_timer_35_expiry() channel %d msg length %d\n\r", channel->uart->uart, channel->rx_write_index);
 
 //	for(loop = 0; loop < channel->rx_write_index; loop++) {
 //		LOG_D("Char %d - 0x%x\n\r", loop, channel->rx_buffer[loop]);
 //	}
-	if(channel->rx_write_index > 2) {
-		if(channel->rx_buffer[0] == channel->address) {
-			start_index = 0;
-		} else if (channel->rx_buffer[1] == channel->address) {
-			start_index = 1;
-		} else {
-			LOG_D("message from wrong address channel Address 0x%x\n\r", channel->address);
-			LOG_D("channel->rx_buffer[0] = 0x%x\n\r", channel->rx_buffer[0]);
-			LOG_D("channel->rx_buffer[1] = 0x%x\n\r", channel->rx_buffer[1]);
-			return;
-		}
+        start_index = 0;
+        if (crc_check(&(channel->rx_buffer[start_index]), channel->rx_write_index - start_index)) {
+                /*
+                 * Response Good
+                 * Subtract 2 for the CRC
+                 */
+                LOG_D("Message Good! Start at 0\n\r");
 
-		if (crc_check(&(channel->rx_buffer[start_index]), channel->rx_write_index - start_index)) {
-			/*
-			 * Response Good
-			 * Subtract 2 for the CRC
-			 */
-			LOG_D("Message Good!\n\r");
-
-                        if(channel->process_unsolicited_msg) {
-                                channel->process_unsolicited_msg(&(channel->rx_buffer[start_index]), channel->rx_write_index - (start_index + 2), channel->response_callback_data);
-                        }
-		} else {
-			LOG_D("Message bad!\n\r");
-                        if(channel->process_unsolicited_msg) {
-                                channel->process_unsolicited_msg(NULL, 0, channel->response_callback_data);
-                        }
-		}
-	} else {
-		LOG_D("Message too short\n\r");
                 if(channel->process_unsolicited_msg) {
-                        channel->process_unsolicited_msg(NULL, 0, channel->response_callback_data);
+                        channel->process_unsolicited_msg(&(channel->rx_buffer[start_index]), channel->rx_write_index - (start_index + 2), channel->response_callback_data);
                 }
+                channel->rx_write_index = 0;
+                return;
+        }
+
+        start_index = 1;
+        if (crc_check(&(channel->rx_buffer[start_index]), channel->rx_write_index - start_index)) {
+                /*
+                 * Response Good
+                 * Subtract 2 for the CRC
+                 */
+                LOG_D("Message Good! Start at 1\n\r");
+
+                if(channel->process_unsolicited_msg) {
+                        channel->process_unsolicited_msg(&(channel->rx_buffer[start_index]), channel->rx_write_index - (start_index + 2), channel->response_callback_data);
+                }
+                channel->rx_write_index = 0;
+                return;
+        }
+
+        LOG_D("Message bad!\n\r");
+	for(loop = 0; loop < channel->rx_write_index; loop++) {
+		LOG_D("Char %d - 0x%x\n\r", loop, channel->rx_buffer[loop]);
 	}
+        if(channel->process_unsolicited_msg) {
+                channel->process_unsolicited_msg(NULL, 0, channel->response_callback_data);
+        }
+        channel->rx_write_index = 0;
 }
 
 void process_rx_character(struct modbus_channel *channel, u8 ch)
