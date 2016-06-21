@@ -351,8 +351,6 @@ result_t uart_reserve(struct uart_data *data)
 			uarts[loop].tx_read_index = 0;
 			uarts[loop].tx_count = 0;
 
-//			AD1PCFGL = 0xffff;
-
 			/*
 			 * Set up the Rx & Tx pins
 			 */
@@ -452,7 +450,7 @@ static void uart_putchar(u8 uart, u8 ch)
 					U2STAbits.UTXISEL1 = 1;
 					U2STAbits.UTXISEL0 = 0;
 				}
-				
+
 				if(uarts[uart].tx_count == UART_TX_BUFFER_SIZE) {
 					LOG_E("Circular buffer full!");
 					return;
@@ -480,7 +478,7 @@ static void uart_putchar(u8 uart, u8 ch)
 					U3STAbits.UTXISEL1 = 1;
 					U3STAbits.UTXISEL0 = 0;
 				}
-				
+
 				if(uarts[uart].tx_count == UART_TX_BUFFER_SIZE) {
 					LOG_E("Circular buffer full!");
 					return;
@@ -508,7 +506,7 @@ static void uart_putchar(u8 uart, u8 ch)
 					U4STAbits.UTXISEL1 = 1;
 					U4STAbits.UTXISEL0 = 0;
 				}
-				
+
 				if(uarts[uart].tx_count == UART_TX_BUFFER_SIZE) {
 					LOG_E("Circular buffer full!");
 					return;
@@ -530,16 +528,20 @@ static void uart_putchar(u8 uart, u8 ch)
 
 static void uart_set_rx_pin(u8 uart, u8 pin)
 {
+//        AD1PCFGL = 0xffff;
 	switch (pin) {
 		case RP0:
+                        AD1PCFGLbits.PCFG0 = 1;
 			TRISBbits.TRISB0 = 1;
 			break;
 
 		case RP1:
+                        AD1PCFGLbits.PCFG1 = 1;
 			TRISBbits.TRISB1 = 1;
 			break;
 
 		case RP13:
+                        AD1PCFGLbits.PCFG2 = 1;
 			TRISBbits.TRISB2 = 1;
 			break;
 
@@ -548,6 +550,7 @@ static void uart_set_rx_pin(u8 uart, u8 pin)
 			break;
 
 		case RP28:
+                        AD1PCFGLbits.PCFG4 = 1;
 			TRISBbits.TRISB4 = 1;
 			break;
 
@@ -599,16 +602,19 @@ static void uart_set_tx_pin(u8 uart, u8 pin)
 
 	switch (pin) {
 		case RP0:
+                        AD1PCFGLbits.PCFG0 = 1;
 			TRISBbits.TRISB0 = 0;
 			RPOR0bits.RP0R = tx_function;
 			break;
 
 		case RP1:
+                        AD1PCFGLbits.PCFG1 = 1;
 			TRISBbits.TRISB1 = 0;
 			RPOR0bits.RP1R = tx_function;
 			break;
 
 		case RP13:
+                        AD1PCFGLbits.PCFG2 = 1;
 			TRISBbits.TRISB2 = 0;
 			RPOR6bits.RP13R = tx_function;
 			break;
@@ -619,6 +625,7 @@ static void uart_set_tx_pin(u8 uart, u8 pin)
 			break;
 
 		case RP28:
+                        AD1PCFGLbits.PCFG4 = 1;
 			TRISBbits.TRISB4 = 0;
 			RPOR14bits.RP28R = tx_function;
 			break;
