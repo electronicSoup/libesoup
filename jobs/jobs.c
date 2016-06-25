@@ -45,7 +45,7 @@ void jobs_init(void)
         write_index = 0;
         read_index = 0;
         count = 0;
-	
+
 	for(loop = 0; loop < NUMBER_OF_JOBS; loop++) {
 		jobs[loop].function = NULL;
 		jobs[loop].data = NULL;
@@ -73,7 +73,7 @@ result_t jobs_execute(void)
 
 	while(count) {
                 if(jobs[read_index].function) {
-                        LOG_D("Execute Job(%d)\n\r", read_index);
+//                        LOG_D("Execute Job(%d)\n\r", read_index);
                         function = jobs[read_index].function;
                         data     = jobs[read_index].data;
 
@@ -81,7 +81,7 @@ result_t jobs_execute(void)
                         jobs[read_index].data = NULL;
                         read_index = (read_index + 1) % NUMBER_OF_JOBS;
                         count--;
-                        
+
                         function(data);
                 } else {
                         LOG_E("Bad job at %d\n\r", read_index);
