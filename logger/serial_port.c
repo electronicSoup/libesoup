@@ -4,7 +4,7 @@
  *
  * Functions for initialisation of the Serial Port.
  *
- * Copyright 2014 John Whitmore <jwhitmore@electronicsoup.com>
+ * Copyright 2016 John Whitmore <jwhitmore@electronicsoup.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 2 of the GNU Lesser General Public License
@@ -40,6 +40,11 @@ static UINT16 tx_read_index = 0;
 static UINT16 tx_buffer_count = 0;
 #endif // (__18F2680) || (__18F4585)
 
+/**
+ * \fn _U1RXInterrupt()
+ *
+ * \brief Interrupt Service Routine for received characters from UART 1
+ */
 void _ISR __attribute__((__no_auto_psv__)) _U1RXInterrupt(void)
 {
 	u8 ch;
@@ -53,6 +58,13 @@ void _ISR __attribute__((__no_auto_psv__)) _U1RXInterrupt(void)
 	IFS0bits.U1RXIF = 0;
 }
 
+/**
+ * \fn serial_init()
+ *
+ * \brief Initialisation function for serial logging
+ *
+ * Initialised the processor registers for serial logging on UART 1
+ */
 void serial_init(void)
 {
 	/*
@@ -60,7 +72,7 @@ void serial_init(void)
 	 */
 #if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__)
 	/*
-	 * Serial Port pin configuration should be defined 
+	 * Serial Port pin configuration should be defined
 	 * in include file system.h
 	 */
 #if defined(SERIAL_PORT_GndTxRx)
@@ -77,7 +89,7 @@ void serial_init(void)
 	U1STA = 0x0410;
 
 	IEC0bits.U1RXIE = 1;
-	
+
 	/*
 	 * Desired Baud Rate = FCY/(16 (UxBRG + 1))
 	 *
@@ -87,8 +99,45 @@ void serial_init(void)
 	 *
 	 */
 	U1BRG = ((CLOCK_FREQ / SERIAL_LOGGING_BAUD) / 16) - 1;
+#elif defined(__dsPIC33EP256MU806__)
+
+        /*
+         * CinnamonBun dsPIC33 uses Gnd, RG8/RP120,  RG6/RP118
+         */
+	/*
+	 * Serial Port pin configuration should be defined
+	 * in include file system.h
+	 */
+#if defined(SERIAL_PORT_GndTxRx)
+        TRISGbits.TRISG6 = 1;
+        TRISGbits.TRISG8 = 0;
+
+        RPINR18bits.U1RXR = 118;
+        RPOR14bits.RP120R = U1TX;
+#elif defined(SERIAL_PORT_GndRxTx)
+        TRISGbits.TRISG6 = 0;
+        TRISGbits.TRISG8 = 1;
+
+        RPINR18bits.U1RXR = 120;
+        RPOR13bits.RP118R = dsPIC33_U1TX;
+#else
+#error "Serial Port configuration not defined"
 #endif
 
+	U1MODE = 0x8800;
+	U1STA = 0x0410;
+
+//	IEC0bits.U1RXIE = 1;
+
+	/*
+	 * Desired Baud Rate = FCY/(16 (UxBRG + 1))
+	 *
+	 * UxBRG = ((FCY/Desired Baud Rate)/16) - 1
+	 *
+	 * UxBRG = ((CLOCK/SERIAL_BAUD)/16) -1
+	 */
+	U1BRG = ((CLOCK_FREQ / SERIAL_LOGGING_BAUD) / 16) - 1;
+#endif
 	/*
 	 * Analogue Guage is running a PIC18F2680 processor
 	 */
