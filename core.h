@@ -119,6 +119,8 @@ typedef union {
 #define CRYSTAL_FREQ 16000000
 #elif defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__)
 #define CLOCK_FREQ 16000000
+#elif defined(__18F2680) || defined(__18F4585)
+#define CRYSTAL_FREQ 16000000
 #endif
 
 /**
