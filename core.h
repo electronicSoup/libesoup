@@ -8,15 +8,15 @@
  * Copyright 2014 John Whitmore <jwhitmore@electronicsoup.com>
  *
  * This program is free software; you can redistribute it and/or modify
- * it under the terms of the version 2 of the GNU General Public License
+ * it under the terms of the version 2 of the GNU Lesser General Public License
  * as published by the Free Software Foundation
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
+ * GNU Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
+ * You should have received a copy of the GNU Lesser General Public License
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  *
  */
@@ -33,13 +33,12 @@
 //#define __PIC24FJ256GB106__
 
 #if defined(__18F2680) || defined(__18F4585)
-//#include <p18cxxx.h>
-#include <xc.h>
-#endif // (__18F2680) || defined(__18F4585)
-
-#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__)
+#include <p18cxxx.h>
+#elif defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__)
 #include <p24Fxxxx.h>
-#endif // (__PIC24FJ256GB106__)
+#elif defined(__dsPIC33EP256MU806__)
+#include <xc.h>
+#endif
 
 /*
  * Include MicroChip's definitions
@@ -91,6 +90,20 @@
     #define can_frame struct can_frame
 #endif
 
+    
+#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__)
+#elif defined(__dsPIC33EP256MU806__)
+#define dsPIC33_U1TX 0x01
+    
+/*
+ * Clock Sources:
+ * 
+ * See Microchip document DS70005131
+ */
+#define dsPIC33_PRIMARY_OSCILLATOR     0b010
+#define dsPIC33_PRIMARY_OSCILLATOR_PLL 0b011
+#endif
+    
 /*
  * Union for converting byte stream to floats
  */
@@ -100,9 +113,15 @@ typedef union {
 } f32;
 
 /**
- * @brief Clock Frequency of the Hardware Device.
+ * @brief Crystal Frequency of the Hardware Device.
  */
+#if defined(__dsPIC33EP256MU806__)
+#define CRYSTAL_FREQ 16000000
+#elif defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__)
 #define CLOCK_FREQ 16000000
+#elif defined(__18F2680) || defined(__18F4585)
+#define CRYSTAL_FREQ 16000000
+#endif
 
 /**
  * @brief Duration of the system timer tick in MilliSeconds.
@@ -863,7 +882,7 @@ typedef u32 canid_t;
  * Structure to define the Layer 2 CAN Frame. Simply the CAN Identifier, Data
  * length info and an array for the Data Bytes.
  */
-#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__)
+#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__) || defined(__dsPIC33EP256MU806__)
 typedef struct __attribute__ ((packed))
 #endif //__PIC24FJ256GB106__
 #if defined(__18F2680) || defined(__18F4585)
