@@ -33,11 +33,11 @@
  * Definitions for the Transmit Circular buffer. Calls to putchar will load
  * up this circular buffer and the UASRT serial port will empty it.
  */
-static BYTE tx_circular_buffer[USART_TX_BUFFER_SIZE];
+static u8 tx_circular_buffer[USART_TX_BUFFER_SIZE];
 
-static UINT16 tx_write_index = 0;
-static UINT16 tx_read_index = 0;
-static UINT16 tx_buffer_count = 0;
+static u16 tx_write_index = 0;
+static u16 tx_read_index = 0;
+static u16 tx_buffer_count = 0;
 #endif // (__18F2680) || (__18F4585)
 
 /**
@@ -45,6 +45,7 @@ static UINT16 tx_buffer_count = 0;
  *
  * \brief Interrupt Service Routine for received characters from UART 1
  */
+#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__) || defined(__dsPIC33EP256MU806__)
 void _ISR __attribute__((__no_auto_psv__)) _U1RXInterrupt(void)
 {
 	u8 ch;
@@ -57,6 +58,7 @@ void _ISR __attribute__((__no_auto_psv__)) _U1RXInterrupt(void)
 
 	IFS0bits.U1RXIF = 0;
 }
+#endif
 
 /**
  * \fn serial_init()
@@ -142,7 +144,7 @@ void serial_init(void)
 	 * Analogue Guage is running a PIC18F2680 processor
 	 */
 #if defined(__18F2680) || defined(__18F4585)
-	UINT8 baud;
+	u8 baud;
 
 	/*
 	 * Initialise the TX Circular buffer
@@ -159,7 +161,7 @@ void serial_init(void)
 	TXSTAbits.BRGH = 0;    // High Baud Rate Select bit
 
 #if defined(ENABLE_USART_RX)
-	RCSTAbits.CREN = 1;    // Enagle the Receiver
+	RCSTAbits.CREN = 1;    // Enable the Receiver
 #endif
 	RCSTAbits.SPEN = 1;
 
@@ -169,6 +171,7 @@ void serial_init(void)
 
 	SPBRG = baud;
 
+	PIE1bits.TXIE = 0;
 	PIR1bits.TXIF = 0;
 #if defined(ENABLE_USART_RX)
 	PIR1bits.RCIF = 0;
@@ -208,6 +211,11 @@ void serial_isr(void)
 #endif // (__18F2680) || (__18F4585)
 
 #if defined(__18F2680) || defined(__18F4585)
+/**
+ * putch: Microchip's printf() implementation calls this function
+ *
+ * @param character
+ */
 void putch(char character)
 {
 	if(tx_buffer_count < USART_TX_BUFFER_SIZE) {
