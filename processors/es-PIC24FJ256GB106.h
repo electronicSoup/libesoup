@@ -32,13 +32,27 @@
 #include <p24Fxxxx.h>
 
 /*
- * Microcontroller Pin Definitions
+ * Peripheral Input Pin Definitions
  */
 #define RP0  0
 #define RP1  1
 #define RP13 13
+#define RP20 20
+#define RP23 23
 #define RP25 25
 #define RP28 28
 
+/*
+ * Peripheral Input functions
+ */
+#define SPI_1_DATA_INPUT RPINR20bits.SDI1R 
+#define UART_1_RX        RPINR18bits.U1RXR
+
+/*
+ * Peripheral Output functions
+ */
+#define UART_1_TX             3
+#define SPI_1_DATA_OUTPUT     7
+#define SPI_1_CLOCK_OUTPUT    8
 
 #endif // _ES_PIC24FJ256GB106_H

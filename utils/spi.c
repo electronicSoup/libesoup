@@ -46,21 +46,10 @@ void spi_init(void)
 	SPI_MISO_DIRECTION = INPUT_PIN;
 	SPI_MOSI_DIRECTION = OUTPUT_PIN;
 
-	/*
-	 *    - SI
-	 *
-	 * RD2 = RP23 - SPI1 Data Input RPINR20 SDI1R<5:0>
-	 */
-	RPINR20bits.SDI1R = 23;
+	SPI_1_DATA_INPUT = SPI_MISO_PIN;
 
-	/*
-	 * OUTPUTS:
-	 *  RD3 = RP22 -  SO  - SPI1 Data Output Function 7
-	 *  RD1 = RP24 - SCK  - SPI1 Clock Output Function 8
-	 *
-	 */
-	RPOR11bits.RP22R = 7;     //SPI1 SO
-	RPOR12bits.RP24R = 8;     //SPI1 SCK
+	SPI_MOSI_PIN = SPI_1_DATA_OUTPUT;
+	SPI_SCK_PIN  = SPI_1_CLOCK_OUTPUT;
 
 	/*
 	 * Init the SPI Config

@@ -29,10 +29,43 @@
 #ifndef _CB_dsPIC33EP256MU806_H
 #define _CB_dsPIC33EP256MU806_H
 
+#include "es_lib/processors/es-dsPIC33EP256MU806.h"
+
 /**
  * @brief Crystal Frequency of the Hardware Device.
  */
 #define CRYSTAL_FREQ 16000000
+
+/**
+ * @brief Bootloader pause on powerup, and listen for new Firmware?
+ *
+ * The cinnamonBun Hardware has a "Boot" Jumper. If the jumper is not connected
+ * the bootloader does NOT attempt to connect to an Android device and allow
+ * firmware update.
+ *
+ * NOTE: This definition might look incorrect with the '=' but it IS 
+ * Correct! The switch is expected to be used in an 'if' statement. The 
+ * first part will be false but it's the second part of the or statement
+ * that will dictate the action of the if!
+ */
+#define BOOT_FLAG      (TRISGbits.TRISG9 = 0 || PORTGbits.RG9)
+
+/*
+ * Serial Logging
+ */
+#if defined(SERIAL_PORT_GndTxRx)
+        #define SERIAL_LOGGING_RX_DDR    TRISGbits.TRISG6
+        #define SERIAL_LOGGING_TX_DDR    TRISGbits.TRISG8
+
+        #define SERIAL_LOGGING_TX        RPOR14bits.RP120R
+        #define SERIAL_LOGGING_RX_PIN    RP118
+#elif defined(SERIAL_PORT_GndRxTx)
+        #define SERIAL_LOGGING_RX_DDR    TRISGbits.TRISG8
+        #define SERIAL_LOGGING_TX_DDR    TRISGbits.TRISG6
+
+        #define SERIAL_LOGGING_TX        RPOR13bits.RP118R
+        #define SERIAL_LOGGING_RX_PIN    RP120
+#endif
 
 /*
  * EEPROM Definitions
@@ -117,6 +150,11 @@
  * @def   EEPROM_DeSelect
  * @brief Macro to deselect the EEPROM Chip
  */
+#define EEPROM_CS_PIN_DIRECTION        TRISDbits.TRISD11
+#define EEPROM_CS                      LATDbits.LATD11
+#define EEPROM_Select                  EEPROM_CS = 0;
+#define EEPROM_DeSelect                EEPROM_CS = 1;
+
 
 /**
  * @def   CAN_CS_PIN_DIRECTION
@@ -156,4 +194,74 @@
  * @brief Data Direction Register pin for the SPI Master Out Slave In line. 
  *
  */
+#define SPI_RW_FINISHED     SPI1STATbits.SPIRBF
+#define SPI_SCK_DIRECTION   TRISFbits.TRISF1   // RP97
+#define SPI_MOSI_DIRECTION  TRISFbits.TRISF0   // RP96
+#define SPI_MISO_DIRECTION  TRISDbits.TRISD10  // RPI74
+
+#define SPI_MISO_PIN        RPI74
+
+#define SPI_MOSI_PIN        RPOR7bits.RP96R  // RP96
+#define SPI_SCK_PIN         RPOR7bits.RP97R  // RP97
+
+/*
+ * Flash parameters
+ */
+/**
+ * @def   FLASH_PAGE_SIZE
+ * @brief The size of Flash memory Pages.
+ *
+ * The Flash page size is 1024 Instructions, which is 3072 as each instruction
+ * is 3 Bytes. But the Flash is addressed in Words so the length given here is
+ * 0x800 (1024 * 2).
+ *
+ * Flash memory is erased on a Page by page basis.
+ *
+ * @def   FLASH_LAST_ADDRESS
+ * @brief The last Address of Flash memory.
+ *
+ * @def   FLASH_NUM_INSTRUCTION_PER_ROW
+ * @brief Flash is written row by row. This is the Row size of Flash Memory
+ */
+#define FLASH_PAGE_SIZE                0x800
+#define FLASH_LAST_ADDRESS             0x2ABF9
+#define FLASH_NUM_INSTRUCTION_PER_ROW  128
+
+/**
+ * @def   FLASH_FIRMWARE_START_ADDRESS
+ * @brief Start of Firmware code in Flash Memory.
+ *
+ * The bootloader code occupies the lower portion of Flash memory. Firmware
+ * starts at this address.
+ *
+ * @def   FLASH_APP_START_ADDRESS
+ * @brief Start of the Application code in Flash Memory.
+ *
+ * If you use the electronicSoup CAN Node Operating System then the application 
+ * Code starts at this address in Flash Memory.
+ */
+#define FLASH_FIRMWARE_START_ADDRESS   0x08800
+#define FLASH_APP_START_ADDRESS        0x18000
+
+/**
+ * @def   FLASH_APP_HANDLE_PAGE
+ * @brief Address of the Applications Handle page in Flash.
+ *
+ * Because of limitations in the PIC Architecture, specifically in how far in
+ * Flash Memory a branching instruction can jump a page of Flash is reserved in
+ * low memory for the handlers to be able to jump up to high memory of the 
+ * Application's code.
+ */
+#define FLASH_APP_HANDLE_PAGE        0x400
+
+/**
+ * @def   USB_HOST
+ * @brief Turn on the 5 Volt power to the USB Bus.
+ *
+ * @def   USB_DEVICE
+ * @brief Turn off the 5 Volt power to the USB Bus.
+ */
+#define USB_HOST    TRISDbits.TRISD9 = OUTPUT_PIN; LATDbits.LATD9 = 1; USBInitialize(0);
+#define USB_DEVICE  TRISDbits.TRISD9 = OUTPUT_PIN; LATDbits.LATD9 = 0;
+
 #endif // _CB_dsPIC33EP256MU806_H

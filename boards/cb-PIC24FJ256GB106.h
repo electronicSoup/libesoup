@@ -30,6 +30,7 @@
 #define _CB_PIC24FJ256GB106_H
 
 #include "es_lib/processors/es-PIC24FJ256GB106.h"
+
 /**
  * @brief Crystal Frequency of the Hardware Device.
  */
@@ -48,6 +49,23 @@
  * that will dictate the action of the if!
  */
 #define BOOT_FLAG      (TRISDbits.TRISD11 = 0 || PORTDbits.RD11)
+
+/*
+ * Serial Logging
+ */
+#if defined(SERIAL_PORT_GndTxRx)
+        #define SERIAL_LOGGING_RX_DDR    TRISDbits.TRISD5
+        #define SERIAL_LOGGING_TX_DDR    TRISDbits.TRISD4
+
+        #define SERIAL_LOGGING_TX        RPOR12bits.RP25R
+        #define SERIAL_LOGGING_RX_PIN    RP20
+#elif defined(SERIAL_PORT_GndRxTx)
+        #define SERIAL_LOGGING_RX_DDR    TRISDbits.TRISD4
+        #define SERIAL_LOGGING_TX_DDR    TRISDbits.TRISD5
+
+        #define SERIAL_LOGGING_TX        RPOR10bits.RP20R
+        #define SERIAL_LOGGING_RX_PIN    RP25
+#endif
 
 /*
  * EEPROM Definitions
@@ -189,10 +207,28 @@
  * @brief Data Direction Register pin for the SPI Master Out Slave In line. 
  *
  */
+
+/*
+ *    - MISO
+ *
+ * RD2 = RP23 - SPI1 Data Input RPINR20 SDI1R<5:0>
+ */
+/*
+ * OUTPUTS:
+ *  RD3 = RP22 - MOSI - SPI1 Data Output Function 7
+ *  RD1 = RP24 - SCK  - SPI1 Clock Output Function 8
+ *
+ */
+
 #define SPI_RW_FINISHED     SPI1STATbits.SPIRBF
 #define SPI_SCK_DIRECTION   TRISDbits.TRISD1
 #define SPI_MISO_DIRECTION  TRISDbits.TRISD2
 #define SPI_MOSI_DIRECTION  TRISDbits.TRISD3
+
+#define SPI_MISO_PIN        RP23
+
+#define SPI_MOSI_PIN        RPOR11bits.RP22R
+#define SPI_SCK_PIN         RPOR12bits.RP24R
 
 /*
  * Flash parameters
