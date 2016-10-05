@@ -33,11 +33,11 @@
  * Definitions for the Transmit Circular buffer. Calls to putchar will load
  * up this circular buffer and the UASRT serial port will empty it.
  */
-static BYTE tx_circular_buffer[USART_TX_BUFFER_SIZE];
+static u8 tx_circular_buffer[USART_TX_BUFFER_SIZE];
 
-static UINT16 tx_write_index = 0;
-static UINT16 tx_read_index = 0;
-static UINT16 tx_buffer_count = 0;
+static u16 tx_write_index = 0;
+static u16 tx_read_index = 0;
+static u16 tx_buffer_count = 0;
 #endif // (__18F2680) || (__18F4585)
 
 /**
@@ -45,7 +45,11 @@ static UINT16 tx_buffer_count = 0;
  *
  * \brief Interrupt Service Routine for received characters from UART 1
  */
+#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__)
 void _ISR __attribute__((__no_auto_psv__)) _U1RXInterrupt(void)
+#elif defined(__dsPIC33EP256MU806__)
+void _ISR __attribute__((__no_auto_psv__)) _U1RXInterrupt(void)
+#endif
 {
 	u8 ch;
 	LOG_D("_U1RXInterrupt\n\r");
@@ -70,20 +74,16 @@ void serial_init(void)
 	/*
 	 * CinnamonBun is running a PIC24FJ256GB106 processor
 	 */
-#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__)
+#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__) || defined(__dsPIC33EP256MU806__)
 	/*
 	 * Serial Port pin configuration should be defined
 	 * in include file system.h
 	 */
-#if defined(SERIAL_PORT_GndTxRx)
-	RPOR12bits.RP25R = 3;
-	RPINR18bits.U1RXR = 20;
-#elif defined(SERIAL_PORT_GndRxTx)
-	TRISDbits.TRISD4 = 1;
+        SERIAL_LOGGING_RX_DDR = INPUT_PIN;
+        SERIAL_LOGGING_TX_DDR = OUTPUT_PIN;
 
-	RPOR10bits.RP20R = 3;
-	RPINR18bits.U1RXR = 25;
-#endif
+	SERIAL_LOGGING_TX = UART_1_TX;
+	UART_1_RX = SERIAL_LOGGING_RX_PIN;
 
 	U1MODE = 0x8800;
 	U1STA = 0x0410;
@@ -99,50 +99,12 @@ void serial_init(void)
 	 *
 	 */
 	U1BRG = ((CLOCK_FREQ / SERIAL_LOGGING_BAUD) / 16) - 1;
-#elif defined(__dsPIC33EP256MU806__)
 
-        /*
-         * CinnamonBun dsPIC33 uses Gnd, RG8/RP120,  RG6/RP118
-         */
-	/*
-	 * Serial Port pin configuration should be defined
-	 * in include file system.h
-	 */
-#if defined(SERIAL_PORT_GndTxRx)
-        TRISGbits.TRISG6 = 1;
-        TRISGbits.TRISG8 = 0;
-
-        RPINR18bits.U1RXR = 118;
-        RPOR14bits.RP120R = U1TX;
-#elif defined(SERIAL_PORT_GndRxTx)
-        TRISGbits.TRISG6 = 0;
-        TRISGbits.TRISG8 = 1;
-
-        RPINR18bits.U1RXR = 120;
-        RPOR13bits.RP118R = dsPIC33_U1TX;
-#else
-#error "Serial Port configuration not defined"
-#endif
-
-	U1MODE = 0x8800;
-	U1STA = 0x0410;
-
-//	IEC0bits.U1RXIE = 1;
-
-	/*
-	 * Desired Baud Rate = FCY/(16 (UxBRG + 1))
-	 *
-	 * UxBRG = ((FCY/Desired Baud Rate)/16) - 1
-	 *
-	 * UxBRG = ((CLOCK/SERIAL_BAUD)/16) -1
-	 */
-	U1BRG = ((CLOCK_FREQ / SERIAL_LOGGING_BAUD) / 16) - 1;
-#endif
+#elif defined(__18F2680) || defined(__18F4585)
 	/*
 	 * Analogue Guage is running a PIC18F2680 processor
 	 */
-#if defined(__18F2680) || defined(__18F4585)
-	UINT8 baud;
+	u8 baud;
 
 	/*
 	 * Initialise the TX Circular buffer
@@ -159,7 +121,7 @@ void serial_init(void)
 	TXSTAbits.BRGH = 0;    // High Baud Rate Select bit
 
 #if defined(ENABLE_USART_RX)
-	RCSTAbits.CREN = 1;    // Enagle the Receiver
+	RCSTAbits.CREN = 1;    // Enable the Receiver
 #endif
 	RCSTAbits.SPEN = 1;
 
@@ -169,6 +131,7 @@ void serial_init(void)
 
 	SPBRG = baud;
 
+	PIE1bits.TXIE = 0;
 	PIR1bits.TXIF = 0;
 #if defined(ENABLE_USART_RX)
 	PIR1bits.RCIF = 0;
@@ -208,6 +171,11 @@ void serial_isr(void)
 #endif // (__18F2680) || (__18F4585)
 
 #if defined(__18F2680) || defined(__18F4585)
+/**
+ * putch: Microchip's printf() implementation calls this function
+ *
+ * @param character
+ */
 void putch(char character)
 {
 	if(tx_buffer_count < USART_TX_BUFFER_SIZE) {

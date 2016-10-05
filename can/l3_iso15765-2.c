@@ -3,7 +3,7 @@
  * \file es_lib/can/iso15765.c
  *
  * Based on ISO_15765-2 but with a much reduced Message Length. The standard
- * allows for 4KB of a message whereas for the electronicSoup CAN Bus Nodes 
+ * allows for 4KB of a message whereas for the electronicSoup CAN Bus Nodes
  * the limit is 74 Bytes, including an initial protocol byte.
  *
  * Copyright 2014 John Whitmore <jwhitmore@electronicsoup.com>
@@ -33,7 +33,7 @@
 #include "es_lib/timers/timers.h"
 
 #define DEBUG_FILE
-#define LOG_LEVEL LOG_INFO
+//#define LOG_LEVEL LOG_INFO
 #include "es_lib/logger/serial_log.h"
 
 #define TAG "ISO-15765"
@@ -230,7 +230,7 @@ result_t iso15765_init(u8 address)
 	tx_frame_id.bytes.type = ISO15765_TARGET_PHYSICAL;
 	tx_frame_id.bytes.source = node_address;
 	tx_frame_id.bytes.destination = node_address;
-    
+
 	tx_frame_id.can_id |= CAN_EFF_FLAG;
 
 	/*
@@ -270,7 +270,7 @@ result_t iso15765_tx_msg(iso15765_msg_t *msg)
 		printf("0x%2x,", *data_ptr++);
 	}
 	printf("\n\r");
-	
+
         if(!initialised) {
 		LOG_E("ISO15765 not Initialised\n\r");
 		return(ERR_UNINITIALISED);
@@ -521,7 +521,7 @@ void iso15765_frame_handler(can_frame *frame)
 			mcp_receiver_busy = FALSE;
 #elif defined(ES_LINUX)
 			free(rx_buffer);
-			node_buffers[source].rx_buffer = NULL;			
+			node_buffers[source].rx_buffer = NULL;
 #endif // MCP - ES_LINUX
 		}
 		else {
@@ -605,7 +605,7 @@ void iso15765_frame_handler(can_frame *frame)
 		rx_buffer = node_buffers[source].rx_buffer;
 #endif // MCP - ES_LINUX
 		stopTimer_N_Cr(rx_buffer);
-		
+
 		if (rx_buffer->sequence == (frame->data[0] & 0x0f)) {
 			for (loop = 1; loop < frame->can_dlc; loop++) {
 				rx_buffer->data[rx_buffer->index++] = frame->data[loop];
@@ -636,7 +636,7 @@ void iso15765_frame_handler(can_frame *frame)
 				mcp_receiver_busy = FALSE;
 #elif defined(ES_LINUX)
 				free(rx_buffer);
-				node_buffers[source].rx_buffer = NULL;			
+				node_buffers[source].rx_buffer = NULL;
 #endif // MCP - ES_LINUX
 			} else if (rx_buffer->frames_received_in_block == rx_buffer->block_size) {
 				rx_buffer->frames_received_in_block = 0;

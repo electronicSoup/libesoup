@@ -123,7 +123,7 @@ static can_baud_rate_t listen_baudrate = no_baud;
 static u8 changing_baud_tx_error;
 //static u8 g_CanErrors = 0x00;
 //static UINT32 g_missedMessageCount = 0;
-static UINT32 rx_msg_count = 0;
+static u32 rx_msg_count = 0;
 //static UINT32 messageSentCount = 0;
 //static UINT32 wakeUpCount = 0;
 static can_frame rx_can_msg;
@@ -920,7 +920,7 @@ static void set_reg_mask_value(u8 reg, u8 mask, u8 value)
         spi_write_byte(mask);
         spi_write_byte(value);
         CAN_DESELECT
-       
+
         fail = (read_reg(reg) & mask) != value;
         if(fail) {
 		LOG_E("Bit Modify Failed!\n\r");
@@ -1014,7 +1014,7 @@ static void set_baudrate(can_baud_rate_t baudrate)
 		phseg1 = 4;
 		phseg2 = 4;
 		break;
-		
+
         case baud_500K:
 		brp = 0;
 		propseg = 7;
@@ -1022,7 +1022,7 @@ static void set_baudrate(can_baud_rate_t baudrate)
 		phseg1 = 4;
 		phseg2 = 4;
 		break;
-		
+
         case baud_800K:
 		brp = 0;
 		propseg = 3;
@@ -1030,7 +1030,7 @@ static void set_baudrate(can_baud_rate_t baudrate)
 		phseg1 = 3;
 		phseg2 = 3;
 		break;
-		
+
         case baud_1M:
 		brp = 0;
 		propseg = 3;
@@ -1053,7 +1053,7 @@ static void set_baudrate(can_baud_rate_t baudrate)
 	set_reg_mask_value(CNF2_REG, SAM_MASK, 0x00 );
 	set_reg_mask_value(CNF2_REG, PSEG1_MASK, (phseg1 - 1) << 3 );
 	set_reg_mask_value(CNF2_REG, PROPSEG_MASK, (propseg - 1) );
-	
+
 	set_reg_mask_value(CNF3_REG, WAKFIL_MASK, 0x00 );
 	set_reg_mask_value(CNF3_REG, PSEG2_MASK, (phseg2 - 1) );
 }

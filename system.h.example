@@ -38,16 +38,35 @@
 #include "es_lib/core.h"
 
 /**
+ * @brief The required Instruction clock frequency of the device. 
+ * 
+ * The actual Hardware clock frequency is defined by the MACRO CRYSTAL_FREQ in
+ * core.h. That constant is used in conjunction with this required CLOCK_FREQ 
+ * in the function clock_init() to set the desired frequency with the PLL.
+ *  
+ * The function clock_init() has to be called on entry to main() to 
+ * initialise the device to this clock frequency.
+ */
+#define CLOCK_FREQ 8000000     // 8MHz
+//#define CLOCK_FREQ 60000000    // 60MHz
+
+/**
  * @brief The size of the Transmit buffer to be used by the Serial Logging port.
  *
+ * This constant is only used in the PIC18F2680 and PIC18F4585 micro-controller.
  * Default set to 300 Bytes as the serial port should be used for
  * relatively short debug messages and memory is limited.
  */
-#define USART_TX_BUFFER_SIZE 300
+//#define USART_TX_BUFFER_SIZE 300
 
 /**
  * @brief Baud rate of the serial logging port
  *
+ * This is Baud rate is set by the function serial_init(). This call to 
+ * initialise the baud rate has to be preceeded by a call to clock_init() so
+ * that the device's instruction clock speed is know, and the correct scaling
+ * can be preformed for the required baud rate.
+ * 
  * Default set to 19k2
  */
 #define SERIAL_LOGGING_BAUD 19200

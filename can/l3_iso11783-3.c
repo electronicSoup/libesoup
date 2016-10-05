@@ -138,7 +138,7 @@ result_t iso11783_init(u8 address)
 	}
 
 	unhandled_handler = (iso11783_msg_handler_t)NULL;
-	
+
 	/*
 	 * Define our target for Layer 2 Frames and register it.
 	 * Looking for Extended frame with EDP Bit set to Zero
@@ -303,7 +303,7 @@ void iso11783_frame_handler(can_frame *frame)
 	 */
 	pgn = canid_to_pgn(frame->can_id);
 
-	LOG_D("iso11783_frame_handler received PGN %d  =  0x%x\n\r", pgn, pgn);
+	LOG_D("iso11783_frame_handler received PGN %d  =  0x%lx\n\r", pgn, pgn);
 
 //	printf("iso11783:(frame id 0x%x) SA 0x%x,", frame->can_id, sa);
 //	if(da_valid) {
@@ -313,7 +313,7 @@ void iso11783_frame_handler(can_frame *frame)
 
 	for(loop = 0; loop < frame->can_dlc; loop++) {
 		printf("%x,", frame->data[loop]);
-	}	
+	}
 	printf("\n\r");
 
 	if(pgn == 126992) {

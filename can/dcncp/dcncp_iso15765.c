@@ -34,10 +34,12 @@
 #include "es_lib/can/dcncp/cinnamonbun_info.h"
 
 #define DEBUG_FILE
-#define LOG_LEVEL LOG_INFO
+//#define LOG_LEVEL LOG_INFO
 #include "es_lib/logger/serial_log.h"
 
 #define TAG "DCNCP_ISO15765"
+
+extern void  os_remove_current_app(void);
 
 /*
  * Defined in the CAN_Node Project source? Have to restructure!!!
@@ -105,9 +107,9 @@ static void dcncp_iso15765_msg_handler(iso15765_msg_t *msg)
 	char          *status;
 	u8             buffer[200];
 
-	LOG_D("Message from Node 0x%x\n\r", (UINT16) msg->address);
-	LOG_D("Message Protocol 0x%x\n\r", (UINT16) msg->protocol);
-	LOG_D("First Data Byte is 0x%x\n\r", (UINT16) msg->data[0]);
+	LOG_D("Message from Node 0x%x\n\r", (u16) msg->address);
+	LOG_D("Message Protocol 0x%x\n\r", (u16) msg->protocol);
+	LOG_D("First Data Byte is 0x%x\n\r", (u16) msg->data[0]);
 
 	if (msg->protocol != ISO15765_DCNCP_PROTOCOL_ID) {
 		LOG_E("Incorrect L3 Protocol received in NodeManagement %x\n\r", msg->protocol);
@@ -263,7 +265,7 @@ static void dcncp_iso15765_msg_handler(iso15765_msg_t *msg)
 				if (eeprom_write(EEPROM_APP_VALID_MAGIC_ADDR_1, APP_VALID_MAGIC_VALUE) != SUCCESS) {
 					LOG_E("Bad EEPROM Write\n\r");
 				}
-				if (eeprom_write(EEPROM_APP_VALID_MAGIC_ADDR_2, (BYTE) (~APP_VALID_MAGIC_VALUE)) != SUCCESS) {
+				if (eeprom_write(EEPROM_APP_VALID_MAGIC_ADDR_2, (u8) (~APP_VALID_MAGIC_VALUE)) != SUCCESS) {
 					LOG_E("BAD EEPROM Write\n\r");
 				}
 				ClrWdt();
@@ -324,14 +326,14 @@ static void dcncp_iso15765_msg_handler(iso15765_msg_t *msg)
 			break;
 
 		default:
-			LOG_E("ERROR: Unprocessed NodeManagement message type 0x%x\n\r", (UINT16) msg->data[0]);
+			LOG_E("ERROR: Unprocessed NodeManagement message type 0x%x\n\r", (u16) msg->data[0]);
 			break;
 	}
 }
 #endif
 
 #ifdef DCNCP_ISO15765
-void send_ready_response(BYTE address)
+void send_ready_response(u8 address)
 {
 	iso15765_msg_t response;
 	u8             response_buffer[3];

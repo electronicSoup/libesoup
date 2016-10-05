@@ -49,6 +49,7 @@ static result_t  start_timer(u8 timer, ty_time_units units, u16 time, u8 repeat,
 static void      set_clock_divide(u8 timer, u16 clock_divide);
 static void      check_timer(u8 timer);
 
+#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__) || defined(__dsPIC33EP256MU806__)
 void _ISR __attribute__((__no_auto_psv__)) _T1Interrupt(void)
 {
 	IFS0bits.T1IF = 0;
@@ -64,7 +65,9 @@ void _ISR __attribute__((__no_auto_psv__)) _T1Interrupt(void)
 
 	check_timer(TIMER_1);
 }
+#endif
 
+#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__) || defined(__dsPIC33EP256MU806__)
 void _ISR __attribute__((__no_auto_psv__)) _T2Interrupt(void)
 {
 	IFS0bits.T2IF = 0;
@@ -80,7 +83,9 @@ void _ISR __attribute__((__no_auto_psv__)) _T2Interrupt(void)
 
 	check_timer(TIMER_2);
 }
+#endif
 
+#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__) || defined(__dsPIC33EP256MU806__)
 void _ISR __attribute__((__no_auto_psv__)) _T3Interrupt(void)
 {
 	IFS0bits.T3IF = 0;
@@ -95,7 +100,9 @@ void _ISR __attribute__((__no_auto_psv__)) _T3Interrupt(void)
 	}
 	check_timer(TIMER_3);
 }
+#endif
 
+#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__) || defined(__dsPIC33EP256MU806__)
 void _ISR __attribute__((__no_auto_psv__)) _T4Interrupt(void)
 {
 	IFS1bits.T4IF = 0;
@@ -110,7 +117,9 @@ void _ISR __attribute__((__no_auto_psv__)) _T4Interrupt(void)
 	}
 	check_timer(TIMER_4);
 }
+#endif
 
+#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__) || defined(__dsPIC33EP256MU806__)
 void _ISR __attribute__((__no_auto_psv__)) _T5Interrupt(void)
 {
 	IFS1bits.T5IF = 0;
@@ -125,6 +134,14 @@ void _ISR __attribute__((__no_auto_psv__)) _T5Interrupt(void)
 	}
 	check_timer(TIMER_5);
 }
+#endif
+
+#if defined(__18F2680) || defined(__18F4585)
+void pic18f2680_timer_isr(u8 timer)
+{
+        check_timer(timer);
+}
+#endif
 
 void hw_timer_init(void)
 {
@@ -140,6 +157,7 @@ void hw_timer_init(void)
 		timers[loop].remainder = 0;
 	}
 
+#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__) || defined(__dsPIC33EP256MU806__)
 	/*
 	 * Initialise the timers to 16 bit and their clock source
 	 */
@@ -150,8 +168,22 @@ void hw_timer_init(void)
 	T4CONbits.T32 = 0;      // 16 Bit Timer
 	T4CONbits.TCS = 0;      // Internal FOSC/2
 	T5CONbits.TCS = 0;      // Internal FOSC/2
+#elif defined(__18F2680) || defined(__18F4585)
+        T0CONbits.T08BIT = 0;   // 16 Bit timer
+        T0CONbits.T0CS   = 0;   // Clock source Instruction Clock
+#endif
 }
 
+/**
+ * hw_timer_start returns the id of the started timer.
+ *
+ * @param units
+ * @param time
+ * @param repeat
+ * @param expiry_function
+ * @param data
+ * @return Timer started or BAD_TIMER on an error (No free timers)
+ */
 u8 hw_timer_start(ty_time_units units, u16 time, u8 repeat, void (*expiry_function)(void *), void *data)
 {
 	result_t rc;
@@ -207,33 +239,43 @@ result_t hw_timer_pause(u8 timer)
 
 	switch (timer) {
 		case TIMER_1:
+#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__) || defined(__dsPIC33EP256MU806__)
 			TMR1 = 0x00;
 			IEC0bits.T1IE = 0;
 			T1CONbits.TON = 0;
+#endif
 			break;
 
 		case TIMER_2:
+#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__) || defined(__dsPIC33EP256MU806__)
 			TMR2 = 0x00;
 			IEC0bits.T2IE = 0;
 			T2CONbits.TON = 0;
+#endif
 			break;
 
 		case TIMER_3:
+#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__) || defined(__dsPIC33EP256MU806__)
 			TMR3 = 0x00;
 			IEC0bits.T3IE = 0;
 			T3CONbits.TON = 0;
+#endif
 			break;
 
 		case TIMER_4:
+#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__) || defined(__dsPIC33EP256MU806__)
 			TMR4 = 0x00;
 			IEC1bits.T4IE = 0;
 			T4CONbits.TON = 0;
+#endif
 			break;
 
 		case TIMER_5:
+#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__) || defined(__dsPIC33EP256MU806__)
 			TMR5 = 0x00;
 			IEC1bits.T5IE = 0;
 			T5CONbits.TON = 0;
+#endif
 			break;
 
 		default:
@@ -260,6 +302,7 @@ void hw_timer_cancel(u8 timer)
 
 void hw_timer_cancel_all()
 {
+#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__) || defined(__dsPIC33EP256MU806__)
 	IEC0bits.T1IE = 0;
 	T1CONbits.TON = 0;
 
@@ -274,9 +317,10 @@ void hw_timer_cancel_all()
 
 	IEC1bits.T5IE = 0;
 	T5CONbits.TON = 0;
+#endif
 }
 
-result_t start_timer(u8 timer, ty_time_units units, u16 time, u8 repeat, void (*expiry_function)(void *), void *data)
+static result_t start_timer(u8 timer, ty_time_units units, u16 time, u8 repeat, void (*expiry_function)(void *), void *data)
 {
 	u32 ticks;
 
@@ -321,12 +365,13 @@ result_t start_timer(u8 timer, ty_time_units units, u16 time, u8 repeat, void (*
 	return(SUCCESS);
 }
 
-void set_clock_divide(u8 timer, u16 clock_divide)
+static void set_clock_divide(u8 timer, u16 clock_divide)
 {
 //	LOG_D("set_clock_divide()\n\r");
 
 	switch(timer) {
 		case TIMER_1:
+#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__) || defined(__dsPIC33EP256MU806__)
 			if(clock_divide == 1) {
 				T1CONbits.TCKPS1 = 0; // Divide by 1
 				T1CONbits.TCKPS0 = 0;
@@ -342,9 +387,11 @@ void set_clock_divide(u8 timer, u16 clock_divide)
 			} else {
 				LOG_E("Bad clock divider!\n\r");
 			}
+#endif
 			break;
 
 		case TIMER_2:
+#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__) || defined(__dsPIC33EP256MU806__)
 			if(clock_divide == 1) {
 				T2CONbits.TCKPS1 = 0; // Divide by 1
 				T2CONbits.TCKPS0 = 0;
@@ -360,9 +407,11 @@ void set_clock_divide(u8 timer, u16 clock_divide)
 			} else {
 				LOG_E("Bad clock divider!\n\r");
 			}
+#endif
 			break;
 
 		case TIMER_3:
+#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__) || defined(__dsPIC33EP256MU806__)
 			if(clock_divide == 1) {
 				T3CONbits.TCKPS1 = 0; // Divide by 1
 				T3CONbits.TCKPS0 = 0;
@@ -378,9 +427,11 @@ void set_clock_divide(u8 timer, u16 clock_divide)
 			} else {
 				LOG_E("Bad clock divider!\n\r");
 			}
+#endif
 			break;
 
 		case TIMER_4:
+#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__) || defined(__dsPIC33EP256MU806__)
 			if(clock_divide == 1) {
 				T4CONbits.TCKPS1 = 0; // Divide by 1
 				T4CONbits.TCKPS0 = 0;
@@ -396,9 +447,11 @@ void set_clock_divide(u8 timer, u16 clock_divide)
 			} else {
 				LOG_E("Bad clock divider!\n\r");
 			}
+#endif
 			break;
 
 		case TIMER_5:
+#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__) || defined(__dsPIC33EP256MU806__)
 			if(clock_divide == 1) {
 				T5CONbits.TCKPS1 = 0; // Divide by 1
 				T5CONbits.TCKPS0 = 0;
@@ -414,6 +467,7 @@ void set_clock_divide(u8 timer, u16 clock_divide)
 			} else {
 				LOG_E("Bad clock divider!\n\r");
 			}
+#endif
 			break;
 
 		default:
@@ -432,43 +486,53 @@ static void check_timer(u8 timer)
 	if(timers[timer].repeats) {
 		switch (timer) {
 			case TIMER_1:
+#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__) || defined(__dsPIC33EP256MU806__)
 				TMR1 = 0x00;
 				PR1 = 0xffff;
 
 				IEC0bits.T1IE = 1;
 				T1CONbits.TON = 1;
+#endif
 				break;
 
 			case TIMER_2:
+#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__) || defined(__dsPIC33EP256MU806__)
 				TMR2 = 0x00;
 				PR2 = 0xffff;
 
 				IEC0bits.T2IE = 1;
 				T2CONbits.TON = 1;
+#endif
 				break;
 
 			case TIMER_3:
+#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__) || defined(__dsPIC33EP256MU806__)
 				TMR3 = 0x00;
 				PR3 = 0xffff;
 
 				IEC0bits.T3IE = 1;
 				T3CONbits.TON = 1;
+#endif
 				break;
 
 			case TIMER_4:
+#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__) || defined(__dsPIC33EP256MU806__)
 				TMR4 = 0x00;
 				PR4 = 0xffff;
 
 				IEC1bits.T4IE = 1;
 				T4CONbits.TON = 1;
+#endif
 				break;
 
 			case TIMER_5:
+#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__) || defined(__dsPIC33EP256MU806__)
 				TMR5 = 0x00;
 				PR5 = 0xffff;
 
 				IEC1bits.T5IE = 1;
 				T5CONbits.TON = 1;
+#endif
 				break;
 
 			default:
@@ -479,43 +543,53 @@ static void check_timer(u8 timer)
 	} else if(timers[timer].remainder) {
 		switch (timer) {
 			case TIMER_1:
+#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__) || defined(__dsPIC33EP256MU806__)
 				TMR1 = 0x00;
 				PR1 = timers[timer].remainder;
 
 				IEC0bits.T1IE = 1;
 				T1CONbits.TON = 1;
+#endif
 				break;
 
 			case TIMER_2:
+#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__) || defined(__dsPIC33EP256MU806__)
 				TMR2 = 0x00;
 				PR2 = timers[timer].remainder;
 
 				IEC0bits.T2IE = 1;
 				T2CONbits.TON = 1;
+#endif
 				break;
 
 			case TIMER_3:
+#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__) || defined(__dsPIC33EP256MU806__)
 				TMR3 = 0x00;
 				PR3 = timers[timer].remainder;
 
 				IEC0bits.T3IE = 1;
 				T3CONbits.TON = 1;
+#endif
 				break;
 
 			case TIMER_4:
+#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__) || defined(__dsPIC33EP256MU806__)
 				TMR4 = 0x00;
 				PR4 = timers[timer].remainder;
 
 				IEC1bits.T4IE = 1;
 				T4CONbits.TON = 1;
+#endif
 				break;
 
 			case TIMER_5:
+#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__) || defined(__dsPIC33EP256MU806__)
 				TMR5 = 0x00;
 				PR5 = timers[timer].remainder;
 
 				IEC1bits.T5IE = 1;
 				T5CONbits.TON = 1;
+#endif
 				break;
 
 			default:
@@ -527,38 +601,48 @@ static void check_timer(u8 timer)
 	} else {
 		switch (timer) {
 			case TIMER_1:
+#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__) || defined(__dsPIC33EP256MU806__)
 				TMR1 = 0x00;
 
 				IEC0bits.T1IE = 0;
 				T1CONbits.TON = 0;
+#endif
 				break;
 
 			case TIMER_2:
+#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__) || defined(__dsPIC33EP256MU806__)
 				TMR2 = 0x00;
 
 				IEC0bits.T2IE = 0;
 				T2CONbits.TON = 0;
+#endif
 				break;
 
 			case TIMER_3:
+#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__) || defined(__dsPIC33EP256MU806__)
 				TMR3 = 0x00;
 
 				IEC0bits.T3IE = 0;
 				T3CONbits.TON = 0;
+#endif
 				break;
 
 			case TIMER_4:
+#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__) || defined(__dsPIC33EP256MU806__)
 				TMR4 = 0x00;
 
 				IEC1bits.T4IE = 0;
 				T4CONbits.TON = 0;
+#endif
 				break;
 
 			case TIMER_5:
+#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__) || defined(__dsPIC33EP256MU806__)
 				TMR5 = 0x00;
 
 				IEC1bits.T5IE = 0;
 				T5CONbits.TON = 0;
+#endif
 				break;
 
 			default:
