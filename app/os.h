@@ -26,11 +26,11 @@
 
 extern void        os_init(void);
 
-extern result_t  (*timer_start)(UINT16, expiry_function, union sigval data, es_timer *timer);
+extern result_t  (*timer_start)(u16, expiry_function, union sigval data, es_timer *timer);
 extern result_t  (*timer_cancel)(es_timer *timer);
 
-extern result_t  (*eeprom_read)(UINT16 address, BYTE *data);
-extern result_t  (*eeprom_write)(UINT16 address, BYTE data);
+extern result_t  (*eeprom_read)(u16 address, u8 *data);
+extern result_t  (*eeprom_write)(u16 address, u8 data);
 
 extern result_t  (*can_l2_tx_frame)(can_frame *);
 extern result_t  (*can_l2_dispatch_reg_handler)(can_l2_target_t *target);
@@ -53,6 +53,6 @@ extern result_t  (*serial_log)(log_level_t level, char *tag, char *fmt, ...);
 extern void      (*iso15765_log)(log_level_t level, char *msg);
 
 extern result_t  (*get_io_address)(u8 *);
-extern result_t  (*flash_strcpy)(char *dst, __prog__ char *src, UINT16 *length);
+extern result_t  (*flash_strcpy)(char *dst, __prog__ char *src, u16 *length);
 
 #endif // ES_OS_H
