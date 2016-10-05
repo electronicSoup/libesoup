@@ -32,14 +32,6 @@
 //#define __18F4585
 //#define __PIC24FJ256GB106__
 
-#if defined(__18F2680) || defined(__18F4585)
-#include <p18cxxx.h>
-#elif defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__)
-#include <p24Fxxxx.h>
-#elif defined(__dsPIC33EP256MU806__)
-#include <xc.h>
-#endif
-
 /*
  * Include MicroChip's definitions
  */
@@ -90,20 +82,6 @@
     #define can_frame struct can_frame
 #endif
 
-    
-#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__)
-#elif defined(__dsPIC33EP256MU806__)
-#define dsPIC33_U1TX 0x01
-    
-/*
- * Clock Sources:
- * 
- * See Microchip document DS70005131
- */
-#define dsPIC33_PRIMARY_OSCILLATOR     0b010
-#define dsPIC33_PRIMARY_OSCILLATOR_PLL 0b011
-#endif
-    
 /*
  * Union for converting byte stream to floats
  */
@@ -111,28 +89,6 @@ typedef union {
 	u8 bytes[4];
 	float value;
 } f32;
-
-/**
- * @brief Crystal Frequency of the Hardware Device.
- */
-#if defined(__dsPIC33EP256MU806__)
-#define CRYSTAL_FREQ 16000000
-#elif defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__)
-#define CLOCK_FREQ 16000000
-#elif defined(__18F2680) || defined(__18F4585)
-#define CRYSTAL_FREQ 16000000
-#endif
-
-/**
- * @brief Duration of the system timer tick in MilliSeconds.
- *
- * This value can be changed if greater grandularity timers are required.
- * At present it is expected to be in milliSeconds and if even greater 
- * grandularity then 1mS is required then initialisation code in 
- * @see es_lib/timers/timers.c will have to be changed and the macros 
- * @see SECONDS_TO_TICKS @see MILLI_SECONDS_TO_TICKS
- */
-#define SYSTEM_TICK_ms 5 //5 mS
 
 typedef enum {
     uSeconds,
@@ -249,165 +205,6 @@ union sigval {
 typedef void (*expiry_function)(timer_t timer_id, union sigval);
 
 /**
- * @brief Bootloader pause on powerup, and listen for new Firmware?
- *
- * The cinnamonBun Hardware has a "Boot" Jumper. If the jumper is not connected
- * the bootloader does NOT attempt to connect to an Android device and allow
- * firmware update.
- *
- * NOTE: This definition might look incorrect with the '=' but it IS 
- * Correct! The switch is expected to be used in an 'if' statement. The 
- * first part will be false but it's the second part of the or statement
- * that will dictate the action of the if!
- */
-#define BOOT_FLAG      (TRISDbits.TRISD11 = 0 || PORTDbits.RD11)
-
-/*
- * EEPROM Definitions
- *
- */
-/**
- * @brief EEPROM Bytes reserved for use by the Bootloader
- *
- * At present four bytes of EEPROM data are reserved for use by the 
- * electronicSoup bootloader. This is all taken care of automatically by 
- * @see es_lib/utils/eeprom.h.
- *
- * Setting @see EEPROM_USE_BOOT_PAGE in your system.h configuration file,
- * will negate the reservation. Use this only if you are overwriting the 
- * Bootloader and programming the device directly with a flash programmer.
- */
-#define EEPROM_BOOT_PAGE_SIZE   0x04
-
-/**
- * @brief Maximum address of the EEPROM Memory
- *
- * This constant defines the size of the EEPROM memory on the hardware this
- * may change depending on future electronicSoup versions or on your own 
- * particular hardware. Any attempt to read or write from addresses above this 
- * limit will raise an error.
- */
-#define EEPROM_MAX_ADDRESS      0x7F
-
-/**
- * @brief EEPROM Watch Dog Reset info Address
- *
- * The Bootloader's Watch Dog Reset Protocol Byte address is used for 
- * communication between the Bootloader and the installed Firmware. 
- *
- * The byte contains a bit field of data, indicating the Power Up status of the
- * device.
- *
- * Only two bits of the Byte are used.
- */
-#define EEPROM_WDR_PROTOCOL_ADDR           0x00
-
-/**
- * @brief The processor was reset by a Watch Dog Reset.
- *
- * This bit of the @see EEPROM_WDR_PROTOCOL_ADDR EEPROM Byte is set by the
- * bootloader if it detects that the processor has been reset by a Watch Dog
- * Reset. Normally the bootload will invalidate the installed firmware if a 
- * Watch Dog Reset is detected on power up.
- *
- * The invalidation of installed firmware can be countermanded if the 
- * @see WDR_DO_NOT_INVALIDATE_FIRMWARE bit of the @see EEPROM_WDR_PROTOCOL_ADDR
- * has been set by the installed firmware.
- */
-#define WDR_PROCESSOR_RESET_BY_WATCHDOG    0x01
-
-/**
- * @brief Force Bootloader NOT to invalidate firmware on Watch Dog Reset.
- *
- * This bit of the @see EEPROM_WDR_PROTOCOL_ADDR Byte can be set by the 
- * installed firware. Normally on power up if a Watch Dog Reset condition is 
- * detected the bootload will invalidate the installed firmware. If however this
- * bit has been set by the installed firmware then the bootload will only set 
- * the @see WDR_PROCESSOR_RESET_BY_WATCHDOG bit to indicate that the WDR has
- * occured, and will not invalidate firmware. The firmware should, when it
- * starts executing, check the @see WDR_PROCESSOR_RESET_BY_WATCHDOG bit to see
- * if a WDR has occured and proceed accordingly.
- *
- */
-#define WDR_DO_NOT_INVALIDATE_FIRMWARE     0x02
-
-/**
- * @def   EEPROM_CS_PIN_DIRECTION
- * @brief EEPROM Chip Select Direction Pin of the connected EEPROM chip
- * 
- * @def   EEPROM_CS
- * @brief Chip Select Pin of the connected EEPROM chip
- *
- *
- * @def   EEPROM_Select
- * @brief Macro to select the EEPROM Chip
- *
- * @def   EEPROM_DeSelect
- * @brief Macro to deselect the EEPROM Chip
- */
-#define EEPROM_CS_PIN_DIRECTION        TRISDbits.TRISD7
-#define EEPROM_CS                      LATDbits.LATD7
-#define EEPROM_Select                  EEPROM_CS = 0;
-#define EEPROM_DeSelect                EEPROM_CS = 1;
-
-/**
- * @def   CAN_INTERRUPT_PIN_DIRECTION
- * @brief CAN Controller (MCP2515) Interrup pin Direction Register
- *
- * @def   CAN_INTERRUPT_PIN
- * @brief CAN Controller (MCP2515) Pin
- *
- * @def   CAN_INTERRUPT
- * @brief CAN Controller (MCP2515) Input to test if there is an Interrupt
- */
-#define CAN_INTERRUPT_PIN_DIRECTION    TRISDbits.TRISD0
-#define CAN_INTERRUPT_PIN              PORTDbits.RD0
-#define CAN_INTERRUPT                  !CAN_INTERRUPT_PIN
-
-/**
- * @def   CAN_CS_PIN_DIRECTION
- * @brief CAN Controller Chip Select Data Direction register pin
- *
- * @def   CAN_CS
- * @brief CAN Controller Chip Select pin
- *
- * @def   CAN_SELECT
- * @brief Macro to select CAN Controller on SPI Bus
- *
- * @def   CAN_DESELECT
- * @brief Macro to deselect CAN Controller Chip on SPI Bus
- *
- */
-#define CAN_CS_PIN_DIRECTION           TRISDbits.TRISD6
-#define CAN_CS                         LATDbits.LATD6
-#define CAN_SELECT                     CAN_CS = 0;
-#define CAN_DESELECT                   CAN_CS = 1;
-
-/**
- * SPI (Serial Peripheral Interface Definitions.
- *
- * @def   SPI_RW_FINISHED
- * @brief Macro to check if current SPI Read/Write operation is complete
- *
- * An SPI read or write operation shouldn't be started till the previous one 
- * has completed. The Processor sets this bit when operation complete.
- *
- * @def   SPI_SCK_DIRECTION
- * @brief Data Direction Register pin for SPI Clock line.
- *
- * @def   SPI_MISO_DIRECTION
- * @brief Data Direction Register pin for the SPI Master In Slave Out line.
- *
- * @def   SPI_MOSI_DIRECTION
- * @brief Data Direction Register pin for the SPI Master Out Slave In line. 
- *
- */
-#define SPI_RW_FINISHED     SPI1STATbits.SPIRBF
-#define SPI_SCK_DIRECTION   TRISDbits.TRISD1
-#define SPI_MISO_DIRECTION  TRISDbits.TRISD2
-#define SPI_MOSI_DIRECTION  TRISDbits.TRISD3
-
-/**
  * @def   INPUT_PIN
  * @brief Direction setting for an input pin
  *
@@ -417,66 +214,6 @@ typedef void (*expiry_function)(timer_t timer_id, union sigval);
  */
 #define INPUT_PIN  1
 #define OUTPUT_PIN 0
-
-/*
- * Flash parameters
- */
-/**
- * @def   FLASH_PAGE_SIZE
- * @brief The size of Flash memory Pages.
- *
- * The Flash page size is 512 Instructions, which is 1536 as each instruction
- * is 3 Bytes. But the Flash is addressed in Words so the length given here is
- * 0x400 (512 * 2).
- *
- * Flash memory is erased on a Page by page basis.
- *
- * @def   FLASH_LAST_ADDRESS
- * @brief The last Address of Flash memory.
- *
- * @def   FLASH_NUM_INSTRUCTION_PER_ROW
- * @brief Flash is written row by row. This is the Row size of Flash Memory
- */
-#define FLASH_PAGE_SIZE                0x400
-#define FLASH_LAST_ADDRESS             0x2ABF9
-#define FLASH_NUM_INSTRUCTION_PER_ROW  64
-
-/**
- * @def   FLASH_FIRMWARE_START_ADDRESS
- * @brief Start of Firmware code in Flash Memory.
- *
- * The bootloader code occupies the lower portion of Flash memory. Firmware
- * starts at this address.
- *
- * @def   FLASH_APP_START_ADDRESS
- * @brief Start of the Application code in Flash Memory.
- *
- * If you use the electronicSoup CAN Node Operating System then the application 
- * Code starts at this address in Flash Memory.
- */
-#define FLASH_FIRMWARE_START_ADDRESS   0x08800
-#define FLASH_APP_START_ADDRESS        0x18000
-
-/**
- * @def   FLASH_APP_HANDLE_PAGE
- * @brief Address of the Applications Handle page in Flash.
- *
- * Because of limitations in the PIC Architecture, specifically in how far in
- * Flash Memory a branching instruction can jump a page of Flash is reserved in
- * low memory for the handlers to be able to jump up to high memory of the 
- * Application's code.
- */
-#define FLASH_APP_HANDLE_PAGE        0x400
-
-/**
- * @def   USB_HOST
- * @brief Turn on the 5 Volt power to the USB Bus.
- *
- * @def   USB_DEVICE
- * @brief Turn off the 5 Volt power to the USB Bus.
- */
-#define USB_HOST    TRISDbits.TRISD8 = OUTPUT_PIN; LATDbits.LATD8 = 1; USBInitialize(0);
-#define USB_DEVICE  TRISDbits.TRISD8 = OUTPUT_PIN; LATDbits.LATD8 = 0;
 
 /** @defgroup group1 Android Message Identifiers
  *
@@ -1041,15 +778,6 @@ typedef enum
 #define LOG_WARNING 2
 #define LOG_ERROR   3
 #define NO_LOGGING  4
-
-/*
- * Microcontroller Pin Definitions
- */
-#define RP0  0
-#define RP1  1
-#define RP13 13
-#define RP25 25
-#define RP28 28
 
 /*
  * UART Defs
