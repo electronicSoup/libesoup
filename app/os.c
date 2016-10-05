@@ -24,11 +24,11 @@
 
 #define OS_FNS 0x8A92
 
-result_t (*timer_start)(UINT16, expiry_function, union sigval, es_timer *);
+result_t (*timer_start)(u16, expiry_function, union sigval, es_timer *);
 result_t (*timer_cancel)(es_timer *timer);
 
-result_t (*eeprom_read)(UINT16 address, BYTE *data);
-result_t (*eeprom_write)(UINT16 address, BYTE data);
+result_t (*eeprom_read)(u16 address, u8 *data);
+result_t (*eeprom_write)(u16 address, u8 data);
 
 result_t (*can_l2_tx_frame)(can_frame *);
 result_t (*can_l2_dispatch_reg_handler)(can_l2_target_t *target);
@@ -51,7 +51,7 @@ result_t (*serial_log)(log_level_t level, char *tag, char *fmt, ...);
 void     (*iso15765_log)(log_level_t level, char *msg);
 
 result_t (*get_io_address)(u8 *);
-result_t  (*flash_strcpy)(char *dst, __prog__ char *src, UINT16 *length);
+result_t  (*flash_strcpy)(char *dst, __prog__ char *src, u16 *length);
 
 void _ISR __attribute__((__no_auto_psv__)) _DefaultInterrupt(void)
 {
@@ -64,11 +64,11 @@ void _ISR __attribute__((__no_auto_psv__)) _DefaultInterrupt(void)
 
 void os_init(void)
 {
-	timer_start = (result_t(*)(UINT16, expiry_function, union sigval data, es_timer *))OS_FNS;
+	timer_start = (result_t(*)(u16, expiry_function, union sigval data, es_timer *))OS_FNS;
 	timer_cancel = (result_t(*)(es_timer *))(OS_FNS + 4);
 
-	eeprom_read = (result_t(*)(UINT16, BYTE *))(OS_FNS + 8);
-	eeprom_write = (result_t(*)(UINT16, BYTE))(OS_FNS + 12);
+	eeprom_read = (result_t(*)(u16, u8 *))(OS_FNS + 8);
+	eeprom_write = (result_t(*)(u16, u8))(OS_FNS + 12);
 
 	can_l2_tx_frame = (result_t(*)(can_frame *))(OS_FNS + 16);
 	can_l2_dispatch_reg_handler = (result_t(*)(can_l2_target_t *))(OS_FNS + 20);
@@ -87,9 +87,9 @@ void os_init(void)
 	iso11783_dispatch_unreg_handler = (result_t (*)(u8 id))(OS_FNS + 60);
 	iso11783_dispatch_set_unhandled_handler = (result_t (*)(iso11783_msg_handler_t handler))(OS_FNS + 64);
 
-	serial_log = (result_t (*)(log_level_t, char *, char *, ...))(OS_FNS + 68);   
+	serial_log = (result_t (*)(log_level_t, char *, char *, ...))(OS_FNS + 68);
 	iso15765_log = (void (*)(log_level_t, char *))(OS_FNS + 72);
 
 	get_io_address = (result_t (*)(u8 *))(OS_FNS + 76);
-	flash_strcpy = (result_t (*)(char *dst, __prog__ char *src, UINT16 *length))(OS_FNS + 80);
+	flash_strcpy = (result_t (*)(char *dst, __prog__ char *src, u16 *length))(OS_FNS + 80);
 }

@@ -38,6 +38,15 @@
 #include "es_lib/core.h"
 
 /**
+ * @brief The required clock frequency of the device. 
+ * 
+ * The function clock_init() has to be called on entry to main() to 
+ * initialise the device to this clock frequency.
+ */
+#define CLOCK_FREQ 8000000     // 8MHz
+//#define CLOCK_FREQ 60000000    // 60MHz
+
+/**
  * @brief The size of the Transmit buffer to be used by the Serial Logging port.
  *
  * Default set to 300 Bytes as the serial port should be used for
