@@ -425,6 +425,8 @@ void set_clock_divide(u8 timer, u16 clock_divide)
 
 static void check_timer(u8 timer)
 {
+	void        (*expiry)(void *data);
+	void         *data;
 //	LOG_D("check_timer(%d) repeats 0x%x, remainder 0x%x\n\r", timer, timers[timer].repeats, timers[timer].remainder);
 
 	if(timers[timer].repeats) {
@@ -565,7 +567,8 @@ static void check_timer(u8 timer)
 		}
 
 		if(timers[timer].expiry_function != NULL) {
-			timers[timer].expiry_function(timers[timer].data);
+            expiry = timers[timer].expiry_function;
+            data = timers[timer].data;
 		}
 
 		if(timers[timer].repeat) {
@@ -578,5 +581,7 @@ static void check_timer(u8 timer)
 			timers[timer].repeats = 0;
 			timers[timer].remainder = 0;
 		}
+        
+        expiry(data);
 	}
 }
