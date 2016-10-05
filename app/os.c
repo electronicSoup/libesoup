@@ -53,7 +53,7 @@ void     (*iso15765_log)(log_level_t level, char *msg);
 result_t (*get_io_address)(u8 *);
 result_t  (*flash_strcpy)(char *dst, __prog__ char *src, u16 *length);
 
-void _ISR __attribute__((__no_auto_psv__)) _DefaultInterrupt(void)
+void __attribute__ (( __interrupt__ , __auto_psv__))  _DefaultInterrupt(void)
 {
 	/*
 	 * Any unexpected interrupt will reset the processor on a Watch Dog Reset
