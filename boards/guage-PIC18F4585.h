@@ -1,6 +1,6 @@
 /**
  *
- * @file es_lib/processors/es-PIC24FJ356GB106.h
+ * @file es_lib/processors/guage-PIC18F4585.h
  *
  * @author John Whitmore
  *
@@ -26,44 +26,17 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-#ifndef _ES_PIC24FJ256GB106_H
-#define _ES_PIC24FJ256GB106_H
+#ifndef _GUAGE_PIC18F4585_H
+#define _GUAGE_PIC18F4585_H
 
-//#include <p24Fxxxx.h>
-#include <xc.h>
+#include "es_lib/processors/es-PIC18F4585.h"
 
-#define TIMER_1 0
-#define TIMER_2 1
-#define TIMER_3 2
-#define TIMER_4 3
-#define TIMER_5 4
-
-#define NUMBER_HW_TIMERS  5
-
-/*
- * Peripheral Input Pin Definitions
+/**
+ * @brief Crystal Frequency of the Hardware Device.
  */
-#define RP0  0
-#define RP1  1
-#define RP13 13
-#define RP20 20
-#define RP23 23
-#define RP25 25
-#define RP28 28
+#define CRYSTAL_FREQ 16000000
 
-/*
- * Peripheral Input functions
- */
-#define SPI_1_DATA_INPUT RPINR20bits.SDI1R 
-#define UART_1_RX        RPINR18bits.U1RXR
+#define HEARTBEAT_LED_DIRECTION    TRISBbits.RB4
+#define HEARTBEAT_LED              LATBbits.LATB4
 
-/*
- * Peripheral Output functions
- */
-#define UART_1_TX             3
-#define SPI_1_DATA_OUTPUT     7
-#define SPI_1_CLOCK_OUTPUT    8
-
-
-
-#endif // _ES_PIC24FJ256GB106_H
+#endif // _GUAGE-PIC18F4585_H
