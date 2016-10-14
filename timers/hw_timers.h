@@ -24,19 +24,6 @@
 #ifndef _HW_TIMERS
 #define _HW_TIMERS
 
-#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__) || defined(__dsPIC33EP256MU806__)
-#define NUMBER_HW_TIMERS  5
-#elif defined(__18F2680) || defined(__18F4585)
-#define NUMBER_HW_TIMERS  1
-#endif
-
-#define TIMER_0 0
-#define TIMER_1 1
-#define TIMER_2 2
-#define TIMER_3 3
-#define TIMER_4 4
-#define TIMER_5 5
-
 #define BAD_TIMER 0xff
 
 extern void     hw_timer_init(void);

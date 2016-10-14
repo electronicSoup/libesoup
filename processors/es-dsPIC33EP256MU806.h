@@ -31,6 +31,14 @@
 
 #include <xc.h>
 
+#define TIMER_1 0
+#define TIMER_2 1
+#define TIMER_3 2
+#define TIMER_4 3
+#define TIMER_5 4
+
+#define NUMBER_HW_TIMERS  5
+
 /*
  * Peripheral Input Pin Definitions
  */
