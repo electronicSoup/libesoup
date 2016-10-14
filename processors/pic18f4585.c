@@ -1,3 +1,4 @@
+#if defined(__18F4585)
 
 #include "system.h"
 #include <stdio.h>
@@ -90,3 +91,5 @@ void interrupt tc_int(void)
 void interrupt low_priority tc_clr(void) {
 // process any other low priority sources here
 }
+
+#endif // __18F4585
