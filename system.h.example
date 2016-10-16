@@ -30,6 +30,25 @@
 #define _SYSTEM_H
 
 /**
+ * @brief Physical Pin configuration of the Serial Logging port.
+ *
+ * On the cinnamonBun the the Gnd pin is physically fixed but the remaining two
+ * pins use Microchip peripheral select functionality to configure which pin is
+ * the Receive pin and which is the Transmit.
+ *
+ * There are two valid settings SERIAL_PORT_GndTxRx or SERIAL_PORT_GndRXTx 
+ * 
+ * Default : SERIAL_PORT_GndRxTx
+ */
+//#define SERIAL_PORT_GndTxRx
+#define SERIAL_PORT_GndRxTx
+
+/*
+ * Include a board file
+ */
+//#include "es_lib/boards/cb-dsPIC33EP256MU806.h"
+
+/**
  * @brief core definitions required by the library
  *
  * core.h contains all fundamental types used in es_lib and thus your 

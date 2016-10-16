@@ -31,4 +31,11 @@
 
 #include <p18cxxx.h>
 
+#define TIMER_0 0
+#define TIMER_1 1
+
+#define NUMBER_HW_TIMERS  2
+
+extern void pic18f_init(void);
+
 #endif // _ES_PIC18F2680_H

@@ -1,6 +1,6 @@
 /**
  *
- * @file es_lib/processors/guage-PIC18F2680.h
+ * @file es_lib/processors/guage-PIC18F4585.h
  *
  * @author John Whitmore
  *
@@ -26,12 +26,17 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-#ifndef _GUAGE-PIC18F2680_H
-#define _GUAGE-PIC18F2680_H
+#ifndef _GUAGE_PIC18F4585_H
+#define _GUAGE_PIC18F4585_H
+
+#include "es_lib/processors/es-PIC18F4585.h"
 
 /**
  * @brief Crystal Frequency of the Hardware Device.
  */
 #define CRYSTAL_FREQ 16000000
 
-#endif // _GUAGE-PIC18F2680_H
+#define HEARTBEAT_LED_DIRECTION    TRISBbits.RB4
+#define HEARTBEAT_LED              LATBbits.LATB4
+
+#endif // _GUAGE-PIC18F4585_H

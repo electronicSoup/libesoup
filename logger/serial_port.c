@@ -50,6 +50,7 @@ void _ISR __attribute__((__no_auto_psv__)) _U1RXInterrupt(void)
 #elif defined(__dsPIC33EP256MU806__)
 void _ISR __attribute__((__no_auto_psv__)) _U1RXInterrupt(void)
 #endif
+#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__) || defined(__dsPIC33EP256MU806__)
 {
 	u8 ch;
 	LOG_D("_U1RXInterrupt\n\r");
@@ -61,6 +62,7 @@ void _ISR __attribute__((__no_auto_psv__)) _U1RXInterrupt(void)
 
 	IFS0bits.U1RXIF = 0;
 }
+#endif
 
 /**
  * \fn serial_init()
@@ -79,16 +81,16 @@ void serial_init(void)
 	 * Serial Port pin configuration should be defined
 	 * in include file system.h
 	 */
+#ifdef USART_RX_ENABLE
         SERIAL_LOGGING_RX_DDR = INPUT_PIN;
-        SERIAL_LOGGING_TX_DDR = OUTPUT_PIN;
-
-	SERIAL_LOGGING_TX = UART_1_TX;
 	UART_1_RX = SERIAL_LOGGING_RX_PIN;
-
+	IEC0bits.U1RXIE = 1;
+#endif
+        SERIAL_LOGGING_TX_DDR = OUTPUT_PIN;
+	SERIAL_LOGGING_TX = UART_1_TX;
+        
 	U1MODE = 0x8800;
 	U1STA = 0x0410;
-
-	IEC0bits.U1RXIE = 1;
 
 	/*
 	 * Desired Baud Rate = FCY/(16 (UxBRG + 1))
@@ -127,7 +129,7 @@ void serial_init(void)
 
 	BAUDCONbits.BRG16 = 0; // 16-bit Baud Rate Register Enable bit
 
-	baud = ((CLOCK_FREQ / SERIAL_BAUD) / 64 ) - 1;
+	baud = ((CLOCK_FREQ / SERIAL_LOGGING_BAUD) / 64 ) - 1;
 
 	SPBRG = baud;
 
@@ -143,7 +145,7 @@ void serial_init(void)
 }
 
 #if defined(__18F2680) || defined(__18F4585)
-void serial_isr(void)
+void pic18f_serial_isr(void)
 {
 #if defined(ENABLE_USART_RX)
 	u8 data;
