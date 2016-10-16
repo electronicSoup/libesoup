@@ -22,6 +22,8 @@
 #ifndef ES_OS_H
 #define ES_OS_H
 
+#define SYSTEM_TICK_ms  5 //mSeconds
+
 #include "es_lib/core.h"
 
 extern void        os_init(void);
