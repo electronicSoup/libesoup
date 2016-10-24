@@ -26,8 +26,10 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-#ifndef _GUAGE-PIC18F2680_H
-#define _GUAGE-PIC18F2680_H
+#ifndef _GAUGE_PIC18F2680_H
+#define _GAUGE_PIC18F2680_H
+
+#include "es_lib/processors/es-PIC18F2680.h"
 
 /**
  * @brief Crystal Frequency of the Hardware Device.

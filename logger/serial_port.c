@@ -46,7 +46,7 @@ static u16 tx_buffer_count = 0;
  * \brief Interrupt Service Routine for received characters from UART 1
  */
 #if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__)
-void _ISR __attribute__((__no_auto_psv__)) _U1RXInterrupt(void)
+void __attribute__((__interrupt__, __no_auto_psv__)) _U1RXInterrupt(void)
 #elif defined(__dsPIC33EP256MU806__)
 void _ISR __attribute__((__no_auto_psv__)) _U1RXInterrupt(void)
 #endif
