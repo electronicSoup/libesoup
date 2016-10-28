@@ -36,7 +36,7 @@
  * A Node address of 0xff is a Broadcast Network node address in ISO11783 so
  * we'll not use it.
  */
-#define BROADCAST_NODE_ADDRESS 0xff
+#define BROADCAST_NODE_ADDRESS         0xff
 
 /*
  * Have to change this status to cater for L2, DCNCP and L3
@@ -70,13 +70,13 @@
  *             L3_Inititialised 0x20
  */
 
-#define L2_STATUS_MASK 0x07
+#define L2_STATUS_MASK                 0x07
 
-#define L2_Uninitialised 0x00
-#define L2_Listening     0x01
-#define L2_Connecting    0x02
-#define L2_Connected     0x03
-#define L2_ChangingBaud  0x04
+#define L2_Uninitialised               0x00
+#define L2_Listening                   0x01
+#define L2_Connecting                  0x02
+#define L2_Connected                   0x03
+#define L2_ChangingBaud                0x04
 
 #if LOG_LEVEL < NO_LOGGING
 extern char can_l2_status_strings[5][17];
