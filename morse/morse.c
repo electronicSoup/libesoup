@@ -57,9 +57,9 @@ static void exp_function(timer_t timer_id, union sigval data);
  * Tx Buffer is a circular buffer
  */
 static char   tx_buffer[MORSE_TX_BUFFER_SIZE];
-static UINT16 tx_buffer_write_index = 0;
-static UINT16 tx_buffer_read_index = 0;
-static UINT16 tx_buffer_count = 0;
+static u16 tx_buffer_write_index = 0;
+static u16 tx_buffer_read_index = 0;
+static u16 tx_buffer_count = 0;
 static es_timer     tx_timer;
 
 #endif

@@ -22,6 +22,7 @@
  *
  */
 #include "es_lib/comms/uart.h"
+#include "es_lib/timers/timers.h"
 
 typedef void (*modbus_response_function)(u8 *msg, u8 size, void *data);
 
