@@ -74,8 +74,6 @@
 #elif defined(__18F4585)
 #define CLOCK_FREQ 16000000     // 8MHz
 #endif
-#define CLOCK_FREQ 8000000     // 8MHz
-//#define CLOCK_FREQ 60000000    // 60MHz
 
 /**
  * @brief The size of the Transmit buffer to be used by the Serial Logging port.
@@ -97,20 +95,6 @@
  * Default set to 19k2
  */
 #define SERIAL_LOGGING_BAUD 19200
-
-/**
- * @brief Physical Pin configuration of the Serial Logging port.
- *
- * On the cinnamonBun the the Gnd pin is physically fixed but the remaining two
- * pins use Microchip peripheral select functionality to configure which pin is
- * the Receive pin and which is the Transmit.
- *
- * There are two valid settings SERIAL_PORT_GndTxRx or SERIAL_PORT_GndRXTx 
- * 
- * Default : SERIAL_PORT_GndRxTx
- */
-//#define SERIAL_PORT_GndTxRx
-#define SERIAL_PORT_GndRxTx
 
 /**
  * @brief Serial logging level
@@ -155,12 +139,18 @@
 /*
  * System jobs
  */
+#ifdef JOBS
 #define NUMBER_OF_JOBS 10
+#endif
 
 #define UART_TX_BUFFER_SIZE                    64
+
+#ifdef MODBUS
 #define MODBUS_RX_BUFFER_SIZE                  256
 #define MODBUS_RESPONSE_TIMEOUT                SECONDS_TO_TICKS(1)
 #define MODBUS_RESPONSE_BROADCAST_TIMEOUT      MILLI_SECONDS_TO_TICKS(500)
+#endif // MODBUS
+
 /*
  * CAN Definitions
  */
