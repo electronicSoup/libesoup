@@ -1,8 +1,8 @@
 #include "system.h"
 
-#include "es_lib/can/l2_dsPIC33EP256MU806.h"
+#include "es_lib/comms/can/l2_dsPIC33EP256MU806.h"
 #include "es_lib/timers/timers.h"
-#include "es_lib/can/es_can.h"
+#include "es_lib/comms/can/es_can.h"
 
 #define DEBUG_FILE
 #include "es_lib/logger/serial_log.h"

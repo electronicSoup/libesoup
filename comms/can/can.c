@@ -20,7 +20,7 @@
  *
  */
 #include "system.h"
-#include "es_lib/can/es_can.h"
+#include "es_lib/comms/can/es_can.h"
 #ifdef DCNCP_CAN
 #include "es_lib/can/dcncp/dcncp_can.h"
 #endif
