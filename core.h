@@ -124,44 +124,6 @@ typedef enum {
 typedef u8 timer_t;
 #endif
 
-/**
- * @brief timer data structure.
- *
- * The actual timer structure is simply the timer identifier and it's status.
- */
-typedef struct
-{
-	timer_status_t status;
-	timer_t        timer_id;
-} es_timer;
-
-/**
- * @brief convience macro to initialise timer to inactive
- *
- * Simple macro to initialise the current statusof a timer to inactive.
- * A timer should always be initialsed to an inactive status before it is used
- * otherwise the timer might appear to be already active
- */
-#define TIMER_INIT(timer) timer.status = INACTIVE;
-
-/**
- * @brief convience macro to convert a Seconds value to system ticks
- *
- * For portability code should always use this macro to calculate system ticks
- * for a timer. If the system changes the @see SYSTEM_TICK_ms value for either
- * finer timer granularity or less granularity.
- */
-#define SECONDS_TO_TICKS(s)  ((s) * (1000 / SYSTEM_TICK_ms))
-
-/**
- * @brief convience macro to convert a MilliSeconds value to system ticks
- * 
- * as for @see SECONDS_TO_TICKS code should always use this macro in case system
- * timer granularity is changed. In addition future electronicSoup deivces may
- * well use different System Tick values.
- */
-#define MILLI_SECONDS_TO_TICKS(ms) ((ms < SYSTEM_TICK_ms) ? 1 : (ms / SYSTEM_TICK_ms))
-
 #ifdef MCP
 /**
  * @brief Data passed to expiry funciton on timer expiry.

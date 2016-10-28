@@ -21,7 +21,7 @@
  *******************************************************************************
  *
  */
-//#define DEBUG_FILE
+#define DEBUG_FILE
 #define TAG "HW_TIMERS"
 
 #include "system.h"
@@ -110,7 +110,6 @@ void hw_timer_init(void)
 	u8 timer;
 
 	for(timer = 0; timer < NUMBER_HW_TIMERS; timer++) {
-                LOG_D("Initialise timer 0x%x\n\r", timer);
 		timers[timer].status = TIMER_UNUSED;
 		timers[timer].repeat = 0;
 		timers[timer].time = 0;
@@ -125,12 +124,21 @@ void hw_timer_init(void)
 	 * Initialise the timers to 16 bit and their clock source
 	 */
 	T1CONbits.TCS = 0;      // Internal FOSC/2
+	T1CONbits.TGATE = 0;
+
 	T2CONbits.T32 = 0;      // 16 Bit Timer
 	T2CONbits.TCS = 0;      // Internal FOSC/2
+        T2CONbits.TGATE = 0;
+        
 	T3CONbits.TCS = 0;      // Internal FOSC/2
+        T3CONbits.TGATE = 0;
+        
 	T4CONbits.T32 = 0;      // 16 Bit Timer
 	T4CONbits.TCS = 0;      // Internal FOSC/2
+        T4CONbits.TGATE = 0;
+        
 	T5CONbits.TCS = 0;      // Internal FOSC/2
+        T5CONbits.TGATE = 0;
 #elif defined(__18F2680) || defined(__18F4585)
         T0CONbits.T08BIT = 0;   // 16 Bit timer
         T0CONbits.T0CS   = 0;   // Clock source Instruction Clock
@@ -155,15 +163,12 @@ u8 hw_timer_start(ty_time_units units, u16 time, u8 repeat, void (*expiry_functi
 	result_t rc;
 	u8       timer;
 
-	LOG_D("hw_timer_start()\n\r");
-
 	/*
 	 * Find a free timer
 	 */
 	timer = 0;
-        timer = TIMER_1;
 
-//	while(timer < NUMBER_HW_TIMERS) {
+	while(timer < NUMBER_HW_TIMERS) {
 		if(timers[timer].status == TIMER_UNUSED) {
 			rc = start_timer(timer, units, time, repeat, expiry_function, data);
 			if(rc == SUCCESS) {
@@ -172,11 +177,9 @@ u8 hw_timer_start(ty_time_units units, u16 time, u8 repeat, void (*expiry_functi
 				LOG_E("Failed to start HW Timer rc 0x%x\n\r", rc);
                                 return(BAD_TIMER);
 			}
-		} else {
-                        LOG_D("Timer Busy\n\r");
-                }
+		}
 		timer++;
-//	}
+	}
 
 	LOG_E("Failed to start the HW Timer\n\r");
 	return(BAD_TIMER);
@@ -310,53 +313,52 @@ static result_t start_timer(u8 timer, ty_time_units units, u16 time, u8 repeat, 
 {
 	u32 ticks = 0;
 
-//	LOG_D("start_timer()\n\r");
 	if(timer >= NUMBER_HW_TIMERS) {
                 LOG_E("Bad time passed to start_timer(0x%x)\n\r", timer);
                 return(ERR_BAD_INPUT_PARAMETER);
         }
 
 	switch(units) {
-		case uSeconds:
-			set_clock_divide(timer, 1);
+        case uSeconds:
+                set_clock_divide(timer, 1);
 #if defined(__18F4585) || defined(__18F2680)
-                        ticks = (u32) ((u32) (((u32) CLOCK_FREQ / 4) / 1000000) * time);
+                ticks = (u32) ((u32) (((u32) CLOCK_FREQ / 4) / 1000000) * time);
 #else
-			ticks = (u32) ((u32) (((u32) CLOCK_FREQ) / 8000000) * time);
+                ticks = (u32) ((u32) (((u32) CLOCK_FREQ ) / 1000000) * time );
 #endif
-			break;
+                break;
 
-		case mSeconds:
+        case mSeconds:
 #if defined(__18F4585)  || defined(__18F2680)
-			set_clock_divide(timer, 4);
-			ticks = (u32) ((u32) (((u32)(CLOCK_FREQ / 4)) / 4000) * time);
+                set_clock_divide(timer, 4);
+                ticks = (u32) ((u32) (((u32)(CLOCK_FREQ / 4)) / 4000) * time);
 #else
-			set_clock_divide(timer, 64);
-			ticks = (u32) ((u32) (((u32) CLOCK_FREQ) / 64000 ) * time);
+                set_clock_divide(timer, 64);
+                ticks = (u32) ((u32) (((u32) CLOCK_FREQ) / 64000 ) * time);
 #endif
-			break;
+                break;
 
-		case Seconds:
+        case Seconds:
 #if defined(__18F4585)  || defined(__18F2680)
-                        if(timer == TIMER_0) {
-                                set_clock_divide(timer, 64);
-                                ticks = (u32) ((u32) (((u32) CLOCK_FREQ / 4) / 64) * time);
-                        } else if(timer == TIMER_1) {
-                                set_clock_divide(timer, 8);
-                                ticks = (u32) ((u32) (((u32) CLOCK_FREQ / 4) / 8) * time);
-                        } else {
-                                LOG_E("Unknown Timers\n\r");
-                        }
+                if(timer == TIMER_0) {
+                        set_clock_divide(timer, 64);
+                        ticks = (u32) ((u32) (((u32) CLOCK_FREQ / 4) / 64) * time);
+                } else if(timer == TIMER_1) {
+                        set_clock_divide(timer, 8);
+                        ticks = (u32) ((u32) (((u32) CLOCK_FREQ / 4) / 8) * time);
+                } else {
+                        LOG_E("Unknown Timers\n\r");
+                }
 #else
-			set_clock_divide(timer, 256);
-			ticks = (u32) ((u32) (((u32) CLOCK_FREQ) / 256) * time);
+                set_clock_divide(timer, 256);
+                ticks = (u32) ((u32) (((u32) CLOCK_FREQ) / 256) * time);
 #endif
-			break;
+                break;
 
-		default:
-			LOG_E("Unknown Timer Units\n\r");
-			return(ERR_BAD_INPUT_PARAMETER);
-			break;
+        default:
+                LOG_E("Unknown Timer Units\n\r");
+                return(ERR_BAD_INPUT_PARAMETER);
+                break;
 	}
 
 	if(ticks > 0) {
@@ -370,7 +372,9 @@ static result_t start_timer(u8 timer, ty_time_units units, u16 time, u8 repeat, 
 		timers[timer].repeats         = (u16)((ticks >> 16) & 0xffff);
 		timers[timer].remainder       = (u16)(ticks & 0xffff);
 
-//                LOG_D("Ticks 0x%lx, Repeats 0x%x, remainder 0x%x\n\r", ticks, timers[timer].repeats, timers[timer].remainder);
+  //              if(units == uSeconds) {
+  //                      LOG_D("Ticks 0x%lx, Repeats 0x%x, remainder 0x%x\n\r", ticks, timers[timer].repeats, timers[timer].remainder);
+  //              }
 //                printf("Ticks 0x%lx, Repeats 0x%x, remainder 0x%x\n\r", ticks, timers[timer].repeats, timers[timer].remainder);
 		check_timer(timer);
 
@@ -546,7 +550,7 @@ void check_timer(u8 timer)
 #if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__) || defined(__dsPIC33EP256MU806__)
 	void        (*expiry)(void *data);
 	void         *data;
-#endif
+#endif        
 //	LOG_D("check_timer(%d) repeats 0x%x, remainder 0x%x\n\r", timer, timers[timer].repeats, timers[timer].remainder);
 
 	if(timers[timer].repeats) {
@@ -626,7 +630,6 @@ void check_timer(u8 timer)
 		timers[timer].repeats--;
   //              LOG_D("After Repeats %d\n\r", timers[timer].repeats);
 	} else if(timers[timer].remainder) {
-                LOG_D("Remainder %d\n\r", timers[timer].remainder);
 		switch (timer) {
 #if defined(__18F4585)
                 case TIMER_0:
@@ -711,7 +714,7 @@ void check_timer(u8 timer)
 
 		if(timers[timer].repeat) {
 			start_timer(timer, timers[timer].units, timers[timer].time, timers[timer].repeat, timers[timer].expiry_function, timers[timer].data);
-                        LOG_E("XC8 can't call recursive function, No repeat\n\r");
+//                        LOG_E("XC8 can't call recursive function, No repeat\n\r");
 		} else {
 			timers[timer].status = TIMER_UNUSED;
 //			timers[timer].repeat = 0;
@@ -722,7 +725,6 @@ void check_timer(u8 timer)
 		}
 
 		if(expiry) {
-                        LOG_D("Call expiry\n\r");
                         expiry(data);
                 }
 #elif defined(__18F4585)

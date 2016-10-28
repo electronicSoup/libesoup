@@ -86,6 +86,45 @@
 
 #endif // MCP
 
+/**
+ * @brief timer data structure.
+ *
+ * The actual timer structure is simply the timer identifier and it's status.
+ */
+typedef struct
+{
+	timer_status_t status;
+	timer_t        timer_id;
+} es_timer;
+
+/**
+ * @brief convience macro to initialise timer to inactive
+ *
+ * Simple macro to initialise the current statusof a timer to inactive.
+ * A timer should always be initialsed to an inactive status before it is used
+ * otherwise the timer might appear to be already active
+ */
+#define TIMER_INIT(timer) timer.status = INACTIVE;
+
+/**
+ * @brief convience macro to convert a Seconds value to system ticks
+ *
+ * For portability code should always use this macro to calculate system ticks
+ * for a timer. If the system changes the @see SYSTEM_TICK_ms value for either
+ * finer timer granularity or less granularity.
+ */
+#define SECONDS_TO_TICKS(s)  ((s) * (1000 / SYSTEM_TICK_ms))
+
+/**
+ * @brief convience macro to convert a MilliSeconds value to system ticks
+ * 
+ * as for @see SECONDS_TO_TICKS code should always use this macro in case system
+ * timer granularity is changed. In addition future electronicSoup deivces may
+ * well use different System Tick values.
+ */
+#define MILLI_SECONDS_TO_TICKS(ms) ((ms < SYSTEM_TICK_ms) ? 1 : (ms / SYSTEM_TICK_ms))
+
+    
 /*
  * timer_start()
  * 
@@ -94,8 +133,48 @@
  * @brief function to start a timer
  *
  * @param in duration: duration of the timer in system ticks. @see SECONDS_TO_TICKS
+ * 
+ * Starting a timer:
+ * 
+ * Declare an expiry function:
+ * 
+ * void expiry(timer_t timer_id, union sigval)
+ * {
+ *     // Do something     
+ * }
+ * 
+ * // Declare both an es_timer and data to pass to the expiry function. 
+ * // The data does not have to be used.
+ * 
+ * es_timer     timer;
+ * union sigval data;
+ * result_t     rc;
+ *
+ * // and Initialise an es_timer
+ * 
+ * TIMER_INIT(timer)
+ *
+ * // If data is to be passed to the expiry function then initialise it.
+ * // the data can either be a 16 bit value or a pointer:
+ * 
+ * data.sival_int = 0;
+ * data.sival_ptr = &es_timer;
+ *
+ * // Create the timer in this case for 5 Seconds
+ *
+ * rc = timer_start(SECONDS_TO_TICKS(5), expiry, data, &timer); 
+ * 
+ * // Possible error codes returned:
+ * 
+ * ERR_TIMER_ACTIVE : The timer passed in is already active. This might be
+ *                    due to an uninitialised data structure TIMER_INIT(timer)
+ * 
+ * ERR_NO_RESOURCES : Out of Software timers. The number of Software timers
+ *                    available in the system is defined by NUMBER_OF_TIMERS
+ *                    in your system.h configuration file.
+ * 
  */
-extern result_t timer_start(u16 duration, expiry_function fn, union sigval data, es_timer *timer);
+extern result_t timer_start(u16 ticks, expiry_function fn, union sigval data, es_timer *timer);
 extern result_t timer_cancel(es_timer *timer);
 extern result_t timer_cancel_all(void);
 
