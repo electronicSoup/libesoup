@@ -53,13 +53,13 @@
 /*
  * Serial Logging
  */
-#if defined(SERIAL_PORT_GndTxRx)
+#if defined(SYS_SERIAL_PORT_GndTxRx)
         #define SERIAL_LOGGING_RX_DDR    TRISDbits.TRISD5
         #define SERIAL_LOGGING_TX_DDR    TRISDbits.TRISD4
 
         #define SERIAL_LOGGING_TX        RPOR12bits.RP25R
         #define SERIAL_LOGGING_RX_PIN    RP20
-#elif defined(SERIAL_PORT_GndRxTx)
+#elif defined(SYS_SERIAL_PORT_GndRxTx)
         #define SERIAL_LOGGING_RX_DDR    TRISDbits.TRISD4
         #define SERIAL_LOGGING_TX_DDR    TRISDbits.TRISD5
 
@@ -263,7 +263,7 @@
  * @def   FLASH_APP_START_ADDRESS
  * @brief Start of the Application code in Flash Memory.
  *
- * If you use the electronicSoup CAN Node Operating System then the application 
+ * If you use the electronicSoup SYS_CAN Node Operating System then the application 
  * Code starts at this address in Flash Memory.
  */
 #define FLASH_FIRMWARE_START_ADDRESS   0x08800

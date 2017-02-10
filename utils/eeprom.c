@@ -28,16 +28,16 @@
  *
  * The eeprom address map is split into two sections with the first 32 Bytes
  * being reserved for a Bootloader. This size is specified in core.h by the
- * constant EEPROM_BOOT_PAGE_SIZE. If your project is not using a Bootloader,
+ * constant SYS_EEPROM_BOOT_PAGE_SIZE. If your project is not using a Bootloader,
  * i.e. is being programmed directly into the PIC Processor using a PicKit3, or
- * similar flash programmer, then defining the switch EEPROM_USE_BOOT_PAGE in
+ * similar flash programmer, then defining the switch SYS_EEPROM_USE_BOOT_PAGE in
  * your system.h file will ignore this restriction and allow access to the full
  * eeprom address space.
  *
  * If you do rely on a bootloader which uses this flash page then comment out
- * or remove the definition of EEPROM_USE_BOOT_PAGE. With this commented out
+ * or remove the definition of SYS_EEPROM_USE_BOOT_PAGE. With this commented out
  * the primitive read and write functions in this file will add
- * EEPROM_BOOT_PAGE_SIZE to any given address.
+ * SYS_EEPROM_BOOT_PAGE_SIZE to any given address.
  */
 
 #include "system.h"
@@ -68,7 +68,7 @@
 
 static void clear_write_in_progress(void)
 {
-	u8 status;
+	uint8_t status;
 
 	do {
 		EEPROM_Select
@@ -92,14 +92,14 @@ static void clear_write_in_progress(void)
  *          otherwise SUCCESS
  *
  */
-result_t eeprom_read(u16 address, u8 *data)
+result_t eeprom_read(uint16_t address, uint8_t *data)
 {
-	u8 use_address;
+	uint8_t use_address;
 
-#ifdef EEPROM_USE_BOOT_PAGE
-	use_address = (u8)address;
+#ifdef SYS_EEPROM_USE_BOOT_PAGE
+	use_address = (uint8_t)address;
 #else
-	use_address = (u8)(address + EEPROM_BOOT_PAGE_SIZE);
+	use_address = (uint8_t)(address + SYS_EEPROM_BOOT_PAGE_SIZE);
 #endif
 	if(use_address <= EEPROM_MAX_ADDRESS) {
 		clear_write_in_progress();
@@ -110,7 +110,9 @@ result_t eeprom_read(u16 address, u8 *data)
 		EEPROM_DeSelect
 		return(SUCCESS);
 	}
-        LOG_E("eeprom_read Address Range Error!\n\r");
+#if (LOG_LEVEL <= LOG_ERROR)
+        log_e(TAG, "eeprom_read Address Range Error!\n\r");
+#endif
 	return (ERR_ADDRESS_RANGE);
 }
 
@@ -127,14 +129,14 @@ result_t eeprom_read(u16 address, u8 *data)
  *          otherwise SUCCESS
  *
  */
-result_t eeprom_write(u16 address, u8 data)
+result_t eeprom_write(uint16_t address, uint8_t data)
 {
-	u8 use_address;
+	uint8_t use_address;
 
-#ifdef EEPROM_USE_BOOT_PAGE
-	use_address = (u8)address;
+#ifdef SYS_EEPROM_USE_BOOT_PAGE
+	use_address = (uint8_t)address;
 #else
-	use_address = (u8)(address + EEPROM_BOOT_PAGE_SIZE);
+	use_address = (uint8_t)(address + SYS_EEPROM_BOOT_PAGE_SIZE);
 #endif
 	if(use_address <= EEPROM_MAX_ADDRESS) {
 		clear_write_in_progress();
@@ -145,7 +147,7 @@ result_t eeprom_write(u16 address, u8 data)
 		EEPROM_Select
 
 		spi_write_byte(SPI_EEPROM_WRITE);
-		spi_write_byte((u8)use_address);
+		spi_write_byte((uint8_t)use_address);
 		spi_write_byte(data);
 		EEPROM_DeSelect
 		Nop();
@@ -154,7 +156,9 @@ result_t eeprom_write(u16 address, u8 data)
 		EEPROM_DeSelect
 		return(SUCCESS);
         }
-        LOG_E("eeprom_write Address Range Error!\n\r");
+#if (LOG_LEVEL <= LOG_ERROR)
+        log_e(TAG, "eeprom_write Address Range Error!\n\r");
+#endif
 	return (ERR_ADDRESS_RANGE);
 }
 
@@ -169,24 +173,28 @@ result_t eeprom_write(u16 address, u8 data)
  *          otherwise SUCCESS
  *
  */
-result_t eeprom_erase(u16 start_address)
+result_t eeprom_erase(uint16_t start_address)
 {
-	u16 loop;
+	uint16_t loop;
 
-        LOG_E("eeprom_erase(0x%x)\n\r", start_address);
-#ifdef EEPROM_USE_BOOT_PAGE
+#if (LOG_LEVEL <= LOG_ERROR)
+        log_e(TAG, "eeprom_erase(0x%x)\n\r", start_address);
+#endif
+#ifdef SYS_EEPROM_USE_BOOT_PAGE
 	if(start_address <= EEPROM_MAX_ADDRESS) {
 #else
-	if(start_address + EEPROM_BOOT_PAGE_SIZE <= EEPROM_MAX_ADDRESS) {
+	if(start_address + SYS_EEPROM_BOOT_PAGE_SIZE <= EEPROM_MAX_ADDRESS) {
 #endif
-		for (loop = start_address; (loop + EEPROM_BOOT_PAGE_SIZE) <= EEPROM_MAX_ADDRESS ; loop++) {
+		for (loop = start_address; (loop + SYS_EEPROM_BOOT_PAGE_SIZE) <= EEPROM_MAX_ADDRESS ; loop++) {
 			asm ("CLRWDT");
 			eeprom_write(loop, 0x00);
 		}
 
 		return (SUCCESS);
 	}
-        LOG_E("eeprom_erase Address Range Error!\n\r");
+#if (LOG_LEVEL <= LOG_ERROR)
+        log_e(TAG, "eeprom_erase Address Range Error!\n\r");
+#endif
 	return (ERR_ADDRESS_RANGE);
 }
 
@@ -209,14 +217,16 @@ result_t eeprom_erase(u16 start_address)
  *          otherwise SUCCESS
  *
  */
-result_t eeprom_str_read(u16 address, u8 *buffer, u16 *length)
+result_t eeprom_str_read(uint16_t address, uint8_t *buffer, uint16_t *length)
 {
-	u8       character;
-	u8      *ptr;
-	u8       num_read = 0;
+	uint8_t       character;
+	uint8_t      *ptr;
+	uint8_t       num_read = 0;
 	result_t rc;
 
-	LOG_D("eeprom_str_read()\n\r");
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+	log_d(TAG, "eeprom_str_read()\n\r");
+#endif
 
 	ptr = buffer;
 
@@ -233,7 +243,9 @@ result_t eeprom_str_read(u16 address, u8 *buffer, u16 *length)
 	}
 	*ptr = 0x00;
 	*length = num_read;
-	LOG_D("eeprom_str_read() read %s\n\r", buffer);
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+	log_d(TAG, "eeprom_str_read() read %s\n\r", buffer);
+#endif
 
 	return (rc);
 }
@@ -253,24 +265,30 @@ result_t eeprom_str_read(u16 address, u8 *buffer, u16 *length)
  *          otherwise SUCCESS
  *
  */
-result_t  eeprom_str_write(u16 address, u8 *buffer, u16 *length)
+result_t  eeprom_str_write(uint16_t address, uint8_t *buffer, uint16_t *length)
 {
-	u8      *ptr;
-	u16      copied = 0;
+	uint8_t      *ptr;
+	uint16_t      copied = 0;
 	result_t rc = SUCCESS;
 
-	LOG_D("eeprom_str_write()\n\r");
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+	log_d(TAG, "eeprom_str_write()\n\r");
+#endif
 
 	ptr = buffer;
 
 	while ( (*ptr) && (rc == SUCCESS) && (copied < (*length - 1))) {
-		LOG_D("Write to location %d value 0x%x\n\r", address, *ptr);
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+		log_d(TAG, "Write to location %d value 0x%x\n\r", address, *ptr);
+#endif
 		rc = eeprom_write(address++, *ptr++);
 		copied++;
 	}
 
 	if(rc == SUCCESS) {
-		LOG_D("Write loop finished\n\r");
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+		log_d(TAG, "Write loop finished\n\r");
+#endif
 		eeprom_write(address, 0x00);
 	}
 

@@ -24,13 +24,13 @@
 #if defined(__dsPIC33EP256MU806__)
 void clock_init(void)
 {
-        u8 clock;
+        uint8_t clock;
 
         /*
          * There's a special case if the required clock frequency is 1/2 the
          * Crystal Frequency then we can simple use Primary Clock.
          */
-        if(CLOCK_FREQ == (CRYSTAL_FREQ/2)) {
+        if(SYS_CLOCK_FREQ == (CRYSTAL_FREQ/2)) {
                 // Initiate Clock Switch to Primary Oscillator
                 clock = dsPIC33_PRIMARY_OSCILLATOR;
                 __builtin_write_OSCCONH(clock);
@@ -57,7 +57,7 @@ void clock_init(void)
         // Wait for Clock switch to occur
         while (OSCCONbits.COSC!= clock);
 
-        if(CLOCK_FREQ != (CRYSTAL_FREQ/2)) {
+        if(SYS_CLOCK_FREQ != (CRYSTAL_FREQ/2)) {
                 // Wait for PLL to lock
                 while (OSCCONbits.LOCK!= 1);
         }

@@ -5,9 +5,9 @@
  * 
  * Android Definitions:
  *
- *    #define ANDROID
+ *    #define SYS_ANDROID
  *
- *    #ifdef ANDROID
+ *    #ifdef SYS_ANDROID
  *
  *    Definition of the function used to change State to the App connected
  *    state. If you are going to use an Android connected device you must
@@ -15,10 +15,10 @@
  *    below:
  *
  *      extern void example_set_app_connected_state(void);
- *      #define ANDROID_SET_APPLICATION_CONNECTED_STATE example_set_app_connected_state();
+ *      #define SYS_ANDROID_SET_APPLICATION_CONNECTED_STATE example_set_app_connected_state();
  *
  *    extern void set_app_connected_state(void);
- *    #define ANDROID_SET_APPLICATION_CONNECTED_STATE set_app_connected_state();
+ *    #define SYS_ANDROID_SET_APPLICATION_CONNECTED_STATE set_app_connected_state();
  *
  *    Android main processing when the Android Application is NOT Connected.
  *    If different processing is required when the Android Applicaiton is not
@@ -28,10 +28,10 @@
  *    define the MACRO.
  *
  *     extern void example_no_android_app_function(void);
- *     #define NO_ANDROID_APP_FN example_no_android_app_function();
+ *     #define SYS_ANDROID_NO_APP_FN example_no_android_app_function();
  *
  *    //extern void example_no_android_app_function(void);
- *    //#define NO_ANDROID_APP_FN example_no_android_app_function();
+ *    //#define SYS_ANDROID_NO_APP_FN example_no_android_app_function();
  *
  *  In addition to all this you need to link the Microchip files into your src directoy:
  *
@@ -75,11 +75,11 @@ DEF_FIRMWARE_URL_50("http://www.me.com")
 
 int main(void)
 {
-	char manufacturer[40] = "";
-	char model[50] = "";
-	char version[10] = "";
-	char uri[50] = "";
-	u16  length;
+	char      manufacturer[40] = "";
+	char      model[50] = "";
+	char      version[10] = "";
+	char      uri[50] = "";
+	uint16_t  length;
 	ANDROID_ACCESSORY_INFORMATION android_device_info;
 
 	/**
@@ -104,10 +104,12 @@ int main(void)
 	length = 50;
 	flash_strcpy(uri, firmware_uri, &length);
 
-	LOG_D("manufacturer - %s\n\r", manufacturer);
-	LOG_D("model - %s\n\r", model);
-	LOG_D("version - %s\n\r", version);
-	LOG_D("uri - %s\n\r", uri);
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+	log_d(TAG, "manufacturer - %s\n\r", manufacturer);
+	log_d(TAG, "model - %s\n\r", model);
+	log_d(TAG, "version - %s\n\r", version);
+	log_d(TAG, "uri - %s\n\r", uri);
+#endif
 
 	android_device_info.manufacturer = manufacturer;
 	android_device_info.manufacturer_size = sizeof(manufacturer);

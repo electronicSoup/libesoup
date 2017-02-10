@@ -27,11 +27,11 @@
 #define BAD_TIMER 0xff
 
 extern void     hw_timer_init(void);
-extern u8       hw_timer_start(ty_time_units units, u16 time, u8 repeat, void (*expiry_function)(void *), void *data);
-//extern result_t hw_timer_restart(u8 hw_timer, ty_time_units units, u16 time, u8 repeat, void (*expiry_function)(void *), void *data);
-//extern result_t hw_timer_pause(u8 timer);
+extern uint8_t  hw_timer_start(ty_time_units units, uint16_t time, uint8_t repeat, void (*expiry_function)(void *), void *data);
+extern result_t hw_timer_restart(uint8_t hw_timer, ty_time_units units, uint16_t time, uint8_t repeat, void (*expiry_function)(void *), void *data);
+extern result_t hw_timer_pause(uint8_t timer);
 
-extern void     hw_timer_cancel(u8 timer);
+extern void     hw_timer_cancel(uint8_t timer);
 extern void     hw_timer_cancel_all();
 
 #endif // _HW_TIMERS

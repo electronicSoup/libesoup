@@ -55,7 +55,7 @@ typedef enum {
  * check for the timer identifer of the expired timer.
  */
 #ifdef MCP
-typedef u8 timer_t;
+typedef uint8_t timer_t;
 #endif
 
 /**
@@ -115,7 +115,7 @@ typedef struct
  * expiry function to decide what is being passed.
  */
 union sigval {
-           u16     sival_int;         /**< 16 bit Integer value */
+           uint16_t     sival_int;         /**< 16 bit Integer value */
            void   *sival_ptr;         /**< Pointer value */
 };
 #endif
@@ -146,8 +146,8 @@ typedef void (*expiry_function)(timer_t timer_id, union sigval);
  * Calculate the 16 bit value that will give us an ISR for the system tick
  * duration.
  */
-#define TMR0H_VAL ((0xFFFF - ((SYSTEM_TICK_ms * CLOCK_FREQ) / 4000)) >> 8) & 0xFF
-#define TMR0L_VAL (0xFFFF - ((SYSTEM_TICK_ms * CLOCK_FREQ) / 4000)) & 0xFF
+#define TMR0H_VAL ((0xFFFF - ((SYSTEM_TICK_ms * SYS_CLOCK_FREQ) / 4000)) >> 8) & 0xFF
+#define TMR0L_VAL (0xFFFF - ((SYSTEM_TICK_ms * SYS_CLOCK_FREQ) / 4000)) & 0xFF
 #endif // (__18F2680) || __18F4585)
 
 
@@ -169,7 +169,7 @@ typedef void (*expiry_function)(timer_t timer_id, union sigval);
      * of the electronicSoup CinnamonBun Library. It initialises all data
      * structures. The project's system.h header file should define the number
      * of timers the library should define space for an manage. See the
-     * definition of NUMBER_OF_TIMERS in the example system.h file in the
+     * definition of SYS_NUMBER_OF_TIMERS in the example system.h file in the
      * es_lib directory.
      */
     extern void timer_init(void);
@@ -202,7 +202,7 @@ typedef void (*expiry_function)(timer_t timer_id, union sigval);
  *
  * @param in duration: duration of the timer in system ticks. @see SECONDS_TO_TICKS
  */
-extern result_t timer_start(u16 duration, expiry_function fn, union sigval data, es_timer *timer);
+extern result_t timer_start(uint16_t duration, expiry_function fn, union sigval data, es_timer *timer);
 extern result_t timer_cancel(es_timer *timer);
 extern result_t timer_cancel_all(void);
 

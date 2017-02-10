@@ -1,8 +1,8 @@
 /**
  *
- * \file es_lib/logger/pic18_serial_log.h
+ * \file es_lib/logger/serial_port.h
  *
- * Definitions for logging to the Serial Port on the pic18 processor.
+ * Definitions for configuration of the Serial Port
  *
  * Copyright 2014 John Whitmore <jwhitmore@electronicsoup.com>
  *
@@ -19,68 +19,37 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  *
  */
-#ifndef PIC18_SERIAL_LOG_H
-#define PIC18_SERIAL_LOG_H
+#ifndef SERIAL_PORT_H
+#define SERIAL_PORT_H
 
 /*
- * This file contains the definition of the convenience logging function
- * and various macros which can be used to simplify it's use in code.
+ *  serial_init()
  *
- * LOG_D -> log a debug message   
- * LOG_I -> log an Information message
- * LOG_W -> log a warning message
- * LOG_E -> log an Error message
+ * This function is only defined for Code compiled for the Microchip
+ * microcontroller so the switch MCP must be defined as part of your
+ * Project.
+ * 
+ * In additon the system.h config file should define the baud rate to
+ * be used and the physical pin configuration of the 3 pin serial port:
+ * GndRxTx or GndTxRx
  *
- * To use the convenience macros the configuration file system.h should define a
- * logging level to be used in the build. In additon each file can switch on and
- * off it's logging messages by defining "FILE_DEBUG". If the FILE_DEBUG switch
- * is not defined before inclusion of this header logging messages will be compiled
- * out of the build.
+ * for example : #define SERIAL_BAUD 19200
  *
- * Example system.h log level definition:
+ * And either : #define SERIAL_PORT_GndTxRx or #define SERIAL_PORT_GndRxTx
  *
- *   #define LOG_LEVEL LOG_DEBUG
  */
-
-#include "system.h"
-#include <stdio.h>
+#if defined(MCP)
+extern void serial_init(void);
 
 /*
- * LOG_D  -> Log a Debug severity message.
+ * The PIC18 Processors process the serial Interrupt loading up the TXREG
+ * register. This function should be called from the PIC18 ISR
  */
-#define DEBUG (defined(DEBUG_FILE) && LOG_LEVEL <= LOG_DEBUG)
+#if defined(__18F2680) || defined(__18F4585)
+extern void serial_isr(void);
+extern void putch(char);
+#endif // (__18F2680) || (__18F4585)
 
-#if (defined(DEBUG_FILE) && LOG_LEVEL <= LOG_DEBUG)
-#define LOG_D printf("D :%s:", TAG); printf
-#else
-#define LOG_D 
 #endif
 
-/*
- * LOG_I  -> Log an Informationional severity message.
- */
-#if (defined(DEBUG_FILE) && LOG_LEVEL <= LOG_INFO)
-#define LOG_I printf("I :%s:", TAG); printf
-#else
-#define LOG_I
-#endif
-
-/*
- * LOG_W  -> Log a Warning severity message.
- */
-#if (defined(DEBUG_FILE) && LOG_LEVEL <= LOG_WARNING)
-#define LOG_W printf("W :%s:", TAG); printf
-#else
-#define LOG_W 
-#endif
-
-/*
- * LOG_E  -> Log an Error severity message.
- */
-#if (LOG_LEVEL <= LOG_ERROR)
-#define LOG_E printf("E :%s:", TAG); printf
-#else
-#define LOG_E 
-#endif
-
-#endif // PIC18_SERIAL_LOG_H
+#endif // SERIAL_PORT_H

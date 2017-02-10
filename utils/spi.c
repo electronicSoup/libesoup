@@ -27,9 +27,11 @@
 
 void spi_init(void)
 {
-	u8 loop;
+	uint8_t loop;
 
-	LOG_D("spi_init()\n\r");
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+	log_d(TAG, "spi_init()\n\r");
+#endif
 
 	/*
 	 * short delay before init SPI

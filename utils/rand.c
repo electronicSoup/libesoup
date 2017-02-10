@@ -27,20 +27,22 @@
 
 #define TAG "RAND"
 
-static u8 initialised = FALSE;
+static uint8_t initialised = FALSE;
 
 void random_init(void)
 {
-	u16  loop;
+	uint16_t  loop;
 	u32  seed;
-	u8  *data;
+	uint8_t  *data;
 
 	if(initialised) {
 		return;
 	}
 
-	LOG_D("random_init()\n\r");
-	data = (u8 *)&IC1TMR;  //0x146
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+	log_d(TAG, "random_init()\n\r");
+#endif
+	data = (uint8_t *)&IC1TMR;  //0x146
 
 	seed = 0;
 
@@ -50,7 +52,9 @@ void random_init(void)
 		data++;
 	}
 
-	LOG_D("Seed 0x%lx\n\r", seed);
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+	log_d(TAG, "Seed 0x%lx\n\r", seed);
+#endif
 	srand(seed);
 }
 

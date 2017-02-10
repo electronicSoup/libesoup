@@ -27,7 +27,7 @@
 /*
  * ISO15765 Protocols
  */
-#if defined(ISO15765)
+#if defined(SYS_ISO15765)
 #define ISO15765_LOGGER_PROTOCOL_ID    0x01
 #define ISO15765_DCNCP_PROTOCOL_ID     0x02
 #endif
@@ -78,23 +78,23 @@
 #define L2_Connected     0x03
 #define L2_ChangingBaud  0x04
 
-#if LOG_LEVEL < NO_LOGGING
+#if SYS_LOG_LEVEL < NO_LOGGING
 extern char can_l2_status_strings[5][17];
 #endif
 
-#ifdef DCNCP_CAN
+#ifdef SYS_CAN_DCNCP
 #define DCNCP_INIT_STATUS_MASK         0x08
 #define DCNCP_NODE_ADDRESS_STATUS_MASK 0x10
-#endif // DCNCP_CAN
+#endif // SYS_CAN_DCNCP
 
 typedef struct {
     union {
         struct {
-            u8 l2_status : 3;
-            u8 dcncp_initialised : 1;
-            u8 dcncp_node_address_valid :1;
+            uint8_t l2_status : 3;
+            uint8_t dcncp_initialised : 1;
+            uint8_t dcncp_node_address_valid :1;
         } bit_field;
-        u8 byte;
+        uint8_t byte;
     };
 } can_status_t;
 
@@ -112,7 +112,7 @@ typedef enum {
 
 typedef void (*can_status_handler_t)(can_status_t, can_baud_rate_t);
 
-#if LOG_LEVEL < NO_LOGGING
+#if SYS_LOG_LEVEL < NO_LOGGING
 extern char can_baud_rate_strings[8][10];
 #endif
 
@@ -124,17 +124,17 @@ extern result_t can_init(can_baud_rate_t      baud,
 //extern bool can_initialised(void);
 
 extern result_t can_l2_init(can_baud_rate_t arg_baud_rate,
-                 void (*arg_status_handler)(u8 mask, can_status_t status, can_baud_rate_t baud));
+                 void (*arg_status_handler)(uint8_t mask, can_status_t status, can_baud_rate_t baud));
 extern void can_l2_tasks(void);
 
 extern result_t can_l2_tx_frame(can_frame *frame);
 extern result_t can_l2_dispatch_reg_handler(can_l2_target_t *target);
-extern result_t can_l2_dispatch_unreg_handler(u8 id);
+extern result_t can_l2_dispatch_unreg_handler(uint8_t id);
 extern result_t can_l2_dispatch_set_unhandled_handler(can_l2_frame_handler_t handler);
 
 //extern void can_l2_ISR(void);
 
-//extern void can_l2_tx_error(u8 node_type, u8 node_number, u32 errorCode);
+//extern void can_l2_tx_error(uint8_t node_type, u8 node_number, u32 errorCode);
 
 extern can_baud_rate_t can_l2_get_baudrate(void);
 extern void can_l2_set_node_baudrate(can_baud_rate_t baudrate);
@@ -147,14 +147,14 @@ extern void can_tasks(void);
 
 #if defined(ISO15765)
 
-extern u8 node_get_address(void);
+extern uint8_t node_get_address(void);
 
-extern result_t iso15765_init(u8 address);
-extern u8 iso15765_initialised(void);
+extern result_t iso15765_init(uint8_t address);
+extern uint8_t iso15765_initialised(void);
 
 extern result_t iso15765_tx_msg(iso15765_msg_t *msg);
 extern result_t iso15765_dispatch_reg_handler(iso15765_target_t *target);
-extern result_t iso15765_dispatch_unreg_handler(u8 id);
+extern result_t iso15765_dispatch_unreg_handler(uint8_t id);
 extern result_t iso15765_dispatch_set_unhandled_handler(iso15765_msg_handler_t handler);
 
 #endif
@@ -170,12 +170,12 @@ typedef enum {
 } iso11783_ack_t;
 
 
-extern result_t  iso11783_init(u8);
+extern result_t  iso11783_init(uint8_t);
 
 extern result_t iso11783_tx_msg(iso11783_msg_t *msg);
 extern result_t iso11783_dispatch_reg_handler(iso11783_target_t *target);
-extern result_t iso11783_dispatch_unreg_handler(u8 id);
+extern result_t iso11783_dispatch_unreg_handler(uint8_t id);
 extern result_t iso11783_dispatch_set_unhandled_handler(iso11783_msg_handler_t handler);
-#endif // ISO11783
+#endif // SYS_ISO11783
 
-#endif // CAN_H
+#endif // ES_CAN_H

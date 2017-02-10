@@ -33,21 +33,21 @@
 #include "es_lib/timers/timers.h"
 
 #define DEBUG_FILE
-//#define LOG_LEVEL LOG_INFO
+//#define SYS_LOG_LEVEL LOG_INFO
 #include "es_lib/logger/serial_log.h"
 
 #define TAG "ISO-15765"
 
 typedef struct
 {
-    u8 used;
-    u8 protocol;
+    uint8_t used;
+    uint8_t protocol;
     iso15765_msg_handler_t handler;
 } iso15765_register_t;
 
 static iso15765_msg_handler_t unhandled_handler;
 
-static iso15765_register_t registered[ISO15765_REGISTER_ARRAY_SIZE];
+static iso15765_register_t registered[SYS_ISO15765_REGISTER_ARRAY_SIZE];
 static void dispatcher_iso15765_msg_handler(iso15765_msg_t *message);
 
 #define SINGLE_FRAME_SIZE 7
@@ -63,10 +63,10 @@ typedef union
 {
     struct
     {
-        u8 source;
-        u8 destination;
-        u8 type;
-        u8 layer3;
+        uint8_t source;
+        uint8_t destination;
+        uint8_t type;
+        uint8_t layer3;
     } bytes;
     u32 can_id;
 } iso15765_id;
@@ -94,31 +94,31 @@ typedef union
 static iso15765_id tx_frame_id;
 
 typedef struct {
-	u8             block_size;
-	u8             seperation_time;
+	uint8_t             block_size;
+	uint8_t             seperation_time;
 	can_frame      frame;
-	u8             sequence;
-	u8             data[ISO15765_MAX_MSG];
-	u16            index;
-	u8             frames_sent_in_block;
-	u16            bytes_to_send;
-	u16            bytes_sent;
-	u8             destination;
+	uint8_t             sequence;
+	uint8_t             data[ISO15765_MAX_MSG];
+	uint16_t            index;
+	uint8_t             frames_sent_in_block;
+	uint16_t            bytes_to_send;
+	uint16_t            bytes_sent;
+	uint8_t             destination;
 	es_timer       consecutive_frame_timer;
 	es_timer       timer_N_Bs;
 } tx_buffer_t;
 
 typedef struct {
-	u8             block_size;
-	u8             seperation_time;
-	u8             data[ISO15765_MAX_MSG];
-	u16            index;
-	u8             sequence;
-	u8             protocol;
-	u16            bytes_expected;
-	u16            bytes_received;
-	u8             frames_received_in_block;
-	u8             source;
+	uint8_t             block_size;
+	uint8_t             seperation_time;
+	uint8_t             data[ISO15765_MAX_MSG];
+	uint16_t            index;
+	uint8_t             sequence;
+	uint8_t             protocol;
+	uint16_t            bytes_expected;
+	uint16_t            bytes_received;
+	uint8_t             frames_received_in_block;
+	uint8_t             source;
 	can_frame      frame;
 	iso15765_msg_t msg;
 	es_timer       timer_N_Cr;
@@ -145,8 +145,8 @@ node_buffers_t node_buffers[NUM_NODES];
 /*
  * This node's local Layer 3 Node Address
  */
-static u8 node_address;
-static u8 initialised = 0x00;
+static uint8_t node_address;
+static uint8_t initialised = 0x00;
 
 static void iso15765_frame_handler(can_frame *rxMsg);
 
@@ -154,7 +154,7 @@ static void init_tx_buffer(tx_buffer_t *);
 static void init_rx_buffer(rx_buffer_t *);
 
 static void exp_sendConsecutiveFrame(timer_t timer_id, union sigval);
-static void sendFlowControlFrame(rx_buffer_t *rx_buffer, u8 flowStatus);
+static void sendFlowControlFrame(rx_buffer_t *rx_buffer, uint8_t flowStatus);
 static void startConsecutiveFrameTimer(tx_buffer_t *tx_buffer) ;
 
 static void startTimer_N_Cr(rx_buffer_t *);
@@ -193,12 +193,12 @@ void init_rx_buffer(rx_buffer_t *rx_buf)
 	TIMER_INIT(rx_buf->timer_N_Cr);
 }
 
-result_t iso15765_init(u8 address)
+result_t iso15765_init(uint8_t address)
 {
-	u16 loop;
+	uint16_t loop;
 	can_l2_target_t target;
 
-	for(loop = 0; loop < ISO15765_REGISTER_ARRAY_SIZE; loop++) {
+	for(loop = 0; loop < SYS_ISO15765_REGISTER_ARRAY_SIZE; loop++) {
 		registered[loop].used = FALSE;
 		registered[loop].protocol = 0x00;
 		registered[loop].handler = (iso15765_msg_handler_t)NULL;
@@ -221,7 +221,9 @@ result_t iso15765_init(u8 address)
 	}
 #endif
         node_address = address;
-	LOG_I("l3_init() node address = 0x%x\n\r", node_address);
+#if (DEBUG_FILE && (LOG_LEVEL <= LOG_INFO))
+	log_i(TAG, "l3_init() node address = 0x%x\n\r", node_address);
+#endif
 
 	/*
 	 * Initialise the static parts or our tx message header.
@@ -246,24 +248,26 @@ result_t iso15765_init(u8 address)
 	return(SUCCESS);
 }
 
-u8 iso15765_initialised(void)
+uint8_t iso15765_initialised(void)
 {
     return(initialised);
 }
 
 result_t iso15765_tx_msg(iso15765_msg_t *msg)
 {
-	u8          *data_ptr;
-	u16          loop;
+	uint8_t          *data_ptr;
+	uint16_t          loop;
 	iso15765_id  id;
 	tx_buffer_t *tx_buffer;
-	u16          size;
-	u8           tmp;
+	uint16_t          size;
+	uint8_t           tmp;
 
-	LOG_I("Tx to 0x%x, Protocol-0x%x, len(0x%x)\n\r",
-		   (u16)msg->address,
-		   (u16)msg->protocol,
-		   (u16)msg->size);
+#if (DEBUG_FILE && (LOG_LEVEL <= LOG_INFO))
+	log_i(TAG, "Tx to 0x%x, Protocol-0x%x, len(0x%x)\n\r",
+#endif
+		   (uint16_t)msg->address,
+		   (uint16_t)msg->protocol,
+		   (uint16_t)msg->size);
 
 	data_ptr = msg->data;
 	for(loop = 0; loop < msg->size; loop++) {
@@ -272,23 +276,31 @@ result_t iso15765_tx_msg(iso15765_msg_t *msg)
 	printf("\n\r");
 
         if(!initialised) {
-		LOG_E("ISO15765 not Initialised\n\r");
+#if (LOG_LEVEL <= LOG_ERROR)
+		log_e(TAG, "ISO15765 not Initialised\n\r");
+#endif
 		return(ERR_UNINITIALISED);
 	}
 
 	if(msg->size == 0) {
-		LOG_E("ISO15765 Message Zero size not Sending\n\r");
+#if (LOG_LEVEL <= LOG_ERROR)
+		log_e(TAG, "ISO15765 Message Zero size not Sending\n\r");
+#endif
 		return(ERR_BAD_INPUT_PARAMETER);
 	}
 
 	if(msg->size > ISO15765_MAX_MSG) {
-		LOG_E("L3_Can Message exceeds size limit\n\r");
+#if (LOG_LEVEL <= LOG_ERROR)
+		log_e(TAG, "L3_Can Message exceeds size limit\n\r");
+#endif
 		return(ERR_BAD_INPUT_PARAMETER);
 	}
 
 #if defined(MCP)
 	if(mcp_transmitter_busy) {
-		LOG_E("ISO15765 transmitter already busy\n\r");
+#if (LOG_LEVEL <= LOG_ERROR)
+		log_e(TAG, "ISO15765 transmitter already busy\n\r");
+#endif
 		return(ERR_BUSY);
 	}
 	tx_buffer = &mcp_tx_buffer;
@@ -297,13 +309,17 @@ result_t iso15765_tx_msg(iso15765_msg_t *msg)
 	 * Check for a transmit buffer already active to the destination
 	 */
 	if(node_buffers[msg->address].tx_buffer != NULL) {
-		LOG_E("ISO15765 transmitter already busy\n\r");
+#if (LOG_LEVEL <= LOG_ERROR)
+		log_e(TAG, "ISO15765 transmitter already busy\n\r");
+#endif
 		return(ERR_BUSY);
 	}
 
 	tx_buffer = malloc(sizeof(tx_buffer_t));
 	if(!tx_buffer) {
-		LOG_E("Malloc Failed\n\r");
+#if (LOG_LEVEL <= LOG_ERROR)
+		log_e(TAG, "Malloc Failed\n\r");
+#endif
 		exit(1);
 	}
 	node_buffers[msg->address].tx_buffer = tx_buffer;
@@ -323,10 +339,14 @@ result_t iso15765_tx_msg(iso15765_msg_t *msg)
 		tx_buffer->frame.data[1] = msg->protocol;
 
 		data_ptr = msg->data;
-		LOG_D("Tx Single Frame\n\r");
+#if (DEBUG_FILE && (LOG_LEVEL <= LOG_DEBUG))
+		log_d(TAG, "Tx Single Frame\n\r");
+#endif
 		for(loop = 0; loop < msg->size; loop++) {
 			tx_buffer->frame.data[loop + 2] = *data_ptr++;
-			LOG_D("ISO15765 TX Byte 0x%x\n\r", tx_buffer->frame.data[loop + 2]);
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+			log_d(TAG, "ISO15765 TX Byte 0x%x\n\r", tx_buffer->frame.data[loop + 2]);
+#endif
 		}
 		can_l2_tx_frame(&(tx_buffer->frame));
 	} else {
@@ -348,17 +368,19 @@ result_t iso15765_tx_msg(iso15765_msg_t *msg)
 	        tx_buffer->frame.can_dlc = CAN_DATA_LENGTH;
 
 		size = msg->size + 1; // Add one for Protocol Byte
-		tmp = (u8)(size >> 8);
+		tmp = (uint8_t)(size >> 8);
 		tmp = tmp & 0x0f;
 		tx_buffer->frame.data[0] = ISO15765_FF | tmp;
-		tx_buffer->frame.data[1] = (u8)(size & 0xff);
+		tx_buffer->frame.data[1] = (uint8_t)(size & 0xff);
 		tx_buffer->frame.data[2] = msg->protocol;
 
 		for (loop = 3; loop < CAN_DATA_LENGTH; loop++) {
 			tx_buffer->frame.data[loop] = tx_buffer->data[tx_buffer->index++];
 			tx_buffer->bytes_sent++;
 		}
-		LOG_D("Tx First Frame\n\r");
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+		log_d(TAG, "Tx First Frame\n\r");
+#endif
 		tx_buffer->sequence = (tx_buffer->sequence + 1) % 0x0f;
 		can_l2_tx_frame(&tx_buffer->frame);
 
@@ -370,7 +392,7 @@ result_t iso15765_tx_msg(iso15765_msg_t *msg)
 
 void exp_sendConsecutiveFrame(timer_t timer_id, union sigval data)
 {
-	u8 loop;
+	uint8_t loop;
 	tx_buffer_t *tx_buffer;
 
 	/*
@@ -380,7 +402,9 @@ void exp_sendConsecutiveFrame(timer_t timer_id, union sigval data)
 
 	tx_buffer = (tx_buffer_t *)data.sival_ptr;
 
-	LOG_D("Tx Consecutive Frame tx Seq %d\n\r", tx_buffer->sequence);
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+	log_d(TAG, "Tx Consecutive Frame tx Seq %d\n\r", tx_buffer->sequence);
+#endif
 
 	tx_buffer->consecutive_frame_timer.status = INACTIVE;
 
@@ -391,7 +415,9 @@ void exp_sendConsecutiveFrame(timer_t timer_id, union sigval data)
 			tx_buffer->frame.data[loop] = tx_buffer->data[tx_buffer->index++];
 			tx_buffer->bytes_sent++;
 
-			LOG_D("Bytes Sent %d Bytes to send %d\n\r", tx_buffer->bytes_sent, tx_buffer->bytes_to_send);
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+			log_d(TAG, "Bytes Sent %d Bytes to send %d\n\r", tx_buffer->bytes_sent, tx_buffer->bytes_to_send);
+#endif
 			if(tx_buffer->bytes_sent == tx_buffer->bytes_to_send) {
 				loop++;
 				break;
@@ -422,7 +448,7 @@ void exp_sendConsecutiveFrame(timer_t timer_id, union sigval data)
 	}
 }
 
-void sendFlowControlFrame(rx_buffer_t *rx_buffer, u8 flowStatus)
+void sendFlowControlFrame(rx_buffer_t *rx_buffer, uint8_t flowStatus)
 {
 	iso15765_id can_id;
 	can_frame frame;
@@ -436,18 +462,22 @@ void sendFlowControlFrame(rx_buffer_t *rx_buffer, u8 flowStatus)
 		frame.data[0] = ISO15765_FC | (flowStatus & 0x0f);
 		frame.data[1] = rx_buffer->block_size;
 		frame.data[2] = rx_buffer->seperation_time;
-		LOG_D("Send Flow Control Frame\n\r");
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+		log_d(TAG, "Send Flow Control Frame\n\r");
+#endif
 		can_l2_tx_frame(&frame);
 	} else {
-		LOG_W("Bad Flow Status\n\r");
+#if (DEBUG_FILE && (LOG_LEVEL <= LOG_WARNING))
+		log_w(TAG, "Bad Flow Status\n\r");
+#endif
 	}
 }
 
 void iso15765_frame_handler(can_frame *frame)
 {
-	u8 type;
-	u8 loop;
-	u8 source;
+	uint8_t type;
+	uint8_t loop;
+	uint8_t source;
 	iso15765_id rx_msg_id;
 	rx_buffer_t *rx_buffer;
 	tx_buffer_t *tx_buffer;
@@ -456,34 +486,46 @@ void iso15765_frame_handler(can_frame *frame)
 
 	if(rx_msg_id.bytes.destination != node_address) {
 		// L3 Message but not for this node - Ignore it
-		LOG_D("ISO15765 Message not for this node\n\r");
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+		log_d(TAG, "ISO15765 Message not for this node\n\r");
+#endif
 		return;
 	}
 
 	source = rx_msg_id.bytes.source;
 
-	LOG_D("iso15765_frame_handler(0x%lx) got a frame from 0x%x\n\r",frame->can_id, source);
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+	log_d(TAG, "iso15765_frame_handler(0x%lx) got a frame from 0x%x\n\r",frame->can_id, source);
+#endif
 	type = frame->data[0] & 0xf0;
 
 	if(type == ISO15765_SF) {
-		u8 length;
+		uint8_t length;
 
-		LOG_D("SF\n\r");
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+		log_d(TAG, "SF\n\r");
+#endif
 #if defined(MCP)
                 rx_buffer = &mcp_rx_buffer;
 		if(mcp_receiver_busy) {
-			LOG_E("ERROR: ISO15765 Received First Frame whilst RxBuffer Busy\n\r");
+#if (LOG_LEVEL <= LOG_ERROR)
+			log_e(TAG, "ERROR: ISO15765 Received First Frame whilst RxBuffer Busy\n\r");
+#endif
 			return;
 		}
 #elif defined(ES_LINUX)
 		if(node_buffers[source].rx_buffer != NULL) {
-			LOG_E("ISO15765 transmitter already busy\n\r");
+#if (LOG_LEVEL <= LOG_ERROR)
+			log_e(TAG, "ISO15765 transmitter already busy\n\r");
+#endif
 			return;
 		}
 
 		rx_buffer = malloc(sizeof(rx_buffer_t));
 		if(!rx_buffer) {
-			LOG_E("Malloc Failed\n\r");
+#if (LOG_LEVEL <= LOG_ERROR)
+			log_e(TAG, "Malloc Failed\n\r");
+#endif
 			exit(1);
 		}
 		node_buffers[source].rx_buffer = rx_buffer;
@@ -497,15 +539,19 @@ void iso15765_frame_handler(can_frame *frame)
 			rx_buffer->index = 0;
 			rx_buffer->protocol = frame->data[1];
 
-			LOG_D("Rx Protocol %d L3 Length %d\n\r",
-				   (u16)rx_buffer->protocol,
-				   (u16)rx_buffer->bytes_expected);
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+			log_d(TAG, "Rx Protocol %d L3 Length %d\n\r",
+#endif
+				   (uint16_t)rx_buffer->protocol,
+				   (uint16_t)rx_buffer->bytes_expected);
 
 			/*
 			 * Subtract one from following loop for Protocol Byte
 			 */
 			for (loop = 2; loop < 2 + rx_buffer->bytes_expected -1; loop++) {
-				LOG_D("Rx Data byte %d - 0x%x\n\r",
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+				log_d(TAG, "Rx Data byte %d - 0x%x\n\r",
+#endif
 					   rx_buffer->index,
 					   frame->data[loop]);
 				rx_buffer->data[rx_buffer->index++] = frame->data[loop];
@@ -525,14 +571,20 @@ void iso15765_frame_handler(can_frame *frame)
 #endif // MCP - ES_LINUX
 		}
 		else {
-			LOG_E("Error in received length");
+#if (LOG_LEVEL <= LOG_ERROR)
+			log_e(TAG, "Error in received length");
+#endif
 		}
 	} else if(type == ISO15765_FF) {
-		u16 size = 0;
-		LOG_D("Rx First Frame\n\r");
+		uint16_t size = 0;
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+		log_d(TAG, "Rx First Frame\n\r");
+#endif
 #if defined(MCP)
 		if(mcp_receiver_busy) {
-			LOG_E("ERROR: Can L3 Received First Frame whilst RxBuffer Busy\n\r");
+#if (LOG_LEVEL <= LOG_ERROR)
+			log_e(TAG, "ERROR: Can L3 Received First Frame whilst RxBuffer Busy\n\r");
+#endif
 			return;
 		}
 
@@ -540,13 +592,17 @@ void iso15765_frame_handler(can_frame *frame)
 		mcp_receiver_busy = TRUE;
 #elif defined(ES_LINUX)
 		if(node_buffers[source].rx_buffer != NULL) {
-			LOG_E("ISO15765 transmitter already busy\n\r");
+#if (LOG_LEVEL <= LOG_ERROR)
+			log_e(TAG, "ISO15765 transmitter already busy\n\r");
+#endif
 			return;
 		}
 
 		rx_buffer = malloc(sizeof(rx_buffer_t));
 		if(!rx_buffer) {
-			LOG_E("Malloc Failed\n\r");
+#if (LOG_LEVEL <= LOG_ERROR)
+			log_e(TAG, "Malloc Failed\n\r");
+#endif
 			exit(1);
 		}
 		node_buffers[source].rx_buffer = rx_buffer;
@@ -559,20 +615,26 @@ void iso15765_frame_handler(can_frame *frame)
 		size = size | frame->data[1];
 
 		if (size > ISO15765_MAX_MSG + 1) {
-			LOG_E("Message received overflows Max Size\n\r");
+#if (LOG_LEVEL <= LOG_ERROR)
+			log_e(TAG, "Message received overflows Max Size\n\r");
+#endif
 			sendFlowControlFrame(rx_buffer, FS_Overflow); //source
 			return;
 		}
 
 		rx_buffer->source = source;
-		rx_buffer->bytes_expected = (u16)size - 1;   // Subtracl one for Protocol Byte
-		LOG_D("Size expected %d\n\r", rx_buffer->bytes_expected);
+		rx_buffer->bytes_expected = (uint16_t)size - 1;   // Subtracl one for Protocol Byte
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+		log_d(TAG, "Size expected %d\n\r", rx_buffer->bytes_expected);
+#endif
 		if(frame->can_dlc == 8) {
 			rx_buffer->source = source;
 			rx_buffer->protocol = frame->data[2];
 
 			for (loop = 3; loop < frame->can_dlc; loop++) {
-//                              LOG_D("Add Byte 0x%x\n\r", (UINT16)rxMsg->data[loop]);
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+//                              log_d(TAG, "Add Byte 0x%x\n\r", (UINT16)rxMsg->data[loop]);
+#endif
 				rx_buffer->data[rx_buffer->index++] = frame->data[loop];
 				rx_buffer->bytes_received++;
 			}
@@ -581,24 +643,34 @@ void iso15765_frame_handler(can_frame *frame)
 
 			sendFlowControlFrame(rx_buffer, FS_CTS);
 		} else {
-			LOG_E("expected a L2 Message of size 8\n\r");
+#if (LOG_LEVEL <= LOG_ERROR)
+			log_e(TAG, "expected a L2 Message of size 8\n\r");
+#endif
 		}
 	} else if(type == ISO15765_CF) {
-		LOG_D("Rx Consecutive Frame\n\r");
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+		log_d(TAG, "Rx Consecutive Frame\n\r");
+#endif
 		for (loop = 0; loop < frame->can_dlc; loop++) {
-			LOG_D("Add Byte %d 0x%x\n\r", loop, frame->data[loop]);
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+			log_d(TAG, "Add Byte %d 0x%x\n\r", loop, frame->data[loop]);
+#endif
 		}
 #if defined(MCP)
 		// If the Receiver isn't busy not sure why we're gettting a CF
 		if(!mcp_receiver_busy) {
-			LOG_E("ERROR: ISO15765 Received CF whilst RxBuffer NOT Busy\n\r");
+#if (LOG_LEVEL <= LOG_ERROR)
+			log_e(TAG, "ERROR: ISO15765 Received CF whilst RxBuffer NOT Busy\n\r");
+#endif
 			return;
 		}
 
 		rx_buffer = &mcp_rx_buffer;
 #elif defined(ES_LINUX)
 		if(node_buffers[source].rx_buffer == NULL) {
-			LOG_E("ISO15765 CF and NOT busy??\n\r");
+#if (LOG_LEVEL <= LOG_ERROR)
+			log_e(TAG, "ISO15765 CF and NOT busy??\n\r");
+#endif
 			return;
 		}
 
@@ -614,19 +686,25 @@ void iso15765_frame_handler(can_frame *frame)
 			rx_buffer->sequence = (rx_buffer->sequence + 1) % 0x0f;
 			rx_buffer->frames_received_in_block++;
 
-			LOG_D("received %d bytes expecting %d\n\r", rx_buffer->bytes_received, rx_buffer->bytes_expected);
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+			log_d(TAG, "received %d bytes expecting %d\n\r", rx_buffer->bytes_received, rx_buffer->bytes_expected);
+#endif
 
 			if (rx_buffer->bytes_received == rx_buffer->bytes_expected) {
-				LOG_D("Complete Message\n\r");
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+				log_d(TAG, "Complete Message\n\r");
+#endif
 				rx_buffer->msg.protocol = rx_buffer->protocol;
 				rx_buffer->msg.data = rx_buffer->data;
 				rx_buffer->msg.size = rx_buffer->bytes_expected;
 				rx_buffer->msg.address = rx_buffer->source;
 
-				LOG_D("RX Msg from-0x%x, Protocol-0x%x, Size-0x%x\n\r",
-					   (u16)rx_buffer->msg.address,
-					   (u16)rx_buffer->msg.protocol,
-					   (u16)rx_buffer->msg.size);
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+				log_d(TAG, "RX Msg from-0x%x, Protocol-0x%x, Size-0x%x\n\r",
+#endif
+					   (uint16_t)rx_buffer->msg.address,
+					   (uint16_t)rx_buffer->msg.protocol,
+					   (uint16_t)rx_buffer->msg.size);
 				dispatcher_iso15765_msg_handler(&rx_buffer->msg);
 
 				/*
@@ -658,24 +736,34 @@ void iso15765_frame_handler(can_frame *frame)
 			free(rx_buffer);
 #endif
 
-			LOG_D("Bad Sequence Number: expected 0x%x received 0x%x\n\r", rx_buffer->sequence, (frame->data[0] & 0x0f));
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+			log_d(TAG, "Bad Sequence Number: expected 0x%x received 0x%x\n\r", rx_buffer->sequence, (frame->data[0] & 0x0f));
+#endif
 		}
 	} else if(type == ISO15765_FC) {
-		u8 flowStatus;
-		LOG_D("Rx Flow Control Frame: BlockSize %d, Seperation time %x\n\r", frame->data[1], frame->data[2]);
-		LOG_D("BlockSize %d, Seperation time %x\n\r", frame->data[1], frame->data[2]);
+		uint8_t flowStatus;
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+		log_d(TAG, "Rx Flow Control Frame: BlockSize %d, Seperation time %x\n\r", frame->data[1], frame->data[2]);
+#endif
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+		log_d(TAG, "BlockSize %d, Seperation time %x\n\r", frame->data[1], frame->data[2]);
+#endif
 
 #if defined(MCP)
 		// If the Receiver isn't busy not sure why we're gettting a CF
 		if(!mcp_transmitter_busy) {
-			LOG_E("ERROR: ISO15765 Received FC whilst TxBuffer NOT Busy\n\r");
+#if (LOG_LEVEL <= LOG_ERROR)
+			log_e(TAG, "ERROR: ISO15765 Received FC whilst TxBuffer NOT Busy\n\r");
+#endif
 			return;
 		}
 
 		tx_buffer = &mcp_tx_buffer;
 #elif defined(ES_LINUX)
 		if(node_buffers[source].tx_buffer == NULL) {
-			LOG_E("ISO15765 FC and NOT busy??\n\r");
+#if (LOG_LEVEL <= LOG_ERROR)
+			log_e(TAG, "ISO15765 FC and NOT busy??\n\r");
+#endif
 			return;
 		}
 
@@ -720,24 +808,30 @@ void iso15765_frame_handler(can_frame *frame)
 			break;
 		}
 	} else {
-		LOG_D("Unrecognised L3 CAN Frame type\n\r");
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+		log_d(TAG, "Unrecognised L3 CAN Frame type\n\r");
+#endif
 	}
 }
 
 void startConsecutiveFrameTimer(tx_buffer_t *tx_buffer)
 {
-	u16 ticks = 0x01;
+	uint16_t ticks = 0x01;
 	result_t result;
 
 	if ((tx_buffer->seperation_time > 0x06) && (tx_buffer->seperation_time <= 0x7f)) {
-		ticks = MILLI_SECONDS_TO_TICKS((u16)tx_buffer->seperation_time);
+		ticks = MILLI_SECONDS_TO_TICKS((uint16_t)tx_buffer->seperation_time);
 	} else {
-		ticks = MILLI_SECONDS_TO_TICKS((u16)0x7f);
+		ticks = MILLI_SECONDS_TO_TICKS((uint16_t)0x7f);
 	}
-	LOG_D("startConsecutiveFrameTimer %d Ticks\n\r", ticks);
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+	log_d(TAG, "startConsecutiveFrameTimer %d Ticks\n\r", ticks);
+#endif
 	result = timer_start(ticks, exp_sendConsecutiveFrame, (union sigval)(void *)tx_buffer, &tx_buffer->consecutive_frame_timer);
 	if(result != SUCCESS) {
-		LOG_E("Failed to start N_Cr Timer\n\r");
+#if (LOG_LEVEL <= LOG_ERROR)
+		log_e(TAG, "Failed to start N_Cr Timer\n\r");
+#endif
 	}
 }
 
@@ -751,7 +845,9 @@ void startTimer_N_Cr(rx_buffer_t *rx_buffer)
 	result = timer_start(MILLI_SECONDS_TO_TICKS(1000), exp_timer_N_Cr_Expired, (union sigval)(void *)rx_buffer, &rx_buffer->timer_N_Cr);
 
 	if(result != SUCCESS) {
-		LOG_E("Failed to start N_Cr Timer\n\r");
+#if (LOG_LEVEL <= LOG_ERROR)
+		log_e(TAG, "Failed to start N_Cr Timer\n\r");
+#endif
 	}
 }
 
@@ -765,7 +861,9 @@ void exp_timer_N_Cr_Expired(timer_t timer_id __attribute__((unused)), union sigv
 {
 	rx_buffer_t *rx_buffer;
 
-	LOG_D("timer_N_Cr_Expired\n\r");
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+	log_d(TAG, "timer_N_Cr_Expired\n\r");
+#endif
 	rx_buffer = (rx_buffer_t *)data.sival_ptr;
 
 	rx_buffer->timer_N_Cr.status = INACTIVE;
@@ -789,7 +887,9 @@ void startTimer_N_Bs(tx_buffer_t *tx_buffer)
 	result = timer_start(MILLI_SECONDS_TO_TICKS(1000), exp_timer_N_Bs_Expired, (union sigval)(void *)tx_buffer, &tx_buffer->timer_N_Bs);
 
 	if(result != SUCCESS) {
-		LOG_E("Failed to start N_Bs Timer\n\r");
+#if (LOG_LEVEL <= LOG_ERROR)
+		log_e(TAG, "Failed to start N_Bs Timer\n\r");
+#endif
 	}
 }
 
@@ -803,7 +903,9 @@ void exp_timer_N_Bs_Expired(timer_t timer_id __attribute__((unused)), union sigv
 {
 	tx_buffer_t *tx_buffer;
 
-	LOG_D("timer_N_Bs_Expired\n\r");
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+	log_d(TAG, "timer_N_Bs_Expired\n\r");
+#endif
 	tx_buffer = (tx_buffer_t *)data.sival_ptr;
 
 	tx_buffer->timer_N_Bs.status = INACTIVE;
@@ -822,13 +924,15 @@ void exp_timer_N_Bs_Expired(timer_t timer_id __attribute__((unused)), union sigv
 
 void dispatcher_iso15765_msg_handler(iso15765_msg_t *message)
 {
-	u16 loop;
-//	u8  *data;
+	uint16_t loop;
+//	uint8_t  *data;
 
-	LOG_I("ISO15765 Dis from-0x%x Protocol-0x%x len(0x%x)\n\r",
-		   (u16)message->address,
-		   (u16)message->protocol,
-		   (u16)message->size);
+#if (DEBUG_FILE && (LOG_LEVEL <= LOG_INFO))
+	log_i(TAG, "ISO15765 Dis from-0x%x Protocol-0x%x len(0x%x)\n\r",
+#endif
+		   (uint16_t)message->address,
+		   (uint16_t)message->protocol,
+		   (uint16_t)message->size);
 #if 0
 	data = message->data;
 	for (loop = 0; loop < message->size; loop++) {
@@ -838,21 +942,27 @@ void dispatcher_iso15765_msg_handler(iso15765_msg_t *message)
 #endif
 	for (loop = 0; loop < ISO15765_REGISTER_ARRAY_SIZE; loop++) {
 		if (registered[loop].used && (message->protocol == registered[loop].protocol) ) {
-			LOG_D(" => Dispatch\n\r");
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+			log_d(TAG, " => Dispatch\n\r");
+#endif
 			registered[loop].handler(message);
 			return;
 		}
 	}
-	LOG_D(" No Handler found for Protocol 0x%x\n\r", (u16)message->protocol);
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+	log_d(TAG, " No Handler found for Protocol 0x%x\n\r", (uint16_t)message->protocol);
+#endif
 }
 
 result_t iso15765_dispatch_reg_handler(iso15765_target_t *target)
 {
-	u8 loop;
+	uint8_t loop;
 
 	target->handler_id = 0xff;
 
-	LOG_I("iso15765_dispatch_register_handler(0x%x)\n\r", (u16)target->protocol);
+#if (DEBUG_FILE && (LOG_LEVEL <= LOG_INFO))
+	log_i(TAG, "iso15765_dispatch_register_handler(0x%x)\n\r", (uint16_t)target->protocol);
+#endif
 
 	/*
 	 * Find a free slot and add the Protocol
@@ -867,11 +977,13 @@ result_t iso15765_dispatch_reg_handler(iso15765_target_t *target)
 		}
 	}
 
-	LOG_E("ISO15765 Dispatch full!\n\r");
+#if (LOG_LEVEL <= LOG_ERROR)
+	log_e(TAG, "ISO15765 Dispatch full!\n\r");
+#endif
 	return(ERR_NO_RESOURCES);
 }
 
-result_t iso15765_dispatch_unreg_handler(u8 id)
+result_t iso15765_dispatch_unreg_handler(uint8_t id)
 {
 	if((id < ISO15765_REGISTER_ARRAY_SIZE) && (registered[id].used)) {
 		registered[id].used = FALSE;

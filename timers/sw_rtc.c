@@ -48,13 +48,13 @@ struct alarm_data {
 
 static struct alarm_data *alarm_list = NULL;
 static struct datetime    current_datetime;
-static u8                 current_datetime_valid = FALSE;
-static u16                current_isr_secs = 0;
+static uint8_t                 current_datetime_valid = FALSE;
+static uint16_t                current_isr_secs = 0;
 
 /*
  * Function prototypes
  */
-static void increment_current_time(u16 current_isr_secs);
+static void increment_current_time(uint16_t current_isr_secs);
 static void check_alarm();
 static void add_alarm_to_list(struct alarm_data *alarm);
 static s8 datetime_cmp(struct datetime *a, struct datetime *b);
@@ -77,22 +77,30 @@ void timer_expiry(void *data)
 	}
 }
 
-static void increment_current_time(u16 secs)
+static void increment_current_time(uint16_t secs)
 {
-	u16 tmp_seconds;
-	u16 tmp_minutes;
-	u16 tmp_hours;
-	u16 tmp_day;
+	uint16_t tmp_seconds;
+	uint16_t tmp_minutes;
+	uint16_t tmp_hours;
+	uint16_t tmp_day;
 
 	tmp_seconds = current_datetime.seconds + secs;
 	tmp_minutes = current_datetime.minutes + tmp_seconds / SECONDS_PER_MINUTE;
 	tmp_hours   = current_datetime.hours + tmp_minutes / MINUTES_PER_HOUR;
 	tmp_day     = current_datetime.day + tmp_hours / HOURS_PER_DAY;
 
-//	LOG_D("Current seconds is %d\n\r", current_datetime.seconds);
-//	LOG_D("Add on %d Seconds\n\r", secs);
-//	LOG_D("tmp_seconds is %d\n\r", tmp_seconds);
-//	LOG_D("/ is %d remainder is %d \n\r", tmp_seconds / 60, tmp_seconds % 60);
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+//	log_d(TAG, "Current seconds is %d\n\r", current_datetime.seconds);
+#endif
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+//	log_d(TAG, "Add on %d Seconds\n\r", secs);
+#endif
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+//	log_d(TAG, "tmp_seconds is %d\n\r", tmp_seconds);
+#endif
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+//	log_d(TAG, "/ is %d remainder is %d \n\r", tmp_seconds / 60, tmp_seconds % 60);
+#endif
 
 	current_datetime.seconds = tmp_seconds % SECONDS_PER_MINUTE;
 	current_datetime.minutes = tmp_minutes % MINUTES_PER_HOUR;
@@ -100,14 +108,18 @@ static void increment_current_time(u16 secs)
 	current_datetime.day     = tmp_day;
 }
 
-result_t rtc_update_current_datetime(u8 *data, u16 len)
+result_t rtc_update_current_datetime(uint8_t *data, uint16_t len)
 {
 //	u32 timer;
 
-	LOG_D("rtc_update_current_datetime()\n\r");
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+	log_d(TAG, "rtc_update_current_datetime()\n\r");
+#endif
 
 	if(len != 17) {
-		LOG_E("Bad input datetime\n\r");
+#if (LOG_LEVEL <= LOG_ERROR)
+		log_e(TAG, "Bad input datetime\n\r");
+#endif
 		return(ERR_BAD_INPUT_PARAMETER);
 	}
 
@@ -120,7 +132,9 @@ result_t rtc_update_current_datetime(u8 *data, u16 len)
 
 	current_datetime_valid = TRUE;
 
-	LOG_D("Current datetime set to %d%d%d-%d:%d:%d\n\r",
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+	log_d(TAG, "Current datetime set to %d%d%d-%d:%d:%d\n\r",
+#endif
 		current_datetime.year,
 		current_datetime.month,
 		current_datetime.day,
@@ -138,15 +152,17 @@ result_t rtc_update_current_datetime(u8 *data, u16 len)
 
 	hw_timer_start(Seconds, current_isr_secs, FALSE, timer_expiry, NULL);
 
-//	LOG_D("Current isr secs %d last digit %d\n\r", current_isr_secs, (data[16] - '0'));
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+//	log_d(TAG, "Current isr secs %d last digit %d\n\r", current_isr_secs, (data[16] - '0'));
+#endif
 
 	return(SUCCESS);
 }
 
-void *rtc_set_alarm_offset(ty_time_units units, u16 time, u8 nice, void (*expiry_fn)(void *), void *expiry_data)
+void *rtc_set_alarm_offset(ty_time_units units, uint16_t time, uint8_t nice, void (*expiry_fn)(void *), void *expiry_data)
 {
-	u16                current_minutes;
-	u16                total_alarm_minutes;
+	uint16_t                current_minutes;
+	uint16_t                total_alarm_minutes;
 	struct datetime    tmp_datetime;
 	struct alarm_data *alarm;
 
@@ -170,7 +186,9 @@ void *rtc_set_alarm_offset(ty_time_units units, u16 time, u8 nice, void (*expiry
 		tmp_datetime.day     = current_datetime.day + tmp_datetime.hours / 24;
 		tmp_datetime.hours   = tmp_datetime.hours % 24;
 	} else if (units == Minutes) {
-		LOG_D("rtc_set_alarm_offset(Minutes, %d)\n\r", time);
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+		log_d(TAG, "rtc_set_alarm_offset(Minutes, %d)\n\r", time);
+#endif
 		tmp_datetime.seconds = 0;
 
 		if(nice) {
@@ -199,7 +217,9 @@ void *rtc_set_alarm_offset(ty_time_units units, u16 time, u8 nice, void (*expiry
 		tmp_datetime.day     = current_datetime.day + tmp_datetime.hours / HOURS_PER_DAY;
 		tmp_datetime.hours   = tmp_datetime.hours % HOURS_PER_DAY;
 	} else {
-		LOG_E("Unrecognised Alarm offset units\n\r");
+#if (LOG_LEVEL <= LOG_ERROR)
+		log_e(TAG, "Unrecognised Alarm offset units\n\r");
+#endif
 		return(NULL);
 	}
 
@@ -231,18 +251,24 @@ static void add_alarm_to_list(struct alarm_data *alarm)
 {
 	struct alarm_data *next = NULL;
 	struct alarm_data *prev = NULL;
-//	u16                count = 0;
+//	uint16_t                count = 0;
 
-	LOG_D("add_alarm_to_list(%2d:%2d)\n\r", alarm->datetime.hours, alarm->datetime.minutes);
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+	log_d(TAG, "add_alarm_to_list(%2d:%2d)\n\r", alarm->datetime.hours, alarm->datetime.minutes);
+#endif
 
 	if (alarm_list == NULL) {
-//		LOG_D("Alarm list null so adding to head\n\r");
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+//		log_d(TAG, "Alarm list null so adding to head\n\r");
+#endif
 		alarm_list = alarm;
 	} else {
 		next = alarm_list;
 
 		if(datetime_cmp(&alarm->datetime, &next->datetime) <= 0) {
-//			LOG_D("Alarm should be first so inserting to head\n\r");
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+//			log_d(TAG, "Alarm should be first so inserting to head\n\r");
+#endif
 			/*
 			 * Insert at head of list
 			 */
@@ -278,7 +304,9 @@ static void add_alarm_to_list(struct alarm_data *alarm)
 		count++;
 	}
 
-	LOG_D("Alarm count %d\n\r", count);
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+	log_d(TAG, "Alarm count %d\n\r", count);
+#endif
 #endif
 }
 
@@ -293,7 +321,9 @@ static s8 datetime_cmp(struct datetime *a, struct datetime *b)
 	 * Compare years
 	 */
 	if(a->year != b->year) {
-//		LOG_D("Comparison on year %d %d\n\r", a->year, b->year);
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+//		log_d(TAG, "Comparison on year %d %d\n\r", a->year, b->year);
+#endif
 		return(a->year - b->year);
 	}
 
@@ -301,7 +331,9 @@ static s8 datetime_cmp(struct datetime *a, struct datetime *b)
 	 * Compare months
 	 */
 	if(a->month != b->month) {
-//		LOG_D("Comparison on Month %d %d\n\r", a->month, b->month);
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+//		log_d(TAG, "Comparison on Month %d %d\n\r", a->month, b->month);
+#endif
 		return(a->month - b->month);
 	}
 
@@ -309,7 +341,9 @@ static s8 datetime_cmp(struct datetime *a, struct datetime *b)
 	 * Compare day
 	 */
 	if(a->day != b->day) {
-//		LOG_D("Comparison on day %d %d\n\r", a->day, b->day);
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+//		log_d(TAG, "Comparison on day %d %d\n\r", a->day, b->day);
+#endif
 		return(a->day - b->day);
 	}
 
@@ -317,7 +351,9 @@ static s8 datetime_cmp(struct datetime *a, struct datetime *b)
 	 * Compare hours
 	 */
 	if(a->hours != b->hours) {
-//		LOG_D("Comparison on Hours %d %d\n\r", a->hours, b->hours);
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+//		log_d(TAG, "Comparison on Hours %d %d\n\r", a->hours, b->hours);
+#endif
 		return(a->hours - b->hours);
 	}
 
@@ -325,7 +361,9 @@ static s8 datetime_cmp(struct datetime *a, struct datetime *b)
 	 * Compare minutes
 	 */
 	if(a->minutes != b->minutes) {
-//		LOG_D("Comparison on minutes %d %d\n\r", a->minutes, b->minutes);
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+//		log_d(TAG, "Comparison on minutes %d %d\n\r", a->minutes, b->minutes);
+#endif
 		return(a->minutes - b->minutes);
 	}
 
@@ -333,7 +371,9 @@ static s8 datetime_cmp(struct datetime *a, struct datetime *b)
 	 * Compare seconds
 	 */
 	if(a->seconds != b->seconds) {
-//		LOG_D("Comparison on seconds %d %d\n\r", a->seconds, b->seconds);
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+//		log_d(TAG, "Comparison on seconds %d %d\n\r", a->seconds, b->seconds);
+#endif
 		return(a->seconds - b->seconds);
 	}
 
@@ -345,11 +385,13 @@ static s8 datetime_cmp(struct datetime *a, struct datetime *b)
 
 static void check_alarm()
 {
-	u8                 finished = FALSE;
-//	u16                count = 0;
+	uint8_t                 finished = FALSE;
+//	uint16_t                count = 0;
 	struct alarm_data *tmp_alarm;
 
-//	LOG_D("check_alarm() Compare Current time %d:%d:%d\n\r",
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+//	log_d(TAG, "check_alarm() Compare Current time %d:%d:%d\n\r",
+#endif
 //		current_datetime.hours,
 //		current_datetime.minutes,
 //		current_datetime.seconds);
@@ -359,7 +401,9 @@ static void check_alarm()
 	 */
 	while (alarm_list && !finished) {
 		if(datetime_cmp(&current_datetime, &alarm_list->datetime) >= 0) {
-			LOG_D("Alarm Expired - %d:%d:%d\n\r",
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+			log_d(TAG, "Alarm Expired - %d:%d:%d\n\r",
+#endif
 				alarm_list->datetime.hours,
 				alarm_list->datetime.minutes,
 				alarm_list->datetime.seconds);
@@ -389,7 +433,9 @@ static void check_alarm()
 	tmp_alarm = alarm_list;
 	count = 0;
 	while(tmp_alarm) {
-		LOG_D("alarm - %d:%d:%d\n\r",
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+		log_d(TAG, "alarm - %d:%d:%d\n\r",
+#endif
 			tmp_alarm->datetime.hours,
 			tmp_alarm->datetime.minutes,
 			tmp_alarm->datetime.seconds);
@@ -397,7 +443,9 @@ static void check_alarm()
 		tmp_alarm = tmp_alarm->next;
 		count++;
 	}
-	LOG_D("Alarm count %d\n\r", count);
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+	log_d(TAG, "Alarm count %d\n\r", count);
+#endif
 #endif
 }
 

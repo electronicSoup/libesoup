@@ -34,7 +34,7 @@
 
 #define TAG "Android-Com"
 
-#ifdef ANDROID_RESET_ON_COMMS_ERROR
+#ifdef SYS_ANDROID_RESET_ON_COMMS_ERROR
 extern void system_reset();
 #endif
 /*
@@ -46,27 +46,27 @@ extern void system_reset();
 /*
  * Forward declaration of funcitons in file
  */
-static BOOL android_receive(u8 *id, u8 *data, u16 *data_size, u8 *error_code);
+static BOOL android_receive(uint8_t *id, uint8_t *data, uint16_t *data_size, uint8_t *error_code);
 static void process_msg_from_android(void);
 
 /*
  * Definitions for the two Circular buffers being used for Tx and Rx
  * messages To and From the connected Android device
  */
-static u8 rx_buffer[RX_BUFFER_SIZE];
-static u8 rx_circular_buffer[RX_BUFFER_SIZE];
+static uint8_t rx_buffer[RX_BUFFER_SIZE];
+static uint8_t rx_circular_buffer[RX_BUFFER_SIZE];
 
-static u16 rx_write_index = 0;
-static u16 rx_read_index = 0;
-static u16 rx_buffer_count = 0;
+static uint16_t rx_write_index = 0;
+static uint16_t rx_read_index = 0;
+static uint16_t rx_buffer_count = 0;
 static BOOL receiver_busy = FALSE;
 
-static u8 tx_buffer[TX_BUFFER_SIZE];
-static u8 tx_circular_buffer[TX_BUFFER_SIZE];
+static uint8_t tx_buffer[TX_BUFFER_SIZE];
+static uint8_t tx_circular_buffer[TX_BUFFER_SIZE];
 
-static u16 tx_write_index = 0;
-static u16 tx_read_index = 0;
-static u16 tx_buffer_count = 0;
+static uint16_t tx_write_index = 0;
+static uint16_t tx_read_index = 0;
+static uint16_t tx_buffer_count = 0;
 static BOOL transmitter_busy = FALSE;
 
 /*
@@ -119,8 +119,8 @@ void android_init(void* data)
  */
 void android_tasks(void)
 {
-	u8 error_code = USB_SUCCESS;
-	u16 loop = 0;
+	uint8_t error_code = USB_SUCCESS;
+	uint16_t loop = 0;
 	u32 size = 0;
 
 	/*
@@ -142,11 +142,13 @@ void android_tasks(void)
 	 * Android Device.
 	 */
 	if (!receiver_busy) {
-		error_code = AndroidAppRead(device_handle, (u8*) & rx_buffer, (u32)sizeof (rx_buffer));
+		error_code = AndroidAppRead(device_handle, (uint8_t*) & rx_buffer, (u32)sizeof (rx_buffer));
 
 		if (error_code != USB_SUCCESS) {
 			if (error_code != USB_ENDPOINT_BUSY) {
-				LOG_E("Error trying to start read - %x\n\r", error_code);
+#if (LOG_LEVEL <= LOG_ERROR)
+				log_e(TAG, "Error trying to start read - %x\n\r", error_code);
+#endif
 			}
 		} else {
 			receiver_busy = TRUE;
@@ -170,7 +172,9 @@ void android_tasks(void)
 				 * Rx Circular Buffer.
 				 */
 				if ((rx_buffer_count + size) >= RX_BUFFER_SIZE) {
-					LOG_E("Error Receive buffer overflow");
+#if (LOG_LEVEL <= LOG_ERROR)
+					log_e(TAG, "Error Receive buffer overflow");
+#endif
 				} else {
 					/*
 					 * We have space so copy received
@@ -186,7 +190,9 @@ void android_tasks(void)
 			} else {
 				//Error
 				receiver_busy = FALSE;
-				LOG_E("Error trying to complete read request %x\n\r", error_code);
+#if (LOG_LEVEL <= LOG_ERROR)
+				log_e(TAG, "Error trying to complete read request %x\n\r", error_code);
+#endif
 			}
 		}
 	}
@@ -198,9 +204,13 @@ void android_tasks(void)
 		/*
 		 * Transmitter is busy so check if it's finished its current write.
 		 */
-		LOG_D("Transmitter is busy\n\r");
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+		log_d(TAG, "Transmitter is busy\n\r");
+#endif
 		if (AndroidAppIsWriteComplete(device_handle, &error_code, &size) == TRUE) {
-			LOG_D("USB TX Write complete\n\r");
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+			log_d(TAG, "USB TX Write complete\n\r");
+#endif
 			transmitter_busy = FALSE;
 
 			if(tx_buffer_count == 0) {
@@ -211,10 +221,14 @@ void android_tasks(void)
 		}
 
 		if(error_code != USB_SUCCESS) {
-			LOG_E("USB TX Write not complete Error code 0x%x\n\r", error_code);
-#ifdef ANDROID_RESET_ON_COMMS_ERROR
+#if (LOG_LEVEL <= LOG_ERROR)
+			log_e(TAG, "USB TX Write not complete Error code 0x%x\n\r", error_code);
+#endif
+#ifdef SYS_ANDROID_RESET_ON_COMMS_ERROR
 			if (error_code == USB_ENDPOINT_UNRESOLVED_STATE) {
-				LOG_E("USB Android resetting on a comms error\n\r");
+#if (LOG_LEVEL <= LOG_ERROR)
+				log_e(TAG, "USB Android resetting on a comms error\n\r");
+#endif
 				system_reset();
 			}
 #endif
@@ -226,7 +240,7 @@ void android_tasks(void)
 	 * then send buffer then send the next message.
 	 */
 	if (!transmitter_busy && (tx_buffer_count > 0)) {
-		u16 numberToSend = tx_buffer_count;
+		uint16_t numberToSend = tx_buffer_count;
 		for (loop = 0; loop < numberToSend; loop++) {
 			tx_buffer[loop] = tx_circular_buffer[tx_read_index];
 			tx_read_index = (++tx_read_index % TX_BUFFER_SIZE);
@@ -234,7 +248,9 @@ void android_tasks(void)
 		}
 		error_code = AndroidAppWrite(device_handle, tx_buffer, numberToSend);
 		if(error_code != USB_SUCCESS) {
-			LOG_E("AndroidAppWrite returned error 0x%x\n\r", error_code);
+#if (LOG_LEVEL <= LOG_ERROR)
+			log_e(TAG, "AndroidAppWrite returned error 0x%x\n\r", error_code);
+#endif
 		}
 		transmitter_busy = TRUE;
 	}
@@ -251,7 +267,7 @@ void android_tasks(void)
 }
 
 /*
- * static BOOL android_receive(BYTE *buffer, u16 *size, BYTE *error_code)
+ * static BOOL android_receive(BYTE *buffer, uint16_t *size, BYTE *error_code)
  *
  * Function if there is a complete message in the Receive circular buffer then
  * remove the message from the circular buffer and place it in the Input buffer
@@ -259,7 +275,7 @@ void android_tasks(void)
  *
  * Input/Output : BYTE *buffer - location where received message should be copied.
  *
- * Input/Output : u16 *size - Input size of input buffer.
+ * Input/Output : uint16_t *size - Input size of input buffer.
  *                               Output size of the received message.
  *
  * Output       : BYTE *error_code - Error code if an error occured.
@@ -268,10 +284,10 @@ void android_tasks(void)
  *                False if no message was received or there was an error.
  *
  */
-static BOOL android_receive(u8 *id, u8 *data, u16 *data_size, u8 *error_code)
+static BOOL android_receive(uint8_t *id, uint8_t *data, uint16_t *data_size, uint8_t *error_code)
 {
-	u16 msg_size;
-	u16 loop;
+	uint16_t msg_size;
+	uint16_t loop;
 	*error_code = USB_SUCCESS;
 
 	/*
@@ -315,7 +331,9 @@ static BOOL android_receive(u8 *id, u8 *data, u16 *data_size, u8 *error_code)
 	 * Check that the input buffer is big enough for received message
 	 */
 	if (msg_size > *data_size) {
-		LOG_E("Read received buffer size %d not big enough for %d\n\r",*data_size, rx_buffer_count);
+#if (LOG_LEVEL <= LOG_ERROR)
+		log_e(TAG, "Read received buffer size %d not big enough for %d\n\r",*data_size, rx_buffer_count);
+#endif
 
 		/*
 		 * Remove this huge message from circular buffer. It will be
@@ -351,7 +369,7 @@ static BOOL android_receive(u8 *id, u8 *data, u16 *data_size, u8 *error_code)
 }
 
 /*
- * static u8 android_transmit(u8 *buffer, u8 size)
+ * static uint8_t android_transmit(uint8_t *buffer, uint8_t size)
  *
  * Function to load the Transmit Circular buffer with a given message for
  * future transmission to the Android Device.
@@ -364,18 +382,22 @@ static BOOL android_receive(u8 *id, u8 *data, u16 *data_size, u8 *error_code)
  *          USB_SUCCESS            Message queued for future transmission.
  *
  */
-u8 android_transmit(u8 *buffer, u8 size)
+uint8_t android_transmit(uint8_t *buffer, uint8_t size)
 {
-	u16 loop;
-	u8 *buffer_ptr;
+	uint16_t loop;
+	uint8_t *buffer_ptr;
 
-	LOG_I("android_transmit(%d bytes)\n\r", size);
+#if (DEBUG_FILE && (LOG_LEVEL <= LOG_INFO))
+	log_i(TAG, "android_transmit(%d bytes)\n\r", size);
+#endif
 
 	/*
 	 * Check we have enough free space in Tx Circular buffer for message.
 	 */
 	if ( (tx_buffer_count + size) >= TX_BUFFER_SIZE) {
-		LOG_E("Buffer Full\n\r");
+#if (LOG_LEVEL <= LOG_ERROR)
+		log_e(TAG, "Buffer Full\n\r");
+#endif
 		return (USB_EVENT_QUEUE_FULL);
 	}
 
@@ -401,15 +423,17 @@ u8 android_transmit(u8 *buffer, u8 size)
  */
 static void process_msg_from_android(void)
 {
-	u16 data_size = 0;
-	u8 id;
-	u8 data[300];
-	u8 error_code = USB_SUCCESS;
+	uint16_t data_size = 0;
+	uint8_t id;
+	uint8_t data[300];
+	uint8_t error_code = USB_SUCCESS;
 
-	data_size = (u16)sizeof(data);
-	while (android_receive((u8 *)&id, (u8*)&data, (u16 *)&data_size, &error_code)) {
+	data_size = (uint16_t)sizeof(data);
+	while (android_receive((uint8_t *)&id, (uint8_t*)&data, (uint16_t *)&data_size, &error_code)) {
 		if (error_code != USB_SUCCESS) {
-			LOG_E("android_receive raised an error %x\n\r", error_code);
+#if (LOG_LEVEL <= LOG_ERROR)
+			log_e(TAG, "android_receive raised an error %x\n\r", error_code);
+#endif
 		}
 
 		/*

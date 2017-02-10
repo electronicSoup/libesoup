@@ -23,18 +23,18 @@
 #define RTC_H
 
 struct datetime {
-    u16 year;
-    u8  month;
-    u8  day;
-    u8  hours;
-    u8  minutes;
-    u8  seconds;
+    uint16_t year;
+    uint8_t  month;
+    uint8_t  day;
+    uint8_t  hours;
+    uint8_t  minutes;
+    uint8_t  seconds;
 };
 
 extern void rtc_init();
-extern result_t rtc_update_current_datetime(u8 *data, u16 len);
+extern result_t rtc_update_current_datetime(uint8_t *data, uint16_t len);
 
-extern void    *rtc_set_alarm_offset(ty_time_units units, u16 time, u8 nice, void (*expiry_fn)(void *), void *expiry_data);
+extern void    *rtc_set_alarm_offset(ty_time_units units, uint16_t time, uint8_t nice, void (*expiry_fn)(void *), void *expiry_data);
 
 extern result_t rtc_get_current_datetime(struct datetime *dt);
 extern result_t rtc_get_dummy_datetime(struct datetime *dt);

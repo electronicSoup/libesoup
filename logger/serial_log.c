@@ -19,13 +19,17 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  *
  */
-#define DEBUG_FILE
+#include <stdarg.h>
+
+#define DEBUG_FILE TRUE
 #define TAG "serial"
 
 #include "system.h"
 
-#include "es_lib/logger/serial_port.h"
-#include "es_lib/logger/serial_log.h"
+#include "es_lib/comms/uart.h"
+//#include "es_lib/logger/serial_log.h"
+
+//static struct uart_data serial_uart;
 
 
 #if defined(__18F2680) || defined(__18F4585)
@@ -33,11 +37,11 @@
  * Definitions for the Transmit Circular buffer. Calls to putchar will load
  * up this circular buffer and the UASRT serial port will empty it.
  */
-static u8 tx_circular_buffer[USART_TX_BUFFER_SIZE];
+static uint8_t tx_circular_buffer[SYS_USART_TX_BUFFER_SIZE];
 
-static u16 tx_write_index = 0;
-static u16 tx_read_index = 0;
-static u16 tx_buffer_count = 0;
+static uint16_t tx_write_index = 0;
+static uint16_t tx_read_index = 0;
+static uint16_t tx_buffer_count = 0;
 #endif // (__18F2680) || (__18F4585)
 
 /**
@@ -52,12 +56,16 @@ void _ISR __attribute__((__no_auto_psv__)) _U1RXInterrupt(void)
 #endif
 #if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__) || defined(__dsPIC33EP256MU806__)
 {
-	u8 ch;
-	LOG_D("_U1RXInterrupt\n\r");
+	uint8_t ch;
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+	log_d(TAG, "_U1RXInterrupt\n\r");
+#endif
 	while (U1STAbits.URXDA) {
 		ch = U1RXREG;
 
-		LOG_D("Rx*0x%x*\n\r", ch);
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+		log_d(TAG, "Rx*0x%x*\n\r", ch);
+#endif
 	}
 
 	IFS0bits.U1RXIF = 0;
@@ -71,7 +79,7 @@ void _ISR __attribute__((__no_auto_psv__)) _U1RXInterrupt(void)
  *
  * Initialised the processor registers for serial logging on UART 1
  */
-void serial_init(void)
+void serial_logging_init(void)
 {
 	/*
 	 * CinnamonBun is running a PIC24FJ256GB106 processor
@@ -100,13 +108,13 @@ void serial_init(void)
 	 * UxBRG = ((CLOCK/SERIAL_BAUD)/16) -1
 	 *
 	 */
-	U1BRG = ((CLOCK_FREQ / SERIAL_LOGGING_BAUD) / 16) - 1;
+	U1BRG = ((SYS_CLOCK_FREQ / SYS_SERIAL_LOGGING_BAUD) / 16) - 1;
 
 #elif defined(__18F2680) || defined(__18F4585)
 	/*
 	 * Analogue Guage is running a PIC18F2680 processor
 	 */
-	u8 baud;
+	uint8_t baud;
 
 	/*
 	 * Initialise the TX Circular buffer
@@ -129,7 +137,7 @@ void serial_init(void)
 
 	BAUDCONbits.BRG16 = 0; // 16-bit Baud Rate Register Enable bit
 
-	baud = ((CLOCK_FREQ / SERIAL_LOGGING_BAUD) / 64 ) - 1;
+	baud = ((SYS_CLOCK_FREQ / SYS_SERIAL_LOGGING_BAUD) / 64 ) - 1;
 
 	SPBRG = baud;
 
@@ -148,7 +156,7 @@ void serial_init(void)
 void pic18f_serial_isr(void)
 {
 #if defined(ENABLE_USART_RX)
-	u8 data;
+	uint8_t data;
 #endif // (ENABLE_UASAT_RX)
 
 	if(PIR1bits.TXIF) {
@@ -158,7 +166,7 @@ void pic18f_serial_isr(void)
 		 */
 		if(tx_buffer_count > 0) {
 			TXREG = tx_circular_buffer[tx_read_index];
-			tx_read_index = ++tx_read_index % USART_TX_BUFFER_SIZE;
+			tx_read_index = ++tx_read_index % SYS_USART_TX_BUFFER_SIZE;
 			tx_buffer_count--;
 		} else {
 			PIE1bits.TXIE = 0;
@@ -180,11 +188,65 @@ void pic18f_serial_isr(void)
  */
 void putch(char character)
 {
-	if(tx_buffer_count < USART_TX_BUFFER_SIZE) {
+	if(tx_buffer_count < SYS_USART_TX_BUFFER_SIZE) {
 		tx_circular_buffer[tx_write_index] = character;
-		tx_write_index = ++tx_write_index % USART_TX_BUFFER_SIZE;
+		tx_write_index = ++tx_write_index % SYS_USART_TX_BUFFER_SIZE;
 		tx_buffer_count++;
 		PIE1bits.TXIE = 1;
 	}
 }
 #endif // (__18F2680) || (__18F4585)
+
+void es_printf(char *fmt, ...)
+{
+#if (SYS_LOG_LEVEL != NO_LOGGING)
+        result_t  rc;
+        char     *ptr;
+        
+        ptr = fmt;
+        
+        while(*ptr) {
+                rc = uart_tx_char(&serial_uart, *ptr++);
+        }
+#endif
+}
+
+void log_d(char *tag, char *fmt, ...)
+{
+        va_list arguments;                     
+
+        /* Initializing arguments to store all values after num */
+        va_start ( arguments, fmt );           
+        es_printf("D :%s ", tag);
+        es_printf(fmt, arguments);
+}
+
+void log_i(char *tag, char *fmt, ...)
+{
+        va_list arguments;                     
+
+        /* Initializing arguments to store all values after num */
+        va_start ( arguments, fmt );           
+        es_printf("I :%s ", tag);
+        es_printf(fmt, arguments);
+}
+
+void log_w(char *tag, char *fmt, ...)
+{
+        va_list arguments;                     
+
+        /* Initializing arguments to store all values after num */
+        va_start ( arguments, fmt );           
+        es_printf("W :%s ", tag);
+        es_printf(fmt, arguments);
+}
+
+void log_e(char *tag, char *fmt, ...)
+{
+        va_list arguments;                     
+
+        /* Initializing arguments to store all values after num */
+        va_start ( arguments, fmt );           
+        es_printf("E :%s ", tag);
+        es_printf(fmt, arguments);
+}

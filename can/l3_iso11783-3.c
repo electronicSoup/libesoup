@@ -28,7 +28,7 @@
 #define TAG "ISO11783"
 
 /*
- * The CAN ID as used by the 11783-3 Protocol
+ * The SYS_CAN ID as used by the 11783-3 Protocol
  *
  *   28..26    25   24  |   23..16   |     15..8    |      7..0      |
  *   Priority  EDP  DP  | PDU Format | PDU Specific | Source Address |
@@ -106,32 +106,34 @@
 #define ACCESS_DENIED   2
 #define CANNOT_RESPOND  3
 
-static u8 node_address;
-static u8 da_valid = 0x00;
+static uint8_t node_address;
+static uint8_t da_valid = 0x00;
 
 typedef struct
 {
-    u8 used;
-    u32 pgn;
+    uint8_t                used;
+    uint32_t               pgn;
     iso11783_msg_handler_t handler;
 } iso11783_register_t;
 
-static iso11783_register_t registered[ISO11783_REGISTER_ARRAY_SIZE];
+static iso11783_register_t registered[SYS_ISO11783_REGISTER_ARRAY_SIZE];
 
 static iso11783_msg_handler_t unhandled_handler;
 
 static void iso11783_frame_handler(can_frame *frame);
 
-result_t iso11783_init(u8 address)
+result_t iso11783_init(uint8_t address)
 {
-	u16 loop;
+	uint16_t loop;
 	can_l2_target_t target;
 
-	LOG_D("iso11783_init(0x%x)\n\r", address);
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+	log_d(TAG, "iso11783_init(0x%x)\n\r", address);
+#endif
 
 	node_address = address;
 
-	for(loop = 0; loop < ISO11783_REGISTER_ARRAY_SIZE; loop++) {
+	for(loop = 0; loop < SYS_ISO11783_REGISTER_ARRAY_SIZE; loop++) {
 		registered[loop].used = FALSE;
 		registered[loop].pgn = 0x00;
 		registered[loop].handler = (iso11783_msg_handler_t)NULL;
@@ -143,8 +145,8 @@ result_t iso11783_init(u8 address)
 	 * Define our target for Layer 2 Frames and register it.
 	 * Looking for Extended frame with EDP Bit set to Zero
 	 */
-	target.mask   = CAN_EFF_FLAG | CAN_EDP_MASK;
-	target.filter =  CAN_EFF_FLAG;
+	target.mask   = SYS_CAN_EFF_FLAG | CAN_EDP_MASK;
+	target.filter =  SYS_CAN_EFF_FLAG;
 	target.handler = iso11783_frame_handler;
 
 	can_l2_dispatch_reg_handler(&target);
@@ -152,20 +154,20 @@ result_t iso11783_init(u8 address)
 	return(SUCCESS);
 }
 
-u32 pgn_to_canid(u8 priority, u32 pgn, u8 dst)
+u32 pgn_to_canid(uint8_t priority, uint32_t pgn, u8 dst)
 {
 //	u32 pgn;
-	u8  pf;
-//	u8  ps;
-//	u8  sa;
-//	u8  da;
-//	u8  loop;
+	uint8_t  pf;
+//	uint8_t  ps;
+//	uint8_t  sa;
+//	uint8_t  da;
+//	uint8_t  loop;
 	u32 canid = 0x00;
 
 	canid = (priority & 0x07);
 	canid = (canid << 2) | ((pgn & (PGN_EDP_MASK | PGN_DP_MASK)) >> 16);
 
-	pf = (u8)((pgn & PGN_PF_MASK) >> 8);
+	pf = (uint8_t)((pgn & PGN_PF_MASK) >> 8);
 	canid = canid << 8 | pf;
 
 	if(pf < PF_PDU_2_CUTOFF) {
@@ -183,24 +185,24 @@ u32 canid_to_pgn(u32 canid)
 {
 	u32 pgn = 0x00;
 #if 0
-	u8  pf;
-	u8  ps;
+	uint8_t  pf;
+	uint8_t  ps;
 
-	sa = (u8)(frame->can_id & 0xff);
+	sa = (uint8_t)(frame->can_id & 0xff);
 
 	/*
 	 * EDP Bit is always 0! so move on to DP bit
 	 */
-	pgn = (u8)((canid & (CAN_EDP_MASK | CAN_DP_MASK)) >> 24);
+	pgn = (uint8_t)((canid & (CAN_EDP_MASK | SYS_CAN_DP_MASK)) >> 24);
 
-	pf = (u8)((canid & CAN_PF_MASK) >> 16);
+	pf = (uint8_t)((canid & SYS_CAN_PF_MASK) >> 16);
 
 	if(pf < PF_PDU_2_CUTOFF) {
-		da = (u8) ((frame->can_id & PS_MASK) >> 8);
+		da = (uint8_t) ((frame->can_id & PS_MASK) >> 8);
 		da_valid = 0x01;
 		ps = 0x00;
 	} else {
-		ps = (u8) ((frame->can_id & PS_MASK) >> 8);
+		ps = (uint8_t) ((frame->can_id & PS_MASK) >> 8);
 	}
 	pgn = (pgn << 8) | pf;
 	pgn = (pgn << 8) | ps;
@@ -208,19 +210,19 @@ u32 canid_to_pgn(u32 canid)
 	return(pgn);
 }
 
-u8 get_source_address_from_canid(u32 canid)
+uint8_t get_source_address_from_canid(u32 canid)
 {
-	return((u8)(canid & CAN_SA_MASK));
+	return((uint8_t)(canid & SYS_CAN_SA_MASK));
 }
 
-u8 get_destination_address_from_canid(u32 canid)
+uint8_t get_destination_address_from_canid(u32 canid)
 {
-	u8  pf;
+	uint8_t  pf;
 
-	pf = (u8)((canid & CAN_PF_MASK) >> 16);
+	pf = (uint8_t)((canid & SYS_CAN_PF_MASK) >> 16);
 
 	if(pf < PF_PDU_2_CUTOFF) {
-		return((u8) ((canid & CAN_PS_MASK) >> 8));
+		return((uint8_t) ((canid & SYS_CAN_PS_MASK) >> 8));
 	}
 	return(0xff);
 }
@@ -229,7 +231,9 @@ result_t iso11783_tx_msg(iso11783_msg_t *msg)
 {
 	can_frame frame;
 
-	LOG_D("iso11783_tx_msg()\n\r");
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+	log_d(TAG, "iso11783_tx_msg()\n\r");
+#endif
 
 	frame.can_id = pgn_to_canid(msg->priority, msg->pgn, msg->destination);
 	frame.can_dlc = 0x00;
@@ -239,29 +243,33 @@ result_t iso11783_tx_msg(iso11783_msg_t *msg)
 	return(SUCCESS);
 }
 
-result_t iso11783_tx_pgn_request(u8 priority, u8 dst, u32 pgn)
+result_t iso11783_tx_pgn_request(uint8_t priority, u8 dst, u32 pgn)
 {
 	can_frame frame;
-	LOG_D("iso11783_tx_pgn_request()\n\r");
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+	log_d(TAG, "iso11783_tx_pgn_request()\n\r");
+#endif
 
 	frame.can_id = pgn_to_canid(priority, PGN_REQUEST, dst);
 	frame.can_dlc = 0x03;
 
-	frame.data[0] = (u8)(pgn & 0xff);
-	frame.data[1] = (u8)((pgn & 0xff00) >> 8);
-	frame.data[2] = (u8)((pgn & 0xff0000) >> 16);
+	frame.data[0] = (uint8_t)(pgn & 0xff);
+	frame.data[1] = (uint8_t)((pgn & 0xff00) >> 8);
+	frame.data[2] = (uint8_t)((pgn & 0xff0000) >> 16);
 
 	can_l2_tx_frame(&frame);
 
 	return(SUCCESS);
 }
 
-result_t iso11783_tx_ack_pgn(u8 priority, u8 dst, u32 pgn, iso11783_ack_t ack_value)
+result_t iso11783_tx_ack_pgn(uint8_t priority, u8 dst, u32 pgn, iso11783_ack_t ack_value)
 {
-	u8        loop;
+	uint8_t        loop;
 	u32       tmp_pgn;
 	can_frame frame;
-	LOG_D("iso11783_tx_ack_pgn()\n\r");
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+	log_d(TAG, "iso11783_tx_ack_pgn()\n\r");
+#endif
 
 	frame.can_id = pgn_to_canid(priority, PGN_ACK, dst);
 	frame.can_dlc = 0x08;
@@ -286,13 +294,15 @@ result_t iso11783_tx_ack_pgn(u8 priority, u8 dst, u32 pgn, iso11783_ack_t ack_va
 void iso11783_frame_handler(can_frame *frame)
 {
 	u32            pgn;
-//	u8             pf;
-//	u8             ps;
-	u16            loop;
-	u8             handled;
+//	uint8_t             pf;
+//	uint8_t             ps;
+	uint16_t            loop;
+	uint8_t             handled;
 	iso11783_msg_t msg;
 
-	LOG_D("iso11783_frame_handler(frame id 0x%x)\n\r", frame->can_id);
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+	log_d(TAG, "iso11783_frame_handler(frame id 0x%x)\n\r", frame->can_id);
+#endif
 
 	/*
 	 * Parameter Group Numbers PGN:
@@ -303,13 +313,17 @@ void iso11783_frame_handler(can_frame *frame)
 	 */
 	pgn = canid_to_pgn(frame->can_id);
 
-	LOG_D("iso11783_frame_handler received PGN %d  =  0x%lx\n\r", pgn, pgn);
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+	log_d(TAG, "iso11783_frame_handler received PGN %d  =  0x%lx\n\r", pgn, pgn);
+#endif
 
 //	printf("iso11783:(frame id 0x%x) SA 0x%x,", frame->can_id, sa);
 //	if(da_valid) {
 //		printf(" DA 0x%x, ", da);
 //	}
-	LOG_D(" PGN %d (0x%x) [", pgn, pgn);
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+	log_d(TAG, " PGN %d (0x%x) [", pgn, pgn);
+#endif
 
 	for(loop = 0; loop < frame->can_dlc; loop++) {
 		printf("%x,", frame->data[loop]);
@@ -317,28 +331,46 @@ void iso11783_frame_handler(can_frame *frame)
 	printf("\n\r");
 
 	if(pgn == 126992) {
-		LOG_D("System Time\n\r");
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+		log_d(TAG, "System Time\n\r");
+#endif
 	} else if(pgn == 128267) {
-		LOG_D("Depth\n\r");
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+		log_d(TAG, "Depth\n\r");
+#endif
 	} else if(pgn == 129025) {
-		LOG_D("Position\n\r");
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+		log_d(TAG, "Position\n\r");
+#endif
 	} else if(pgn == 129026) {
-		LOG_D("Corse Over Ground (COG) & Speed over Ground (SOG)\n\r");
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+		log_d(TAG, "Corse Over Ground (COG) & Speed over Ground (SOG)\n\r");
+#endif
 	} else if(pgn == 129027) {
-		LOG_D("Position Delta\n\r");
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+		log_d(TAG, "Position Delta\n\r");
+#endif
 	} else if(pgn == 129029) {
-		LOG_D("GNSS Position Data\n\r");
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+		log_d(TAG, "GNSS Position Data\n\r");
+#endif
 	} else if(pgn == 129033) {
-		LOG_D("Time & Date\n\r");
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+		log_d(TAG, "Time & Date\n\r");
+#endif
 	} else if(pgn == 129539) {
-		LOG_D("GNSS and DOP Dilution Of Precision\n\r");
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+		log_d(TAG, "GNSS and DOP Dilution Of Precision\n\r");
+#endif
 	} else if(pgn == 129540) {
-		LOG_D("Satalites in View\n\r");
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+		log_d(TAG, "Satalites in View\n\r");
+#endif
 	}
 
 	handled = 0x00;
 
-	for (loop = 0; loop < ISO11783_REGISTER_ARRAY_SIZE; loop++) {
+	for (loop = 0; loop < SYS_ISO11783_REGISTER_ARRAY_SIZE; loop++) {
 		if (registered[loop].used && (pgn == registered[loop].pgn)) {
 			registered[loop].handler(&msg);
 			handled = 1;
@@ -354,16 +386,18 @@ void iso11783_frame_handler(can_frame *frame)
 
 result_t iso11783_dispatch_reg_handler(iso11783_target_t *target)
 {
-	u8 loop;
+	uint8_t loop;
 
 	target->handler_id = 0xff;
 
-	LOG_D("iso11783_dispatch_register_handler(0x%lx)\n\r", target->pgn);
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+	log_d(TAG, "iso11783_dispatch_register_handler(0x%lx)\n\r", target->pgn);
+#endif
 
 	/*
 	 * Find a free slot and add the Protocol
 	 */
-	for(loop = 0; loop < ISO11783_REGISTER_ARRAY_SIZE; loop++) {
+	for(loop = 0; loop < SYS_ISO11783_REGISTER_ARRAY_SIZE; loop++) {
 		if(registered[loop].used == FALSE) {
 			registered[loop].used = TRUE;
 			registered[loop].pgn = target->pgn;
@@ -373,13 +407,15 @@ result_t iso11783_dispatch_reg_handler(iso11783_target_t *target)
 		}
 	}
 
-	LOG_E("ISO11783 Dispatch full!\n\r");
+#if (LOG_LEVEL <= LOG_ERROR)
+	log_e(TAG, "ISO11783 Dispatch full!\n\r");
+#endif
 	return(ERR_NO_RESOURCES);
 }
 
-result_t iso11783_dispatch_unreg_handler(u8 id)
+result_t iso11783_dispatch_unreg_handler(uint8_t id)
 {
-	if((id < ISO11783_REGISTER_ARRAY_SIZE) && (registered[id].used)) {
+	if((id < SYS_ISO11783_REGISTER_ARRAY_SIZE) && (registered[id].used)) {
 		registered[id].used = FALSE;
 		registered[id].pgn = 0x00;
 		registered[id].handler = (iso11783_msg_handler_t)NULL;

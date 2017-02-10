@@ -12,7 +12,9 @@ static void process_timer_35_expiry(void *);
 
 void set_modbus_starting_state(struct modbus_channel *channel)
 {
-	LOG_D("set_modbus_starting_state(channel %d)\n\r", channel->uart->uart);
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+	log_d(TAG, "set_modbus_starting_state(channel %d)\n\r", channel->uart->uart);
+#endif
 
 	channel->process_timer_15_expiry = NULL;
 	channel->process_timer_35_expiry = process_timer_35_expiry;
@@ -29,10 +31,14 @@ static void process_timer_35_expiry(void *data)
         struct modbus_channel *channel = (struct modbus_channel *)data;
         
         if(channel->uart) {
-                LOG_D("process_timer_35_expiry(channel %d)\n\r", channel->uart->uart);
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+                log_d(TAG, "process_timer_35_expiry(channel %d)\n\r", channel->uart->uart);
+#endif
 
                 set_modbus_idle_state(channel);
         } else {
-                LOG_D("process_timer_35_expiry() No Uart\n\r");
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+                log_d(TAG, "process_timer_35_expiry() No Uart\n\r");
+#endif
         }
 }

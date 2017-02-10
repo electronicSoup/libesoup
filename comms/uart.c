@@ -21,7 +21,6 @@
  *******************************************************************************
  *
  */
-
 #define U1_RX_ISR_FLAG   IFS0bits.U1RXIF
 #define U1_TX_ISR_FLAG   IFS0bits.U1TXIF
 #define U1_RX_ISR_ENABLE IEC0bits.U1RXIE
@@ -42,7 +41,7 @@
 #define U4_RX_ISR_ENABLE IEC5bits.U4RXIE
 #define U4_TX_ISR_ENABLE IEC5bits.U4TXIE
 
-#define DEBUG_FILE
+#define DEBUG_FILE TRUE
 #define TAG "UART"
 
 #include <stdio.h>
@@ -61,12 +60,12 @@ enum uart_status {
 
 struct uart {
 	enum uart_status  status;
-	u16               magic;
+	uint16_t               magic;
 	struct uart_data *data;
-	u8                tx_buffer[UART_TX_BUFFER_SIZE];
-	u16               tx_write_index;
-	u16               tx_read_index;
-	u16               tx_count;
+	uint8_t                tx_buffer[SYS_UART_TX_BUFFER_SIZE];
+	uint16_t               tx_write_index;
+	uint16_t               tx_read_index;
+	uint16_t               tx_count;
 } uart;
 
 struct uart uarts[NUM_UARTS];
@@ -74,18 +73,18 @@ struct uart uarts[NUM_UARTS];
 /*
  * Local static Function prototypes
  */
-static void uart_tx_isr(u8);
+static void uart_tx_isr(uint8_t);
 
-static void uart_set_rx_pin(u8 uart, u8 pin);
-static void uart_set_tx_pin(u8 uart, u8 pin);
+static void uart_set_rx_pin(uint8_t uart, uint8_t pin);
+static void uart_set_tx_pin(uint8_t uart, uint8_t pin);
 static void uart_set_com_config(struct uart_data *com);
 
-static void uart_putchar(u8 uart, u8 ch);
+static void uart_putchar(uint8_t uart, uint8_t ch);
 
 /*
  * Returns the number of bytes still waiting to be loaded in HW TX Buffer.
  */
-static u16 load_tx_buffer(u8 uart);
+static uint16_t load_tx_buffer(uint8_t uart);
 
 /*
  * Interrupt Service Routines
@@ -114,10 +113,12 @@ void _ISR __attribute__((__no_auto_psv__)) _U4TXInterrupt(void)
 	}
 }
 
-static void uart_tx_isr(u8 uart)
+static void uart_tx_isr(uint8_t uart)
 {
 	if ((uarts[uart].data == NULL) || (uarts[uart].status != UART_BUSY)) {
-		LOG_E("UART Null in ISR!\n\r");
+#if (LOG_LEVEL <= LOG_ERROR)
+		log_e(TAG, "UART Null in ISR!\n\r");
+#endif
 		return;
 	}
 
@@ -220,7 +221,9 @@ static void uart_tx_isr(u8 uart)
 				break;
 
 			default:
-				LOG_E("Bad comm port given!\n\r");
+#if (LOG_LEVEL <= LOG_ERROR)
+				log_e(TAG, "Bad comm port given!\n\r");
+#endif
 				return;
 				break;
 		}
@@ -232,14 +235,16 @@ static void uart_tx_isr(u8 uart)
  */
 void _ISR __attribute__((__no_auto_psv__)) _U2RXInterrupt(void)
 {
-	u8 ch;
+	uint8_t ch;
 
 	U2_RX_ISR_FLAG = 0;
 
 	asm ("CLRWDT");
 
 	if (U2STAbits.OERR) {
-		LOG_E("RX Buffer overrun\n\r");
+#if (LOG_LEVEL <= LOG_ERROR)
+		log_e(TAG, "RX Buffer overrun\n\r");
+#endif
 		U2STAbits.OERR = 0;   /* Clear the error flag */
 	}
 
@@ -251,14 +256,16 @@ void _ISR __attribute__((__no_auto_psv__)) _U2RXInterrupt(void)
 
 void _ISR __attribute__((__no_auto_psv__)) _U3RXInterrupt(void)
 {
-	u8 ch;
+	uint8_t ch;
 
 	U3_RX_ISR_FLAG = 0;
 
 	asm ("CLRWDT");
 
 	if (U3STAbits.OERR) {
-		LOG_E("RX Buffer overrun\n\r");
+#if (LOG_LEVEL <= LOG_ERROR)
+		log_e(TAG, "RX Buffer overrun\n\r");
+#endif
 		U3STAbits.OERR = 0;   /* Clear the error flag */
 	}
 
@@ -270,14 +277,16 @@ void _ISR __attribute__((__no_auto_psv__)) _U3RXInterrupt(void)
 
 void _ISR __attribute__((__no_auto_psv__)) _U4RXInterrupt(void)
 {
-	u8 ch;
+	uint8_t ch;
 
 	U4_RX_ISR_FLAG = 0;
 
 	asm ("CLRWDT");
 
 	if (U4STAbits.OERR) {
-		LOG_E("RX Buffer overrun\n\r");
+#if (LOG_LEVEL <= LOG_ERROR)
+		log_e(TAG, "RX Buffer overrun\n\r");
+#endif
 		U4STAbits.OERR = 0;   /* Clear the error flag */
 	}
 
@@ -287,34 +296,37 @@ void _ISR __attribute__((__no_auto_psv__)) _U4RXInterrupt(void)
 	}
 }
 
-u16 uart_calculate_mode(u8 databits,	u8 parity, u8 stopbits, u8 rx_idle_level)
+result_t uart_calculate_mode(uint16_t *mode, uint8_t databits, uint8_t parity, uint8_t stopbits, uint8_t rx_idle_level)
 {
-	u16 mode = 0x00;
+	*mode = 0x00;
 
-	mode |= UARTEN_MASK;
+	*mode |= UARTEN_MASK;
 
 	if (databits == 8) {
 		if (parity == PARITY_EVEN) {
-			mode |= PDSEL0_MASK;
+			*mode |= PDSEL0_MASK;
 		} else if (parity == PARITY_ODD) {
-			mode |= PDSEL1_MASK;
+			*mode |= PDSEL1_MASK;
 		}
 	} else if (databits == 9) {
-		mode |= PDSEL1_MASK;
-		mode |= PDSEL0_MASK;
+		*mode |= PDSEL1_MASK;
+		*mode |= PDSEL0_MASK;
 	} else {
-		LOG_E("Unrecognised Data bit/Parity configuration\n\r");
+#if (LOG_LEVEL <= LOG_ERROR)
+                log_e(TAG, "Bad byte length\n\r");
+#endif
+		return(ERR_BAD_INPUT_PARAMETER);
 	}
 
 	if (stopbits == TWO_STOP_BITS) {
-		mode |= STSEL_MASK;
+		*mode |= STSEL_MASK;
 	}
 
 	if (rx_idle_level == IDLE_HIGH) {
-		mode |= RXINV_MASK;
+		*mode |= RXINV_MASK;
 	}
 
-	return(mode);
+	return(SUCCESS);
 }
 
 /*
@@ -322,7 +334,7 @@ u16 uart_calculate_mode(u8 databits,	u8 parity, u8 stopbits, u8 rx_idle_level)
  */
 void uart_init(void)
 {
-	u8 loop;
+	uint8_t loop;
 
 	for(loop = 0; loop < NUM_UARTS; loop++) {
 		uarts[loop].status = UART_FREE;
@@ -332,12 +344,15 @@ void uart_init(void)
 
 result_t uart_reserve(struct uart_data *data)
 {
-	LOG_D("uart_reserve()\n\r");
-
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+	log_d(TAG, "uart_reserve()\n\r");
+#endif
+#endif
 	/*
 	 * Find a free uart to use
 	 */
-	u8  loop;
+	uint8_t  loop;
 
 	for(loop = 0; loop < NUM_UARTS; loop++) {
 		if(uarts[loop].status == UART_FREE) {
@@ -354,8 +369,8 @@ result_t uart_reserve(struct uart_data *data)
 			/*
 			 * Set up the Rx & Tx pins
 			 */
-			uart_set_rx_pin((u8) data->uart, data->rx_pin);
-			uart_set_tx_pin((u8) data->uart, data->tx_pin);
+			uart_set_rx_pin((uint8_t) data->uart, data->rx_pin);
+			uart_set_tx_pin((uint8_t) data->uart, data->tx_pin);
 
 			uart_set_com_config(data);
 
@@ -368,14 +383,18 @@ result_t uart_reserve(struct uart_data *data)
 
 result_t uart_release(struct uart_data *data)
 {
-	u8  uart;
+	uint8_t  uart;
 
 	uart = data->uart;
 
-	LOG_D("uart_release()  %d\n\r", uart);
-
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+	log_d("uart_release()  %d\n\r", uart);
+#endif
+        
 	if(uarts[uart].data != data) {
-		LOG_E("uart_tx called with bad data pointer\n\r");
+#if (LOG_LEVEL <= LOG_ERROR)
+		log_e(TAG, "uart_tx called with bad data pointer\n\r");
+#endif
 		return(ERR_BAD_INPUT_PARAMETER);
 	}
 
@@ -407,16 +426,14 @@ result_t uart_release(struct uart_data *data)
 	return(SUCCESS);
 }
 
-result_t uart_tx(struct uart_data *data, u8 *buffer, u16 len)
+result_t uart_tx_buffer(struct uart_data *data, uint8_t *buffer, uint16_t len)
 {
-	u8  uart;
-	u8 *ptr;
+	uint8_t  uart;
+	uint8_t *ptr;
 
-	LOG_D("uart_tx(%d)\n\r", len);
 	uart = data->uart;
 
 	if(uarts[uart].data != data) {
-		LOG_E("uart_tx called with bad data pointer\n\r");
 		return(ERR_BAD_INPUT_PARAMETER);
 	}
 
@@ -428,9 +445,24 @@ result_t uart_tx(struct uart_data *data, u8 *buffer, u16 len)
 	return(SUCCESS);
 }
 
-static void uart_putchar(u8 uart, u8 ch)
+result_t uart_tx_char(struct uart_data *data, char ch)
 {
-//	u8 loop;
+	uint8_t  uart;
+
+	uart = data->uart;
+
+	if(uarts[uart].data != data) {
+		return(ERR_BAD_INPUT_PARAMETER);
+	}
+
+        uart_putchar(uart, ch);
+	return(SUCCESS);        
+}
+
+static void uart_putchar(uint8_t uart, uint8_t ch)
+{
+//	uint8_t loop;
+        uint8_t tmp;
 
 	/*
 	 * If the Transmitter queue is currently empty turn on chip select.
@@ -451,13 +483,19 @@ static void uart_putchar(u8 uart, u8 ch)
 					U2STAbits.UTXISEL0 = 0;
 				}
 
-				if(uarts[uart].tx_count == UART_TX_BUFFER_SIZE) {
-					LOG_E("Circular buffer full!");
+				if(uarts[uart].tx_count == SYS_UART_TX_BUFFER_SIZE) {
+#if (LOG_LEVEL <= LOG_ERROR)
+					log_e(TAG, "Circular buffer full!");
+#endif
 					return;
 				}
 
 				uarts[uart].tx_buffer[uarts[uart].tx_write_index] = ch;
-				uarts[uart].tx_write_index = (++(uarts[uart].tx_write_index) % UART_TX_BUFFER_SIZE);
+                                /*
+                                 * Compiler don't like following two lines in a oner
+                                 */
+                                tmp = ++(uarts[uart].tx_write_index) % SYS_UART_TX_BUFFER_SIZE;
+				uarts[uart].tx_write_index = tmp;
 				uarts[uart].tx_count++;
 			} else {
 				U2TXREG = ch;
@@ -479,13 +517,19 @@ static void uart_putchar(u8 uart, u8 ch)
 					U3STAbits.UTXISEL0 = 0;
 				}
 
-				if(uarts[uart].tx_count == UART_TX_BUFFER_SIZE) {
-					LOG_E("Circular buffer full!");
+				if(uarts[uart].tx_count == SYS_UART_TX_BUFFER_SIZE) {
+#if (LOG_LEVEL <= LOG_ERROR)
+					log_e(TAG, "Circular buffer full!");
+#endif
 					return;
 				}
 
 				uarts[uart].tx_buffer[uarts[uart].tx_write_index] = ch;
-				uarts[uart].tx_write_index = (++(uarts[uart].tx_write_index) % UART_TX_BUFFER_SIZE);
+                                /*
+                                 * Compiler don't like following two lines in a oner
+                                 */
+                                tmp = ++(uarts[uart].tx_write_index) % SYS_UART_TX_BUFFER_SIZE;
+				uarts[uart].tx_write_index = tmp;
 				uarts[uart].tx_count++;
 			} else {
 				U3TXREG = ch;
@@ -507,13 +551,19 @@ static void uart_putchar(u8 uart, u8 ch)
 					U4STAbits.UTXISEL0 = 0;
 				}
 
-				if(uarts[uart].tx_count == UART_TX_BUFFER_SIZE) {
-					LOG_E("Circular buffer full!");
+				if(uarts[uart].tx_count == SYS_UART_TX_BUFFER_SIZE) {
+#if (LOG_LEVEL <= LOG_ERROR)
+					log_e(TAG, "Circular buffer full!");
+#endif
 					return;
 				}
 
 				uarts[uart].tx_buffer[uarts[uart].tx_write_index] = ch;
-				uarts[uart].tx_write_index = (++(uarts[uart].tx_write_index) % UART_TX_BUFFER_SIZE);
+                                /*
+                                 * Compiler don't like following two lines in a oner
+                                 */
+                                tmp = ++(uarts[uart].tx_write_index) % SYS_UART_TX_BUFFER_SIZE;
+				uarts[uart].tx_write_index = tmp;
 				uarts[uart].tx_count++;
 			} else {
 				U4TXREG = ch;
@@ -521,12 +571,14 @@ static void uart_putchar(u8 uart, u8 ch)
 			break;
 
 		default:
-			LOG_E("Unrecognised UART in putchar()\n\r");
+#if (LOG_LEVEL <= LOG_ERROR)
+			log_e(TAG, "Unrecognised UART in putchar()\n\r");
+#endif
 			break;
 	}
 }
 
-static void uart_set_rx_pin(u8 uart, u8 pin)
+static void uart_set_rx_pin(uint8_t uart, uint8_t pin)
 {
 //        AD1PCFGL = 0xffff;
 	switch (pin) {
@@ -555,7 +607,9 @@ static void uart_set_rx_pin(u8 uart, u8 pin)
 			break;
 
 		default:
-			LOG_E("Unknow Peripheral Rx Pin\n\r");
+#if (LOG_LEVEL <= LOG_ERROR)
+			log_e(TAG, "Unknow Peripheral Rx Pin\n\r");
+#endif
 			break;
 	}
 
@@ -578,9 +632,9 @@ static void uart_set_rx_pin(u8 uart, u8 pin)
 	}
 }
 
-static void uart_set_tx_pin(u8 uart, u8 pin)
+static void uart_set_tx_pin(uint8_t uart, uint8_t pin)
 {
-	u8 tx_function;
+	uint8_t tx_function;
 
 	switch (uart) {
 //		case UART_1:
@@ -631,7 +685,9 @@ static void uart_set_tx_pin(u8 uart, u8 pin)
 			break;
 
 		default:
-			LOG_E("Unknow Peripheral Tx Pin\n\r");
+#if (LOG_LEVEL <= LOG_ERROR)
+			log_e(TAG, "Unknow Peripheral Tx Pin\n\r");
+#endif
 			break;
 	}
 }
@@ -660,7 +716,7 @@ static void uart_set_com_config(struct uart_data *com)
 			 * UxBRG = ((CLOCK/MODBUS_BAUD)/16) -1
 			 *
 			 */
-			U2BRG = ((CLOCK_FREQ / com->baud) / 16) - 1;
+			U2BRG = ((SYS_CLOCK_FREQ / com->baud) / 16) - 1;
 
 
                         U2_RX_ISR_FLAG = 0;
@@ -690,7 +746,7 @@ static void uart_set_com_config(struct uart_data *com)
 			 * UxBRG = ((CLOCK/MODBUS_BAUD)/16) -1
 			 *
 			 */
-			U3BRG = ((CLOCK_FREQ / com->baud) / 16) - 1;
+			U3BRG = ((SYS_CLOCK_FREQ / com->baud) / 16) - 1;
 
                         U3_RX_ISR_FLAG = 0;
                         U3_TX_ISR_FLAG = 0;
@@ -719,7 +775,7 @@ static void uart_set_com_config(struct uart_data *com)
 			 * UxBRG = ((CLOCK/MODBUS_BAUD)/16) -1
 			 *
 			 */
-			U4BRG = ((CLOCK_FREQ / com->baud) / 16) - 1;
+			U4BRG = ((SYS_CLOCK_FREQ / com->baud) / 16) - 1;
 
                         U4_RX_ISR_FLAG = 0;
                         U4_TX_ISR_FLAG = 0;
@@ -728,7 +784,9 @@ static void uart_set_com_config(struct uart_data *com)
 			break;
 
 		default:
-			LOG_E("Bad UART passed\n\r");
+#if (LOG_LEVEL <= LOG_ERROR)
+			log_e(TAG, "Bad UART passed\n\r");
+#endif
 			break;
 	}
 }
@@ -736,8 +794,10 @@ static void uart_set_com_config(struct uart_data *com)
 /*
  * Returns the number of bytes still waiting to be loaded in HW TX Buffer.
  */
-static u16 load_tx_buffer(u8 uart)
+static uint16_t load_tx_buffer(uint8_t uart)
 {
+        uint8_t tmp;
+        
 	switch (uart) {
 		case UART_2:
 			/*
@@ -745,7 +805,11 @@ static u16 load_tx_buffer(u8 uart)
 			 */
 			while ((!U2STAbits.UTXBF) && (uarts[uart].tx_count)) {
 				U2TXREG = uarts[uart].tx_buffer[uarts[uart].tx_read_index];
-				uarts[uart].tx_read_index = (++(uarts[uart].tx_read_index) % UART_TX_BUFFER_SIZE);
+                                /*
+                                 * Compiler don't like following two lines in a oner
+                                 */
+                                tmp = ++(uarts[uart].tx_read_index) % SYS_UART_TX_BUFFER_SIZE;
+				uarts[uart].tx_read_index = tmp;
 				uarts[uart].tx_count--;
 			}
 
@@ -758,7 +822,11 @@ static u16 load_tx_buffer(u8 uart)
 			 */
 			while ((!U3STAbits.UTXBF) && (uarts[uart].tx_count)) {
 				U3TXREG = uarts[uart].tx_buffer[uarts[uart].tx_read_index];
-				uarts[uart].tx_read_index = (++(uarts[uart].tx_read_index) % UART_TX_BUFFER_SIZE);
+                                /*
+                                 * Compiler don't like following two lines in a oner
+                                 */
+                                tmp = ++(uarts[uart].tx_read_index) % SYS_UART_TX_BUFFER_SIZE;
+				uarts[uart].tx_read_index = tmp;
 				uarts[uart].tx_count--;
 			}
 
@@ -771,7 +839,11 @@ static u16 load_tx_buffer(u8 uart)
 			 */
 			while ((!U4STAbits.UTXBF) && (uarts[uart].tx_count)) {
 				U4TXREG = uarts[uart].tx_buffer[uarts[uart].tx_read_index];
-				uarts[uart].tx_read_index = (++(uarts[uart].tx_read_index) % UART_TX_BUFFER_SIZE);
+                                /*
+                                 * Compiler don't like following two lines in a oner
+                                 */
+                                tmp = ++(uarts[uart].tx_read_index) % SYS_UART_TX_BUFFER_SIZE;
+				uarts[uart].tx_read_index = tmp;
 				uarts[uart].tx_count--;
 			}
 
@@ -780,7 +852,9 @@ static u16 load_tx_buffer(u8 uart)
 	}
 
 //	return(com->tx_buffer_size - com->tx_buffer_read_index);
-	LOG_E("load_tx_buffer() Bad UART\n\r");
+#if (LOG_LEVEL <= LOG_ERROR)
+	log_e(TAG, "load_tx_buffer() Bad UART\n\r");
+#endif
 	return(0);
 }
 
@@ -804,7 +878,9 @@ static u16 load_tx_buffer(u8 uart)
 	} else if (MODBUS_DATA_BITS == 9) {
 		UxMODEbits.PDSEL = 0x11;
 	} else {
-		LOG_E("Unrecognised Data bit/Parity configuration\n\r");
+#if (LOG_LEVEL <= LOG_ERROR)
+		log_e(TAG, "Unrecognised Data bit/Parity configuration\n\r");
+#endif
 	}
 
 	if (MODBUS_STOP_BITS == ONE_STOP_BIT) {
@@ -812,7 +888,9 @@ static u16 load_tx_buffer(u8 uart)
 	} else if (MODBUS_STOP_BITS == TWO_STOP_BITS) {
 		UxMODEbits.STSEL = 1;
 	} else {
-		LOG_E("Unrecognised Stop bits configuration\n\r");
+#if (LOG_LEVEL <= LOG_ERROR)
+		log_e(TAG, "Unrecognised Stop bits configuration\n\r");
+#endif
 	}
 
 	if (MODBUS_RX_IDLE_LEVEL == IDLE_LOW) {
@@ -856,5 +934,5 @@ static u16 load_tx_buffer(u8 uart)
 	 * UxBRG = ((CLOCK/MODBUS_BAUD)/16) -1
 	 *
 	 */
-	UxBRG = ((CLOCK_FREQ / MODBUS_BAUD) / 16) - 1;
+	UxBRG = ((SYS_CLOCK_FREQ / MODBUS_BAUD) / 16) - 1;
 #endif

@@ -9,14 +9,16 @@
 extern struct modbus_state modbus_state;
 
 static void process_timer_35_expiry(void *);
-static void process_rx_character(struct modbus_channel *channel, u8 ch);
+static void process_rx_character(struct modbus_channel *channel, uint8_t ch);
 static void process_response_timeout(struct modbus_channel *channel);
 
 void set_modbus_awaiting_response_state(struct modbus_channel *channel)
 {
         result_t rc;
         
-	LOG_D("set_modbus_awaiting_response_state()\n\r");
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+	log_d(TAG, "set_modbus_awaiting_response_state()\n\r");
+#endif
 	channel->rx_write_index = 0;
 
 	channel->process_timer_15_expiry = NULL;
@@ -29,7 +31,9 @@ void set_modbus_awaiting_response_state(struct modbus_channel *channel)
 	rc = start_response_timer(channel);
         
         if(rc != SUCCESS) {
-                LOG_E("Failed to start response timer\n\r");
+#if (LOG_LEVEL <= LOG_ERROR)
+                log_e(TAG, "Failed to start response timer\n\r");
+#endif
         }
 }
 
@@ -37,17 +41,23 @@ void process_timer_35_expiry(void *data)
 {
         struct modbus_channel *channel = (struct modbus_channel *)data;
         
-	u8  start_index;
-//	u16 loop;
+	uint8_t  start_index;
+//	uint16_t loop;
 
-	LOG_D("process_timer_35_expiry()\n\r");
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+	log_d(TAG, "process_timer_35_expiry()\n\r");
+#endif
 //	RX_ISR_ENABLE = 0;
 	set_modbus_idle_state(channel);
 
-	LOG_D("process_timer_35_expiry() channel %d msg length %d\n\r", channel->uart->uart, channel->rx_write_index);
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+	log_d(TAG, "process_timer_35_expiry() channel %d msg length %d\n\r", channel->uart->uart, channel->rx_write_index);
+#endif
 
 //	for(loop = 0; loop < channel->rx_write_index; loop++) {
-//		LOG_D("Char %d - 0x%x\n\r", loop, channel->rx_buffer[loop]);
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+//		log_d(TAG, "Char %d - 0x%x\n\r", loop, channel->rx_buffer[loop]);
+#endif
 //	}
 	if(channel->rx_write_index > 2) {
 		if(channel->rx_buffer[0] == channel->address) {
@@ -55,9 +65,15 @@ void process_timer_35_expiry(void *data)
 		} else if (channel->rx_buffer[1] == channel->address) {
 			start_index = 1;
 		} else {
-			LOG_D("message from wrong address channel Address 0x%x\n\r", channel->address);
-			LOG_D("channel->rx_buffer[0] = 0x%x\n\r", channel->rx_buffer[0]);
-			LOG_D("channel->rx_buffer[1] = 0x%x\n\r", channel->rx_buffer[1]);
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+			log_d(TAG, "message from wrong address channel Address 0x%x\n\r", channel->address);
+#endif
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+			log_d(TAG, "channel->rx_buffer[0] = 0x%x\n\r", channel->rx_buffer[0]);
+#endif
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+			log_d(TAG, "channel->rx_buffer[1] = 0x%x\n\r", channel->rx_buffer[1]);
+#endif
 			return;
 		}
 
@@ -68,16 +84,20 @@ void process_timer_35_expiry(void *data)
 			 */
 			channel->process_response(&(channel->rx_buffer[start_index]), channel->rx_write_index - (start_index + 2), channel->response_callback_data);
 		} else {
-			LOG_D("Message bad!\n\r");
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+			log_d(TAG, "Message bad!\n\r");
+#endif
 			channel->process_response(NULL, 0, channel->response_callback_data);
 		}
 	} else {
-		LOG_D("Message too short\n\r");
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+		log_d(TAG, "Message too short\n\r");
+#endif
 		channel->process_response(NULL, 0, channel->response_callback_data);
 	}
 }
 
-void process_rx_character(struct modbus_channel *channel, u8 ch)
+void process_rx_character(struct modbus_channel *channel, uint8_t ch)
 {
 	if ((channel->rx_write_index == 0) && (ch == 0x00)) {
 		return;
@@ -87,18 +107,24 @@ void process_rx_character(struct modbus_channel *channel, u8 ch)
 
 	channel->rx_buffer[channel->rx_write_index++] = ch;
 
-	if (channel->rx_write_index == MODBUS_RX_BUFFER_SIZE) {
-		LOG_E("UART 2 Overflow: Line too long\n\r");
+	if (channel->rx_write_index == SYS_MODBUS_RX_BUFFER_SIZE) {
+#if (LOG_LEVEL <= LOG_ERROR)
+		log_e(TAG, "UART 2 Overflow: Line too long\n\r");
+#endif
 	}
 }
 
 static void process_response_timeout(struct modbus_channel *channel)
 {
-	LOG_D("process_response_timeout()\n\r");
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+	log_d(TAG, "process_response_timeout()\n\r");
+#endif
 	set_modbus_starting_state(channel);
 	if(channel->process_response) {
 		channel->process_response(NULL, 0, channel->response_callback_data);
 	} else {
-		LOG_E("No response Function\n\r");
+#if (LOG_LEVEL <= LOG_ERROR)
+		log_e(TAG, "No response Function\n\r");
+#endif
 	}
 }
