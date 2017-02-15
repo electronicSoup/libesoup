@@ -116,9 +116,13 @@ void _ISR __attribute__((__no_auto_psv__)) _U4TXInterrupt(void)
 static void uart_tx_isr(uint8_t uart)
 {
 	if ((uarts[uart].data == NULL) || (uarts[uart].status != UART_BUSY)) {
-#if (LOG_LEVEL <= LOG_ERROR)
+#if defined(SYS_LOG_LEVEL)
+#if (SYS_LOG_LEVEL <= LOG_ERROR)
 		log_e(TAG, "UART Null in ISR!\n\r");
 #endif
+#else  //  defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  defined(SYS_LOG_LEVEL)
 		return;
 	}
 
@@ -221,9 +225,13 @@ static void uart_tx_isr(uint8_t uart)
 				break;
 
 			default:
-#if (LOG_LEVEL <= LOG_ERROR)
+#if defined(SYS_LOG_LEVEL)
+#if (SYS_LOG_LEVEL <= LOG_ERROR)
 				log_e(TAG, "Bad comm port given!\n\r");
 #endif
+#else  //  defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  defined(SYS_LOG_LEVEL)
 				return;
 				break;
 		}
@@ -242,9 +250,13 @@ void _ISR __attribute__((__no_auto_psv__)) _U2RXInterrupt(void)
 	asm ("CLRWDT");
 
 	if (U2STAbits.OERR) {
-#if (LOG_LEVEL <= LOG_ERROR)
+#if defined(SYS_LOG_LEVEL)
+#if (SYS_LOG_LEVEL <= LOG_ERROR)
 		log_e(TAG, "RX Buffer overrun\n\r");
 #endif
+#else  //  defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  defined(SYS_LOG_LEVEL)
 		U2STAbits.OERR = 0;   /* Clear the error flag */
 	}
 
@@ -263,9 +275,13 @@ void _ISR __attribute__((__no_auto_psv__)) _U3RXInterrupt(void)
 	asm ("CLRWDT");
 
 	if (U3STAbits.OERR) {
-#if (LOG_LEVEL <= LOG_ERROR)
+#if defined(SYS_LOG_LEVEL)
+#if (SYS_LOG_LEVEL <= LOG_ERROR)
 		log_e(TAG, "RX Buffer overrun\n\r");
 #endif
+#else  //  defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  defined(SYS_LOG_LEVEL)
 		U3STAbits.OERR = 0;   /* Clear the error flag */
 	}
 
@@ -284,9 +300,13 @@ void _ISR __attribute__((__no_auto_psv__)) _U4RXInterrupt(void)
 	asm ("CLRWDT");
 
 	if (U4STAbits.OERR) {
-#if (LOG_LEVEL <= LOG_ERROR)
+#if defined(SYS_LOG_LEVEL)
+#if (SYS_LOG_LEVEL <= LOG_ERROR)
 		log_e(TAG, "RX Buffer overrun\n\r");
 #endif
+#else  //  defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  defined(SYS_LOG_LEVEL)
 		U4STAbits.OERR = 0;   /* Clear the error flag */
 	}
 
@@ -312,9 +332,13 @@ result_t uart_calculate_mode(uint16_t *mode, uint8_t databits, uint8_t parity, u
 		*mode |= PDSEL1_MASK;
 		*mode |= PDSEL0_MASK;
 	} else {
-#if (LOG_LEVEL <= LOG_ERROR)
+#if defined(SYS_LOG_LEVEL)
+#if (SYS_LOG_LEVEL <= LOG_ERROR)
                 log_e(TAG, "Bad byte length\n\r");
 #endif
+#else  //  defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  defined(SYS_LOG_LEVEL)
 		return(ERR_BAD_INPUT_PARAMETER);
 	}
 
@@ -344,11 +368,13 @@ void uart_init(void)
 
 result_t uart_reserve(struct uart_data *data)
 {
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+#if defined(SYS_LOG_LEVEL)
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	log_d(TAG, "uart_reserve()\n\r");
 #endif
-#endif
+#else  //  defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  defined(SYS_LOG_LEVEL)
 	/*
 	 * Find a free uart to use
 	 */
@@ -387,14 +413,22 @@ result_t uart_release(struct uart_data *data)
 
 	uart = data->uart;
 
+#if defined(SYS_LOG_LEVEL)
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
-	log_d("uart_release()  %d\n\r", uart);
+	log_d(TAG, "uart_release()  %d\n\r", uart);
 #endif
+#else  //  defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  defined(SYS_LOG_LEVEL)
         
 	if(uarts[uart].data != data) {
-#if (LOG_LEVEL <= LOG_ERROR)
+#if defined(SYS_LOG_LEVEL)
+#if (SYS_LOG_LEVEL <= LOG_ERROR)
 		log_e(TAG, "uart_tx called with bad data pointer\n\r");
 #endif
+#else  //  defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  defined(SYS_LOG_LEVEL)
 		return(ERR_BAD_INPUT_PARAMETER);
 	}
 
@@ -484,9 +518,13 @@ static void uart_putchar(uint8_t uart, uint8_t ch)
 				}
 
 				if(uarts[uart].tx_count == SYS_UART_TX_BUFFER_SIZE) {
-#if (LOG_LEVEL <= LOG_ERROR)
+#if defined(SYS_LOG_LEVEL)
+#if (SYS_LOG_LEVEL <= LOG_ERROR)
 					log_e(TAG, "Circular buffer full!");
 #endif
+#else  //  defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  defined(SYS_LOG_LEVEL)
 					return;
 				}
 
@@ -518,9 +556,13 @@ static void uart_putchar(uint8_t uart, uint8_t ch)
 				}
 
 				if(uarts[uart].tx_count == SYS_UART_TX_BUFFER_SIZE) {
-#if (LOG_LEVEL <= LOG_ERROR)
+#if defined(SYS_LOG_LEVEL)
+#if (SYS_LOG_LEVEL <= LOG_ERROR)
 					log_e(TAG, "Circular buffer full!");
 #endif
+#else  //  defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  defined(SYS_LOG_LEVEL)
 					return;
 				}
 
@@ -552,9 +594,13 @@ static void uart_putchar(uint8_t uart, uint8_t ch)
 				}
 
 				if(uarts[uart].tx_count == SYS_UART_TX_BUFFER_SIZE) {
-#if (LOG_LEVEL <= LOG_ERROR)
+#if defined(SYS_LOG_LEVEL)
+#if (SYS_LOG_LEVEL <= LOG_ERROR)
 					log_e(TAG, "Circular buffer full!");
 #endif
+#else  //  defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  defined(SYS_LOG_LEVEL)
 					return;
 				}
 
@@ -571,9 +617,13 @@ static void uart_putchar(uint8_t uart, uint8_t ch)
 			break;
 
 		default:
-#if (LOG_LEVEL <= LOG_ERROR)
+#if defined(SYS_LOG_LEVEL)
+#if (SYS_LOG_LEVEL <= LOG_ERROR)
 			log_e(TAG, "Unrecognised UART in putchar()\n\r");
 #endif
+#else  //  defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  defined(SYS_LOG_LEVEL)
 			break;
 	}
 }
@@ -607,9 +657,13 @@ static void uart_set_rx_pin(uint8_t uart, uint8_t pin)
 			break;
 
 		default:
-#if (LOG_LEVEL <= LOG_ERROR)
+#if defined(SYS_LOG_LEVEL)
+#if (SYS_LOG_LEVEL <= LOG_ERROR)
 			log_e(TAG, "Unknow Peripheral Rx Pin\n\r");
 #endif
+#else  //  defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  defined(SYS_LOG_LEVEL)
 			break;
 	}
 
@@ -685,9 +739,13 @@ static void uart_set_tx_pin(uint8_t uart, uint8_t pin)
 			break;
 
 		default:
-#if (LOG_LEVEL <= LOG_ERROR)
+#if defined(SYS_LOG_LEVEL)
+#if (SYS_LOG_LEVEL <= LOG_ERROR)
 			log_e(TAG, "Unknow Peripheral Tx Pin\n\r");
 #endif
+#else  //  defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  defined(SYS_LOG_LEVEL)
 			break;
 	}
 }
@@ -716,9 +774,11 @@ static void uart_set_com_config(struct uart_data *com)
 			 * UxBRG = ((CLOCK/MODBUS_BAUD)/16) -1
 			 *
 			 */
+#if defined(SYS_CLOCK_FREQ)
 			U2BRG = ((SYS_CLOCK_FREQ / com->baud) / 16) - 1;
-
-
+#else
+#error system.h file should define the SYS_CLOCK_FREQ
+#endif
                         U2_RX_ISR_FLAG = 0;
                         U2_TX_ISR_FLAG = 0;
 			U2_RX_ISR_ENABLE = 1;
@@ -746,7 +806,11 @@ static void uart_set_com_config(struct uart_data *com)
 			 * UxBRG = ((CLOCK/MODBUS_BAUD)/16) -1
 			 *
 			 */
+#if defined(SYS_CLOCK_FREQ)
 			U3BRG = ((SYS_CLOCK_FREQ / com->baud) / 16) - 1;
+#else
+#error system.h file should define the SYS_CLOCK_FREQ
+#endif
 
                         U3_RX_ISR_FLAG = 0;
                         U3_TX_ISR_FLAG = 0;
@@ -775,7 +839,11 @@ static void uart_set_com_config(struct uart_data *com)
 			 * UxBRG = ((CLOCK/MODBUS_BAUD)/16) -1
 			 *
 			 */
+#if defined(SYS_CLOCK_FREQ)
 			U4BRG = ((SYS_CLOCK_FREQ / com->baud) / 16) - 1;
+#else
+#error system.h file should define the SYS_CLOCK_FREQ
+#endif
 
                         U4_RX_ISR_FLAG = 0;
                         U4_TX_ISR_FLAG = 0;
@@ -784,9 +852,13 @@ static void uart_set_com_config(struct uart_data *com)
 			break;
 
 		default:
-#if (LOG_LEVEL <= LOG_ERROR)
+#if defined(SYS_LOG_LEVEL)
+#if (SYS_LOG_LEVEL <= LOG_ERROR)
 			log_e(TAG, "Bad UART passed\n\r");
 #endif
+#else  //  defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  defined(SYS_LOG_LEVEL)
 			break;
 	}
 }
@@ -852,9 +924,13 @@ static uint16_t load_tx_buffer(uint8_t uart)
 	}
 
 //	return(com->tx_buffer_size - com->tx_buffer_read_index);
-#if (LOG_LEVEL <= LOG_ERROR)
+#if defined(SYS_LOG_LEVEL)
+#if (SYS_LOG_LEVEL <= LOG_ERROR)
 	log_e(TAG, "load_tx_buffer() Bad UART\n\r");
 #endif
+#else  //  defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  defined(SYS_LOG_LEVEL)
 	return(0);
 }
 
@@ -878,9 +954,13 @@ static uint16_t load_tx_buffer(uint8_t uart)
 	} else if (MODBUS_DATA_BITS == 9) {
 		UxMODEbits.PDSEL = 0x11;
 	} else {
-#if (LOG_LEVEL <= LOG_ERROR)
+#if defined(SYS_LOG_LEVEL)
+#if (SYS_LOG_LEVEL <= LOG_ERROR)
 		log_e(TAG, "Unrecognised Data bit/Parity configuration\n\r");
 #endif
+#else  //  defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  defined(SYS_LOG_LEVEL)
 	}
 
 	if (MODBUS_STOP_BITS == ONE_STOP_BIT) {
@@ -888,9 +968,13 @@ static uint16_t load_tx_buffer(uint8_t uart)
 	} else if (MODBUS_STOP_BITS == TWO_STOP_BITS) {
 		UxMODEbits.STSEL = 1;
 	} else {
-#if (LOG_LEVEL <= LOG_ERROR)
+#if defined(SYS_LOG_LEVEL)
+#if (SYS_LOG_LEVEL <= LOG_ERROR)
 		log_e(TAG, "Unrecognised Stop bits configuration\n\r");
 #endif
+#else  //  defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  defined(SYS_LOG_LEVEL)
 	}
 
 	if (MODBUS_RX_IDLE_LEVEL == IDLE_LOW) {

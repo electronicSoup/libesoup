@@ -53,25 +53,25 @@
  *
  * Destination Address DA 0xFF is a Broadcast Address
  */
-#define ISO_11783_DA_BROADCAST 0xFF
+#define ISO_11783_DA_BROADCAST    0xFF
 
-#define CAN_EDP_MASK  0x02000000
-#define CAN_DP_MASK   0x01000000
-#define CAN_PF_MASK   0x00FF0000
-#define CAN_PS_MASK   0x0000FF00
-#define CAN_DA_MASK   0x0000FF00
-#define CAN_GE_MASK   0x0000FF00
-#define CAN_SA_MASK   0x000000FF
+#define CAN_EDP_MASK              0x02000000
+#define CAN_DP_MASK               0x01000000
+#define CAN_PF_MASK               0x00FF0000
+#define CAN_PS_MASK               0x0000FF00
+#define CAN_DA_MASK               0x0000FF00
+#define CAN_GE_MASK               0x0000FF00
+#define CAN_SA_MASK               0x000000FF
 
-#define PGN_EDP_MASK  0x020000
-#define PGN_DP_MASK   0x010000
-#define PGN_PF_MASK   0x00FF00
-#define PGN_PS_MASK   0x0000FF
+#define PGN_EDP_MASK              0x020000
+#define PGN_DP_MASK               0x010000
+#define PGN_PF_MASK               0x00FF00
+#define PGN_PS_MASK               0x0000FF
 
-#define DEFAULT_PRIORITY_CONTROL 0x03
-#define DEFAULT_PRIORITY         0x06
+#define DEFAULT_PRIORITY_CONTROL  0x03
+#define DEFAULT_PRIORITY          0x06
 
-#define PF_PDU_2_CUTOFF 0xF0
+#define PF_PDU_2_CUTOFF           0xF0
 
 #define DEFAULT_PRIORITY_CONTROL  0x03
 #define DEFAULT_PRIORITY          0x06
@@ -94,17 +94,17 @@
 #define TP_CM_BAM                 32
 #define TP_CM_Connection_Abort    255
 
-#define TIMER_Tr   200
-#define TIMER_Th   500
-#define TIMER_1    750
-#define TIMER_2   1250
-#define TIMER_3   1250
-#define TIMER_4   1050
+#define TIMER_Tr                  200
+#define TIMER_Th                  500
+#define TIMER_1                   750
+#define TIMER_2                   1250
+#define TIMER_3                   1250
+#define TIMER_4                   1050
 
-#define ACK             0
-#define NACK            1
-#define ACCESS_DENIED   2
-#define CANNOT_RESPOND  3
+#define ACK                       0
+#define NACK                      1
+#define ACCESS_DENIED             2
+#define CANNOT_RESPOND            3
 
 static uint8_t node_address;
 static uint8_t da_valid = 0x00;
@@ -127,9 +127,13 @@ result_t iso11783_init(uint8_t address)
 	uint16_t loop;
 	can_l2_target_t target;
 
+#if defined(SYS_LOG_LEVEL)
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	log_d(TAG, "iso11783_init(0x%x)\n\r", address);
 #endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 
 	node_address = address;
 
@@ -231,9 +235,13 @@ result_t iso11783_tx_msg(iso11783_msg_t *msg)
 {
 	can_frame frame;
 
+#if defined(SYS_LOG_LEVEL)
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	log_d(TAG, "iso11783_tx_msg()\n\r");
 #endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 
 	frame.can_id = pgn_to_canid(msg->priority, msg->pgn, msg->destination);
 	frame.can_dlc = 0x00;
@@ -246,9 +254,13 @@ result_t iso11783_tx_msg(iso11783_msg_t *msg)
 result_t iso11783_tx_pgn_request(uint8_t priority, u8 dst, u32 pgn)
 {
 	can_frame frame;
+#if defined(SYS_LOG_LEVEL)
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	log_d(TAG, "iso11783_tx_pgn_request()\n\r");
 #endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 
 	frame.can_id = pgn_to_canid(priority, PGN_REQUEST, dst);
 	frame.can_dlc = 0x03;
@@ -267,9 +279,13 @@ result_t iso11783_tx_ack_pgn(uint8_t priority, u8 dst, u32 pgn, iso11783_ack_t a
 	uint8_t        loop;
 	u32       tmp_pgn;
 	can_frame frame;
+#if defined(SYS_LOG_LEVEL)
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	log_d(TAG, "iso11783_tx_ack_pgn()\n\r");
 #endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 
 	frame.can_id = pgn_to_canid(priority, PGN_ACK, dst);
 	frame.can_dlc = 0x08;
@@ -300,9 +316,13 @@ void iso11783_frame_handler(can_frame *frame)
 	uint8_t             handled;
 	iso11783_msg_t msg;
 
+#if defined(SYS_LOG_LEVEL)
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	log_d(TAG, "iso11783_frame_handler(frame id 0x%x)\n\r", frame->can_id);
 #endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 
 	/*
 	 * Parameter Group Numbers PGN:
@@ -313,60 +333,56 @@ void iso11783_frame_handler(can_frame *frame)
 	 */
 	pgn = canid_to_pgn(frame->can_id);
 
+#if defined(SYS_LOG_LEVEL)
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	log_d(TAG, "iso11783_frame_handler received PGN %d  =  0x%lx\n\r", pgn, pgn);
 #endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 
 //	printf("iso11783:(frame id 0x%x) SA 0x%x,", frame->can_id, sa);
 //	if(da_valid) {
 //		printf(" DA 0x%x, ", da);
 //	}
+#if defined(SYS_LOG_LEVEL)
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	log_d(TAG, " PGN %d (0x%x) [", pgn, pgn);
 #endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 
 	for(loop = 0; loop < frame->can_dlc; loop++) {
 		printf("%x,", frame->data[loop]);
 	}
 	printf("\n\r");
 
+#if defined(SYS_LOG_LEVEL)
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	if(pgn == 126992) {
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 		log_d(TAG, "System Time\n\r");
-#endif
 	} else if(pgn == 128267) {
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 		log_d(TAG, "Depth\n\r");
-#endif
 	} else if(pgn == 129025) {
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 		log_d(TAG, "Position\n\r");
-#endif
 	} else if(pgn == 129026) {
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 		log_d(TAG, "Corse Over Ground (COG) & Speed over Ground (SOG)\n\r");
-#endif
 	} else if(pgn == 129027) {
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 		log_d(TAG, "Position Delta\n\r");
-#endif
 	} else if(pgn == 129029) {
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 		log_d(TAG, "GNSS Position Data\n\r");
-#endif
 	} else if(pgn == 129033) {
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 		log_d(TAG, "Time & Date\n\r");
-#endif
 	} else if(pgn == 129539) {
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 		log_d(TAG, "GNSS and DOP Dilution Of Precision\n\r");
-#endif
 	} else if(pgn == 129540) {
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 		log_d(TAG, "Satalites in View\n\r");
-#endif
 	}
+#endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 
 	handled = 0x00;
 
@@ -390,9 +406,13 @@ result_t iso11783_dispatch_reg_handler(iso11783_target_t *target)
 
 	target->handler_id = 0xff;
 
+#if defined(SYS_LOG_LEVEL)
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	log_d(TAG, "iso11783_dispatch_register_handler(0x%lx)\n\r", target->pgn);
 #endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 
 	/*
 	 * Find a free slot and add the Protocol
@@ -407,9 +427,13 @@ result_t iso11783_dispatch_reg_handler(iso11783_target_t *target)
 		}
 	}
 
-#if (LOG_LEVEL <= LOG_ERROR)
+#if defined(SYS_LOG_LEVEL)
+#if (SYS_LOG_LEVEL <= LOG_ERROR)
 	log_e(TAG, "ISO11783 Dispatch full!\n\r");
 #endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 	return(ERR_NO_RESOURCES);
 }
 

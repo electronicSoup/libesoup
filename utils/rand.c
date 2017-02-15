@@ -29,6 +29,9 @@
 
 static uint8_t initialised = FALSE;
 
+/*
+ * Function to generate a random seed to initialise the microchip random library
+ */
 void random_init(void)
 {
 	uint16_t  loop;
@@ -39,10 +42,14 @@ void random_init(void)
 		return;
 	}
 
+#if defined(SYS_LOG_LEVEL)
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	log_d(TAG, "random_init()\n\r");
 #endif
-	data = (uint8_t *)&IC1TMR;  //0x146
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
+	data = (uint8_t *)&IC1TMR;
 
 	seed = 0;
 
@@ -52,9 +59,14 @@ void random_init(void)
 		data++;
 	}
 
+#if defined(SYS_LOG_LEVEL)
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	log_d(TAG, "Seed 0x%lx\n\r", seed);
 #endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
+
 	srand(seed);
 }
 

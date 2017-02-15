@@ -89,19 +89,6 @@ static void increment_current_time(uint16_t secs)
 	tmp_hours   = current_datetime.hours + tmp_minutes / MINUTES_PER_HOUR;
 	tmp_day     = current_datetime.day + tmp_hours / HOURS_PER_DAY;
 
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
-//	log_d(TAG, "Current seconds is %d\n\r", current_datetime.seconds);
-#endif
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
-//	log_d(TAG, "Add on %d Seconds\n\r", secs);
-#endif
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
-//	log_d(TAG, "tmp_seconds is %d\n\r", tmp_seconds);
-#endif
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
-//	log_d(TAG, "/ is %d remainder is %d \n\r", tmp_seconds / 60, tmp_seconds % 60);
-#endif
-
 	current_datetime.seconds = tmp_seconds % SECONDS_PER_MINUTE;
 	current_datetime.minutes = tmp_minutes % MINUTES_PER_HOUR;
 	current_datetime.hours   = tmp_hours % HOURS_PER_DAY;
@@ -112,14 +99,22 @@ result_t rtc_update_current_datetime(uint8_t *data, uint16_t len)
 {
 //	u32 timer;
 
+#if defined(SYS_LOG_LEVEL)
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	log_d(TAG, "rtc_update_current_datetime()\n\r");
 #endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 
 	if(len != 17) {
-#if (LOG_LEVEL <= LOG_ERROR)
+#if defined(SYS_LOG_LEVEL)
+#if (SYS_LOG_LEVEL <= LOG_ERROR)
 		log_e(TAG, "Bad input datetime\n\r");
 #endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 		return(ERR_BAD_INPUT_PARAMETER);
 	}
 
@@ -132,9 +127,13 @@ result_t rtc_update_current_datetime(uint8_t *data, uint16_t len)
 
 	current_datetime_valid = TRUE;
 
+#if defined(SYS_LOG_LEVEL)
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	log_d(TAG, "Current datetime set to %d%d%d-%d:%d:%d\n\r",
 #endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 		current_datetime.year,
 		current_datetime.month,
 		current_datetime.day,
@@ -152,9 +151,13 @@ result_t rtc_update_current_datetime(uint8_t *data, uint16_t len)
 
 	hw_timer_start(Seconds, current_isr_secs, FALSE, timer_expiry, NULL);
 
+#if defined(SYS_LOG_LEVEL)
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 //	log_d(TAG, "Current isr secs %d last digit %d\n\r", current_isr_secs, (data[16] - '0'));
 #endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 
 	return(SUCCESS);
 }
@@ -186,9 +189,13 @@ void *rtc_set_alarm_offset(ty_time_units units, uint16_t time, uint8_t nice, voi
 		tmp_datetime.day     = current_datetime.day + tmp_datetime.hours / 24;
 		tmp_datetime.hours   = tmp_datetime.hours % 24;
 	} else if (units == Minutes) {
+#if defined(SYS_LOG_LEVEL)
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 		log_d(TAG, "rtc_set_alarm_offset(Minutes, %d)\n\r", time);
 #endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 		tmp_datetime.seconds = 0;
 
 		if(nice) {
@@ -217,9 +224,13 @@ void *rtc_set_alarm_offset(ty_time_units units, uint16_t time, uint8_t nice, voi
 		tmp_datetime.day     = current_datetime.day + tmp_datetime.hours / HOURS_PER_DAY;
 		tmp_datetime.hours   = tmp_datetime.hours % HOURS_PER_DAY;
 	} else {
-#if (LOG_LEVEL <= LOG_ERROR)
+#if defined(SYS_LOG_LEVEL)
+#if (SYS_LOG_LEVEL <= LOG_ERROR)
 		log_e(TAG, "Unrecognised Alarm offset units\n\r");
 #endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 		return(NULL);
 	}
 
@@ -253,22 +264,34 @@ static void add_alarm_to_list(struct alarm_data *alarm)
 	struct alarm_data *prev = NULL;
 //	uint16_t                count = 0;
 
+#if defined(SYS_LOG_LEVEL)
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	log_d(TAG, "add_alarm_to_list(%2d:%2d)\n\r", alarm->datetime.hours, alarm->datetime.minutes);
 #endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 
 	if (alarm_list == NULL) {
+#if defined(SYS_LOG_LEVEL)
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 //		log_d(TAG, "Alarm list null so adding to head\n\r");
 #endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 		alarm_list = alarm;
 	} else {
 		next = alarm_list;
 
 		if(datetime_cmp(&alarm->datetime, &next->datetime) <= 0) {
+#if defined(SYS_LOG_LEVEL)
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 //			log_d(TAG, "Alarm should be first so inserting to head\n\r");
 #endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 			/*
 			 * Insert at head of list
 			 */
@@ -304,9 +327,13 @@ static void add_alarm_to_list(struct alarm_data *alarm)
 		count++;
 	}
 
+#if defined(SYS_LOG_LEVEL)
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	log_d(TAG, "Alarm count %d\n\r", count);
 #endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 #endif
 }
 
@@ -321,9 +348,13 @@ static s8 datetime_cmp(struct datetime *a, struct datetime *b)
 	 * Compare years
 	 */
 	if(a->year != b->year) {
+#if defined(SYS_LOG_LEVEL)
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 //		log_d(TAG, "Comparison on year %d %d\n\r", a->year, b->year);
 #endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 		return(a->year - b->year);
 	}
 
@@ -331,9 +362,13 @@ static s8 datetime_cmp(struct datetime *a, struct datetime *b)
 	 * Compare months
 	 */
 	if(a->month != b->month) {
+#if defined(SYS_LOG_LEVEL)
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 //		log_d(TAG, "Comparison on Month %d %d\n\r", a->month, b->month);
 #endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 		return(a->month - b->month);
 	}
 
@@ -341,9 +376,13 @@ static s8 datetime_cmp(struct datetime *a, struct datetime *b)
 	 * Compare day
 	 */
 	if(a->day != b->day) {
+#if defined(SYS_LOG_LEVEL)
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 //		log_d(TAG, "Comparison on day %d %d\n\r", a->day, b->day);
 #endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 		return(a->day - b->day);
 	}
 
@@ -351,9 +390,13 @@ static s8 datetime_cmp(struct datetime *a, struct datetime *b)
 	 * Compare hours
 	 */
 	if(a->hours != b->hours) {
+#if defined(SYS_LOG_LEVEL)
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 //		log_d(TAG, "Comparison on Hours %d %d\n\r", a->hours, b->hours);
 #endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 		return(a->hours - b->hours);
 	}
 
@@ -361,9 +404,13 @@ static s8 datetime_cmp(struct datetime *a, struct datetime *b)
 	 * Compare minutes
 	 */
 	if(a->minutes != b->minutes) {
+#if defined(SYS_LOG_LEVEL)
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 //		log_d(TAG, "Comparison on minutes %d %d\n\r", a->minutes, b->minutes);
 #endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 		return(a->minutes - b->minutes);
 	}
 
@@ -371,9 +418,13 @@ static s8 datetime_cmp(struct datetime *a, struct datetime *b)
 	 * Compare seconds
 	 */
 	if(a->seconds != b->seconds) {
+#if defined(SYS_LOG_LEVEL)
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 //		log_d(TAG, "Comparison on seconds %d %d\n\r", a->seconds, b->seconds);
 #endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 		return(a->seconds - b->seconds);
 	}
 
@@ -389,9 +440,13 @@ static void check_alarm()
 //	uint16_t                count = 0;
 	struct alarm_data *tmp_alarm;
 
+#if defined(SYS_LOG_LEVEL)
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 //	log_d(TAG, "check_alarm() Compare Current time %d:%d:%d\n\r",
 #endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 //		current_datetime.hours,
 //		current_datetime.minutes,
 //		current_datetime.seconds);
@@ -401,12 +456,16 @@ static void check_alarm()
 	 */
 	while (alarm_list && !finished) {
 		if(datetime_cmp(&current_datetime, &alarm_list->datetime) >= 0) {
+#if defined(SYS_LOG_LEVEL)
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 			log_d(TAG, "Alarm Expired - %d:%d:%d\n\r",
-#endif
 				alarm_list->datetime.hours,
 				alarm_list->datetime.minutes,
 				alarm_list->datetime.seconds);
+#endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 			/*
 			 * Remove the alarm from the Queue
 			 */
@@ -433,9 +492,13 @@ static void check_alarm()
 	tmp_alarm = alarm_list;
 	count = 0;
 	while(tmp_alarm) {
+#if defined(SYS_LOG_LEVEL)
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 		log_d(TAG, "alarm - %d:%d:%d\n\r",
 #endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 			tmp_alarm->datetime.hours,
 			tmp_alarm->datetime.minutes,
 			tmp_alarm->datetime.seconds);
@@ -443,10 +506,15 @@ static void check_alarm()
 		tmp_alarm = tmp_alarm->next;
 		count++;
 	}
+#if defined(SYS_LOG_LEVEL)
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	log_d(TAG, "Alarm count %d\n\r", count);
 #endif
-#endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
+
+#endif //  if 0
 }
 
 result_t rtc_get_current_datetime(struct datetime *dt)

@@ -146,9 +146,13 @@ void android_tasks(void)
 
 		if (error_code != USB_SUCCESS) {
 			if (error_code != USB_ENDPOINT_BUSY) {
-#if (LOG_LEVEL <= LOG_ERROR)
+#if defined(SYS_LOG_LEVEL)
+#if (SYS_LOG_LEVEL <= LOG_ERROR)
 				log_e(TAG, "Error trying to start read - %x\n\r", error_code);
 #endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 			}
 		} else {
 			receiver_busy = TRUE;
@@ -172,9 +176,13 @@ void android_tasks(void)
 				 * Rx Circular Buffer.
 				 */
 				if ((rx_buffer_count + size) >= RX_BUFFER_SIZE) {
-#if (LOG_LEVEL <= LOG_ERROR)
+#if defined(SYS_LOG_LEVEL)
+#if (SYS_LOG_LEVEL <= LOG_ERROR)
 					log_e(TAG, "Error Receive buffer overflow");
 #endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 				} else {
 					/*
 					 * We have space so copy received
@@ -190,9 +198,13 @@ void android_tasks(void)
 			} else {
 				//Error
 				receiver_busy = FALSE;
-#if (LOG_LEVEL <= LOG_ERROR)
+#if defined(SYS_LOG_LEVEL)
+#if (SYS_LOG_LEVEL <= LOG_ERROR)
 				log_e(TAG, "Error trying to complete read request %x\n\r", error_code);
 #endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 			}
 		}
 	}
@@ -204,13 +216,21 @@ void android_tasks(void)
 		/*
 		 * Transmitter is busy so check if it's finished its current write.
 		 */
+#if defined(SYS_LOG_LEVEL)
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 		log_d(TAG, "Transmitter is busy\n\r");
 #endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 		if (AndroidAppIsWriteComplete(device_handle, &error_code, &size) == TRUE) {
+#if defined(SYS_LOG_LEVEL)
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 			log_d(TAG, "USB TX Write complete\n\r");
 #endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 			transmitter_busy = FALSE;
 
 			if(tx_buffer_count == 0) {
@@ -221,14 +241,23 @@ void android_tasks(void)
 		}
 
 		if(error_code != USB_SUCCESS) {
-#if (LOG_LEVEL <= LOG_ERROR)
+#if defined(SYS_LOG_LEVEL)
+#if (SYS_LOG_LEVEL <= LOG_ERROR)
 			log_e(TAG, "USB TX Write not complete Error code 0x%x\n\r", error_code);
 #endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
+
 #ifdef SYS_ANDROID_RESET_ON_COMMS_ERROR
 			if (error_code == USB_ENDPOINT_UNRESOLVED_STATE) {
-#if (LOG_LEVEL <= LOG_ERROR)
+#if defined(SYS_LOG_LEVEL)
+#if (SYS_LOG_LEVEL <= LOG_ERROR)
 				log_e(TAG, "USB Android resetting on a comms error\n\r");
 #endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 				system_reset();
 			}
 #endif
@@ -248,9 +277,13 @@ void android_tasks(void)
 		}
 		error_code = AndroidAppWrite(device_handle, tx_buffer, numberToSend);
 		if(error_code != USB_SUCCESS) {
-#if (LOG_LEVEL <= LOG_ERROR)
+#if defined(SYS_LOG_LEVEL)
+#if (SYS_LOG_LEVEL <= LOG_ERROR)
 			log_e(TAG, "AndroidAppWrite returned error 0x%x\n\r", error_code);
 #endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 		}
 		transmitter_busy = TRUE;
 	}
@@ -331,9 +364,13 @@ static BOOL android_receive(uint8_t *id, uint8_t *data, uint16_t *data_size, uin
 	 * Check that the input buffer is big enough for received message
 	 */
 	if (msg_size > *data_size) {
-#if (LOG_LEVEL <= LOG_ERROR)
+#if defined(SYS_LOG_LEVEL)
+#if (SYS_LOG_LEVEL <= LOG_ERROR)
 		log_e(TAG, "Read received buffer size %d not big enough for %d\n\r",*data_size, rx_buffer_count);
 #endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 
 		/*
 		 * Remove this huge message from circular buffer. It will be
@@ -387,17 +424,25 @@ uint8_t android_transmit(uint8_t *buffer, uint8_t size)
 	uint16_t loop;
 	uint8_t *buffer_ptr;
 
-#if (DEBUG_FILE && (LOG_LEVEL <= LOG_INFO))
+#if defined(SYS_LOG_LEVEL)
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_INFO))
 	log_i(TAG, "android_transmit(%d bytes)\n\r", size);
 #endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 
 	/*
 	 * Check we have enough free space in Tx Circular buffer for message.
 	 */
 	if ( (tx_buffer_count + size) >= TX_BUFFER_SIZE) {
-#if (LOG_LEVEL <= LOG_ERROR)
+#if defined(SYS_LOG_LEVEL)
+#if (SYS_LOG_LEVEL <= LOG_ERROR)
 		log_e(TAG, "Buffer Full\n\r");
 #endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 		return (USB_EVENT_QUEUE_FULL);
 	}
 
@@ -431,9 +476,13 @@ static void process_msg_from_android(void)
 	data_size = (uint16_t)sizeof(data);
 	while (android_receive((uint8_t *)&id, (uint8_t*)&data, (uint16_t *)&data_size, &error_code)) {
 		if (error_code != USB_SUCCESS) {
-#if (LOG_LEVEL <= LOG_ERROR)
+#if defined(SYS_LOG_LEVEL)
+#if (SYS_LOG_LEVEL <= LOG_ERROR)
 			log_e(TAG, "android_receive raised an error %x\n\r", error_code);
 #endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 		}
 
 		/*

@@ -57,15 +57,23 @@ void _ISR __attribute__((__no_auto_psv__)) _U1RXInterrupt(void)
 #if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__) || defined(__dsPIC33EP256MU806__)
 {
 	uint8_t ch;
+#if defined(SYS_LOG_LEVEL)
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	log_d(TAG, "_U1RXInterrupt\n\r");
 #endif
+#else  //  defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  defined(SYS_LOG_LEVEL)
 	while (U1STAbits.URXDA) {
 		ch = U1RXREG;
 
+#if defined(SYS_LOG_LEVEL)
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 		log_d(TAG, "Rx*0x%x*\n\r", ch);
 #endif
+#else  //  defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  defined(SYS_LOG_LEVEL)
 	}
 
 	IFS0bits.U1RXIF = 0;
@@ -77,7 +85,8 @@ void _ISR __attribute__((__no_auto_psv__)) _U1RXInterrupt(void)
  *
  * \brief Initialisation function for serial logging
  *
- * Initialised the processor registers for serial logging on UART 1
+ * The system.h file should define serial port pin orientation, and include the 
+ * board file which defines the pins being used by the serial port.
  */
 void serial_logging_init(void)
 {
@@ -89,14 +98,23 @@ void serial_logging_init(void)
 	 * Serial Port pin configuration should be defined
 	 * in include file system.h
 	 */
-#ifdef USART_RX_ENABLE
+#ifdef SERIAL_LOGGING_RX_ENABLE
         SERIAL_LOGGING_RX_DDR = INPUT_PIN;
 	UART_1_RX = SERIAL_LOGGING_RX_PIN;
 	IEC0bits.U1RXIE = 1;
 #endif
+        /*
+         * The system.h file should define the Serial Logging pin orientation
+         * (either SYS_SERIAL_PORT_GndTxRx or SYS_SERIAL_PORT_GndRxTx) which is
+         * then used in the board header file included from the system.h file.
+         * The board file defines the pins used by the serial port here. 
+         */
+#if defined(SERIAL_LOGGING_TX_DDR)
         SERIAL_LOGGING_TX_DDR = OUTPUT_PIN;
 	SERIAL_LOGGING_TX = UART_1_TX;
-        
+#else
+#error Serial port orientation not defined in system.h
+#endif
 	U1MODE = 0x8800;
 	U1STA = 0x0410;
 
@@ -108,7 +126,15 @@ void serial_logging_init(void)
 	 * UxBRG = ((CLOCK/SERIAL_BAUD)/16) -1
 	 *
 	 */
+#if defined(SYS_SERIAL_LOGGING_BAUD)
+#if defined(SYS_CLOCK_FREQ)
 	U1BRG = ((SYS_CLOCK_FREQ / SYS_SERIAL_LOGGING_BAUD) / 16) - 1;
+#else
+#error system.h file should define the SYS_CLOCK_FREQ
+#endif
+#else
+#error system.h file should define the SYS_SERIAL_LOGGING_BAUD
+#endif
 
 #elif defined(__18F2680) || defined(__18F4585)
 	/*
@@ -200,13 +226,13 @@ void putch(char character)
 void es_printf(char *fmt, ...)
 {
 #if (SYS_LOG_LEVEL != NO_LOGGING)
-        result_t  rc;
+//        result_t  rc;
         char     *ptr;
         
         ptr = fmt;
         
         while(*ptr) {
-                rc = uart_tx_char(&serial_uart, *ptr++);
+//                rc = uart_tx_char(&serial_uart, *ptr++);
         }
 #endif
 }

@@ -29,9 +29,13 @@ void spi_init(void)
 {
 	uint8_t loop;
 
+#if defined(SYS_LOG_LEVEL)
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	log_d(TAG, "spi_init()\n\r");
 #endif
+#else   // if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif  // if defined(SYS_LOG_LEVEL)
 
 	/*
 	 * short delay before init SPI
@@ -41,6 +45,7 @@ void spi_init(void)
 	/*
 	 * Initialise the EEPROM Chip Select Pin
 	 */
+	// Todo - Check that this is defined and issue compiler error.
 	EEPROM_CS_PIN_DIRECTION = OUTPUT_PIN;
 	EEPROM_DeSelect
 

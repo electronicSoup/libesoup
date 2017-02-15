@@ -59,7 +59,13 @@ void idle_process_usb_event(USB_EVENT event);
  */
 void set_idle_state(void)
 {
+#if defined(SYS_LOG_LEVEL)
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_INFO))
 	LOG_I("Android state -> Idle\n\r");
+#endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 	android_state.process_msg = idle_process_msg;
 	android_state.main = idle_main;
 	android_state.process_usb_event = idle_process_usb_event;
@@ -74,7 +80,13 @@ void idle_process_msg(u8 cmd, void *data, u16 data_len)
 	if (cmd == APP_MSG_APP_CONNECT) {
 		ANDROID_SET_APPLICATION_CONNECTED_STATE
 	} else {
+#if defined(SYS_LOG_LEVEL)
+#if (SYS_LOG_LEVEL <= LOG_ERROR)
 		LOG_E("Android Connected State received Android message other then App connected 0x%x\n\r", cmd);
+#endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 	}
 }
 

@@ -73,9 +73,13 @@ result_t jobs_execute(void)
 
 	while(count) {
                 if(jobs[read_index].function) {
+#if defined(SYS_LOG_LEVEL)
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 //                        log_d(TAG, "Execute Job(%d)\n\r", read_index);
 #endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
                         function = jobs[read_index].function;
                         data     = jobs[read_index].data;
 
@@ -86,9 +90,13 @@ result_t jobs_execute(void)
 
                         function(data);
                 } else {
-#if (LOG_LEVEL <= LOG_ERROR)
+#if defined(SYS_LOG_LEVEL)
+#if (SYS_LOG_LEVEL <= LOG_ERROR)
                         log_e(TAG, "Bad job at %d\n\r", read_index);
 #endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
                         rc = ERR_GENERAL_ERROR;
                 }
 	}

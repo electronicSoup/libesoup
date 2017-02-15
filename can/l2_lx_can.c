@@ -64,14 +64,22 @@ result_t can_l2_init(can_baud_rate_t arg_baud_rate,
 
 	char *ifname = CAN_INTERFACE;
 
+#if defined(SYS_LOG_LEVEL)
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	log_d(TAG, "l2_can_init(%s)\n\r", CAN_INTERFACE);
 #endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
  
 	if((can_socket = socket(PF_CAN, SOCK_RAW, CAN_RAW)) < 0) {
-#if (LOG_LEVEL <= LOG_ERROR)
+#if defined(SYS_LOG_LEVEL)
+#if (SYS_LOG_LEVEL <= LOG_ERROR)
 		log_e(TAG, "Error while opening socket\n\r");
 #endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 		return(ERR_GENERAL_ERROR);
 	}
 
@@ -82,22 +90,34 @@ result_t can_l2_init(can_baud_rate_t arg_baud_rate,
 	addr.can_ifindex = ifr.ifr_ifindex; 
  
 	if(bind(can_socket, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
+#if defined(SYS_LOG_LEVEL)
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 		log_d(TAG, "Error binding socket\n\r");
 #endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 		return(ERR_GENERAL_ERROR);
 	}
 
 	result = pthread_create(&thread_id, NULL, create_read_thread, (void *)can_socket);
 	if(result != 0){
-#if (LOG_LEVEL <= LOG_ERROR)
+#if defined(SYS_LOG_LEVEL)
+#if (SYS_LOG_LEVEL <= LOG_ERROR)
 		log_e(TAG, "Failed to create read thead\n\r");
 #endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 		return(ERR_GENERAL_ERROR);
 	}
+#if defined(SYS_LOG_LEVEL)
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	log_d(TAG, "New Thread created\n\r");
 #endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 
 	pthread_detach(thread_id);
 	sched_yield();
@@ -115,9 +135,13 @@ result_t can_l2_tx_frame(can_frame *frame)
 {
 	int nbytes;
 
+#if defined(SYS_LOG_LEVEL)
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	log_d(TAG, "L2_CanTxMessage(0x%x)\n\r", frame->can_id);
 #endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 	if(can_status.bit_field.l2_status != L2_Connected)
 		return(ERR_CAN_NOT_CONNECTED);
 
@@ -130,9 +154,13 @@ result_t can_l2_tx_frame(can_frame *frame)
 	}
 
 	if(nbytes != sizeof(can_frame)){
-#if (LOG_LEVEL <= LOG_ERROR)
+#if defined(SYS_LOG_LEVEL)
+#if (SYS_LOG_LEVEL <= LOG_ERROR)
 		log_e(TAG, "Wrote %d bytes! Expected %d\n\r", nbytes, sizeof(can_frame));
 #endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 		return(ERR_GENERAL_ERROR);
 	}
 	
@@ -143,9 +171,13 @@ result_t can_l2_dispatch_reg_handler(can_l2_target_t *target)
 {
 	int loop;
 
+#if defined(SYS_LOG_LEVEL)
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	log_d(TAG, "sys_l2_can_dispatch_reg_handler() Mask 0x%x, Filter 0x%x\n\r", target->mask, target->filter);
 #endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 
 	/*
 	 * clean up the target in case the caller has included spurious bits
@@ -157,9 +189,13 @@ result_t can_l2_dispatch_reg_handler(can_l2_target_t *target)
 
 	for(loop = 0; loop < REGISTER_ARRAY_SIZE; loop++) {
 		if(registered[loop].bitField.used == FALSE) {
+#if defined(SYS_LOG_LEVEL)
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 			log_d(TAG, "Target stored at target %d\n\r", loop);
 #endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 			registered[loop].bitField.used = TRUE;
 			registered[loop].bitField.system = FALSE;
 			registered[loop].target.mask = target->mask;
@@ -186,17 +222,25 @@ void *create_read_thread(void *arg)
 		nbytes = read(s, &frame, sizeof(can_frame));
 
 		if (nbytes < 0) {
-#if (LOG_LEVEL <= LOG_ERROR)
+#if defined(SYS_LOG_LEVEL)
+#if (SYS_LOG_LEVEL <= LOG_ERROR)
 			log_e(TAG, "thread error in size of read data\n\r");
 #endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 			return((void *)NULL);
     		}
 
     		/* paranoid check ... */
     		if (nbytes < (int)sizeof(can_frame)) {
-#if (LOG_LEVEL <= LOG_ERROR)
+#if defined(SYS_LOG_LEVEL)
+#if (SYS_LOG_LEVEL <= LOG_ERROR)
 			log_e(TAG, "thread error in size of read data\n\r");
 #endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 			return((void *)NULL);
     		}
 

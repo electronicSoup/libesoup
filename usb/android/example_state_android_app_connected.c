@@ -44,9 +44,13 @@ void app_connected_process_usb_event(USB_EVENT event);
 
 void example_set_app_connected_state(void)
 {
+#if defined(SYS_LOG_LEVEL)
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	log_d(TAG, "State -> App_connected\n\r");
 #endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 
 	android_state.process_msg = app_connected_process_msg;
 	android_state.main = app_connected_main;
