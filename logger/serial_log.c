@@ -37,7 +37,11 @@
  * Definitions for the Transmit Circular buffer. Calls to putchar will load
  * up this circular buffer and the UASRT serial port will empty it.
  */
+#if defined(SYS_USART_TX_BUFFER_SIZE)
 static uint8_t tx_circular_buffer[SYS_USART_TX_BUFFER_SIZE];
+#else  // if defined(SYS_USART_TX_BUFFER_SIZE)
+#error system.h should define SYS_USART_TX_BUFFER_SIZE (see es_lib/examples/system.h)
+#endif // if defined(SYS_USART_TX_BUFFER_SIZE)
 
 static uint16_t tx_write_index = 0;
 static uint16_t tx_read_index = 0;
