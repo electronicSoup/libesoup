@@ -1,8 +1,8 @@
 /**
  *
- * \file es_lib/timers/timers.h
+ * \file es_lib/timers/sw_timers.h
  *
- * Timer function prototypes of the electronicSoup Cinnamon Bun
+ * Timer function prototypes
  *
  * Copyright 2014 John Whitmore <jwhitmore@electronicsoup.com>
  *
@@ -29,8 +29,8 @@
  * has the advantage that protocols written for the CinnamonBun can easily be
  * ported to the RaspberryPi platform.
  */
-#ifndef TIMERS_H
-#define TIMERS_H
+#ifndef SW_TIMERS_H
+#define SW_TIMERS_H
 
 /*
  * Timer definitions
@@ -163,7 +163,7 @@ typedef void (*expiry_function)(timer_t timer_id, union sigval);
     extern volatile BOOL timer_ticked;
 
     /*
-     * timer_init()
+     * sw_timer_init()
      *
      * This function should be called to initialise the timer functionality
      * of the electronicSoup CinnamonBun Library. It initialises all data
@@ -172,17 +172,17 @@ typedef void (*expiry_function)(timer_t timer_id, union sigval);
      * definition of SYS_NUMBER_OF_TIMERS in the example system.h file in the
      * es_lib directory.
      */
-    extern void timer_init(void);
+    extern void sw_timer_init(void);
 
     /*
-     * timer_tick()
+     * sw_timer_tick()
      *
      * This function should not be called directly but called with the
      * CHECK_TIMERS macro defined above. It should be called only when the
      * timer interrupt has fired for a timer tick. The period of the timer tick
      * is defined in core.h.
      */
-    extern void timer_tick(void);
+    extern void sw_timer_tick(void);
 
     /*
      * timer_isr
@@ -194,7 +194,7 @@ typedef void (*expiry_function)(timer_t timer_id, union sigval);
 #endif // MCP
 
 /*
- * timer_start()
+ * sw_timer_start()
  * 
  */
 /**
@@ -202,9 +202,8 @@ typedef void (*expiry_function)(timer_t timer_id, union sigval);
  *
  * @param in duration: duration of the timer in system ticks. @see SECONDS_TO_TICKS
  */
-extern result_t timer_start(uint16_t duration, expiry_function fn, union sigval data, es_timer *timer);
-extern result_t timer_cancel(es_timer *timer);
-extern result_t timer_cancel_all(void);
+extern result_t sw_timer_start(uint16_t duration, expiry_function fn, union sigval data, es_timer *timer);
+extern result_t sw_timer_cancel(es_timer *timer);
+extern result_t sw_timer_cancel_all(void);
 
-#endif
-
+#endif  // SW_TIMERS_H

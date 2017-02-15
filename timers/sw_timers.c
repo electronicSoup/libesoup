@@ -64,7 +64,7 @@
 #include "system.h"
 #include "es_lib/logger/serial_log.h"
 #include "es_lib/timers/hw_timers.h"
-#include "es_lib/timers/timers.h"
+#include "es_lib/timers/sw_timers.h"
 
 #ifdef ES_LINUX
 #include <stdlib.h>
@@ -138,14 +138,14 @@ void timer_isr(void)
 #endif // MCP
 
 /*
- * void timer_init(void)
+ * void sw_timer_init(void)
  *
  * Function to initialise the data structures for timers and start 
  * Timer_1 of the PIC 
  *
  */
 #ifdef MCP
-void timer_init(void)
+void sw_timer_init(void)
 {
 	uint8_t loop;
 
@@ -190,7 +190,7 @@ void timer_init(void)
 #endif // MCP
 
 /*
- * void timer_tick(void)
+ * void sw_timer_tick(void)
  *
  * Function periodically called to check the state of active timers and check
  * expiry of any of the timers. If a timer has expired after the current tick
@@ -198,7 +198,7 @@ void timer_init(void)
  *
  */
 #ifdef MCP
-void timer_tick(void)
+void sw_timer_tick(void)
 {
 	uint16_t active_timers;
 	uint8_t loop;
@@ -246,7 +246,7 @@ void timer_tick(void)
 #endif // MCP
 
 /*
- * result_t timer_start(uint16_t ticks,
+ * result_t sw_timer_start(uint16_t ticks,
  *                      expiry_function function,
  *                      union sigval data,
  *                      es_timer *timer)
@@ -280,7 +280,7 @@ void timer_tick(void)
  *          ERR_NO_RESOURCES    Error - No Free system timers available.
  *
  */
-result_t timer_start(uint16_t ticks,
+result_t sw_timer_start(uint16_t ticks,
 		     expiry_function function,
 		     union sigval data,
 		     es_timer *timer)
@@ -421,7 +421,7 @@ result_t timer_start(uint16_t ticks,
 }
 
 /*
- * result_t timer_cancel(es_timer *timer)
+ * result_t sw_timer_cancel(es_timer *timer)
  *
  * Function to cancel a running timer on the system.
  *
@@ -431,7 +431,7 @@ result_t timer_start(uint16_t ticks,
  * Return : SUCCESS
  *
  */
-result_t timer_cancel(es_timer *timer)
+result_t sw_timer_cancel(es_timer *timer)
 {
 #ifdef MCP
 	if(timer->status == ACTIVE) {
@@ -468,16 +468,16 @@ result_t timer_cancel(es_timer *timer)
 }
 
 /*
- * timer_cancel_all
+ * sw_timer_cancel_all
  */
-result_t timer_cancel_all(void)
+result_t sw_timer_cancel_all(void)
 {
 	uint8_t loop;
 	es_timer timer;
 
 #if defined(SYS_LOG_LEVEL)
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
-	log_d(TAG, "timer_cancel_all()\n\r");
+	log_d(TAG, "sw_timer_cancel_all()\n\r");
 #endif
 #else  //  defined(SYS_LOG_LEVEL)
 #error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
@@ -488,7 +488,7 @@ result_t timer_cancel_all(void)
 			timer.status = ACTIVE;
 			timer.timer_id = loop;
 
-			timer_cancel(&timer);
+			sw_timer_cancel(&timer);
 		}
 	}
 	return (SUCCESS);
