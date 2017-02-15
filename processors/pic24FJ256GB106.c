@@ -1,8 +1,9 @@
 #if defined(__PIC24FJ256GB106__)
 
-#include "system.h"
+//#include "system.h"
+#include <xc.h>
 
-_CONFIG1(JTAGEN_OFF & FWDTEN_ON & FWPSA_PR32 & WDTPS_PS1024 & WINDIS_OFF & ICS_PGx2)   // JTAG off, watchdog timer on
+_CONFIG1(JTAGEN_OFF & FWDTEN_OFF & FWPSA_PR32 & WDTPS_PS1024 & WINDIS_OFF & ICS_PGx2)   // JTAG off, watchdog timer off
 _CONFIG2(FNOSC_FRCPLL & POSCMOD_NONE & OSCIOFNC_ON & PLL_96MHZ_ON & PLLDIV_NODIV & DISUVREG_OFF)  // CLOCK 16000000
 
 
