@@ -1,8 +1,8 @@
-/**
+/*
  *
- * \file es_lib/timers/hw_timers.c
+ * es_lib/timers/hw_timers.c
  *
- * Hardware Timer functionalty for the electronicSoup Cinnamon Bun
+ * Hardware Timer functionality for the electronicSoup Cinnamon Bun
  *
  * Copyright 2016 John Whitmore <jwhitmore@electronicsoup.com>
  *
@@ -28,28 +28,68 @@
 #include "es_lib/logger/serial_log.h"
 #include "es_lib/timers/hw_timers.h"
 
+/*
+ * Local definitions
+ */
+
+/*
+ * constants:
+ */
+/*
+ * Definitions for the status of a hardware timer
+ */
 #define TIMER_UNUSED  0b00
 #define TIMER_RUNNING 0b01
 #define TIMER_PAUSED  0b10
 
+/*
+ * Data structures:
+ */
+/*
+ * Private structure to manage the hardware timers of the micro controller
+ * should not be used outside this file.
+ */
 struct hw_timer_data {
-	uint8_t            status:2;
-	uint8_t            repeat:1;
+	uint8_t       status:2;
+	uint8_t       repeat:1;
 	ty_time_units units;
-	uint16_t           time;
-	uint16_t           repeats;
-	uint16_t           remainder;
+	uint16_t      time;
+	uint16_t      repeats;
+	uint16_t      remainder;
 	void        (*expiry_function)(void *data);
 	void         *data;
 };
 
+/*
+ * Private array managing the hardware timers in the micro-controller. The size
+ * is defined by the constant NUMBER_OF_TIMERS which should be defined in a
+ * processor header file, located in es_lib/processors.
+ * 
+ * The processor header file should be included in a board header file 
+ * "es_lib/boards/..." which is included by the system.h configuration header
+ * file. So the system.h file defines the board being used and the board file
+ * defines the micro controller being used. The microcontroller ultimately 
+ * dictates the number of hardware timers.
+ */
 static struct hw_timer_data timers[NUMBER_HW_TIMERS];
 
+/*
+ * Function definitions:
+ */
 static result_t  start_timer(uint8_t timer, ty_time_units units, uint16_t time, uint8_t repeat, void (*expiry_function)(void *), void *data);
 static void      set_clock_divide(uint8_t timer, uint16_t clock_divide);
+static void      check_timer(uint8_t timer);
 
-void      check_timer(uint8_t timer);
+/*
+ * The Code:
+ */
 
+/*
+ * The function simply clears the Register flags associated with the interrupt
+ * and calls the local static function check_timer() passing it the identifier
+ * for the expired timer. The check_timer() function does the main processing
+ * for all expired timers.
+ */
 #if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__) || defined(__dsPIC33EP256MU806__)
 void __attribute__((__interrupt__, __no_auto_psv__)) _T1Interrupt(void)
 {
@@ -61,6 +101,12 @@ void __attribute__((__interrupt__, __no_auto_psv__)) _T1Interrupt(void)
 }
 #endif
 
+/*
+ * The function simply clears the Register flags associated with the interrupt
+ * and calls the local static function check_timer() passing it the identifier
+ * for the expired timer. The check_timer() function does the main processing
+ * for all expired timers.
+ */
 #if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__) || defined(__dsPIC33EP256MU806__)
 void __attribute__((__interrupt__, __no_auto_psv__)) _T2Interrupt(void)
 {
@@ -72,6 +118,12 @@ void __attribute__((__interrupt__, __no_auto_psv__)) _T2Interrupt(void)
 }
 #endif
 
+/*
+ * The function simply clears the Register flags associated with the interrupt
+ * and calls the local static function check_timer() passing it the identifier
+ * for the expired timer. The check_timer() function does the main processing
+ * for all expired timers.
+ */
 #if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__) || defined(__dsPIC33EP256MU806__)
 void __attribute__((__interrupt__, __no_auto_psv__)) _T3Interrupt(void)
 {
@@ -83,6 +135,12 @@ void __attribute__((__interrupt__, __no_auto_psv__)) _T3Interrupt(void)
 }
 #endif
 
+/*
+ * The function simply clears the Register flags associated with the interrupt
+ * and calls the local static function check_timer() passing it the identifier
+ * for the expired timer. The check_timer() function does the main processing
+ * for all expired timers.
+ */
 #if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__) || defined(__dsPIC33EP256MU806__)
 void __attribute__((__interrupt__, __no_auto_psv__)) _T4Interrupt(void)
 {
@@ -94,6 +152,12 @@ void __attribute__((__interrupt__, __no_auto_psv__)) _T4Interrupt(void)
 }
 #endif
 
+/*
+ * The function simply clears the Register flags associated with the interrupt
+ * and calls the local static function check_timer() passing it the identifier
+ * for the expired timer. The check_timer() function does the main processing
+ * for all expired timers.
+ */
 #if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__) || defined(__dsPIC33EP256MU806__)
 void __attribute__((__interrupt__, __no_auto_psv__)) _T5Interrupt(void)
 {
@@ -105,14 +169,20 @@ void __attribute__((__interrupt__, __no_auto_psv__)) _T5Interrupt(void)
 }
 #endif
 
+/*
+ */
 void hw_timer_init(void)
 {
 	uint8_t timer;
 
 	for(timer = 0; timer < NUMBER_HW_TIMERS; timer++) {
+#if defined(SYS_LOG_LEVEL)
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
                 log_d(TAG, "Initialise timer 0x%x\n\r", timer);
 #endif
+#else  //  defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  defined(SYS_LOG_LEVEL)
 		timers[timer].status = TIMER_UNUSED;
 		timers[timer].repeat = 0;
 		timers[timer].time = 0;
@@ -142,24 +212,21 @@ void hw_timer_init(void)
 #endif
 }
 
-/**
+/*
  * hw_timer_start returns the id of the started timer.
- *
- * @param units
- * @param time
- * @param repeat
- * @param expiry_function
- * @param data
- * @return Timer started or BAD_TIMER on an error (No free timers)
  */
 uint8_t hw_timer_start(ty_time_units units, uint16_t time, uint8_t repeat, void (*expiry_function)(void *), void *data)
 {
 	result_t rc;
 	uint8_t       timer;
 
+#if defined(SYS_LOG_LEVEL)
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	log_d(TAG, "hw_timer_start()\n\r");
 #endif
+#else  //  defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  defined(SYS_LOG_LEVEL)
 	/*
 	 * Find a free timer
 	 */
@@ -172,24 +239,34 @@ uint8_t hw_timer_start(ty_time_units units, uint16_t time, uint8_t repeat, void 
 			if(rc == SUCCESS) {
 				return(timer);
 			} else {
-#if (LOG_LEVEL <= LOG_ERROR)
+#if defined(SYS_LOG_LEVEL)
+#if (SYS_LOG_LEVEL <= LOG_ERROR)
 				log_e(TAG, "Failed to start HW Timer rc 0x%x\n\r", rc);
 #endif
+#else  //  defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  defined(SYS_LOG_LEVEL)
                                 return(BAD_TIMER);
 			}
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 		} else {
+#if defined(SYS_LOG_LEVEL)
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
                         log_d(TAG, "Timer Busy\n\r");
 #endif
-#endif
+#else  //  defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  defined(SYS_LOG_LEVEL)
                 }
 		timer++;
 //	}
 
-#if (LOG_LEVEL <= LOG_ERROR)
+#if defined(SYS_LOG_LEVEL)
+#if (SYS_LOG_LEVEL <= LOG_ERROR)
 	log_e(TAG, "Failed to start the HW Timer\n\r");
 #endif
+#else  //  defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  defined(SYS_LOG_LEVEL)
 	return(BAD_TIMER);
 }
 
@@ -199,9 +276,13 @@ result_t hw_timer_restart(uint8_t timer, ty_time_units units, uint16_t time, uin
 		return(hw_timer_start(units, time, repeat, expiry_function, data));
 	}
 	if(timer >= NUMBER_HW_TIMERS) {
-#if (LOG_LEVEL <= LOG_ERROR)
+#if defined(SYS_LOG_LEVEL)
+#if (SYS_LOG_LEVEL <= LOG_ERROR)
 		log_e(TAG, "Bad time passed to hw_timer_restart()\n\r!");
 #endif
+#else  //  defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  defined(SYS_LOG_LEVEL)
 		return(ERR_BAD_INPUT_PARAMETER);
 	}
 
@@ -211,16 +292,24 @@ result_t hw_timer_restart(uint8_t timer, ty_time_units units, uint16_t time, uin
 result_t hw_timer_pause(uint8_t timer)
 {
 	if(timer >= NUMBER_HW_TIMERS) {
-#if (LOG_LEVEL <= LOG_ERROR)
+#if defined(SYS_LOG_LEVEL)
+#if (SYS_LOG_LEVEL <= LOG_ERROR)
 		log_e(TAG, "Bad timer passed to hw_timer_pause(0x%x)\n\r!", timer);
 #endif
+#else  //  defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  defined(SYS_LOG_LEVEL)
 		return(ERR_BAD_INPUT_PARAMETER);
 	}
 
 	if(timers[timer].status == TIMER_UNUSED) {
-#if (LOG_LEVEL <= LOG_ERROR)
+#if defined(SYS_LOG_LEVEL)
+#if (SYS_LOG_LEVEL <= LOG_ERROR)
 		log_e(TAG, "Timer passed to hw_timer_pause() is NOT in use\n\r");
 #endif
+#else  //  defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  defined(SYS_LOG_LEVEL)
 		return(ERR_BAD_INPUT_PARAMETER);
 	}
 
@@ -266,9 +355,13 @@ result_t hw_timer_pause(uint8_t timer)
 #endif
 
         default:
-#if (LOG_LEVEL <= LOG_ERROR)
+#if defined(SYS_LOG_LEVEL)
+#if (SYS_LOG_LEVEL <= LOG_ERROR)
                 log_e(TAG, "Unknown Timer\n\r");
 #endif
+#else  //  defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  defined(SYS_LOG_LEVEL)
                 break;
 	}
 
@@ -289,9 +382,13 @@ void hw_timer_cancel(uint8_t timer)
                 timers[timer].repeats = (uint16_t)0;
                 timers[timer].remainder = (uint16_t)0;
         } else {
-#if (LOG_LEVEL <= LOG_ERROR)
+#if defined(SYS_LOG_LEVEL)
+#if (SYS_LOG_LEVEL <= LOG_ERROR)
                 log_e(TAG, "Bad timer passed to hw_timer_cancel(0x%x)\n\r", timer);
 #endif
+#else  //  defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  defined(SYS_LOG_LEVEL)
         }
 }
 
@@ -331,27 +428,33 @@ static result_t start_timer(uint8_t timer, ty_time_units units, uint16_t time, u
 {
 	uint32_t ticks = 0;
 
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
-//	log_d(TAG, "start_timer()\n\r");
-#endif
 	if(timer >= NUMBER_HW_TIMERS) {
-#if (LOG_LEVEL <= LOG_ERROR)
+#if defined(SYS_LOG_LEVEL)
+#if (SYS_LOG_LEVEL <= LOG_ERROR)
                 log_e(TAG, "Bad time passed to start_timer(0x%x)\n\r", timer);
 #endif
+#else  //  defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  defined(SYS_LOG_LEVEL)
                 return(ERR_BAD_INPUT_PARAMETER);
         }
 
 	switch(units) {
 		case uSeconds:
 			set_clock_divide(timer, 1);
+#if defined(SYS_CLOCK_FREQ)
 #if defined(__18F4585) || defined(__18F2680)
                         ticks = (uint32_t) ((uint32_t) (((uint32_t) SYS_CLOCK_FREQ / 4) / 1000000) * time);
 #else
 			ticks = (uint32_t) ((uint32_t) (((uint32_t) SYS_CLOCK_FREQ) / 8000000) * time);
 #endif
+#else
+#error system.h file should define the SYS_CLOCK_FREQ
+#endif
 			break;
 
 		case mSeconds:
+#if defined(SYS_CLOCK_FREQ)
 #if defined(__18F4585)  || defined(__18F2680)
 			set_clock_divide(timer, 4);
 			ticks = (uint32_t) ((uint32_t) (((uint32_t)(SYS_CLOCK_FREQ / 4)) / 4000) * time);
@@ -359,9 +462,13 @@ static result_t start_timer(uint8_t timer, ty_time_units units, uint16_t time, u
 			set_clock_divide(timer, 64);
 			ticks = (uint32_t) ((uint32_t) (((uint32_t) SYS_CLOCK_FREQ) / 64000 ) * time);
 #endif
+#else
+#error system.h file should define the SYS_CLOCK_FREQ
+#endif
 			break;
 
 		case Seconds:
+#if defined(SYS_CLOCK_FREQ)
 #if defined(__18F4585)  || defined(__18F2680)
                         if(timer == TIMER_0) {
                                 set_clock_divide(timer, 64);
@@ -370,20 +477,31 @@ static result_t start_timer(uint8_t timer, ty_time_units units, uint16_t time, u
                                 set_clock_divide(timer, 8);
                                 ticks = (uint32_t) ((uint32_t) (((uint32_t) SYS_CLOCK_FREQ / 4) / 8) * time);
                         } else {
-#if (LOG_LEVEL <= LOG_ERROR)
+#if defined(SYS_LOG_LEVEL)
+#if (SYS_LOG_LEVEL <= LOG_ERROR)
                                 log_e(TAG, "Unknown Timers\n\r");
 #endif
+#else  //  defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  defined(SYS_LOG_LEVEL)
                         }
 #else
 			set_clock_divide(timer, 256);
 			ticks = (uint32_t) ((uint32_t) (((uint32_t) SYS_CLOCK_FREQ) / 256) * time);
 #endif
+#else
+#error system.h file should define the SYS_CLOCK_FREQ
+#endif
 			break;
 
 		default:
-#if (LOG_LEVEL <= LOG_ERROR)
+#if defined(SYS_LOG_LEVEL)
+#if (SYS_LOG_LEVEL <= LOG_ERROR)
 			log_e(TAG, "Unknown Timer Units\n\r");
 #endif
+#else  //  defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  defined(SYS_LOG_LEVEL)
 			return(ERR_BAD_INPUT_PARAMETER);
 			break;
 	}
@@ -399,10 +517,13 @@ static result_t start_timer(uint8_t timer, ty_time_units units, uint16_t time, u
 		timers[timer].repeats         = (uint16_t)((ticks >> 16) & 0xffff);
 		timers[timer].remainder       = (uint16_t)(ticks & 0xffff);
 
+#if defined(SYS_LOG_LEVEL)
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 //                log_d(TAG, "Ticks 0x%lx, Repeats 0x%x, remainder 0x%x\n\r", ticks, timers[timer].repeats, timers[timer].remainder);
 #endif
-//                printf("Ticks 0x%lx, Repeats 0x%x, remainder 0x%x\n\r", ticks, timers[timer].repeats, timers[timer].remainder);
+#else  //  defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  defined(SYS_LOG_LEVEL)
 		check_timer(timer);
 
                 return(SUCCESS);
@@ -413,9 +534,13 @@ static result_t start_timer(uint8_t timer, ty_time_units units, uint16_t time, u
 
 static void set_clock_divide(uint8_t timer, uint16_t clock_divide)
 {
+#if defined(SYS_LOG_LEVEL)
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 //	log_d(TAG, "set_clock_divide()\n\r");
 #endif
+#else  //  defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  defined(SYS_LOG_LEVEL)
 
 	switch(timer) {
 #if defined(__18F4585) || defined(__18F2680)
@@ -442,9 +567,13 @@ static void set_clock_divide(uint8_t timer, uint16_t clock_divide)
                         } else if(clock_divide == 256) {
                                 T0CONbits.T0PS = 0x07;   // Divide by 256
                         } else {
-#if (LOG_LEVEL <= LOG_ERROR)
+#if defined(SYS_LOG_LEVEL)
+#if (SYS_LOG_LEVEL <= LOG_ERROR)
                                 log_e(TAG, "Unknown divide\n\r");
 #endif
+#else  //  defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  defined(SYS_LOG_LEVEL)
                         }
                 }
                 break;
@@ -461,9 +590,13 @@ static void set_clock_divide(uint8_t timer, uint16_t clock_divide)
                 } else if(clock_divide == 8) {
                         T1CONbits.T1CKPS = 0x03;   // Divide by 8
                 } else {
-#if (LOG_LEVEL <= LOG_ERROR)
+#if defined(SYS_LOG_LEVEL)
+#if (SYS_LOG_LEVEL <= LOG_ERROR)
                         log_e(TAG, "Unknow divide\n\r");
 #endif
+#else  //  defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  defined(SYS_LOG_LEVEL)
                 }
                 break;
 #endif
@@ -483,9 +616,13 @@ static void set_clock_divide(uint8_t timer, uint16_t clock_divide)
                         T1CONbits.TCKPS1 = 1; // Divide by 256
                         T1CONbits.TCKPS0 = 1;
                 } else {
-#if (LOG_LEVEL <= LOG_ERROR)
+#if defined(SYS_LOG_LEVEL)
+#if (SYS_LOG_LEVEL <= LOG_ERROR)
                         log_e(TAG, "Bad clock divider!\n\r");
 #endif
+#else  //  defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  defined(SYS_LOG_LEVEL)
                 }
                 break;
 #endif
@@ -505,9 +642,13 @@ static void set_clock_divide(uint8_t timer, uint16_t clock_divide)
                         T2CONbits.TCKPS1 = 1; // Divide by 256
                         T2CONbits.TCKPS0 = 1;
                 } else {
-#if (LOG_LEVEL <= LOG_ERROR)
+#if defined(SYS_LOG_LEVEL)
+#if (SYS_LOG_LEVEL <= LOG_ERROR)
                         log_e(TAG, "Bad clock divider!\n\r");
 #endif
+#else  //  defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  defined(SYS_LOG_LEVEL)
                 }
                 break;
 #endif
@@ -527,9 +668,13 @@ static void set_clock_divide(uint8_t timer, uint16_t clock_divide)
                         T3CONbits.TCKPS1 = 1; // Divide by 256
                         T3CONbits.TCKPS0 = 1;
                 } else {
-#if (LOG_LEVEL <= LOG_ERROR)
+#if defined(SYS_LOG_LEVEL)
+#if (SYS_LOG_LEVEL <= LOG_ERROR)
                         log_e(TAG, "Bad clock divider!\n\r");
 #endif
+#else  //  defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  defined(SYS_LOG_LEVEL)
                 }
                 break;
 #endif
@@ -549,9 +694,13 @@ static void set_clock_divide(uint8_t timer, uint16_t clock_divide)
                         T4CONbits.TCKPS1 = 1; // Divide by 256
                         T4CONbits.TCKPS0 = 1;
                 } else {
-#if (LOG_LEVEL <= LOG_ERROR)
+#if defined(SYS_LOG_LEVEL)
+#if (SYS_LOG_LEVEL <= LOG_ERROR)
                         log_e(TAG, "Bad clock divider!\n\r");
 #endif
+#else  //  defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  defined(SYS_LOG_LEVEL)
                 }
                 break;
 #endif
@@ -571,23 +720,31 @@ static void set_clock_divide(uint8_t timer, uint16_t clock_divide)
                         T5CONbits.TCKPS1 = 1; // Divide by 256
                         T5CONbits.TCKPS0 = 1;
                 } else {
-#if (LOG_LEVEL <= LOG_ERROR)
+#if defined(SYS_LOG_LEVEL)
+#if (SYS_LOG_LEVEL <= LOG_ERROR)
                         log_e(TAG, "Bad clock divider!\n\r");
 #endif
+#else  //  defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  defined(SYS_LOG_LEVEL)
                 }
                 break;
 #endif
 
         default:
-#if (LOG_LEVEL <= LOG_ERROR)
+#if defined(SYS_LOG_LEVEL)
+#if (SYS_LOG_LEVEL <= LOG_ERROR)
                 log_e(TAG, "Unknown Timer\n\r");
 #endif
+#else  //  defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  defined(SYS_LOG_LEVEL)
                 break;
 
 	}
 }
 
-void check_timer(uint8_t timer)
+static void check_timer(uint8_t timer)
 {
 #if defined(__18F4585)
         uint16_t           remainder;
@@ -596,9 +753,13 @@ void check_timer(uint8_t timer)
 	void        (*expiry)(void *data);
 	void         *data;
 #endif
+#if defined(SYS_LOG_LEVEL)
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 //	log_d(TAG, "check_timer(%d) repeats 0x%x, remainder 0x%x\n\r", timer, timers[timer].repeats, timers[timer].remainder);
 #endif
+#else  //  defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  defined(SYS_LOG_LEVEL)
 
 	if(timers[timer].repeats) {
 		switch (timer) {
@@ -671,19 +832,31 @@ void check_timer(uint8_t timer)
 #endif
 
                 default:
-#if (LOG_LEVEL <= LOG_ERROR)
+#if defined(SYS_LOG_LEVEL)
+#if (SYS_LOG_LEVEL <= LOG_ERROR)
                         log_e(TAG, "Unknown Timer\n\r");
 #endif
+#else  //  defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  defined(SYS_LOG_LEVEL)
                         break;
 		}
 		timers[timer].repeats--;
+#if defined(SYS_LOG_LEVEL)
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
   //              log_d(TAG, "After Repeats %d\n\r", timers[timer].repeats);
 #endif
+#else  //  defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  defined(SYS_LOG_LEVEL)
 	} else if(timers[timer].remainder) {
+#if defined(SYS_LOG_LEVEL)
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
                 log_d(TAG, "Remainder %d\n\r", timers[timer].remainder);
 #endif
+#else  //  defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  defined(SYS_LOG_LEVEL)
 		switch (timer) {
 #if defined(__18F4585)
                 case TIMER_0:
@@ -756,9 +929,13 @@ void check_timer(uint8_t timer)
 #endif
 
                 default:
-#if (LOG_LEVEL <= LOG_ERROR)
+#if defined(SYS_LOG_LEVEL)
+#if (SYS_LOG_LEVEL <= LOG_ERROR)
                         log_e(TAG, "Unknown Timer\n\r");
 #endif
+#else  //  defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  defined(SYS_LOG_LEVEL)
                         break;
 		}
 		timers[timer].remainder = 0;
@@ -770,9 +947,13 @@ void check_timer(uint8_t timer)
 
 		if(timers[timer].repeat) {
 			start_timer(timer, timers[timer].units, timers[timer].time, timers[timer].repeat, timers[timer].expiry_function, timers[timer].data);
-#if (LOG_LEVEL <= LOG_ERROR)
+#if defined(SYS_LOG_LEVEL)
+#if (SYS_LOG_LEVEL <= LOG_ERROR)
                         log_e(TAG, "XC8 can't call recursive function, No repeat\n\r");
 #endif
+#else  //  defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  defined(SYS_LOG_LEVEL)
 		} else {
 			timers[timer].status = TIMER_UNUSED;
 //			timers[timer].repeat = 0;
@@ -783,11 +964,13 @@ void check_timer(uint8_t timer)
 		}
 
 		if(expiry) {
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+#if defined(SYS_LOG_LEVEL)
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
                         log_d(TAG, "Call expiry\n\r")
 #endif
-#endif
+#else  //  defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  defined(SYS_LOG_LEVEL)
                         expiry(data);
                 }
 #elif defined(__18F4585)
