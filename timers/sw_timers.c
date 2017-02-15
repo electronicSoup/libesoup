@@ -1,6 +1,6 @@
-/**
+/*
  *
- * \file es_lib/timers/timers.c
+ * file es_lib/timers/timers.c
  *
  * Timer functionalty for the electronicSoup Cinnamon Bun
  *
@@ -347,18 +347,11 @@ result_t sw_timer_start(uint16_t ticks,
 #error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
 #endif //  defined(SYS_LOG_LEVEL)
 	return(ERR_NO_RESOURCES);
+
 #elif defined(ES_LINUX)
 	struct itimerspec its;
 	struct sigevent action;
 	int ret;
-
-#if defined(SYS_LOG_LEVEL)
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
-//	log_d(TAG, "start_timer(%d) 5ms Ticks\n\r", duration);
-#endif
-#else  //  defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif //  defined(SYS_LOG_LEVEL)
 
 	if(timer->status == ACTIVE) {
 #if defined(SYS_LOG_LEVEL)
