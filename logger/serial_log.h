@@ -1,6 +1,6 @@
 /**
  *
- * \file es_lib/logger/serial_port.h
+ * \file es_lib/logger/serial_log.h
  *
  * Definitions for configuration of the Serial Port
  *
@@ -19,8 +19,8 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  *
  */
-#ifndef SERIAL_PORT_H
-#define SERIAL_PORT_H
+#ifndef SERIAL_LOG_H
+#define SERIAL_LOG_H
 
 /*
  *  serial_init()
@@ -53,4 +53,4 @@ extern void putch(char);
 
 #endif
 
-#endif // SERIAL_PORT_H
+#endif // SERIAL_LOG_H
