@@ -29,8 +29,8 @@
  *******************************************************************************
  *
  */
-#ifndef _HW_TIMERS
-#define _HW_TIMERS
+#ifndef _HW_TIMERS_H
+#define _HW_TIMERS_H
 
 /**
  * \brief Dummy timer identifier for a non existent timer.
@@ -99,7 +99,7 @@ extern void     hw_timer_cancel(uint8_t timer);
  */
 extern void     hw_timer_cancel_all();
 
-#endif // _HW_TIMERS
+#endif // _HW_TIMERS_H
 
 /**
  * @}
