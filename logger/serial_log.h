@@ -35,11 +35,12 @@
  *
  * for example : #define SERIAL_BAUD 19200
  *
- * And either : #define SERIAL_PORT_GndTxRx or #define SERIAL_PORT_GndRxTx
+ * And either : #define SYS_SERIAL_PORT_GndTxRx or #define SYS_SERIAL_PORT_GndRxTx
  *
  */
 #if defined(MCP)
-extern void serial_init(void);
+extern void serial_logging_init(void);
+extern void es_printf(char *s, ...);
 
 /*
  * The PIC18 Processors process the serial Interrupt loading up the TXREG
