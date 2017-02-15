@@ -1,6 +1,6 @@
 /**
  *
- * @file es_lib/example_system.h
+ * @file es_lib/example/system.h
  *
  * @author John Whitmore
  *
@@ -13,16 +13,16 @@
  * Copyright 2015 John Whitmore <jwhitmore@electronicsoup.com>
  *
  *   This program is free software: you can redistribute it and/or modify
- *   it under the terms of the GNU General Public License as published by
+ *   it under the terms of the GNU Lesser General Public License as published by
  *   the Free Software Foundation, either version 3 of the License, or
  *   (at your option) any later version.
  *
  *   This program is distributed in the hope that it will be useful,
  *   but WITHOUT ANY WARRANTY; without even the implied warranty of
  *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *   GNU General Public License for more details.
+ *   GNU Lesser General Public License for more details.
  *
- *   You should have received a copy of the GNU General Public License
+ *   You should have received a copy of the GNU Lesser General Public License
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
@@ -36,12 +36,12 @@
  * pins use Microchip peripheral select functionality to configure which pin is
  * the Receive pin and which is the Transmit.
  *
- * There are two valid settings SERIAL_PORT_GndTxRx or SERIAL_PORT_GndRXTx 
+ * There are two valid settings SYS_SERIAL_PORT_GndTxRx or SERIAL_PORT_GndRXTx 
  * 
- * Default : SERIAL_PORT_GndRxTx
+ * Default : SYS_SERIAL_PORT_GndRxTx
  */
-//#define SERIAL_PORT_GndTxRx
-#define SERIAL_PORT_GndRxTx
+//#define SYS_SERIAL_PORT_GndTxRx
+#define SYS_SERIAL_PORT_GndRxTx
 
 /*
  * Include a board file
@@ -60,22 +60,22 @@
  * @brief The required Instruction clock frequency of the device. 
  * 
  * The actual Hardware clock frequency is defined by the MACRO CRYSTAL_FREQ in
- * core.h. That constant is used in conjunction with this required CLOCK_FREQ 
+ * core.h. That constant is used in conjunction with this required SYS_CLOCK_FREQ 
  * in the function clock_init() to set the desired frequency with the PLL.
  *  
  * The function clock_init() has to be called on entry to main() to 
  * initialise the device to this clock frequency.
  */
 #if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__)
-#define CLOCK_FREQ 16000000     // 8MHz
+#define SYS_CLOCK_FREQ 16000000     // 8MHz
 #elif defined(__dsPIC33EP256MU806__)
-//#define CLOCK_FREQ 8000000     // 8MHz
-#define CLOCK_FREQ 60000000    // 60MHz
+//#define SYS_CLOCK_FREQ 8000000     // 8MHz
+#define SYS_CLOCK_FREQ 60000000    // 60MHz
 #elif defined(__18F4585)
-#define CLOCK_FREQ 16000000     // 8MHz
+#define SYS_CLOCK_FREQ 16000000     // 8MHz
 #endif
-#define CLOCK_FREQ 8000000     // 8MHz
-//#define CLOCK_FREQ 60000000    // 60MHz
+#define SYS_CLOCK_FREQ 8000000     // 8MHz
+//#define SYS_CLOCK_FREQ 60000000    // 60MHz
 
 /**
  * @brief The size of the Transmit buffer to be used by the Serial Logging port.
@@ -84,7 +84,7 @@
  * Default set to 300 Bytes as the serial port should be used for
  * relatively short debug messages and memory is limited.
  */
-//#define USART_TX_BUFFER_SIZE 300
+//#define SYS_USART_TX_BUFFER_SIZE 300
 
 /**
  * @brief Baud rate of the serial logging port
@@ -96,7 +96,7 @@
  * 
  * Default set to 19k2
  */
-#define SERIAL_LOGGING_BAUD 19200
+#define SYS_SERIAL_LOGGING_BAUD 19200
 
 /**
  * @brief Physical Pin configuration of the Serial Logging port.
@@ -105,12 +105,12 @@
  * pins use Microchip peripheral select functionality to configure which pin is
  * the Receive pin and which is the Transmit.
  *
- * There are two valid settings SERIAL_PORT_GndTxRx or SERIAL_PORT_GndRXTx 
+ * There are two valid settings SYS_SERIAL_PORT_GndTxRx or SERIAL_PORT_GndRXTx 
  * 
- * Default : SERIAL_PORT_GndRxTx
+ * Default : SYS_SERIAL_PORT_GndRxTx
  */
-//#define SERIAL_PORT_GndTxRx
-#define SERIAL_PORT_GndRxTx
+//#define SYS_SERIAL_PORT_GndTxRx
+#define SYS_SERIAL_PORT_GndRxTx
 
 /**
  * @brief Serial logging level
@@ -121,7 +121,7 @@
  * expect a logging level to be defined and a #define of "DEBUG_FILE" at the 
  * top of the file for logging to be enabled.
  */
-#define LOG_LEVEL LOG_DEBUG
+#define SYS_LOG_LEVEL LOG_DEBUG
 
 /**
  * @brief Number of timers available in the system.
@@ -150,30 +150,30 @@
  * Default : Switch is commented out assuming timer functionality not included
  * in project.
  */
-#define NUMBER_OF_TIMERS 20     // Default disabled
+#define SYS_NUMBER_OF_TIMERS 20     // Default disabled
 
 /*
  * System jobs
  */
-#define NUMBER_OF_JOBS 10
+#define SYS_NUMBER_OF_JOBS 10
 
-#define UART_TX_BUFFER_SIZE                    64
-#define MODBUS_RX_BUFFER_SIZE                  256
-#define MODBUS_RESPONSE_TIMEOUT                SECONDS_TO_TICKS(1)
-#define MODBUS_RESPONSE_BROADCAST_TIMEOUT      MILLI_SECONDS_TO_TICKS(500)
+#define SYS_UART_TX_BUFFER_SIZE                    64
+#define SYS_MODBUS_RX_BUFFER_SIZE                  256
+#define SYS_MODBUS_RESPONSE_TIMEOUT                SECONDS_TO_TICKS(1)
+#define SYS_MODBUS_RESPONSE_BROADCAST_TIMEOUT      MILLI_SECONDS_TO_TICKS(500)
 /*
- * CAN Definitions
+ * SYS_CAN Definitions
  */
 /**
- * @brief CAN Bus Enable
+ * @brief SYS_CAN Bus Enable
  *
  * Switch to enable CAN Bus functionality. There are more specific switches for
  * various aspects of the CAN Bus functionality, of the es_lib, but this is
  * the global switch for CAN Bus.
  */
-#define CAN                    // Default Disabled
+#define SYS_CAN                    // Default Disabled
 
-#ifdef CAN
+#ifdef SYS_CAN
 /**
  * @brief Number of CAN Bus Frame handlers.
  *
@@ -182,7 +182,7 @@
  * interested in one CAN Identifier then this array size can be limited to a
  * single entry.
  */
-#define CAN_L2_HANDLER_ARRAY_SIZE 5
+#define SYS_CAN_L2_HANDLER_ARRAY_SIZE 5
 
 /**
  * @brief CAN BUS Baud Auto Detection
@@ -210,9 +210,9 @@
  *     } can_baud_rate_t;
  * 
  */
-#define CAN_BAUD_AUTO_DETECT            // Default Disabled
+#define SYS_CAN_BAUD_AUTO_DETECT            // Default Disabled
 
-#ifdef CAN_BAUD_AUTO_DETECT
+#ifdef SYS_CAN_BAUD_AUTO_DETECT
 /**
  * @brief  CAN Baud auto detech listen period
  *
@@ -227,8 +227,8 @@
  * If on the other hand Valid Frames are received and no Errors then we've
  * found the network's Baud rate.
  */
-#define CAN_BAUD_AUTO_DETECT_LISTEN_PERIOD    20       // Default 20 Seconds
-#endif // CAN_BAUD_AUTO_DETECT
+#define SYS_CAN_BAUD_AUTO_DETECT_LISTEN_PERIOD    20       // Default 20 Seconds
+#endif // SYS_CAN_BAUD_AUTO_DETECT
 
 /**
  * @brief Enable the CAN Ping Protocol
@@ -239,9 +239,9 @@
  * then that auto detection depends on valid traffic on the network. 
  * This "Ping Protocol", when enabled, will have your CAN Node send a spurious
  * CAN Frame onto the network if there has been no activity on the network for
- * CAN_PING_PROTOCOL_PERIOD +/- 0.5 Seconds.
+ * SYS_CAN_PING_PROTOCOL_PERIOD +/- 0.5 Seconds.
  *
- * The actual exact period defined by CAN_PING_PROTOCOL_PERIOD is not used but
+ * The actual exact period defined by SYS_CAN_PING_PROTOCOL_PERIOD is not used but
  * rather a random duration within one second of that duration is used. For
  * that reason if you're code uses the Ping Protcol then it should include 
  * es_lib/utils/rand.c and during startup initialise a random seed with a call
@@ -259,25 +259,25 @@
  * You might see the Ping Protocol as an overhead, but if there's no traffic on
  * the network then nothing is happening anyhow.
  */
-#define CAN_PING_PROTOCOL        // Default Disabled
+//#define SYS_CAN_PING_PROTOCOL        // Default Disabled
 
 /**
  * @brief Ping Protocol idle period
  *
- * See the comments for CAN_PING_PROTOCOL above. 
+ * See the comments for SYS_CAN_PING_PROTOCOL above. 
  * 
- * Basically if the CAN Layer 2 functionality detects no activity on the CAN 
+ * Basically if the SYS_CAN Layer 2 functionality detects no activity on the SYS_CAN 
  * Bus for this duration +/- 1 Second then a Ping Frame will be transmitted
  * on the network.
  *
  * Value is a duration in Seconds. 
  *
- * Only used if CAN_PING_PROTOCOL is enabled.
+ * Only used if SYS_CAN_PING_PROTOCOL is enabled.
  *
  */
-#ifdef CAN_PING_PROTOCOL
-#define CAN_PING_PROTOCOL_PERIOD     5    // Seconds
-#endif  // CAN_PING_PROTOCOL
+#ifdef SYS_CAN_PING_PROTOCOL
+#define SYS_CAN_PING_PROTOCOL_PERIOD     5    // Seconds
+#endif  // SYS_CAN_PING_PROTOCOL
 
 /**
  * @brief Enable the Dynamic CAN Node Configuration Protocol (DCNCP)
@@ -290,9 +290,9 @@
  * the Baud rate of the network. In the case of a Global Configuration, like
  * Baud rate, all Nodes on the network must have DCNCP enabled. 
  */
-#define DCNCP_CAN               // Default Disabled
+//#define SYS_CAN_DCNCP               // Default Disabled
 
-#ifdef DCNCP_CAN
+#ifdef SYS_CAN_DCNCP
 
 /**
  * @brief DCNCP Network Baud Rate
@@ -331,58 +331,58 @@
  * If all nodes comply with the DCNCP Baud Rate Protocol the network will now
  * be operating at the new network Baud Rate.
  */
-#define DCNCP_CAN_BAUDRATE      // Default Disabled
+#define SYS_CAN_DCNCP_BAUDRATE      // Default Disabled
 
 /**
- * @brief Include ISO15765 Functionality
+ * @brief Include SYS_ISO15765 Functionality
  *
- * ISO15765 has a dependance on random! Add es_lib/utils/rand.c to your project 
+ * SYS_ISO15765 has a dependance on random! Add es_lib/utils/rand.c to your project 
  * and, to initialise a seed, on startup call:
  * 
  * init_rand();
  *
- * ISO15765 defines a Layer 3 Protocol which sits on top of the CAN Bus,
+ * SYS_ISO15765 defines a Layer 3 Protocol which sits on top of the CAN Bus,
  * Later 2, protocol. CAN Bus transmits frames with up to 8 Bytes of Data. That
  * is perfect in a field bus where status data is being send across the network.
  * However depending on your applicaiton 8 bytes of data can be a limiting
- * factor. The ISO15765 protocol adds the ability to send larger messages
+ * factor. The SYS_ISO15765 protocol adds the ability to send larger messages
  * across the Bus. The larger messages are segmented into short frames for 
  * transmission across the bus and reassembly on the other side.
  *
- * The es_lib implementation of ISO15765 is not a strict implementation of the
+ * The es_lib implementation of SYS_ISO15765 is not a strict implementation of the
  * standard. For example the standard enables a maximum message size for 
- * transmission of 4095 Bytes whilst es_lib defines ISO15765_MAX_MSG as 270
+ * transmission of 4095 Bytes whilst es_lib defines SYS_ISO15765_MAX_MSG as 270
  * in es_lib/core.h. Seperate from this size is a Protocol or Layer 3 message
  * type. The es_lib implementation defines the first byte of the transmitted
  * message as a Protocol Identifier which specifies the type of the message.
  *
- * The es_lib CAN implementation reserves two ISO15765 Protocol ID's for
+ * The es_lib CAN implementation reserves two SYS_ISO15765 Protocol ID's for
  * specific use in es_lib/can/es_can.h:
  * 
- * #define ISO15765_LOGGER_PROTOCOL_ID    0x01
- * #define ISO15765_DCNCP_PROTOCOL_ID     0x02
+ * #define SYS_ISO15765_LOGGER_PROTOCOL_ID    0x01
+ * #define SYS_ISO15765_DCNCP_PROTOCOL_ID     0x02
  *
- * If a ISO15765 Message is received with a frist Byte of 0x01 then the message
+ * If a SYS_ISO15765 Message is received with a frist Byte of 0x01 then the message
  * is passed to the network logger functionality. Likewise 0x02 is passed to 
  * Layer 3 of DCNCP Handler.
  *
- * Unlike Layer 2 ISO15765, Layer 3, is an addressed protocol. Messages are 
+ * Unlike Layer 2 SYS_ISO15765, Layer 3, is an addressed protocol. Messages are 
  * sent from a node with a specific address across the network to a node 
- * with a destination address. Therefore a CAN Node using ISO15765 must have
+ * with a destination address. Therefore a CAN Node using SYS_ISO15765 must have
  * a BYTE value defining the Layer 3 address of the node.
  *
- * The ISO15765 functionality in the es_lib code does not dictate how a Layer
- * 3 node address is obtained. If your project is including ISO15765 you will
+ * The SYS_ISO15765 functionality in the es_lib code does not dictate how a Layer
+ * 3 node address is obtained. If your project is including SYS_ISO15765 you will
  * have to add a function to the project which the library code can call to 
  * obtain it's layer 3 node address.
  *
- *     u8 node_get_address(void)
+ *     uint8_t node_get_address(void)
  *     {
  *             return(0x01);
  *     }
  *
  * The above example, whilst valid, is too simplistic to be used in producton.
- * Whilst the es_lib ISO15765 functionality will request a Layer 3 node address
+ * Whilst the es_lib SYS_ISO15765 functionality will request a Layer 3 node address
  * from your higher level code a DCNCP peer to peer based protocol is used to 
  * confirm that the address is not already in use on the network. If the Layer
  * 3 node address you have specified is already in use your "node_get_address()
@@ -392,41 +392,53 @@
  * address as its "first choice". If that address is rejected it sleects another
  * address at random and stores the new address in EEPROM:
  *  
- *     u8 node_get_address(void)
+ *     uint8_t node_get_address(void)
  *     {
- *             static u8 retry_count = 0;
+ *             static uint8_t retry_count = 0;
  *	       result_t rc;
- *	       u8 address;
+ *	       uint8_t address;
  *
  *	       if(retry_count == 0) {
  *		       rc = eeprom_read(EEPROM_NODE_ADDRESS, &address);
  *		       if (rc != SUCCESS) {
- *		               LOG_E("address Failed to read from eeprom return code 0x%x\n\r", rc);
+#if defined(SYS_LOG_LEVEL)
+#if defined(SYS_LOG_LEVEL)
+ * #if (SYS_LOG_LEVEL <= LOG_ERROR)
+ *		               log_e(TAG, "address Failed to read from eeprom return code 0x%x\n\r", rc);
+ * #endif
  *			       do {
- *				       address = (u8) (rand() & 0x0ff);
+ *				       address = (uint8_t) (rand() & 0x0ff);
  *			       } while (address == BROADCAST_NODE_ADDRESS);
  *
  *			       rc = eeprom_write(EEPROM_NODE_ADDRESS, address);
  *			       if (rc != SUCCESS) {
- *			       	       LOG_E("Failed to write from eeprom return code 0x%x\n\r", rc);
+#if defined(SYS_LOG_LEVEL)
+#if defined(SYS_LOG_LEVEL)
+ * #if (SYS_LOG_LEVEL <= LOG_ERROR)
+ *			       	       log_e(TAG, "Failed to write from eeprom return code 0x%x\n\r", rc);
+ * #endif
  *			       }
  *		       } else {
- *			       LOG_D("address value read back from EEPROM address 0x02 = 0x%x\n\r", address);
+ *			       log_d(TAG, "address value read back from EEPROM address 0x02 = 0x%x\n\r", address);
  *		       }
  *	       } else {
  *		       do {
- *			       address = (u8) (rand() & 0x0ff);
+ *			       address = (uint8_t) (rand() & 0x0ff);
  *		       } while (address == BROADCAST_NODE_ADDRESS);
  *		
  *		       rc = eeprom_write(EEPROM_NODE_ADDRESS, address);
  *		       if (rc != SUCCESS) {
- *			       LOG_E("Failed to write from eeprom return code 0x%x\n\r", rc);
+#if defined(SYS_LOG_LEVEL)
+#if defined(SYS_LOG_LEVEL)
+ * #if (SYS_LOG_LEVEL <= LOG_ERROR)
+ *			       log_e(TAG, "Failed to write from eeprom return code 0x%x\n\r", rc);
+ * #endif
  *		       }
  *	       }
  *
  *	       retry_count++;
  *
- *	       LOG_D("node_get_address() Retry %d try address 0x%x\n\r", retry_count, address);
+ *	       log_d(TAG, "node_get_address() Retry %d try address 0x%x\n\r", retry_count, address);
  *	       return(address);
  *     }
  *
@@ -437,25 +449,25 @@
  * then you can hardcode an address into each node on the network.
  *
  */
-#define ISO15765                 // Default Disabled
+#define SYS_ISO15765                 // Default Disabled
 
-#ifdef ISO15765
+#ifdef SYS_ISO15765
 /**
- * @brief Size of ISO15765 register array.
+ * @brief Size of SYS_ISO15765 register array.
  *
- * The es_lib implementation of ISO15765 uses the first byte of each message
+ * The es_lib implementation of SYS_ISO15765 uses the first byte of each message
  * as a message type, or Layer 3 Protocol Identifier. So in theory you can send 
  * 256 different message types between nodes. This number is reduced as es_lib 
  * reserves two layer 3 protocol numbers for specific uses.
  *
  * Default is 2
  */
-#define ISO15765_REGISTER_ARRAY_SIZE 2
+#define SYS_ISO15765_REGISTER_ARRAY_SIZE 2
 
 /**
- * @brief Enable ISO15765 Logging functionality
+ * @brief Enable SYS_ISO15765 Logging functionality
  * 
- * Enable this switch if your project uses the ISO15765 Logging functionality
+ * Enable this switch if your project uses the SYS_ISO15765 Logging functionality
  * to send information across the CAN Bus network. The code for this 
  * functionality is in files es_lib/logger/iso15765_log.c and iso15765_log.h.
  * your code can send debug messages with a call to:
@@ -466,27 +478,27 @@
  *
  *     iso15765_log(Debug, "Hello World");
  *
- * ISO15765 Layer 3 Protocol ID 0x01 is reserved for this functionality.
+ * SYS_ISO15765 Layer 3 Protocol ID 0x01 is reserved for this functionality.
  */
-#define ISO15765_LOGGING           // Default Disabled
+#define SYS_ISO15765_LOGGING           // Default Disabled
 
 /**
- * @brief Enable ISO15765 Logger functionality
+ * @brief Enable SYS_ISO15765 Logger functionality
  * 
  * If this node can act as the CAN Bus Network logger enable this swith.
  *
- * The above switch (ISO15765_LOGGING) allows your firmware to send debug
- * messages across the CAN Bus Network to an ISO15765 Network Logger. This 
+ * The above switch (SYS_ISO15765_LOGGING) allows your firmware to send debug
+ * messages across the CAN Bus Network to an SYS_ISO15765 Network Logger. This 
  * switch enables the code to allow this node to be the Network Logger.
  * 
  * This switch should only be enabled in one single node on the network as
- * the ISO15765 Protocol only sends to a specific Layer 3 node addres. 
+ * the SYS_ISO15765 Protocol only sends to a specific Layer 3 node addres. 
  *
  */
-#define ISO15765_LOGGER             // Default Disabled
+#define SYS_ISO15765_LOGGER             // Default Disabled
 
 /**
- * @brief ISO15765 Network logger Ping Period (Seconds)
+ * @brief SYS_ISO15765 Network logger Ping Period (Seconds)
  *
  * If this node has enabled Network Logger functionality this switch defines 
  * the period at which register request messages are repeated.
@@ -496,12 +508,12 @@
  *
  *     iso15765_log(Debug, "Hello World");
  *
- * The es_lib ISO15765 logging code will actually totally ignore these requests
- * if it does not know of a registered ISO15765 Network Logger. An ISO15765
+ * The es_lib SYS_ISO15765 logging code will actually totally ignore these requests
+ * if it does not know of a registered SYS_ISO15765 Network Logger. An SYS_ISO15765
  * message is sent to a specific destination so if no destination address is
  * known then there is nowhere to send the messages.
  *
- * To ensure that the various nodes on the network know where to send ISO15765
+ * To ensure that the various nodes on the network know where to send SYS_ISO15765
  * logging messages the Network Logger will periodically transmist a message
  * basically meaning "I am the network logger". Because we're on a network 
  * nodes can power up and down in different orders and different time so this
@@ -510,48 +522,48 @@
  *
  * The default is 60 Seconds.
  */
-#ifdef ISO15765_LOGGER
-#define ISO15765_LOGGER_PING_PERIOD 60        // Seconds 
-#endif // ISO15765_LOGGER
+#ifdef SYS_ISO15765_LOGGER
+#define SYS_ISO15765_LOGGER_PING_PERIOD 60        // Seconds 
+#endif // SYS_ISO15765_LOGGER
 
 /**
- * @brief Enable Dynamic Can Node Configuration Protocol in ISO15765 layer.
+ * @brief Enable Dynamic Can Node Configuration Protocol in SYS_ISO15765 layer.
  *
- * We've previously discussed ISO15765 Network logging functionality. The other
- * reserved ISO15765 Layer 3 protocol, 0x02 (es_lib/can/es_can.h), is for the
+ * We've previously discussed SYS_ISO15765 Network logging functionality. The other
+ * reserved SYS_ISO15765 Layer 3 protocol, 0x02 (es_lib/can/es_can.h), is for the
  * Dynamic CAN Node Configuration Protocol. 
  */
-#define DCNCP_ISO15765
+#define SYS_ISO15765_DCNCP
 
-#endif // ISO15765
+#endif // SYS_ISO15765
 
 /**
- * @brief Enable the ISO11783 Protocol
+ * @brief Enable the SYS_ISO11783 Protocol
  *
- * ISO15765 is just one Layer 3 protocol which sits on top of CAN Bus. ISO11783
- * also piggy backs on top of CAN Bus. ISO11783 calls itself a Layer 2 Protocol
+ * SYS_ISO15765 is just one Layer 3 protocol which sits on top of SYS_CAN Bus. SYS_ISO11783
+ * also piggy backs on top of SYS_CAN Bus. SYS_ISO11783 calls itself a Layer 2 Protocol
  * so things might get a bit confusing if we're talking in terms of layers.
  * 
- * ISO11783 is the Protocol used by the NMEA2000 Protocol in Marine
+ * SYS_ISO11783 is the Protocol used by the NMEA2000 Protocol in Marine
  * applicaiton and by SAE J1939 in the Automotice applications.
  *
  * 
  */
-#define ISO11783                                 // Default Disabled
+#define SYS_ISO11783                                 // Default Disabled
 
-#ifdef ISO11783
+#ifdef SYS_ISO11783
 /**
- * @brief Size of ISO11783 register array size
+ * @brief Size of SYS_ISO11783 register array size
  *
- * The number of different ISO11783 GRP handlers that can be registered
+ * The number of different SYS_ISO11783 GRP handlers that can be registered
  * in the system or applicaiton.
  */
-#define ISO11783_REGISTER_ARRAY_SIZE 2
+#define SYS_ISO11783_REGISTER_ARRAY_SIZE 2
 
-#endif // ISO11783
+#endif // SYS_ISO11783
 
-#endif // DCNCP_CAN
-#endif // CAN
+#endif // SYS_CAN_DCNCP
+#endif // SYS_CAN
 
 /*
  * Android Definitions:
@@ -562,9 +574,9 @@
  *
  * If your project communicates with an Android Device then enable this switch.
  */
-#define ANDROID                        // Default Disabled
+//#define SYS_ANDROID                        // Default Disabled
 
-#ifdef ANDROID
+#ifdef SYS_ANDROID
 /**
  * @brief Android App connected state handler.
  *
@@ -605,15 +617,15 @@
  * What your firmware does with the connected Android Application is up to you
  * you simply have to define a function which will set the correct Android state
  * functions and tell es_lib what function to call with the 
- * ANDROID_SET_APPLICATION_CONNECTED_STATE switch:
+ * SYS_ANDROID_SET_APPLICATION_CONNECTED_STATE switch:
  *  
  *     extern void example_set_app_connected_state(void);
- *     #define ANDROID_SET_APPLICATION_CONNECTED_STATE example_set_app_connected_state();
+ *     #define SYS_ANDROID_SET_APPLICATION_CONNECTED_STATE example_set_app_connected_state();
  *
  * With this in place the your function will be called to set the correct state
  * when an Android App accepts responsibility for your firmware.
  */
-#define ANDROID_SET_APPLICATION_CONNECTED_STATE set_app_connected_state();
+#define SYS_ANDROID_SET_APPLICATION_CONNECTED_STATE set_app_connected_state();
 extern void set_app_connected_state(void);
 
 /**
@@ -621,16 +633,16 @@ extern void set_app_connected_state(void);
  *
  * If your firmware is designed to interact with a connected Android device
  * what does it do when there is no Android device connected? The answer to
- * that question is in the NO_ANDROID_APP_FN switch.
+ * that question is in the SYS_ANDROID_NO_APP_FN switch.
  *
  * This is NOT Mandatory. If you project does not require it then don't
  * define the MACRO.
  *
  */
-#define NO_ANDROID_APP_FN example_no_android_app_function();
+#define SYS_ANDROID_NO_APP_FN example_no_android_app_function();
 extern void example_no_android_app_function(void);
 
-#endif // ANDROID
+#endif // SYS_ANDROID
 
 /**
  * @brief Use Bootloader EEPROM space.
@@ -639,13 +651,13 @@ extern void example_no_android_app_function(void);
  * a result the lower section of EEPROM is reserved for the Bootloader. The 
  * number of bytes reserved for the Bootloader is defined in es_lib/core.h
  *
- *     #define EEPROM_BOOT_PAGE_SIZE   0x04
+ *     #define SYS_EEPROM_BOOT_PAGE_SIZE   0x04
  *
  * If you intend to directly program your project into the Flash with a Flash
  * programmer, like the PICkit-3, in what I refer to as "Raw" mode then you
  * can use the area of EEPROM normally reserved for use by the Bootloader.
  */
-#define EEPROM_USE_BOOT_PAGE         // Default disabled
+//#define SYS_EEPROM_USE_BOOT_PAGE         // Default disabled
 
 /*
  *******************************************************************************
