@@ -25,12 +25,12 @@
 
 #include "system.h"
 
-#define DEBUG_FILE
+#define DEBUG_FILE TRUE
 #include "es_lib/logger/serial_log.h"
 #include "es_lib/can/es_can.h"
 
 #include "es_lib/can/dcncp/dcncp_can.h"
-#include "es_lib/timers/timers.h"
+#include "es_lib/timers/sw_timers.h"
 #if defined(ISO15765_LOGGER) || defined(SYS_ISO15765_LOGGING)
 #include "es_lib/logger/iso15765_log.h"
 #endif
@@ -49,24 +49,24 @@ static void exp_network_baud_chage_req(timer_t timer_id, union sigval data);
  */
 extern uint8_t node_get_address(void);
 
-    static es_timer node_send_reg_req_timer;
-    static es_timer node_reg_timer;
+static es_timer node_send_reg_req_timer;
+static es_timer node_reg_timer;
 
 #ifdef SYS_ISO15765_LOGGER
-        static can_frame local_iso15765_logger_frame;
-        static es_timer local_iso15765_logger_timer;
+static can_frame local_iso15765_logger_frame;
+static es_timer  local_iso15765_logger_timer;
 #endif // SYS_ISO15765_LOGGER
 
-    static uint8_t dcncp_node_address;
-    uint8_t dcncp_get_node_address(void);
+static uint8_t dcncp_node_address;
+uint8_t dcncp_get_node_address(void);
 
 #ifdef SYS_ISO15765_LOGGER
-        static void exp_iso15765_logger_ping(timer_t timer_id __attribute__((unused)), union sigval);
+static void exp_iso15765_logger_ping(timer_t timer_id __attribute__((unused)), union sigval);
 #endif // SYS_ISO15765_LOGGER
 
-    static void exp_send_address_register_request(timer_t timer_id, union sigval data);
-    static void exp_node_address_registered(timer_t timer_id __attribute__((unused)), union sigval data);
-    static void exp_send_node_addr_report(timer_t timer_id, union sigval data);
+static void exp_send_address_register_request(timer_t timer_id, union sigval data);
+static void exp_node_address_registered(timer_t timer_id __attribute__((unused)), union sigval data);
+static void exp_send_node_addr_report(timer_t timer_id, union sigval data);
 
 #endif  // SYS_ISO15765 || SYS_ISO11783
 
@@ -95,18 +95,19 @@ void dcncp_init(void (*arg_status_handler)(uint8_t mask, can_status_t status, ca
 #endif // SYS_ISO15765 || SYS_ISO11783
 
 #ifdef SYS_ISO15765_LOGGER
+	local_iso15765_logger_timer.status = INACTIVE;
 	TIMER_INIT(local_iso15765_logger_timer);
 #endif // SYS_ISO15765_LOGGER
 
 	/*
 	 * Add the Layer 2 frame Handler
 	 */
-	target.mask    = (u32)DCNCP_CAN_MASK;
-	target.filter  = (u32)DCNCP_CAN_FILTER;
+	target.mask    = (uint32_t)DCNCP_CAN_MASK;
+	target.filter  = (uint32_t)DCNCP_CAN_FILTER;
 	target.handler = can_l2_msg_handler;
 #ifdef MCP
 #if defined(SYS_LOG_LEVEL)
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	log_d(TAG, "Node Address Register handler Mask 0x%lx, Filter 0x%lx\n\r", target.mask, target.filter);
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
@@ -114,7 +115,7 @@ void dcncp_init(void (*arg_status_handler)(uint8_t mask, can_status_t status, ca
 #endif //  if defined(SYS_LOG_LEVEL)
 #elif defined(ES_LINUX)
 #if defined(SYS_LOG_LEVEL)
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	log_d(TAG, "Node Address Register handler Mask 0x%x, Filter 0x%x\n\r", target.mask, target.filter);
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
@@ -158,7 +159,7 @@ void dcncp_request_network_baud_change(can_baud_rate_t baud)
 	union sigval data;
 
 #if defined(SYS_LOG_LEVEL)
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	log_d(TAG, "dcncp_request_network_baud_change()\n\r");
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
@@ -167,7 +168,7 @@ void dcncp_request_network_baud_change(can_baud_rate_t baud)
 
         if(!status.bit_field.dcncp_initialised) {
 #if defined(SYS_LOG_LEVEL)
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_WARNING))
+#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_WARNING))
 		log_w(TAG, "Ignoring DCNCP not ready!\n\r");
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
@@ -178,7 +179,7 @@ void dcncp_request_network_baud_change(can_baud_rate_t baud)
 
 	if(baud == can_l2_get_baudrate()) {
 #if defined(SYS_LOG_LEVEL)
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_WARNING))
+#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_WARNING))
 		log_w(TAG, "Ignoring spurious request!\n\r");
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
@@ -214,14 +215,14 @@ void dcncp_request_network_baud_change(can_baud_rate_t baud)
 	}
 
 #if defined(SYS_LOG_LEVEL)
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	log_d(TAG, "send network baudrate change request\n\r");
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
 #error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
 #endif //  if defined(SYS_LOG_LEVEL)
 
-	msg.can_id = SYS_CAN_DCNCP_NetworkChangeBaudRateReq;
+	msg.can_id = CAN_DCNCP_NetworkChangeBaudRateReq;
 	msg.can_dlc = 2;
 	msg.data[0] = baud;
 	msg.data[1] = 3;      // 3 Seconds till Change
@@ -239,7 +240,7 @@ static void exp_resend_network_baud_chage_req(timer_t timer_id, union sigval dat
 	can_baud_rate_t baud;
 
 #if defined(SYS_LOG_LEVEL)
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	log_d(TAG, "exp_resend_network_baud_chage_req()\n\r");
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
@@ -254,7 +255,7 @@ static void exp_resend_network_baud_chage_req(timer_t timer_id, union sigval dat
 	baud = (data.sival_int >> 8) & 0xff;
 
 #if defined(SYS_LOG_LEVEL)
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	log_d(TAG, "Time left %d\n\r", time_left);
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
@@ -283,14 +284,14 @@ static void exp_resend_network_baud_chage_req(timer_t timer_id, union sigval dat
 		}
 
 #if defined(SYS_LOG_LEVEL)
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 		log_d(TAG, "send network baudrate change request\n\r");
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
 #error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
 #endif //  if defined(SYS_LOG_LEVEL)
 
-		msg.can_id = SYS_CAN_DCNCP_NetworkChangeBaudRateReq;
+		msg.can_id = CAN_DCNCP_NetworkChangeBaudRateReq;
 		msg.can_dlc = 2;
 		msg.data[0] = baud;
 		msg.data[1] = time_left;
@@ -298,7 +299,7 @@ static void exp_resend_network_baud_chage_req(timer_t timer_id, union sigval dat
 		can_l2_tx_frame(&msg);
 	} else {
 #if defined(SYS_LOG_LEVEL)
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 		log_d(TAG, "TIME UP Change Baud Rate\n\r");
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
@@ -313,7 +314,7 @@ static void exp_resend_network_baud_chage_req(timer_t timer_id, union sigval dat
 static void exp_network_baud_chage_req(timer_t timer_id, union sigval data)
 {
 #if defined(SYS_LOG_LEVEL)
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	log_d(TAG, "!!! exp_network_baud_chage_req() !!!\n\r");
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
@@ -347,7 +348,7 @@ void exp_send_address_register_request(timer_t timer_id, union sigval data)
 	data = data;
 
 #if defined(SYS_LOG_LEVEL)
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	log_d(TAG, "exp_send_address_register_request() Send Initial Register Req\n\r");
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
@@ -358,14 +359,14 @@ void exp_send_address_register_request(timer_t timer_id, union sigval data)
 	dcncp_node_address = node_get_address();
 
 #if defined(SYS_LOG_LEVEL)
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	log_d(TAG, "sendRegisterReq(%x)\n\r", (uint16_t) dcncp_node_address);
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
 #error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
 #endif //  if defined(SYS_LOG_LEVEL)
 
-	msg.can_id = SYS_CAN_DCNCP_AddressRegisterReq;
+	msg.can_id = CAN_DCNCP_AddressRegisterReq;
 	msg.can_dlc = 1;
 	msg.data[0] = dcncp_node_address;
 
@@ -404,7 +405,7 @@ void exp_node_address_registered(timer_t timer_id __attribute__((unused)), union
 	TIMER_INIT(node_reg_timer);
 
 #if defined(SYS_LOG_LEVEL)
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	log_d(TAG, "nodeRegistered()\n\r");
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
@@ -434,25 +435,25 @@ void can_l2_msg_handler(can_frame *frame)
 	es_timer timer;
 #endif // SYS_ISO15765 || SYS_ISO11783
 
-	if (frame->can_id == SYS_CAN_DCNCP_AddressRegisterReq) {
+	if (frame->can_id == CAN_DCNCP_AddressRegisterReq) {
 #if defined(ISO15765) || defined(ISO11783)
 		if(frame->data[0] == dcncp_node_address) {
 			if(status.bit_field.dcncp_node_address_valid) {
 #if defined(SYS_LOG_LEVEL)
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 				log_d(TAG, "reject Register Request\n\r");
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
 #error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
 #endif //  if defined(SYS_LOG_LEVEL)
-				tx_frame.can_id = SYS_CAN_DCNCP_AddressRegisterReject;
+				tx_frame.can_id = CAN_DCNCP_AddressRegisterReject;
 				tx_frame.can_dlc = 1;
 				tx_frame.data[0] = dcncp_node_address;
 
 				can_l2_tx_frame(&tx_frame);
 			} else {
 #if defined(SYS_LOG_LEVEL)
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 				log_d(TAG, "Register Node Address clash. Get New Node Address!\n\r");
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
@@ -471,7 +472,7 @@ void can_l2_msg_handler(can_frame *frame)
 			}
 		}
 #endif  // SYS_ISO15765 || SYS_ISO11783
-	} else if(frame->can_id == SYS_CAN_DCNCP_AddressRegisterReject) {
+	} else if(frame->can_id == CAN_DCNCP_AddressRegisterReject) {
 #if defined(ISO15765) || defined(ISO11783)
 		if(frame->data[0] == dcncp_node_address) {
 			if(status.bit_field.dcncp_node_address_valid) {
@@ -482,14 +483,14 @@ void can_l2_msg_handler(can_frame *frame)
 #else  //  if defined(SYS_LOG_LEVEL)
 #error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
 #endif //  if defined(SYS_LOG_LEVEL)
-				tx_frame.can_id = SYS_CAN_DCNCP_NodeAddressError;
+				tx_frame.can_id = CAN_DCNCP_NodeAddressError;
 				tx_frame.can_dlc = 1;
 				tx_frame.data[0] = dcncp_node_address;
 
 				can_l2_tx_frame(&tx_frame);
 			} else {
 #if defined(SYS_LOG_LEVEL)
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 				log_d(TAG, "Address Regected so get a new one!\n\r");
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
@@ -508,9 +509,9 @@ void can_l2_msg_handler(can_frame *frame)
 			}
 		}
 #endif // SYS_ISO15765 || SYS_ISO11783
-	} else if (frame->can_id == SYS_CAN_DCNCP_NodeAddressReportReq) {
+	} else if (frame->can_id == CAN_DCNCP_NodeAddressReportReq) {
 #if defined(SYS_LOG_LEVEL)
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 		log_d(TAG, "DCNCP_CAN_NodeAddressReportReq:\n\r");
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
@@ -530,10 +531,10 @@ void can_l2_msg_handler(can_frame *frame)
 #endif //  if defined(SYS_LOG_LEVEL)
 		}
 #endif // SYS_ISO15765 || SYS_ISO11783
-	} else if (frame->can_id == SYS_CAN_DCNCP_NodeAddressReporting) {
+	} else if (frame->can_id == CAN_DCNCP_NodeAddressReporting) {
 		if(frame->data[0]) {
 #if defined(SYS_LOG_LEVEL)
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 			log_d(TAG, "Foreign Node Rep Registered Node Address 0x%x\n\r", frame->data[1]);
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
@@ -541,17 +542,17 @@ void can_l2_msg_handler(can_frame *frame)
 #endif //  if defined(SYS_LOG_LEVEL)
 		} else {
 #if defined(SYS_LOG_LEVEL)
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 			log_d(TAG, "Foreign Node Rep UN-Registered Node Address 0x%x\n\r", frame->data[1]);
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
 #error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
 #endif //  if defined(SYS_LOG_LEVEL)
 		}
-	} else if (frame->can_id == SYS_CAN_DCNCP_NetworkChangeBaudRateReq) {
+	} else if (frame->can_id == CAN_DCNCP_NetworkChangeBaudRateReq) {
 #ifdef SYS_CAN_DCNCP_BAUDRATE
 #if defined(SYS_LOG_LEVEL)
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 		log_d(TAG, "***Baud Rate Change Request New Baud Rate %s Time left %dS\n\r", can_baud_rate_strings[frame->data[0]], frame->data[1]);
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
@@ -586,10 +587,10 @@ void can_l2_msg_handler(can_frame *frame)
 #error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
 #endif //  if defined(SYS_LOG_LEVEL)
 #endif // SYS_CAN_DCNCP_BAUDRATE
-	} else if (frame->can_id == SYS_CAN_DCNCP_NodePingMessage) {
-	} else if (frame->can_id == SYS_CAN_DCNCP_RegisterNetLogger) {
+	} else if (frame->can_id == CAN_DCNCP_NodePingMessage) {
+	} else if (frame->can_id == CAN_DCNCP_RegisterNetLogger) {
 #if defined(SYS_LOG_LEVEL)
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 		log_d(TAG, "Received NetLogger Registration Message\n\r");
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
@@ -598,9 +599,9 @@ void can_l2_msg_handler(can_frame *frame)
 #ifdef SYS_ISO15765_LOGGING
 		iso15765_logger_register_remote(frame->data[0], frame->data[1]);
 #endif // SYS_ISO15765_LOGGING
-	} else if (frame->can_id == SYS_CAN_DCNCP_UnRegisterNetLogger) {
+	} else if (frame->can_id == CAN_DCNCP_UnRegisterNetLogger) {
 #if defined(SYS_LOG_LEVEL)
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 		log_d(TAG, "Received NetLogger UnRegistration Message\n\r");
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
@@ -612,7 +613,7 @@ void can_l2_msg_handler(can_frame *frame)
 	} else {
 #if defined(MCP)
 #if defined(SYS_LOG_LEVEL)
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_WARNING))
+#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_WARNING))
 		log_w(TAG, "Node Unrecognised Request %lx \n\r", frame->can_id);
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
@@ -620,7 +621,7 @@ void can_l2_msg_handler(can_frame *frame)
 #endif //  if defined(SYS_LOG_LEVEL)
 #elif defined(ES_LINUX)
 #if defined(SYS_LOG_LEVEL)
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_WARNING))
+#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_WARNING))
 		log_w(TAG, "Node Unrecognised Request %x \n\r", frame->can_id);
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
@@ -641,14 +642,14 @@ void exp_send_node_addr_report(timer_t timer_id __attribute__((unused)), union s
 	data = data;
 
 #if defined(SYS_LOG_LEVEL)
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	log_d(TAG, "exp_send_node_addr_report(Address %x)\n\r", dcncp_node_address);
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
 #error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
 #endif //  if defined(SYS_LOG_LEVEL)
 
-	frame.can_id = SYS_CAN_DCNCP_NodeAddressReporting;
+	frame.can_id = CAN_DCNCP_NodeAddressReporting;
 	frame.can_dlc = 2;
 	frame.data[1] = dcncp_node_address;
 
@@ -668,7 +669,7 @@ void exp_send_node_addr_report(timer_t timer_id __attribute__((unused)), union s
 result_t dcncp_register_this_node_net_logger(log_level_t level)
 {
 #if defined(SYS_LOG_LEVEL)
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	log_d(TAG, "register_this_node_net_logger()\n\r");
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
@@ -678,14 +679,14 @@ result_t dcncp_register_this_node_net_logger(log_level_t level)
 	if(!iso15765_initialised())
 		return(ERR_NOT_READY);
 
-	local_iso15765_logger_frame.can_id = SYS_CAN_DCNCP_RegisterNetLogger;
+	local_iso15765_logger_frame.can_id = CAN_DCNCP_RegisterNetLogger;
 	local_iso15765_logger_frame.can_dlc = 2;
 	local_iso15765_logger_frame.data[0] = dcncp_node_address;
 	local_iso15765_logger_frame.data[1] = level;
 
 	can_l2_tx_frame(&local_iso15765_logger_frame);
 #if defined(SYS_LOG_LEVEL)
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	log_d(TAG, "NetLogger message sent\n\r");
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
@@ -708,7 +709,7 @@ void exp_iso15765_logger_ping(timer_t timer_id __attribute__((unused)), union si
 
 	can_l2_tx_frame(&local_iso15765_logger_frame);
 #if defined(SYS_LOG_LEVEL)
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	log_d(TAG, "NetLogger message sent\n\r");
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
@@ -728,20 +729,20 @@ result_t dcncp_unregister_this_node_net_logger()
 	can_frame frame;
 
 #if defined(SYS_LOG_LEVEL)
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	log_d(TAG, "DeRegAsNetLogger()\n\r");
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
 #error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
 #endif //  if defined(SYS_LOG_LEVEL)
 
-	frame.can_id = SYS_CAN_DCNCP_UnRegisterNetLogger;
+	frame.can_id = CAN_DCNCP_UnRegisterNetLogger;
 	frame.can_dlc = 1;
 	frame.data[0] = dcncp_node_address;
 
 	can_l2_tx_frame(&frame);
 #if defined(SYS_LOG_LEVEL)
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	log_d(TAG, "CancelNetLogger message sent\n\r");
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
@@ -759,14 +760,14 @@ void dcncp_send_ping(void)
 {
 	can_frame frame;
 
-	frame.can_id = SYS_CAN_DCNCP_NodePingMessage;
+	frame.can_id = CAN_DCNCP_NodePingMessage;
 	frame.can_dlc = 0;
 
 	can_l2_tx_frame(&frame);
 
 #ifdef SYS_CAN_L2_PING_LOGGING
 #if defined(SYS_LOG_LEVEL)
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	log_d(TAG, "Ping message sent\n\r");
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)

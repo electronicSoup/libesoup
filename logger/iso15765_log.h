@@ -22,6 +22,14 @@
 #ifndef ISO15765_LOG_H
 #define ISO15765_LOG_H
 
+typedef enum {
+        Error,
+        Warning,
+	Notice,
+	Info,
+	Debug,
+} log_level_t;
+
 extern void iso15765_log(log_level_t level, char *msg);
 
 /*

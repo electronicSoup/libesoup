@@ -12,12 +12,13 @@
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <unistd.h>
+#include <stdio.h>
  
 #include <linux/can.h>
 #include <linux/can/raw.h>
 
 #include "es_lib/can/es_can.h"
-#define DEBUG_FILE
+#define DEBUG_FILE TRUE
 #include "es_lib/logger/serial_log.h"
 #define TAG "CAN_L2_LX"
 
@@ -62,11 +63,11 @@ result_t can_l2_init(can_baud_rate_t arg_baud_rate,
 		registered[loop].target.handler = (can_l2_frame_handler_t)NULL;
 	}
 
-	char *ifname = CAN_INTERFACE;
+	char *ifname = SYS_CAN_INTERFACE;
 
 #if defined(SYS_LOG_LEVEL)
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
-	log_d(TAG, "l2_can_init(%s)\n\r", CAN_INTERFACE);
+#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+	log_d(TAG, "l2_can_init(%s)\n\r", SYS_CAN_INTERFACE);
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
 #error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
@@ -91,7 +92,7 @@ result_t can_l2_init(can_baud_rate_t arg_baud_rate,
  
 	if(bind(can_socket, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
 #if defined(SYS_LOG_LEVEL)
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 		log_d(TAG, "Error binding socket\n\r");
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
@@ -112,7 +113,7 @@ result_t can_l2_init(can_baud_rate_t arg_baud_rate,
 		return(ERR_GENERAL_ERROR);
 	}
 #if defined(SYS_LOG_LEVEL)
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	log_d(TAG, "New Thread created\n\r");
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
@@ -136,7 +137,7 @@ result_t can_l2_tx_frame(can_frame *frame)
 	int nbytes;
 
 #if defined(SYS_LOG_LEVEL)
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	log_d(TAG, "L2_CanTxMessage(0x%x)\n\r", frame->can_id);
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
@@ -172,7 +173,7 @@ result_t can_l2_dispatch_reg_handler(can_l2_target_t *target)
 	int loop;
 
 #if defined(SYS_LOG_LEVEL)
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	log_d(TAG, "sys_l2_can_dispatch_reg_handler() Mask 0x%x, Filter 0x%x\n\r", target->mask, target->filter);
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
@@ -190,7 +191,7 @@ result_t can_l2_dispatch_reg_handler(can_l2_target_t *target)
 	for(loop = 0; loop < REGISTER_ARRAY_SIZE; loop++) {
 		if(registered[loop].bitField.used == FALSE) {
 #if defined(SYS_LOG_LEVEL)
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 			log_d(TAG, "Target stored at target %d\n\r", loop);
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)

@@ -25,7 +25,7 @@
 #include "es_lib/can/dcncp/dcncp_can.h"
 #include "es_lib/can/es_can.h"
 
-#define DEBUG_FILE
+#define DEBUG_FILE TRUE
 #include "es_lib/logger/serial_log.h"
 #include "es_lib/logger/iso15765_log.h"
 
@@ -49,7 +49,7 @@ static log_level_t iso15765_logger_level = Error;
 static void iso15765_log_handler(iso15765_msg_t *message)
 {
 	log_level_t level;
-	char        string[ISO15765_MAX_MSG];
+	char        string[SYS_ISO15765_MAX_MSG];
 
 	level = message->data[0];
 	if ((level >= iso15765_logger_level) && iso15765_logger_handler) {
@@ -70,7 +70,7 @@ result_t iso15765_logger_register_as_logger(void (*handler)(uint8_t, log_level_t
 	iso15765_target_t target;
 
 #if defined(SYS_LOG_LEVEL)
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	log_d(TAG, "iso15765_log_reg_as_handler() level %x\n\r", level);
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
@@ -111,7 +111,7 @@ result_t iso15765_logger_register_as_logger(void (*handler)(uint8_t, log_level_t
 result_t iso15765_logger_unregister_as_logger(void)
 {
 #if defined(SYS_LOG_LEVEL)
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	log_d(TAG, "iso15765_log_unreg_as_handler()\n\r");
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
@@ -129,12 +129,12 @@ void iso15765_log(log_level_t level, char *string)
 {
 	uint8_t loop;
 //	uint8_t address;
-	uint8_t data[ISO15765_MAX_MSG];
+	uint8_t data[SYS_ISO15765_MAX_MSG];
 
 	iso15765_msg_t msg;
 
 #if defined(SYS_LOG_LEVEL)
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	log_d(TAG, "iso15765_log(0x%x, %s)\n\r", (uint16_t)level, string);
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
@@ -169,7 +169,7 @@ void iso15765_log(log_level_t level, char *string)
 			}
 		} else {
 #if defined(SYS_LOG_LEVEL)
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 			log_d(TAG, "ISO15765 logger not logging insifficient Level\n\r");
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
@@ -178,7 +178,7 @@ void iso15765_log(log_level_t level, char *string)
 		}
 	} else {
 #if defined(SYS_LOG_LEVEL)
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 		log_d(TAG, "no Logger Registered\n\r");
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)

@@ -28,11 +28,11 @@
 #include "es_lib/can/dcncp/dcncp_iso15765.h"
 #endif // SYS_ISO15765_DCNCP
 
-#define DEBUG_FILE
+#define DEBUG_FILE TRUE
 #include "es_lib/logger/serial_log.h"
 
 #if defined(SYS_LOG_LEVEL)
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 #define TAG "CAN"
 
 char can_l2_status_strings[5][17] = {
@@ -69,7 +69,7 @@ result_t can_init(can_baud_rate_t baudrate,
 		  can_status_handler_t arg_status_handler)
 {
 #if defined(SYS_LOG_LEVEL)
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	log_d(TAG, "can_init\n\r");
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
@@ -90,7 +90,7 @@ result_t can_init(can_baud_rate_t baudrate,
 void status_handler(uint8_t mask, can_status_t status, can_baud_rate_t baud)
 {
 #if defined(SYS_LOG_LEVEL)
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	log_d(TAG, "status_handler(mask-0x%x, status-0x%x\n\r", mask, status.byte);
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
@@ -101,7 +101,7 @@ void status_handler(uint8_t mask, can_status_t status, can_baud_rate_t baud)
 		switch(status.bit_field.l2_status) {
 			case L2_Uninitialised:
 #if defined(SYS_LOG_LEVEL)
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 				log_d(TAG, "L2_Uninitialised\n\r");
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
@@ -111,7 +111,7 @@ void status_handler(uint8_t mask, can_status_t status, can_baud_rate_t baud)
 				
 			case L2_Listening:
 #if defined(SYS_LOG_LEVEL)
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 				log_d(TAG, "L2_Listening\n\r");
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
@@ -121,7 +121,7 @@ void status_handler(uint8_t mask, can_status_t status, can_baud_rate_t baud)
 				
 			case L2_Connecting:
 #if defined(SYS_LOG_LEVEL)
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 				log_d(TAG, "L2_Connecting\n\r");
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
@@ -131,7 +131,7 @@ void status_handler(uint8_t mask, can_status_t status, can_baud_rate_t baud)
 				
 			case L2_Connected:
 #if defined(SYS_LOG_LEVEL)
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 				log_d(TAG, "L2_Connected\n\r");
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
@@ -141,7 +141,7 @@ void status_handler(uint8_t mask, can_status_t status, can_baud_rate_t baud)
 				
 			case L2_ChangingBaud:
 #if defined(SYS_LOG_LEVEL)
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 				log_d(TAG, "L2_ChangingBaud\n\r");
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
@@ -163,7 +163,7 @@ void status_handler(uint8_t mask, can_status_t status, can_baud_rate_t baud)
 #ifdef SYS_CAN_DCNCP
 		if ((status.bit_field.l2_status == L2_Connected) && (can_status.bit_field.l2_status != L2_Connected)) {
 #if defined(SYS_LOG_LEVEL)
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 			log_d(TAG, "Layer 2 Connected so start DCNCP\n\r");
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
@@ -183,7 +183,7 @@ void status_handler(uint8_t mask, can_status_t status, can_baud_rate_t baud)
 	else if (mask == DCNCP_INIT_STATUS_MASK) {
 		if(status.bit_field.dcncp_initialised) {
 #if defined(SYS_LOG_LEVEL)
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 			log_d(TAG, "DCNCP_Initialised\n\r");
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
@@ -191,7 +191,7 @@ void status_handler(uint8_t mask, can_status_t status, can_baud_rate_t baud)
 #endif //  if defined(SYS_LOG_LEVEL)
 		} else {
 #if defined(SYS_LOG_LEVEL)
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 			log_d(TAG, "DCNCP_Uninitilised\n\r");
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
@@ -206,7 +206,7 @@ void status_handler(uint8_t mask, can_status_t status, can_baud_rate_t baud)
 #if defined(ISO15765) || defined(ISO11783)
 	else if (mask == DCNCP_NODE_ADDRESS_STATUS_MASK) {
 #if defined(SYS_LOG_LEVEL)
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 		log_d(TAG, "L3 Status update\n\r");
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
@@ -232,7 +232,7 @@ void status_handler(uint8_t mask, can_status_t status, can_baud_rate_t baud)
 #if defined(ISO11783)
 	iso11783_init(185);
 #if defined(SYS_LOG_LEVEL)
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	log_d(TAG, "iso11783 Initialised\n\r");
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)

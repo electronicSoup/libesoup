@@ -77,38 +77,42 @@
 #define TAG "TIMERS"
 
 #ifdef MCP
-static uint16_t timer_counter = 0;
+static uint16_t  timer_counter = 0;
 
-volatile BOOL timer_ticked = FALSE;
+volatile boolean timer_ticked = FALSE;
 
-static uint8_t hw_timer_paused = FALSE;
-static uint8_t hw_timer = BAD_TIMER;
+static uint8_t   hw_timer_paused = FALSE;
+static uint8_t   hw_timer = BAD_TIMER;
+#endif // MCP
 
 /*
  * Data structure for a Timer on the Cinnamon Bun.
  */
 typedef struct {
-	BOOL active;
-	uint16_t expiry_count;
+	boolean         active;
+	uint16_t        expiry_count;
 	expiry_function function;
-	union sigval expiry_data;
+	union sigval    expiry_data;
 } sys_timer_t;
-#endif // MCP
 
 /*
  * The Cinnamon Bun maintains a table of timers which can be activated
- * by the calling code. The SYS_NUMBER_OF_TIMERS, defined in your system.h
+ * by the calling code. The SYS_NUMBER_OF_SW_TIMERS, defined in your system.h
  * file defines how many timers the code maintains. 
  *
  * If your project uses a limited number of know timers then you can set 
- * SYS_NUMBER_OF_TIMERS to a known value.
+ * SYS_NUMBER_OF_SW_TIMERS to a known value.
  */
 #ifdef MCP
 #if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__) || (__dsPIC33EP256MU806__)
 #pragma udata
 #endif //__PIC24FJ256GB106__
-sys_timer_t timers[SYS_NUMBER_OF_TIMERS];
 #endif // MCP
+#if defined(SYS_NUMBER_OF_SW_TIMERS)
+sys_timer_t timers[SYS_NUMBER_OF_SW_TIMERS];
+#else  //  defined(SYS_NUMBER_OF_SW_TIMERS)
+#error system.h file should define SYS_NUMBER_OF_SW_TIMERS (see es_lib/examples/system.h)
+#endif //  defined(SYS_NUMBER_OF_SW_TIMERS)
 
 /*
  * Timer_1 ISR. To keep ISR short it simply restarts TIMER_1 and sets 
@@ -152,7 +156,7 @@ void sw_timer_init(void)
 	/*
 	 * Initialise our Data Structures
 	 */
-	for(loop=0; loop < SYS_NUMBER_OF_TIMERS; loop++) {
+	for(loop=0; loop < SYS_NUMBER_OF_SW_TIMERS; loop++) {
 		timers[loop].active = FALSE;
 		timers[loop].expiry_count = 0;
 		timers[loop].function = (expiry_function)NULL;
@@ -212,7 +216,7 @@ void sw_timer_tick(void)
 	/*
 	 * Check for expired timers
 	 */
-	for(loop=0; loop < SYS_NUMBER_OF_TIMERS; loop++) {
+	for(loop=0; loop < SYS_NUMBER_OF_SW_TIMERS; loop++) {
 		if (timers[loop].active) {
 			active_timers++;
 
@@ -302,7 +306,7 @@ result_t sw_timer_start(uint16_t ticks,
 	/*
 	 * Find the First empty timer
 	 */
-	for(loop=0; loop < SYS_NUMBER_OF_TIMERS; loop++) {
+	for(loop=0; loop < SYS_NUMBER_OF_SW_TIMERS; loop++) {
 		if (!timers[loop].active) {
 			/*
 			 * Found an inactive timer so assign to this expiry
@@ -361,7 +365,7 @@ result_t sw_timer_start(uint16_t ticks,
 #else  //  defined(SYS_LOG_LEVEL)
 #error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
 #endif //  defined(SYS_LOG_LEVEL)
-		timer_cancel(timer);
+		sw_timer_cancel(timer);
 	}
 
 	action.sigev_notify = SIGEV_THREAD;
@@ -392,8 +396,8 @@ result_t sw_timer_start(uint16_t ticks,
 //		   (duration * SYSTEM_TICK_ms) / 1000, 
 //		   (duration * SYSTEM_TICK_ms) % 1000 * 1000000);
 
-	its.it_value.tv_sec = (ticks * SYSTEM_TICK_ms) / 1000;
-	its.it_value.tv_nsec = (ticks * SYSTEM_TICK_ms) % 1000 * 1000000;
+	its.it_value.tv_sec = (ticks * SYS_SYSTEM_TICK_ms) / 1000;
+	its.it_value.tv_nsec = (ticks * SYS_SYSTEM_TICK_ms) % 1000 * 1000000;
 	its.it_interval.tv_sec = 0;
 	its.it_interval.tv_nsec = 0;
 
@@ -475,7 +479,7 @@ result_t sw_timer_cancel_all(void)
 #else  //  defined(SYS_LOG_LEVEL)
 #error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
 #endif //  defined(SYS_LOG_LEVEL)
-	for (loop = 0; loop < SYS_NUMBER_OF_TIMERS; loop++) {
+	for (loop = 0; loop < SYS_NUMBER_OF_SW_TIMERS; loop++) {
 		if (timers[loop].active) {
 			timers[loop].active = FALSE;
 			timer.status = ACTIVE;

@@ -41,7 +41,7 @@
 #define NULL (0)
 #endif	/* NULL */
 
-    typedef uint8_t    BOOL;
+    typedef uint8_t    boolean;
 #define FALSE 0x00
 #define TRUE (!FALSE)
 
@@ -66,11 +66,7 @@
 #elif defined(ES_LINUX)
     #include <stdint.h>
 
-    typedef uint8_t  uint8_t;
-    typedef uint16_t uint16_t;
-    typedef uint32_t u32;
-
-    typedef unsigned char bool;
+    typedef unsigned char boolean;
     #define FALSE 0
     #define TRUE !(FALSE)
 
@@ -563,17 +559,6 @@ typedef struct
     can_l2_frame_handler_t  handler;
     uint8_t                      handler_id;
 } can_l2_target_t;
-
-/**
- * @def   ISO15765_MAX_MSG
- * @brief Maximum length of an ISO15765 Message
- *
- * The maximum ISO15765 Message length, not including the protcol Byte.
- *
- * ISO15765  Specification allows for 4095 Bytes but we're not even going to 
- * get close to that.
- */
-#define ISO15765_MAX_MSG 270  
 
 /**
  * @type  iso15765_msg_t

@@ -82,10 +82,10 @@ typedef struct
  * @brief convience macro to convert a Seconds value to system ticks
  *
  * For portability code should always use this macro to calculate system ticks
- * for a timer. If the system changes the @see SYSTEM_TICK_ms value for either
+ * for a timer. If the system changes the @see SYS_SYSTEM_TICK_ms value for either
  * finer timer granularity or less granularity.
  */
-#define SECONDS_TO_TICKS(s)  ((s) * (1000 / SYSTEM_TICK_ms))
+#define SECONDS_TO_TICKS(s)  ((s) * (1000 / SYS_SYSTEM_TICK_ms))
 
 /**
  * @brief convience macro to convert a MilliSeconds value to system ticks
@@ -94,7 +94,7 @@ typedef struct
  * timer granularity is changed. In addition future electronicSoup deivces may
  * well use different System Tick values.
  */
-#define MILLI_SECONDS_TO_TICKS(ms) ((ms < SYSTEM_TICK_ms) ? 1 : (ms / SYSTEM_TICK_ms))
+#define MILLI_SECONDS_TO_TICKS(ms) ((ms < SYS_SYSTEM_TICK_ms) ? 1 : (ms / SYS_SYSTEM_TICK_ms))
 
 #ifdef MCP
 /**
@@ -146,8 +146,8 @@ typedef void (*expiry_function)(timer_t timer_id, union sigval);
  * Calculate the 16 bit value that will give us an ISR for the system tick
  * duration.
  */
-#define TMR0H_VAL ((0xFFFF - ((SYSTEM_TICK_ms * SYS_CLOCK_FREQ) / 4000)) >> 8) & 0xFF
-#define TMR0L_VAL (0xFFFF - ((SYSTEM_TICK_ms * SYS_CLOCK_FREQ) / 4000)) & 0xFF
+#define TMR0H_VAL ((0xFFFF - ((SYS_SYSTEM_TICK_ms * SYS_CLOCK_FREQ) / 4000)) >> 8) & 0xFF
+#define TMR0L_VAL (0xFFFF - ((SYS_SYSTEM_TICK_ms * SYS_CLOCK_FREQ) / 4000)) & 0xFF
 #endif // (__18F2680) || __18F4585)
 
 
@@ -209,7 +209,7 @@ typedef void (*expiry_function)(timer_t timer_id, union sigval);
  * for a timer. If the system changes the @see SYSTEM_TICK_ms value for either
  * finer timer granularity or less granularity.
  */
-#define SECONDS_TO_TICKS(s)  ((s) * (1000 / SYSTEM_TICK_ms))
+#define SECONDS_TO_TICKS(s)  ((s) * (1000 / SYS_SYSTEM_TICK_ms))
 
 /**
  * @brief convience macro to convert a MilliSeconds value to system ticks
@@ -218,7 +218,7 @@ typedef void (*expiry_function)(timer_t timer_id, union sigval);
  * timer granularity is changed. In addition future electronicSoup deivces may
  * well use different System Tick values.
  */
-#define MILLI_SECONDS_TO_TICKS(ms) ((ms < SYSTEM_TICK_ms) ? 1 : (ms / SYSTEM_TICK_ms))
+#define MILLI_SECONDS_TO_TICKS(ms) ((ms < SYS_SYSTEM_TICK_ms) ? 1 : (ms / SYS_SYSTEM_TICK_ms))
 
     
 /*
