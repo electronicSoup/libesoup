@@ -54,9 +54,9 @@ typedef enum {
  * expiry function is used for two timers. In this case the expiry function can
  * check for the timer identifer of the expired timer.
  */
-#ifdef MCP
+#if defined(MCP)
 typedef uint8_t timer_t;
-#endif
+#endif  // if defined(MCP)
 
 /**
  * @brief timer data structure.
@@ -96,7 +96,7 @@ typedef struct
  */
 #define MILLI_SECONDS_TO_TICKS(ms) ((ms < SYS_SYSTEM_TICK_ms) ? 1 : (ms / SYS_SYSTEM_TICK_ms))
 
-#ifdef MCP
+#if defined(MCP)
 /**
  * @brief Data passed to expiry funciton on timer expiry.
  *
@@ -118,7 +118,7 @@ union sigval {
            uint16_t     sival_int;         /**< 16 bit Integer value */
            void   *sival_ptr;         /**< Pointer value */
 };
-#endif
+#endif  // if defined(MCP)
 
 /**
  * @brief call signiture of the timer expiry function.
