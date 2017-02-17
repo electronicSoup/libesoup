@@ -26,8 +26,11 @@
 
 #include "system.h"
 
+#if defined (MCP)
 #include "es_lib/comms/uart.h"
-//#include "es_lib/logger/serial_log.h"
+#elif defined (ES_LINUX)
+#include <stdio.h>
+#endif // if defined (ES_LINUX)
 
 //static struct uart_data serial_uart;
 
@@ -94,6 +97,7 @@ void _ISR __attribute__((__no_auto_psv__)) _U1RXInterrupt(void)
  */
 void serial_logging_init(void)
 {
+#ifdef MCP
 	/*
 	 * CinnamonBun is running a PIC24FJ256GB106 or dsPIC33 processor
 	 */
@@ -183,6 +187,7 @@ void serial_logging_init(void)
 
 	RCSTAbits.SPEN = 1;
 #endif // (__18F2680) || (__18F4585)
+#endif // ifdef MCP
 }
 
 #if defined(__18F2680) || defined(__18F4585)
@@ -246,12 +251,17 @@ void es_printf(char *fmt, ...)
 
 void log_d(char *tag, char *fmt, ...)
 {
-        va_list arguments;                     
+        va_list arguments;           
 
         /* Initializing arguments to store all values after num */
-        va_start ( arguments, fmt );           
+        va_start ( arguments, fmt );
+#if defined(MCP)
         es_printf("D :%s ", tag);
         es_printf(fmt, arguments);
+#elif defined(ES_LINUX)
+        printf("D :%s ", tag);
+        printf(fmt, arguments);
+#endif
 }
 
 void log_i(char *tag, char *fmt, ...)
@@ -259,9 +269,14 @@ void log_i(char *tag, char *fmt, ...)
         va_list arguments;                     
 
         /* Initializing arguments to store all values after num */
-        va_start ( arguments, fmt );           
+        va_start ( arguments, fmt );
+#if defined(MCP)
         es_printf("I :%s ", tag);
         es_printf(fmt, arguments);
+#elif defined(ES_LINUX)
+        printf("I :%s ", tag);
+        printf(fmt, arguments);
+#endif
 }
 
 void log_w(char *tag, char *fmt, ...)
@@ -269,9 +284,14 @@ void log_w(char *tag, char *fmt, ...)
         va_list arguments;                     
 
         /* Initializing arguments to store all values after num */
-        va_start ( arguments, fmt );           
+        va_start ( arguments, fmt );
+#if defined(MCP)
         es_printf("W :%s ", tag);
         es_printf(fmt, arguments);
+#elif defined(ES_LINUX)
+        printf("W :%s ", tag);
+        printf(fmt, arguments);
+#endif
 }
 
 void log_e(char *tag, char *fmt, ...)
@@ -279,7 +299,12 @@ void log_e(char *tag, char *fmt, ...)
         va_list arguments;                     
 
         /* Initializing arguments to store all values after num */
-        va_start ( arguments, fmt );           
+        va_start ( arguments, fmt );
+#if defined(MCP)
         es_printf("E :%s ", tag);
         es_printf(fmt, arguments);
+#elif defined(ES_LINUX)
+        printf("E :%s ", tag);
+        printf(fmt, arguments);
+#endif
 }
