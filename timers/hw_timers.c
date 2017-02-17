@@ -356,7 +356,7 @@ static result_t start_timer(u8 timer, ty_time_units units, u16 time, u8 repeat, 
 		default:
 			LOG_E("Unknown Timer Units\n\r");
 			return(ERR_BAD_INPUT_PARAMETER);
-			break;
+//			break;
 	}
 
 	if(ticks > 0) {
