@@ -160,7 +160,7 @@ typedef void (*expiry_function)(timer_t timer_id, union sigval);
      */
     #define CHECK_TIMERS()  if(timer_ticked) timer_tick();
 
-    extern volatile BOOL timer_ticked;
+    extern volatile boolean timer_ticked;
 
     /*
      * sw_timer_init()
