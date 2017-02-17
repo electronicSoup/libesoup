@@ -74,7 +74,7 @@ void _ISR __attribute__((__no_auto_psv__)) _U1RXInterrupt(void)
 void serial_init(void)
 {
 	/*
-	 * CinnamonBun is running a PIC24FJ256GB106 processor
+	 * CinnamonBun is running a PIC24FJ256GB106 or dsPIC33 processor
 	 */
 #if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__) || defined(__dsPIC33EP256MU806__)
 	/*
@@ -114,16 +114,19 @@ void serial_init(void)
 	tx_write_index = 0;
 	tx_read_index = 0;
 	tx_buffer_count = 0;
-
+        
 	TRISCbits.TRISC6 = 0;
+#if defined(ENABLE_USART_RX)
 	TRISCbits.TRISC7 = 1;
-
+#endif
 	TXSTAbits.TXEN = 1;    // Transmitter enabled
 	TXSTAbits.SYNC = 0;    // Asynchronous mode
 	TXSTAbits.BRGH = 0;    // High Baud Rate Select bit
 
 #if defined(ENABLE_USART_RX)
 	RCSTAbits.CREN = 1;    // Enable the Receiver
+#else
+	RCSTAbits.CREN = 0;    // Disable the Receiver
 #endif
 	RCSTAbits.SPEN = 1;
 
