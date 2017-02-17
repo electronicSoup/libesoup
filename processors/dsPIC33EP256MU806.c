@@ -5,6 +5,7 @@
 /*
  * Set up the configuration words of the processor:
  */
+//pragma config _FOSCSEL = FNOSC_FRC
 _FOSCSEL( FNOSC_FRC & IESO_OFF ) // Start up with FRC Clock source
 // Enable Clock Switching and Configure POSC in HS mode
 _FOSC( FCKSM_CSECMD & IOL1WAY_OFF & OSCIOFNC_ON & POSCMD_HS )

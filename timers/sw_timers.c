@@ -104,7 +104,7 @@ typedef struct {
  * SYS_NUMBER_OF_TIMERS to a known value.
  */
 #ifdef MCP
-#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__)
+#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__) || (__dsPIC33EP256MU806__)
 #pragma udata
 #endif //__PIC24FJ256GB106__
 sys_timer_t timers[SYS_NUMBER_OF_TIMERS];
@@ -117,7 +117,7 @@ sys_timer_t timers[SYS_NUMBER_OF_TIMERS];
  * macro.
  */
 #ifdef MCP
-#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__)
+#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__) || (__dsPIC33EP256MU806__)
 static void hw_expiry_function(void *data)
 {
 	timer_ticked = TRUE;
@@ -158,7 +158,7 @@ void sw_timer_init(void)
 		timers[loop].function = (expiry_function)NULL;
 	}
 
-#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__)
+#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__) || defined(__dsPIC33EP256MU806__)
 	hw_timer = BAD_TIMER;
 
 	hw_timer = hw_timer_start(mSeconds, 5, TRUE, hw_expiry_function, NULL);

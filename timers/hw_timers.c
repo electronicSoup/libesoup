@@ -21,7 +21,7 @@
  *******************************************************************************
  *
  */
-#define DEBUG_FILE FALSE
+#define DEBUG_FILE TRUE
 #define TAG "HW_TIMERS"
 
 #include "system.h"
@@ -197,12 +197,21 @@ void hw_timer_init(void)
 	 * Initialise the timers to 16 bit and their clock source
 	 */
 	T1CONbits.TCS = 0;      // Internal FOSC/2
+	T1CONbits.TGATE = 0;
+
 	T2CONbits.T32 = 0;      // 16 Bit Timer
 	T2CONbits.TCS = 0;      // Internal FOSC/2
+        T2CONbits.TGATE = 0;
+        
 	T3CONbits.TCS = 0;      // Internal FOSC/2
+        T3CONbits.TGATE = 0;
+        
 	T4CONbits.T32 = 0;      // 16 Bit Timer
 	T4CONbits.TCS = 0;      // Internal FOSC/2
+        T4CONbits.TGATE = 0;
+        
 	T5CONbits.TCS = 0;      // Internal FOSC/2
+        T5CONbits.TGATE = 0;
 #elif defined(__18F2680) || defined(__18F4585)
         T0CONbits.T08BIT = 0;   // 16 Bit timer
         T0CONbits.T0CS   = 0;   // Clock source Instruction Clock
@@ -231,9 +240,8 @@ uint8_t hw_timer_start(ty_time_units units, uint16_t time, uint8_t repeat, void 
 	 * Find a free timer
 	 */
 	timer = 0;
-        timer = TIMER_1;
 
-//	while(timer < NUMBER_HW_TIMERS) {
+	while(timer < NUMBER_HW_TIMERS) {
 		if(timers[timer].status == TIMER_UNUSED) {
 			rc = start_timer(timer, units, time, repeat, expiry_function, data);
 			if(rc == SUCCESS) {
@@ -258,7 +266,7 @@ uint8_t hw_timer_start(ty_time_units units, uint16_t time, uint8_t repeat, void 
 #endif //  defined(SYS_LOG_LEVEL)
                 }
 		timer++;
-//	}
+	}
 
 #if defined(SYS_LOG_LEVEL)
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
@@ -451,7 +459,7 @@ static result_t start_timer(uint8_t timer, ty_time_units units, uint16_t time, u
 #else
 #error system.h file should define the SYS_CLOCK_FREQ
 #endif
-			break;
+                break;
 
 		case mSeconds:
 #if defined(SYS_CLOCK_FREQ)
@@ -465,7 +473,7 @@ static result_t start_timer(uint8_t timer, ty_time_units units, uint16_t time, u
 #else
 #error system.h file should define the SYS_CLOCK_FREQ
 #endif
-			break;
+                break;
 
 		case Seconds:
 #if defined(SYS_CLOCK_FREQ)
@@ -492,7 +500,7 @@ static result_t start_timer(uint8_t timer, ty_time_units units, uint16_t time, u
 #else
 #error system.h file should define the SYS_CLOCK_FREQ
 #endif
-			break;
+                break;
 
 		default:
 #if defined(SYS_LOG_LEVEL)
