@@ -150,7 +150,7 @@
  * Default : Switch is commented out assuming timer functionality not included
  * in project.
  */
-#define SYS_NUMBER_OF_TIMERS 20     // Default disabled
+//#define SYS_NUMBER_OF_SW_TIMERS 20     // Default disabled
 
 /*
  * System jobs
