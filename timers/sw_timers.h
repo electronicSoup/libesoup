@@ -2,7 +2,7 @@
  *
  * \file es_lib/timers/sw_timers.h
  *
- * Timer function prototypes
+ * Software Timer definitions and function prototypes
  *
  * Copyright 2014 John Whitmore <jwhitmore@electronicsoup.com>
  *
@@ -33,50 +33,13 @@
 #define SW_TIMERS_H
 
 /*
- * Timer definitions
- */
-/**
- * @brief Timer status.
- *
- * Enumerated type for the current status of a timer in the system. Simple, a timer
- * is either Active or it's not.
- */
-typedef enum {
-    INACTIVE = 0x00,
-    ACTIVE
-} timer_status_t;
-
-/*
  * timer_t Timer identifier
  *
- * A Timer identifer should not be written directly by code but only by timer.c. 
- * It is part of the es_timer structure and can be read, if for some reason one
- * expiry function is used for two timers. In this case the expiry function can
- * check for the timer identifer of the expired timer.
+ * A Timer identifer returned from a timer created by sw_timer_create()
  */
 #if defined(MCP)
 typedef uint8_t timer_t;
 #endif  // if defined(MCP)
-
-/**
- * @brief timer data structure.
- *
- * The actual timer structure is simply the timer identifier and it's status.
- */
-typedef struct
-{
-	timer_status_t status;
-	timer_t        timer_id;
-} es_timer;
-
-/**
- * @brief convience macro to initialise timer to inactive
- *
- * Simple macro to initialise the current statusof a timer to inactive.
- * A timer should always be initialsed to an inactive status before it is used
- * otherwise the timer might appear to be already active
- */
-#define TIMER_INIT(timer) timer.status = INACTIVE;
 
 /**
  * @brief convience macro to convert a Seconds value to system ticks
@@ -175,14 +138,14 @@ typedef void (*expiry_function)(timer_t timer_id, union sigval);
     extern void sw_timer_init(void);
 
     /*
-     * sw_timer_tick()
+     * timer_tick()
      *
      * This function should not be called directly but called with the
      * CHECK_TIMERS macro defined above. It should be called only when the
      * timer interrupt has fired for a timer tick. The period of the timer tick
      * is defined in core.h.
      */
-    extern void sw_timer_tick(void);
+    extern void timer_tick(void);
 
     /*
      * timer_isr
@@ -192,15 +155,6 @@ typedef void (*expiry_function)(timer_t timer_id, union sigval);
 #endif // (__18F2680) || (__18F4585)
 
 #endif // MCP
-
-/**
- * @brief convience macro to initialise timer to inactive
- *
- * Simple macro to initialise the current statusof a timer to inactive.
- * A timer should always be initialsed to an inactive status before it is used
- * otherwise the timer might appear to be already active
- */
-#define TIMER_INIT(timer) timer.status = INACTIVE;
 
 /**
  * @brief convience macro to convert a Seconds value to system ticks
@@ -270,8 +224,8 @@ typedef void (*expiry_function)(timer_t timer_id, union sigval);
  *                    in your system.h configuration file.
  * 
  */
-extern result_t sw_timer_start(uint16_t duration, expiry_function fn, union sigval data, es_timer *timer);
-extern result_t sw_timer_cancel(es_timer *timer);
+extern result_t sw_timer_start(uint16_t duration, expiry_function fn, union sigval data, timer_t *timer);
+extern result_t sw_timer_cancel(timer_t timer);
 extern result_t sw_timer_cancel_all(void);
 
 #endif  // SW_TIMERS_H

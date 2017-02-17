@@ -1,6 +1,6 @@
 /*
  *
- * file es_lib/timers/timers.c
+ * file es_lib/timers/sw_timers.c
  *
  * Timer functionalty for the electronicSoup Cinnamon Bun
  *
@@ -74,7 +74,7 @@
 
 #define DEBUG_FILE TRUE
 
-#define TAG "TIMERS"
+#define TAG "SW_TIMERS"
 
 #ifdef MCP
 static uint16_t  timer_counter = 0;
@@ -147,6 +147,7 @@ void timer_isr(void)
  * Function to initialise the data structures for timers and start 
  * Timer_1 of the PIC 
  *
+ * This function is not required by ES_LINUX systems
  */
 #ifdef MCP
 void sw_timer_init(void)
@@ -194,15 +195,16 @@ void sw_timer_init(void)
 #endif // MCP
 
 /*
- * void sw_timer_tick(void)
+ * void timer_tick(void)
  *
  * Function periodically called to check the state of active timers and check
  * expiry of any of the timers. If a timer has expired after the current tick
  * it's expiry function is called.
  *
+ * This function is not required by ES_LINUX systems
  */
 #ifdef MCP
-void sw_timer_tick(void)
+void timer_tick(void)
 {
 	uint16_t active_timers;
 	uint8_t loop;
@@ -253,7 +255,7 @@ void sw_timer_tick(void)
  * result_t sw_timer_start(uint16_t ticks,
  *                      expiry_function function,
  *                      union sigval data,
- *                      es_timer *timer)
+ *                      timer_t *timer)
  *
  * Function to start a timer on the system.
  *
@@ -274,10 +276,8 @@ void sw_timer_tick(void)
  *              to the given expiry function if the timer expires. The union
  *              is defined in timers.h and can be a value or a pointer.
  *
- * Input/Output  : es_timer *timer
- *              The timer strucure which the function is to operate on. The
- *              structure's timer identifier will be updated depending on which
- *              system timer is allocated to the timer.
+ * Output  : timer_t *timer
+ *              The timer identifier which the function returns to the caller.
  *
  * Return : SUCCESS             Timer created successfully
  *          ERR_TIMER_ACTIVE    Error - Given timer is already active
@@ -287,20 +287,24 @@ void sw_timer_tick(void)
 result_t sw_timer_start(uint16_t ticks,
 		     expiry_function function,
 		     union sigval data,
-		     es_timer *timer)
+		     timer_t *timer)
 {
 #ifdef MCP
 	timer_t loop;
 
-	if(timer->status != INACTIVE) {
+	if(*timer != BAD_TIMER) {
+                if(*timer < SYS_NUMBER_OF_SW_TIMERS) {
+                        if (timers[*timer].active) {
 #if defined(SYS_LOG_LEVEL)
-#if (SYS_LOG_LEVEL <= LOG_ERROR)
-		log_e(TAG, "start_timer() ERR_TIMER_ACTIVE\n\r");
+#if (DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_WARNING)
+                                log_w(TAG, "sw_timer_start() timer passed in active. Cancelling!\n\r");
 #endif
 #else  //  defined(SYS_LOG_LEVEL)
 #error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
 #endif //  defined(SYS_LOG_LEVEL)
-		return(ERR_TIMER_ACTIVE);
+                        }
+                }
+		sw_timer_cancel(*timer);
 	}
 
 	/*
@@ -321,8 +325,7 @@ result_t sw_timer_start(uint16_t ticks,
 			timers[loop].function = function;
 			timers[loop].expiry_data = data;
 
-			timer->status = ACTIVE;
-			timer->timer_id = loop;
+			*timer = loop;
 
 			/*
 			 * If our hw_timer isn't running restart it:
@@ -357,23 +360,12 @@ result_t sw_timer_start(uint16_t ticks,
 	struct sigevent action;
 	int ret;
 
-	if(timer->status == ACTIVE) {
-#if defined(SYS_LOG_LEVEL)
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
-		log_d(TAG, "Cancel Running timer\n\r");
-#endif
-#else  //  defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif //  defined(SYS_LOG_LEVEL)
-		sw_timer_cancel(timer);
-	}
-
 	action.sigev_notify = SIGEV_THREAD;
 	action.sigev_notify_function = (void (*)(union sigval))function; 
 	action.sigev_notify_attributes = NULL;
 	action.sigev_value = data;
 
-	ret = timer_create(CLOCK_REALTIME, &action, &(timer->timer_id));
+	ret = timer_create(CLOCK_REALTIME, &action, timer);
 
 	if(ret) {
 #if defined(SYS_LOG_LEVEL)
@@ -401,7 +393,7 @@ result_t sw_timer_start(uint16_t ticks,
 	its.it_interval.tv_sec = 0;
 	its.it_interval.tv_nsec = 0;
 
-	if (timer_settime(timer->timer_id, 0, &its, NULL) == -1) {
+	if (timer_settime(timer, 0, &its, NULL) == -1) {
 #if defined(SYS_LOG_LEVEL)
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
 		log_e(TAG, "Error can't set time\n\r");
@@ -411,55 +403,66 @@ result_t sw_timer_start(uint16_t ticks,
 #endif //  defined(SYS_LOG_LEVEL)
 		return(ERR_GENERAL_ERROR);
 	}
-	timer->status = ACTIVE;
 
 	return(SUCCESS);
 #endif
 }
 
 /*
- * result_t sw_timer_cancel(es_timer *timer)
+ * result_t sw_timer_cancel(timer_t timer)
  *
  * Function to cancel a running timer on the system.
  *
- * Input/Output  : es_timer *timer
- *              The timer strucure which the function is to operate on.
+ * Input  : timer_t timer
+ *              The timer identifier which the function is to operate on.
  *
  * Return : SUCCESS
  *
  */
-result_t sw_timer_cancel(es_timer *timer)
+result_t sw_timer_cancel(timer_t timer)
 {
 #ifdef MCP
-	if(timer->status == ACTIVE) {
-		if(timers[timer->timer_id].active) {
-			timers[timer->timer_id].active = FALSE;
-			timers[timer->timer_id].expiry_count = 0;
-			timers[timer->timer_id].function = (expiry_function) NULL;
-		}
-		timer->status = INACTIVE;
-	}
-#elif defined(ES_LINUX)
-	struct itimerspec its;
-
-	if(timer->status == ACTIVE) {
-		its.it_value.tv_sec = 0;
-		its.it_value.tv_nsec = 0;
-		its.it_interval.tv_sec = 0;
-		its.it_interval.tv_nsec = 0;
-
-		if (timer_settime(timer->timer_id, 0, &its, NULL) == -1) {
+	if ((timer == BAD_TIMER) || (timer >= SYS_NUMBER_OF_SW_TIMERS)) {
 #if defined(SYS_LOG_LEVEL)
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
-			log_e(TAG, "Error can't create timer\n\r");
+                log_e(TAG, "sw_timer_cancel() Bad timer identifier passed in!\n\r");
 #endif
 #else  //  defined(SYS_LOG_LEVEL)
 #error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
 #endif //  defined(SYS_LOG_LEVEL)
-			return(ERR_GENERAL_ERROR);
-		}
-		timer->status = INACTIVE;
-	}
+                return(ERR_BAD_INPUT_PARAMETER);
+	} else if (timers[timer].active) {
+                timers[timer].active = FALSE;
+                timers[timer].expiry_count = 0;
+                timers[timer].function = (expiry_function) NULL;
+        } else {
+#if defined(SYS_LOG_LEVEL)
+#if (DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_INFO)
+                log_i(TAG, "sw_timer_cancel() timer not active!\n\r");
+#endif
+#else  //  defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  defined(SYS_LOG_LEVEL)
+        }
+        
+#elif defined(ES_LINUX)
+	struct itimerspec its;
+
+        its.it_value.tv_sec = 0;
+        its.it_value.tv_nsec = 0;
+        its.it_interval.tv_sec = 0;
+        its.it_interval.tv_nsec = 0;
+
+        if (timer_settime(timer, 0, &its, NULL) == -1) {
+#if defined(SYS_LOG_LEVEL)
+#if (SYS_LOG_LEVEL <= LOG_ERROR)
+                log_e(TAG, "Error can't create timer\n\r");
+#endif
+#else  //  defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  defined(SYS_LOG_LEVEL)
+                return(ERR_GENERAL_ERROR);
+        }
 #endif
 	return(SUCCESS);
 }
@@ -467,10 +470,10 @@ result_t sw_timer_cancel(es_timer *timer)
 /*
  * sw_timer_cancel_all
  */
+#if defined(MCP)
 result_t sw_timer_cancel_all(void)
 {
-	uint8_t loop;
-	es_timer timer;
+	uint8_t    loop;
 
 #if defined(SYS_LOG_LEVEL)
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
@@ -481,12 +484,9 @@ result_t sw_timer_cancel_all(void)
 #endif //  defined(SYS_LOG_LEVEL)
 	for (loop = 0; loop < SYS_NUMBER_OF_SW_TIMERS; loop++) {
 		if (timers[loop].active) {
-			timers[loop].active = FALSE;
-			timer.status = ACTIVE;
-			timer.timer_id = loop;
-
-			sw_timer_cancel(&timer);
+			sw_timer_cancel(loop);
 		}
 	}
 	return (SUCCESS);
 }
+#endif // if defined(MCP)
