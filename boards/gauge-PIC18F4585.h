@@ -36,7 +36,7 @@
  */
 #define CRYSTAL_FREQ 16000000
 
-#define HEARTBEAT_LED_DIRECTION    TRISBbits.RB4
-#define HEARTBEAT_LED              LATBbits.LATB4
+//#define HEARTBEAT_LED_DIRECTION    TRISBbits.RB4
+//#define HEARTBEAT_LED              LATBbits.LATB4
 
 #endif // _GUAGE-PIC18F4585_H
