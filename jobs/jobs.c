@@ -33,20 +33,20 @@ struct job {
     void *data;
 };
 
-struct job jobs[NUMBER_OF_JOBS];
-static u8 write_index;
-static u8 read_index;
-static u8 count;
+struct job jobs[SYS_NUMBER_OF_JOBS];
+static uint8_t write_index;
+static uint8_t read_index;
+static uint8_t count;
 
 void jobs_init(void)
 {
-	u16 loop;
+	uint16_t loop;
 
         write_index = 0;
         read_index = 0;
         count = 0;
 
-	for(loop = 0; loop < NUMBER_OF_JOBS; loop++) {
+	for(loop = 0; loop < SYS_NUMBER_OF_JOBS; loop++) {
 		jobs[loop].function = NULL;
 		jobs[loop].data = NULL;
 	}
@@ -59,7 +59,7 @@ result_t jobs_add(void (*function)(void *), void *data)
         __builtin_disi(0x3FFF); /* disable interrupts */
         jobs[write_index].function = function;
         jobs[write_index].data = data;
-        write_index = (write_index + 1) % NUMBER_OF_JOBS;
+        write_index = (write_index + 1) % SYS_NUMBER_OF_JOBS;
         count++;
         __builtin_disi(0x0000); /* enable interrupts */
 	return(rc);
@@ -73,18 +73,30 @@ result_t jobs_execute(void)
 
 	while(count) {
                 if(jobs[read_index].function) {
-//                        LOG_D("Execute Job(%d)\n\r", read_index);
+#if defined(SYS_LOG_LEVEL)
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+//                        log_d(TAG, "Execute Job(%d)\n\r", read_index);
+#endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
                         function = jobs[read_index].function;
                         data     = jobs[read_index].data;
 
                         jobs[read_index].function = NULL;
                         jobs[read_index].data = NULL;
-                        read_index = (read_index + 1) % NUMBER_OF_JOBS;
+                        read_index = (read_index + 1) % SYS_NUMBER_OF_JOBS;
                         count--;
 
                         function(data);
                 } else {
-                        LOG_E("Bad job at %d\n\r", read_index);
+#if defined(SYS_LOG_LEVEL)
+#if (SYS_LOG_LEVEL <= LOG_ERROR)
+                        log_e(TAG, "Bad job at %d\n\r", read_index);
+#endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
                         rc = ERR_GENERAL_ERROR;
                 }
 	}

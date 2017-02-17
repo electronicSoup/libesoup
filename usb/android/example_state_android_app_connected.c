@@ -38,13 +38,19 @@
 /*
  * Forward declarations of functions.
  */
-void app_connected_process_msg(u8, void *, u16);
+void app_connected_process_msg(uint8_t, void *, uint16_t);
 void app_connected_main(void);
 void app_connected_process_usb_event(USB_EVENT event);
 
 void example_set_app_connected_state(void)
 {
-	LOG_D("State -> App_connected\n\r");
+#if defined(SYS_LOG_LEVEL)
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+	log_d(TAG, "State -> App_connected\n\r");
+#endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 
 	android_state.process_msg = app_connected_process_msg;
 	android_state.main = app_connected_main;
@@ -60,7 +66,7 @@ void example_set_app_connected_state(void)
  * the connected Android. If you want to keep this received after the function returns
  * then copy it out to your own buffer!
  */
-void app_connected_process_msg(u8 cmd, void *data, u16 data_len)
+void app_connected_process_msg(uint8_t cmd, void *data, uint16_t data_len)
 {
 }
 

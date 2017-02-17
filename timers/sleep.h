@@ -20,4 +20,4 @@
  *
  */
 
-extern void sleep(ty_time_units units, u16 time);
+extern void sleep(ty_time_units units, uint16_t time);

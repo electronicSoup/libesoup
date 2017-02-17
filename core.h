@@ -45,18 +45,18 @@
 #define FALSE 0x00
 #define TRUE (!FALSE)
 
-    typedef uint8_t    u8;
-    typedef uint16_t   u16;
-    typedef uint32_t   u32;
+//    typedef uint8_t    uint8_t;
+//    typedef uint16_t   uint16_t;
+//    typedef uint32_t   u32;
 
-    typedef int8_t     s8;
-    typedef int16_t    s16;
-    typedef int32_t    s32;
+//    typedef int8_t     s8;
+//    typedef int16_t    s16;
+//    typedef int32_t    s32;
 #if 0
 #include <GenericTypeDefs.h>
 
-    typedef UINT8    u8;
-    typedef UINT16   u16;
+    typedef UINT8    uint8_t;
+    typedef UINT16   uint16_t;
     typedef UINT32   u32;
 
     typedef INT8     s8;
@@ -66,8 +66,8 @@
 #elif defined(ES_LINUX)
     #include <stdint.h>
 
-    typedef uint8_t  u8;
-    typedef uint16_t u16;
+    typedef uint8_t  uint8_t;
+    typedef uint16_t uint16_t;
     typedef uint32_t u32;
 
     typedef unsigned char bool;
@@ -86,10 +86,20 @@
  * Union for converting byte stream to floats
  */
 typedef union {
-	u8 bytes[4];
+	uint8_t bytes[4];
 	float value;
 } f32;
 
+/**
+ * \defgroup Timers Timers
+ * @{
+ * 
+ * \brief Enumeration for units of time. Used to specify durations for timers.
+ * 
+ * These are fairly straight forward and represent human representations of
+ * time durations. When used to start timers the API functions will convert the 
+ * duration in to a micro-controller specific tick count or crystal pulse count.
+ */
 typedef enum {
     uSeconds,
     mSeconds,
@@ -97,112 +107,9 @@ typedef enum {
     Minutes,
     Hours
 } ty_time_units;
-
-/*
- * Timer definitions
- */
 /**
- * @brief Timer status.
- *
- * Enumerated type for the current status of a timer in the system. Simple, a timer
- * is either Active or it's not.
+ * @}
  */
-typedef enum {
-    INACTIVE = 0x00,
-    ACTIVE
-} timer_status_t;
-
-/*
- * timer_t Timer identifier
- *
- * A Timer identifer should not be written directly by code but only by timer.c. 
- * It is part of the es_timer structure and can be read, if for some reason one
- * expiry function is used for two timers. In this case the expiry function can
- * check for the timer identifer of the expired timer.
- */
-#ifdef MCP
-typedef u8 timer_t;
-#endif
-
-/**
- * @brief timer data structure.
- *
- * The actual timer structure is simply the timer identifier and it's status.
- */
-typedef struct
-{
-	timer_status_t status;
-	timer_t        timer_id;
-} es_timer;
-
-/**
- * @brief convience macro to initialise timer to inactive
- *
- * Simple macro to initialise the current statusof a timer to inactive.
- * A timer should always be initialsed to an inactive status before it is used
- * otherwise the timer might appear to be already active
- */
-#define TIMER_INIT(timer) timer.status = INACTIVE;
-
-/**
- * @brief convience macro to convert a Seconds value to system ticks
- *
- * For portability code should always use this macro to calculate system ticks
- * for a timer. If the system changes the @see SYSTEM_TICK_ms value for either
- * finer timer granularity or less granularity.
- */
-#define SECONDS_TO_TICKS(s)  ((s) * (1000 / SYSTEM_TICK_ms))
-
-/**
- * @brief convience macro to convert a MilliSeconds value to system ticks
- * 
- * as for @see SECONDS_TO_TICKS code should always use this macro in case system
- * timer granularity is changed. In addition future electronicSoup deivces may
- * well use different System Tick values.
- */
-#define MILLI_SECONDS_TO_TICKS(ms) ((ms < SYSTEM_TICK_ms) ? 1 : (ms / SYSTEM_TICK_ms))
-
-#ifdef MCP
-/**
- * @brief Data passed to expiry funciton on timer expiry.
- *
- * The sigval union comes straight from the Linux timer API, which is why this
- * definition if encased in a test for MCP definition. The union is passed to
- * the expiry function if the timer expires. It can either carry a 16 bit
- * integer value or a pointer.
- *
- * The reason for Linux API conformance is so that code is portable between
- * Linux and Microchip devices. In the case of MCP @see es_lib/timers/timers.h
- * provides the timer functionality, where as under Linux its timer code is
- * used. In both cases user code will be the same.
- *
- * Data passed to the expiry function can either be interpreted as a 16 bit
- * value or a pointer. It's up to the creater of the timer and the connected 
- * expiry function to decide what is being passed.
- */
-union sigval {
-           u16     sival_int;         /**< 16 bit Integer value */
-           void   *sival_ptr;         /**< Pointer value */
-};
-#endif
-
-/**
- * @brief call signiture of the timer expiry function.
- *
- * When a timer is created an expiry function is passed to the creation
- * function. The es_lib timer code executes this expiry_function when the timer
- * expires, passing the expiry function any data provided on timer creation.
- *
- * The expiry_function is a pointer to a function which accepts as parameter
- * the timer_id identifer of the timer which has expired and any associated data
- *
- * The expiry function is declared void and will not return anything to the
- * timer library code.
- *
- * Any timer expiry function should be short and sweet and return control as
- * soon as possible to the es_lib timer functionality.
- */
-typedef void (*expiry_function)(timer_t timer_id, union sigval);
 
 /**
  * @def   INPUT_PIN
@@ -462,9 +369,9 @@ typedef void (*expiry_function)(timer_t timer_id, union sigval);
  * in your system.h file.
  *
  * For example if an attempt to start a timer returns the no resources return
- * code then you can rebuild your system with more timers, @see NUMBER_OF_TIMERS
- * Of course more system Main Memory will be used up in timer table, in this 
- * case.
+ * code then you can rebuild your system with more timers, 
+ * @see SYS_NUMBER_OF_TIMERS Of course more system Main Memory will be used
+ * up in timer table, in this case.
  *
  * @enum  ERR_ADDRESS_RANGE,
  * @brief An address passed to an es_lib API function is out of valid range.
@@ -610,7 +517,7 @@ typedef enum {
  * bit 30	: remote transmission request flag (1 = rtr frame)
  * bit 31	: frame format flag (0 = standard 11 bit, 1 = extended 29 bit)
  */
-typedef u32 canid_t;
+typedef uint32_t canid_t;
 
 
 /**
@@ -628,8 +535,8 @@ typedef struct
 #endif //__18F2680
 {
     canid_t can_id; /* 32 bit CAN_ID + EFF/RTR/ERR flags */
-    u8      can_dlc;
-    u8      data[CAN_DATA_LENGTH];
+    uint8_t      can_dlc;
+    uint8_t      data[CAN_DATA_LENGTH];
 } can_frame;
 #endif //MCP
 
@@ -651,10 +558,10 @@ typedef void (*can_l2_frame_handler_t)(can_frame *msg);
  */
 typedef struct 
 {
-    u32                     mask;
-    u32                     filter;
+    uint32_t                     mask;
+    uint32_t                     filter;
     can_l2_frame_handler_t  handler;
-    u8                      handler_id;
+    uint8_t                      handler_id;
 } can_l2_target_t;
 
 /**
@@ -675,10 +582,10 @@ typedef struct
  */
 typedef struct
 {
-    u8  address;
-    u16 size;
-    u8  protocol;
-    u8 *data;
+    uint8_t  address;
+    uint16_t size;
+    uint8_t  protocol;
+    uint8_t *data;
 } iso15765_msg_t;
 
 /**
@@ -696,9 +603,9 @@ typedef void (*iso15765_msg_handler_t)(iso15765_msg_t *msg);
  */
 typedef struct
 {
-    u8                       protocol;
+    uint8_t                       protocol;
     iso15765_msg_handler_t   handler;
-    u8                       handler_id;
+    uint8_t                       handler_id;
 } iso15765_target_t;
 
 /**
@@ -708,11 +615,11 @@ typedef struct
  */
 typedef struct
 {
-    u8 source;
-    u8 destination;
-    u8 priority;
-    u32 pgn;
-    u8 *data;
+    uint8_t source;
+    uint8_t destination;
+    uint8_t priority;
+    uint32_t pgn;
+    uint8_t *data;
 } iso11783_msg_t;
 
 /**
@@ -731,9 +638,9 @@ typedef void (*iso11783_msg_handler_t)(iso11783_msg_t *msg);
  */
 typedef struct
 {
-    u32                      pgn;
+    uint32_t                      pgn;
     iso11783_msg_handler_t   handler;
-    u8                       handler_id;
+    uint8_t                       handler_id;
 } iso11783_target_t;
 
 /** @}*/
@@ -745,6 +652,7 @@ typedef struct
  *
  * Logger levels
  */
+#if 0
 typedef enum
 {
     Debug = 0,
@@ -752,6 +660,7 @@ typedef enum
     Warning,
     Error
 } log_level_t;
+#endif
 
 /**
  * @def   LOG_DEBUG
@@ -781,19 +690,53 @@ typedef enum
 #define NO_LOGGING  4
 
 /*
- * UART Defs
+ * http://stackoverflow.com/questions/4178392/how-to-separate-logging-logic-from-business-logic-in-a-c-program-and-in-a-c-o
  */
-#define PARITY_NONE                 0
-#define PARITY_ODD                  1
-#define PARITY_EVEN                 2
 
-#define ONE_STOP_BIT                1
-#define TWO_STOP_BITS               2
+extern void es_printf(char *fmt, ...);
+extern void log_d(char *tag, char *fmt, ...);
+extern void log_i(char *tag, char *fmt, ...);
+extern void log_w(char *tag, char *fmt, ...);
+extern void log_e(char *tag, char *fmt, ...);
 
-#define IDLE_LOW                    0
-#define IDLE_HIGH                   1
 
-#define LITTLE_ENDIAN               0
-#define BIG_ENDIAN                  1
+//#if (defined(DEBUG_FILE) && SYS_LOG_LEVEL <= LOG_DEBUG)
+//#define LOG_D es_printf("D :%s:", TAG); es_printf
+//#define LOG_D es_printf("D :%s:", TAG); es_printf
+//#else
+//#define LOG_D(fmt, ...) do { if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG)){ es_printf(fmt, __VA_ARGS__);} } while (0)
+//#define LOG_D(fmt, ...) do { if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG)){ es_printf("D :%s:", TAG);} } while (0);
+//#define LOG_D(fmt, ...) do { if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG)){ es_printf(fmt, __VA_ARGS__);} } while (0);
+//#define LOG_D(fmt, ...) do { if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG)){ es_printf("D :%s:", TAG); es_printf(fmt, __VA_ARGS__);} } while (0);
+//#define LOG_D
+//#endif
 
+#if 0
+/*
+ * LOG_I  -> Log an Informationional severity message.
+ */
+#if (defined(DEBUG_FILE) && SYS_LOG_LEVEL <= LOG_INFO)
+#define LOG_I es_printf("I :%s:", TAG); es_printf
+#else
+#define LOG_I 
+#endif
+
+/*
+ * LOG_W  -> Log a Warning severity message.
+ */
+#if (defined(DEBUG_FILE) && SYS_LOG_LEVEL <= LOG_WARNING)
+#define LOG_W es_printf("W :%s:", TAG); es_printf
+#else
+#define LOG_W 
+#endif
+
+/*
+ * LOG_E  -> Log an Error severity message.
+ */
+#if (SYS_LOG_LEVEL <= LOG_ERROR)
+#define LOG_E es_printf("E :%s:", TAG); es_printf
+#else
+#define LOG_E 
+#endif
+#endif //0
 #endif // _CORE_H

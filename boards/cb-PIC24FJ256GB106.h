@@ -13,16 +13,16 @@
  * Copyright 2015 John Whitmore <jwhitmore@electronicsoup.com>
  *
  *   This program is free software: you can redistribute it and/or modify
- *   it under the terms of the GNU General Public License as published by
+ *   it under the terms of the GNU Lesser General Public License as published by
  *   the Free Software Foundation, either version 3 of the License, or
  *   (at your option) any later version.
  *
  *   This program is distributed in the hope that it will be useful,
  *   but WITHOUT ANY WARRANTY; without even the implied warranty of
  *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *   GNU General Public License for more details.
+ *   GNU Lesser General Public License for more details.
  *
- *   You should have received a copy of the GNU General Public License
+ *   You should have received a copy of the GNU Lesser General Public License
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
@@ -53,13 +53,13 @@
 /*
  * Serial Logging
  */
-#if defined(SERIAL_PORT_GndTxRx)
+#if defined(SYS_SERIAL_PORT_GndTxRx)
         #define SERIAL_LOGGING_RX_DDR    TRISDbits.TRISD5
         #define SERIAL_LOGGING_TX_DDR    TRISDbits.TRISD4
 
         #define SERIAL_LOGGING_TX        RPOR12bits.RP25R
         #define SERIAL_LOGGING_RX_PIN    RP20
-#elif defined(SERIAL_PORT_GndRxTx)
+#elif defined(SYS_SERIAL_PORT_GndRxTx)
         #define SERIAL_LOGGING_RX_DDR    TRISDbits.TRISD4
         #define SERIAL_LOGGING_TX_DDR    TRISDbits.TRISD5
 
@@ -263,7 +263,7 @@
  * @def   FLASH_APP_START_ADDRESS
  * @brief Start of the Application code in Flash Memory.
  *
- * If you use the electronicSoup CAN Node Operating System then the application 
+ * If you use the electronicSoup SYS_CAN Node Operating System then the application 
  * Code starts at this address in Flash Memory.
  */
 #define FLASH_FIRMWARE_START_ADDRESS   0x08800
@@ -289,6 +289,14 @@
  */
 #define USB_HOST    TRISDbits.TRISD8 = OUTPUT_PIN; LATDbits.LATD8 = 1; USBInitialize(0);
 #define USB_DEVICE  TRISDbits.TRISD8 = OUTPUT_PIN; LATDbits.LATD8 = 0;
+
+/**
+ * @brief core definitions required by the library
+ *
+ * core.h contains all fundamental types used in es_lib and thus your 
+ * project.
+ */
+#include "es_lib/core.h"
 
 
 #endif // _CB_PIC24FJ256GB106_H

@@ -15,10 +15,10 @@ struct character
 
 static struct character alphabet['z' -'a' + 1];
 
-//static u8 current_letter_valid;
+//static uint8_t current_letter_valid;
 
-//static u8 tone;
-//static u8 switch_state;
+//static uint8_t tone;
+//static uint8_t switch_state;
 
 #define IDLE_STATE             0x00
 #define DOT_STATE              0x01
@@ -39,7 +39,7 @@ static struct character alphabet['z' -'a' + 1];
 
 #ifdef MORSE_TX
 static struct character *tx_current_character;
-static u8 tx_current_state;
+static uint8_t tx_current_state;
 
 extern void morse_tone_on(void);
 extern void morse_tone_off(void);
@@ -50,23 +50,23 @@ static void tx_start_element_space(void);
 static void tx_start_character_space(void);
 static void tx_start_word_space(void);
 
-static void timer_on(u8 duration);
+static void timer_on(uint8_t duration);
 static void exp_function(timer_t timer_id, union sigval data);
 
 /*
  * Tx Buffer is a circular buffer
  */
 static char   tx_buffer[MORSE_TX_BUFFER_SIZE];
-static UINT16 tx_buffer_write_index = 0;
-static UINT16 tx_buffer_read_index = 0;
-static UINT16 tx_buffer_count = 0;
+static uint16_t tx_buffer_write_index = 0;
+static uint16_t tx_buffer_read_index = 0;
+static uint16_t tx_buffer_count = 0;
 static es_timer     tx_timer;
 
 #endif
 
 void morse_init(void)
 {
-	u8 loop;
+	uint8_t loop;
 
 	/*
 	 * Set up out alphabet
@@ -180,7 +180,7 @@ void morse_tx_init(void (*on)(void), void (*off)(void))
 #endif
 
 #ifdef MORSE_TX
-static void morse_tx_char(u8 ch)
+static void morse_tx_char(uint8_t ch)
 {
 	struct character *previous_character;
 
@@ -226,15 +226,27 @@ void morse_tx(char *msg)
 		tx_buffer_count++;
 	}
 
-	LOG_D("Leaving morse_tx() buffer count is %d\n\r", tx_buffer_count);
-}
+#if defined(SYS_LOG_LEVEL)
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+	log_d(TAG, "Leaving morse_tx() buffer count is %d\n\r", tx_buffer_count);
 #endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
+}
+#endif  // if MORSE_TX
 
 #ifdef MORSE_TX
 void tx_start_dot(void)
 {
 	putchar('.');
-//	LOG_D("tx_start_dot()\n\r");
+#if defined(SYS_LOG_LEVEL)
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+//	log_d(TAG, "tx_start_dot()\n\r");
+#endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 	morse_tone_on();
 	timer_on(1);
 	tx_current_state = DOT_STATE;
@@ -263,7 +275,13 @@ void start_dot(void)
 void tx_start_dash(void)
 {
 	putchar('_');
-//	LOG_D("tx_start_dash()\n\r");
+#if defined(SYS_LOG_LEVEL)
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+//	log_d(TAG, "tx_start_dash()\n\r");
+#endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 	morse_tone_on();
 	timer_on(3);
 	tx_current_state = DASH_STATE;
@@ -308,7 +326,13 @@ void tx_start_character_space(void)
 	tx_current_state = CHARACTER_SPACE_STATE;
 #ifdef MORSE_RX
 	if(current_letter_valid) {
-		LOG_D("LETTER VALID -%c-\n\r", current_letter->ch);
+#if defined(SYS_LOG_LEVEL)
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+		log_d(TAG, "LETTER VALID -%c-\n\r", current_letter->ch);
+#endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 	}
 	current_letter_valid = 0x01;
 	current_letter = &alphabet[0];
@@ -327,12 +351,18 @@ void tx_start_word_space(void)
 #endif
 
 #ifdef MORSE_TX
-void timer_on(u8 duration)
+void timer_on(uint8_t duration)
 {
 	result_t     rc;
 	union sigval data;
 
-	LOG_D("timer_on(%d)\n\r", MILLI_SECONDS_TO_TICKS(DOT_TIME * duration));
+#if defined(SYS_LOG_LEVEL)
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+	log_d(TAG, "timer_on(%d)\n\r", MILLI_SECONDS_TO_TICKS(DOT_TIME * duration));
+#endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 	data.sival_int = 0x00;
 
 	rc = timer_start(MILLI_SECONDS_TO_TICKS(DOT_TIME * duration), exp_function, data, &tx_timer);
@@ -346,7 +376,13 @@ void exp_function(timer_t timer_id, union sigval data)
 
 	TIMER_INIT(tx_timer);
 
-//	LOG_D("expiry current state = 0x%x\n\r", current_state);
+#if defined(SYS_LOG_LEVEL)
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+//	log_d(TAG, "expiry current state = 0x%x\n\r", current_state);
+#endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 
 	if(tx_current_state == DOT_STATE) {
 		tx_start_element_space();
@@ -358,7 +394,13 @@ void exp_function(timer_t timer_id, union sigval data)
 	           || (tx_current_state == WORD_SPACE_STATE)) {
 		// TODO Would be next character
 		if (tx_buffer_count > 0) {
-			LOG_D("Tx '%c'\n\r", tx_buffer[tx_buffer_read_index]);
+#if defined(SYS_LOG_LEVEL)
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+			log_d(TAG, "Tx '%c'\n\r", tx_buffer[tx_buffer_read_index]);
+#endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 			morse_tx_char(tx_buffer[tx_buffer_read_index]);
 			tx_buffer_read_index = (tx_buffer_read_index + 1) % MORSE_TX_BUFFER_SIZE;
 			tx_buffer_count--;

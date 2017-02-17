@@ -30,21 +30,21 @@
 #define TAG "FLASH"
 
 /*
- * BOOL flash_page_empty(u32 address)
+ * BOOL flash_page_empty(uint32_t address)
  *
  * Function simply checks that a Flash page is empty. If the address is invalid False is returned.
  *
- * Input  : u16 address - Flash page address check
+ * Input  : uint16_t address - Flash page address check
  *
  * Return : True if the given FLASH Page is Valid address and empty. False otherwise.
  *
  */
-BOOL flash_page_empty(u32 address)
+BOOL flash_page_empty(uint32_t address)
 {
-	u16 loop = 0;
-	u16 offset;
-	u16 highWord;
-	u16 lowWord;
+	uint16_t loop = 0;
+	uint16_t offset;
+	uint16_t highWord;
+	uint16_t lowWord;
 
 	/*
 	 * Check that the given address is on a page boundary.
@@ -69,31 +69,38 @@ BOOL flash_page_empty(u32 address)
 }
 
 /*
- * result_t flash_erase_page(u32 address)
+ * result_t flash_erase_page(uint32_t address)
  *
  * Function Erase a Flash page.
  *
- * Input  : u16 address - Flash page to erase.
+ * Input  : uint16_t address - Flash page to erase.
  *
  * Return : result_t  -  ERR_ADDRESS_RANGE if the passed address is incorrect.
  *                    -  SUCCESS if the page has been erased.
  */
-result_t flash_erase_page(u32 address)
+result_t flash_erase_page(uint32_t address)
 {
 	unsigned int offset;
 
-	LOG_D("flash_erase_page(0x%lx)\n\r", address);
-#if 0
-	if(address >= 0x2a800) {
-		LOG_D("Ignoring that one\n\r");
-		return(SUCCESS);
-	}
+#if defined(SYS_LOG_LEVEL)
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+	log_d(TAG, "flash_erase_page(0x%lx)\n\r", address);
 #endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
+
 	/*
 	 * Check that the given address is on a page boundary.
 	 */
         if((address & (FLASH_PAGE_SIZE - 1)) != 0x00) {
-		LOG_E("ERR_ADDRESS_RANGE(0x%lx)\n\r", address);
+#if defined(SYS_LOG_LEVEL)
+#if (SYS_LOG_LEVEL <= LOG_ERROR)
+		log_e(TAG, "ERR_ADDRESS_RANGE(0x%lx)\n\r", address);
+#endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 		return (ERR_ADDRESS_RANGE);
 	}
 
@@ -101,7 +108,13 @@ result_t flash_erase_page(u32 address)
 	 * Check that the given address is in an area of Firmware Address space which we can erase.
 	 */
         if((address < FLASH_FIRMWARE_START_ADDRESS) && (address != FLASH_APP_HANDLE_PAGE)) {
-		LOG_E("ERR_ADDRESS_RANGE(0x%lx)\n\r", address);
+#if defined(SYS_LOG_LEVEL)
+#if (SYS_LOG_LEVEL <= LOG_ERROR)
+		log_e(TAG, "ERR_ADDRESS_RANGE(0x%lx)\n\r", address);
+#endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 		return (ERR_ADDRESS_RANGE);
         }
 
@@ -119,28 +132,41 @@ result_t flash_erase_page(u32 address)
 }
 
 /*
- * result_t flash_write_row(u32 address, u8 *data)
+ * result_t flash_write_row(uint32_t address, uint8_t *data)
  *
  * Function Write a Row of Flash.
  *
- * Input  : u16 address - Address of the Row to write.
+ * Input  : uint16_t address - Address of the Row to write.
  *
- * Input  : u8 *data     - The row of data to be written to the Flash Page.
+ * Input  : uint8_t *data     - The row of data to be written to the Flash Page.
  *
  * Return : result_t  -  ERR_ADDRESS_RANGE if the passed address is incorrect.
  *                    -  SUCCESS if the Row has been written.
  */
-result_t flash_write_row(u32 address, u8 *data)
+result_t flash_write_row(uint32_t address, uint8_t *data)
 {
-	u16  highWord = 0;
-	u16  lowWord = 0;
-	u32 offset;
-	u32 i;
+	uint16_t  highWord = 0;
+	uint16_t  lowWord = 0;
+	uint32_t offset;
+	uint32_t i;
 
-	LOG_D("flash_write(0x%lx)\n\r", address);
+#if defined(SYS_LOG_LEVEL)
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+	log_d(TAG, "flash_write(0x%lx)\n\r", address);
+#endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
+
 #if 0
 	if(address >= 0x2a800) {
-		LOG_D("Ignoring that one\n\r");
+#if defined(SYS_LOG_LEVEL)
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+		log_d(TAG, "Ignoring that one\n\r");
+#endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 		return(SUCCESS);
 	}
 
@@ -170,7 +196,13 @@ result_t flash_write_row(u32 address, u8 *data)
 	 * Check that the given address is in an area of Firmware Address space which we can erase.
 	 */
         if((address < FLASH_FIRMWARE_START_ADDRESS) && (address != FLASH_APP_HANDLE_PAGE)) {
-		LOG_E("flash_write ERR_ADDRESS_RANGE 0x%lx\n\r", address);
+#if defined(SYS_LOG_LEVEL)
+#if (SYS_LOG_LEVEL <= LOG_ERROR)
+		log_e(TAG, "flash_write ERR_ADDRESS_RANGE 0x%lx\n\r", address);
+#endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 		return (ERR_ADDRESS_RANGE);
         }
 
@@ -211,7 +243,7 @@ result_t flash_write_row(u32 address, u8 *data)
 }
 
 /*
- * result_t flash_write_row(u32 address, u8 *data)
+ * result_t flash_write_row(uint32_t address, uint8_t *data)
  *
  * Function to copy a C null terminated string from Flash into RAM memory.
  *
@@ -224,16 +256,16 @@ result_t flash_write_row(u32 address, u8 *data)
  *
  * Input  : char *src - Flash Address where string is copied from.
  *
- * Input/Output : u16 *length - Input as the length of the destination buffer
+ * Input/Output : uint16_t *length - Input as the length of the destination buffer
  *                               - Output as the number of characters written to buffer.
  *
  * Return : result_t  -  SUCCESS
  */
-result_t flash_strcpy(char *dst, __prog__ char *src, u16 *length)
+result_t flash_strcpy(char *dst, __prog__ char *src, uint16_t *length)
 {
 	char *dst_p = dst;
 
-	u16 i = 0;
+	uint16_t i = 0;
 
 	while ((*src != 0x00) && (*src != 0xff) && (i < (*length) - 1)) {
 		*dst_p++ = *src++;
@@ -245,9 +277,9 @@ result_t flash_strcpy(char *dst, __prog__ char *src, u16 *length)
 	return (SUCCESS);
 }
 
-u16 flash_strlen(__prog__ char *src)
+uint16_t flash_strlen(__prog__ char *src)
 {
-	u16 i = 0;
+	uint16_t i = 0;
 	__prog__ char *ptr;
 
 	ptr = src;

@@ -22,17 +22,18 @@
  *
  */
 #include "es_lib/comms/uart.h"
+#include "es_lib/timers/timers.h"
 
-typedef void (*modbus_response_function)(u8 *msg, u8 size, void *data);
+typedef void (*modbus_response_function)(uint8_t *msg, uint8_t size, void *data);
 
 struct modbus_channel {
     struct uart_data        *uart;
-    u8                       hw_15_timer;
-    u8                       hw_35_timer;
+    uint8_t                       hw_15_timer;
+    uint8_t                       hw_35_timer;
     es_timer                 resp_timer;
-    u8                       address;
-    u8                       rx_buffer[MODBUS_RX_BUFFER_SIZE];
-    u16                      rx_write_index;
+    uint8_t                       address;
+    uint8_t                       rx_buffer[SYS_MODBUS_RX_BUFFER_SIZE];
+    uint16_t                      rx_write_index;
 
     /*
      * function to process unsolicited messages
@@ -56,8 +57,8 @@ struct modbus_channel {
     void                   (*modbus_tx_finished)(void *);
     void                   (*process_timer_15_expiry)(void *);
     void                   (*process_timer_35_expiry)(void *);
-    void                   (*transmit)(struct modbus_channel *channel, u8 *data, u16 len, modbus_response_function fn, void *callback_data);
-    void                   (*process_rx_character)(struct modbus_channel *channel, u8 ch);
+    void                   (*transmit)(struct modbus_channel *channel, uint8_t *data, uint16_t len, modbus_response_function fn, void *callback_data);
+    void                   (*process_rx_character)(struct modbus_channel *channel, uint8_t ch);
     void                   (*process_response_timeout)();
 //    void (*resp_timeout_expiry_fn(timer_t timer_id, union sigval data);
 
@@ -80,11 +81,11 @@ extern void start_35_timer(struct modbus_channel *channel);
 
 extern result_t modbus_reserve(struct uart_data *uart, void (*idle_callback)(void *), modbus_response_function, void *);
 extern result_t modbus_release(struct uart_data *uart);
-extern void modbus_tx_data(struct modbus_channel *channel, u8 *data, u16 len);
-extern result_t modbus_attempt_transmission(struct uart_data *uart, u8 *data, u16 len, modbus_response_function fn, void *callback_data);
+extern void modbus_tx_data(struct modbus_channel *channel, uint8_t *data, uint16_t len);
+extern result_t modbus_attempt_transmission(struct uart_data *uart, uint8_t *data, uint16_t len, modbus_response_function fn, void *callback_data);
 
-extern u16 crc_calculate(u8 *data, u16 len);
-extern u8 crc_check(u8 *data, u16 len);
+extern uint16_t crc_calculate(uint8_t *data, u16 len);
+extern uint8_t crc_check(uint8_t *data, uint16_t len);
 
 
 extern result_t start_response_timer(struct modbus_channel *channel);

@@ -62,10 +62,10 @@
 #define APP_VERSION_10_ADDRESS      (APP_SOFTWARE_50_ADDRESS + 50)
 #define APP_URI_50_ADDRESS          (APP_VERSION_10_ADDRESS + 10)
 
-extern result_t cb_get_hardware_info(u8 *data, u16 *length);
-extern result_t cb_get_boot_info(u8 *data, u16 *data_len);
-extern result_t cb_get_firmware_info(u8 *data, u16 *data_len);
-extern result_t cb_get_application_info(u8 *data, u16 *length);
-#ifdef CAN_NODE_OS
-extern result_t cb_get_node_config_info(u8 *data, u16 *data_len);
-#endif // CAN_NODE_OS
+extern result_t cb_get_hardware_info(uint8_t *data, uint16_t *length);
+extern result_t cb_get_boot_info(uint8_t *data, uint16_t *data_len);
+extern result_t cb_get_firmware_info(uint8_t *data, uint16_t *data_len);
+extern result_t cb_get_application_info(uint8_t *data, uint16_t *length);
+#ifdef SYS_CAN_NODE_OS
+extern result_t cb_get_node_config_info(uint8_t *data, uint16_t *data_len);
+#endif // SYS_CAN_NODE_OS

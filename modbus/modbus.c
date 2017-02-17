@@ -38,7 +38,7 @@ struct modbus_channel modbus_channels[NUM_UARTS];
 /*
  *  Table of CRC values for high?order byte
  */
-static u8 crc_high_bytes[] = {
+static uint8_t crc_high_bytes[] = {
 	0x00, 0xC1, 0x81, 0x40, 0x01, 0xC0, 0x80, 0x41,
 	0x01, 0xC0, 0x80, 0x41, 0x00, 0xC1, 0x81, 0x40,
 	0x01, 0xC0, 0x80, 0x41, 0x00, 0xC1, 0x81, 0x40,
@@ -75,7 +75,7 @@ static u8 crc_high_bytes[] = {
 
 /* Table of CRC values for low?order byte
 */
-static u8 crc_low_bytes[] = {
+static uint8_t crc_low_bytes[] = {
 	0x00, 0xC0, 0xC1, 0x01, 0xC3, 0x03, 0x02, 0xC2,
 	0xC6, 0x06, 0x07, 0xC7, 0x05, 0xC5, 0xC4, 0x04,
 	0xCC, 0x0C, 0x0D, 0xCD, 0x0F, 0xCF, 0xCE, 0x0E,
@@ -115,12 +115,12 @@ void start_35_timer(struct modbus_channel *channel);
 
 static void resp_timeout_expiry_fn(timer_t timer_id, union sigval data);
 
-u16 crc_calculate(u8 *data, u16 len)
+uint16_t crc_calculate(uint8_t *data, u16 len)
 {
-	u8 *ptr = data;
-	u8  crc_high = 0xFF; /* high byte of CRC initialised */
-	u8  crc_low  = 0xFF; /* low byte of CRC initialised */
-	u16 index;           /* will index into CRC lookup table */
+	uint8_t *ptr = data;
+	uint8_t  crc_high = 0xFF; /* high byte of CRC initialised */
+	uint8_t  crc_low  = 0xFF; /* low byte of CRC initialised */
+	uint16_t index;           /* will index into CRC lookup table */
 
 	while (len--) {      /* pass through message buffer */
 		             /* calculate the CRC */
@@ -132,9 +132,9 @@ u16 crc_calculate(u8 *data, u16 len)
 	return (crc_high << 8 | crc_low);
 }
 
-u8 crc_check(u8 *data, u16 len)
+uint8_t crc_check(u8 *data, uint16_t len)
 {
-        u16 crc;
+        uint16_t crc;
 
 	crc = crc_calculate(data, len - 2);
 
@@ -156,7 +156,13 @@ static void hw_35_expiry_function(void *chan)
 		// modbus_chan->process_timer_35_expiry(modbus_chan);
 		jobs_add(modbus_chan->process_timer_35_expiry, (void *)modbus_chan);
 	} else {
-		LOG_E("T35 in unknown state\n\r");
+#if defined(SYS_LOG_LEVEL)
+#if (SYS_LOG_LEVEL <= LOG_ERROR)
+		log_e(TAG, "T35 in unknown state\n\r");
+#endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 	}
 }
 
@@ -168,7 +174,13 @@ static void hw_15_expiry_function(void *chan)
 		// modbus_chan->process_timer_15_expiry(modbus_chan);
 		jobs_add(modbus_chan->process_timer_15_expiry, (void *)modbus_chan);
 	} else {
-		LOG_E("T15 in unknown state\n\r");
+#if defined(SYS_LOG_LEVEL)
+#if (SYS_LOG_LEVEL <= LOG_ERROR)
+		log_e(TAG, "T15 in unknown state\n\r");
+#endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 	}
 }
 
@@ -186,7 +198,7 @@ void start_35_timer(struct modbus_channel *channel)
 	channel->hw_35_timer = hw_timer_start(uSeconds, ((1000000 * 39)/channel->uart->baud), FALSE, hw_35_expiry_function, (void *)channel);
 }
 
-static void modbus_process_rx_character(u8 channel_id, u8 ch)
+static void modbus_process_rx_character(uint8_t channel_id, u8 ch)
 {
 	if(modbus_channels[channel_id].process_rx_character) {
 		modbus_channels[channel_id].process_rx_character(&modbus_channels[channel_id], ch);
@@ -202,7 +214,13 @@ void modbus_tx_finished(void *data)
         struct uart_data *uart = (struct uart_data *)data;
 
 	if(!modbus_channels[uart->uart].uart) {
-		LOG_E("Error tx_finished channel %d no UART struct\n\r", uart->uart);
+#if defined(SYS_LOG_LEVEL)
+#if (SYS_LOG_LEVEL <= LOG_ERROR)
+		log_e(TAG, "Error tx_finished channel %d no UART struct\n\r", uart->uart);
+#endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 		return;
 	}
 
@@ -213,7 +231,13 @@ void modbus_tx_finished(void *data)
 		//modbus_channels[channel_id].process_tx_finished(&modbus_channels[channel_id]);
 		jobs_add(modbus_channels[uart->uart].modbus_tx_finished, (void *)&modbus_channels[uart->uart]);
 	} else {
-		LOG_E("Error processing tx_finished\n\r");
+#if defined(SYS_LOG_LEVEL)
+#if (SYS_LOG_LEVEL <= LOG_ERROR)
+		log_e(TAG, "Error processing tx_finished\n\r");
+#endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 	}
 
 	/*
@@ -230,7 +254,13 @@ result_t modbus_reserve(struct uart_data *uart, void (*idle_callback)(void *), m
 	result_t rc;
 	void (*app_tx_finished)(void *data);
 
-        LOG_D("modbus_reserve()\n\r");
+#if defined(SYS_LOG_LEVEL)
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+        log_d(TAG, "modbus_reserve()\n\r");
+#endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 	app_tx_finished = uart->tx_finished;
 
 	uart->process_rx_char = modbus_process_rx_character;
@@ -244,7 +274,13 @@ result_t modbus_reserve(struct uart_data *uart, void (*idle_callback)(void *), m
 	if(rc != SUCCESS) {
 		return(rc);
 	}
-	LOG_D("modbus_reserve took UART %d\n\r", uart->uart);
+#if defined(SYS_LOG_LEVEL)
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+	log_d(TAG, "modbus_reserve took UART %d\n\r", uart->uart);
+#endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 
 	modbus_channels[uart->uart].process_unsolicited_msg = unsolicited;
 	modbus_channels[uart->uart].idle_callback = idle_callback;
@@ -275,7 +311,13 @@ result_t modbus_release(struct uart_data *uart)
 {
 //	result_t rc;
 
-	LOG_D("modbus_relase() UART %d\n\r", uart->uart);
+#if defined(SYS_LOG_LEVEL)
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+	log_d(TAG, "modbus_relase() UART %d\n\r", uart->uart);
+#endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 
 	if(modbus_channels[uart->uart].hw_35_timer != BAD_TIMER) {
 		hw_timer_cancel(modbus_channels[uart->uart].hw_35_timer);
@@ -304,18 +346,24 @@ result_t modbus_release(struct uart_data *uart)
 	return(uart_release(uart));
 }
 
-void modbus_tx_data(struct modbus_channel *channel, u8 *data, u16 len)
+void modbus_tx_data(struct modbus_channel *channel, uint8_t *data, uint16_t len)
 {
-	u16      crc;
-	u8      *ptr;
-	u16      loop;
-	u8       buffer[UART_TX_BUFFER_SIZE];
+	uint16_t      crc;
+	uint8_t      *ptr;
+	uint16_t      loop;
+	uint8_t       buffer[SYS_UART_TX_BUFFER_SIZE];
 	result_t rc;
 
 	ptr = data;
 
 	crc = crc_calculate(data, len);
-	LOG_D("tx_data crc %x\n\r", crc);
+#if defined(SYS_LOG_LEVEL)
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+	log_d(TAG, "tx_data crc %x\n\r", crc);
+#endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 
 	for(loop = 0; loop < len; loop++) {
 		buffer[loop] = *ptr++;
@@ -327,24 +375,36 @@ void modbus_tx_data(struct modbus_channel *channel, u8 *data, u16 len)
 	rc = uart_tx(channel->uart, buffer, loop);
 
 	if(rc != SUCCESS) {
-		LOG_E("Failed to transmit modbus data\n\r");
+#if defined(SYS_LOG_LEVEL)
+#if (SYS_LOG_LEVEL <= LOG_ERROR)
+		log_e(TAG, "Failed to transmit modbus data\n\r");
+#endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 	}
 }
 
-result_t modbus_attempt_transmission(struct uart_data *uart, u8 *data, u16 len, modbus_response_function fn, void *callback_data)
+result_t modbus_attempt_transmission(struct uart_data *uart, uint8_t *data, uint16_t len, modbus_response_function fn, void *callback_data)
 {
 	if (modbus_channels[uart->uart].transmit) {
 		modbus_channels[uart->uart].transmit(&modbus_channels[uart->uart], data, len, fn, callback_data);
 		return(SUCCESS);
 	} else {
-		LOG_E("Tx Attempted in unknown state\n\r");
+#if defined(SYS_LOG_LEVEL)
+#if (SYS_LOG_LEVEL <= LOG_ERROR)
+		log_e(TAG, "Tx Attempted in unknown state\n\r");
+#endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 		return(ERR_NOT_READY);
 	}
 }
 
 result_t start_response_timer(struct modbus_channel *channel)
 {
-	u16          ticks;
+	uint16_t          ticks;
 	union sigval timer_data;
 
 	/*
@@ -358,9 +418,9 @@ result_t start_response_timer(struct modbus_channel *channel)
 	timer_data.sival_int = channel->uart->uart;
 
 	if (channel->address == 0) {
-		ticks = MODBUS_RESPONSE_BROADCAST_TIMEOUT;
+		ticks = SYS_MODBUS_RESPONSE_BROADCAST_TIMEOUT;
 	} else {
-		ticks = MODBUS_RESPONSE_TIMEOUT;
+		ticks = SYS_MODBUS_RESPONSE_TIMEOUT;
 	}
 	return(timer_start(ticks,
 		           resp_timeout_expiry_fn,
@@ -375,13 +435,17 @@ result_t cancel_response_timer(struct modbus_channel *channel)
 
 static void resp_timeout_expiry_fn(timer_t timer_id, union sigval data)
 {
-//	LOG_D("resp_timeout_expiry_fn()\n\r");
-
 	TIMER_INIT(modbus_channels[data.sival_int].resp_timer);
 
 	if (modbus_channels[data.sival_int].process_response_timeout) {
 		modbus_channels[data.sival_int].process_response_timeout(&modbus_channels[data.sival_int]);
 	} else {
-		LOG_E("Response Timout in unknown state\n\r");
+#if defined(SYS_LOG_LEVEL)
+#if (SYS_LOG_LEVEL <= LOG_ERROR)
+		log_e(TAG, "Response Timout in unknown state\n\r");
+#endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 	}
 }

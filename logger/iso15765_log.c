@@ -34,18 +34,18 @@
 /*
  * Network Logging
  */
-#if defined(ISO15765)
-#ifdef ISO15765_LOGGER
-static void (*iso15765_logger_handler)(u8, log_level_t, char*) = NULL;
-#endif // ISO15765_LOGGER
+#if defined(SYS_ISO15765)
+#ifdef SYS_ISO15765_LOGGER
+static void (*iso15765_logger_handler)(uint8_t, log_level_t, char*) = NULL;
+#endif // SYS_ISO15765_LOGGER
 
-static u8 iso15765_logger = FALSE;
-static u8 iso15765_logger_address;
+static uint8_t iso15765_logger = FALSE;
+static uint8_t iso15765_logger_address;
 static log_level_t iso15765_logger_level = Error;
 #endif
 
-#if defined(ISO15765)
-#ifdef ISO15765_LOGGER
+#if defined(SYS_ISO15765)
+#ifdef SYS_ISO15765_LOGGER
 static void iso15765_log_handler(iso15765_msg_t *message)
 {
 	log_level_t level;
@@ -57,19 +57,25 @@ static void iso15765_log_handler(iso15765_msg_t *message)
 		iso15765_logger_handler(message->address, level, string);
 	}
 }
-#endif // ISO15765_LOGGER
-#endif // ISO15765
+#endif // SYS_ISO15765_LOGGER
+#endif // SYS_ISO15765
 
 /*
  * Register this node on the Network as the logger
  */
-#if defined(ISO15765)
-#ifdef ISO15765_LOGGER
-result_t iso15765_logger_register_as_logger(void (*handler)(u8, log_level_t, char *), log_level_t level)
+#if defined(SYS_ISO15765)
+#ifdef SYS_ISO15765_LOGGER
+result_t iso15765_logger_register_as_logger(void (*handler)(uint8_t, log_level_t, char *), log_level_t level)
 {
 	iso15765_target_t target;
 
-	LOG_D("iso15765_log_reg_as_handler() level %x\n\r", level);
+#if defined(SYS_LOG_LEVEL)
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+	log_d(TAG, "iso15765_log_reg_as_handler() level %x\n\r", level);
+#endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 	if(iso15765_initialised()) {
 		if(handler != NULL) {
 			iso15765_logger_handler = handler;
@@ -81,50 +87,63 @@ result_t iso15765_logger_register_as_logger(void (*handler)(u8, log_level_t, cha
 
 			return (dcncp_register_this_node_net_logger(level));
 		} else {
-			LOG_E("No handler given\n\r");
+#if defined(SYS_LOG_LEVEL)
+#if (SYS_LOG_LEVEL <= LOG_ERROR)
+			log_e(TAG, "No handler given\n\r");
+#endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 			return(ERR_BAD_INPUT_PARAMETER);
 		}
 	} else {
 		return(ERR_NOT_READY);
 	}
 }
-#endif // ISO15765_LOGGER
-#endif // ISO15765
+#endif // SYS_ISO15765_LOGGER
+#endif // SYS_ISO15765
 
 /*
  * Unregister this node as the Network Logger!
  */
-#if defined(ISO15765)
-#ifdef ISO15765_LOGGER
+#if defined(SYS_ISO15765)
+#ifdef SYS_ISO15765_LOGGER
 result_t iso15765_logger_unregister_as_logger(void)
 {
-	LOG_D("iso15765_log_unreg_as_handler()\n\r");
+#if defined(SYS_LOG_LEVEL)
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+	log_d(TAG, "iso15765_log_unreg_as_handler()\n\r");
+#endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 	iso15765_logger = FALSE;
 	iso15765_logger_handler = NULL;
 	return(dcncp_unregister_this_node_net_logger());
 }
-#endif // ISO15765_LOGGER
-#endif // ISO15765
+#endif // SYS_ISO15765_LOGGER
+#endif // SYS_ISO15765
 
-#if defined(ISO15765)
+#if defined(SYS_ISO15765)
 void iso15765_log(log_level_t level, char *string)
 {
-	u8 loop;
-//	u8 address;
-	u8 data[ISO15765_MAX_MSG];
+	uint8_t loop;
+//	uint8_t address;
+	uint8_t data[ISO15765_MAX_MSG];
 
 	iso15765_msg_t msg;
 
-	LOG_D("iso15765_log(0x%x, %s)\n\r", (u16)level, string);
+#if defined(SYS_LOG_LEVEL)
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+	log_d(TAG, "iso15765_log(0x%x, %s)\n\r", (uint16_t)level, string);
+#endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 
 	if(iso15765_logger) {
-//		if(iso15765_logger_local && iso15765_logger_handler) {
-//			get_l3_node_address(&address);
-//			net_logger_handler(address, level, string);
-//			LOG_D("Local Net Logger\n\r");
-//		} else
 		if(level <= iso15765_logger_level) {
-			if(strlen((char *)string) < ISO15765_MAX_MSG - 2) {
+			if(strlen((char *)string) < SYS_ISO15765_MAX_MSG - 2) {
 				msg.address = iso15765_logger_address;
 				msg.protocol = ISO15765_LOGGER_PROTOCOL_ID;
 				data[0] = level;
@@ -136,40 +155,58 @@ void iso15765_log(log_level_t level, char *string)
 				msg.size = loop + 1;
 				msg.data = data;
 
-				if(msg.size < ISO15765_MAX_MSG) {
+				if(msg.size < SYS_ISO15765_MAX_MSG) {
 					iso15765_tx_msg(&msg);
 				} else {
-					LOG_E("message size limit exceeded!\n\r");
+#if defined(SYS_LOG_LEVEL)
+#if (SYS_LOG_LEVEL <= LOG_ERROR)
+					log_e(TAG, "message size limit exceeded!\n\r");
+#endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 				}
 			}
 		} else {
-			LOG_D("ISO15765 logger not logging insifficient Level\n\r");
+#if defined(SYS_LOG_LEVEL)
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+			log_d(TAG, "ISO15765 logger not logging insifficient Level\n\r");
+#endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 		}
 	} else {
-		LOG_D("no Logger Registered\n\r");
+#if defined(SYS_LOG_LEVEL)
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+		log_d(TAG, "no Logger Registered\n\r");
+#endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 	}
 }
-#endif
+#endif  // if defined(SYS_ISO15765)
 
 /*
  * Another network node has registered as the system
  */
-#if defined(ISO15765)
-void iso15765_logger_register_remote(u8 address, log_level_t level)
+#if defined(SYS_ISO15765)
+void iso15765_logger_register_remote(uint8_t address, log_level_t level)
 {
 	iso15765_logger = TRUE;
 	iso15765_logger_address = address;
 	iso15765_logger_level = level;
 }
-#endif // ISO15765
+#endif // SYS_ISO15765
 
 /*
  * Another network node has UN-registered as the system
  */
-#if defined(ISO15765)
-void iso15765_logger_unregister_remote(u8 address)
+#if defined(SYS_ISO15765)
+void iso15765_logger_unregister_remote(uint8_t address)
 {
 	if(iso15765_logger_address == address)
 		iso15765_logger = FALSE;
 }
-#endif // ISO15765
+#endif // SYS_ISO15765

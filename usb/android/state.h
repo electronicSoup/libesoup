@@ -28,7 +28,7 @@
 
 typedef struct android_state_t
 {
-    void (*process_msg)(u8, void *, u16);
+    void (*process_msg)(uint8_t, void *, uint16_t);
     void (*tx_free)(void);
     void (*main)(void);
     void (*process_usb_event)(USB_EVENT event);
