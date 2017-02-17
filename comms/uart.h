@@ -36,10 +36,10 @@
 
 #define IDLE_LOW                    0
 #define IDLE_HIGH                   1
-
+#ifdef MCP
 #define LITTLE_ENDIAN               0
 #define BIG_ENDIAN                  1
-
+#endif  // ifdef MCP
 
 #define UARTEN_MASK      0x8000
 #define USIDL_MASK       0x2000
