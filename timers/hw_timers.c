@@ -974,7 +974,7 @@ static void check_timer(uint8_t timer)
 		if(expiry) {
 #if defined(SYS_LOG_LEVEL)
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
-                        log_d(TAG, "Call expiry\n\r")
+                        log_d(TAG, "Call expiry\n\r");
 #endif
 #else  //  defined(SYS_LOG_LEVEL)
 #error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
