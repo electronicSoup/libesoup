@@ -21,6 +21,17 @@
  */
 #include "system.h"
 
+/*
+ * Check required system.h defines are found
+ */
+#ifndef SYS_CLOCK_FREQ
+#error system.h should define SYS_CLOCK_FREQ (see es_lib/examples/system.h)
+#endif
+
+/*
+ * The switch __dsPIC33EP256MU806__ is automatically set by the Microchip 
+ * build system, if that is the target device of the build.
+ */
 #if defined(__dsPIC33EP256MU806__)
 void clock_init(void)
 {
@@ -30,7 +41,6 @@ void clock_init(void)
          * There's a special case if the required clock frequency is 1/2 the
          * Crystal Frequency then we can simple use Primary Clock.
          */
-#if defined(SYS_CLOCK_FREQ)
         if(SYS_CLOCK_FREQ == (CRYSTAL_FREQ/2)) {
                 // Initiate Clock Switch to Primary Oscillator
                 clock = dsPIC33_PRIMARY_OSCILLATOR;
@@ -62,8 +72,5 @@ void clock_init(void)
                 // Wait for PLL to lock
                 while (OSCCONbits.LOCK!= 1);
         }
-#else //  #if defined(SYS_CLOCK_FREQ)
-#error system.h should define SYS_CLOCK_FREQ (see es_lib/examples/system.h)
-#endif
 }
 #endif // defined(__dsPIC33EP256MU806__)
