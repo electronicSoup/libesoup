@@ -48,7 +48,7 @@ typedef uint8_t timer_t;
  * for a timer. If the system changes the @see SYS_SYSTEM_TICK_ms value for either
  * finer timer granularity or less granularity.
  */
-#define SECONDS_TO_TICKS(s)  ((s) * (1000 / SYS_SYSTEM_TICK_ms))
+#define SECONDS_TO_TICKS(s)  ((s) * (1000 / SYS_SW_TIMER_TICK_ms))
 
 /**
  * @brief convience macro to convert a MilliSeconds value to system ticks
@@ -57,7 +57,7 @@ typedef uint8_t timer_t;
  * timer granularity is changed. In addition future electronicSoup deivces may
  * well use different System Tick values.
  */
-#define MILLI_SECONDS_TO_TICKS(ms) ((ms < SYS_SYSTEM_TICK_ms) ? 1 : (ms / SYS_SYSTEM_TICK_ms))
+#define MILLI_SECONDS_TO_TICKS(ms) ((ms < SYS_SYSTEM_TICK_ms) ? 1 : (ms / SYS_SW_TIMER_TICK_ms))
 
 #if defined(MCP)
 /**
@@ -156,25 +156,6 @@ typedef void (*expiry_function)(timer_t timer_id, union sigval);
 
 #endif // MCP
 
-/**
- * @brief convience macro to convert a Seconds value to system ticks
- *
- * For portability code should always use this macro to calculate system ticks
- * for a timer. If the system changes the @see SYSTEM_TICK_ms value for either
- * finer timer granularity or less granularity.
- */
-#define SECONDS_TO_TICKS(s)  ((s) * (1000 / SYS_SYSTEM_TICK_ms))
-
-/**
- * @brief convience macro to convert a MilliSeconds value to system ticks
- * 
- * as for @see SECONDS_TO_TICKS code should always use this macro in case system
- * timer granularity is changed. In addition future electronicSoup deivces may
- * well use different System Tick values.
- */
-#define MILLI_SECONDS_TO_TICKS(ms) ((ms < SYS_SYSTEM_TICK_ms) ? 1 : (ms / SYS_SYSTEM_TICK_ms))
-
-    
 /*
  * sw_timer_start()
  * 
