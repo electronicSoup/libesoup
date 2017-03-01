@@ -26,6 +26,32 @@
 
 #include "system.h"
 
+/*
+ * Check required system.h defines are found
+ */
+#ifndef SYS_LOG_LEVEL
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif
+
+#if defined(__18F2680) || defined(__18F4585)
+#ifndef SYS_USART_TX_BUFFER_SIZE
+#error system.h should define SYS_USART_TX_BUFFER_SIZE (see es_lib/examples/system.h)
+#endif
+#endif
+
+#ifndef SERIAL_LOGGING_TX_DDR
+#error system.h should include a board file which defines SERIAL_LOGGING_TX_DDR (see es_lib/examples/system.h)
+#endif
+
+#ifndef SYS_SERIAL_LOGGING_BAUD
+#error system.h file should define the SYS_SERIAL_LOGGING_BAUD
+#endif
+
+#ifndef SYS_CLOCK_FREQ
+#error system.h file should define the SYS_CLOCK_FREQ
+#endif
+
+
 #if defined (MCP)
 #include "es_lib/comms/uart.h"
 #elif defined (ES_LINUX)
@@ -40,11 +66,7 @@
  * Definitions for the Transmit Circular buffer. Calls to putchar will load
  * up this circular buffer and the UASRT serial port will empty it.
  */
-#if defined(SYS_USART_TX_BUFFER_SIZE)
 static uint8_t tx_circular_buffer[SYS_USART_TX_BUFFER_SIZE];
-#else  // if defined(SYS_USART_TX_BUFFER_SIZE)
-#error system.h should define SYS_USART_TX_BUFFER_SIZE (see es_lib/examples/system.h)
-#endif // if defined(SYS_USART_TX_BUFFER_SIZE)
 
 static uint16_t tx_write_index = 0;
 static uint16_t tx_read_index = 0;
@@ -64,23 +86,15 @@ void _ISR __attribute__((__no_auto_psv__)) _U1RXInterrupt(void)
 #if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__) || defined(__dsPIC33EP256MU806__)
 {
 	uint8_t ch;
-#if defined(SYS_LOG_LEVEL)
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	log_d(TAG, "_U1RXInterrupt\n\r");
 #endif
-#else  //  defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif //  defined(SYS_LOG_LEVEL)
 	while (U1STAbits.URXDA) {
 		ch = U1RXREG;
 
-#if defined(SYS_LOG_LEVEL)
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 		log_d(TAG, "Rx*0x%x*\n\r", ch);
 #endif
-#else  //  defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif //  defined(SYS_LOG_LEVEL)
 	}
 
 	IFS0bits.U1RXIF = 0;
@@ -117,12 +131,8 @@ void serial_logging_init(void)
          * then used in the board header file included from the system.h file.
          * The board file defines the pins used by the serial port here. 
          */
-#if defined(SERIAL_LOGGING_TX_DDR)
         SERIAL_LOGGING_TX_DDR = OUTPUT_PIN;
 	SERIAL_LOGGING_TX = UART_1_TX;
-#else
-#error Serial port orientation not defined in system.h
-#endif
 	U1MODE = 0x8800;
 	U1STA = 0x0410;
 
@@ -134,15 +144,7 @@ void serial_logging_init(void)
 	 * UxBRG = ((CLOCK/SERIAL_BAUD)/16) -1
 	 *
 	 */
-#if defined(SYS_SERIAL_LOGGING_BAUD)
-#if defined(SYS_CLOCK_FREQ)
 	U1BRG = ((SYS_CLOCK_FREQ / SYS_SERIAL_LOGGING_BAUD) / 16) - 1;
-#else
-#error system.h file should define the SYS_CLOCK_FREQ
-#endif
-#else
-#error system.h file should define the SYS_SERIAL_LOGGING_BAUD
-#endif
 
 #elif defined(__18F2680) || defined(__18F4585)
 	/*
