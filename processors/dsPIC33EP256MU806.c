@@ -30,5 +30,11 @@ _FOSCSEL( FNOSC_SOSC & IESO_OFF )
 #endif
 #endif
 
+void cpu_init(void)
+{
+        clock_init();
+        spi_init();        
+}
+
 
 #endif // defined(__dsPIC33EP256MU806__)
