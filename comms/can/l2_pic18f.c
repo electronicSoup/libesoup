@@ -8,17 +8,9 @@
 
 #define DEBUG_FILE
 #include "es_lib/logger/serial_log.h"
-//#include "logging.h"
-//#include "os_api.h"
-//#include "l2_can_types.h"
-//#include "can_ids.h"
-//#include "can/can.h"
-//#include "can/l2_can.h"
-//#include "timers/timer_sys.h"
-//#include "node/node_address.h"
-//#include "utils/utils.h"
+#include "es_lib/comms/can/es_can.h"
 
-#define TAG "PIC_CAN";
+#define TAG "PIC_CAN"
 
 #undef L2_CAN_INTERRUPT_DRIVEN
 
@@ -35,30 +27,16 @@ char baud_rate_strings[8][10] = {
 };
 #endif
 
-/**
- * \brief Network Idle functionality
- *
- * We need to have CAN Bus Network traffic so that when devices connect
- * to listen to the Network to establish the CAN Bus Baud Rate. As a result
- * we'll keep a timer and if nothing has been received or transmitted in this
- * time we'll fire a ping message.
- */
-static UINT16 networkIdleDuration = 0;
-static es_timer networkIdleTimer;
-static ty_CanStatus canStatus = Listening;
-
-void pingNetwork(BYTE *);
-
 #ifdef L2_CAN_INTERRUPT_DRIVEN
 
-static UINT32 rxMsgCount = 0;
+static u32 rxMsgCount = 0;
 
 #define CAN_RX_CIR_BUFFER_SIZE 5
 
     canBuffer_t cirBuffer[CAN_RX_CIR_BUFFER_SIZE];
-    BYTE cirBufferNextRead = 0;
-    BYTE cirBufferNextWrite = 0;
-    BYTE cirBufferCount = 0;
+    u8 cirBufferNextRead = 0;
+    u8 cirBufferNextWrite = 0;
+    u8 cirBufferCount = 0;
 
 can_msg_t rxCanMsg;
 
@@ -67,7 +45,7 @@ can_msg_t rxCanMsg;
 canBuffer_t *tx_buffers[TX_BUFFERS];
 
 #else
-can_msg_t rxMsg;
+//can_frame_t rxMsg;
 
 #define TX_BUFFERS  6
 #define RX_BUFFERS  5
@@ -86,17 +64,18 @@ can_mask masks[MASKS] =
 };
 
 
-static void setMode(BYTE mode);
-static void setBitRate(baud_rate_t baudRate);
-static void finaliseBaudRateChange(BYTE *data);
+static void set_mode(u8 mode);
+static void set_bit_rate(can_baud_rate_t baudRate);
+static void finalise_baud_rate_change(u8 *data);
 
-static l2_msg_handler_t l2Handler = (l2_msg_handler_t)NULL;
+//static l2_msg_handler_t l2Handler = (l2_msg_handler_t)NULL;
 
-baud_rate_t L2_CanInit(baud_rate_t baudRate, l2_msg_handler_t handler, void (*statusHandler)(ty_CanStatus, BYTE))
+
+result_t can_l2_init(can_baud_rate_t arg_baud_rate, void (*arg_status_handler)(u8 mask, can_status_t status, can_baud_rate_t baud))
 {
-	BYTE loop;
+#if 0
+	u8 loop;
 
-	TIMER_INIT(networkIdleTimer)
 	if (baudRate <= BAUD_MAX) {
 		LOG_D("L2_CanInit() Baud Rate %s\n\r", baud_rate_strings[baudRate]);
 	} else {
@@ -119,7 +98,7 @@ baud_rate_t L2_CanInit(baud_rate_t baudRate, l2_msg_handler_t handler, void (*st
 	/*
 	 * Set the Baud rate.
 	 */
-	setBitRate(baudRate);
+	set_bit_rate(baudRate);
 
 	/*
 	 * Set out Functional mode of opperation
@@ -206,26 +185,20 @@ baud_rate_t L2_CanInit(baud_rate_t baudRate, l2_msg_handler_t handler, void (*st
 
 	canStatus = Connected;
 
-	// Create a random timer between 1 and 1.5 seconds for firing the
-	// Network Idle Ping message
-	networkIdleDuration = (UINT16) ((rand() % 500) + 1000);
-
-#if DEBUG_LEVEL <= LOG_DEBUG
-	LOG_D("Network Idle Duration set to %d milliSeconds\n\r", networkIdleDuration);
-#endif
-	networkIdleTimer = start_timer(networkIdleDuration, pingNetwork, NULL);
 	return (baudRate);
+#endif
+        return(SUCCESS);
 }
 
 #ifdef L2_CAN_INTERRUPT_DRIVEN
 void L2_ISR(void)
 {
-	BYTE flags = 0x00;
-	BYTE txFlags = 0x00;
-	BYTE ctrl;
-	BYTE loop;
-	BYTE *fromPtr;
-	BYTE *toPtr;
+	u8 flags = 0x00;
+	u8 txFlags = 0x00;
+	u8 ctrl;
+	u8 loop;
+	u8 *fromPtr;
+	u8 *toPtr;
 
 	/*
 	 * Have to work of a snapshot of the Interrupt Flags as they
@@ -337,7 +310,7 @@ void L2_ISR(void)
 #ifdef L2_CAN_INTERRUPT_DRIVEN
 void L2_CanTasks(void)
 {
-	BYTE loop;
+	u8 loop;
 
 	LOG_D("L2_CanTasks()\n\r");
 
@@ -379,11 +352,12 @@ void L2_CanTasks(void)
 }
 }
 #else
-void L2_CanTasks(void)
+void can_l2_tasks(void)
 {
-	BYTE i;
-	BYTE buffer;
-	BYTE *ptr;
+#if 0
+	u8 i;
+	u8 buffer;
+	u8 *ptr;
 
 	buffer = CANCON & 0x0f;
 
@@ -442,15 +416,18 @@ void L2_CanTasks(void)
 		}
 		buffer = CANCON & 0x0f;
 	}
+#endif
 }
 #endif
 
-result_t L2_CanTxMessage(can_msg_t *msg)
+result_t can_l2_tx_frame(can_frame *frame)
+//result_t L2_CanTxMessage(can_msg_t *msg)
 {
+#if 0
 	//    can_message_id_t  *id;
-	BYTE buffer;
-	BYTE i;
-	BYTE *ptr;
+	u8 buffer;
+	u8 i;
+	u8 *ptr;
 
 	if (canStatus != Connected) {
 		return (CAN_ERROR);
@@ -517,12 +494,13 @@ result_t L2_CanTxMessage(can_msg_t *msg)
 	LOG_D("Transmitting L2 Message so restart Idle Timer\n\r");
 	cancel_timer(networkIdleTimer);
 	networkIdleTimer = start_timer(networkIdleDuration, pingNetwork, NULL);
+#endif
 	return (SUCCESS);
 }
 
 //ToDo
 #if 0
-void L2_CanTxError(BYTE node_type, BYTE node_number, UINT32 errorCode) 
+void L2_CanTxError(u8 node_type, u8 node_number, UINT32 errorCode) 
 {
 	can_error_t error;
 
@@ -540,14 +518,14 @@ void L2_CanTxError(BYTE node_type, BYTE node_number, UINT32 errorCode)
 }
 #endif
 
-void L2_SetCanNodeBuadRate(baud_rate_t baudRate)
+void L2_SetCanNodeBuadRate(can_baud_rate_t baudRate)
 {
-	baud_rate_t testRate;
+	can_baud_rate_t testRate;
 	LOG_D("L2_SetCanNodeBuadRate()\n\r");
 
-	sys_eeprom_write(NETWORK_BAUD_RATE, (BYTE) baudRate);
+//	sys_eeprom_write(NETWORK_BAUD_RATE, (u8) baudRate);
 
-	sys_eeprom_read(NETWORK_BAUD_RATE, (BYTE *) & testRate);
+//	sys_eeprom_read(NETWORK_BAUD_RATE, (u8 *) & testRate);
 
 	if (testRate != baudRate) {
 		LOG_E("Baud Rate NOT Stored!\n\r");
@@ -555,26 +533,26 @@ void L2_SetCanNodeBuadRate(baud_rate_t baudRate)
 		LOG_D("Baud Rate Stored\n\r");
 	}
 
-	canStatus = ChangingBaud;
-	setMode(CONFIG_MODE);
+//	canStatus = ChangingBaud;
+	set_mode(CONFIG_MODE);
 
-	setBitRate(baudRate);
+	set_bit_rate(baudRate);
 
 	/*
 	 * The Baud rate is being changed so going to stay in config mode
 	 * for 10 Seconds and let the Network settle down.
 	 */
-	start_timer(SECONDS_TO_TICKS(10), finaliseBaudRateChange, NULL);
+	start_timer(SECONDS_TO_TICKS(10), finalise_baud_rate_change, NULL);
 }
 
-static void finaliseBaudRateChange(BYTE *data)
+static void finalise_baud_rate_change(u8 *data)
 {
-	LOG_D("finaliseBaudRateChange()\n\r");
-	canStatus = Connected;
+	LOG_D("finalise_baud_rate_change()\n\r");
+//	canStatus = Connected;
 	setMode(NORMAL_MODE);
 }
 
-void L2_SetCanNetworkBuadRate(baud_rate_t baudRate)
+void L2_SetCanNetworkBuadRate(can_baud_rate_t baudRate)
 {
 	LOG_D("L2_SetCanNetworkBuadRate()\n\r");
 
@@ -583,13 +561,13 @@ void L2_SetCanNetworkBuadRate(baud_rate_t baudRate)
 	setMode(NORMAL_MODE);
 }
 
-static void setBitRate(baud_rate_t baudRate)
+static void set_bit_rate(can_baud_rate_t baudRate)
 {
-	BYTE sjw = 0;
-	BYTE brp = 0;
-	BYTE phseg1 = 0;
-	BYTE phseg2 = 0;
-	BYTE propseg = 0;
+	u8 sjw = 0;
+	u8 brp = 0;
+	u8 phseg1 = 0;
+	u8 phseg2 = 0;
+	u8 propseg = 0;
 
 	switch (baudRate) {
 		case baud_10K:
@@ -673,9 +651,9 @@ static void setBitRate(baud_rate_t baudRate)
 /*
  * Function Header
  */
-static void setMode(BYTE mode)
+static void set_mode(u8 mode)
 {
-	BYTE value;
+	u8 value;
 
 	/*
 	 * Enter CAN Configuration mode
@@ -690,11 +668,4 @@ static void setMode(BYTE mode)
 	 * CAN Mode is a request so we have to wait for confirmation
 	 */
 	while ((CANSTAT & MODE_MASK) != mode);
-}
-
-void pingNetwork(BYTE *data)
-{
-	LOG_D("Network Idle Expired so send a ping message and restart\n\r");
-	networkIdleTimer = start_timer(networkIdleDuration, pingNetwork, NULL);
-	send_ping_message();
 }

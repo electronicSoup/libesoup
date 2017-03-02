@@ -47,13 +47,13 @@
 
 typedef struct
 {
-    BYTE ctrl;
-    BYTE sidh;
-    BYTE sidl;
-    BYTE eid8;
-    BYTE eid0;
-    BYTE dcl;
-    BYTE data[8];
+    u8 ctrl;
+    u8 sidh;
+    u8 sidl;
+    u8 eid8;
+    u8 eid0;
+    u8 dcl;
+    u8 data[8];
 } canBuffer_t;
 
 #ifdef L2_CAN_INTERRUPT_DRIVEN
@@ -61,13 +61,13 @@ typedef struct
 #else
 //typedef struct can_buffer
 //{
-//    BYTE   *control;
-//    BYTE   *sidh;
-//    BYTE   *sidl;
-//    BYTE   *eidh;
-//    BYTE   *eidl;
-//    BYTE   *dcl;
-//    BYTE   *data;
+//    u8   *control;
+//    u8   *sidh;
+//    u8   *sidl;
+//    u8   *eidh;
+//    u8   *eidl;
+//    u8   *dcl;
+//    u8   *data;
 //} can_buffer;
 
 
@@ -75,10 +75,10 @@ typedef struct
 
 typedef struct can_mask
 {
-    BYTE   *sidh;
-    BYTE   *sidl;
-    BYTE   *eidh;
-    BYTE   *eidl;
+    u8   *sidh;
+    u8   *sidl;
+    u8   *eidh;
+    u8   *eidl;
 } can_mask;
 
 

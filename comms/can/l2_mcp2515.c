@@ -26,9 +26,9 @@
 #define DEBUG_FILE
 //#define LOG_LEVEL LOG_INFO
 #include "es_lib/logger/serial_log.h"
-#include "es_lib/can/es_can.h"
-#include "es_lib/can/dcncp/dcncp_can.h"
-#include "es_lib/can/l2_mcp2515.h"
+#include "es_lib/comms/can/es_can.h"
+#include "es_lib/comms/can/dcncp/dcncp_can.h"
+#include "es_lib/comms/can/l2_mcp2515.h"
 #include "es_lib/timers/timers.h"
 
 #include "es_lib/utils/spi.h"
@@ -151,7 +151,7 @@ result_t can_l2_init(can_baud_rate_t arg_baud_rate,
 	u8        loop = 0x00;
 	u8        exit_mode = NORMAL_MODE;
 	u32       delay;
-#ifndef CAN_PING_PROTOCOL
+#ifdef CAN_PING_PROTOCOL
 	can_frame frame;
 #endif // CAN_PING_PROTOCOL
 	LOG_D("l2_init()\n\r");
@@ -263,7 +263,7 @@ result_t can_l2_init(can_baud_rate_t arg_baud_rate,
 #if defined(CAN_PING_PROTOCOL)
 	ping_time = (u16)((rand() % SECONDS_TO_TICKS(1)) + (SECONDS_TO_TICKS(CAN_PING_PROTOCOL_PERIOD) - MILLI_SECONDS_TO_TICKS(500)));
         restart_ping_timer();
-#else
+//#else
 	frame.can_id = DCNCP_CAN_NodePingMessage;
 	frame.can_dlc = 0;
 
