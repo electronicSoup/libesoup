@@ -1,8 +1,8 @@
 /**
  *
- * \file es_lib/timers/timers.h
+ * \file es_lib/timers/sw_timers.h
  *
- * Timer function prototypes of the electronicSoup Cinnamon Bun
+ * Software Timer definitions and function prototypes
  *
  * Copyright 2014 John Whitmore <jwhitmore@electronicsoup.com>
  *
@@ -29,63 +29,26 @@
  * has the advantage that protocols written for the CinnamonBun can easily be
  * ported to the RaspberryPi platform.
  */
-#ifndef TIMERS_H
-#define TIMERS_H
-
-/*
- * Timer definitions
- */
-/**
- * @brief Timer status.
- *
- * Enumerated type for the current status of a timer in the system. Simple, a timer
- * is either Active or it's not.
- */
-typedef enum {
-    INACTIVE = 0x00,
-    ACTIVE
-} timer_status_t;
+#ifndef SW_TIMERS_H
+#define SW_TIMERS_H
 
 /*
  * timer_t Timer identifier
  *
- * A Timer identifer should not be written directly by code but only by timer.c. 
- * It is part of the es_timer structure and can be read, if for some reason one
- * expiry function is used for two timers. In this case the expiry function can
- * check for the timer identifer of the expired timer.
+ * A Timer identifer returned from a timer created by sw_timer_create()
  */
-#ifdef MCP
-typedef u8 timer_t;
-#endif
-
-/**
- * @brief timer data structure.
- *
- * The actual timer structure is simply the timer identifier and it's status.
- */
-typedef struct
-{
-	timer_status_t status;
-	timer_t        timer_id;
-} es_timer;
-
-/**
- * @brief convience macro to initialise timer to inactive
- *
- * Simple macro to initialise the current statusof a timer to inactive.
- * A timer should always be initialsed to an inactive status before it is used
- * otherwise the timer might appear to be already active
- */
-#define TIMER_INIT(timer) timer.status = INACTIVE;
+#if defined(MCP)
+typedef uint8_t timer_t;
+#endif  // if defined(MCP)
 
 /**
  * @brief convience macro to convert a Seconds value to system ticks
  *
  * For portability code should always use this macro to calculate system ticks
- * for a timer. If the system changes the @see SYSTEM_TICK_ms value for either
+ * for a timer. If the system changes the @see SYS_SYSTEM_TICK_ms value for either
  * finer timer granularity or less granularity.
  */
-#define SECONDS_TO_TICKS(s)  ((s) * (1000 / SYSTEM_TICK_ms))
+#define SECONDS_TO_TICKS(s)  ((s) * (1000 / SYS_SW_TIMER_TICK_ms))
 
 /**
  * @brief convience macro to convert a MilliSeconds value to system ticks
@@ -94,9 +57,9 @@ typedef struct
  * timer granularity is changed. In addition future electronicSoup deivces may
  * well use different System Tick values.
  */
-#define MILLI_SECONDS_TO_TICKS(ms) ((ms < SYSTEM_TICK_ms) ? 1 : (ms / SYSTEM_TICK_ms))
+#define MILLI_SECONDS_TO_TICKS(ms) ((ms < SYS_SYSTEM_TICK_ms) ? 1 : (ms / SYS_SW_TIMER_TICK_ms))
 
-#ifdef MCP
+#if defined(MCP)
 /**
  * @brief Data passed to expiry funciton on timer expiry.
  *
@@ -115,10 +78,10 @@ typedef struct
  * expiry function to decide what is being passed.
  */
 union sigval {
-           u16     sival_int;         /**< 16 bit Integer value */
+           uint16_t     sival_int;         /**< 16 bit Integer value */
            void   *sival_ptr;         /**< Pointer value */
 };
-#endif
+#endif  // if defined(MCP)
 
 /**
  * @brief call signiture of the timer expiry function.
@@ -146,8 +109,8 @@ typedef void (*expiry_function)(timer_t timer_id, union sigval);
  * Calculate the 16 bit value that will give us an ISR for the system tick
  * duration.
  */
-#define TMR0H_VAL ((0xFFFF - ((SYSTEM_TICK_ms * CLOCK_FREQ) / 4000)) >> 8) & 0xFF
-#define TMR0L_VAL (0xFFFF - ((SYSTEM_TICK_ms * CLOCK_FREQ) / 4000)) & 0xFF
+#define TMR0H_VAL ((0xFFFF - ((SYS_SYSTEM_TICK_ms * SYS_CLOCK_FREQ) / 4000)) >> 8) & 0xFF
+#define TMR0L_VAL (0xFFFF - ((SYS_SYSTEM_TICK_ms * SYS_CLOCK_FREQ) / 4000)) & 0xFF
 #endif // (__18F2680) || __18F4585)
 
 
@@ -160,19 +123,19 @@ typedef void (*expiry_function)(timer_t timer_id, union sigval);
      */
     #define CHECK_TIMERS()  if(timer_ticked) timer_tick();
 
-    extern volatile BOOL timer_ticked;
+    extern volatile boolean timer_ticked;
 
     /*
-     * timer_init()
+     * sw_timer_init()
      *
      * This function should be called to initialise the timer functionality
      * of the electronicSoup CinnamonBun Library. It initialises all data
      * structures. The project's system.h header file should define the number
      * of timers the library should define space for an manage. See the
-     * definition of NUMBER_OF_TIMERS in the example system.h file in the
+     * definition of SYS_NUMBER_OF_TIMERS in the example system.h file in the
      * es_lib directory.
      */
-    extern void timer_init(void);
+    extern void sw_timer_init(void);
 
     /*
      * timer_tick()
@@ -193,36 +156,8 @@ typedef void (*expiry_function)(timer_t timer_id, union sigval);
 
 #endif // MCP
 
-/**
- * @brief convience macro to initialise timer to inactive
- *
- * Simple macro to initialise the current statusof a timer to inactive.
- * A timer should always be initialsed to an inactive status before it is used
- * otherwise the timer might appear to be already active
- */
-#define TIMER_INIT(timer) timer.status = INACTIVE;
-
-/**
- * @brief convience macro to convert a Seconds value to system ticks
- *
- * For portability code should always use this macro to calculate system ticks
- * for a timer. If the system changes the @see SYSTEM_TICK_ms value for either
- * finer timer granularity or less granularity.
- */
-#define SECONDS_TO_TICKS(s)  ((s) * (1000 / SYSTEM_TICK_ms))
-
-/**
- * @brief convience macro to convert a MilliSeconds value to system ticks
- * 
- * as for @see SECONDS_TO_TICKS code should always use this macro in case system
- * timer granularity is changed. In addition future electronicSoup deivces may
- * well use different System Tick values.
- */
-#define MILLI_SECONDS_TO_TICKS(ms) ((ms < SYSTEM_TICK_ms) ? 1 : (ms / SYSTEM_TICK_ms))
-
-    
 /*
- * timer_start()
+ * sw_timer_start()
  * 
  */
 /**
@@ -270,9 +205,8 @@ typedef void (*expiry_function)(timer_t timer_id, union sigval);
  *                    in your system.h configuration file.
  * 
  */
-extern result_t timer_start(u16 ticks, expiry_function fn, union sigval data, es_timer *timer);
-extern result_t timer_cancel(es_timer *timer);
-extern result_t timer_cancel_all(void);
+extern result_t sw_timer_start(uint16_t duration, expiry_function fn, union sigval data, timer_t *timer);
+extern result_t sw_timer_cancel(timer_t timer);
+extern result_t sw_timer_cancel_all(void);
 
-#endif
-
+#endif  // SW_TIMERS_H

@@ -2,7 +2,7 @@
  *
  * \file es_lib/logger/iso15765_log.h
  *
- * Definitions for the ISO15765 Network Logger
+ * Definitions for the SYS_ISO15765 Network Logger
  *
  * Copyright 2014 John Whitmore <jwhitmore@electronicsoup.com>
  *
@@ -19,8 +19,16 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  *
  */
-#ifndef ISO15765_LOGGER_H
-#define ISO15765_LOGGER_H
+#ifndef ISO15765_LOG_H
+#define ISO15765_LOG_H
+
+typedef enum {
+        Error,
+        Warning,
+	Notice,
+	Info,
+	Debug,
+} log_level_t;
 
 extern void iso15765_log(log_level_t level, char *msg);
 
@@ -30,15 +38,15 @@ extern void iso15765_log(log_level_t level, char *msg);
  * This function takes a function pointer which is going to handle the received
  * debug messages and the minimum level that we're expecting to receive.
  */
-extern result_t iso15765_logger_register_as_logger(void (*handler)(u8, log_level_t, char *), log_level_t level);
-//extern result_t net_logger_local_register(void (*handler)(u8, log_level_t, char *), log_level_t level);
+extern result_t iso15765_logger_register_as_logger(void (*handler)(uint8_t, log_level_t, char *), log_level_t level);
+//extern result_t net_logger_local_register(void (*handler)(uint8_t, log_level_t, char *), log_level_t level);
 //extern result_t net_logger_local_cancel(void);
 
 /*
  * If another node on the network registers/unregisters as the network logger 
  * these two functions are used.
  */
-extern void iso15765_logger_register_remote(u8 address, log_level_t level);
-extern void iso15765_logger_unregister_remote(u8 address);
+extern void iso15765_logger_register_remote(uint8_t address, log_level_t level);
+extern void iso15765_logger_unregister_remote(uint8_t address);
 
-#endif // ISO15765_LOGGER_H
+#endif // ISO15765_LOG_H

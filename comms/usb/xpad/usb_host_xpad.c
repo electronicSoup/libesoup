@@ -190,7 +190,13 @@ uint8_t rx_buffer[RX_BUFFER_SIZE];
  ****************************************************************************/
 void xpad_start()
 {
-    LOG_D("xpad_start()\n\r");
+#if defined(SYS_LOG_LEVEL)
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+    log_d(TAG, "xpad_start()\n\r");
+#endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
     memset(&xpad_device,0x00,sizeof(xpad_device));
     memset(&xpad_data,0x00,sizeof(xpad_data));
 }
@@ -263,7 +269,13 @@ void xpad_tasks(void)
 			if (error_code == USB_SUCCESS) {
 				xpad_device.state = READING;
 			} else {
-				LOG_E("xpad_read returned Error 0x%x\n\r", error_code);
+#if defined(SYS_LOG_LEVEL)
+#if (SYS_LOG_LEVEL <= LOG_ERROR)
+				log_e(TAG, "xpad_read returned Error 0x%x\n\r", error_code);
+#endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 			}
 			break;
 
@@ -275,7 +287,13 @@ void xpad_tasks(void)
 			break;
 
 		default:
-			LOG_E("xpad_tasks() - default state\n\r");
+#if defined(SYS_LOG_LEVEL)
+#if (SYS_LOG_LEVEL <= LOG_ERROR)
+			log_e(TAG, "xpad_tasks() - default state\n\r");
+#endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 			break;
 	}
 }
@@ -332,16 +350,34 @@ bool xpad_initialise ( uint8_t address, uint32_t flags, uint8_t clientDriverID )
 	uint8_t endpoint_address;
 	uint16_t endpoint_packet_size;
 
-	LOG_D("xpad_initialise(Address 0x%x)\n\r", address);
+#if defined(SYS_LOG_LEVEL)
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+	log_d(TAG, "xpad_initialise(Address 0x%x)\n\r", address);
+#endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 	xpad_device.address = address;
 
 	descriptor = USBHostGetDeviceDescriptor(address);
 
-	LOG_D("Descriptor Length %d\n\r", descriptor[USB_DESC_bLength]);
-	LOG_D("Descriptor Type 0x%x\n\r", descriptor[USB_DESC_bDescriptorType]);
+#if defined(SYS_LOG_LEVEL)
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+	log_d(TAG, "Descriptor Length %d\n\r", descriptor[USB_DESC_bLength]);
+	log_d(TAG, "Descriptor Type 0x%x\n\r", descriptor[USB_DESC_bDescriptorType]);
+#endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 	
 	if(descriptor[USB_DESC_bDescriptorType] != USB_DEVICE_DESCRIPTOR){
-		LOG_E("Expected the Device Descriptor\n\r");
+#if defined(SYS_LOG_LEVEL)
+#if (SYS_LOG_LEVEL <= LOG_ERROR)
+		log_e(TAG, "Expected the Device Descriptor\n\r");
+#endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 		return(false);
 	}
 
@@ -349,34 +385,70 @@ bool xpad_initialise ( uint8_t address, uint32_t flags, uint8_t clientDriverID )
 		printf("-0x%x-", descriptor[loop]);
 	}
 
-	LOG_D("Device Class 0x%x\n\r", descriptor[USB_DEV_DESC_bDeviceClass]);
-	LOG_D("Device Sub Class 0x%x\n\r", descriptor[USB_DEV_DESC_bDeviceSubClass]);
-	LOG_D("Device Protocol 0x%x\n\r", descriptor[USB_DEV_DESC_bDeviceProtocol]);
-	LOG_D("Device MaxPacketSize0 0x%x\n\r", descriptor[USB_DEV_DESC_bMaxPacketSize0]);
+#if defined(SYS_LOG_LEVEL)
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+	log_d(TAG, "Device Class 0x%x\n\r", descriptor[USB_DEV_DESC_bDeviceClass]);
+	log_d(TAG, "Device Sub Class 0x%x\n\r", descriptor[USB_DEV_DESC_bDeviceSubClass]);
+	log_d(TAG, "Device Protocol 0x%x\n\r", descriptor[USB_DEV_DESC_bDeviceProtocol]);
+	log_d(TAG, "Device MaxPacketSize0 0x%x\n\r", descriptor[USB_DEV_DESC_bMaxPacketSize0]);
+#endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 
 	tmp_word = (uint16_t)descriptor[USB_DEV_DESC_VID_OFFSET];
 	tmp_word |= ((uint16_t)descriptor[USB_DEV_DESC_VID_OFFSET + 1]) << 8;
-	LOG_D("VID 0x%x\n\r", tmp_word);
+#if defined(SYS_LOG_LEVEL)
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+	log_d(TAG, "VID 0x%x\n\r", tmp_word);
+#endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 
 	tmp_word = (uint16_t)descriptor[USB_DEV_DESC_PID_OFFSET];
 	tmp_word |= ((uint16_t)descriptor[USB_DEV_DESC_PID_OFFSET + 1]) << 8;
-	LOG_D("PID 0x%x\n\r", tmp_word);
-	LOG_D("Number of Configurations %d\n\r", descriptor[USB_DEV_DESC_NUM_CONFIGS_OFFSET]);
-	LOG_D("*******************************\n\r");
+#if defined(SYS_LOG_LEVEL)
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+	log_d(TAG, "PID 0x%x\n\r", tmp_word);
+	log_d(TAG, "Number of Configurations %d\n\r", descriptor[USB_DEV_DESC_NUM_CONFIGS_OFFSET]);
+	log_d(TAG, "*******************************\n\r");
+#endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
         if(xpad_device.state != NO_DEVICE) {
-		LOG_E("xpad_initilise() - device Not in NO_DEVICE State\n\r");
+#if defined(SYS_LOG_LEVEL)
+#if (SYS_LOG_LEVEL <= LOG_ERROR)
+		log_e(TAG, "xpad_initilise() - device Not in NO_DEVICE State\n\r");
+#endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 		return(false);
 	}
 
 	descriptor = USBHostGetCurrentConfigurationDescriptor(address);
 
 	descriptor_length = descriptor[USB_DESC_bLength];
-	LOG_D("Configuration Descriptor\n\r");
-	LOG_D("Descriptor Length %d\n\r", descriptor_length);
-	LOG_D("Descriptor Type 0x%x\n\r", descriptor[USB_DESC_bDescriptorType]);
+#if defined(SYS_LOG_LEVEL)
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+	log_d(TAG, "Configuration Descriptor\n\r");
+	log_d(TAG, "Descriptor Length %d\n\r", descriptor_length);
+	log_d(TAG, "Descriptor Type 0x%x\n\r", descriptor[USB_DESC_bDescriptorType]);
+#endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 
 	if(descriptor[USB_DESC_bDescriptorType] != USB_CONFIG_DESCRIPTOR){
-		LOG_E("Expected the Device Descriptor\n\r");
+#if defined(SYS_LOG_LEVEL)
+#if (SYS_LOG_LEVEL <= LOG_ERROR)
+		log_e(TAG, "Expected the Device Descriptor\n\r");
+#endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 		return(false);
 	}
 
@@ -386,68 +458,139 @@ bool xpad_initialise ( uint8_t address, uint32_t flags, uint8_t clientDriverID )
 
 	config_total_length = (uint16_t)descriptor[USB_CONFIG_DESC_wTotalLength];
 	config_total_length |= ((uint16_t)descriptor[USB_CONFIG_DESC_wTotalLength + 1]) << 8;
-	LOG_D("Total Length of config Descriptor %d\n\r", config_total_length);
-	LOG_D("*******************************\n\r");
+#if defined(SYS_LOG_LEVEL)
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+	log_d(TAG, "Total Length of config Descriptor %d\n\r", config_total_length);
+	log_d(TAG, "*******************************\n\r");
+#endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 
 	ptr = descriptor + descriptor_length;
 	i = 0;
 
 	while(ptr < (descriptor + config_total_length)) {
 		descriptor_length = ptr[USB_DESC_bLength];
-		LOG_D("Process Descriptor %d\n\r", i);
-		LOG_D("Descriptor %d Length %d\n\r", i, descriptor_length);
-		LOG_D("Descriptor %d Type 0x%x\n\r", i, ptr[USB_DESC_bDescriptorType]);
+#if defined(SYS_LOG_LEVEL)
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+		log_d(TAG, "Process Descriptor %d\n\r", i);
+		log_d(TAG, "Descriptor %d Length %d\n\r", i, descriptor_length);
+		log_d(TAG, "Descriptor %d Type 0x%x\n\r", i, ptr[USB_DESC_bDescriptorType]);
+#endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 
 		for (loop = 0; loop < ptr[USB_DESC_bLength]; loop++) {
 			printf("-0x%x-", ptr[loop]);
 		}
 
 		if(ptr[USB_DESC_bDescriptorType] == USB_ENDPOINT_DESCRIPTOR) {
-			LOG_D("Endpoint Descriptor\n\r");
-
+#if defined(SYS_LOG_LEVEL)
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+			log_d(TAG, "Endpoint Descriptor\n\r");
+#endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 			endpoint_address = ptr[USB_ENDPOINT_DESC_bEndpointAddress];
 			endpoint_packet_size = (uint16_t) ptr[USB_ENDPOINT_DESC_wMaxPacketSize];
 			endpoint_packet_size |= ((uint16_t) ptr[USB_ENDPOINT_DESC_wMaxPacketSize + 1]) << 8;
 
-			LOG_D("Endpoint number - 0x%x\n\r", endpoint_address);
-			LOG_D("Maximum packet size %d\n\r", endpoint_packet_size);
-			LOG_D("Attributes 0x%x\n\r", ptr[USB_ENDPOINT_DESC_bmAttributes]);
+#if defined(SYS_LOG_LEVEL)
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+			log_d(TAG, "Endpoint number - 0x%x\n\r", endpoint_address);
+			log_d(TAG, "Maximum packet size %d\n\r", endpoint_packet_size);
+			log_d(TAG, "Attributes 0x%x\n\r", ptr[USB_ENDPOINT_DESC_bmAttributes]);
+#endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 			if(endpoint_address & 0x80) {
-				LOG_D("IN\n\r");
+#if defined(SYS_LOG_LEVEL)
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+				log_d(TAG, "IN\n\r");
+#endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 				xpad_device.INEndpointNum = endpoint_address;
 				xpad_device.INEndpointSize = endpoint_packet_size;
 			} else {
-				LOG_D("OUT\n\r");
+#if defined(SYS_LOG_LEVEL)
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+				log_d(TAG, "OUT\n\r");
+#endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 				xpad_device.OUTEndpointNum = endpoint_address;
 				xpad_device.OUTEndpointSize = endpoint_packet_size;
 			}
 		} else if (ptr[USB_DESC_bDescriptorType] == USB_INTERFACE_DESCRIPTOR) {
-			LOG_D("Interface Descriptor\n\r");
-			LOG_D("Interface Number 0x%x\n\r", ptr[USB_INTERFACE_DESC_bInterfaceNumber]);
-			LOG_D("Interface Number of Endpoints 0x%x\n\r", ptr[USB_INTERFACE_DESC_bNumEndpoints]);
-			LOG_D("Interface Class 0x%x\n\r", ptr[USB_INTERFACE_DESC_bInterfaceClass]);
-			LOG_D("Interface SubClass 0x%x\n\r", ptr[USB_INTERFACE_DESC_bInterfaceSubClass]);
-			LOG_D("Interface Protocol 0x%x\n\r", ptr[USB_INTERFACE_DESC_bInterfaceProtocol]);
+#if defined(SYS_LOG_LEVEL)
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+			log_d(TAG, "Interface Descriptor\n\r");
+			log_d(TAG, "Interface Number 0x%x\n\r", ptr[USB_INTERFACE_DESC_bInterfaceNumber]);
+			log_d(TAG, "Interface Number of Endpoints 0x%x\n\r", ptr[USB_INTERFACE_DESC_bNumEndpoints]);
+			log_d(TAG, "Interface Class 0x%x\n\r", ptr[USB_INTERFACE_DESC_bInterfaceClass]);
+			log_d(TAG, "Interface SubClass 0x%x\n\r", ptr[USB_INTERFACE_DESC_bInterfaceSubClass]);
+			log_d(TAG, "Interface Protocol 0x%x\n\r", ptr[USB_INTERFACE_DESC_bInterfaceProtocol]);
+#endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 		} else if (ptr[USB_DESC_bDescriptorType] == USB_HID_DESCRIPTOR) {
-			LOG_D("HID Descriptor\n\r");
-			LOG_D("HID Num Descriptors 0x%x\n\r", ptr[USB_HID_DESC_bNumDescriptors]);
-			LOG_D("HID Descriptor Type 0x%x\n\r", ptr[USB_HID_DESC_bDescriptorType]);
+#if defined(SYS_LOG_LEVEL)
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+			log_d(TAG, "HID Descriptor\n\r");
+			log_d(TAG, "HID Num Descriptors 0x%x\n\r", ptr[USB_HID_DESC_bNumDescriptors]);
+			log_d(TAG, "HID Descriptor Type 0x%x\n\r", ptr[USB_HID_DESC_bDescriptorType]);
+#endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 
 			tmp_word = (uint16_t) ptr[USB_HID_DESC_wDescriptorLength];
 			tmp_word |= ((uint16_t) ptr[USB_HID_DESC_wDescriptorLength + 1]) << 8;
-			LOG_D("HID Descriptor Length 0x%x\n\r", tmp_word);
-			LOG_D("HID Optional Descriptor Type 0x%x\n\r", ptr[USB_HID_DESC_bOptionalDescriptorType]);
+#if defined(SYS_LOG_LEVEL)
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+			log_d(TAG, "HID Descriptor Length 0x%x\n\r", tmp_word);
+			log_d(TAG, "HID Optional Descriptor Type 0x%x\n\r", ptr[USB_HID_DESC_bOptionalDescriptorType]);
+#endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 			tmp_word = (uint16_t) ptr[USB_HID_DESC_wOptionalDescriptorLength];
 			tmp_word |= ((uint16_t) ptr[USB_HID_DESC_wOptionalDescriptorLength + 1]) << 8;
-			LOG_D("HID Optional Descriptor Lenght 0x%x\n\r", tmp_word);
+#if defined(SYS_LOG_LEVEL)
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+			log_d(TAG, "HID Optional Descriptor Lenght 0x%x\n\r", tmp_word);
+#endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 		}
-		LOG_D("*******************************\n\r");
+#if defined(SYS_LOG_LEVEL)
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+		log_d(TAG, "*******************************\n\r");
+#endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 		i++;
 		ptr += descriptor_length;
 	}
 
 	xpad_device.state = DEVICE_ATTACHED;
-	LOG_D("End of descriptors\n\r");
+#if defined(SYS_LOG_LEVEL)
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+	log_d(TAG, "End of descriptors\n\r");
+#endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 	return true;
 }
 
@@ -468,7 +611,13 @@ bool xpad_event_handler( uint8_t address, USB_EVENT event, void *data, uint32_t 
 			return true;
 
 		case EVENT_DETACH:
-			LOG_D("EVENT_DETACH\n\r");
+#if defined(SYS_LOG_LEVEL)
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+			log_d(TAG, "EVENT_DETACH\n\r");
+#endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 			xpad_device.state = NO_DEVICE;
 			return true;
 
@@ -493,27 +642,63 @@ bool xpad_event_handler( uint8_t address, USB_EVENT event, void *data, uint32_t 
 			return true;
 
 		case EVENT_RESUME:
-			LOG_D("EVENT_RESUME\n\r");
+#if defined(SYS_LOG_LEVEL)
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+			log_d(TAG, "EVENT_RESUME\n\r");
+#endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 			return true;
 
 		case EVENT_SUSPEND:
-			LOG_D("EVENT_SUSPEND\n\r");
+#if defined(SYS_LOG_LEVEL)
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+			log_d(TAG, "EVENT_SUSPEND\n\r");
+#endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 			return true;
 
 		case EVENT_RESET:
-			LOG_D("EVENT_RESET\n\r");
+#if defined(SYS_LOG_LEVEL)
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+			log_d(TAG, "EVENT_RESET\n\r");
+#endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 			return true;
 
 		case EVENT_STALL:
-			LOG_D("EVENT_STALL\n\r");
+#if defined(SYS_LOG_LEVEL)
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+			log_d(TAG, "EVENT_STALL\n\r");
+#endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 			return true;
 
 		case EVENT_BUS_ERROR:
-			LOG_D("EVENT_BUS_ERROR\n\r");
+#if defined(SYS_LOG_LEVEL)
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+			log_d(TAG, "EVENT_BUS_ERROR\n\r");
+#endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 			return true;
 
 		default:
-			LOG_E("default unprocessed Even 0x%x\n\r", event);
+#if defined(SYS_LOG_LEVEL)
+#if (SYS_LOG_LEVEL <= LOG_ERROR)
+			log_e(TAG, "default unprocessed Even 0x%x\n\r", event);
+#endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 			break;
 	}
 	return false;
@@ -530,14 +715,26 @@ bool xpad_data_event_handler( uint8_t address, USB_EVENT event, void *data, uint
 {
 	switch (event) {
 		case EVENT_SOF: // Start of frame - NOT NEEDED
-			LOG_D("EVENT_SOF\n\r");
+#if defined(SYS_LOG_LEVEL)
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+			log_d(TAG, "EVENT_SOF\n\r");
+#endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 			return true;
 
 		case EVENT_1MS: // 1ms timer
 			xpad_tasks();
 			return true;
 		default:
-			LOG_D("Default event do nothing! 0x%x\n\r", event);
+#if defined(SYS_LOG_LEVEL)
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+			log_d(TAG, "Default event do nothing! 0x%x\n\r", event);
+#endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 			break;
 	}
 	return false;

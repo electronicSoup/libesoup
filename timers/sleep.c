@@ -24,19 +24,18 @@
 #define DEBUG_FILE
 #define TAG "SLEEP"
 
-#include "es_lib/logger/serial_log.h"
 #include "es_lib/timers/hw_timers.h"
 
-static volatile u8 sleep_over;
+static volatile uint8_t sleep_over;
 
 static void hw_expiry_function(void *data)
 {
 	sleep_over = TRUE;
 }
 
-void sleep(ty_time_units units, u16 time)
+void sleep(ty_time_units units, uint16_t time)
 {
-	u8 hw_timer;
+	uint8_t hw_timer;
 
 	sleep_over = FALSE;
 	hw_timer = hw_timer_start(units, time, FALSE, hw_expiry_function, NULL);

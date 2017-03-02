@@ -24,6 +24,23 @@
 #ifndef ES_LIB_UART_H
 #define ES_LIB_UART_H
 
+/*
+ * UART Defs
+ */
+#define PARITY_NONE                 0
+#define PARITY_ODD                  1
+#define PARITY_EVEN                 2
+
+#define ONE_STOP_BIT                1
+#define TWO_STOP_BITS               2
+
+#define IDLE_LOW                    0
+#define IDLE_HIGH                   1
+#ifdef MCP
+#define LITTLE_ENDIAN               0
+#define BIG_ENDIAN                  1
+#endif  // ifdef MCP
+
 #define UARTEN_MASK      0x8000
 #define USIDL_MASK       0x2000
 #define IREN_MASK        0x1000
@@ -46,20 +63,21 @@
 #define UART_BAD         0xff
 
 struct uart_data {
-    u8            tx_pin;
-    u8            rx_pin;
-    u8            uart;
-    u16           uart_mode;
-    u16           baud;
+    uint8_t            tx_pin;
+    uint8_t            rx_pin;
+    uint8_t            uart;
+    uint16_t           uart_mode;
+    uint16_t           baud;
     void        (*tx_finished)(void *);
-    void        (*process_rx_char)(u8, u8);
+    void        (*process_rx_char)(uint8_t, uint8_t);
 };
 
 
-extern u16      uart_calculate_mode(u8 databits, u8 parity, u8 stopbits, u8 rx_idle_level);
+extern result_t uart_calculate_mode(uint16_t *, uint8_t databits, uint8_t parity, uint8_t stopbits, uint8_t rx_idle_level);
 extern void     uart_init(void);
 extern result_t uart_reserve(struct uart_data *data);
 extern result_t uart_release(struct uart_data *data);
-extern result_t uart_tx(struct uart_data *data, u8 *buffer, u16 len);
+extern result_t uart_tx_buffer(struct uart_data *data, uint8_t *buffer, uint16_t len);
+extern result_t uart_tx_char(struct uart_data *data, char ch);
 
 #endif // ES_LIB_UART_H

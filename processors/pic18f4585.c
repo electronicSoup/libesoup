@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include "es_lib/timers/hw_timers.h"
 
-extern void check_timer(u8 timer);
+extern void check_timer(uint8_t timer);
 
 #pragma config WDT = OFF
 #pragma config MCLRE = OFF
@@ -30,10 +30,10 @@ extern void check_timer(u8 timer);
 #pragma config EBTR1 = OFF
 #pragma config EBTR2 = OFF
 
-extern void pic18f_timer_isr(u8 timer);
+extern void pic18f_timer_isr(uint8_t timer);
 extern void pic18f_serial_isr(void);
 
-void pic18f_init(void)
+void cpu_init(void)
 {
         RCONbits.IPEN = 0; // No Interrupt priority level
 }

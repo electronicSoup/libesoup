@@ -34,10 +34,10 @@
 #include "es_lib/can/dcncp/cinnamonbun_info.h"
 
 #define DEBUG_FILE
-//#define LOG_LEVEL LOG_INFO
+//#define SYS_LOG_LEVEL LOG_INFO
 #include "es_lib/logger/serial_log.h"
 
-#define TAG "DCNCP_ISO15765"
+#define TAG "ISO15765_DCNCP"
 
 extern void  os_remove_current_app(void);
 
@@ -66,63 +66,100 @@ typedef enum {
     node_reflash_finished     = 0x11
 } dcncp_iso15765_msg_t;
 
-void (*app_status)(char *, u16 *);
+void (*app_status)(char *, uint16_t *);
 
 //#define NODE_MAGIC              0x55
 
 static void dcncp_iso15765_msg_handler(iso15765_msg_t *msg);
-static void send_ready_response(u8 address);
+static void send_ready_response(uint8_t address);
 
 void dcncp_iso15765_init()
 {
 	result_t          rc;
 	iso15765_target_t target;
 
-	LOG_D("dcncp_iso15765_init()\n\r");
-#ifdef DCNCP_ISO15765
-	app_status = (void (*)(char *, u16))APP_STATUS_ADDRESS;
+#if defined(SYS_LOG_LEVEL)
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+	log_d(TAG, "dcncp_iso15765_init()\n\r");
+#endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
+
+#ifdef SYS_ISO15765_DCNCP
+	app_status = (void (*)(char *, uint16_t))APP_STATUS_ADDRESS;
 
 	target.protocol = ISO15765_DCNCP_PROTOCOL_ID;
 	target.handler = dcncp_iso15765_msg_handler;
 
 	rc = iso15765_dispatch_reg_handler(&target);
 	if(rc != SUCCESS) {
-		LOG_E("Failed to register Network Management iso15765 handler\n\r");
+#if defined(SYS_LOG_LEVEL)
+#if (SYS_LOG_LEVEL <= LOG_ERROR)
+		log_e(TAG, "Failed to register Network Management iso15765 handler\n\r");
+#endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 	}
 #endif
 }
 
-#ifdef DCNCP_ISO15765
+#ifdef SYS_ISO15765_DCNCP
 static void dcncp_iso15765_msg_handler(iso15765_msg_t *msg)
 {
 	result_t       rc;
 	iso15765_msg_t response;
-	u8             response_buffer[ISO15765_MAX_MSG];
-	u8             response_index = 0;
-	u8             loop;
-	u8             data[60];
-	u16            length;
-	u8             i = 0x00;
+	uint8_t             response_buffer[ISO15765_MAX_MSG];
+	uint8_t             response_index = 0;
+	uint8_t             loop;
+	uint8_t             data[60];
+	uint16_t            length;
+	uint8_t             i = 0x00;
 	u32            flash_address;
 	char          *status;
-	u8             buffer[200];
+	uint8_t             buffer[200];
 
-	LOG_D("Message from Node 0x%x\n\r", (u16) msg->address);
-	LOG_D("Message Protocol 0x%x\n\r", (u16) msg->protocol);
-	LOG_D("First Data Byte is 0x%x\n\r", (u16) msg->data[0]);
+#if defined(SYS_LOG_LEVEL)
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+	log_d(TAG, "Message from Node 0x%x\n\r", (uint16_t) msg->address);
+	log_d(TAG, "Message Protocol 0x%x\n\r", (uint16_t) msg->protocol);
+	log_d(TAG, "First Data Byte is 0x%x\n\r", (uint16_t) msg->data[0]);
+#endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 
 	if (msg->protocol != ISO15765_DCNCP_PROTOCOL_ID) {
-		LOG_E("Incorrect L3 Protocol received in NodeManagement %x\n\r", msg->protocol);
+#if defined(SYS_LOG_LEVEL)
+#if (SYS_LOG_LEVEL <= LOG_ERROR)
+		log_e(TAG, "Incorrect L3 Protocol received in NodeManagement %x\n\r", msg->protocol);
+#endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 		return;
 	}
 
 	switch (msg->data[0]) {
  		case hw_info_request:
-			LOG_W("hw_info_request:\n\r");
+#if defined(SYS_LOG_LEVEL)
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_WARNING))
+			log_w(TAG, "hw_info_request:\n\r");
+#endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 			length = 200;
 			rc = cb_get_hardware_info(buffer, &length);
 			if(rc != SUCCESS) {
-				LOG_E("Failed to read HW Info\n\r");
+#if defined(SYS_LOG_LEVEL)
+#if (SYS_LOG_LEVEL <= LOG_ERROR)
+				log_e(TAG, "Failed to read HW Info\n\r");
+#endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 				return;
 			}
 
@@ -140,11 +177,23 @@ static void dcncp_iso15765_msg_handler(iso15765_msg_t *msg)
 			break;
 
  		case boot_info_request:
-			LOG_W("boot_info_request:\n\r");
+#if defined(SYS_LOG_LEVEL)
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_WARNING))
+			log_w(TAG, "boot_info_request:\n\r");
+#endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 			length = 200;
 			rc = cb_get_boot_info(buffer, &length);
 			if(rc != SUCCESS) {
-				LOG_E("Failed to read Boot Info\n\r");
+#if defined(SYS_LOG_LEVEL)
+#if (SYS_LOG_LEVEL <= LOG_ERROR)
+				log_e(TAG, "Failed to read Boot Info\n\r");
+#endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 				return;
 			}
 
@@ -162,11 +211,23 @@ static void dcncp_iso15765_msg_handler(iso15765_msg_t *msg)
 			break;
 
 		case firmware_info_request:
-			LOG_W("firmware_info_request\n\r");
+#if defined(SYS_LOG_LEVEL)
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_WARNING))
+			log_w(TAG, "firmware_info_request\n\r");
+#endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 			length = 200;
 			rc = cb_get_firmware_info(buffer, &length);
 			if(rc != SUCCESS) {
-				LOG_E("Failed to read Firmware Info\n\r");
+#if defined(SYS_LOG_LEVEL)
+#if (SYS_LOG_LEVEL <= LOG_ERROR)
+				log_e(TAG, "Failed to read Firmware Info\n\r");
+#endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 				return;
 			}
 
@@ -184,11 +245,23 @@ static void dcncp_iso15765_msg_handler(iso15765_msg_t *msg)
 			break;
 
 		case node_config_info_request:
-			LOG_W("node_config_info_request\n\r");
+#if defined(SYS_LOG_LEVEL)
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_WARNING))
+			log_w(TAG, "node_config_info_request\n\r");
+#endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 			length = 200;
 			rc = cb_get_node_config_info(buffer, &length);
 			if(rc != SUCCESS) {
-				LOG_E("Failed to read Firmware Info\n\r");
+#if defined(SYS_LOG_LEVEL)
+#if (SYS_LOG_LEVEL <= LOG_ERROR)
+				log_e(TAG, "Failed to read Firmware Info\n\r");
+#endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 				return;
 			}
 
@@ -206,11 +279,23 @@ static void dcncp_iso15765_msg_handler(iso15765_msg_t *msg)
 			break;
 
 		case app_info_request:
-			LOG_D("AppInfoRequest\n\r");
+#if defined(SYS_LOG_LEVEL)
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+			log_d(TAG, "AppInfoRequest\n\r");
+#endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 			length = 200;
 			rc = cb_get_application_info(buffer, &length);
 			if(rc != SUCCESS) {
-				LOG_E("Failed to read Application Info\n\r");
+#if defined(SYS_LOG_LEVEL)
+#if (SYS_LOG_LEVEL <= LOG_ERROR)
+				log_e(TAG, "Failed to read Application Info\n\r");
+#endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 				return;
 			}
 
@@ -228,15 +313,33 @@ static void dcncp_iso15765_msg_handler(iso15765_msg_t *msg)
 			break;
 
 		case node_begin_reflash:
-			LOG_D("ReFlash Request\n\r");
+#if defined(SYS_LOG_LEVEL)
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+			log_d(TAG, "ReFlash Request\n\r");
+#endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 			os_remove_current_app();
 			rc = eeprom_write(EEPROM_APP_VALID_MAGIC_ADDR_1, 0x00);
 			if(rc != SUCCESS) {
-				LOG_E("Error writing to eeprom\n\r");
+#if defined(SYS_LOG_LEVEL)
+#if (SYS_LOG_LEVEL <= LOG_ERROR)
+				log_e(TAG, "Error writing to eeprom\n\r");
+#endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 			}
 			rc = eeprom_write((EEPROM_APP_VALID_MAGIC_ADDR_2), 0x00);
 			if(rc != SUCCESS) {
-				LOG_E("Error writing to eeprom\n\r");
+#if defined(SYS_LOG_LEVEL)
+#if (SYS_LOG_LEVEL <= LOG_ERROR)
+				log_e(TAG, "Error writing to eeprom\n\r");
+#endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 			}
 			app_valid = FALSE;
 
@@ -245,7 +348,13 @@ static void dcncp_iso15765_msg_handler(iso15765_msg_t *msg)
 			break;
 
 		case node_reflash_finished:
-			LOG_I("ReFlash Finished\n\r");
+#if defined(SYS_LOG_LEVEL)
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_INFO))
+			log_i(TAG, "ReFlash Finished\n\r");
+#endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 
 			/*
 			 * Test the installed App to see if it's valid!
@@ -255,27 +364,69 @@ static void dcncp_iso15765_msg_handler(iso15765_msg_t *msg)
 			if(  (flash_strlen((__prog__ char*)APP_AUTHOR_40_ADDRESS) < 40)
 			   && (flash_strlen((__prog__ char*)APP_SOFTWARE_50_ADDRESS) < 50)
 			   && (flash_strlen((__prog__ char*)APP_VERSION_10_ADDRESS) < 10)) {
-				LOG_I("App Strings are valid\n\r");
+#if defined(SYS_LOG_LEVEL)
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_INFO))
+				log_i(TAG, "App Strings are valid\n\r");
+#endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 				CALL_APP_INIT();
-				LOG_I("Back from app_init() call app_main()\n\r");
+#if defined(SYS_LOG_LEVEL)
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_INFO))
+				log_i(TAG, "Back from app_init() call app_main()\n\r");
+#endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 				CALL_APP_MAIN();
-				LOG_I("Application is valid\n\r");
+#if defined(SYS_LOG_LEVEL)
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_INFO))
+				log_i(TAG, "Application is valid\n\r");
+#endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 				app_valid = TRUE;
 
 				if (eeprom_write(EEPROM_APP_VALID_MAGIC_ADDR_1, APP_VALID_MAGIC_VALUE) != SUCCESS) {
-					LOG_E("Bad EEPROM Write\n\r");
+#if defined(SYS_LOG_LEVEL)
+#if (SYS_LOG_LEVEL <= LOG_ERROR)
+					log_e(TAG, "Bad EEPROM Write\n\r");
+#endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 				}
-				if (eeprom_write(EEPROM_APP_VALID_MAGIC_ADDR_2, (u8) (~APP_VALID_MAGIC_VALUE)) != SUCCESS) {
-					LOG_E("BAD EEPROM Write\n\r");
+				if (eeprom_write(EEPROM_APP_VALID_MAGIC_ADDR_2, (uint8_t) (~APP_VALID_MAGIC_VALUE)) != SUCCESS) {
+#if defined(SYS_LOG_LEVEL)
+#if (SYS_LOG_LEVEL <= LOG_ERROR)
+					log_e(TAG, "BAD EEPROM Write\n\r");
+#endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 				}
 				ClrWdt();
 			} else {
-				LOG_E("Invalid App\n\r");
+#if defined(SYS_LOG_LEVEL)
+#if (SYS_LOG_LEVEL <= LOG_ERROR)
+				log_e(TAG, "Invalid App\n\r");
+#endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 			}
 			break;
 
 		case node_write_row:
-			LOG_W("Write Flash Row\n\r");
+#if defined(SYS_LOG_LEVEL)
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_WARNING))
+			log_w(TAG, "Write Flash Row\n\r");
+#endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 
 			flash_address = 0x00;
 
@@ -286,11 +437,23 @@ static void dcncp_iso15765_msg_handler(iso15765_msg_t *msg)
 
 			if(  (flash_address < APP_START_FLASH_ADDRESS)
 			   &&((flash_address < APP_HANDLE_FLASH_ADDRESS) || (flash_address >= APP_HANDLE_FLASH_ADDRESS + FLASH_PAGE_SIZE))) {
-				LOG_E("Bad address to Write to row\n\r");
+#if defined(SYS_LOG_LEVEL)
+#if (SYS_LOG_LEVEL <= LOG_ERROR)
+				log_e(TAG, "Bad address to Write to row\n\r");
+#endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 			} else {
 				rc = flash_write_row(flash_address, &msg->data[5]);
 				if (rc != SUCCESS) {
-					LOG_E("write row to address 0x%lx\n\r", flash_address);
+#if defined(SYS_LOG_LEVEL)
+#if (SYS_LOG_LEVEL <= LOG_ERROR)
+					log_e(TAG, "write row to address 0x%lx\n\r", flash_address);
+#endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 				}
 				send_ready_response(msg->address);
 			}
@@ -306,7 +469,13 @@ static void dcncp_iso15765_msg_handler(iso15765_msg_t *msg)
 				flash_write(address, &(message->data[5]));
 				send_ready_response(message->address);
 			} else {
-				LOG_D("Bad data Size given %d expected %d\n\r",
+#if defined(SYS_LOG_LEVEL)
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+				log_d(TAG, "Bad data Size given %d expected %d\n\r",
+#endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
                                       (UINT16)(message->size - 5),
                                       (UINT16)FLASH_PAGE_SIZE);
 			}
@@ -326,17 +495,23 @@ static void dcncp_iso15765_msg_handler(iso15765_msg_t *msg)
 			break;
 
 		default:
-			LOG_E("ERROR: Unprocessed NodeManagement message type 0x%x\n\r", (u16) msg->data[0]);
+#if defined(SYS_LOG_LEVEL)
+#if (SYS_LOG_LEVEL <= LOG_ERROR)
+			log_e(TAG, "ERROR: Unprocessed NodeManagement message type 0x%x\n\r", (uint16_t) msg->data[0]);
+#endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 			break;
 	}
 }
 #endif
 
-#ifdef DCNCP_ISO15765
-void send_ready_response(u8 address)
+#ifdef SYS_ISO15765_DCNCP
+void send_ready_response(uint8_t address)
 {
 	iso15765_msg_t response;
-	u8             response_buffer[3];
+	uint8_t             response_buffer[3];
 
 	response_buffer[0] = node_ready_next;
 

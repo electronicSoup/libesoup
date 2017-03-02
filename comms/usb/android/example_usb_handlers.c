@@ -18,26 +18,50 @@
 
 bool USB_ApplicationDataEventHandler( uint8_t address, USB_EVENT event, void *data, uint32_t size )
 {
-	LOG_D("USB_ApplicationDataEventHandler()\n\r");
+#if defined(SYS_LOG_LEVEL)
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+	log_d(TAG, "USB_ApplicationDataEventHandler()\n\r");
+#endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 	return FALSE;
 }
 
 bool USB_ApplicationEventHandler( uint8_t address, USB_EVENT event, void *data, uint32_t size )
 {
-//	LOG_D("USB_ApplicationEventHandler()\n\r");
+#if defined(SYS_LOG_LEVEL)
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+//	log_d(TAG, "USB_ApplicationEventHandler()\n\r");
+#endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 
 	asm ("CLRWDT");
 
 	switch( event) {
 		case EVENT_VBUS_REQUEST_POWER:
-//			LOG_D("EVENT_VBUS_REQUEST_POWER current %d\n\r", ((USB_VBUS_POWER_EVENT_DATA*) data)->current);
+#if defined(SYS_LOG_LEVEL)
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+//			log_d(TAG, "EVENT_VBUS_REQUEST_POWER current %d\n\r", ((USB_VBUS_POWER_EVENT_DATA*) data)->current);
+#endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 			// The data pointer points to a byte that represents the amount of power
 			// requested in mA, divided by two.  If the device wants too much power,
 			// we reject it.
 			if (((USB_VBUS_POWER_EVENT_DATA*) data)->current <= (MAX_ALLOWED_CURRENT / 2)) {
 				return TRUE;
 			} else {
-				LOG_E("\r\n***** USB Error - device requires too much current *****\r\n");
+#if defined(SYS_LOG_LEVEL)
+#if (SYS_LOG_LEVEL <= LOG_ERROR)
+				log_e(TAG, "\r\n***** USB Error - device requires too much current *****\r\n");
+#endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 			}
 			break;
 
@@ -50,7 +74,13 @@ bool USB_ApplicationEventHandler( uint8_t address, USB_EVENT event, void *data, 
 		case EVENT_UNSPECIFIED_ERROR: // This should never be generated.
 		case EVENT_DETACH: // USB cable has been detached (data: BYTE, address of device)
 		case EVENT_ANDROID_DETACH:
-			LOG_D("Device Detached\n\r");
+#if defined(SYS_LOG_LEVEL)
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+			log_d(TAG, "Device Detached\n\r");
+#endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 			/*
 			 * Pass a Detach event on to the state machine for processing.
 			 */
@@ -61,7 +91,13 @@ bool USB_ApplicationEventHandler( uint8_t address, USB_EVENT event, void *data, 
 
 			// Android Specific events
 		case EVENT_ANDROID_ATTACH:
-			LOG_D("Device Attached\n\r");
+#if defined(SYS_LOG_LEVEL)
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+			log_d(TAG, "Device Attached\n\r");
+#endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 			/*
 			 * Pass an Attach even on to the State machine.
 			 */
@@ -70,11 +106,23 @@ bool USB_ApplicationEventHandler( uint8_t address, USB_EVENT event, void *data, 
 			return TRUE;
 
 		case EVENT_OVERRIDE_CLIENT_DRIVER_SELECTION:
-			LOG_D("Ignoring EVENT_OVERRIDE_CLIENT_DRIVER_SELECTION\n\r");
+#if defined(SYS_LOG_LEVEL)
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+			log_d(TAG, "Ignoring EVENT_OVERRIDE_CLIENT_DRIVER_SELECTION\n\r");
+#endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 			break;
 
 		default:
-			LOG_W("Unknown Event 0x%x\n\r", event);
+#if defined(SYS_LOG_LEVEL)
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_WARNING))
+			log_w(TAG, "Unknown Event 0x%x\n\r", event);
+#endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 			break;
 	}
 	return FALSE;

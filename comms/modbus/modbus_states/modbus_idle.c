@@ -8,13 +8,19 @@
 
 extern struct modbus_state modbus_state;
 
-static void transmit(struct modbus_channel *channel, u8 *data, u16 len, modbus_response_function fn, void* callback_data);
+static void transmit(struct modbus_channel *channel, uint8_t *data, uint16_t len, modbus_response_function fn, void* callback_data);
 static void process_timer_35_expiry(void *data);
-static void process_rx_character(struct modbus_channel *channel, u8 ch);
+static void process_rx_character(struct modbus_channel *channel, uint8_t ch);
 
 void set_modbus_idle_state(struct modbus_channel *channel)
 {
-	LOG_D("set_modbus_idle_state(channel %d)\n\r", channel->uart->uart);
+#if defined(SYS_LOG_LEVEL)
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+	log_d(TAG, "set_modbus_idle_state(channel %d)\n\r", channel->uart->uart);
+#endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 
 	channel->process_timer_15_expiry = NULL;
 	channel->process_timer_35_expiry = process_timer_35_expiry;
@@ -29,9 +35,15 @@ void set_modbus_idle_state(struct modbus_channel *channel)
 	}
 }
 
-void transmit(struct modbus_channel *channel, u8 *data, u16 len, modbus_response_function fn, void *callback_data)
+void transmit(struct modbus_channel *channel, uint8_t *data, uint16_t len, modbus_response_function fn, void *callback_data)
 {
-	LOG_D("Modbus Idle state Transmit(%d)\n\r", channel->uart->uart);
+#if defined(SYS_LOG_LEVEL)
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+	log_d(TAG, "Modbus Idle state Transmit(%d)\n\r", channel->uart->uart);
+#endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 
 	/*
 	 * The response timeout timer is started when the transmission is
@@ -48,21 +60,30 @@ void process_timer_35_expiry(void *data)
 {
         struct modbus_channel *channel = (struct modbus_channel *)data;
 
-	u8  start_index;
-	u16 loop;
+	uint8_t  start_index;
+	uint16_t loop;
 
-	LOG_D("process_timer_35_expiry() channel %d msg length %d\n\r", channel->uart->uart, channel->rx_write_index);
+#if defined(SYS_LOG_LEVEL)
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+	log_d(TAG, "process_timer_35_expiry() channel %d msg length %d\n\r", channel->uart->uart, channel->rx_write_index);
+#endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 
-//	for(loop = 0; loop < channel->rx_write_index; loop++) {
-//		LOG_D("Char %d - 0x%x\n\r", loop, channel->rx_buffer[loop]);
-//	}
         start_index = 0;
         if (crc_check(&(channel->rx_buffer[start_index]), channel->rx_write_index - start_index)) {
                 /*
                  * Response Good
                  * Subtract 2 for the CRC
                  */
-                LOG_D("Message Good! Start at 0\n\r");
+#if defined(SYS_LOG_LEVEL)
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+                log_d(TAG, "Message Good! Start at 0\n\r");
+#endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 
                 if(channel->process_unsolicited_msg) {
                         channel->process_unsolicited_msg(&(channel->rx_buffer[start_index]), channel->rx_write_index - (start_index + 2), channel->response_callback_data);
@@ -77,7 +98,13 @@ void process_timer_35_expiry(void *data)
                  * Response Good
                  * Subtract 2 for the CRC
                  */
-                LOG_D("Message Good! Start at 1\n\r");
+#if defined(SYS_LOG_LEVEL)
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+                log_d(TAG, "Message Good! Start at 1\n\r");
+#endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 
                 if(channel->process_unsolicited_msg) {
                         channel->process_unsolicited_msg(&(channel->rx_buffer[start_index]), channel->rx_write_index - (start_index + 2), channel->response_callback_data);
@@ -86,17 +113,23 @@ void process_timer_35_expiry(void *data)
                 return;
         }
 
-        LOG_D("Message bad!\n\r");
+#if defined(SYS_LOG_LEVEL)
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+        log_d(TAG, "Message bad!\n\r");
 	for(loop = 0; loop < channel->rx_write_index; loop++) {
-		LOG_D("Char %d - 0x%x\n\r", loop, channel->rx_buffer[loop]);
+		log_d(TAG, "Char %d - 0x%x\n\r", loop, channel->rx_buffer[loop]);
 	}
+#endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
         if(channel->process_unsolicited_msg) {
                 channel->process_unsolicited_msg(NULL, 0, channel->response_callback_data);
         }
         channel->rx_write_index = 0;
 }
 
-void process_rx_character(struct modbus_channel *channel, u8 ch)
+void process_rx_character(struct modbus_channel *channel, uint8_t ch)
 {
 	if ((channel->rx_write_index == 0) && (ch == 0x00)) {
 		return;
@@ -106,8 +139,13 @@ void process_rx_character(struct modbus_channel *channel, u8 ch)
 
 	channel->rx_buffer[channel->rx_write_index++] = ch;
 
-	if (channel->rx_write_index == MODBUS_RX_BUFFER_SIZE) {
-		LOG_E("UART 2 Overflow: Line too long\n\r");
+	if (channel->rx_write_index == SYS_MODBUS_RX_BUFFER_SIZE) {
+#if defined(SYS_LOG_LEVEL)
+#if (SYS_LOG_LEVEL <= LOG_ERROR)
+		log_e(TAG, "UART 2 Overflow: Line too long\n\r");
+#endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 	}
 }
-

@@ -41,36 +41,21 @@
 #define NULL (0)
 #endif	/* NULL */
 
-    typedef uint8_t    BOOL;
+    typedef uint8_t    boolean;
 #define FALSE 0x00
 #define TRUE (!FALSE)
 
-    typedef uint8_t    u8;
-    typedef uint16_t   u16;
-    typedef uint32_t   u32;
+//    typedef uint8_t    uint8_t;
+//    typedef uint16_t   uint16_t;
+//    typedef uint32_t   u32;
 
-    typedef int8_t     s8;
-    typedef int16_t    s16;
-    typedef int32_t    s32;
-#if 0
-#include <GenericTypeDefs.h>
-
-    typedef UINT8    u8;
-    typedef UINT16   u16;
-    typedef UINT32   u32;
-
-    typedef INT8     s8;
-    typedef INT16    s16;
-    typedef INT32    s32;
-#endif
+//    typedef int8_t     s8;
+//    typedef int16_t    s16;
+//    typedef int32_t    s32;
 #elif defined(ES_LINUX)
     #include <stdint.h>
 
-    typedef uint8_t  u8;
-    typedef uint16_t u16;
-    typedef uint32_t u32;
-
-    typedef unsigned char bool;
+    typedef unsigned char boolean;
     #define FALSE 0
     #define TRUE !(FALSE)
 
@@ -86,10 +71,20 @@
  * Union for converting byte stream to floats
  */
 typedef union {
-	u8 bytes[4];
+	uint8_t bytes[4];
 	float value;
 } f32;
 
+/**
+ * \defgroup Timers Timers
+ * @{
+ * 
+ * \brief Enumeration for units of time. Used to specify durations for timers.
+ * 
+ * These are fairly straight forward and represent human representations of
+ * time durations. When used to start timers the API functions will convert the 
+ * duration in to a micro-controller specific tick count or crystal pulse count.
+ */
 typedef enum {
     uSeconds,
     mSeconds,
@@ -97,6 +92,9 @@ typedef enum {
     Minutes,
     Hours
 } ty_time_units;
+/**
+ * @}
+ */
 
 /**
  * @def   INPUT_PIN
@@ -356,9 +354,9 @@ typedef enum {
  * in your system.h file.
  *
  * For example if an attempt to start a timer returns the no resources return
- * code then you can rebuild your system with more timers, @see NUMBER_OF_TIMERS
- * Of course more system Main Memory will be used up in timer table, in this 
- * case.
+ * code then you can rebuild your system with more timers, 
+ * @see SYS_NUMBER_OF_TIMERS Of course more system Main Memory will be used
+ * up in timer table, in this case.
  *
  * @enum  ERR_ADDRESS_RANGE,
  * @brief An address passed to an es_lib API function is out of valid range.
@@ -504,7 +502,7 @@ typedef enum {
  * bit 30	: remote transmission request flag (1 = rtr frame)
  * bit 31	: frame format flag (0 = standard 11 bit, 1 = extended 29 bit)
  */
-typedef u32 canid_t;
+typedef uint32_t canid_t;
 
 
 /**
@@ -522,8 +520,8 @@ typedef struct
 #endif //__18F2680
 {
     canid_t can_id; /* 32 bit CAN_ID + EFF/RTR/ERR flags */
-    u8      can_dlc;
-    u8      data[CAN_DATA_LENGTH];
+    uint8_t      can_dlc;
+    uint8_t      data[CAN_DATA_LENGTH];
 } can_frame;
 #endif //MCP
 
@@ -545,22 +543,11 @@ typedef void (*can_l2_frame_handler_t)(can_frame *msg);
  */
 typedef struct 
 {
-    u32                     mask;
-    u32                     filter;
+    uint32_t                     mask;
+    uint32_t                     filter;
     can_l2_frame_handler_t  handler;
-    u8                      handler_id;
+    uint8_t                      handler_id;
 } can_l2_target_t;
-
-/**
- * @def   ISO15765_MAX_MSG
- * @brief Maximum length of an ISO15765 Message
- *
- * The maximum ISO15765 Message length, not including the protcol Byte.
- *
- * ISO15765  Specification allows for 4095 Bytes but we're not even going to 
- * get close to that.
- */
-#define ISO15765_MAX_MSG 270  
 
 /**
  * @type  iso15765_msg_t
@@ -569,10 +556,10 @@ typedef struct
  */
 typedef struct
 {
-    u8  address;
-    u16 size;
-    u8  protocol;
-    u8 *data;
+    uint8_t  address;
+    uint16_t size;
+    uint8_t  protocol;
+    uint8_t *data;
 } iso15765_msg_t;
 
 /**
@@ -590,9 +577,9 @@ typedef void (*iso15765_msg_handler_t)(iso15765_msg_t *msg);
  */
 typedef struct
 {
-    u8                       protocol;
+    uint8_t                       protocol;
     iso15765_msg_handler_t   handler;
-    u8                       handler_id;
+    uint8_t                       handler_id;
 } iso15765_target_t;
 
 /**
@@ -602,11 +589,11 @@ typedef struct
  */
 typedef struct
 {
-    u8 source;
-    u8 destination;
-    u8 priority;
-    u32 pgn;
-    u8 *data;
+    uint8_t source;
+    uint8_t destination;
+    uint8_t priority;
+    uint32_t pgn;
+    uint8_t *data;
 } iso11783_msg_t;
 
 /**
@@ -625,9 +612,9 @@ typedef void (*iso11783_msg_handler_t)(iso11783_msg_t *msg);
  */
 typedef struct
 {
-    u32                      pgn;
+    uint32_t                      pgn;
     iso11783_msg_handler_t   handler;
-    u8                       handler_id;
+    uint8_t                       handler_id;
 } iso11783_target_t;
 
 /** @}*/
@@ -639,6 +626,7 @@ typedef struct
  *
  * Logger levels
  */
+#if 0
 typedef enum
 {
     Debug = 0,
@@ -646,6 +634,7 @@ typedef enum
     Warning,
     Error
 } log_level_t;
+#endif
 
 /**
  * @def   LOG_DEBUG
@@ -675,19 +664,53 @@ typedef enum
 #define NO_LOGGING  4
 
 /*
- * UART Defs
+ * http://stackoverflow.com/questions/4178392/how-to-separate-logging-logic-from-business-logic-in-a-c-program-and-in-a-c-o
  */
-#define PARITY_NONE                 0
-#define PARITY_ODD                  1
-#define PARITY_EVEN                 2
 
-#define ONE_STOP_BIT                1
-#define TWO_STOP_BITS               2
+extern void es_printf(char *fmt, ...);
+extern void log_d(char *tag, char *fmt, ...);
+extern void log_i(char *tag, char *fmt, ...);
+extern void log_w(char *tag, char *fmt, ...);
+extern void log_e(char *tag, char *fmt, ...);
 
-#define IDLE_LOW                    0
-#define IDLE_HIGH                   1
 
-#define LITTLE_ENDIAN               0
-#define BIG_ENDIAN                  1
+//#if (defined(DEBUG_FILE) && SYS_LOG_LEVEL <= LOG_DEBUG)
+//#define LOG_D es_printf("D :%s:", TAG); es_printf
+//#define LOG_D es_printf("D :%s:", TAG); es_printf
+//#else
+//#define LOG_D(fmt, ...) do { if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG)){ es_printf(fmt, __VA_ARGS__);} } while (0)
+//#define LOG_D(fmt, ...) do { if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG)){ es_printf("D :%s:", TAG);} } while (0);
+//#define LOG_D(fmt, ...) do { if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG)){ es_printf(fmt, __VA_ARGS__);} } while (0);
+//#define LOG_D(fmt, ...) do { if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG)){ es_printf("D :%s:", TAG); es_printf(fmt, __VA_ARGS__);} } while (0);
+//#define LOG_D
+//#endif
 
+#if 0
+/*
+ * LOG_I  -> Log an Informationional severity message.
+ */
+#if (defined(DEBUG_FILE) && SYS_LOG_LEVEL <= LOG_INFO)
+#define LOG_I es_printf("I :%s:", TAG); es_printf
+#else
+#define LOG_I 
+#endif
+
+/*
+ * LOG_W  -> Log a Warning severity message.
+ */
+#if (defined(DEBUG_FILE) && SYS_LOG_LEVEL <= LOG_WARNING)
+#define LOG_W es_printf("W :%s:", TAG); es_printf
+#else
+#define LOG_W 
+#endif
+
+/*
+ * LOG_E  -> Log an Error severity message.
+ */
+#if (SYS_LOG_LEVEL <= LOG_ERROR)
+#define LOG_E es_printf("E :%s:", TAG); es_printf
+#else
+#define LOG_E 
+#endif
+#endif //0
 #endif // _CORE_H

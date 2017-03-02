@@ -19,13 +19,13 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  *
  */
-#ifndef ANDROID_H
-#define ANDROID_H
+#ifndef ANDROID_COMMS_H
+#define ANDROID_COMMS_H
 
-extern void android_init(void* data);
-extern void android_set_tx_finished_callback(void (*data)(void));
-extern void android_tasks(void);
-extern u8   android_transmit(u8 *buffer, u8 size);
+extern void      android_init(void* data);
+extern void      android_set_tx_finished_callback(void (*data)(void));
+extern void      android_tasks(void);
+extern uint8_t   android_transmit(uint8_t *buffer, uint8_t size);
 
 
-#endif /* SEND_ANDROID_H */
+#endif /* ANDROID_COMMS_H */

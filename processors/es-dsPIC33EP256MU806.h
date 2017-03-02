@@ -13,16 +13,16 @@
  * Copyright 2015 John Whitmore <jwhitmore@electronicsoup.com>
  *
  *   This program is free software: you can redistribute it and/or modify
- *   it under the terms of the GNU General Public License as published by
+ *   it under the terms of the GNU Lesser General Public License as published by
  *   the Free Software Foundation, either version 3 of the License, or
  *   (at your option) any later version.
  *
  *   This program is distributed in the hope that it will be useful,
  *   but WITHOUT ANY WARRANTY; without even the implied warranty of
  *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *   GNU General Public License for more details.
+ *   GNU Lesser General Public License for more details.
  *
- *   You should have received a copy of the GNU General Public License
+ *   You should have received a copy of the GNU Lesser General Public License
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
@@ -31,48 +31,52 @@
 
 #include <xc.h>
 
-#define TIMER_1 0
-#define TIMER_2 1
-#define TIMER_3 2
-#define TIMER_4 3
-#define TIMER_5 4
+#define TIMER_1                           0
+#define TIMER_2                           1
+#define TIMER_3                           2
+#define TIMER_4                           3
+#define TIMER_5                           4
 
-#define NUMBER_HW_TIMERS  5
+#define NUMBER_HW_TIMERS                  5
 
 /*
  * Peripheral Input Pin Definitions
  */
-#define RP0   0
-#define RP1   1
-#define RP13  13
-#define RP20  20
-#define RP23  23
-#define RP25  25
-#define RP28  28
-#define RPI74 74
-#define RP118 118
-#define RP120 120
+#define RP0                               0
+#define RP1                               1
+#define RP13                             13
+#define RP20                             20
+#define RP23                             23
+#define RP25                             25
+#define RP28                             28
+#define RPI74                            74
+#define RP118                           118
+#define RP120                           120
 
 /*
  * Peripheral Input functions
  */
-#define SPI_1_DATA_INPUT RPINR20bits.SDI1R 
-#define UART_1_RX        RPINR18bits.U1RXR
-
+#define SPI_1_DATA_INPUT                RPINR20bits.SDI1R 
+#define UART_1_RX                       RPINR18bits.U1RXR
+#define CAN_1_RX                        RPINR26bits.C1RXR
+ 
 /*
  * Peripheral Output functions
  */
-#define UART_1_TX             0x01
-#define SPI_1_DATA_OUTPUT     0x05
-#define SPI_1_CLOCK_OUTPUT    0x06
-
+#define UART_1_TX                       0x01
+#define SPI_1_DATA_OUTPUT               0x05
+#define SPI_1_CLOCK_OUTPUT              0x06
+#define CAN_1_TX                        0x0e
+ 
     
 /*
  * Clock Sources:
  * 
  * See Microchip document DS70005131
  */
-#define dsPIC33_PRIMARY_OSCILLATOR     0b010
-#define dsPIC33_PRIMARY_OSCILLATOR_PLL 0b011
+#define dsPIC33_PRIMARY_OSCILLATOR      0b010
+#define dsPIC33_PRIMARY_OSCILLATOR_PLL  0b011
+
+extern void cpu_init(void);
 
 #endif // _ES_dsPIC33EP256MU806_H
