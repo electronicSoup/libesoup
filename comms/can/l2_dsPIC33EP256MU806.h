@@ -1,8 +1,11 @@
 #ifndef L2_dsPIC33EP256MU806_H
 #define L2_dsPIC33EP256MU806_H
 
+#if defined(__dsPIC33EP256MU806__)
+
 #include "system.h"
 
+#if 0
 /*
  * Interrupt Flags
  */
@@ -32,46 +35,14 @@
  * CAN Modes of Opperation
  */
 #define MODE_MASK     0xe0
-
-#define NORMAL_MODE   0x00
-#define SLEEP_MODE    0x20
-#define LOOPBACK_MODE 0x40
-#define LISTEN_MODE   0x60
-#define CONFIG_MODE   0x80
-
-
-#define SIDL_SRTR   0x10
-#define SIDL_EXIDE  0x08
-
-#define DCL_ERTR    0x40
-
-struct
-{
-    u8 ctrl;
-    u8 sidh;
-    u8 sidl;
-    u8 eid8;
-    u8 eid0;
-    u8 dcl;
-    u8 data[8];
-} can_buffer;
-
-#ifdef L2_CAN_INTERRUPT_DRIVEN
-
-#else
-//typedef struct can_buffer
-//{
-//    u8   *control;
-//    u8   *sidh;
-//    u8   *sidl;
-//    u8   *eidh;
-//    u8   *eidl;
-//    u8   *dcl;
-//    u8   *data;
-//} can_buffer;
-
-
 #endif
+
+#define NORMAL_MODE       0b000
+#define DISABLE_MODE      0b001
+#define LOOPBACK_MODE     0b010
+#define LISTEN_ONLYMODE   0b011
+#define CONFIG_MODE       0b100
+#define LISTEN_ALL_MODE   0b111
 
 typedef struct can_mask
 {
@@ -99,5 +70,7 @@ typedef struct can_mask
  *     NBT = 16 TQ = 6uS
  *     166,666 baud
  */
+
+#endif // __dsPIC33EP256MU806__
 
 #endif // L2_dsPIC33EP256MU806_H

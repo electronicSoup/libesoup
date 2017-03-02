@@ -1,3 +1,7 @@
+#if defined(__dsPIC33EP256MU806__)
+
+#include <p33EP256MU806.h>
+
 #include "system.h"
 
 #include "es_lib/comms/can/l2_dsPIC33EP256MU806.h"
@@ -7,9 +11,7 @@
 #define DEBUG_FILE
 #include "es_lib/logger/serial_log.h"
 
-#define TAG "dsPIC_CAN"
-
-#undef L2_CAN_INTERRUPT_DRIVEN
+#define TAG "dsPIC33_CAN"
 
 #if DEBUG_LEVEL < NO_LOGGING
 char baud_rate_strings[8][10] = {
@@ -24,358 +26,583 @@ char baud_rate_strings[8][10] = {
 };
 #endif
 
-/**
- * \brief Network Idle functionality
- *
- * We need to have CAN Bus Network traffic so that when devices connect
- * to listen to the Network to establish the CAN Bus Baud Rate. As a result
- * we'll keep a timer and if nothing has been received or transmitted in this
- * time we'll fire a ping message.
- */
-static u16 networkIdleDuration = 0;
-static es_timer networkIdleTimer;
-//static ty_CanStatus canStatus = Listening;
+#define MASK_0    0b00
+#define MASK_1    0b01
+#define MASK_2    0b10
 
-void pingNetwork(u8 *);
+#define WIN_ZERO  C1CTRL1bits.WIN = 0;
+#define WIN_ONE   C1CTRL1bits.WIN = 1;
 
-#ifdef L2_CAN_INTERRUPT_DRIVEN
+typedef struct __attribute__ ((packed))
+{
+        u16 ide   :1;
+        u16 ssr   :1;
+        u16 sid   :11;
+        u16       :3;
+        u16 eid_h :12;
+        u16       :4;
+        u16 dlc   :4;
+        u16 rb0   :1;
+        u16       :3;
+        u16 rb1   :1;
+        u16 rtr   :1;
+        u16 eid_l :6;
+        u8  data[8];
+        u16       :8;
+        u16 filhit:5;
+} can_buffer;
 
-static UINT32 rxMsgCount = 0;
+#define NUM_CAN_BUFFERS 32
 
-#define CAN_RX_CIR_BUFFER_SIZE 5
+//static can_buffer can_buffers[NUM_CAN_BUFFERS] __attribute__((aligned(NUM_CAN_BUFFERS * 16)));
+//unsigned int can_buffers[NUM_CAN_BUFFERS][8] __attribute__((aligned(NUM_CAN_BUFFERS * 16)));
+__eds__ unsigned int can_buffers[NUM_CAN_BUFFERS][8] __attribute__((eds,space(dma)));
 
-    canBuffer_t cirBuffer[CAN_RX_CIR_BUFFER_SIZE];
-    u8 cirBufferNextRead = 0;
-    u8 cirBufferNextWrite = 0;
-    u8 cirBufferCount = 0;
+//__eds__ unsigned int can_buffers[NUM_CAN_BUFFERS] __attribute__((eds,space(dma)));
 
-can_msg_t rxCanMsg;
+typedef struct __attribute__ ((packed))
+{
+        u16 TXmPRI:2;
+        u16 RTRENm:1;
+        u16 TXREQm:1;
+        u16 TXERRm:1;
+        u16 TXLARBm:1;
+        u16 TXABTm:1;
+        u16 TXENm:1;
+        u16 TXnPRI:2;
+        u16 RTRENn:1;
+        u16 TXREQn:1;
+        u16 TXERRn:1;
+        u16 TXLARBn:1;
+        u16 TXABTn:1;
+        u16 TXENn:1;
+} CxTRmnCON;
 
-#define TX_BUFFERS  3
+#define NUM_TX_CONTROL  4
 
-canBuffer_t *tx_buffers[TX_BUFFERS];
+CxTRmnCON *tx_control[NUM_TX_CONTROL];
 
-#else
+//static u32 rxMsgCount = 0;
+
+//#define CAN_RX_CIR_BUFFER_SIZE 5
+
+// canBuffer_t cirBuffer[CAN_RX_CIR_BUFFER_SIZE];
+//u8 cirBufferNextRead = 0;
+//u8 cirBufferNextWrite = 0;
+//u8 cirBufferCount = 0;
+
+// can_msg_t rxCanMsg;
+
+//#define TX_BUFFERS  3
+
+// canBuffer_t *tx_buffers[TX_BUFFERS];
+
 //struct l2_can_frame rx_frame;
 
-#define TX_BUFFERS  6
-#define RX_BUFFERS  5
+//#define RX_BUFFERS  5
 
-struct can_buffer *tx_buffers[TX_BUFFERS];
-struct can_buffer *rx_buffers[RX_BUFFERS];
+//struct can_buffer *tx_buffers[TX_BUFFERS];
+//struct can_buffer *rx_buffers[RX_BUFFERS];
 
-#endif
+static void set_mode(u8 mode);
+static void set_bit_rate(can_baud_rate_t baudRate);
 
-#if 0
-#define MASKS 2
+static void (*status_handler)(u8 mask, can_status_t status, can_baud_rate_t baud);
 
-can_mask masks[MASKS] =
+void __attribute__((__interrupt__, __no_auto_psv__)) _C1RxRdyInterrupt(void)
 {
-    {&RXM0SIDH, &RXM0SIDL, &RXM0EIDH, &RXM0EIDL},
-    {&RXM1SIDH, &RXM1SIDL, &RXM1EIDH, &RXM1EIDL}
-};
-#endif
+        LOG_D("C1RxRdy Isr");
+}
 
-static void setMode(u8 mode);
-static void setBitRate(can_baud_rate_t baudRate);
-static void finaliseBaudRateChange(u8 *data);
+void __attribute__((__interrupt__, __no_auto_psv__)) _C1Interrupt(void)
+{
+        LOG_D("C1 Isr Flag 0x%x - 0lx%lx ICODE 0x%x\n\r", C1INTF, C1INTF, C1VECbits.ICODE);
+        
+        if(C1INTFbits.TBIF) {
+                C1INTFbits.TBIF = 0;
+                LOG_D("TBIF\n\r");
+        } else if(C1INTFbits.RBIF) {
+                C1INTFbits.RBIF = 0;
+                LOG_D("RBIF\n\r");
+        } else if(C1INTFbits.RBOVIF) {
+                C1INTFbits.RBOVIF = 0;
+                LOG_D("RBOVIF\n\r");
+        } else if(C1INTFbits.FIFOIF) {
+                C1INTFbits.FIFOIF = 0;
+                LOG_D("FIFOIF\n\r");
+        } else if(C1INTFbits.ERRIF) {
+                C1INTFbits.ERRIF = 0;
+                LOG_D("ERRIF\n\r");
+        } else if(C1INTFbits.WAKIF) {
+                C1INTFbits.WAKIF = 0;
+                LOG_D("WAKIF\n\r");
+        } else if(C1INTFbits.IVRIF) {
+                C1INTFbits.IVRIF = 0;
+                LOG_D("IVRIF\n\r");
+        } else if(C1INTFbits.EWARN) {
+                C1INTFbits.EWARN = 0;
+                LOG_D("EWARN\n\r");
+        } else if(C1INTFbits.RXWAR) {
+                C1INTFbits.RXWAR = 0;
+                LOG_D("RXWAR\n\r");
+        } else if(C1INTFbits.TXWAR) {
+                C1INTFbits.TXWAR = 0;
+                LOG_D("TXWAR\n\r");
+        } else if(C1INTFbits.RXBP) {
+                C1INTFbits.RXBP = 0;
+                LOG_D("RXBP\n\r");
+        } else if(C1INTFbits.TXBP) {
+                C1INTFbits.TXBP = 0;
+                LOG_D("TXBP\n\r");
+        } else if(C1INTFbits.TXBO) {
+                C1INTFbits.TXBO = 0;
+                LOG_D("TXBO\n\r");
+        } else {
+                LOG_D("Unprocessed ISR\n\r");
+        }
+}
 
-static can_l2_frame_handler_t l2_handler = (can_l2_frame_handler_t)NULL;
+void __attribute__((__interrupt__, __no_auto_psv__)) _DMA0Interrupt(void)
+{
+        LOG_D("DMA-0 ISR");
+        IFS0bits.DMA0IF = 0;
+}
+
+void __attribute__((__interrupt__, __no_auto_psv__)) _DMA1Interrupt(void)
+{
+        LOG_D("DMA-1 ISR");
+}
+
+void __attribute__((__interrupt__, __no_auto_psv__)) _DMA2Interrupt(void)
+{
+        LOG_D("DMA-2 ISR");
+}
 
 result_t can_l2_init(can_baud_rate_t arg_baud_rate, void (*arg_status_handler)(u8 mask, can_status_t status, can_baud_rate_t baud))
-//can_baud_rate_t can_l2_init(can_baud_rate_t baud_rate, can_l2_frame_handler_t handler, void (*statusHandler)(can_status_t, u8))
+//void init(void)
 {
-//	u8 loop;
-#if 0
-	TIMER_INIT(networkIdleTimer)
-	if (baud_rate <= no_baud) {
-		LOG_D("L2_CanInit() Baud Rate %s\n\r", baud_rate_strings[baud_rate]);
-	} else {
-		LOG_E("L2_CanInit() ToDo!!! No Baud Rate Specified\n\r");
-		return (baud_rate);
-	}
+        u32 address;
+        
+        /*
+         * Tx pin is RF4 (RP100)
+         * Rx is RG7 (RPI119)
+         */
+        TRISFbits.TRISF4 = 0;
+        TRISGbits.TRISG7 = 1;
+        RPOR9bits.RP100R = 0x0e;
+        RPINR26bits.C1RXR = 119;
 
-	l2_handler = handler;
+        /*
+         * Enter configuration mode
+         */
+        C1CTRL1bits.REQOP = 0b100;
+        while (C1CTRL1bits.OPMODE != 0b100) Nop();
+
+        /*
+         * Set 8 transmit buffers
+         */
+        C1TR01CONbits.TXEN0 = 1;
+        C1TR01CONbits.TXEN1 = 1;
+        C1TR23CONbits.TXEN2 = 1;
+        C1TR23CONbits.TXEN3 = 1;
+        C1TR45CONbits.TXEN4 = 1;
+        C1TR45CONbits.TXEN5 = 1;
+        C1TR67CONbits.TXEN6 = 1;
+        C1TR67CONbits.TXEN7 = 1;
+    
+        /*
+         * Set the number of DMA buffers we're using to 32
+         */
+	C1CTRL1bits.WIN = 0;
+	C1FCTRLbits.DMABS = 0b110;   // 32 Buffers in RAM
+        C1FCTRLbits.FSA   = 0x08;    // FIFO starts Buffer 8
+        
+        /*
+         * All filters result in Rx'd frame going into FIFO
+         */
+	C1CTRL1bits.WIN = 1;
+        C1BUFPNT1 - 0xffff;
+        C1BUFPNT2 - 0xffff;
+        C1BUFPNT3 - 0xffff;
+        C1BUFPNT4 - 0xffff;
+//        C1BUFPNT1bits.F0BP = 0xf;
+//        C1BUFPNT1bits.F1BP = 0xf;
+//        C1BUFPNT1bits.F2BP = 0xf;
+//        C1BUFPNT1bits.F3BP = 0xf;
+//        C1BUFPNT2bits.F4BP = 0xf;
+//        C1BUFPNT2bits.F5BP = 0xf;
+//        C1BUFPNT2bits.F6BP = 0xf;
+//        C1BUFPNT2bits.F7BP = 0xf;
+//        C1BUFPNT3bits.F8BP = 0xf;
+//        C1BUFPNT3bits.F9BP = 0xf;
+//        C1BUFPNT3bits.F10BP = 0xf;
+//        C1BUFPNT3bits.F11BP = 0xf;
+//        C1BUFPNT4bits.F12BP = 0xf;
+//        C1BUFPNT4bits.F13BP = 0xf;
+//        C1BUFPNT4bits.F14BP = 0xf;
+//        C1BUFPNT4bits.F15BP = 0xf;
+
+        /*
+         * All filters user mask 0
+         */
+	C1CTRL1bits.WIN = 0;
+        C1FMSKSEL1 = 0x0000;
+        C1FMSKSEL2 = 0x0000;
+
+        /*
+         * Filter zero is looking for 0x555
+         */
+        C1RXF0SIDbits.SID = 0x555;
+        C1RXF0SIDbits.EXIDE = 0;
+        
+        /*
+         * Setup mask zero, much don't care
+         */
+	C1CTRL1bits.WIN = 1;
+        C1RXM0SIDbits.SID = 0x3ff;// = 0x0000;
+        C1RXM0SIDbits.MIDE = 1; // Match Standard/Extended
+        C1RXM0EID = 0x0000;
+        
+        /*
+         * Setup mask one
+         */
+        C1RXM1SID = 0x0000;
+        C1RXM1EID = 0x0000;
+
+        /*
+         * Setup mask two
+         */
+        C1RXM2SID = 0x0000;
+        C1RXM2EID = 0x0000;
+
+        /*
+         * Enable all Rx Filters for the moment.
+         */
+        C1FEN1 = 0xffff;
+        
+	C1CTRL1bits.WIN = 0;
 
 	/*
-	 * Set up the CAN Configuration
+	 * Set Baud rate 125Kbs
 	 */
+        C1CTRL1bits.CANCKS = 0;   //Use peripheral clock  
+        C1CFG1bits.SJW = 3;
+        C1CFG1bits.BRP = 3;
 
-	// IO Settings for CAN Tx and Rx on Port B
-//	TRISBbits.TRISB2 = 0;
-//	TRISBbits.TRISB3 = 1;
+        C1CFG2bits.PRSEG = 6;
+        C1CFG2bits.SEG1PH = 3;
+        C1CFG2bits.SEG2PH = 3;
+        
+	C1CFG2bits.SAM = 0; //One sample point
 
-	setMode(CONFIG_MODE);
+        /*
+         * Setup DMA Channel 2 for CAN 1 TX
+         */
+        DMA2CONbits.SIZE = 0x00;    // Word transfer mode
+        DMA2CONbits.DIR = 0x01;     // Direction - Device RAM to Peripheral
+        DMA2CONbits.AMODE = 0x02;   // Addressing mode: Peripheral indirect
+        DMA2CONbits.MODE = 0x00;    // Operating Mode: Continuous no Ping Pong
+        DMA2REQ = 70;               // ECAN1 Tx
+        DMA2CNT = 7;                // Buffer size, 8 words
+        
+        DMA2PAD = (volatile unsigned int)&C1TXD;
+        
+        address = (u32)&can_buffers;
+        
+        LOG_D("Address of CAN Buffers is 0x%lx\n\r", address);
+        
+//        DMA2STAL = __builtin_dmaoffset(can_buffers);
+//        DMA2STAH = 0x00;
 
+        DMA0STAL = (uint16_t)(int_least24_t)(&can_buffers);
+        DMA0STAH = 0;
+        
+        IEC1bits.DMA2IE = 1;        // Enable DMA-0 ISR        
+        DMA2CONbits.CHEN = 1;    // Enable DMA-0
+        
+        /*
+         * DMA Channel One for Rx
+         */
+        DMA1CONbits.SIZE = 0x0;    // Data Transfer Size: Word Transfer Mode
+        DMA1CONbits.DIR = 0x0;     // Direction: Peripheral to device RAM 
+        DMA1CONbits.AMODE = 0x2;   // Addressing Mode: Peripheral Indirect
+        DMA1CONbits.MODE = 0x0;    // Operating Mode: Continuous, no Ping Pong
+        DMA1REQ = 34;              // Assign ECAN1 Rx event for DMA Channel 1
+        DMA1CNT = 7;               // DMA Transfer per ECAN message to 8 words
+
+        /* 
+         * Peripheral Address: ECAN1 Receive Register 
+         */
+        DMA1PAD = (volatile unsigned int) &C1RXD; 
+        
+        
+//        DMA1STAL = ((unsigned int)(&can_buffers)) & 0xffff;
+//        DMA1STAH = (((unsigned int)(&can_buffers)) >> 16) & 0xff;
+        DMA1STAL = address & 0xffff;
+        DMA1STAH = (address >> 16) & 0xff;
+
+//        DMA1STAL = (unsigned int) &can_buffers;
+//        DMA1STAH = (unsigned int) &can_buffers;
+
+        DMA1CONbits.CHEN = 0x1;    // Channel Enable: Enable DMA Channel 1
+        IEC0bits.DMA1IE = 1;       // Enable DMA Channel 1 Interrupt
+ 
+        /*
+         * Clear all interrupt flags and enable all interrupts for the moment.
+         */
+	C1CTRL1bits.WIN = 0;
+        C1INTF = 0x00;        
+        C1INTE = 0x00ff;
+
+        IFS2bits.C1IF = 0x00;
+        IFS2bits.C1RXIF = 0x00;
+        IEC2bits.C1IE = 0x01;
+        IEC2bits.C1RXIE = 0x01;
+
+	/*
+	 * Drop out of the configuration mode into loopback
+	 */
+        C1CTRL1bits.REQOP = 0b000;
+        while (C1CTRL1bits.OPMODE != 0b000) Nop();
+#if 0
+	/*
+	 * Send a test frame out of buffer zero:
+	 */
+        can_buffers[0].rb0 = 0;
+        can_buffers[0].rb1 = 0;
+        can_buffers[0].ide = 0;
+        can_buffers[0].rtr = 0;
+        can_buffers[0].ssr = 0;
+        can_buffers[0].sid = 0x5aa;
+        can_buffers[0].dlc = 0;
+
+	/*
+	 * Mark the buffer for transmission
+	 */
+        C1TR01CONbits.TXREQ0 = 1;
+        while(C1TR01CONbits.TXREQ0 == 1);
+        
+        LOG_D("Test frame sent\n\r");
+#endif // 0
+        return(SUCCESS);
+}
+
+result_t can_l2_tx_frame(can_frame *frame)
+{
+	/*
+	 * Send a test frame out of buffer zero:
+	 */
+#if 0
+        can_buffers[0].rb0 = 0;
+        can_buffers[0].rb1 = 0;
+        can_buffers[0].ide = 0;
+        can_buffers[0].rtr = 0;
+        can_buffers[0].ssr = 0;
+        can_buffers[0].sid = 0x5aa;
+        can_buffers[0].dlc = 0;
+#endif
+        can_buffers[0][0] = 0x123C;
+        can_buffers[0][1] = 0x0000;
+        can_buffers[0][2] = 0x0008;
+        can_buffers[0][3] = 0xabcd;
+        can_buffers[0][4] = 0xabcd;
+        can_buffers[0][5] = 0xabcd;
+        can_buffers[0][6] = 0xabcd;
+
+        /*
+	 * Mark the buffer for transmission
+	 */
+        C1TR01CONbits.TXREQ0 = 1;
+//        while(C1TR01CONbits.TXREQ0 == 1);        
+        LOG_D("Test frame sent\n\r");
+        
+        return(SUCCESS);
+}
+#if 0
+result_t can_l2_init(can_baud_rate_t arg_baud_rate, void (*arg_status_handler)(u8 mask, can_status_t status, can_baud_rate_t baud))
+{
+	u8 loop;
+
+	if (arg_baud_rate <= no_baud) {
+		LOG_D("L2_CanInit() Baud Rate %s\n\r", baud_rate_strings[arg_baud_rate]);
+	} else {
+		LOG_E("L2_CanInit() ToDo!!! No Baud Rate Specified\n\r");
+		return (ERR_BAD_INPUT_PARAMETER);
+	}
+
+        status_handler = arg_status_handler;
+
+	/*
+	 * Set up the CAN Pin Configuration
+	 */
+        CAN_TX_DDR = OUTPUT_PIN;
+        CAN_RX_DDR = INPUT_PIN;
+
+        CAN_TX_PIN = CAN_1_TX;
+        CAN_1_RX = CAN_RX_PIN;
+        
+	set_mode(CONFIG_MODE);
+
+        /*
+         * Set 8 transmit buffers
+         */
+        C1TR01CONbits.TXEN0 = 1;
+        C1TR01CONbits.TXEN1 = 1;
+        C1TR23CONbits.TXEN2 = 1;
+        C1TR23CONbits.TXEN3 = 1;
+        C1TR45CONbits.TXEN4 = 1;
+        C1TR45CONbits.TXEN5 = 1;
+        C1TR67CONbits.TXEN6 = 1;
+        C1TR67CONbits.TXEN7 = 1;
+#if 0
+        tx_control[0] = (CxTRmnCON *)&C1TR01CON;
+        tx_control[1] = (CxTRmnCON *)&C1TR23CON;
+        tx_control[2] = (CxTRmnCON *)&C1TR45CON;
+        tx_control[3] = (CxTRmnCON *)&C1TR67CON;
+
+        for(loop = 0; loop < NUM_TX_CONTROL; loop++) {
+                tx_control[loop]->TXENm = 1;
+                tx_control[loop]->TXENn = 1;
+        }
+#endif
+        /*
+         * Set the number of DMA buffers we're using to 32
+         */
+        WIN_ZERO;
+        C1FCTRLbits.DMABS = 0b110;   // 32 Buffers in RAM
+        C1FCTRLbits.FSA   = 0x08;    // FIFO starts Buffer 8
+        
+        /*
+         * All filters result in Rx'd frame going into FIFO
+         */
+        WIN_ONE;
+        C1BUFPNT1bits.F0BP = 0xf;
+        C1BUFPNT1bits.F1BP = 0xf;
+        C1BUFPNT1bits.F2BP = 0xf;
+        C1BUFPNT1bits.F3BP = 0xf;
+        C1BUFPNT2bits.F4BP = 0xf;
+        C1BUFPNT2bits.F5BP = 0xf;
+        C1BUFPNT2bits.F6BP = 0xf;
+        C1BUFPNT2bits.F7BP = 0xf;
+        C1BUFPNT3bits.F8BP = 0xf;
+        C1BUFPNT3bits.F9BP = 0xf;
+        C1BUFPNT3bits.F10BP = 0xf;
+        C1BUFPNT3bits.F11BP = 0xf;
+        C1BUFPNT4bits.F12BP = 0xf;
+        C1BUFPNT4bits.F13BP = 0xf;
+        C1BUFPNT4bits.F14BP = 0xf;
+        C1BUFPNT4bits.F15BP = 0xf;
+
+        /*
+         * All filters user mask 0
+         */
+        WIN_ZERO;
+        C1FMSKSEL1 = 0x0000;
+        C1FMSKSEL2 = 0x0000;
+
+        /*
+         * Setup mask zero, much don't care
+         */
+        WIN_ONE;
+        C1RXM0SID = 0x0000;
+        C1RXM0EID = 0x0000;
+        
+        /*
+         * Setup mask one
+         */
+        C1RXM1SID = 0x0000;
+        C1RXM1EID = 0x0000;
+
+        /*
+         * Setup mask two
+         */
+        C1RXM2SID = 0x0000;
+        C1RXM2EID = 0x0000;
+
+        /*
+         * Enable all Rx Filters for the moment.
+         */
+        C1FEN1 = 0xffff;
+        
+        /*
+         * Filter 0 Uses Mask 0
+         */
+        C1FMSKSEL1bits.F0MSK = MASK_0;
+        
 	/*
 	 * Set the Baud rate.
 	 */
-	setBitRate(baud_rate);
+        WIN_ZERO;
+	set_bit_rate(arg_baud_rate);
 
-	/*
-	 * Set out Functional mode of opperation
-	 */
-#ifdef L2_CAN_INTERRUPT_DRIVEN
-	// Mode 0 Legacy
-	ECANCONbits.MDSEL0 = 0;
-	ECANCONbits.MDSEL1 = 0;
-
-	tx_buffers[0] = (canBuffer_t *) & TXB0CON;
-	tx_buffers[1] = (canBuffer_t *) & TXB1CON;
-	tx_buffers[2] = (canBuffer_t *) & TXB2CON;
-
-	RXB0CON = 0x00;
-	RXB1CON = 0x00;
-#else
-	// Mode 2 FIFO mode
-//	ECANCONbits.MDSEL0 = 0;
-//	ECANCONbits.MDSEL1 = 1;
-
-	/*
-	 * Set 6 Additional buffers
-	 * 3 (5,4,3) Tx
-	 * 3 (2,1,0) Rx
-	 */
-//	BSEL0 = 0xe0;
-
-	/*
-	 * Set FIFO to interrupt when one RX Buffer left
-	 */
-#if 0
-	ECANCONbits.FIFOWM = 1;
-
-	tx_buffers[0] = (canBuffer_t *) & TXB0CON;
-	tx_buffers[1] = (canBuffer_t *) & TXB1CON;
-	tx_buffers[2] = (canBuffer_t *) & TXB2CON;
-	tx_buffers[3] = (canBuffer_t *) & B3CON;
-	tx_buffers[4] = (canBuffer_t *) & B4CON;
-	tx_buffers[5] = (canBuffer_t *) & B5CON;
-
-	rx_buffers[0] = (canBuffer_t *) & RXB0CON;
-	rx_buffers[1] = (canBuffer_t *) & RXB1CON;
-	rx_buffers[2] = (canBuffer_t *) & B0CON;
-	rx_buffers[3] = (canBuffer_t *) & B1CON;
-	rx_buffers[4] = (canBuffer_t *) & B2CON;
-
-	/*
-	 * Recieve all valid messages
-	 */
-	for (loop = 0; loop < RX_BUFFERS; loop++) {
-		rx_buffers[loop]->ctrl = 0;
-	}
-#endif // 0
-#endif
-
-#if 0
-	/*
-	 * Disable all filters for the moment
-	 */
-	for (loop = 0; loop < MASKS; loop++) {
-		*(masks[loop].sidh) = 0;
-		*(masks[loop].sidl) = 0;
-		*(masks[loop].eidh) = 0;
-		*(masks[loop].eidl) = 0;
-	}
-
-	//    RXFCON0 = 0x00;
-	//    RXFCON1 = 0x00;
-
-	MSEL0 = 0x00;
-	MSEL1 = 0x00;
-	MSEL2 = 0x00;
-	MSEL3 = 0x00;
-#endif // 0
+        /*
+         * Setup DMA Channel 0 for CAN 1 TX
+         */
+        DMA0CONbits.SIZE = 0x00;    // Word transfer mode
+        DMA0CONbits.DIR = 0x01;     // Direction - Device RAM to Peripheral
+        DMA0CONbits.AMODE = 0x02;   // Addressing mode: Peripheral indirect
+        DMA0CONbits.MODE = 0x00;    // Operating Mode: Continuous no Ping Pong
+        DMA0REQ = 70;               // ECAN1 Tx
+        DMA0CNT = 7;                // Buffer size, 8 words
         
-#ifdef L2_CAN_INTERRUPT_DRIVEN
-	PIE3 = 0xff;
-#else
-	// Disable all interrupts from CAN
-//	PIE3 = 0x00;
-#endif
+        DMA0PAD = (volatile unsigned int)&C1TXD;
+        DMA0STAL = ((unsigned int)(&can_buffers)) & 0xffff;
+        DMA0STAH = (((unsigned int)(&can_buffers)) >> 16) & 0xff;
+        
+        IEC0bits.DMA0IE = 1;        // Enable DMA-0 ISR        
+        DMA0CONbits.CHEN = 0x01;    // Enable DMA-0
+        
+        /*
+         * DMA Channel One for Rx
+         */
+        DMA1CONbits.SIZE = 0x0;    // Data Transfer Size: Word Transfer Mode
+        DMA1CONbits.DIR = 0x0;     // Direction: Peripheral to device RAM 
+        DMA1CONbits.AMODE = 0x2;   // Addressing Mode: Peripheral Indirect
+        DMA1CONbits.MODE = 0x0;    // Operating Mode: Continuous, no Ping Pong
+        DMA1REQ = 34;              // Assign ECAN1 Rx event for DMA Channel 1
+        DMA1CNT = 7;               // DMA Transfer per ECAN message to 8 words
 
+        /* 
+         * Peripheral Address: ECAN1 Receive Register 
+         */
+        DMA1PAD = (volatile unsigned int) &C1RXD; 
+        DMA1STAL = ((unsigned int)(&can_buffers)) & 0xffff;
+        DMA1STAH = (((unsigned int)(&can_buffers)) >> 16) & 0xff;
+
+//        DMA1STAL = (unsigned int) &can_buffers;
+//        DMA1STAH = (unsigned int) &can_buffers;
+
+        DMA1CONbits.CHEN = 0x1;    // Channel Enable: Enable DMA Channel 1
+        IEC0bits.DMA1IE = 1;       // Enable DMA Channel 1 Interrupt
+ 
+        /*
+         * Clear all interrupt flags and enable all interrupts for the moment.
+         */
+        WIN_ZERO
+        C1INTF = 0x00;        
+        C1INTE = 0xff;
+                
 	/*
 	 * Drop out of the configuration mode
 	 * we're good to go
 	 */
-	setMode(NORMAL_MODE);
+	set_mode(LOOPBACK_MODE);
 
-//	can_status = Connected;
+//        can_status = Connected;
 
 	// Create a random timer between 1 and 1.5 seconds for firing the
 	// Network Idle Ping message
 //	networkIdleDuration = (u16) ((rand() % 500) + 1000);
 
-#if DEBUG_LEVEL <= LOG_DEBUG
-	LOG_D("Network Idle Duration set to %d milliSeconds\n\r", networkIdleDuration);
-#endif
+//#if DEBUG_LEVEL <= LOG_DEBUG
+//	LOG_D("Network Idle Duration set to %d milliSeconds\n\r", networkIdleDuration);
+//#endif
 //	networkIdleTimer = start_timer(networkIdleDuration, pingNetwork, NULL);
-	return (baud_rate);
-#endif //0
+
         return(SUCCESS);
 }
+#endif // 0
 
-#ifdef L2_CAN_INTERRUPT_DRIVEN
-void L2_ISR(void)
-{
-	u8 flags = 0x00;
-	u8 txFlags = 0x00;
-	u8 ctrl;
-	u8 loop;
-	u8 *fromPtr;
-	u8 *toPtr;
-
-	/*
-	 * Have to work of a snapshot of the Interrupt Flags as they
-	 * are volatile.
-	 */
-	flags = PIR3;
-#if DEBUG_LEVEL <= LOG_DEBUG
-	LOG_D("CAN L2 ISR Flag-%x\n\r", flags);
-#endif
-
-//    if(flags & MERRE)
-//    {
-//#if DEBUG_LEVEL <= LOG_DEBUG
-//        serial_log(Debug, TAG, "CAN MERRE Flag\n\r");
-//#endif
-//        /*
-//         * We've got an error condition so dump all received messages
-//         */
-//        if (flags  & (RX0IE | RX1IE))
-//        {
-//            if (flags & RX0IE)
-//            {
-//                CANSetRegMaskValue(CANINTF, RX0IE, 0x00);
-//            }
-//
-//            if (flags & RX1IE)
-//            {
-//                CANSetRegMaskValue(CANINTF, RX1IE, 0x00);
-//            }
-//        }
-//        else
-//        {
-//            /*
-//             * Error Raised and not for RX operaton so stop TX
-//             */
-//            networkGood = FALSE;
-//
-//            ctrl = TXB0CTRL;
-//
-//            for(loop = 0; loop < 3; loop++)
-//            {
-//                txFlags = CANReadReg(ctrl);
-//
-//                if(txFlags & TXERR)
-//                {
-//                    CANSetRegMaskValue(ctrl, TXREQ, 0x00);
-//                }
-//
-//                ctrl = ctrl + 0x10;
-//            }
-//        }
-//
-//        /*
-//         * Clear the Error Flag
-//         */
-//        CANSetRegMaskValue(CANINTF, MERRE, 0x00);
-//    }
-//    else
-//    {
-	if (flags & RX0IE) {
-		/*
-		 * Incrememnt the rx count incase we're listening for Baud
-		 * Rate seettings.
-		 */
-		rxMsgCount++;
-
-		if (cirBufferCount < CAN_RX_CIR_BUFFER_SIZE) {
-			fromPtr = &RXB0SIDH;
-			toPtr = &(cirBuffer[cirBufferNextWrite].sidh);
-
-			for (loop = 0; loop < 13; loop++) {
-				*toPtr++ = *fromPtr++;
-			}
-			cirBufferNextWrite = (cirBufferNextWrite + 1) % CAN_RX_CIR_BUFFER_SIZE;
-			cirBufferCount++;
-		} else {
-			LOG_E("Circular Buffer overflow!");
-		}
-
-		PIR3bits.RXB0IF = 0;
-	}
-
-	if (flags & RX1IE) {
-		/*
-		 * Incrememnt the rx count incase we're listening for Baud
-		 * Rate seettings.
-		 */
-		rxMsgCount++;
-
-		if (cirBufferCount < CAN_RX_CIR_BUFFER_SIZE) {
-			fromPtr = &RXB1SIDH;
-			toPtr = &(cirBuffer[cirBufferNextWrite].sidh);
-
-			for (loop = 0; loop < 13; loop++) {
-				*toPtr++ = *fromPtr++;
-			}
-			cirBufferNextWrite = (cirBufferNextWrite + 1) % CAN_RX_CIR_BUFFER_SIZE;
-			cirBufferCount++;
-		} else {
-			LOG_E("Circular Buffer overflow!");
-		}
-
-		PIR3bits.RXB1IF = 0;
-	}
-//    }
-}
-#endif
-
-#ifdef L2_CAN_INTERRUPT_DRIVEN
-void L2_CanTasks(void)
-{
-	u8 loop;
-
-	LOG_D("L2_CanTasks()\n\r");
-
-	while (cirBufferCount > 0) {
-		// Check if it's an extended
-		if (cirBuffer[cirBufferNextRead].sidl & SIDL_EXIDE) {
-			rxCanMsg.header.extended_id = TRUE;
-			rxCanMsg.header.rnr_frame = cirBuffer[cirBufferNextRead].dcl & DCL_ERTR;
-			rxCanMsg.header.can_id.id = cirBuffer[cirBufferNextRead].sidh;
-			rxCanMsg.header.can_id.id = rxCanMsg.header.can_id.id << 3 | (cirBuffer[cirBufferNextRead].sidl >> 5) & 0x07;
-			rxCanMsg.header.can_id.id = rxCanMsg.header.can_id.id << 2 | cirBuffer[cirBufferNextRead].sidl & 0x03;
-			rxCanMsg.header.can_id.id = rxCanMsg.header.can_id.id << 8 | cirBuffer[cirBufferNextRead].eid8;
-			rxCanMsg.header.can_id.id = rxCanMsg.header.can_id.id << 8 | cirBuffer[cirBufferNextRead].eid0;
-		} else
-			rxCanMsg.header.extended_id = FALSE;
-		rxCanMsg.header.rnr_frame = cirBuffer[cirBufferNextRead].sidl & SIDL_SRTR;
-		rxCanMsg.header.can_id.id = cirBuffer[cirBufferNextRead].sidh;
-		rxCanMsg.header.can_id.id = rxCanMsg.header.can_id.id << 3 | (cirBuffer[cirBufferNextRead].sidl >> 5) & 0x07;
-	}
-
-        /*
-	 * Fill out the Data Length
-         */
-        rxCanMsg.header.data_length = cirBuffer[cirBufferNextRead].dcl & 0x0f;
-
-        for (loop = 0; loop < rxCanMsg.header.data_length; loop++) {
-		rxCanMsg.data[loop] = cirBuffer[cirBufferNextRead].data[loop];
-	}
-
-        LOG_D("Received a message id - %lx\n\r", rxCanMsg.header.can_id.id);
-//        networkGood = TRUE;
-	cirBufferNextRead = (cirBufferNextRead + 1) % CAN_RX_CIR_BUFFER_SIZE;
-	cirBufferCount--;
-
-        if(l2Handler) {
-		l2Handler(&rxCanMsg);
-	}
-	//        processCanL2MsgFn(&rxCanMsg);
-}
-}
-#else
 void can_l2_tasks(void)
 {
 #if 0
@@ -442,155 +669,101 @@ void can_l2_tasks(void)
 	}
 #endif //0
 }
-#endif
 
-result_t L2_CanTxMessage(struct l2_can_frame_t *msg)
-{
 #if 0
-	//    can_message_id_t  *id;
-	u8 buffer;
-	u8 i;
-	u8 *ptr;
+result_t can_l2_tx_frame(can_frame *frame)
+{
+	u8 loop;
+        u8 use_buffer;
+//	u8 i;
+//	u8 *ptr;
 
-	if (canStatus != Connected) {
-		return (CAN_ERROR);
-	}
+//	if (can_status != Connected) {
+//		return (CAN_ERROR);
+//	}
 
-	LOG_D("L2_CanTxMessage(0x%lx)\n\r", msg->header.can_id.id);
+	LOG_D("L2_CanTxMessage(0x%lx)\n\r", frame->can_id);
 
+        WIN_ONE
+                
 	/*
 	 * Find a free buffer
 	 */
-	for (buffer = 0; buffer < TX_BUFFERS; buffer++) {
-		if (!(tx_buffers[buffer]->ctrl & TXREQ)) {
-			break;
-		}
-	}
-
-	if (buffer == TX_BUFFERS) {
+        use_buffer = 0;
+#if 0
+        for(loop = 0; loop < NUM_TX_CONTROL; loop++) {
+                if (!tx_control[loop]->TXREQm) {
+                        use_buffer = loop * 2;
+                        break;
+                }
+                
+                if (!tx_control[loop]->TXREQn) {
+                        use_buffer = (loop * 2) + 1;
+                        break;
+                }
+        }
+        
+	if (loop == NUM_TX_CONTROL) {
 		LOG_E("No empty TX buffer\n\r");
-		return (CAN_ERROR); //No Empty buffers
+		return (ERR_NO_RESOURCES); //No Empty buffers
 	}
+#endif
+        LOG_D("use_buffer %d\n\r", use_buffer);
 
 	/*
-	 * Trasmit buffer with index "buffer" is empty
+	 * Trasmit buffer with index "use_buffer" is empty
 	 * so fill in the registers with data.
 	 */
-	if (msg->header.extended_id) {
-		//debug("Transmit an extended CAN message\n\r");
+        can_buffers[0].rb0 = 0;
+        can_buffers[0].rb1 = 0;
+        can_buffers[0].ide = 0;
+        can_buffers[0].rtr = 0;
+        can_buffers[0].ssr = 0;
+        can_buffers[0].sid = 0x5aa;
+        can_buffers[0].dlc = 0;
+#if 0
+        can_buffers[use_buffer].rb0 = 0;
+        can_buffers[use_buffer].rb1 = 0;
+        can_buffers[use_buffer].ide = frame->can_id & CAN_EFF_FLAG;
+        can_buffers[use_buffer].rtr = frame->can_id & CAN_RTR_FLAG;
+        can_buffers[use_buffer].ssr = can_buffers[use_buffer].rtr;
+        can_buffers[use_buffer].sid = frame->can_id & CAN_SFF_MASK;
 
-		tx_buffers[buffer]->sidh = (msg->header.can_id.id >> 21) & 0xff;
-		tx_buffers[buffer]->sidl = ((msg->header.can_id.id >> 18) & 0x07) << 5;
-		tx_buffers[buffer]->sidl |= ((msg->header.can_id.id >> 16) & 0x03);
-		tx_buffers[buffer]->sidl |= SIDL_EXIDE;
-		tx_buffers[buffer]->eid8 = (msg->header.can_id.id >> 8) & 0xff;
-		tx_buffers[buffer]->eid0 = msg->header.can_id.id & 0xff;
-	} else {
-		//debug("Transmit a standard CAN message\n\r");
-		tx_buffers[buffer]->sidh = (msg->header.can_id.id >> 3) & 0xff;
-		tx_buffers[buffer]->sidl = (msg->header.can_id.id & 0x07) << 5;
-	}
+	if (can_buffers[use_buffer].ide) {
+                can_buffers[use_buffer].ssr = 1;
+                
+                can_buffers[use_buffer].eid_h = (frame->can_id & 0x1ffe0000) >> 17;
+                can_buffers[use_buffer].eid_l = (frame->can_id & 0x1f800) >> 11;
+        }
+        
+        can_buffers[use_buffer].dlc = frame->can_dlc & 0x0f;
 
-	tx_buffers[buffer]->dcl = msg->header.data_length & 0x0f;
-
-	if (msg->header.rnr_frame) {
-		tx_buffers[buffer]->dcl |= DCL_RNR;
-	}
-
-	if (msg->header.data_length > 8) {
-		LOG_E("Copy across the data length %d\n\r", msg->header.data_length);
-	}
-
-	ptr = tx_buffers[buffer]->data;
-	for (i = 0; i < msg->header.data_length; i++, ptr++) {
-		*ptr = msg->data[i];
-	}
+        if(!can_buffers[use_buffer].rtr) {
+                for(loop = 0; loop < frame->can_dlc; loop++) {
+                        can_buffers[use_buffer].data[loop] = frame->data[loop];
+                }
+        }
+#endif   
 
 	/*
 	 * Mark the buffer for transmission
 	 */
-	tx_buffers[buffer]->ctrl |= TXREQ;
-
-	/*
-	 * cancel the timer if running we've received a frame
-	 */
-	LOG_D("Transmitting L2 Message so restart Idle Timer\n\r");
-	cancel_timer(networkIdleTimer);
-	networkIdleTimer = start_timer(networkIdleDuration, pingNetwork, NULL);
-#endif //0
+        C1TR01CONbits.TXREQ0 = 1;
+        while(C1TR01CONbits.TXREQ0 == 1);
+        
+        LOG_D("Sent\n\r");
+#if 0
+        if(use_buffer & 0x01) {
+                tx_control[use_buffer / 2]->TXREQn = 1;
+        } else {
+                tx_control[use_buffer / 2]->TXREQm = 1;
+        }
+#endif
 	return (SUCCESS);
 }
 
-//ToDo
-#if 0
-void L2_CanTxError(u8 node_type, u8 node_number, UINT32 errorCode) 
+static void set_bit_rate(can_baud_rate_t baudRate)
 {
-	can_error_t error;
-
-	error.header.can_id.id = canIds[can_error].id;
-	error.header.extended_id = canIds[can_error].extended;
-	error.header.rnr_frame = FALSE;
-	error.header.data_length = 6;
-
-	error.node.node_type = node_type;
-	error.node.node_number = node_number;
-
-	error.errorCode = errorCode;
-
-	L2_CanTxMessage((can_msg_t *) & error);
-}
-#endif
-
-void L2_SetCanNodeBuadRate(can_baud_rate_t baudRate)
-{
-//	baud_rate_t testRate;
-	LOG_D("L2_SetCanNodeBuadRate()\n\r");
-#if 0
-	sys_eeprom_write(NETWORK_BAUD_RATE, (u8) baudRate);
-
-	sys_eeprom_read(NETWORK_BAUD_RATE, (u8 *) & testRate);
-
-	if (testRate != baudRate) {
-		LOG_E("Baud Rate NOT Stored!\n\r");
-	} else {
-		LOG_D("Baud Rate Stored\n\r");
-	}
-
-	canStatus = ChangingBaud;
-	setMode(CONFIG_MODE);
-
-	setBitRate(baudRate);
-
-	/*
-	 * The Baud rate is being changed so going to stay in config mode
-	 * for 10 Seconds and let the Network settle down.
-	 */
-	start_timer(SECONDS_TO_TICKS(10), finaliseBaudRateChange, NULL);
-#endif //0
-}
-
-static void finaliseBaudRateChange(u8 *data)
-{
-	LOG_D("finaliseBaudRateChange()\n\r");
-#if 0
-	canStatus = Connected;
-	setMode(NORMAL_MODE);
-#endif
-}
-
-void L2_SetCanNetworkBuadRate(can_baud_rate_t baudRate)
-{
-	LOG_D("L2_SetCanNetworkBuadRate()\n\r");
-#if 0
-	setMode(CONFIG_MODE);
-	setBitRate(baudRate);
-	setMode(NORMAL_MODE);
-#endif //0
-}
-
-static void setBitRate(can_baud_rate_t baudRate)
-{
-#if 0
 	u8 sjw = 0;
 	u8 brp = 0;
 	u8 phseg1 = 0;
@@ -667,45 +840,35 @@ static void setBitRate(can_baud_rate_t baudRate)
 			break;
 	}
 
-	BRGCON1 = (((sjw - 1) & 0x03) << 6) | ((brp) & 0x3f);
+        C1CTRL1bits.CANCKS = 0;   //Use peripheral clock  
+        C1CFG1bits.SJW = sjw;
+        C1CFG1bits.BRP = brp;
 
-	BRGCON2 = (((phseg1 - 1) & 0x07) << 3) | ((propseg - 1) & 0x07);
-	BRGCON2bits.SAM = 0; //One sampe point
-	BRGCON2bits.SEG2PHTS = 1; //Phase Segement 2 programmed
-
-	BRGCON3 = ((phseg2 - 1) & 0x07);
-#endif //0
+        C1CFG2bits.PRSEG = propseg - 1;
+        C1CFG2bits.SEG1PH = phseg1 - 1;
+        C1CFG2bits.SEG2PH = phseg2 - 1;
+        
+	C1CFG2bits.SAM = 0; //One sampe point
 }
 
 /*
  * Function Header
  */
-static void setMode(u8 mode)
+static void set_mode(u8 mode)
 {
-#if 0
-	u8 value;
-
-	/*
-	 * Enter CAN Configuration mode
-	 */
-	value = CANCON;
-
-	value = value & ~MODE_MASK;
-	value = value | (mode & MODE_MASK);
-	CANCON = value;
+        C1CTRL1bits.REQOP = mode;
 
 	/*
 	 * CAN Mode is a request so we have to wait for confirmation
 	 */
-	while ((CANSTAT & MODE_MASK) != mode);
-#endif // 0
+	while (C1CTRL1bits.OPMODE != mode) Nop();
 }
 
-void pingNetwork(u8 *data)
+result_t can_l2_dispatch_reg_handler(can_l2_target_t *target)
 {
-	LOG_D("Network Idle Expired so send a ping message and restart\n\r");
-#if 0
-	networkIdleTimer = start_timer(networkIdleDuration, pingNetwork, NULL);
-	send_ping_message();
-#endif
+        LOG_D("can_l2_dispatch_reg_handler()\n\r");
+        return(SUCCESS);
 }
+#endif // defined(__dsPIC33EP256MU806__)
+
+#endif
