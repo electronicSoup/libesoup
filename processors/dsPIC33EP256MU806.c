@@ -22,10 +22,15 @@
 #pragma config BOREN = OFF
 #pragma config JTAGEN = OFF
 
+#include "es_lib/utils/clock.h"
+#include "es_lib/utils/spi.h"
+
 void cpu_init(void)
 {
         clock_init();
-        spi_init();        
+#ifdef SYS_SPI_BUS
+        spi_init();
+#endif
 }
 
 #endif // defined(__dsPIC33EP256MU806__)

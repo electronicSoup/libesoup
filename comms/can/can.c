@@ -32,7 +32,7 @@
 #include "es_lib/logger/serial_log.h"
 
 #if defined(SYS_LOG_LEVEL)
-#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 #define TAG "CAN"
 
 char can_l2_status_strings[5][17] = {
@@ -65,16 +65,19 @@ static void status_handler(uint8_t mask, can_status_t status, can_baud_rate_t ba
 
 can_status_handler_t app_status_handler = (can_status_handler_t)NULL;
 
+/*
+ * Check required system.h defines are found
+ */
+#ifndef SYS_LOG_LEVEL
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif
+
 result_t can_init(can_baud_rate_t baudrate,
 		  can_status_handler_t arg_status_handler)
 {
-#if defined(SYS_LOG_LEVEL)
-#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	log_d(TAG, "can_init\n\r");
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif //  if defined(SYS_LOG_LEVEL)
 
         /*
          * Clear the stored SYS_CAN Status as nothing is done.
@@ -87,88 +90,56 @@ result_t can_init(can_baud_rate_t baudrate,
 	return(SUCCESS);
 }
 
-void status_handler(uint8_t mask, can_status_t status, can_baud_rate_t baud)
+static void status_handler(uint8_t mask, can_status_t status, can_baud_rate_t baud)
 {
-#if defined(SYS_LOG_LEVEL)
-#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	log_d(TAG, "status_handler(mask-0x%x, status-0x%x\n\r", mask, status.byte);
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif //  if defined(SYS_LOG_LEVEL)
 
 	if (mask == L2_STATUS_MASK) {
 		switch(status.bit_field.l2_status) {
 			case L2_Uninitialised:
-#if defined(SYS_LOG_LEVEL)
-#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 				log_d(TAG, "L2_Uninitialised\n\r");
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif //  if defined(SYS_LOG_LEVEL)
 				break;
 				
 			case L2_Listening:
-#if defined(SYS_LOG_LEVEL)
-#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 				log_d(TAG, "L2_Listening\n\r");
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif //  if defined(SYS_LOG_LEVEL)
 				break;
 				
 			case L2_Connecting:
-#if defined(SYS_LOG_LEVEL)
-#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 				log_d(TAG, "L2_Connecting\n\r");
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif //  if defined(SYS_LOG_LEVEL)
 				break;
 				
 			case L2_Connected:
-#if defined(SYS_LOG_LEVEL)
-#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 				log_d(TAG, "L2_Connected\n\r");
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif //  if defined(SYS_LOG_LEVEL)
 				break;
 				
 			case L2_ChangingBaud:
-#if defined(SYS_LOG_LEVEL)
-#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 				log_d(TAG, "L2_ChangingBaud\n\r");
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif //  if defined(SYS_LOG_LEVEL)
 				break;
 			
 			default:
-#if defined(SYS_LOG_LEVEL)
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
 				log_e(TAG, "Unrecognised SYS_CAN Layer 2 status\n\r");
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif //  if defined(SYS_LOG_LEVEL)
 				break;
 		}
 
 #ifdef SYS_CAN_DCNCP
 		if ((status.bit_field.l2_status == L2_Connected) && (can_status.bit_field.l2_status != L2_Connected)) {
-#if defined(SYS_LOG_LEVEL)
-#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 			log_d(TAG, "Layer 2 Connected so start DCNCP\n\r");
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif //  if defined(SYS_LOG_LEVEL)
 			dcncp_init(status_handler);
 		}
 #endif
@@ -182,21 +153,13 @@ void status_handler(uint8_t mask, can_status_t status, can_baud_rate_t baud)
 #ifdef SYS_CAN_DCNCP
 	else if (mask == DCNCP_INIT_STATUS_MASK) {
 		if(status.bit_field.dcncp_initialised) {
-#if defined(SYS_LOG_LEVEL)
-#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 			log_d(TAG, "DCNCP_Initialised\n\r");
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif //  if defined(SYS_LOG_LEVEL)
 		} else {
-#if defined(SYS_LOG_LEVEL)
-#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 			log_d(TAG, "DCNCP_Uninitilised\n\r");
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif //  if defined(SYS_LOG_LEVEL)
 		}
 
 		can_status.bit_field.dcncp_initialised = status.bit_field.dcncp_initialised;
@@ -205,13 +168,9 @@ void status_handler(uint8_t mask, can_status_t status, can_baud_rate_t baud)
 	}
 #if defined(ISO15765) || defined(ISO11783)
 	else if (mask == DCNCP_NODE_ADDRESS_STATUS_MASK) {
-#if defined(SYS_LOG_LEVEL)
-#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 		log_d(TAG, "L3 Status update\n\r");
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif //  if defined(SYS_LOG_LEVEL)
 		if (status.bit_field.dcncp_node_address_valid && !can_status.bit_field.dcncp_node_address_valid) {
 			can_status.bit_field.dcncp_node_address_valid = status.bit_field.dcncp_node_address_valid;
 			if (app_status_handler)
@@ -231,13 +190,9 @@ void status_handler(uint8_t mask, can_status_t status, can_baud_rate_t baud)
 
 #if defined(ISO11783)
 	iso11783_init(185);
-#if defined(SYS_LOG_LEVEL)
-#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	log_d(TAG, "iso11783 Initialised\n\r");
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif //  if defined(SYS_LOG_LEVEL)
 #endif  // SYS_ISO11783
 }
 

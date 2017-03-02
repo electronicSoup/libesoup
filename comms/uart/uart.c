@@ -30,7 +30,7 @@
 #include "es_lib/logger/serial_log.h"
 #include "es_lib/utils/rand.h"
 
-#include "es_lib/comms/uart.h"
+#include "es_lib/comms/uart/uart.h"
 
 #define U1_RX_ISR_FLAG   IFS0bits.U1RXIF
 #define U1_TX_ISR_FLAG   IFS0bits.U1TXIF

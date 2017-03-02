@@ -667,11 +667,11 @@ typedef enum
  * http://stackoverflow.com/questions/4178392/how-to-separate-logging-logic-from-business-logic-in-a-c-program-and-in-a-c-o
  */
 
-extern void es_printf(char *fmt, ...);
-extern void log_d(char *tag, char *fmt, ...);
-extern void log_i(char *tag, char *fmt, ...);
-extern void log_w(char *tag, char *fmt, ...);
-extern void log_e(char *tag, char *fmt, ...);
+//extern void es_printf(char *fmt, ...);
+//extern void log_d(char *tag, char *fmt, ...);
+//extern void log_i(char *tag, char *fmt, ...);
+//extern void log_w(char *tag, char *fmt, ...);
+//extern void log_e(char *tag, char *fmt, ...);
 
 
 //#if (defined(DEBUG_FILE) && SYS_LOG_LEVEL <= LOG_DEBUG)

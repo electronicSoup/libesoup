@@ -26,6 +26,7 @@
 #define TAG "serial"
 
 #include "system.h"
+#include "es_lib/logger/serial_log.h"
 
 /*
  * Check required system.h defines are found
@@ -38,11 +39,12 @@
 #ifndef SYS_USART_TX_BUFFER_SIZE
 #error system.h should define SYS_USART_TX_BUFFER_SIZE (see es_lib/examples/system.h)
 #endif
-#endif
-
+#else
 #ifndef SERIAL_LOGGING_TX_DDR
 #error system.h should include a board file which defines SERIAL_LOGGING_TX_DDR (see es_lib/examples/system.h)
 #endif
+#endif
+
 
 #ifndef SYS_SERIAL_LOGGING_BAUD
 #error system.h file should define the SYS_SERIAL_LOGGING_BAUD
@@ -54,7 +56,7 @@
 
 
 #if defined (MCP)
-#include "es_lib/comms/uart.h"
+#include "es_lib/comms/uart/uart.h"
 #elif defined (ES_LINUX)
 #include <stdio.h>
 #endif // if defined (ES_LINUX)
@@ -240,11 +242,11 @@ void putch(char character)
 }
 #endif // (__18F2680) || (__18F4585)
 
-void es_printf(char *fmt, ...)
+void es_printf(const char *fmt, ...)
 {
 #if (SYS_LOG_LEVEL != NO_LOGGING)
 //        result_t  rc;
-        char     *ptr;
+        const char     *ptr;
         
         ptr = fmt;
         
@@ -254,7 +256,7 @@ void es_printf(char *fmt, ...)
 #endif
 }
 
-void log_d(char *tag, char *fmt, ...)
+void log_d(const char *tag, const char *fmt, ...)
 {
         va_list arguments;           
 
@@ -269,7 +271,7 @@ void log_d(char *tag, char *fmt, ...)
 #endif
 }
 
-void log_i(char *tag, char *fmt, ...)
+void log_i(const char *tag, const char *fmt, ...)
 {
         va_list arguments;                     
 
@@ -284,7 +286,7 @@ void log_i(char *tag, char *fmt, ...)
 #endif
 }
 
-void log_w(char *tag, char *fmt, ...)
+void log_w(const char *tag, const char *fmt, ...)
 {
         va_list arguments;                     
 
@@ -299,7 +301,7 @@ void log_w(char *tag, char *fmt, ...)
 #endif
 }
 
-void log_e(char *tag, char *fmt, ...)
+void log_e(const char *tag, const char *fmt, ...)
 {
         va_list arguments;                     
 

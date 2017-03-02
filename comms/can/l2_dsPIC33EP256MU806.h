@@ -46,10 +46,10 @@
 
 typedef struct can_mask
 {
-    u8   *sidh;
-    u8   *sidl;
-    u8   *eidh;
-    u8   *eidl;
+    uint8_t   *sidh;
+    uint8_t   *sidl;
+    uint8_t   *eidh;
+    uint8_t   *eidl;
 } can_mask;
 
 

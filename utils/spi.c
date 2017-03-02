@@ -20,7 +20,7 @@
  *
  */
 #include "system.h"
-#define DEBUG_FILE
+#define DEBUG_FILE TRUE
 #include "es_lib/logger/serial_log.h"
 
 #define TAG "SPI"

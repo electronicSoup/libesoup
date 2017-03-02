@@ -46,7 +46,13 @@
 /*
  * Include a board file
  */
-//#include "es_lib/boards/cb-dsPIC33EP256MU806.h"
+#if defined(__dsPIC33EP256MU806__)
+#include "es_lib/boards/cb-dsPIC33EP256MU806.h"
+#elif defined (__PIC24FJ256GB106__)
+#include "es_lib/boards/cb-PIC24FJ256GB106.h"
+#elif defined(__18F4585)
+#include "es_lib/boards/gauge-PIC18F4585.h"
+#endif
 
 /**
  * @brief core definitions required by the library
@@ -82,7 +88,9 @@
  * Default set to 300 Bytes as the serial port should be used for
  * relatively short debug messages and memory is limited.
  */
-//#define SYS_USART_TX_BUFFER_SIZE 300
+#if defined(__18F4585)
+#define SYS_USART_TX_BUFFER_SIZE 300
+#endif // __18F4585
 
 /**
  * @brief Baud rate of the serial logging port
@@ -108,7 +116,7 @@
 #define SYS_LOG_LEVEL LOG_DEBUG
 
 /**
- * @brief Number of timers available in the system.
+ * @brief Number of Software timers available in the system.
  *
  * If your project includes es_lib Timer code then you must use this definition
  * to define number of timers actually avalible in the system. 
@@ -119,11 +127,11 @@
  *
  * An example stripped down main:
  *
- *     #include "es_lib/timers/timers.h"
+ *     #include "es_lib/timers/sw_timers.h"
  *
  *     int main(void)
  *     {
- *             timer_init();
+ *             sw_timer_init();
  * 
  *             while(TRUE) {
  *                     asm ("CLRWDT");
@@ -135,16 +143,27 @@
  * in project.
  */
 //#define SYS_NUMBER_OF_SW_TIMERS 20     // Default disabled
+#define SYS_SW_TICK_ms     5      // mSeconds
 
 /*
  * System jobs
  */
-#define SYS_NUMBER_OF_JOBS 10
+//#define SYS_JOBS
 
-#define SYS_UART_TX_BUFFER_SIZE                    64
+#ifdef JOBS
+#define SYS_NUMBER_OF_JOBS 10
+#endif
+
+/*
+ * MODBUS
+ */
+//#define SYS_MODBUS
+
+#ifdef SYS_MODBUS
 #define SYS_MODBUS_RX_BUFFER_SIZE                  256
 #define SYS_MODBUS_RESPONSE_TIMEOUT                SECONDS_TO_TICKS(1)
 #define SYS_MODBUS_RESPONSE_BROADCAST_TIMEOUT      MILLI_SECONDS_TO_TICKS(500)
+#endif // SYS_MODBUS
 
 /*
  * SYS_SPI Definitions
@@ -179,6 +198,13 @@
 #define SYS_CAN_L2_HANDLER_ARRAY_SIZE 5
 
 /**
+ * @brief Size of the MCP2515 Rx circular buffer.
+ *
+ */
+#define SYS_CAN_RX_CIR_BUFFER_SIZE    5
+
+
+/**
  * @brief CAN BUS Baud Auto Detection
  *
  * Depending on the application it may be usefull to be able to automatically
@@ -204,7 +230,7 @@
  *     } can_baud_rate_t;
  * 
  */
-#define SYS_CAN_BAUD_AUTO_DETECT            // Default Disabled
+//#define SYS_CAN_BAUD_AUTO_DETECT            // Default Disabled
 
 #ifdef SYS_CAN_BAUD_AUTO_DETECT
 /**
@@ -325,7 +351,7 @@
  * If all nodes comply with the DCNCP Baud Rate Protocol the network will now
  * be operating at the new network Baud Rate.
  */
-#define SYS_CAN_DCNCP_BAUDRATE      // Default Disabled
+//#define SYS_CAN_DCNCP_BAUDRATE      // Default Disabled
 
 /**
  * @brief Include SYS_ISO15765 Functionality
@@ -395,8 +421,6 @@
  *	       if(retry_count == 0) {
  *		       rc = eeprom_read(EEPROM_NODE_ADDRESS, &address);
  *		       if (rc != SUCCESS) {
-#if defined(SYS_LOG_LEVEL)
-#if defined(SYS_LOG_LEVEL)
  * #if (SYS_LOG_LEVEL <= LOG_ERROR)
  *		               log_e(TAG, "address Failed to read from eeprom return code 0x%x\n\r", rc);
  * #endif
@@ -406,8 +430,6 @@
  *
  *			       rc = eeprom_write(EEPROM_NODE_ADDRESS, address);
  *			       if (rc != SUCCESS) {
-#if defined(SYS_LOG_LEVEL)
-#if defined(SYS_LOG_LEVEL)
  * #if (SYS_LOG_LEVEL <= LOG_ERROR)
  *			       	       log_e(TAG, "Failed to write from eeprom return code 0x%x\n\r", rc);
  * #endif
@@ -422,8 +444,6 @@
  *		
  *		       rc = eeprom_write(EEPROM_NODE_ADDRESS, address);
  *		       if (rc != SUCCESS) {
-#if defined(SYS_LOG_LEVEL)
-#if defined(SYS_LOG_LEVEL)
  * #if (SYS_LOG_LEVEL <= LOG_ERROR)
  *			       log_e(TAG, "Failed to write from eeprom return code 0x%x\n\r", rc);
  * #endif
@@ -443,7 +463,7 @@
  * then you can hardcode an address into each node on the network.
  *
  */
-#define SYS_ISO15765                 // Default Disabled
+//#define SYS_ISO15765                 // Default Disabled
 
 #ifdef SYS_ISO15765
 /**
@@ -474,7 +494,7 @@
  *
  * SYS_ISO15765 Layer 3 Protocol ID 0x01 is reserved for this functionality.
  */
-#define SYS_ISO15765_LOGGING           // Default Disabled
+//#define SYS_ISO15765_LOGGING           // Default Disabled
 
 /**
  * @brief Enable SYS_ISO15765 Logger functionality
@@ -489,7 +509,7 @@
  * the SYS_ISO15765 Protocol only sends to a specific Layer 3 node addres. 
  *
  */
-#define SYS_ISO15765_LOGGER             // Default Disabled
+//#define SYS_ISO15765_LOGGER             // Default Disabled
 
 /**
  * @brief SYS_ISO15765 Network logger Ping Period (Seconds)

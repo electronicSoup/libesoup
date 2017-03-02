@@ -1,12 +1,13 @@
 #include "system.h"
 #include <stdlib.h>
 #include <stdio.h>
+#include <stdint.h>
 
 #include "l2_pic18f.h"
 
-#include "es_lib/timers/timers.h"
+#include "es_lib/timers/sw_timers.h"
 
-#define DEBUG_FILE
+#define DEBUG_FILE TRUE
 #include "es_lib/logger/serial_log.h"
 #include "es_lib/comms/can/es_can.h"
 
@@ -36,10 +37,10 @@ char baud_rate_strings[8][10] = {
  * time we'll fire a ping message.
  */
 static uint16_t     networkIdleDuration = 0;
-static es_timer     networkIdleTimer;
-static ty_CanStatus canStatus = Listening;
+static uint8_t      networkIdleTimer;
+//static ty_CanStatus canStatus = Listening;
 
-void pingNetwork(uint8_t *);
+static void pingNetwork(timer_t timer, union sigval data);
 
 #ifdef L2_CAN_INTERRUPT_DRIVEN
 
@@ -47,22 +48,22 @@ static uint32_t rxMsgCount = 0;
 
 #define SYS_CAN_RX_CIR_BUFFER_SIZE 5
 
-    canBuffer_t cirBuffer[CAN_RX_CIR_BUFFER_SIZE];
-    uint8_t cirBufferNextRead = 0;
-    uint8_t cirBufferNextWrite = 0;
-    uint8_t cirBufferCount = 0;
+canBuffer_t cirBuffer[CAN_RX_CIR_BUFFER_SIZE];
+uint8_t     cirBufferNextRead = 0;
+uint8_t     cirBufferNextWrite = 0;
+uint8_t     cirBufferCount = 0;
 
-can_msg_t rxCanMsg;
+can_msg_t   rxCanMsg;
 
-#define TX_BUFFERS  3
+#define     TX_BUFFERS  3
 
 canBuffer_t *tx_buffers[TX_BUFFERS];
 
 #else
-//can_frame_t rxMsg;
+can_frame rxMsg;
 
-#define TX_BUFFERS  6
-#define RX_BUFFERS  5
+#define     TX_BUFFERS  6
+#define     RX_BUFFERS  5
 
 canBuffer_t *tx_buffers[TX_BUFFERS];
 canBuffer_t *rx_buffers[RX_BUFFERS];
@@ -73,36 +74,28 @@ canBuffer_t *rx_buffers[RX_BUFFERS];
 
 can_mask masks[MASKS] =
 {
-    {&RXM0SIDH, &RXM0SIDL, &RXM0EIDH, &RXM0EIDL},
-    {&RXM1SIDH, &RXM1SIDL, &RXM1EIDH, &RXM1EIDL}
+    {(uint8_t *)&RXM0SIDH, (uint8_t *)&RXM0SIDL, (uint8_t *)&RXM0EIDH, (uint8_t *)&RXM0EIDL},
+    {(uint8_t *)&RXM1SIDH, (uint8_t *)&RXM1SIDL, (uint8_t *)&RXM1EIDH, (uint8_t *)&RXM1EIDL}
 };
 
 
 static void setMode(uint8_t mode);
-static void setBitRate(baud_rate_t baudRate);
+static void setBitRate(can_baud_rate_t baudRate);
 static void finaliseBaudRateChange(uint8_t *data);
 
-result_t can_l2_init(can_baud_rate_t arg_baud_rate, void (*arg_status_handler)(u8 mask, can_status_t status, can_baud_rate_t baud))
+result_t can_l2_init(can_baud_rate_t arg_baud_rate, void (*arg_status_handler)(uint8_t mask, can_status_t status, can_baud_rate_t baud))
 {
 #if 0
-	u8 loop;
+	uint8_t loop;
 
 	if (baudRate <= BAUD_MAX) {
-#if defined(SYS_LOG_LEVEL)
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 		log_d(TAG, "L2_CanInit() Baud Rate %s\n\r", baud_rate_strings[baudRate]);
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif //  if defined(SYS_LOG_LEVEL)
 	} else {
-#if defined(SYS_LOG_LEVEL)
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
 		log_e(TAG, "L2_CanInit() ToDo!!! No Baud Rate Specified\n\r");
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif //  if defined(SYS_LOG_LEVEL)
 		return (baudRate);
 	}
 
@@ -212,13 +205,9 @@ result_t can_l2_init(can_baud_rate_t arg_baud_rate, void (*arg_status_handler)(u
 	// Network Idle Ping message
 	networkIdleDuration = (UINT16) ((rand() % 500) + 1000);
 
-#if defined(SYS_LOG_LEVEL)
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	log_d(TAG, "Network Idle Duration set to %d milliSeconds\n\r", networkIdleDuration);
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif //  if defined(SYS_LOG_LEVEL)
 	networkIdleTimer = start_timer(networkIdleDuration, pingNetwork, NULL);
 	return (baudRate);
 #endif
@@ -240,14 +229,9 @@ void L2_ISR(void)
 	 * are volatile.
 	 */
 	flags = PIR3;
-#if defined(SYS_LOG_LEVEL)
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	log_d(TAG, "CAN L2 ISR Flag-%x\n\r", flags);
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif //  if defined(SYS_LOG_LEVEL)
-
 //    if(flags & MERRE)
 //    {
 //#if DEBUG_LEVEL <= LOG_DEBUG
@@ -314,13 +298,9 @@ void L2_ISR(void)
 			cirBufferNextWrite = (cirBufferNextWrite + 1) % SYS_CAN_RX_CIR_BUFFER_SIZE;
 			cirBufferCount++;
 		} else {
-#if defined(SYS_LOG_LEVEL)
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
 			log_e(TAG, "Circular Buffer overflow!");
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif //  if defined(SYS_LOG_LEVEL)
 		}
 
 		PIR3bits.RXB0IF = 0;
@@ -343,13 +323,9 @@ void L2_ISR(void)
 			cirBufferNextWrite = (cirBufferNextWrite + 1) % SYS_CAN_RX_CIR_BUFFER_SIZE;
 			cirBufferCount++;
 		} else {
-#if defined(SYS_LOG_LEVEL)
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
 			log_e(TAG, "Circular Buffer overflow!");
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif //  if defined(SYS_LOG_LEVEL)
 		}
 
 		PIR3bits.RXB1IF = 0;
@@ -363,14 +339,9 @@ void L2_CanTasks(void)
 {
 	uint8_t loop;
 
-#if defined(SYS_LOG_LEVEL)
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	log_d(TAG, "L2_CanTasks()\n\r");
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif //  if defined(SYS_LOG_LEVEL)
-
 	while (cirBufferCount > 0) {
 		// Check if it's an extended
 		if (cirBuffer[cirBufferNextRead].sidl & SIDL_EXIDE) {
@@ -397,13 +368,9 @@ void L2_CanTasks(void)
 		rxCanMsg.data[loop] = cirBuffer[cirBufferNextRead].data[loop];
 	}
 
-#if defined(SYS_LOG_LEVEL)
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
         log_d(TAG, "Received a message id - %lx\n\r", rxCanMsg.header.can_id.id);
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif //  if defined(SYS_LOG_LEVEL)
 //        networkGood = TRUE;
 	cirBufferNextRead = (cirBufferNextRead + 1) % SYS_CAN_RX_CIR_BUFFER_SIZE;
 	cirBufferCount--;
@@ -417,11 +384,13 @@ void L2_CanTasks(void)
 #else
 void can_l2_tasks(void)
 {
-	uint8_t i;
-	uint8_t buffer;
-	uint8_t *ptr;
+        union sigval data;
+        timer_t      timer;
+	uint8_t      i;
+	uint8_t      buffer;
+	uint8_t     *ptr;
 
-	buffer = SYS_CANCON & 0x0f;
+	buffer = CANCON & 0x0f;
 
 	/*
 	 * Read all the messages present and process them
@@ -430,14 +399,16 @@ void can_l2_tasks(void)
 		/*
 		 * cancel the timer if running we've received a frame
 		 */
-		LOG_D(Debug, TAG, "Rx L2 Message so restart Idle Timer\n\r");
-		cancel_timer(networkIdleTimer);
-		networkIdleTimer = start_timer(networkIdleDuration, pingNetwork, NULL);
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+		log_d(TAG, "Rx L2 Message so restart Idle Timer\n\r");
+#endif
+		sw_timer_cancel(networkIdleTimer);
+		networkIdleTimer = sw_timer_start(networkIdleDuration, pingNetwork, data, &timer);
 		if (rx_buffers[buffer]->sidl & SIDL_EXIDE) {
 			/*
 			 * Extended message identifer ???
 			 */
-			rxMsg.header.extended_id = TRUE;
+			rxMsg.  .header.extended_id = TRUE;
 			rxMsg.header.can_id.id = rx_buffers[buffer]->sidh;
 			rxMsg.header.can_id.id = rxMsg.header.can_id.id << 3 | ((rx_buffers[buffer]->sidl >> 5) & 0x07);
 			rxMsg.header.can_id.id = rxMsg.header.can_id.id << 2 | (rx_buffers[buffer]->sidl & 0x03);
@@ -469,28 +440,19 @@ void can_l2_tasks(void)
 
 		/* Clear the received flag */
 		rx_buffers[buffer]->ctrl &= ~CNTL_RXFUL;
-#if defined(SYS_LOG_LEVEL)
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 		log_d(TAG, "rxMsg %lx\n\r", rxMsg.header.can_id.id);
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif //  if defined(SYS_LOG_LEVEL)
 
 		if(l2Handler) {
 			l2Handler(&rxMsg);
 		} else {
-#if defined(SYS_LOG_LEVEL)
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 			log_d(TAG, "No Handler so ignoring received message\n\r");
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif //  if defined(SYS_LOG_LEVEL)
 		}
 		buffer = SYS_CANCON & 0x0f;
 	}
-#endif
 }
 #endif
 
@@ -507,14 +469,9 @@ result_t can_l2_tx_frame(can_frame *frame)
 		return (CAN_ERROR);
 	}
 
-#if defined(SYS_LOG_LEVEL)
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	log_d(TAG, "L2_CanTxMessage(0x%lx)\n\r", msg->header.can_id.id);
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif //  if defined(SYS_LOG_LEVEL)
-
 	/*
 	 * Find a free buffer
 	 */
@@ -525,13 +482,9 @@ result_t can_l2_tx_frame(can_frame *frame)
 	}
 
 	if (buffer == TX_BUFFERS) {
-#if defined(SYS_LOG_LEVEL)
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
 		log_e(TAG, "No empty TX buffer\n\r");
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif //  if defined(SYS_LOG_LEVEL)
 		return (CAN_ERROR); //No Empty buffers
 	}
 
@@ -561,13 +514,9 @@ result_t can_l2_tx_frame(can_frame *frame)
 	}
 
 	if (msg->header.data_length > 8) {
-#if defined(SYS_LOG_LEVEL)
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
 		log_e(TAG, "Copy across the data length %d\n\r", msg->header.data_length);
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif //  if defined(SYS_LOG_LEVEL)
 	}
 
 	ptr = tx_buffers[buffer]->data;
@@ -583,13 +532,9 @@ result_t can_l2_tx_frame(can_frame *frame)
 	/*
 	 * cancel the timer if running we've received a frame
 	 */
-#if defined(SYS_LOG_LEVEL)
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	log_d(TAG, "Transmitting L2 Message so restart Idle Timer\n\r");
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif //  if defined(SYS_LOG_LEVEL)
 	cancel_timer(networkIdleTimer);
 	networkIdleTimer = start_timer(networkIdleDuration, pingNetwork, NULL);
 #endif
@@ -619,34 +564,22 @@ void L2_CanTxError(uint8_t node_type, uint8_t node_number, UINT32 errorCode)
 void L2_SetCanNodeBuadRate(can_baud_rate_t baudRate)
 {
 	baud_rate_t testRate;
-#if defined(SYS_LOG_LEVEL)
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	log_d(TAG, "L2_SetCanNodeBuadRate()\n\r");
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif //  if defined(SYS_LOG_LEVEL)
 
 	sys_eeprom_write(NETWORK_BAUD_RATE, (uint8_t) baudRate);
 
 	sys_eeprom_read(NETWORK_BAUD_RATE, (uint8_t *) & testRate);
 
 	if (testRate != baudRate) {
-#if defined(SYS_LOG_LEVEL)
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
 		log_e(TAG, "Baud Rate NOT Stored!\n\r");
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif //  if defined(SYS_LOG_LEVEL)
 	} else {
-#if defined(SYS_LOG_LEVEL)
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 		log_d(TAG, "Baud Rate Stored\n\r");
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif //  if defined(SYS_LOG_LEVEL)
 	}
 
 //	canStatus = ChangingBaud;
@@ -663,27 +596,18 @@ void L2_SetCanNodeBuadRate(can_baud_rate_t baudRate)
 
 static void finaliseBaudRateChange(uint8_t *data)
 {
-#if defined(SYS_LOG_LEVEL)
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	log_d(TAG, "finaliseBaudRateChange()\n\r");
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif //  if defined(SYS_LOG_LEVEL)
-	canStatus = Connected;
+//	canStatus = Connected;
 	setMode(NORMAL_MODE);
 }
 
 void L2_SetCanNetworkBuadRate(can_baud_rate_t baudRate)
 {
-#if defined(SYS_LOG_LEVEL)
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	log_d(TAG, "L2_SetCanNetworkBuadRate()\n\r");
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif //  if defined(SYS_LOG_LEVEL)
-
 	setMode(CONFIG_MODE);
 	setBitRate(baudRate);
 	setMode(NORMAL_MODE);
@@ -763,13 +687,9 @@ static void set_bit_rate(can_baud_rate_t baudRate)
 			break;
 
 		default:
-#if defined(SYS_LOG_LEVEL)
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
 			log_e(TAG, "Invalid Baud Rate Specified\n\r");
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif //  if defined(SYS_LOG_LEVEL)
 			break;
 	}
 
@@ -804,15 +724,11 @@ static void setMode(uint8_t mode)
 	while ((CANSTAT & MODE_MASK) != mode);
 }
 
-void pingNetwork(uint8_t *data)
+static void pingNetwork(timer_t timer, union sigval data)
 {
-#if defined(SYS_LOG_LEVEL)
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	log_d(TAG, "Network Idle Expired so send a ping message and restart\n\r");
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif //  if defined(SYS_LOG_LEVEL)
-	networkIdleTimer = start_timer(networkIdleDuration, pingNetwork, NULL);
+	networkIdleTimer = sw_timer_start(networkIdleDuration, pingNetwork, data, &timer);
 	send_ping_message();
 }

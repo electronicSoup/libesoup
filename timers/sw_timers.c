@@ -76,6 +76,17 @@
 
 #define TAG "SW_TIMERS"
 
+/*
+ * Check required system.h defines are found
+ */
+#ifndef SYS_LOG_LEVEL
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif
+
+#ifndef SYS_NUMBER_OF_SW_TIMERS
+#error system.h file should define SYS_NUMBER_OF_SW_TIMERS (see es_lib/examples/system.h)
+#endif
+
 #ifdef MCP
 static uint16_t  timer_counter = 0;
 
@@ -108,11 +119,7 @@ typedef struct {
 #pragma udata
 #endif //__PIC24FJ256GB106__
 #endif // MCP
-#if defined(SYS_NUMBER_OF_SW_TIMERS)
 sys_timer_t timers[SYS_NUMBER_OF_SW_TIMERS];
-#else  //  defined(SYS_NUMBER_OF_SW_TIMERS)
-#error system.h file should define SYS_NUMBER_OF_SW_TIMERS (see es_lib/examples/system.h)
-#endif //  defined(SYS_NUMBER_OF_SW_TIMERS)
 
 /*
  * Timer_1 ISR. To keep ISR short it simply restarts TIMER_1 and sets 
@@ -293,13 +300,9 @@ result_t sw_timer_start(uint16_t ticks,
 	if(*timer != BAD_TIMER) {
                 if(*timer < SYS_NUMBER_OF_SW_TIMERS) {
                         if (timers[*timer].active) {
-#if defined(SYS_LOG_LEVEL)
 #if (DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_WARNING)
                                 log_w(TAG, "sw_timer_start() timer passed in active. Cancelling!\n\r");
 #endif
-#else  //  defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif //  defined(SYS_LOG_LEVEL)
                         }
                 }
 		sw_timer_cancel(*timer);
@@ -330,13 +333,9 @@ result_t sw_timer_start(uint16_t ticks,
 			 */
 			if(hw_timer_paused) {
 				if(hw_timer_restart(hw_timer, mSeconds, 5, TRUE, hw_expiry_function, NULL) != SUCCESS) {
-#if defined(SYS_LOG_LEVEL)
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
 					log_e(TAG, "Failed to restart HW timer\n\r");
 #endif
-#else  //  defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif //  defined(SYS_LOG_LEVEL)
 				}
 				hw_timer_paused = FALSE;
 			}
@@ -344,13 +343,9 @@ result_t sw_timer_start(uint16_t ticks,
 		}
 	}
 
-#if defined(SYS_LOG_LEVEL)
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
 	log_e(TAG, "start_timer() ERR_NO_RESOURCES\n\r");
 #endif
-#else  //  defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif //  defined(SYS_LOG_LEVEL)
 	return(ERR_NO_RESOURCES);
 
 #elif defined(ES_LINUX)
@@ -366,23 +361,15 @@ result_t sw_timer_start(uint16_t ticks,
 	ret = timer_create(CLOCK_REALTIME, &action, timer);
 
 	if(ret) {
-#if defined(SYS_LOG_LEVEL)
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
 		log_e(TAG, "Error can't create timer\n\r");
 #endif
-#else  //  defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif //  defined(SYS_LOG_LEVEL)
 		return(ERR_GENERAL_ERROR);
 	}
 	
-#if defined(SYS_LOG_LEVEL)
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 //	log_d(TAG, "Setting time to %d Seconds %d nano Seonds\n\r", 
 #endif
-#else  //  defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif //  defined(SYS_LOG_LEVEL)
 //		   (duration * SYSTEM_TICK_ms) / 1000, 
 //		   (duration * SYSTEM_TICK_ms) % 1000 * 1000000);
 
@@ -392,13 +379,9 @@ result_t sw_timer_start(uint16_t ticks,
 	its.it_interval.tv_nsec = 0;
 
 	if (timer_settime(timer, 0, &its, NULL) == -1) {
-#if defined(SYS_LOG_LEVEL)
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
 		log_e(TAG, "Error can't set time\n\r");
 #endif
-#else  //  defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif //  defined(SYS_LOG_LEVEL)
 		return(ERR_GENERAL_ERROR);
 	}
 
@@ -421,26 +404,18 @@ result_t sw_timer_cancel(timer_t timer)
 {
 #ifdef MCP
 	if ((timer == BAD_TIMER) || (timer >= SYS_NUMBER_OF_SW_TIMERS)) {
-#if defined(SYS_LOG_LEVEL)
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
                 log_e(TAG, "sw_timer_cancel() Bad timer identifier passed in!\n\r");
 #endif
-#else  //  defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif //  defined(SYS_LOG_LEVEL)
                 return(ERR_BAD_INPUT_PARAMETER);
 	} else if (timers[timer].active) {
                 timers[timer].active = FALSE;
                 timers[timer].expiry_count = 0;
                 timers[timer].function = (expiry_function) NULL;
         } else {
-#if defined(SYS_LOG_LEVEL)
 #if (DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_INFO)
                 log_i(TAG, "sw_timer_cancel() timer not active!\n\r");
 #endif
-#else  //  defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif //  defined(SYS_LOG_LEVEL)
         }
         
 #elif defined(ES_LINUX)
@@ -452,13 +427,9 @@ result_t sw_timer_cancel(timer_t timer)
         its.it_interval.tv_nsec = 0;
 
         if (timer_settime(timer, 0, &its, NULL) == -1) {
-#if defined(SYS_LOG_LEVEL)
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
                 log_e(TAG, "Error can't create timer\n\r");
 #endif
-#else  //  defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif //  defined(SYS_LOG_LEVEL)
                 return(ERR_GENERAL_ERROR);
         }
 #endif
@@ -473,13 +444,9 @@ result_t sw_timer_cancel_all(void)
 {
 	uint8_t    loop;
 
-#if defined(SYS_LOG_LEVEL)
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	log_d(TAG, "sw_timer_cancel_all()\n\r");
 #endif
-#else  //  defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif //  defined(SYS_LOG_LEVEL)
 	for (loop = 0; loop < SYS_NUMBER_OF_SW_TIMERS; loop++) {
 		if (timers[loop].active) {
 			sw_timer_cancel(loop);

@@ -75,4 +75,6 @@
 #define SPI_1_DATA_OUTPUT     7
 #define SPI_1_CLOCK_OUTPUT    8
 
+extern void cpu_init(void);
+
 #endif // _ES_PIC24FJ256GB106_H

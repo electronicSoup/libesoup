@@ -2,6 +2,7 @@
 #define L2_PIC18F_H
 
 #include "system.h"
+#include <stdint.h>
 
 /*
  * Interrupt Flags
@@ -47,13 +48,13 @@
 
 typedef struct
 {
-    u8 ctrl;
-    u8 sidh;
-    u8 sidl;
-    u8 eid8;
-    u8 eid0;
-    u8 dcl;
-    u8 data[8];
+    uint8_t ctrl;
+    uint8_t sidh;
+    uint8_t sidl;
+    uint8_t eid8;
+    uint8_t eid0;
+    uint8_t dcl;
+    uint8_t data[8];
 } canBuffer_t;
 
 #ifdef L2_CAN_INTERRUPT_DRIVEN
@@ -61,13 +62,13 @@ typedef struct
 #else
 //typedef struct can_buffer
 //{
-//    u8   *control;
-//    u8   *sidh;
-//    u8   *sidl;
-//    u8   *eidh;
-//    u8   *eidl;
-//    u8   *dcl;
-//    u8   *data;
+//    uint8_t   *control;
+//    uint8_t   *sidh;
+//    uint8_t   *sidl;
+//    uint8_t   *eidh;
+//    uint8_t   *eidl;
+//    uint8_t   *dcl;
+//    uint8_t   *data;
 //} can_buffer;
 
 
@@ -75,10 +76,10 @@ typedef struct
 
 typedef struct can_mask
 {
-    u8   *sidh;
-    u8   *sidl;
-    u8   *eidh;
-    u8   *eidl;
+    uint8_t   *sidh;
+    uint8_t   *sidl;
+    uint8_t   *eidh;
+    uint8_t   *eidl;
 } can_mask;
 
 

@@ -57,7 +57,7 @@ typedef uint8_t timer_t;
  * timer granularity is changed. In addition future electronicSoup deivces may
  * well use different System Tick values.
  */
-#define MILLI_SECONDS_TO_TICKS(ms) ((ms < SYS_SYSTEM_TICK_ms) ? 1 : (ms / SYS_SW_TIMER_TICK_ms))
+#define MILLI_SECONDS_TO_TICKS(ms) ((ms < SYS_SW_TIMER_TICK_ms) ? 1 : (ms / SYS_SW_TIMER_TICK_ms))
 
 #if defined(MCP)
 /**
@@ -109,8 +109,8 @@ typedef void (*expiry_function)(timer_t timer_id, union sigval);
  * Calculate the 16 bit value that will give us an ISR for the system tick
  * duration.
  */
-#define TMR0H_VAL ((0xFFFF - ((SYS_SYSTEM_TICK_ms * SYS_CLOCK_FREQ) / 4000)) >> 8) & 0xFF
-#define TMR0L_VAL (0xFFFF - ((SYS_SYSTEM_TICK_ms * SYS_CLOCK_FREQ) / 4000)) & 0xFF
+#define TMR0H_VAL ((0xFFFF - ((SYS_SW_TIMER_TICK_ms * SYS_CLOCK_FREQ) / 4000)) >> 8) & 0xFF
+#define TMR0L_VAL (0xFFFF - ((SYS_SW_TIMER_TICK_ms * SYS_CLOCK_FREQ) / 4000)) & 0xFF
 #endif // (__18F2680) || __18F4585)
 
 
