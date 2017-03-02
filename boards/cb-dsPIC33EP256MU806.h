@@ -170,10 +170,15 @@
  * @brief Macro to deselect CAN Controller Chip on SPI Bus
  *
  */
-#define CAN_CS_PIN_DIRECTION           TRISDbits.TRISD6
-#define CAN_CS                         LATDbits.LATD6
-#define CAN_SELECT                     CAN_CS = 0;
-#define CAN_DESELECT                   CAN_CS = 1;
+//#define CAN_CS_PIN_DIRECTION           TRISDbits.TRISD6
+//#define CAN_CS                         LATDbits.LATD6
+//#define CAN_SELECT                     CAN_CS = 0;
+//#define CAN_DESELECT                   CAN_CS = 1;
+#define CAN_TX_DDR                     TRISFbits.TRISF4
+#define CAN_RX_DDR                     TRISGbits.TRISG7
+#define CAN_TX_PIN                     RPOR9bits.RP100R
+#define CAN_RX_PIN                     RPI119
+ 
 
 /**
  * SPI (Serial Peripheral Interface Definitions.
