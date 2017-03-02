@@ -21,6 +21,7 @@
 
 void cpu_init(void)
 {
+        clock_init();
 #ifdef SYS_SPI_BUS
         spi_init();
 #endif

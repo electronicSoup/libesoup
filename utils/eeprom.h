@@ -25,7 +25,7 @@
 extern result_t eeprom_read(uint16_t address, uint8_t *data);
 extern result_t eeprom_write(uint16_t address, uint8_t data);
 extern result_t eeprom_erase(uint16_t start_address);
-extern result_t eeprom_str_read(uint16_t address, uint8_t *buffer, u16 *length);
-extern result_t eeprom_str_write(uint16_t address, uint8_t *buffer, u16 *length);
+extern result_t eeprom_str_read(uint16_t address, uint8_t *buffer, uint16_t *length);
+extern result_t eeprom_str_write(uint16_t address, uint8_t *buffer, uint16_t *length);
 
 #endif // EEPROM_H
