@@ -269,4 +269,6 @@
 #define USB_HOST    TRISDbits.TRISD9 = OUTPUT_PIN; LATDbits.LATD9 = 1; USBInitialize(0);
 #define USB_DEVICE  TRISDbits.TRISD9 = OUTPUT_PIN; LATDbits.LATD9 = 0;
 
+#include "es_lib/core.h"
+
 #endif // _CB_dsPIC33EP256MU806_H

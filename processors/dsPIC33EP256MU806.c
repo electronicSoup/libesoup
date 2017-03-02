@@ -18,6 +18,7 @@
 #pragma config IOL1WAY = OFF
 #pragma config FCKSM = CSECMD
 #pragma config FWDTEN = OFF
+#pragma config WINDIS   = OFF              // Watchdog Timer Window (Standard Watchdog Timer enabled,(Windowed-mode is disabled))
 #pragma config BOREN = OFF
 #pragma config JTAGEN = OFF
 

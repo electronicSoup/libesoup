@@ -52,17 +52,6 @@
 //    typedef int8_t     s8;
 //    typedef int16_t    s16;
 //    typedef int32_t    s32;
-#if 0
-#include <GenericTypeDefs.h>
-
-    typedef UINT8    uint8_t;
-    typedef UINT16   uint16_t;
-    typedef UINT32   u32;
-
-    typedef INT8     s8;
-    typedef INT16    s16;
-    typedef INT32    s32;
-#endif
 #elif defined(ES_LINUX)
     #include <stdint.h>
 
