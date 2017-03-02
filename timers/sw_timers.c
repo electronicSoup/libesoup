@@ -121,12 +121,10 @@ sys_timer_t timers[SYS_NUMBER_OF_SW_TIMERS];
  * macro.
  */
 #ifdef MCP
-#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__) || (__dsPIC33EP256MU806__)
 static void hw_expiry_function(void *data)
 {
 	timer_ticked = TRUE;
 }
-#endif //__PIC24FJ256GB106__
 
 #if defined(__18F2680) || defined(__18F4585)
 void timer_isr(void)
