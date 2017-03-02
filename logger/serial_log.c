@@ -20,6 +20,7 @@
  *
  */
 #include <stdarg.h>
+#include <stdio.h>
 
 #define DEBUG_FILE TRUE
 #define TAG "serial"
@@ -190,6 +191,8 @@ void serial_logging_init(void)
 	RCSTAbits.SPEN = 1;
 #endif // (__18F2680) || (__18F4585)
 #endif // ifdef MCP
+
+        printf("\n\r\n\r");
 }
 
 #if defined(__18F2680) || defined(__18F4585)
