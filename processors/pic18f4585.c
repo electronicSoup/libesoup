@@ -33,7 +33,7 @@ extern void check_timer(uint8_t timer);
 extern void pic18f_timer_isr(uint8_t timer);
 extern void pic18f_serial_isr(void);
 
-void pic18f_init(void)
+void cpu_init(void)
 {
         RCONbits.IPEN = 0; // No Interrupt priority level
 }
