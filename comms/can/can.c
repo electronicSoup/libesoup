@@ -78,7 +78,7 @@ result_t can_init(can_baud_rate_t baudrate,
 	return(SUCCESS);
 }
 
-void status_handler(u8 mask, can_status_t status, can_baud_rate_t baud)
+static void status_handler(u8 mask, can_status_t status, can_baud_rate_t baud)
 {
 	LOG_D("status_handler(mask-0x%x, status-0x%x\n\r", mask, status.byte);
 
