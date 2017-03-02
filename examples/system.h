@@ -161,6 +161,16 @@
 #define SYS_MODBUS_RX_BUFFER_SIZE                  256
 #define SYS_MODBUS_RESPONSE_TIMEOUT                SECONDS_TO_TICKS(1)
 #define SYS_MODBUS_RESPONSE_BROADCAST_TIMEOUT      MILLI_SECONDS_TO_TICKS(500)
+
+/*
+ * SYS_SPI Definitions
+ */
+/**
+ * Enable the SYS_SPI_BUS switch if the project includes devices on the SPI
+ * bus. EEPROM is one example.
+ */
+//#define SYS_SPI_BUS
+
 /*
  * SYS_CAN Definitions
  */
