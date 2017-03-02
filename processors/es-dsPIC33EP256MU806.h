@@ -75,4 +75,6 @@
 #define dsPIC33_PRIMARY_OSCILLATOR     0b010
 #define dsPIC33_PRIMARY_OSCILLATOR_PLL 0b011
 
+extern void cpu_init(void);
+
 #endif // _ES_dsPIC33EP256MU806_H
