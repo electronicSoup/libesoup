@@ -21,6 +21,17 @@
  *******************************************************************************
  *
  */
+#define DEBUG_FILE TRUE
+#define TAG "UART"
+
+#include <stdio.h>
+
+#include "system.h"
+#include "es_lib/logger/serial_log.h"
+#include "es_lib/utils/rand.h"
+
+#include "es_lib/comms/uart.h"
+
 #define U1_RX_ISR_FLAG   IFS0bits.U1RXIF
 #define U1_TX_ISR_FLAG   IFS0bits.U1TXIF
 #define U1_RX_ISR_ENABLE IEC0bits.U1RXIE
@@ -40,17 +51,6 @@
 #define U4_TX_ISR_FLAG   IFS5bits.U4TXIF
 #define U4_RX_ISR_ENABLE IEC5bits.U4RXIE
 #define U4_TX_ISR_ENABLE IEC5bits.U4TXIE
-
-#define DEBUG_FILE TRUE
-#define TAG "UART"
-
-#include <stdio.h>
-
-#include "system.h"
-#include "es_lib/logger/serial_log.h"
-#include "es_lib/utils/rand.h"
-
-#include "es_lib/comms/uart.h"
 
 /*
  * Check required system.h defines are found
