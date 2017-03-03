@@ -52,6 +52,8 @@
 #include "es_lib/boards/cb-PIC24FJ256GB106.h"
 #elif defined(__18F4585)
 #include "es_lib/boards/gauge-PIC18F4585.h"
+#elif defined(__RPI)
+#include "es_lib/boards/rpi.h"
 #endif
 
 /**
@@ -142,8 +144,8 @@
  * Default : Switch is commented out assuming timer functionality not included
  * in project.
  */
-//#define SYS_NUMBER_OF_SW_TIMERS 20     // Default disabled
-#define SYS_SW_TICK_ms     5      // mSeconds
+#define SYS_NUMBER_OF_SW_TIMERS 20 
+#define SYS_SW_TICK_ms           5        // mSeconds
 
 /*
  * System jobs
