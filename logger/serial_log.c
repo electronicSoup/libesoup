@@ -35,6 +35,13 @@
 #error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
 #endif
 
+
+
+#ifndef SYS_SERIAL_LOGGING_BAUD
+#error system.h file should define the SYS_SERIAL_LOGGING_BAUD
+#endif
+
+#ifndef ES_LINUX
 #if defined(__18F2680) || defined(__18F4585)
 #ifndef SYS_USART_TX_BUFFER_SIZE
 #error system.h should define SYS_USART_TX_BUFFER_SIZE (see es_lib/examples/system.h)
@@ -45,15 +52,10 @@
 #endif
 #endif
 
-
-#ifndef SYS_SERIAL_LOGGING_BAUD
-#error system.h file should define the SYS_SERIAL_LOGGING_BAUD
-#endif
-
 #ifndef SYS_CLOCK_FREQ
 #error system.h file should define the SYS_CLOCK_FREQ
 #endif
-
+#endif
 
 #if defined (MCP)
 #include "es_lib/comms/uart/uart.h"
