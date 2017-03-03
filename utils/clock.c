@@ -32,9 +32,9 @@
  * The switch __dsPIC33EP256MU806__ is automatically set by the Microchip 
  * build system, if that is the target device of the build.
  */
-#if defined(__dsPIC33EP256MU806__)
 void clock_init(void)
 {
+#if defined(__dsPIC33EP256MU806__)
         uint8_t clock;
 
         /*
@@ -72,5 +72,5 @@ void clock_init(void)
                 // Wait for PLL to lock
                 while (OSCCONbits.LOCK!= 1);
         }
-}
 #endif // defined(__dsPIC33EP256MU806__)
+}
