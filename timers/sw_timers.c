@@ -31,34 +31,18 @@
  *
  * Linux refers to the interval of time as Jiffies where as in this code it's 
  * refered to as a "tick". This tick interval is defined in the core.h file
- * by the SYSTEM_TICK_ms Macro and is currently set to 5 milli Second. 
+ * by the SYS_SW_TICK_ms Macro and is currently set to 5 milli Second. 
  *
- * core.h also includes two macros for calculating real time intervals in 
- * timer tick intervals:
- *
- * #define SECONDS_TO_TICKS(s)  ((s) * (1000 / SYSTEM_TICK_ms))
- * #define MILLI_SECONDS_TO_TICKS(ms) ((ms < SYSTEM_TICK_ms) ? 1 : (ms / SYSTEM_TICK_ms))
+ * Two macros can be used to calculate the Ticks required for a timer.
+ * 
+ * SECONDS_TO_TICKS(s)
+ * MILLI_SECONDS_TO_TICKS(ms)
+ * 
  * Both of these utilities should be used for portability, just in case the 
  * timer tick period is changed.
  *
- * To use these timer funcionality the initilaisation function timer_init()
- * must be called and at regular intervals the macro CHECK_TIMERS() must be
- * called. So your main() might look something like:
- *
- * void main(void)
- * {
- *     timer_init();
- *
- *     // Other Initialisation
- *
- *     while(1) {
- *         CHECK_TIMERS()
- *
- *         // Main control loop Code.
- *     }
- * } 
- *
- *
+ * The es_lib/examples directory contains an example main.c named 
+ * main_sw_timers.c
  *
  */
 #include "system.h"
@@ -132,18 +116,6 @@ static void hw_expiry_function(void *data)
 {
 	timer_ticked = TRUE;
 }
-
-#if defined(__18F2680) || defined(__18F4585)
-void timer_isr(void)
-{
-	if (INTCONbits.TMR0IF) {
-		INTCONbits.TMR0IF = 0;
-		TMR0H = TMR0H_VAL;      // Have to write High Byte First.
-		TMR0L = TMR0L_VAL;
-		timer_ticked = TRUE;
-	}
-}
-#endif // (__18F2680) || (__18F4584)
 #endif // MCP
 
 /*
@@ -152,9 +124,7 @@ void timer_isr(void)
  * Function to initialise the data structures for timers and start 
  * Timer_1 of the PIC 
  *
- * This function is not required by ES_LINUX systems
  */
-#ifdef MCP
 void sw_timer_init(void)
 {
 	uint8_t loop;
@@ -197,7 +167,6 @@ void sw_timer_init(void)
 	INTCONbits.TMR0IE = 1;  // Timer 0 Interrupt Enable
 #endif // (__18F2680) || (__18F4585)
 }
-#endif // MCP
 
 /*
  * void timer_tick(void)
@@ -370,11 +339,8 @@ result_t sw_timer_start(uint16_t ticks,
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 //	log_d(TAG, "Setting time to %d Seconds %d nano Seonds\n\r", 
 #endif
-//		   (duration * SYSTEM_TICK_ms) / 1000, 
-//		   (duration * SYSTEM_TICK_ms) % 1000 * 1000000);
-
-	its.it_value.tv_sec = (ticks * SYS_SYSTEM_TICK_ms) / 1000;
-	its.it_value.tv_nsec = (ticks * SYS_SYSTEM_TICK_ms) % 1000 * 1000000;
+	its.it_value.tv_sec = (ticks * SYS_SW_TIMER_TICK_ms) / 1000;
+	its.it_value.tv_nsec = (ticks * SYS_SW_TIMER_TICK_ms) % 1000 * 1000000;
 	its.it_interval.tv_sec = 0;
 	its.it_interval.tv_nsec = 0;
 

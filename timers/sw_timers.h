@@ -114,47 +114,47 @@ typedef void (*expiry_function)(timer_t timer_id, union sigval);
 #endif // (__18F2680) || __18F4585)
 
 
-    /*
-     * CHECK_TIMERS()
-     *
-     * this CHECK_TIMERS() macro should be placed in the main loop of you code
-     * so taht it calls the library timer functionality when ever the tick
-     * interrup has occured.
-     */
-    #define CHECK_TIMERS()  if(timer_ticked) timer_tick();
+/*
+ * CHECK_TIMERS()
+ *
+ * this CHECK_TIMERS() macro should be placed in the main loop of you code
+ * so taht it calls the library timer functionality when ever the tick
+ * interrup has occured.
+ */
+#define CHECK_TIMERS()  if(timer_ticked) timer_tick();
 
-    extern volatile boolean timer_ticked;
+extern volatile boolean timer_ticked;
 
-    /*
-     * sw_timer_init()
-     *
-     * This function should be called to initialise the timer functionality
-     * of the electronicSoup CinnamonBun Library. It initialises all data
-     * structures. The project's system.h header file should define the number
-     * of timers the library should define space for an manage. See the
-     * definition of SYS_NUMBER_OF_TIMERS in the example system.h file in the
-     * es_lib directory.
-     */
-    extern void sw_timer_init(void);
+/*
+ * timer_tick()
+ *
+ * This function should not be called directly but called with the
+ * CHECK_TIMERS macro defined above. It should be called only when the
+ * timer interrupt has fired for a timer tick. The period of the timer tick
+ * is defined in core.h.
+ */
+extern void timer_tick(void);
 
-    /*
-     * timer_tick()
-     *
-     * This function should not be called directly but called with the
-     * CHECK_TIMERS macro defined above. It should be called only when the
-     * timer interrupt has fired for a timer tick. The period of the timer tick
-     * is defined in core.h.
-     */
-    extern void timer_tick(void);
-
-    /*
-     * timer_isr
-     */
+/*
+ * timer_isr
+ */
 #if defined(__18F2680) || defined(__18F4585)
     extern void timer_isr(void);
 #endif // (__18F2680) || (__18F4585)
 
 #endif // MCP
+
+/*
+ * sw_timer_init()
+ *
+ * This function should be called to initialise the timer functionality
+ * of the electronicSoup CinnamonBun Library. It initialises all data
+ * structures. The project's system.h header file should define the number
+ * of timers the library should define space for an manage. See the
+ * definition of SYS_NUMBER_OF_TIMERS in the example system.h file in the
+ * es_lib directory.
+ */
+extern void sw_timer_init(void);
 
 /*
  * sw_timer_start()
