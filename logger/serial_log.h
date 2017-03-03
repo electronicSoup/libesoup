@@ -42,11 +42,6 @@
 extern void serial_logging_init(void);
 extern void es_printf(const char *s, ...);
 
-extern void log_d(const char *tag, const char *fmt, ...);
-extern void log_i(const char *tag, const char *fmt, ...);
-extern void log_w(const char *tag, const char *fmt, ...);
-extern void log_e(const char *tag, const char *fmt, ...);
-
 /*
  * The PIC18 Processors process the serial Interrupt loading up the TXREG
  * register. This function should be called from the PIC18 ISR
@@ -56,6 +51,13 @@ extern void serial_isr(void);
 extern void putch(char);
 #endif // (__18F2680) || (__18F4585)
 
-#endif
+#endif // MCP
+
+extern void log_d(const char *tag, const char *fmt, ...);
+extern void log_i(const char *tag, const char *fmt, ...);
+extern void log_w(const char *tag, const char *fmt, ...);
+extern void log_e(const char *tag, const char *fmt, ...);
+
+
 
 #endif // SERIAL_LOG_H
