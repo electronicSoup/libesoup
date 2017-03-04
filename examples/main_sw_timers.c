@@ -50,7 +50,7 @@ int main(void)
 
         rc = sw_timer_start(SECONDS_TO_TICKS(30), expiry, data, &timer);
         
-        if(timer == BAD_TIMER) {
+        if(rc != SUCCESS) {
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
 	        log_e(TAG, "Failed to start HW Timer\n\r");
 #endif
@@ -64,7 +64,7 @@ int main(void)
         return 0;
 }
 
-static void expiry(timer_t timer_id, union sigval data)
+static void expiry(timer_t timer_id  __attribute__((unused)), union sigval data __attribute__((unused)))
 {
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
         log_d(TAG, "exp_func()\n\r");
