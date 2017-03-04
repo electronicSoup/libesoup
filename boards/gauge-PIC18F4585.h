@@ -39,4 +39,6 @@
 //#define HEARTBEAT_LED_DIRECTION    TRISBbits.RB4
 //#define HEARTBEAT_LED              LATBbits.LATB4
 
+#include "es_lib/core.h"
+
 #endif // _GUAGE-PIC18F4585_H

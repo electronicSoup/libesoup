@@ -48,7 +48,6 @@
  * first part will be false but it's the second part of the or statement
  * that will dictate the action of the if!
  */
-#define BOOT_FLAG      (TRISGbits.TRISG9 = 0 || PORTGbits.RG9)
 
 /*
  * Serial Logging
