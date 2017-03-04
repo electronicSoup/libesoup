@@ -125,8 +125,12 @@
  * Default : Switch is commented out assuming timer functionality not included
  * in project.
  */
+//#define SYS_SW_TIMERS
+
+#ifdef SYS_SW_TIMERS
 #define SYS_NUMBER_OF_SW_TIMERS 20 
 #define SYS_SW_TICK_ms           5        // mSeconds
+#endif // SYS_SW_TIMERS
 
 /*
  * System jobs
