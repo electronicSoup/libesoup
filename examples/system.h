@@ -57,14 +57,6 @@
 #endif
 
 /**
- * @brief core definitions required by the library
- *
- * core.h contains all fundamental types used in es_lib and thus your 
- * project.
- */
-#include "es_lib/core.h"
-
-/**
  * @brief The required Instruction clock frequency of the device. 
  * 
  * The actual Hardware clock frequency is defined by the MACRO CRYSTAL_FREQ in
@@ -120,26 +112,15 @@
 /**
  * @brief Number of Software timers available in the system.
  *
- * If your project includes es_lib Timer code then you must use this definition
- * to define number of timers actually avalible in the system. 
+ * If your project includes es_lib Software Timer code then you must use this 
+ * definition to define number of timers actually avalible in the system. 
  *
  * In addition to adding this Switch your code must initialise the timer
  * functionality and regularly check the timers with the "CHECK_TIMERS()" MACRO
- * defined in es_lib/timers/timers.h
+ * defined in es_lib/timers/sw_timers.h
  *
- * An example stripped down main:
- *
- *     #include "es_lib/timers/sw_timers.h"
- *
- *     int main(void)
- *     {
- *             sw_timer_init();
- * 
- *             while(TRUE) {
- *                     asm ("CLRWDT");
- *                     CHECK_TIMERS();
- *             }
- *     }
+ * For an example of using the Software timers take a look at:
+ * es_lib/examples/main_sw_timers.c
  * 
  * Default : Switch is commented out assuming timer functionality not included
  * in project.
