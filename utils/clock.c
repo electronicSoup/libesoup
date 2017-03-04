@@ -7,30 +7,41 @@
  * Copyright 2016 John Whitmore <jwhitmore@electronicsoup.com>
  *
  * This program is free software; you can redistribute it and/or modify
- * it under the terms of the version 2 of the GNU General Public License
+ * it under the terms of the version 2 of the GNU Lesser General Public License
  * as published by the Free Software Foundation
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
+ * GNU Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
+ * You should have received a copy of the GNU Lesser General Public License
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  *
  */
 #include "system.h"
 
-#if defined(__dsPIC33EP256MU806__)
+/*
+ * Check required system.h defines are found
+ */
+#ifndef SYS_CLOCK_FREQ
+#error system.h should define SYS_CLOCK_FREQ (see es_lib/examples/system.h)
+#endif
+
+/*
+ * The switch __dsPIC33EP256MU806__ is automatically set by the Microchip 
+ * build system, if that is the target device of the build.
+ */
 void clock_init(void)
 {
-        u8 clock;
+#if defined(__dsPIC33EP256MU806__)
+        uint8_t clock;
 
         /*
          * There's a special case if the required clock frequency is 1/2 the
          * Crystal Frequency then we can simple use Primary Clock.
          */
-        if(CLOCK_FREQ == (CRYSTAL_FREQ/2)) {
+        if(SYS_CLOCK_FREQ == (CRYSTAL_FREQ/2)) {
                 // Initiate Clock Switch to Primary Oscillator
                 clock = dsPIC33_PRIMARY_OSCILLATOR;
                 __builtin_write_OSCCONH(clock);
@@ -57,9 +68,9 @@ void clock_init(void)
         // Wait for Clock switch to occur
         while (OSCCONbits.COSC!= clock);
 
-        if(CLOCK_FREQ != (CRYSTAL_FREQ/2)) {
+        if(SYS_CLOCK_FREQ != (CRYSTAL_FREQ/2)) {
                 // Wait for PLL to lock
                 while (OSCCONbits.LOCK!= 1);
         }
-}
 #endif // defined(__dsPIC33EP256MU806__)
+}

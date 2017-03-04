@@ -26,7 +26,7 @@
 #include "es_lib/logger/serial_log.h"
 #include "es_lib/timers/rtc.h"
 
-static u8  current_datetime_valid = FALSE;
+static uint8_t  current_datetime_valid = FALSE;
 
 /*
  * Function prototypes
@@ -34,20 +34,38 @@ static u8  current_datetime_valid = FALSE;
 
 void _ISR __attribute__((__no_auto_psv__)) _RTCCInterrupt(void)
 {
-	LOG_D("RTCC ISR\n\r");
+#if defined(SYS_LOG_LEVEL)
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+	log_d(TAG, "RTCC ISR\n\r");
+#endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 }
 
-result_t rtc_update_current_datetime(u8 *data, u16 len)
+result_t rtc_update_current_datetime(uint8_t *data, uint16_t len)
 {
-	u16 year          = 0x00;
-	u16 month_day     = 0x00;
-	u16 weekday_hours = 0x00;
-	u16 min_sec       = 0x00;
+	uint16_t year          = 0x00;
+	uint16_t month_day     = 0x00;
+	uint16_t weekday_hours = 0x00;
+	uint16_t min_sec       = 0x00;
 
-	LOG_D("rtc_update_current_datetime()\n\r");
+#if defined(SYS_LOG_LEVEL)
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+	log_d(TAG, "rtc_update_current_datetime()\n\r");
+#endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 
 	if(len != 17) {
-		LOG_E("Bad input datetime\n\r");
+#if defined(SYS_LOG_LEVEL)
+#if (SYS_LOG_LEVEL <= LOG_ERROR)
+		log_e(TAG, "Bad input datetime\n\r");
+#endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 		return(ERR_BAD_INPUT_PARAMETER);
 	}
 #if 0
@@ -108,7 +126,13 @@ result_t rtc_update_current_datetime(u8 *data, u16 len)
 
 	current_datetime_valid = TRUE;
 #if 0
-	LOG_D("Current datetime set to %d%d%d-%d:%d:%d\n\r",
+#if defined(SYS_LOG_LEVEL)
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+	log_d(TAG, "Current datetime set to %d%d%d-%d:%d:%d\n\r",
+#endif
+#else  //  if defined(SYS_LOG_LEVEL)
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif //  if defined(SYS_LOG_LEVEL)
 		current_datetime.year,
 		current_datetime.month,
 		current_datetime.day,
