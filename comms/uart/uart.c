@@ -32,26 +32,6 @@
 
 #include "es_lib/comms/uart/uart.h"
 
-#define U1_RX_ISR_FLAG   IFS0bits.U1RXIF
-#define U1_TX_ISR_FLAG   IFS0bits.U1TXIF
-#define U1_RX_ISR_ENABLE IEC0bits.U1RXIE
-#define U1_TX_ISR_ENABLE IEC0bits.U1TXIE
-
-#define U2_RX_ISR_FLAG   IFS1bits.U2RXIF
-#define U2_TX_ISR_FLAG   IFS1bits.U2TXIF
-#define U2_RX_ISR_ENABLE IEC1bits.U2RXIE
-#define U2_TX_ISR_ENABLE IEC1bits.U2TXIE
-
-#define U3_RX_ISR_FLAG   IFS5bits.U3RXIF
-#define U3_TX_ISR_FLAG   IFS5bits.U3TXIF
-#define U3_RX_ISR_ENABLE IEC5bits.U3RXIE
-#define U3_TX_ISR_ENABLE IEC5bits.U3TXIE
-
-#define U4_RX_ISR_FLAG   IFS5bits.U4RXIF
-#define U4_TX_ISR_FLAG   IFS5bits.U4TXIF
-#define U4_RX_ISR_ENABLE IEC5bits.U4RXIE
-#define U4_TX_ISR_ENABLE IEC5bits.U4TXIE
-
 /*
  * Check required system.h defines are found
  */
@@ -69,9 +49,9 @@ enum uart_status {
 };
 
 struct uart {
-	enum uart_status  status;
+	enum uart_status       status;
 	uint16_t               magic;
-	struct uart_data *data;
+	struct uart_data      *data;
 	uint8_t                tx_buffer[SYS_UART_TX_BUFFER_SIZE];
 	uint16_t               tx_write_index;
 	uint16_t               tx_read_index;
@@ -99,6 +79,14 @@ static uint16_t load_tx_buffer(uint8_t uart);
 /*
  * Interrupt Service Routines
  */
+void _ISR __attribute__((__no_auto_psv__)) _U1TXInterrupt(void)
+{
+	while(U1_TX_ISR_FLAG) {
+		uart_tx_isr(UART_1);
+		U1_TX_ISR_FLAG = 0;
+	}
+}
+
 void _ISR __attribute__((__no_auto_psv__)) _U2TXInterrupt(void)
 {
 	while(U2_TX_ISR_FLAG) {
@@ -137,6 +125,37 @@ static void uart_tx_isr(uint8_t uart)
 	 */
 	if (!load_tx_buffer(uart)) {
 		switch(uart) {
+			case UART_1:
+				/*
+				 * Can't use U2STAbits.TRMT to detect when Tx Queue is empty
+				 * as it ain't reliable at all.
+				 */
+				if (U1STAbits.UTXISEL0) {
+					while (!U1STAbits.TRMT) {
+						Nop();
+					}
+
+					/*
+					 * Interrupt when a character is transferred to the Transmit Shift
+					 * Register (TSR), and as a result, the transmit buffer becomes empty
+					 */
+					U1STAbits.UTXISEL1 = 1;
+					U1STAbits.UTXISEL0 = 0;
+
+                                        /*
+                                         * Inform the higher layer we're finished
+                                         */
+                                        uarts[uart].data->tx_finished(uarts[uart].data);
+				} else {
+					/*
+					 * Interrupt when the last character is shifted out of the Transmit
+					 * Shift Register; all transmit operations are completed
+					 */
+					U1STAbits.UTXISEL1 = 0;
+					U1STAbits.UTXISEL0 = 1;
+				}
+				break;
+
 			case UART_2:
 				/*
 				 * Can't use U2STAbits.TRMT to detect when Tx Queue is empty
@@ -243,6 +262,27 @@ static void uart_tx_isr(uint8_t uart)
 /*
  * Receive Interrupt Service Routines
  */
+void _ISR __attribute__((__no_auto_psv__)) _U1RXInterrupt(void)
+{
+	uint8_t ch;
+
+	U1_RX_ISR_FLAG = 0;
+
+	asm ("CLRWDT");
+
+	if (U1STAbits.OERR) {
+#if (SYS_LOG_LEVEL <= LOG_ERROR)
+		log_e(TAG, "RX Buffer overrun\n\r");
+#endif
+		U1STAbits.OERR = 0;   /* Clear the error flag */
+	}
+
+	while (U1STAbits.URXDA) {
+		ch = U1RXREG;
+		uarts[UART_1].data->process_rx_char(UART_1, ch);
+	}
+}
+
 void _ISR __attribute__((__no_auto_psv__)) _U2RXInterrupt(void)
 {
 	uint8_t ch;
@@ -476,6 +516,40 @@ static void uart_putchar(uint8_t uart, uint8_t ch)
 	 * If the Transmitter queue is currently empty turn on chip select.
 	 */
 	switch(uart) {
+		case UART_1:
+			/*
+			 * If either the TX Buffer is full OR there are already characters in
+			 * our SW Buffer then add to SW buffer
+			 */
+			if(U1STAbits.UTXBF || uarts[uart].tx_count) {
+				if (uarts[uart].tx_count == 0) {
+					/*
+					 * Interrupt when a character is transferred to the Transmit Shift
+					 * Register (TSR), and as a result, the transmit buffer becomes empty
+					 */
+					U1STAbits.UTXISEL1 = 1;
+					U1STAbits.UTXISEL0 = 0;
+				}
+
+				if(uarts[uart].tx_count == SYS_UART_TX_BUFFER_SIZE) {
+#if (SYS_LOG_LEVEL <= LOG_ERROR)
+					log_e(TAG, "Circular buffer full!");
+#endif
+					return;
+				}
+
+				uarts[uart].tx_buffer[uarts[uart].tx_write_index] = ch;
+                                /*
+                                 * Compiler don't like following two lines in a oner
+                                 */
+                                tmp = ++(uarts[uart].tx_write_index) % SYS_UART_TX_BUFFER_SIZE;
+				uarts[uart].tx_write_index = tmp;
+				uarts[uart].tx_count++;
+			} else {
+				U1TXREG = ch;
+			}
+			break;
+
 		case UART_2:
 			/*
 			 * If either the TX Buffer is full OR there are already characters in
@@ -622,10 +696,10 @@ static void uart_set_rx_pin(uint8_t uart, uint8_t pin)
 	}
 
 	switch (uart) {
-//		case UART_1:
-//			RPINR18bits.U1RXR = pin;
-//			break;
-//
+		case UART_1:
+			RPINR18bits.U1RXR = pin;
+			break;
+
 		case UART_2:
 			RPINR19bits.U2RXR = pin;
 			break;
@@ -645,9 +719,9 @@ static void uart_set_tx_pin(uint8_t uart, uint8_t pin)
 	uint8_t tx_function;
 
 	switch (uart) {
-//		case UART_1:
-//			tx_function = 3;
-//			break;
+		case UART_1:
+			tx_function = 3;
+			break;
 
 		case UART_2:
 			tx_function = 5;
@@ -703,6 +777,34 @@ static void uart_set_tx_pin(uint8_t uart, uint8_t pin)
 static void uart_set_com_config(struct uart_data *com)
 {
 	switch (com->uart) {
+		case UART_1:
+			U1MODE = com->uart_mode;
+			U1MODEbits.UARTEN = 1;
+
+			U1STA = 0x8410;
+
+			/*
+			 * Interrupt when a character is transferred to the Transmit Shift
+			 * Register (TSR), and as a result, the transmit buffer becomes empty
+			 */
+			U1STAbits.UTXISEL1 = 1;
+			U1STAbits.UTXISEL0 = 0;
+
+			/*
+			 * Desired Baud Rate = FCY/(16 (UxBRG + 1))
+			 *
+			 * UxBRG = ((FCY/Desired Baud Rate)/16) - 1
+			 *
+			 * UxBRG = ((CLOCK/MODBUS_BAUD)/16) -1
+			 *
+			 */
+			U1BRG = ((SYS_CLOCK_FREQ / com->baud) / 16) - 1;
+                        U1_RX_ISR_FLAG = 0;
+                        U1_TX_ISR_FLAG = 0;
+			U1_RX_ISR_ENABLE = 1;
+			U1_TX_ISR_ENABLE = 1;
+			break;
+
 		case UART_2:
 			U2MODE = com->uart_mode;
 			U2MODEbits.UARTEN = 1;
@@ -803,6 +905,23 @@ static uint16_t load_tx_buffer(uint8_t uart)
         uint8_t tmp;
         
 	switch (uart) {
+		case UART_1:
+			/*
+			 * If the TX buffer is not full load it from the circular buffer
+			 */
+			while ((!U1STAbits.UTXBF) && (uarts[uart].tx_count)) {
+				U1TXREG = uarts[uart].tx_buffer[uarts[uart].tx_read_index];
+                                /*
+                                 * Compiler don't like following two lines in a oner
+                                 */
+                                tmp = ++(uarts[uart].tx_read_index) % SYS_UART_TX_BUFFER_SIZE;
+				uarts[uart].tx_read_index = tmp;
+				uarts[uart].tx_count--;
+			}
+
+			return(uarts[uart].tx_count);
+			break;
+
 		case UART_2:
 			/*
 			 * If the TX buffer is not full load it from the circular buffer
