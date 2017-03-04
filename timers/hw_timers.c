@@ -89,7 +89,11 @@ static struct hw_timer_data timers[NUMBER_HW_TIMERS];
  */
 static result_t  start_timer(uint8_t timer, ty_time_units units, uint16_t time, uint8_t repeat, void (*expiry_function)(void *), void *data);
 static void      set_clock_divide(uint8_t timer, uint16_t clock_divide);
-static void      check_timer(uint8_t timer);
+
+/*
+ * Called from external scope by pic18f4585.c
+ */
+void      check_timer(uint8_t timer);
 
 /*
  * The Code:
@@ -659,7 +663,10 @@ static void set_clock_divide(uint8_t timer, uint16_t clock_divide)
 	}
 }
 
-static void check_timer(uint8_t timer)
+/*
+ * Not static as called from pic18f4585.c processor
+ */
+void check_timer(uint8_t timer)
 {
 #if defined(__18F4585)
         uint16_t           remainder;
