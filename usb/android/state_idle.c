@@ -27,18 +27,22 @@
 /*
  * Microchip USB Includes
  */
-//#include "usb/usb.h"
-//#include "usb/usb_host_android.h"
 #include "usb/inc/usb.h"
 #include "usb/inc/usb_host_android.h"
 
 #include "es_lib/usb/android/state.h"
-//#include "es_lib/usb/android/ipc.h"
 
-#define DEBUG_FILE
+#define DEBUG_FILE TRUE
 #include "es_lib/logger/serial_log.h"
 
 #define TAG "Idle"
+
+/*
+ * Check required system.h defines are found
+ */
+#ifndef SYS_LOG_LEVEL
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif
 
 /*
  * Variables to keep track of the state of comms with Android Device.
@@ -59,12 +63,10 @@ void idle_process_usb_event(USB_EVENT event);
  */
 void set_idle_state(void)
 {
-#if defined(SYS_LOG_LEVEL)
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_INFO))
+#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_INFO))
 	LOG_I("Android state -> Idle\n\r");
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
 #endif //  if defined(SYS_LOG_LEVEL)
 	android_state.process_msg = idle_process_msg;
 	android_state.main = idle_main;
@@ -80,13 +82,9 @@ void idle_process_msg(u8 cmd, void *data, u16 data_len)
 	if (cmd == APP_MSG_APP_CONNECT) {
 		ANDROID_SET_APPLICATION_CONNECTED_STATE
 	} else {
-#if defined(SYS_LOG_LEVEL)
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
-		LOG_E("Android Connected State received Android message other then App connected 0x%x\n\r", cmd);
+		log_e(TAG, "Android Connected State received Android message other then App connected 0x%x\n\r", cmd);
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif //  if defined(SYS_LOG_LEVEL)
 	}
 }
 
@@ -96,8 +94,8 @@ void idle_process_msg(u8 cmd, void *data, u16 data_len)
  */
 void idle_main()
 {
-#if defined(NO_ANDROID_APP_FN)
-	NO_ANDROID_APP_FN
+#if defined(SYS_ANDROID_NO_APP_FN)
+	SYS_ANDROID_NO_APP_FN
 #endif
 }
 
