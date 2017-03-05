@@ -25,7 +25,7 @@
 #include "system.h"
 
 #include "es_lib/logger/serial_log.h"
-#include "es_lib/modbus/modbus.h"
+#include "es_lib/comms/modbus/modbus.h"
 
 /*
  * Check required system.h defines are found

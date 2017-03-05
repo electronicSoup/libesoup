@@ -83,6 +83,7 @@ static uint16_t tx_buffer_count = 0;
  *
  * \brief Interrupt Service Routine for received characters from UART 1
  */
+#if 0
 #if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__)
 void __attribute__((__interrupt__, __no_auto_psv__)) _U1RXInterrupt(void)
 #elif defined(__dsPIC33EP256MU806__)
@@ -105,6 +106,7 @@ void _ISR __attribute__((__no_auto_psv__)) _U1RXInterrupt(void)
 	IFS0bits.U1RXIF = 0;
 }
 #endif
+#endif // 0
 
 /**
  * \fn serial_init()
@@ -258,6 +260,7 @@ void es_printf(const char *fmt, ...)
 #endif
 }
 
+#if (SYS_LOG_LEVEL <= LOG_DEBUG)
 void log_d(const char *tag, const char *fmt, ...)
 {
         va_list arguments;           
@@ -272,7 +275,9 @@ void log_d(const char *tag, const char *fmt, ...)
         printf(fmt, arguments);
 #endif
 }
+#endif // LOG_DEBUG
 
+#if (SYS_LOG_LEVEL <= LOG_INFO)
 void log_i(const char *tag, const char *fmt, ...)
 {
         va_list arguments;                     
@@ -287,7 +292,9 @@ void log_i(const char *tag, const char *fmt, ...)
         printf(fmt, arguments);
 #endif
 }
+#endif // LOG_INFO
 
+#if (SYS_LOG_LEVEL <= LOG_WARNING)
 void log_w(const char *tag, const char *fmt, ...)
 {
         va_list arguments;                     
@@ -302,7 +309,9 @@ void log_w(const char *tag, const char *fmt, ...)
         printf(fmt, arguments);
 #endif
 }
+#endif // LOG_WARNING
 
+#if (SYS_LOG_LEVEL <= LOG_ERROR)
 void log_e(const char *tag, const char *fmt, ...)
 {
         va_list arguments;                     
@@ -317,3 +326,4 @@ void log_e(const char *tag, const char *fmt, ...)
         printf(fmt, arguments);
 #endif
 }
+#endif  // LOG_ERROR
