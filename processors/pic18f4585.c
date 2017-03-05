@@ -33,7 +33,7 @@ extern void check_timer(uint8_t timer);
 extern void pic18f_timer_isr(uint8_t timer);
 extern void pic18f_serial_isr(void);
 
-void pic18f_init(void)
+void cpu_init(void)
 {
         RCONbits.IPEN = 0; // No Interrupt priority level
 }
@@ -72,14 +72,18 @@ void interrupt tc_int(void)
                 TMR0IF = 0;
                 TMR0IE = 0;
                 T0CONbits.TMR0ON = 0;
+#ifdef SYS_SW_TIMERS
                 check_timer(TIMER_0);
+#endif
         }
 
         if (TMR1IE && TMR1IF) {
                 TMR1IF=0;
                 TMR1IE = 0;
                 T1CONbits.TMR1ON = 0;
+#ifdef SYS_SW_TIMERS
                 check_timer(TIMER_1);
+#endif
         }
 
 	if(PIR1bits.TXIF) {

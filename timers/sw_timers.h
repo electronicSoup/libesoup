@@ -48,7 +48,7 @@ typedef uint8_t timer_t;
  * for a timer. If the system changes the @see SYS_SYSTEM_TICK_ms value for either
  * finer timer granularity or less granularity.
  */
-#define SECONDS_TO_TICKS(s)  ((s) * (1000 / SYS_SYSTEM_TICK_ms))
+#define SECONDS_TO_TICKS(s)  ((s) * (1000 / SYS_SW_TIMER_TICK_ms))
 
 /**
  * @brief convience macro to convert a MilliSeconds value to system ticks
@@ -57,7 +57,7 @@ typedef uint8_t timer_t;
  * timer granularity is changed. In addition future electronicSoup deivces may
  * well use different System Tick values.
  */
-#define MILLI_SECONDS_TO_TICKS(ms) ((ms < SYS_SYSTEM_TICK_ms) ? 1 : (ms / SYS_SYSTEM_TICK_ms))
+#define MILLI_SECONDS_TO_TICKS(ms) ((ms < SYS_SW_TIMER_TICK_ms) ? 1 : (ms / SYS_SW_TIMER_TICK_ms))
 
 #if defined(MCP)
 /**
@@ -109,72 +109,53 @@ typedef void (*expiry_function)(timer_t timer_id, union sigval);
  * Calculate the 16 bit value that will give us an ISR for the system tick
  * duration.
  */
-#define TMR0H_VAL ((0xFFFF - ((SYS_SYSTEM_TICK_ms * SYS_CLOCK_FREQ) / 4000)) >> 8) & 0xFF
-#define TMR0L_VAL (0xFFFF - ((SYS_SYSTEM_TICK_ms * SYS_CLOCK_FREQ) / 4000)) & 0xFF
+#define TMR0H_VAL ((0xFFFF - ((SYS_SW_TIMER_TICK_ms * SYS_CLOCK_FREQ) / 4000)) >> 8) & 0xFF
+#define TMR0L_VAL (0xFFFF - ((SYS_SW_TIMER_TICK_ms * SYS_CLOCK_FREQ) / 4000)) & 0xFF
 #endif // (__18F2680) || __18F4585)
 
 
-    /*
-     * CHECK_TIMERS()
-     *
-     * this CHECK_TIMERS() macro should be placed in the main loop of you code
-     * so taht it calls the library timer functionality when ever the tick
-     * interrup has occured.
-     */
-    #define CHECK_TIMERS()  if(timer_ticked) timer_tick();
+/*
+ * CHECK_TIMERS()
+ *
+ * this CHECK_TIMERS() macro should be placed in the main loop of you code
+ * so taht it calls the library timer functionality when ever the tick
+ * interrup has occured.
+ */
+#define CHECK_TIMERS()  if(timer_ticked) timer_tick();
 
-    extern volatile boolean timer_ticked;
+extern volatile boolean timer_ticked;
 
-    /*
-     * sw_timer_init()
-     *
-     * This function should be called to initialise the timer functionality
-     * of the electronicSoup CinnamonBun Library. It initialises all data
-     * structures. The project's system.h header file should define the number
-     * of timers the library should define space for an manage. See the
-     * definition of SYS_NUMBER_OF_TIMERS in the example system.h file in the
-     * es_lib directory.
-     */
-    extern void sw_timer_init(void);
+/*
+ * timer_tick()
+ *
+ * This function should not be called directly but called with the
+ * CHECK_TIMERS macro defined above. It should be called only when the
+ * timer interrupt has fired for a timer tick. The period of the timer tick
+ * is defined in core.h.
+ */
+extern void timer_tick(void);
 
-    /*
-     * timer_tick()
-     *
-     * This function should not be called directly but called with the
-     * CHECK_TIMERS macro defined above. It should be called only when the
-     * timer interrupt has fired for a timer tick. The period of the timer tick
-     * is defined in core.h.
-     */
-    extern void timer_tick(void);
-
-    /*
-     * timer_isr
-     */
+/*
+ * timer_isr
+ */
 #if defined(__18F2680) || defined(__18F4585)
     extern void timer_isr(void);
 #endif // (__18F2680) || (__18F4585)
 
 #endif // MCP
 
-/**
- * @brief convience macro to convert a Seconds value to system ticks
+/*
+ * sw_timer_init()
  *
- * For portability code should always use this macro to calculate system ticks
- * for a timer. If the system changes the @see SYSTEM_TICK_ms value for either
- * finer timer granularity or less granularity.
+ * This function should be called to initialise the timer functionality
+ * of the electronicSoup CinnamonBun Library. It initialises all data
+ * structures. The project's system.h header file should define the number
+ * of timers the library should define space for an manage. See the
+ * definition of SYS_NUMBER_OF_TIMERS in the example system.h file in the
+ * es_lib directory.
  */
-#define SECONDS_TO_TICKS(s)  ((s) * (1000 / SYS_SYSTEM_TICK_ms))
+extern void sw_timer_init(void);
 
-/**
- * @brief convience macro to convert a MilliSeconds value to system ticks
- * 
- * as for @see SECONDS_TO_TICKS code should always use this macro in case system
- * timer granularity is changed. In addition future electronicSoup deivces may
- * well use different System Tick values.
- */
-#define MILLI_SECONDS_TO_TICKS(ms) ((ms < SYS_SYSTEM_TICK_ms) ? 1 : (ms / SYS_SYSTEM_TICK_ms))
-
-    
 /*
  * sw_timer_start()
  * 

@@ -52,17 +52,6 @@
 //    typedef int8_t     s8;
 //    typedef int16_t    s16;
 //    typedef int32_t    s32;
-#if 0
-#include <GenericTypeDefs.h>
-
-    typedef UINT8    uint8_t;
-    typedef UINT16   uint16_t;
-    typedef UINT32   u32;
-
-    typedef INT8     s8;
-    typedef INT16    s16;
-    typedef INT32    s32;
-#endif
 #elif defined(ES_LINUX)
     #include <stdint.h>
 
@@ -678,11 +667,11 @@ typedef enum
  * http://stackoverflow.com/questions/4178392/how-to-separate-logging-logic-from-business-logic-in-a-c-program-and-in-a-c-o
  */
 
-extern void es_printf(char *fmt, ...);
-extern void log_d(char *tag, char *fmt, ...);
-extern void log_i(char *tag, char *fmt, ...);
-extern void log_w(char *tag, char *fmt, ...);
-extern void log_e(char *tag, char *fmt, ...);
+//extern void es_printf(char *fmt, ...);
+//extern void log_d(char *tag, char *fmt, ...);
+//extern void log_i(char *tag, char *fmt, ...);
+//extern void log_w(char *tag, char *fmt, ...);
+//extern void log_e(char *tag, char *fmt, ...);
 
 
 //#if (defined(DEBUG_FILE) && SYS_LOG_LEVEL <= LOG_DEBUG)

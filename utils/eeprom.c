@@ -60,6 +60,12 @@
 #error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
 #endif
 
+#if defined(SYS_EEPROM_USE_BOOT_PAGE)
+#ifndef SYS_EEPROM_BOOT_PAGE_SIZE
+#error system.h file should define SYS_EEPROM_BOOT_PAGE_SIZE (see es_lib/examples/system.h)
+#endif
+#endif // #if defined(SYS_EEPROM_USE_BOOT_PAGE)
+
 /*
  * EEPROM SPI Commands.
  */
@@ -103,9 +109,9 @@ result_t eeprom_read(uint16_t address, uint8_t *data)
 	uint8_t use_address;
 
 #ifdef SYS_EEPROM_USE_BOOT_PAGE
-	use_address = (uint8_t)address;
-#else
 	use_address = (uint8_t)(address + SYS_EEPROM_BOOT_PAGE_SIZE);
+#else
+	use_address = (uint8_t)address;
 #endif
 	if(use_address <= EEPROM_MAX_ADDRESS) {
 		clear_write_in_progress();
@@ -140,9 +146,9 @@ result_t eeprom_write(uint16_t address, uint8_t data)
 	uint8_t use_address;
 
 #ifdef SYS_EEPROM_USE_BOOT_PAGE
-	use_address = (uint8_t)address;
-#else
 	use_address = (uint8_t)(address + SYS_EEPROM_BOOT_PAGE_SIZE);
+#else
+	use_address = (uint8_t)address;
 #endif
 	if(use_address <= EEPROM_MAX_ADDRESS) {
 		clear_write_in_progress();
@@ -182,16 +188,19 @@ result_t eeprom_write(uint16_t address, uint8_t data)
 result_t eeprom_erase(uint16_t start_address)
 {
 	uint16_t loop;
+	uint8_t  use_address;
 
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
         log_e(TAG, "eeprom_erase(0x%x)\n\r", start_address);
 #endif
 #ifdef SYS_EEPROM_USE_BOOT_PAGE
-	if(start_address <= EEPROM_MAX_ADDRESS) {
+	use_address = (uint8_t)(start_address + SYS_EEPROM_BOOT_PAGE_SIZE);
 #else
-	if(start_address + SYS_EEPROM_BOOT_PAGE_SIZE <= EEPROM_MAX_ADDRESS) {
+	use_address = (uint8_t)start_address;
 #endif
-		for (loop = start_address; (loop + SYS_EEPROM_BOOT_PAGE_SIZE) <= EEPROM_MAX_ADDRESS ; loop++) {
+
+	if(use_address <= EEPROM_MAX_ADDRESS) {
+		for (loop = use_address; loop <= EEPROM_MAX_ADDRESS ; loop++) {
 			asm ("CLRWDT");
 			eeprom_write(loop, 0x00);
 		}
@@ -230,7 +239,7 @@ result_t eeprom_str_read(uint16_t address, uint8_t *buffer, uint16_t *length)
 	uint8_t       num_read = 0;
 	result_t rc;
 
-#if ((DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	log_d(TAG, "eeprom_str_read()\n\r");
 #endif
 	ptr = buffer;
@@ -248,7 +257,7 @@ result_t eeprom_str_read(uint16_t address, uint8_t *buffer, uint16_t *length)
 	}
 	*ptr = 0x00;
 	*length = num_read;
-#if ((DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	log_d(TAG, "eeprom_str_read() read %s\n\r", buffer);
 #endif
 	return (rc);
@@ -275,13 +284,13 @@ result_t  eeprom_str_write(uint16_t address, uint8_t *buffer, uint16_t *length)
 	uint16_t      copied = 0;
 	result_t rc = SUCCESS;
 
-#if ((DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	log_d(TAG, "eeprom_str_write()\n\r");
 #endif
 	ptr = buffer;
 
 	while ( (*ptr) && (rc == SUCCESS) && (copied < (*length - 1))) {
-#if ((DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 		log_d(TAG, "Write to location %d value 0x%x\n\r", address, *ptr);
 #endif
 		rc = eeprom_write(address++, *ptr++);
@@ -289,7 +298,7 @@ result_t  eeprom_str_write(uint16_t address, uint8_t *buffer, uint16_t *length)
 	}
 
 	if(rc == SUCCESS) {
-#if ((DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 		log_d(TAG, "Write loop finished\n\r");
 #endif
 		eeprom_write(address, 0x00);

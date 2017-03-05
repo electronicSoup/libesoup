@@ -23,7 +23,7 @@
 #define SERIAL_LOG_H
 
 /*
- *  serial_init()
+ *  serial_logging_init()
  *
  * This function is only defined for Code compiled for the Microchip
  * microcontroller so the switch MCP must be defined as part of your
@@ -40,7 +40,7 @@
  */
 #if defined(MCP)
 extern void serial_logging_init(void);
-extern void es_printf(char *s, ...);
+extern void es_printf(const char *s, ...);
 
 /*
  * The PIC18 Processors process the serial Interrupt loading up the TXREG
@@ -51,6 +51,13 @@ extern void serial_isr(void);
 extern void putch(char);
 #endif // (__18F2680) || (__18F4585)
 
-#endif
+#endif // MCP
+
+extern void log_d(const char *tag, const char *fmt, ...);
+extern void log_i(const char *tag, const char *fmt, ...);
+extern void log_w(const char *tag, const char *fmt, ...);
+extern void log_e(const char *tag, const char *fmt, ...);
+
+
 
 #endif // SERIAL_LOG_H

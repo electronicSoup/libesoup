@@ -20,20 +20,36 @@
  *
  */
 #include <stdlib.h>
+#include <stdio.h>
 #include "system.h"
 
 
-#define DEBUG_FILE
+#define DEBUG_FILE TRUE
 //#define SYS_LOG_LEVEL LOG_INFO
 #include "es_lib/logger/serial_log.h"
-#include "es_lib/can/es_can.h"
-#include "es_lib/can/dcncp/dcncp_can.h"
-#include "es_lib/can/l2_mcp2515.h"
-#include "es_lib/timers/timers.h"
+#include "es_lib/comms/can/es_can.h"
+#include "es_lib/comms/can/dcncp/dcncp_can.h"
+#include "es_lib/comms/can/l2_mcp2515.h"
+#include "es_lib/timers/sw_timers.h"
 
 #include "es_lib/utils/spi.h"
 
 #define TAG "MCP2515"
+
+/*
+ * Check required system.h defines are found
+ */
+#ifndef SYS_LOG_LEVEL
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif
+
+#ifndef SYS_CAN_L2_HANDLER_ARRAY_SIZE
+#error system.h file should define SYS_CAN_L2_HANDLER_ARRAY_SIZE (see es_lib/examples/system.h)
+#endif
+
+#ifndef SYS_CAN_RX_CIR_BUFFER_SIZE
+#error system.h file should define SYS_CAN_RX_CIR_BUFFER_SIZE (see es_lib/examples/system.h)
+#endif
 
 typedef struct
 {
@@ -45,9 +61,7 @@ typedef struct
 	uint8_t data[8];
 } canBuffer_t;
 
-#define CAN_RX_CIR_BUFFER_SIZE 5
-
-canBuffer_t buffer[CAN_RX_CIR_BUFFER_SIZE];
+canBuffer_t buffer[SYS_CAN_RX_CIR_BUFFER_SIZE];
 uint8_t        buffer_next_read = 0;
 uint8_t        buffer_next_write = 0;
 uint8_t        buffer_count = 0;
@@ -58,12 +72,12 @@ typedef struct
 	can_l2_target_t target;
 } can_register_t;
 
-static can_register_t registered_handlers[CAN_L2_HANDLER_ARRAY_SIZE];
+static can_register_t registered_handlers[SYS_CAN_L2_HANDLER_ARRAY_SIZE];
 static can_l2_frame_handler_t unhandled_handler;
 
 static uint8_t connecting_errors = 0;
 
-static BOOL mcp2515_isr = FALSE;
+static boolean mcp2515_isr = FALSE;
 
 /*
  * Byte to store current input values in TXRTSCTRL
@@ -82,15 +96,15 @@ static uint16_t ping_time;
 static void     service_device(void);
 static void     set_can_mode(uint8_t mode);
 static void     set_baudrate(can_baud_rate_t baudRate);
-#if defined(CAN_BAUD_AUTO_DETECT)
+#if defined(SYS_CAN_BAUD_AUTO_DETECT)
 static void     exp_check_network_connection(timer_t timer_id, union sigval);
 #endif // SYS_CAN_BAUD_AUTO_DETECT
 static void     exp_finalise_baudrate_change(timer_t timer_id, union sigval data);
 static void     exp_resend_baudrate_change(timer_t timer_id, union sigval data);
-#if defined(CAN_PING_PROTOCOL)
+#if defined(SYS_CAN_PING_PROTOCOL)
 static void     exp_test_ping(timer_t timer_id, union sigval data);
 static void     restart_ping_timer(void);
-static es_timer ping_timer;
+static uint8_t ping_timer;
 #endif
 
 
@@ -98,10 +112,10 @@ static void     enable_rx_interrupts(void);
 static void     disable_rx_interrupts(void);
 
 static void     reset(void);
-static void     set_reg_mask_value(uint8_t reg, u8 mask, u8 value);
-static uint8_t       read_reg(u8 reg);
-static void     write_reg(uint8_t reg, u8 value);
-static void     read_rx_buffer(uint8_t reg, u8 *buffer);
+static void     set_reg_mask_value(uint8_t reg, uint8_t mask, uint8_t value);
+static uint8_t       read_reg(uint8_t reg);
+static void     write_reg(uint8_t reg, uint8_t value);
+static void     read_rx_buffer(uint8_t reg, uint8_t *buffer);
 static uint8_t       find_free_tx_buffer(void);
 
 //static uint8_t CheckErrors(void);
@@ -123,7 +137,7 @@ static can_baud_rate_t listen_baudrate = no_baud;
 static uint8_t changing_baud_tx_error;
 //static uint8_t g_CanErrors = 0x00;
 //static UINT32 g_missedMessageCount = 0;
-static u32 rx_msg_count = 0;
+static uint32_t rx_msg_count = 0;
 //static UINT32 messageSentCount = 0;
 //static UINT32 wakeUpCount = 0;
 static can_frame rx_can_msg;
@@ -131,7 +145,7 @@ static can_frame rx_can_msg;
 static can_status_t status;
 static can_baud_rate_t status_baud = no_baud;
 #if defined(CAN_BAUD_AUTO_DETECT)
-static es_timer listen_timer;
+static uint8_t listen_timer;
 #endif
 static void (*status_handler)(uint8_t mask, can_status_t status, can_baud_rate_t baud) = NULL;
 
@@ -150,27 +164,19 @@ result_t can_l2_init(can_baud_rate_t arg_baud_rate,
 {
 	uint8_t        loop = 0x00;
 	uint8_t        exit_mode = NORMAL_MODE;
-	u32       delay;
+	uint32_t       delay;
 #ifndef SYS_CAN_PING_PROTOCOL
 	can_frame frame;
 #endif // SYS_CAN_PING_PROTOCOL
-#if defined(SYS_LOG_LEVEL)
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	log_d(TAG, "l2_init()\n\r");
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif //  if defined(SYS_LOG_LEVEL)
 
 #ifndef SYS_CAN_BAUD_AUTO_DETECT
 	if(arg_baud_rate >= no_baud) {
-#if defined(SYS_LOG_LEVEL)
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
 		log_e(TAG, "Bad Baud rate!!!\n\r");
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif //  if defined(SYS_LOG_LEVEL)
 		return (ERR_BAD_INPUT_PARAMETER);
 	}
 #endif // SYS_CAN_BAUD_AUTO_DETECT
@@ -183,13 +189,6 @@ result_t can_l2_init(can_baud_rate_t arg_baud_rate,
          */
         status.byte = 0x00;
         status_baud = no_baud;
-
-#if defined(CAN_BAUD_AUTO_DETECT)
-	TIMER_INIT(listen_timer);
-#endif
-#if defined(CAN_PING_PROTOCOL)
-	TIMER_INIT(ping_timer);
-#endif // SYS_CAN_PING_PROTOCOL
 
         /*
          * Initialise the Handlers table
@@ -225,13 +224,9 @@ result_t can_l2_init(can_baud_rate_t arg_baud_rate,
 	 * Have to set the baud rate if one has been passed into the function
 	 */
 	if(arg_baud_rate < no_baud) {
-#if defined(SYS_LOG_LEVEL)
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 		log_d(TAG, "Valid Baud Rate specified - %s\n\r", can_baud_rate_strings[arg_baud_rate]);
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif //  if defined(SYS_LOG_LEVEL)
 		connected_baudrate = arg_baud_rate;
 		set_baudrate(arg_baud_rate);
 		exit_mode = NORMAL_MODE;
@@ -247,13 +242,9 @@ result_t can_l2_init(can_baud_rate_t arg_baud_rate,
 		 * Have to search for the Networks baud rate. Start at the bottom
 		 */
 		rx_msg_count = 0;
-#if defined(SYS_LOG_LEVEL)
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 		log_d(TAG, "Before trying 10K REC - %d, rxCount - %ld\n\r", read_reg(REC), rx_msg_count);
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif //  if defined(SYS_LOG_LEVEL)
 		listen_baudrate = baud_10K;
 		set_baudrate(listen_baudrate);
 		exit_mode = LISTEN_MODE;
@@ -265,18 +256,14 @@ result_t can_l2_init(can_baud_rate_t arg_baud_rate,
 			status_handler(L2_STATUS_MASK, status, status_baud);
 
 		/* Now wait and see if we have errors */
-		timer_start(SECONDS_TO_TICKS(CAN_BAUD_AUTO_DETECT_LISTEN_PERIOD), exp_check_network_connection, (union sigval)(void *)NULL, &listen_timer);
+		sw_timer_start(SECONDS_TO_TICKS(CAN_BAUD_AUTO_DETECT_LISTEN_PERIOD), exp_check_network_connection, (union sigval)(void *)NULL, &listen_timer);
 #endif // SYS_CAN_BAUD_AUTO_DETECT
 	}
 	asm ("CLRWDT");
 
-#if defined(SYS_LOG_LEVEL)
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	log_d(TAG, "Set Exit Mode 0x%x\n\r", exit_mode);
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif //  if defined(SYS_LOG_LEVEL)
 	set_can_mode(exit_mode);
 
         /*
@@ -290,7 +277,7 @@ result_t can_l2_init(can_baud_rate_t arg_baud_rate,
 
 	// Create a random timer for firing the
 	// Network Idle Ping message
-#if defined(CAN_PING_PROTOCOL)
+#if defined(SYS_CAN_PING_PROTOCOL)
 	ping_time = (uint16_t)((rand() % SECONDS_TO_TICKS(1)) + (SECONDS_TO_TICKS(CAN_PING_PROTOCOL_PERIOD) - MILLI_SECONDS_TO_TICKS(500)));
         restart_ping_timer();
 #else
@@ -300,96 +287,65 @@ result_t can_l2_init(can_baud_rate_t arg_baud_rate,
 	can_l2_tx_frame(&frame);
 #endif
 
-#if defined(SYS_LOG_LEVEL)
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	log_d(TAG, "CAN Layer 2 Initialised\n\r");
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif //  if defined(SYS_LOG_LEVEL)
 	return(SUCCESS);
 }
 
-#if defined(CAN_PING_PROTOCOL)
+#if defined(SYS_CAN_PING_PROTOCOL)
 void exp_test_ping(timer_t timer_id __attribute__((unused)), union sigval data __attribute__((unused)))
 {
-#if defined(SYS_LOG_LEVEL)
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
         log_d(TAG, "exp_test_ping()\n\r");
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif //  if defined(SYS_LOG_LEVEL)
-	TIMER_INIT(ping_timer);
 
 	dcncp_send_ping();
         restart_ping_timer();
 }
 #endif
 
-#if defined(CAN_PING_PROTOCOL)
+#if defined(SYS_CAN_PING_PROTOCOL)
 void restart_ping_timer(void)
 {
 	if(ping_timer.status == ACTIVE) {
-#if defined(SYS_LOG_LEVEL)
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 //		log_d(TAG, "Cancel running ping timer\n\r");
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif //  if defined(SYS_LOG_LEVEL)
  		if(timer_cancel(&ping_timer) != SUCCESS) {
-#if defined(SYS_LOG_LEVEL)
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
 			log_e(TAG, "Failed to cancel the Ping timer\n\r");
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif //  if defined(SYS_LOG_LEVEL)
 			return;
 		}
 	}
 
-	timer_start(ping_time, exp_test_ping, (union sigval)(void *) NULL, &ping_timer);
+	sw_timer_start(ping_time, exp_test_ping, (union sigval)(void *) NULL, &ping_timer);
 }
-#endif
+#endif // defined(SYS_CAN_PING_PROTOCOL)
 
-#if defined(CAN_BAUD_AUTO_DETECT)
+#if defined(SYS_CAN_BAUD_AUTO_DETECT)
 void exp_check_network_connection(timer_t timer_id __attribute__((unused)), union sigval data __attribute__((unused)))
 {
 	result_t result;
 //	uint8_t rec = read_reg(REC);
 
-	TIMER_INIT(listen_timer);
-
 	if(listen_baudrate < no_baud) {
-#if defined(SYS_LOG_LEVEL)
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 		log_d(TAG, "After trying %s Errors - %d, rxCount - %ld\n\r", can_baud_rate_strings[listen_baudrate], connecting_errors, rx_msg_count);
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif //  if defined(SYS_LOG_LEVEL)
 	} else {
-#if defined(SYS_LOG_LEVEL)
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 		log_d(TAG, "After trying %s Errors - %d, rxCount - %ld\n\r", "NO BAUD RATE", connecting_errors, rx_msg_count);
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif //  if defined(SYS_LOG_LEVEL)
 	}
 	/*
 	 * If we heard valid messages with no errors we've found the baud rate.
 	 */
 	if(rx_msg_count > 0 && connecting_errors == 0) {
-#if defined(SYS_LOG_LEVEL)
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 		log_d(TAG, "*** Network connected ***\n\r");
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif //  if defined(SYS_LOG_LEVEL)
 		connected_baudrate = listen_baudrate;
 
 		set_can_mode(NORMAL_MODE);
@@ -404,13 +360,9 @@ void exp_check_network_connection(timer_t timer_id __attribute__((unused)), unio
 		if(listen_baudrate == no_baud)
 			listen_baudrate = baud_10K;
 
-#if defined(SYS_LOG_LEVEL)
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 		log_d(TAG, "No joy try Baud Rate - %s\n\r", can_baud_rate_strings[listen_baudrate]);
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif //  if defined(SYS_LOG_LEVEL)
 		set_can_mode(CONFIG_MODE);
 		set_baudrate(listen_baudrate);
 		set_can_mode(LISTEN_MODE);
@@ -423,25 +375,17 @@ void exp_check_network_connection(timer_t timer_id __attribute__((unused)), unio
 		if(status_handler)
 			status_handler(L2_STATUS_MASK, status, status_baud);
 
-#if defined(SYS_LOG_LEVEL)
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 		log_d(TAG, "Restart timer\n\r");
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif //  if defined(SYS_LOG_LEVEL)
-		result = timer_start(SECONDS_TO_TICKS(CAN_BAUD_AUTO_DETECT_LISTEN_PERIOD),
+		result = sw_timer_start(SECONDS_TO_TICKS(CAN_BAUD_AUTO_DETECT_LISTEN_PERIOD),
 				     exp_check_network_connection,
 				     (union sigval)(void *)NULL,
 				     &listen_timer);
 		if(result != SUCCESS) {
-#if defined(SYS_LOG_LEVEL)
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
 			log_e(TAG, "Failed to start listen timer, result 0x%x\n\r", result);
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif //  if defined(SYS_LOG_LEVEL)
 		}
 	}
 }
@@ -453,7 +397,6 @@ void exp_check_network_connection(timer_t timer_id __attribute__((unused)), unio
 void _ISR __attribute__((__no_auto_psv__)) _INT0Interrupt(void)
 {
     if(mcp2515_isr) {
-#if defined(SYS_LOG_LEVEL)
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
         log_e(TAG, "Overlapping MCP2515 ISR\n\r");
 #endif
@@ -484,53 +427,33 @@ static void service_device(void)
 		canstat = read_reg(CANSTAT);
 		write_reg(CANINTF, 0x00);
 
-#if defined(SYS_LOG_LEVEL)
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_WARNING))
 		log_w(TAG, "*** ISR with zero flags! IOCD %x\n\r", canstat & IOCD);
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif //  if defined(SYS_LOG_LEVEL)
 	} else {
-#if defined(SYS_LOG_LEVEL)
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 		log_d(TAG, "service_device() flags 0x%x\n\r", flags);
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif //  if defined(SYS_LOG_LEVEL)
         }
 
 	while(flags != 0x00) {
 		canstat = read_reg(CANSTAT);
-#if defined(SYS_LOG_LEVEL)
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 		log_d(TAG, "service() Flag-%x, IOCD-%x\n\r", flags, (canstat & IOCD));
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif //  if defined(SYS_LOG_LEVEL)
 		if (flags & ERRIE) {
 			eflg = read_reg(EFLG);
-#if defined(SYS_LOG_LEVEL)
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
 			log_e(TAG, "*** SYS_CAN ERRIR Flag!!!\n\r");
 			log_e(TAG, "*** SYS_CAN EFLG %x\n\r", eflg);
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif //  if defined(SYS_LOG_LEVEL)
 			if(status.bit_field.l2_status == L2_Listening) {
 				connecting_errors++;
                         } else if(status.bit_field.l2_status == L2_Connecting) {
                                 tec = read_reg(TEC);
-#if defined(SYS_LOG_LEVEL)
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_WARNING))
                                 log_w(TAG, "Tx Error Count = %d\n\r", tec);
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif //  if defined(SYS_LOG_LEVEL)
                                 if(eflg & TXWAR) {
 					set_can_mode(CONFIG_MODE);
 					set_can_mode(NORMAL_MODE);
@@ -547,24 +470,16 @@ static void service_device(void)
 		}
 
 		if (flags & MERRE) {
-#if defined(SYS_LOG_LEVEL)
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_WARNING))
 			log_w(TAG, "CAN MERRE Flag\n\r");
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif //  if defined(SYS_LOG_LEVEL)
 			if(status.bit_field.l2_status == L2_Listening) {
 				connecting_errors++;
                         } else if(status.bit_field.l2_status == L2_Connecting) {
                                 tec = read_reg(TEC);
-#if defined(SYS_LOG_LEVEL)
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_WARNING))
                                 log_w(TAG, "Tx Error Count = %d\n\r", tec);
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif //  if defined(SYS_LOG_LEVEL)
                         }
 			/*
 			 * We've got an error condition so dump all received messages
@@ -579,13 +494,9 @@ static void service_device(void)
 			tx_flags = read_reg(ctrl);
 
 			if((tx_flags & TXREQ) && (tx_flags & TXERR)) {
-#if defined(SYS_LOG_LEVEL)
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
 				log_e(TAG, "Transmit Buffer Failed to send\n\r");
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif //  if defined(SYS_LOG_LEVEL)
 				set_reg_mask_value(ctrl, TXREQ, 0x00);
 				if (status.bit_field.l2_status == L2_ChangingBaud)
 					changing_baud_tx_error++;
@@ -594,14 +505,10 @@ static void service_device(void)
 		}
 
 		if (flags & RX0IE) {
-#if defined(SYS_LOG_LEVEL)
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 			log_d(TAG, "RX0IE\n\r");
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif //  if defined(SYS_LOG_LEVEL)
-#if defined(CAN_PING_PROTOCOL)
+#if defined(SYS_CAN_PING_PROTOCOL)
 			restart_ping_timer();
 #endif
 			/*
@@ -616,13 +523,9 @@ static void service_device(void)
 					buffer_next_write = (buffer_next_write + 1) % SYS_CAN_RX_CIR_BUFFER_SIZE;
 					buffer_count++;
 				} else {
-#if defined(SYS_LOG_LEVEL)
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
 					log_e(TAG, "Circular Buffer overflow!\n\r");
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif //  if defined(SYS_LOG_LEVEL)
 				}
 			}
 
@@ -630,14 +533,10 @@ static void service_device(void)
 		}
 
 		if (flags & RX1IE) {
-#if defined(SYS_LOG_LEVEL)
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 			log_d(TAG, "RX1IE\n\r");
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif //  if defined(SYS_LOG_LEVEL)
-#if defined(CAN_PING_PROTOCOL)
+#if defined(SYS_CAN_PING_PROTOCOL)
 			restart_ping_timer();
 #endif
 
@@ -653,13 +552,9 @@ static void service_device(void)
 					buffer_next_write = (buffer_next_write + 1) % SYS_CAN_RX_CIR_BUFFER_SIZE;
 					buffer_count++;
 				} else {
-#if defined(SYS_LOG_LEVEL)
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
 					log_e(TAG, "Circular Buffer overflow!\n\r");
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif //  if defined(SYS_LOG_LEVEL)
 				}
 			}
 
@@ -667,13 +562,9 @@ static void service_device(void)
 		}
 
 		if (flags & TX2IE) {
-#if defined(SYS_LOG_LEVEL)
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 			log_d(TAG, "TX2IE\n\r");
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif //  if defined(SYS_LOG_LEVEL)
 			if (status.bit_field.l2_status == L2_Connecting) {
 				status.bit_field.l2_status = L2_Connected;
 
@@ -685,13 +576,9 @@ static void service_device(void)
 		}
 
 		if (flags & TX1IE) {
-#if defined(SYS_LOG_LEVEL)
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 			log_d(TAG, "TX1IE\n\r");
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif //  if defined(SYS_LOG_LEVEL)
 			if (status.bit_field.l2_status == L2_Connecting) {
 				status.bit_field.l2_status = L2_Connected;
 
@@ -702,13 +589,9 @@ static void service_device(void)
 		}
 
 		if (flags & TX0IE) {
-#if defined(SYS_LOG_LEVEL)
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 			log_d(TAG, "TX0IE\n\r");
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif //  if defined(SYS_LOG_LEVEL)
 			if (status.bit_field.l2_status == L2_Connecting) {
 				status.bit_field.l2_status = L2_Connected;
 
@@ -720,19 +603,15 @@ static void service_device(void)
 		}
 		flags = read_reg(CANINTF);
 	}
-#if defined(SYS_LOG_LEVEL)
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	log_d(TAG, "service_device() finished\n\r");
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif //  if defined(SYS_LOG_LEVEL)
 }
 
 void can_l2_tasks(void)
 {
 #ifdef TEST
-	static UINT16 count = 0;
+	static uint16_t count = 0;
 #endif
 	uint8_t loop;
 
@@ -759,16 +638,16 @@ void can_l2_tasks(void)
 			rx_can_msg.can_id = (rx_can_msg.can_id << 2) | (buffer[buffer_next_read].sidl & 0x03);
 			rx_can_msg.can_id = (rx_can_msg.can_id << 8) | buffer[buffer_next_read].eid8;
 			rx_can_msg.can_id = (rx_can_msg.can_id << 8) | buffer[buffer_next_read].eid0;
-			rx_can_msg.can_id |= SYS_CAN_EFF_FLAG;
+			rx_can_msg.can_id |= CAN_EFF_FLAG;
 
 			if(buffer[buffer_next_read].dcl & DCL_ERTR)
-				rx_can_msg.can_id |= SYS_CAN_RTR_FLAG;
+				rx_can_msg.can_id |= CAN_RTR_FLAG;
 		} else {
 			rx_can_msg.can_id = buffer[buffer_next_read].sidh;
 			rx_can_msg.can_id = (rx_can_msg.can_id << 3) | ((buffer[buffer_next_read].sidl >> 5) & 0x07);
 
 			if(buffer[buffer_next_read].sidl & SIDL_SRTR)
-				rx_can_msg.can_id |= SYS_CAN_RTR_FLAG;
+				rx_can_msg.can_id |= CAN_RTR_FLAG;
 		}
 
 		/*
@@ -818,29 +697,21 @@ result_t can_l2_tx_frame(can_frame  *frame)
 	uint8_t           ctrl;
 	uint8_t           can_buffer = 0x00;
 
-#if defined(SYS_LOG_LEVEL)
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	log_d(TAG, "L2 => Id %lx\n\r", frame->can_id);
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif //  if defined(SYS_LOG_LEVEL)
 
-#if defined(CAN_PING_PROTOCOL)
+#if defined(SYS_CAN_PING_PROTOCOL)
         restart_ping_timer();
 #endif
 	if(connected_baudrate == no_baud) {
-#if defined(SYS_LOG_LEVEL)
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
 		log_e(TAG, "Can't Transmit network not connected!\n\r");
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif //  if defined(SYS_LOG_LEVEL)
 		return(ERR_GENERAL_CAN_ERROR);
 	}
 
-	if(frame->can_id & SYS_CAN_EFF_FLAG) {
+	if(frame->can_id & CAN_EFF_FLAG) {
 		tx_buffer.sidh = (frame->can_id >> 21) & 0xff;
 		tx_buffer.sidl = ((frame->can_id >> 18) & 0x07) << 5;
 		tx_buffer.sidl |= ((frame->can_id >> 16) & 0x03);
@@ -853,7 +724,7 @@ result_t can_l2_tx_frame(can_frame  *frame)
 		tx_buffer.sidl = (frame->can_id & 0x07) << 5;
 	}
 	// Remote Transmission Request
-	tx_buffer.dcl = (frame->can_id & SYS_CAN_RTR_FLAG) ? 0x40 : 0x00;
+	tx_buffer.dcl = (frame->can_id & CAN_RTR_FLAG) ? 0x40 : 0x00;
 
 	// Data Length
 	tx_buffer.dcl = tx_buffer.dcl | (frame->can_dlc & 0x0f);
@@ -869,13 +740,9 @@ result_t can_l2_tx_frame(can_frame  *frame)
 
 	if(ctrl == 0xff) {
 		// Shipment of fail has arrived
-#if defined(SYS_LOG_LEVEL)
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
 		log_e(TAG, "ERROR No free Tx Buffers\n\r");
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif //  if defined(SYS_LOG_LEVEL)
 		return(ERR_CAN_NO_FREE_BUFFER);
 	} else if (ctrl == TXB0CTRL) {
 		can_buffer = TXB0SIDH;
@@ -910,13 +777,9 @@ result_t can_l2_tx_frame(can_frame  *frame)
 	 * and send in One Shot Mode if we're unsure of the Network.
 	 */
 	if (status.bit_field.l2_status == L2_Connecting) {
-#if defined(SYS_LOG_LEVEL)
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 		log_d(TAG, "Network not good so sending OSM\n\r");
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif //  if defined(SYS_LOG_LEVEL)
 		set_reg_mask_value(CANCTRL, OSM, OSM);
 	} else {
 		// Clear One Shot Mode
@@ -928,13 +791,9 @@ result_t can_l2_tx_frame(can_frame  *frame)
 #if 0
 	if (status.bit_field.l2_status == L2_Connecting) {
 		while (read_reg(ctrl) & 0x08) {
-#if defined(SYS_LOG_LEVEL)
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
 			log_e(TAG, "Wait for transmission to complete\n\r");
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif //  if defined(SYS_LOG_LEVEL)
 		}
 		status.bit_field.l2_status = L2_Connected;
 		if (status_handler)
@@ -952,13 +811,9 @@ uint8_t CheckErrors(void)
 	flags = SYS_CANReadReg(CANINTF);
 
 	if(flags != 0x00) {
-#if defined(SYS_LOG_LEVEL)
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 		log_d(TAG, "CheckErrors() Flag set 0x%x\n\r", flags);
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif //  if defined(SYS_LOG_LEVEL)
 	}
 
 	if (flags & TX0IE) {
@@ -978,25 +833,17 @@ uint8_t CheckErrors(void)
 
 	if (flags & MERRE) {
 		CANSetRegMaskValue(CANINTF, MERRE, 0x00);
-#if defined(SYS_LOG_LEVEL)
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
 		log_e(TAG, "Message Error Flag set! Flasg now 0x%x\n\r", SYS_CANReadReg(CANINTF));
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif //  if defined(SYS_LOG_LEVEL)
 	}
 
 	if (flags & WAKIE) {
 		CANSetRegMaskValue(CANINTF, WAKIE, 0x00);
 		wakeUpCount++;
-#if defined(SYS_LOG_LEVEL)
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 		log_d(TAG, "Wake Up Count - now %ld\n\r", wakeUpCount);
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif //  if defined(SYS_LOG_LEVEL)
 	}
 
 	if (flags & ERRIE) {
@@ -1026,13 +873,9 @@ static void checkSubErrors(void)
 	error = SYS_CANReadReg(EFLG);
 
 	if(error != 0x00) {
-#if defined(SYS_LOG_LEVEL)
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
 		log_e(TAG, "checkSubErrors() errors - %x\n\r", error);
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif //  if defined(SYS_LOG_LEVEL)
 	}
 
 	/*
@@ -1040,14 +883,9 @@ static void checkSubErrors(void)
 	 */
 	if (error & RX1OVR) {
 		g_missedMessageCount++;
-#if defined(SYS_LOG_LEVEL)
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 		log_d(TAG, "Missed Message Count - %ld\n\r", g_missedMessageCount);
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif //  if defined(SYS_LOG_LEVEL)
-
 		/*
 		 * Clear this flag
 		 */
@@ -1056,14 +894,9 @@ static void checkSubErrors(void)
 
 	if (error & RX0OVR) {
 		g_missedMessageCount++;
-#if defined(SYS_LOG_LEVEL)
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 		log_d(TAG, "Missed Message Count - %ld\n\r", g_missedMessageCount);
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif //  if defined(SYS_LOG_LEVEL)
-
 		/*
 		 * Clear this flag
 		 */
@@ -1091,13 +924,9 @@ static void checkSubErrors(void)
 		 * Work out what's changed
 		 */
 		difference = error ^ g_CanErrors;
-#if defined(SYS_LOG_LEVEL)
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
 		log_e(TAG, "ERRORS Have changed! Difference is %x\n\r", difference);
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif //  if defined(SYS_LOG_LEVEL)
 
 		/*
 		 * Loop through the lower 6 bits we're interested in
@@ -1106,7 +935,6 @@ static void checkSubErrors(void)
 
 		for(loop = 0; loop < 6; loop++, mask << 1) {
 			if(mask & difference) {
-#if defined(SYS_LOG_LEVEL)
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
 				if (mask & TXBO) {
 					/*
@@ -1155,20 +983,14 @@ static void checkSubErrors(void)
 						log_e(TAG, "Rx Warning Cleared Error Count < 96\n\r");
 					}
 				}
-#else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif //  if defined(SYS_LOG_LEVEL)
 			}
+#endif // #if (SYS_LOG_LEVEL <= LOG_ERROR)
 		}
 		g_CanErrors = error;
 	} else {
-#if defined(SYS_LOG_LEVEL)
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 		log_d(TAG, "Errors Have not changed\n\r");
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif //  if defined(SYS_LOG_LEVEL)
 	}
 }
 #endif
@@ -1181,71 +1003,57 @@ static void reset(void)
 	CAN_DESELECT
 }
 
-static void set_reg_mask_value(uint8_t reg, u8 mask, u8 value)
+static void set_reg_mask_value(uint8_t reg, uint8_t mask, uint8_t value)
 {
 	uint8_t fail;
 
         //    do {
-        SYS_CAN_SELECT
+        CAN_SELECT
         spi_write_byte(CAN_BIT_MODIFY);
         spi_write_byte(reg);
         spi_write_byte(mask);
         spi_write_byte(value);
-        SYS_CAN_DESELECT
+        CAN_DESELECT
 
         fail = (read_reg(reg) & mask) != value;
         if(fail) {
-#if defined(SYS_LOG_LEVEL)
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
 		log_e(TAG, "Bit Modify Failed!\n\r");
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif //  if defined(SYS_LOG_LEVEL)
         }
 //    } while (fail);
 }
 
 static void set_can_mode(uint8_t mode)
 {
-//	unsigned char result;
+	unsigned char result;
 #ifdef TEST
-	UINT16 delay;
-	UINT16 loop = 0;
-#endif
+	uint16_t delay;
+	uint16_t loop = 0;
+#endif // TEST
 
 #ifdef TEST
-#if defined(SYS_LOG_LEVEL)
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	log_d(TAG, "set_can_mode(0x%x)\n\r", mode);
-#endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif //  if defined(SYS_LOG_LEVEL)
-#endif
+#endif // LOGGING
+#endif // TEST
 
 	set_reg_mask_value(CANCTRL, MODE_MASK, mode);
 #ifdef TEST
 	result = read_reg(CANCTRL);
-
+#endif // TEST
 	while((result & MODE_MASK) != mode) {
-#if defined(SYS_LOG_LEVEL)
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 		log_d(TAG, "Before write SYS_CANCTRL 0x%x\n\r", result & MODE_MASK);
-#endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif //  if defined(SYS_LOG_LEVEL)
+#endif // LOGGING
 		set_reg_mask_value(CANCTRL, MODE_MASK, mode);
 		result = read_reg(CANCTRL);
 #ifdef TEST
 		for (delay = 0; delay < 0x100; delay++) {
 			Nop();
 		}
-#endif
+#endif // TEST
 	}
-#endif
-
 }
 
 /**
@@ -1330,13 +1138,9 @@ static void set_baudrate(can_baud_rate_t baudrate)
 		break;
 
         default:
-#if defined(SYS_LOG_LEVEL)
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
 		log_e(TAG, "Invalid Baud Rate Specified\n\r");
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif //  if defined(SYS_LOG_LEVEL)
 		break;
 	}
 
@@ -1367,17 +1171,11 @@ can_baud_rate_t can_l2_get_baudrate(void)
 
 void can_l2_set_node_baudrate(can_baud_rate_t baudrate)
 {
-	es_timer timer;
+	uint8_t timer;
 
-#if defined(SYS_LOG_LEVEL)
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	log_d(TAG, "set_can_node_baudrate()\n\r");
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif //  if defined(SYS_LOG_LEVEL)
-	TIMER_INIT(timer);
-
 	status.bit_field.l2_status = L2_ChangingBaud;
 	status_baud = baudrate;
 
@@ -1392,19 +1190,14 @@ void can_l2_set_node_baudrate(can_baud_rate_t baudrate)
 	 * The Baud rate is being changed so going to stay in config mode
 	 * for 5 Seconds and let the Network settle down.
 	 */
-	timer_start(SECONDS_TO_TICKS(5), exp_finalise_baudrate_change, (union sigval)(void *)NULL, &timer);
+	sw_timer_start(SECONDS_TO_TICKS(5), exp_finalise_baudrate_change, (union sigval)(void *)NULL, &timer);
 }
 
 static void exp_finalise_baudrate_change(timer_t timer_id __attribute__((unused)), union sigval data __attribute__((unused)))
 {
-#if defined(SYS_LOG_LEVEL)
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	log_d(TAG, "exp_finalise_baudrate_change()\n\r");
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif //  if defined(SYS_LOG_LEVEL)
-
         set_can_mode(NORMAL_MODE);
 
 	status.bit_field.l2_status = L2_Connected;
@@ -1418,19 +1211,13 @@ static void exp_finalise_baudrate_change(timer_t timer_id __attribute__((unused)
  */
 void can_l2_initiate_baudrate_change(can_baud_rate_t rate)
 {
-	es_timer timer;
+	uint8_t timer;
 	can_frame msg;
 	result_t result = SUCCESS;
 
-#if defined(SYS_LOG_LEVEL)
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	log_d(TAG, "initiate_can_baudrate_change()\n\r");
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif //  if defined(SYS_LOG_LEVEL)
-	TIMER_INIT(timer);
-
 	msg.can_id = 0x705;
 	msg.can_dlc = 1;
 
@@ -1446,92 +1233,66 @@ void can_l2_initiate_baudrate_change(can_baud_rate_t rate)
 		if (status_handler)
 			status_handler(L2_STATUS_MASK, status, status_baud);
 
-		timer_start(MILLI_SECONDS_TO_TICKS(500), exp_resend_baudrate_change, (union sigval)(void *)NULL, &timer);
+		sw_timer_start(MILLI_SECONDS_TO_TICKS(500), exp_resend_baudrate_change, (union sigval)(void *)NULL, &timer);
 	}
 }
 
 static void exp_resend_baudrate_change(timer_t timer_id __attribute__((unused)), union sigval data __attribute__((unused)))
 {
 	can_frame msg;
-	es_timer timer;
+	uint8_t timer;
 
-        TIMER_INIT(timer);
-
-#if defined(SYS_LOG_LEVEL)
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	log_d(TAG, "exp_resend_baudrate_change()\n\r");
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif //  if defined(SYS_LOG_LEVEL)
 
 	if(changing_baud_tx_error < 3) {
-#if defined(SYS_LOG_LEVEL)
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 		log_d(TAG, "resending Baud Rate Change Request %d\n\r", changing_baud_tx_error);
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif //  if defined(SYS_LOG_LEVEL)
 		msg.can_id = 0x705;
 		msg.can_dlc = 1;
 
 		msg.data[0] = status_baud;
 
 		if(can_l2_tx_frame(&msg) != ERR_CAN_NO_FREE_BUFFER)
-			timer_start(MILLI_SECONDS_TO_TICKS(500), exp_resend_baudrate_change, (union sigval)(void *)NULL, &timer);
+			sw_timer_start(MILLI_SECONDS_TO_TICKS(500), exp_resend_baudrate_change, (union sigval)(void *)NULL, &timer);
 		else {
-#if defined(SYS_LOG_LEVEL)
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 			log_d(TAG, "No Free Buffers so change the Baud Rate\n\r");
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif //  if defined(SYS_LOG_LEVEL)
 			set_reg_mask_value(TXB0CTRL, TXREQ, 0x00);
 			set_reg_mask_value(TXB1CTRL, TXREQ, 0x00);
 			set_reg_mask_value(TXB2CTRL, TXREQ, 0x00);
                         can_l2_set_node_baudrate(status_baud);
 		}
 	} else {
-#if defined(SYS_LOG_LEVEL)
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 		log_d(TAG, "3 Errors so NOT Resending Baud Rate Change Request\n\r");
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif //  if defined(SYS_LOG_LEVEL)
                 can_l2_set_node_baudrate(status_baud);
 	}
 }
 
 static void enable_rx_interrupts(void)
 {
-#if defined(SYS_LOG_LEVEL)
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	log_d(TAG, "CANEnableRXInterrupts\n\r");
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif //  if defined(SYS_LOG_LEVEL)
 	set_reg_mask_value(CANINTE, RX1IE, RX1IE);
 	set_reg_mask_value(CANINTE, RX0IE, RX0IE);
 }
 
 static void disable_rx_interrupts(void)
 {
-#if defined(SYS_LOG_LEVEL)
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	log_d(TAG, "CANDisableRXInterrupts\n\r");
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif //  if defined(SYS_LOG_LEVEL)
 	set_reg_mask_value(CANINTE, RX1IE, 0x00);
 	set_reg_mask_value(CANINTE, RX0IE, 0x00);
 }
 
-static uint8_t read_reg(u8 reg)
+static uint8_t read_reg(uint8_t reg)
 {
 	uint8_t value;
 	CAN_SELECT
@@ -1543,7 +1304,7 @@ static uint8_t read_reg(u8 reg)
 	return(value);
 }
 
-static void write_reg(uint8_t reg, u8 value)
+static void write_reg(uint8_t reg, uint8_t value)
 {
 	CAN_SELECT
 	spi_write_byte(CAN_WRITE_REG);
@@ -1552,7 +1313,7 @@ static void write_reg(uint8_t reg, u8 value)
 	CAN_DESELECT
 }
 
-static void read_rx_buffer(uint8_t reg, u8 *buffer)
+static void read_rx_buffer(uint8_t reg, uint8_t *buffer)
 {
 	uint8_t loop = 0x00;
 	uint8_t *ptr;
@@ -1571,14 +1332,10 @@ static void read_rx_buffer(uint8_t reg, u8 *buffer)
 	}
 
 	dataLength = buffer[4] & 0x0f;
-	if(dataLength > SYS_CAN_DATA_LENGTH) {
-#if defined(SYS_LOG_LEVEL)
+	if(dataLength > CAN_DATA_LENGTH) {
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
 		log_e(TAG, "Invalid Data Length %x & 0x0f = %x\n\r", buffer[4], buffer[4] & 0x0f);
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif //  if defined(SYS_LOG_LEVEL)
 	} else {
 		for (loop = 0; loop < dataLength; loop++, ptr++) {
 			*ptr = spi_write_byte(0x00);
@@ -1618,37 +1375,25 @@ void print_error_counts(void)
 	byte = read_reg(TEC);
 	if(byte != tec) {
 		tec = byte;
-#if defined(SYS_LOG_LEVEL)
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
 		log_e(TAG, "Tx Error (TEC) Count Change - 0x%x\n\r", tec);
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif //  if defined(SYS_LOG_LEVEL)
 	}
 
 	byte = read_reg(REC);
 	if(byte != rec) {
 		rec = byte;
-#if defined(SYS_LOG_LEVEL)
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
 		log_e(TAG, "Rx Error (REC) Count Change - 0x%x\n\r", rec);
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif //  if defined(SYS_LOG_LEVEL)
 	}
 
 	byte = read_reg(EFLG);
 	if(byte != eflg) {
 		eflg = byte;
-#if defined(SYS_LOG_LEVEL)
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
 		log_e(TAG, "EFLG Changed - 0x%x\n\r", eflg);
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif //  if defined(SYS_LOG_LEVEL)
 	}
 }
 #endif
@@ -1662,20 +1407,16 @@ void test_can()
 	byte = read_reg(CANCTRL);
 	CAN_DESELECT
 
-#if defined(SYS_LOG_LEVEL)
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	log_d(TAG, "Test read of SYS_CANCTRL - 0x%x\n\r", byte);
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif //  if defined(SYS_LOG_LEVEL)
 }
 #endif
 
 static void can_l2_dispatcher_frame_handler(can_frame *frame)
 {
 	uint8_t loop;
-	BOOL found = FALSE;
+	boolean found = FALSE;
 
 	printf("L2_CanDispatcherL2MsgHandler 0x%lx [", frame->can_id);
 	for(loop = 0; loop < frame->can_dlc; loop++) {
@@ -1697,47 +1438,35 @@ static void can_l2_dispatcher_frame_handler(can_frame *frame)
 		/*
 		 * No handler found so pass the received message to the Application
 		 */
-#if defined(SYS_LOG_LEVEL)
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 		log_d(TAG, "No Handler for 0x%lx\n\r", frame->can_id);
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif //  if defined(SYS_LOG_LEVEL)
 	}
 }
 
 result_t can_l2_dispatch_reg_handler(can_l2_target_t *target)
 {
 	uint8_t loop;
-#if defined(SYS_LOG_LEVEL)
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_INFO))
 	log_i(TAG, "sys_l2_can_dispatch_reg_handler mask 0x%lx, filter 0x%lx\n\r",
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif //  if defined(SYS_LOG_LEVEL)
 		   target->mask,
 		   target->filter);
 	/*
 	 * clean up the target in case the caller has included spurious bits
 	 */
-	if(target->mask & SYS_CAN_EFF_FLAG) {
-		target->mask = target->mask & (CAN_EFF_FLAG | SYS_CAN_EFF_MASK);
+	if(target->mask & CAN_EFF_FLAG) {
+		target->mask = target->mask & (CAN_EFF_FLAG | CAN_EFF_MASK);
 	} else {
-		target->mask = target->mask & SYS_CAN_SFF_MASK;
+		target->mask = target->mask & CAN_SFF_MASK;
 	}
 
 	// Find a free slot
 	for(loop = 0; loop < SYS_CAN_L2_HANDLER_ARRAY_SIZE; loop++) {
 		if(registered_handlers[loop].used == FALSE) {
-#if defined(SYS_LOG_LEVEL)
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_INFO))
 			log_i(TAG, "Target stored at target %d\n\r", loop);
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif //  if defined(SYS_LOG_LEVEL)
 			registered_handlers[loop].used = TRUE;
 			registered_handlers[loop].target.mask = target->mask;
 			registered_handlers[loop].target.filter = target->filter;

@@ -22,7 +22,7 @@
 #ifndef NODE_ADDRESS_H
 #define NODE_ADDRESS_H
 
-#include "es_lib/can/es_can.h"
+#include "es_lib/comms/can/es_can.h"
 
 /*
  * Node module will use standard CAN frames which are 11 bits for Id

@@ -48,7 +48,6 @@
  * first part will be false but it's the second part of the or statement
  * that will dictate the action of the if!
  */
-#define BOOT_FLAG      (TRISGbits.TRISG9 = 0 || PORTGbits.RG9)
 
 /*
  * Serial Logging
@@ -170,10 +169,15 @@
  * @brief Macro to deselect CAN Controller Chip on SPI Bus
  *
  */
-#define CAN_CS_PIN_DIRECTION           TRISDbits.TRISD6
-#define CAN_CS                         LATDbits.LATD6
-#define CAN_SELECT                     CAN_CS = 0;
-#define CAN_DESELECT                   CAN_CS = 1;
+//#define CAN_CS_PIN_DIRECTION           TRISDbits.TRISD6
+//#define CAN_CS                         LATDbits.LATD6
+//#define CAN_SELECT                     CAN_CS = 0;
+//#define CAN_DESELECT                   CAN_CS = 1;
+#define CAN_TX_DDR                     TRISFbits.TRISF4
+#define CAN_RX_DDR                     TRISGbits.TRISG7
+#define CAN_TX_PIN                     RPOR9bits.RP100R
+#define CAN_RX_PIN                     RPI119
+ 
 
 /**
  * SPI (Serial Peripheral Interface Definitions.
@@ -263,5 +267,7 @@
  */
 #define USB_HOST    TRISDbits.TRISD9 = OUTPUT_PIN; LATDbits.LATD9 = 1; USBInitialize(0);
 #define USB_DEVICE  TRISDbits.TRISD9 = OUTPUT_PIN; LATDbits.LATD9 = 0;
+
+#include "es_lib/core.h"
 
 #endif // _CB_dsPIC33EP256MU806_H

@@ -1,6 +1,6 @@
 /**
  *
- * @file es_lib/processors/cb-PIC24FJ256GB106.h
+ * @file es_lib/boards/cb-PIC24FJ256GB106.h
  *
  * @author John Whitmore
  *

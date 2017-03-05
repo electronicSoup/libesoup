@@ -36,6 +36,6 @@
 
 #define NUMBER_HW_TIMERS  2
 
-extern void pic18f_init(void);
+extern void cpu_init(void);
 
 #endif // _ES_PIC18F2680_H
