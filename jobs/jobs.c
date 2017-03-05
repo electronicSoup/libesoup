@@ -2,7 +2,7 @@
  *
  * \file es_lib/jobs/jobs.c
  *
- * Functions for using a MODBUS Comms.
+ * Functions for using system Jobs.
  *
  * The first uart port is used by the logger. See es_lib/logger
  *
@@ -21,12 +21,19 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  *
  */
-#define DEBUG_FILE
+#define DEBUG_FILE TRUE
 #define TAG "JOBS"
 
 #include "system.h"
 #include "es_lib/logger/serial_log.h"
 #include "es_lib/jobs/jobs.h"
+
+/*
+ * Check required system.h defines are found
+ */
+#ifndef SYS_LOG_LEVEL 
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif
 
 struct job {
     void (*function)(void *);
@@ -73,13 +80,6 @@ result_t jobs_execute(void)
 
 	while(count) {
                 if(jobs[read_index].function) {
-#if defined(SYS_LOG_LEVEL)
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
-//                        log_d(TAG, "Execute Job(%d)\n\r", read_index);
-#endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif //  if defined(SYS_LOG_LEVEL)
                         function = jobs[read_index].function;
                         data     = jobs[read_index].data;
 
@@ -90,13 +90,9 @@ result_t jobs_execute(void)
 
                         function(data);
                 } else {
-#if defined(SYS_LOG_LEVEL)
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
                         log_e(TAG, "Bad job at %d\n\r", read_index);
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif //  if defined(SYS_LOG_LEVEL)
                         rc = ERR_GENERAL_ERROR;
                 }
 	}

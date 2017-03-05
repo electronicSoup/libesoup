@@ -27,6 +27,13 @@
 
 #define TAG "RAND"
 
+/*
+ * Check required system.h defines are found
+ */
+#ifndef SYS_LOG_LEVEL
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif
+
 static uint8_t initialised = FALSE;
 
 /*
@@ -35,20 +42,16 @@ static uint8_t initialised = FALSE;
 void random_init(void)
 {
 	uint16_t  loop;
-	u32  seed;
+	u32       seed;
 	uint8_t  *data;
 
 	if(initialised) {
 		return;
 	}
 
-#if defined(SYS_LOG_LEVEL)
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
-	log_d(TAG, "random_init()\n\r");
+#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_INFO))
+	log_i("random_init()\n\r");
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif //  if defined(SYS_LOG_LEVEL)
 	data = (uint8_t *)&IC1TMR;
 
 	seed = 0;
@@ -59,14 +62,8 @@ void random_init(void)
 		data++;
 	}
 
-#if defined(SYS_LOG_LEVEL)
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	log_d(TAG, "Seed 0x%lx\n\r", seed);
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif //  if defined(SYS_LOG_LEVEL)
-
 	srand(seed);
 }
-

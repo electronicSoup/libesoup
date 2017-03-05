@@ -23,17 +23,22 @@
  */
 #include <stdio.h>
 #include "system.h"
-//#include "usb/usb.h"
-//#include "usb/usb_host_android.h"
 #include "usb/inc/usb.h"
 #include "usb/inc/usb_host_android.h"
 #include "es_lib/usb/android/state.h"
 #include "es_lib/usb/android/state_idle.h"
 
-#define DEBUG_FILE
+#define DEBUG_FILE TRUE
 #include "es_lib/logger/serial_log.h"
 
 #define TAG "Android-AppConnected"
+
+/*
+ * Check required system.h defines are found
+ */
+#ifndef SYS_LOG_LEVEL
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif
 
 /*
  * Forward declarations of functions.
@@ -44,14 +49,9 @@ void app_connected_process_usb_event(USB_EVENT event);
 
 void example_set_app_connected_state(void)
 {
-#if defined(SYS_LOG_LEVEL)
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+#if ((DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	log_d(TAG, "State -> App_connected\n\r");
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif //  if defined(SYS_LOG_LEVEL)
-
 	android_state.process_msg = app_connected_process_msg;
 	android_state.main = app_connected_main;
 	android_state.process_usb_event = app_connected_process_usb_event;

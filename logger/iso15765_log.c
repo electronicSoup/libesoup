@@ -32,6 +32,13 @@
 #define TAG "ISO15765_LOG"
 
 /*
+ * Check required system.h defines are found
+ */
+#ifndef SYS_LOG_LEVEL 
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif
+
+/*
  * Network Logging
  */
 #if defined(SYS_ISO15765)
@@ -69,13 +76,9 @@ result_t iso15765_logger_register_as_logger(void (*handler)(uint8_t, log_level_t
 {
 	iso15765_target_t target;
 
-#if defined(SYS_LOG_LEVEL)
-#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+#if ((DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	log_d(TAG, "iso15765_log_reg_as_handler() level %x\n\r", level);
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif //  if defined(SYS_LOG_LEVEL)
 	if(iso15765_initialised()) {
 		if(handler != NULL) {
 			iso15765_logger_handler = handler;
@@ -87,13 +90,9 @@ result_t iso15765_logger_register_as_logger(void (*handler)(uint8_t, log_level_t
 
 			return (dcncp_register_this_node_net_logger(level));
 		} else {
-#if defined(SYS_LOG_LEVEL)
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
 			log_e(TAG, "No handler given\n\r");
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif //  if defined(SYS_LOG_LEVEL)
 			return(ERR_BAD_INPUT_PARAMETER);
 		}
 	} else {
@@ -110,13 +109,9 @@ result_t iso15765_logger_register_as_logger(void (*handler)(uint8_t, log_level_t
 #ifdef SYS_ISO15765_LOGGER
 result_t iso15765_logger_unregister_as_logger(void)
 {
-#if defined(SYS_LOG_LEVEL)
-#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+#if ((DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	log_d(TAG, "iso15765_log_unreg_as_handler()\n\r");
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif //  if defined(SYS_LOG_LEVEL)
 	iso15765_logger = FALSE;
 	iso15765_logger_handler = NULL;
 	return(dcncp_unregister_this_node_net_logger());
@@ -133,13 +128,9 @@ void iso15765_log(log_level_t level, char *string)
 
 	iso15765_msg_t msg;
 
-#if defined(SYS_LOG_LEVEL)
-#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+#if ((DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	log_d(TAG, "iso15765_log(0x%x, %s)\n\r", (uint16_t)level, string);
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif //  if defined(SYS_LOG_LEVEL)
 
 	if(iso15765_logger) {
 		if(level <= iso15765_logger_level) {
@@ -158,32 +149,20 @@ void iso15765_log(log_level_t level, char *string)
 				if(msg.size < SYS_ISO15765_MAX_MSG) {
 					iso15765_tx_msg(&msg);
 				} else {
-#if defined(SYS_LOG_LEVEL)
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
 					log_e(TAG, "message size limit exceeded!\n\r");
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif //  if defined(SYS_LOG_LEVEL)
 				}
 			}
 		} else {
-#if defined(SYS_LOG_LEVEL)
-#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+#if ((DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 			log_d(TAG, "ISO15765 logger not logging insifficient Level\n\r");
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif //  if defined(SYS_LOG_LEVEL)
 		}
 	} else {
-#if defined(SYS_LOG_LEVEL)
-#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+#if ((DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 		log_d(TAG, "no Logger Registered\n\r");
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif //  if defined(SYS_LOG_LEVEL)
 	}
 }
 #endif  // if defined(SYS_ISO15765)

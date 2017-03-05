@@ -104,16 +104,12 @@ int main(void)
 	length = 50;
 	flash_strcpy(uri, firmware_uri, &length);
 
-#if defined(SYS_LOG_LEVEL)
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+#if ((DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	log_d(TAG, "manufacturer - %s\n\r", manufacturer);
 	log_d(TAG, "model - %s\n\r", model);
 	log_d(TAG, "version - %s\n\r", version);
 	log_d(TAG, "uri - %s\n\r", uri);
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif //  if defined(SYS_LOG_LEVEL)
 
 	android_device_info.manufacturer = manufacturer;
 	android_device_info.manufacturer_size = sizeof(manufacturer);

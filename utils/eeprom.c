@@ -123,7 +123,7 @@ result_t eeprom_read(uint16_t address, uint8_t *data)
 		return(SUCCESS);
 	}
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
-        log_e(TAG, "eeprom_read Address Range Error!\n\r");
+        log_e(TAG,"eeprom_read Address Range Error!\n\r");
 #endif
 	return (ERR_ADDRESS_RANGE);
 }
