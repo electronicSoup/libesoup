@@ -1,6 +1,6 @@
 /**
  *
- * @file es_lib/processors/es-dsPIC33EP256MU806.h
+ * @file es_lib/processors/es-PIC18F4585.h
  *
  * @author John Whitmore
  *
@@ -29,7 +29,8 @@
 #ifndef _ES_PIC18F4585_H
 #define _ES_PIC18F4585_H
 
-#include <p18cxxx.h>
+//#include <p18cxxx.h>
+#include <xc.h>
 
 #define TIMER_0 0
 #define TIMER_1 1

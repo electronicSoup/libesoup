@@ -129,7 +129,7 @@
 
 #ifdef SYS_SW_TIMERS
 #define SYS_NUMBER_OF_SW_TIMERS 20 
-#define SYS_SW_TICK_ms           5        // mSeconds
+#define SYS_SW_TIMER_TICK_ms           5        // mSeconds
 #endif // SYS_SW_TIMERS
 
 /*
