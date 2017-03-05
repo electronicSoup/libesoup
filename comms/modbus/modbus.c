@@ -26,9 +26,9 @@
 #define DEBUG_FILE TRUE
 #include "es_lib/logger/serial_log.h"
 #include "es_lib/timers/hw_timers.h"
-#include "es_lib/timers/timers.h"
-#include "es_lib/modbus/modbus.h"
-#include "es_lib/comms/uart.h"
+#include "es_lib/timers/sw_timers.h"
+#include "es_lib/comms/modbus/modbus.h"
+#include "es_lib/comms/uart/uart.h"
 #include "es_lib/jobs/jobs.h"
 
 #define TAG "MODBUS"
@@ -122,7 +122,7 @@ void start_35_timer(struct modbus_channel *channel);
 
 static void resp_timeout_expiry_fn(timer_t timer_id, union sigval data);
 
-uint16_t crc_calculate(uint8_t *data, u16 len)
+uint16_t crc_calculate(uint8_t *data, uint16_t len)
 {
 	uint8_t *ptr = data;
 	uint8_t  crc_high = 0xFF; /* high byte of CRC initialised */
@@ -139,7 +139,7 @@ uint16_t crc_calculate(uint8_t *data, u16 len)
 	return (crc_high << 8 | crc_low);
 }
 
-uint8_t crc_check(u8 *data, uint16_t len)
+uint8_t crc_check(uint8_t *data, uint16_t len)
 {
         uint16_t crc;
 
@@ -197,12 +197,11 @@ void start_35_timer(struct modbus_channel *channel)
 	channel->hw_35_timer = hw_timer_start(uSeconds, ((1000000 * 39)/channel->uart->baud), FALSE, hw_35_expiry_function, (void *)channel);
 }
 
-static void modbus_process_rx_character(uint8_t channel_id, u8 ch)
+static void modbus_process_rx_character(uint8_t channel_id, uint8_t ch)
 {
 	if(modbus_channels[channel_id].process_rx_character) {
 		modbus_channels[channel_id].process_rx_character(&modbus_channels[channel_id], ch);
 	}
-
 }
 
 /*
@@ -277,11 +276,6 @@ result_t modbus_reserve(struct uart_data *uart, void (*idle_callback)(void *), m
 	modbus_channels[uart->uart].hw_35_timer = BAD_TIMER;
 
 	/*
-	 * Initialise the SW Timer used for response timeout
-	 */
-	TIMER_INIT(modbus_channels[uart->uart].resp_timer);
-
-	/*
 	 * Set the starting state.
 	 */
 	set_modbus_starting_state(&modbus_channels[uart->uart]);
@@ -344,7 +338,7 @@ void modbus_tx_data(struct modbus_channel *channel, uint8_t *data, uint16_t len)
 	buffer[loop++] = (crc >> 8) & 0xff;
 	buffer[loop++] = crc & 0xff;
 
-	rc = uart_tx(channel->uart, buffer, loop);
+	rc = uart_tx_buffer(channel->uart, buffer, loop);
 
 	if(rc != SUCCESS) {
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
@@ -386,7 +380,7 @@ result_t start_response_timer(struct modbus_channel *channel)
 	} else {
 		ticks = SYS_MODBUS_RESPONSE_TIMEOUT;
 	}
-	return(timer_start(ticks,
+	return(sw_timer_start(ticks,
 		           resp_timeout_expiry_fn,
 		           timer_data,
 		           &channel->resp_timer));
@@ -394,13 +388,11 @@ result_t start_response_timer(struct modbus_channel *channel)
 
 result_t cancel_response_timer(struct modbus_channel *channel)
 {
-	return(timer_cancel(&(channel->resp_timer)));
+	return(sw_timer_cancel(&(channel->resp_timer)));
 }
 
 static void resp_timeout_expiry_fn(timer_t timer_id, union sigval data)
 {
-	TIMER_INIT(modbus_channels[data.sival_int].resp_timer);
-
 	if (modbus_channels[data.sival_int].process_response_timeout) {
 		modbus_channels[data.sival_int].process_response_timeout(&modbus_channels[data.sival_int]);
 	} else {

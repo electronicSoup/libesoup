@@ -21,16 +21,16 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  *
  */
-#include "es_lib/comms/uart.h"
-#include "es_lib/timers/timers.h"
+#include "es_lib/comms/uart/uart.h"
+#include "es_lib/timers/sw_timers.h"
 
 typedef void (*modbus_response_function)(uint8_t *msg, uint8_t size, void *data);
 
 struct modbus_channel {
-    struct uart_data        *uart;
+    struct uart_data    *uart;
     uint8_t                       hw_15_timer;
     uint8_t                       hw_35_timer;
-    es_timer                 resp_timer;
+    timer_t                 resp_timer;
     uint8_t                       address;
     uint8_t                       rx_buffer[SYS_MODBUS_RX_BUFFER_SIZE];
     uint16_t                      rx_write_index;
@@ -84,7 +84,7 @@ extern result_t modbus_release(struct uart_data *uart);
 extern void modbus_tx_data(struct modbus_channel *channel, uint8_t *data, uint16_t len);
 extern result_t modbus_attempt_transmission(struct uart_data *uart, uint8_t *data, uint16_t len, modbus_response_function fn, void *callback_data);
 
-extern uint16_t crc_calculate(uint8_t *data, u16 len);
+extern uint16_t crc_calculate(uint8_t *data, uint16_t len);
 extern uint8_t crc_check(uint8_t *data, uint16_t len);
 
 

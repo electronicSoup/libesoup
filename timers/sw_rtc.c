@@ -66,7 +66,7 @@ static uint16_t                current_isr_secs = 0;
 static void increment_current_time(uint16_t current_isr_secs);
 static void check_alarm();
 static void add_alarm_to_list(struct alarm_data *alarm);
-static s8 datetime_cmp(struct datetime *a, struct datetime *b);
+static int8_t datetime_cmp(struct datetime *a, struct datetime *b);
 
 void rtc_init(void)
 {
@@ -77,7 +77,7 @@ void timer_expiry(void *data)
 {
 	increment_current_time(current_isr_secs);
 
-	current_isr_secs = SW_RTC_TICK_SECS;
+	current_isr_secs = SYS_SW_RTC_TICK_SECS;
 
 	hw_timer_start(Seconds, current_isr_secs, FALSE, timer_expiry, NULL);
 
@@ -107,7 +107,7 @@ static void increment_current_time(uint16_t secs)
 result_t rtc_update_current_datetime(uint8_t *data, uint16_t len)
 {
 #if ((DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-	LOG_D("rtc_update_current_datetime()\n\r");
+	log_d(TAG, "rtc_update_current_datetime()\n\r");
 #endif
 
 	if(len != 17) {
@@ -136,12 +136,12 @@ result_t rtc_update_current_datetime(uint8_t *data, uint16_t len)
 		current_datetime.minutes,
 		current_datetime.seconds);
 
-	if (SW_RTC_TICK_SECS > current_datetime.seconds) {
-		current_isr_secs = SW_RTC_TICK_SECS - current_datetime.seconds;
-	} else if(SW_RTC_TICK_SECS == current_datetime.seconds) {
-		current_isr_secs = SW_RTC_TICK_SECS;
+	if (SYS_SW_RTC_TICK_SECS > current_datetime.seconds) {
+		current_isr_secs = SYS_SW_RTC_TICK_SECS - current_datetime.seconds;
+	} else if(SYS_SW_RTC_TICK_SECS == current_datetime.seconds) {
+		current_isr_secs = SYS_SW_RTC_TICK_SECS;
 	} else {
-		current_isr_secs = current_datetime.seconds % SW_RTC_TICK_SECS;
+		current_isr_secs = current_datetime.seconds % SYS_SW_RTC_TICK_SECS;
 	}
 
 	hw_timer_start(Seconds, current_isr_secs, FALSE, timer_expiry, NULL);
@@ -286,7 +286,7 @@ static void add_alarm_to_list(struct alarm_data *alarm)
  * if Return value > 0 then it indicates datetime b is before datetime a.
  * if Return value = 0 then it indicates datetime a is the same as datetime b
  */
-static s8 datetime_cmp(struct datetime *a, struct datetime *b)
+static int8_t datetime_cmp(struct datetime *a, struct datetime *b)
 {
 	/*
 	 * Compare years
