@@ -25,9 +25,9 @@
 
 #include "system.h"
 
-extern BOOL     flash_page_empty(u32 address);
-extern result_t flash_erase_page(u32 address);
-extern result_t flash_write_row(u32 address, uint8_t *data);
+extern boolean  flash_page_empty(uint32_t address);
+extern result_t flash_erase_page(uint32_t address);
+extern result_t flash_write_row(uint32_t address, uint8_t *data);
 extern result_t flash_strcpy(char *dst, __prog__ char *src, uint16_t *length);
 extern uint16_t      flash_strlen(__prog__ char *src);
 

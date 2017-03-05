@@ -27,7 +27,7 @@
 #include "usb/inc/usb.h"
 #include "usb/inc/usb_host_android.h"
 
-#include "es_lib/usb/android/state.h"
+#include "es_lib/comms/usb/android/state.h"
 
 #define DEBUG_FILE TRUE
 #include "es_lib/logger/serial_log.h"
@@ -46,7 +46,7 @@ extern void system_reset();
 /*
  * Forward declaration of funcitons in file
  */
-static BOOL android_receive(uint8_t *id, uint8_t *data, uint16_t *data_size, uint8_t *error_code);
+static boolean android_receive(uint8_t *id, uint8_t *data, uint16_t *data_size, uint8_t *error_code);
 static void process_msg_from_android(void);
 
 /*
@@ -59,7 +59,7 @@ static uint8_t rx_circular_buffer[RX_BUFFER_SIZE];
 static uint16_t rx_write_index = 0;
 static uint16_t rx_read_index = 0;
 static uint16_t rx_buffer_count = 0;
-static BOOL receiver_busy = FALSE;
+static boolean receiver_busy = FALSE;
 
 static uint8_t tx_buffer[TX_BUFFER_SIZE];
 static uint8_t tx_circular_buffer[TX_BUFFER_SIZE];
@@ -67,7 +67,7 @@ static uint8_t tx_circular_buffer[TX_BUFFER_SIZE];
 static uint16_t tx_write_index = 0;
 static uint16_t tx_read_index = 0;
 static uint16_t tx_buffer_count = 0;
-static BOOL transmitter_busy = FALSE;
+static boolean transmitter_busy = FALSE;
 
 /*
  * Device handle for the connected USB Device
@@ -121,7 +121,7 @@ void android_tasks(void)
 {
 	uint8_t error_code = USB_SUCCESS;
 	uint16_t loop = 0;
-	u32 size = 0;
+	uint32_t size = 0;
 
 	/*
 	 * If there is not connected Android Device then simply perform state
@@ -142,7 +142,7 @@ void android_tasks(void)
 	 * Android Device.
 	 */
 	if (!receiver_busy) {
-		error_code = AndroidAppRead(device_handle, (uint8_t*) & rx_buffer, (u32)sizeof (rx_buffer));
+		error_code = AndroidAppRead(device_handle, (uint8_t*) & rx_buffer, (uint32_t)sizeof (rx_buffer));
 
 		if (error_code != USB_SUCCESS) {
 			if (error_code != USB_ENDPOINT_BUSY) {
@@ -191,7 +191,7 @@ void android_tasks(void)
 				//Error
 				receiver_busy = FALSE;
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
-				log_e("Error trying to complete read request %x\n\r", error_code);
+				log_e(TAG, "Error trying to complete read request %x\n\r", error_code);
 #endif
 			}
 		}
@@ -268,7 +268,7 @@ void android_tasks(void)
 }
 
 /*
- * static BOOL android_receive(BYTE *buffer, uint16_t *size, BYTE *error_code)
+ * static boolean android_receive(BYTE *buffer, uint16_t *size, BYTE *error_code)
  *
  * Function if there is a complete message in the Receive circular buffer then
  * remove the message from the circular buffer and place it in the Input buffer
@@ -285,7 +285,7 @@ void android_tasks(void)
  *                False if no message was received or there was an error.
  *
  */
-static BOOL android_receive(uint8_t *id, uint8_t *data, uint16_t *data_size, uint8_t *error_code)
+static boolean android_receive(uint8_t *id, uint8_t *data, uint16_t *data_size, uint8_t *error_code)
 {
 	uint16_t msg_size;
 	uint16_t loop;

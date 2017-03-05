@@ -6,8 +6,8 @@
 #include "usb/inc/usb.h"
 #include "usb/inc/usb_host_android.h"
 
-#include "es_lib/usb/android/state.h"
-#include "es_lib/usb/android/android_comms.h"
+#include "es_lib/comms/usb/android/state.h"
+#include "es_lib/comms/usb/android/android_comms.h"
 
 #define DEBUG_FILE TRUE
 #include "es_lib/logger/serial_log.h"

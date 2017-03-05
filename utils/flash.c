@@ -24,7 +24,8 @@
 
 #include "system.h"
 
-#define DEBUG_FILE
+#define DEBUG_FILE TRUE
+
 #include "es_lib/logger/serial_log.h"
 
 #define TAG "FLASH"
@@ -89,7 +90,7 @@ result_t flash_erase_page(uint32_t address)
 {
 	unsigned int offset;
 
-#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	log_d(TAG, "flash_erase_page(0x%lx)\n\r", address);
 #endif
 	/*
@@ -144,7 +145,7 @@ result_t flash_write_row(uint32_t address, uint8_t *data)
 	uint32_t offset;
 	uint32_t i;
 
-#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	log_d(TAG, "flash_write(0x%lx)\n\r", address);
 #endif
 	/*

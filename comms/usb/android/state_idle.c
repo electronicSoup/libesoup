@@ -30,7 +30,7 @@
 #include "usb/inc/usb.h"
 #include "usb/inc/usb_host_android.h"
 
-#include "es_lib/usb/android/state.h"
+#include "es_lib/comms/usb/android/state.h"
 
 #define DEBUG_FILE TRUE
 #include "es_lib/logger/serial_log.h"
@@ -52,8 +52,8 @@ android_state_t android_state;
 /*
  * Forward declarations of the states functions.
  */
-//void idle_process_msg(android_command_t, void *, u16);
-void idle_process_msg(u8, void *, u16);
+//void idle_process_msg(android_command_t, void *, uint16_t);
+void idle_process_msg(uint8_t, void *, uint16_t);
 void idle_main(void);
 void idle_process_usb_event(USB_EVENT event);
 
@@ -63,11 +63,9 @@ void idle_process_usb_event(USB_EVENT event);
  */
 void set_idle_state(void)
 {
-#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_INFO))
-	LOG_I("Android state -> Idle\n\r");
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_INFO))
+	log_i(TAG, "Android state -> Idle\n\r");
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#endif //  if defined(SYS_LOG_LEVEL)
 	android_state.process_msg = idle_process_msg;
 	android_state.main = idle_main;
 	android_state.process_usb_event = idle_process_usb_event;
@@ -77,7 +75,7 @@ void set_idle_state(void)
  * When in the Idle state there is no Android Device connected so we'd
  * not expect to receive any messages from the Android for processing.
  */
-void idle_process_msg(u8 cmd, void *data, u16 data_len)
+void idle_process_msg(uint8_t cmd, void *data, uint16_t data_len)
 {
 	if (cmd == APP_MSG_APP_CONNECT) {
 		ANDROID_SET_APPLICATION_CONNECTED_STATE
