@@ -30,7 +30,14 @@
 #define TAG "FLASH"
 
 /*
- * BOOL flash_page_empty(uint32_t address)
+ * Check required system.h defines are found
+ */
+#ifndef SYS_LOG_LEVEL
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif
+
+/*
+ * boolean flash_page_empty(uint32_t address)
  *
  * Function simply checks that a Flash page is empty. If the address is invalid False is returned.
  *
@@ -39,7 +46,7 @@
  * Return : True if the given FLASH Page is Valid address and empty. False otherwise.
  *
  */
-BOOL flash_page_empty(uint32_t address)
+boolean flash_page_empty(uint32_t address)
 {
 	uint16_t loop = 0;
 	uint16_t offset;
@@ -82,25 +89,16 @@ result_t flash_erase_page(uint32_t address)
 {
 	unsigned int offset;
 
-#if defined(SYS_LOG_LEVEL)
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	log_d(TAG, "flash_erase_page(0x%lx)\n\r", address);
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif //  if defined(SYS_LOG_LEVEL)
-
 	/*
 	 * Check that the given address is on a page boundary.
 	 */
         if((address & (FLASH_PAGE_SIZE - 1)) != 0x00) {
-#if defined(SYS_LOG_LEVEL)
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
 		log_e(TAG, "ERR_ADDRESS_RANGE(0x%lx)\n\r", address);
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif //  if defined(SYS_LOG_LEVEL)
 		return (ERR_ADDRESS_RANGE);
 	}
 
@@ -108,13 +106,9 @@ result_t flash_erase_page(uint32_t address)
 	 * Check that the given address is in an area of Firmware Address space which we can erase.
 	 */
         if((address < FLASH_FIRMWARE_START_ADDRESS) && (address != FLASH_APP_HANDLE_PAGE)) {
-#if defined(SYS_LOG_LEVEL)
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
 		log_e(TAG, "ERR_ADDRESS_RANGE(0x%lx)\n\r", address);
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif //  if defined(SYS_LOG_LEVEL)
 		return (ERR_ADDRESS_RANGE);
         }
 
@@ -150,41 +144,8 @@ result_t flash_write_row(uint32_t address, uint8_t *data)
 	uint32_t offset;
 	uint32_t i;
 
-#if defined(SYS_LOG_LEVEL)
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	log_d(TAG, "flash_write(0x%lx)\n\r", address);
-#endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif //  if defined(SYS_LOG_LEVEL)
-
-#if 0
-	if(address >= 0x2a800) {
-#if defined(SYS_LOG_LEVEL)
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
-		log_d(TAG, "Ignoring that one\n\r");
-#endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif //  if defined(SYS_LOG_LEVEL)
-		return(SUCCESS);
-	}
-
-	if(address == 0x18000) {
-		tmp = data;
-		for (i = 0; i < FLASH_NUM_INSTRUCTION_PER_ROW * 4; i++) {
-			printf("0x%x,", *tmp++);
-			asm ("CLRWDT");
-		}
-	}
-
-	if(address == 0x2ab80) {
-		tmp = data;
-		for (i = 0; i < FLASH_NUM_INSTRUCTION_PER_ROW * 4; i++) {
-			printf("0x%x,", *tmp++);
-			asm ("CLRWDT");
-		}
-	}
 #endif
 	/*
 	 * Check that the given address is on a Flash Row boundary.
@@ -196,13 +157,9 @@ result_t flash_write_row(uint32_t address, uint8_t *data)
 	 * Check that the given address is in an area of Firmware Address space which we can erase.
 	 */
         if((address < FLASH_FIRMWARE_START_ADDRESS) && (address != FLASH_APP_HANDLE_PAGE)) {
-#if defined(SYS_LOG_LEVEL)
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
 		log_e(TAG, "flash_write ERR_ADDRESS_RANGE 0x%lx\n\r", address);
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif //  if defined(SYS_LOG_LEVEL)
 		return (ERR_ADDRESS_RANGE);
         }
 

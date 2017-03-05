@@ -48,11 +48,17 @@
  */
 #include "es_lib/utils/spi.h"
 
-#define DEBUG_FILE
+#define DEBUG_FILE TRUE
 #include "es_lib/logger/serial_log.h"
 
 #define TAG "EEPROM"
 
+/*
+ * Check required system.h defines are found
+ */
+#ifndef SYS_LOG_LEVEL
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif
 
 /*
  * EEPROM SPI Commands.
@@ -110,13 +116,9 @@ result_t eeprom_read(uint16_t address, uint8_t *data)
 		EEPROM_DeSelect
 		return(SUCCESS);
 	}
-#if defined(SYS_LOG_LEVEL)
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
-        log_e(TAG, "eeprom_read Address Range Error!\n\r");
+        log_e(TAG,"eeprom_read Address Range Error!\n\r");
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif //  if defined(SYS_LOG_LEVEL)
 	return (ERR_ADDRESS_RANGE);
 }
 
@@ -160,13 +162,9 @@ result_t eeprom_write(uint16_t address, uint8_t data)
 		EEPROM_DeSelect
 		return(SUCCESS);
         }
-#if defined(SYS_LOG_LEVEL)
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
         log_e(TAG, "eeprom_write Address Range Error!\n\r");
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif //  if defined(SYS_LOG_LEVEL)
 	return (ERR_ADDRESS_RANGE);
 }
 
@@ -185,13 +183,9 @@ result_t eeprom_erase(uint16_t start_address)
 {
 	uint16_t loop;
 
-#if defined(SYS_LOG_LEVEL)
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
         log_e(TAG, "eeprom_erase(0x%x)\n\r", start_address);
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif //  if defined(SYS_LOG_LEVEL)
 #ifdef SYS_EEPROM_USE_BOOT_PAGE
 	if(start_address <= EEPROM_MAX_ADDRESS) {
 #else
@@ -204,13 +198,9 @@ result_t eeprom_erase(uint16_t start_address)
 
 		return (SUCCESS);
 	}
-#if defined(SYS_LOG_LEVEL)
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
         log_e(TAG, "eeprom_erase Address Range Error!\n\r");
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif //  if defined(SYS_LOG_LEVEL)
 	return (ERR_ADDRESS_RANGE);
 }
 
@@ -240,14 +230,9 @@ result_t eeprom_str_read(uint16_t address, uint8_t *buffer, uint16_t *length)
 	uint8_t       num_read = 0;
 	result_t rc;
 
-#if defined(SYS_LOG_LEVEL)
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+#if ((DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	log_d(TAG, "eeprom_str_read()\n\r");
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif //  if defined(SYS_LOG_LEVEL)
-
 	ptr = buffer;
 
 	rc = eeprom_read(address++, &character);
@@ -263,14 +248,9 @@ result_t eeprom_str_read(uint16_t address, uint8_t *buffer, uint16_t *length)
 	}
 	*ptr = 0x00;
 	*length = num_read;
-#if defined(SYS_LOG_LEVEL)
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+#if ((DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	log_d(TAG, "eeprom_str_read() read %s\n\r", buffer);
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif //  if defined(SYS_LOG_LEVEL)
-
 	return (rc);
 }
 
@@ -295,36 +275,23 @@ result_t  eeprom_str_write(uint16_t address, uint8_t *buffer, uint16_t *length)
 	uint16_t      copied = 0;
 	result_t rc = SUCCESS;
 
-#if defined(SYS_LOG_LEVEL)
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+#if ((DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	log_d(TAG, "eeprom_str_write()\n\r");
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif //  if defined(SYS_LOG_LEVEL)
-
 	ptr = buffer;
 
 	while ( (*ptr) && (rc == SUCCESS) && (copied < (*length - 1))) {
-#if defined(SYS_LOG_LEVEL)
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+#if ((DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 		log_d(TAG, "Write to location %d value 0x%x\n\r", address, *ptr);
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif //  if defined(SYS_LOG_LEVEL)
 		rc = eeprom_write(address++, *ptr++);
 		copied++;
 	}
 
 	if(rc == SUCCESS) {
-#if defined(SYS_LOG_LEVEL)
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+#if ((DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 		log_d(TAG, "Write loop finished\n\r");
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif //  if defined(SYS_LOG_LEVEL)
 		eeprom_write(address, 0x00);
 	}
 

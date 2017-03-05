@@ -20,23 +20,25 @@
  *
  */
 #include "system.h"
-#define DEBUG_FILE
+#define DEBUG_FILE TRUE
 #include "es_lib/logger/serial_log.h"
 
 #define TAG "SPI"
+
+/*
+ * Check required system.h defines are found
+ */
+#ifndef SYS_LOG_LEVEL
+#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#endif
 
 void spi_init(void)
 {
 	uint8_t loop;
 
-#if defined(SYS_LOG_LEVEL)
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
-	log_d(TAG, "spi_init()\n\r");
+#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_INFO))
+	log_i(TAG, "spi_init()\n\r");
 #endif
-#else   // if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif  // if defined(SYS_LOG_LEVEL)
-
 	/*
 	 * short delay before init SPI
 	 */
