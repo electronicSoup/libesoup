@@ -106,6 +106,12 @@
  * with es_lib/logging/serial_log.h. That file defines Logging macros which 
  * expect a logging level to be defined and a #define of "DEBUG_FILE" at the 
  * top of the file for logging to be enabled.
+ *
+ * #define TAG "MyMain"
+ *
+ * #if ((DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+ *         log_d(TAG, "logging message\n\r");
+ # #endif
  */
 #define SYS_LOG_LEVEL LOG_DEBUG
 
@@ -137,7 +143,7 @@
  */
 //#define SYS_JOBS
 
-#ifdef JOBS
+#ifdef SYS_JOBS
 #define SYS_NUMBER_OF_JOBS 10
 #endif
 
