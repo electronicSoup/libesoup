@@ -1,6 +1,6 @@
 /**
  *
- * \file es_lib/timers/rtc.c
+ * \file libesoup/timers/rtc.c
  *
  * This file contains code for dealing with Real Date Time values
  *

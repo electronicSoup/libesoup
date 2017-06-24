@@ -1,6 +1,6 @@
 /**
  *
- * \file es_lib/logger/serial_port.c
+ * \file libesoup/logger/serial_port.c
  *
  * Functions for initialisation of the Serial Port.
  *
@@ -26,13 +26,13 @@
 #define TAG "serial"
 
 #include "system.h"
-#include "es_lib/logger/serial_log.h"
+#include "libesoup/logger/serial_log.h"
 
 /*
  * Check required system.h defines are found
  */
 #ifndef SYS_LOG_LEVEL
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
 #endif
 
 
@@ -44,11 +44,11 @@
 #ifndef ES_LINUX
 #if defined(__18F2680) || defined(__18F4585)
 #ifndef SYS_USART_TX_BUFFER_SIZE
-#error system.h should define SYS_USART_TX_BUFFER_SIZE (see es_lib/examples/system.h)
+#error system.h should define SYS_USART_TX_BUFFER_SIZE (see libesoup/examples/system.h)
 #endif
 #else
 #ifndef SERIAL_LOGGING_TX_DDR
-#error system.h should include a board file which defines SERIAL_LOGGING_TX_DDR (see es_lib/examples/system.h)
+#error system.h should include a board file which defines SERIAL_LOGGING_TX_DDR (see libesoup/examples/system.h)
 #endif
 #endif
 
@@ -58,7 +58,7 @@
 #endif
 
 #if defined (MCP)
-#include "es_lib/comms/uart/uart.h"
+#include "libesoup/comms/uart/uart.h"
 #elif defined (ES_LINUX)
 #include <stdio.h>
 #endif // if defined (ES_LINUX)

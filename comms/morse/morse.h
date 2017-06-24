@@ -1,6 +1,6 @@
 /**
  *
- * \file es_lib/morse/morse.h
+ * \file libesoup/morse/morse.h
  *
  * Timer function prototypes of the electronicSoup Cinnamon Bun
  *

@@ -1,6 +1,6 @@
 /**
  *
- * \file es_lib/utils/sleep.c
+ * \file libesoup/utils/sleep.c
  *
  * Functionality for sleep
  *
@@ -24,7 +24,7 @@
 #define DEBUG_FILE
 #define TAG "SLEEP"
 
-#include "es_lib/timers/hw_timers.h"
+#include "libesoup/timers/hw_timers.h"
 
 static volatile uint8_t sleep_over;
 

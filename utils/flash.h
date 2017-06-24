@@ -1,6 +1,6 @@
 /**
  *
- * \file es_lib/utils/flash.h
+ * \file libesoup/utils/flash.h
  *
  * Flash function prototypes for electronicSoup Cinnamon Bun code Library
  *

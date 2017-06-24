@@ -1,6 +1,6 @@
 /**
  *
- * \file es_lib/utils/utils.h
+ * \file libesoup/utils/utils.h
  *
  * General utility functions of the electronicSoup CAN code Library
  *
@@ -23,7 +23,7 @@
 #ifndef UTILS_H
 #define UTILS_H
 
-#include "es_lib/core.h"
+#include "libesoup/core.h"
 #include "system.h"
 
 #ifdef HEARTBEAT

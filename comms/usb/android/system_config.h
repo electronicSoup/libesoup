@@ -1,6 +1,6 @@
 /**
  *
- * \file es_lib/usb/android/system_config.h
+ * \file libesoup/usb/android/system_config.h
  *
  * Definition file required by the Microchip USB Host stack
  *

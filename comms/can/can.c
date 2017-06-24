@@ -1,6 +1,6 @@
 /**
  *
- * \file es_lib/can/can.c
+ * \file libesoup/can/can.c
  *
  * Core SYS_CAN Functionality of electronicSoup CAN code
  *
@@ -20,16 +20,16 @@
  *
  */
 #include "system.h"
-#include "es_lib/comms/can/es_can.h"
+#include "libesoup/comms/can/es_can.h"
 #ifdef SYS_CAN_DCNCP
-#include "es_lib/can/dcncp/dcncp_can.h"
+#include "libesoup/can/dcncp/dcncp_can.h"
 #endif
 #ifdef SYS_ISO15765_DCNCP
-#include "es_lib/can/dcncp/dcncp_iso15765.h"
+#include "libesoup/can/dcncp/dcncp_iso15765.h"
 #endif // SYS_ISO15765_DCNCP
 
 #define DEBUG_FILE TRUE
-#include "es_lib/logger/serial_log.h"
+#include "libesoup/logger/serial_log.h"
 
 #if defined(SYS_LOG_LEVEL)
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
@@ -55,7 +55,7 @@ char can_baud_rate_strings[8][10] = {
 };
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
 #endif //  if defined(SYS_LOG_LEVEL)
 
 static can_status_t can_status;
@@ -69,7 +69,7 @@ can_status_handler_t app_status_handler = (can_status_handler_t)NULL;
  * Check required system.h defines are found
  */
 #ifndef SYS_LOG_LEVEL
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
 #endif
 
 result_t can_init(can_baud_rate_t baudrate,

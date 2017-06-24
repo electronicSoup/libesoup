@@ -1,6 +1,6 @@
 /**
  *
- * \file es_lib/comms/uart.c
+ * \file libesoup/comms/uart.c
  *
  * UART functionalty for the electronicSoup Cinnamon Bun
  *
@@ -27,16 +27,16 @@
 #include <stdio.h>
 
 #include "system.h"
-#include "es_lib/logger/serial_log.h"
-#include "es_lib/utils/rand.h"
+#include "libesoup/logger/serial_log.h"
+#include "libesoup/utils/rand.h"
 
-#include "es_lib/comms/uart/uart.h"
+#include "libesoup/comms/uart/uart.h"
 
 /*
  * Check required system.h defines are found
  */
 #ifndef SYS_LOG_LEVEL
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
 #endif
 
 #ifndef SYS_CLOCK_FREQ

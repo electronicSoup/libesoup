@@ -1,6 +1,6 @@
 /*********************************************************************
  *
- * \file es_lib/usb/xpad/usb_host_xpad.h
+ * \file libesoup/usb/xpad/usb_host_xpad.h
  *
  * Defines the Interface functions to the Microchip USB Host Stack. 
  *

@@ -22,8 +22,8 @@
 #pragma config BOREN = OFF
 #pragma config JTAGEN = OFF
 
-#include "es_lib/utils/clock.h"
-#include "es_lib/utils/spi.h"
+#include "libesoup/utils/clock.h"
+#include "libesoup/utils/spi.h"
 
 void cpu_init(void)
 {

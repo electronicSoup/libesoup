@@ -1,6 +1,6 @@
 /**
  *
- * \file es_lib/firmware/firmware.h
+ * \file libesoup/firmware/firmware.h
  *
  * Definitions for creating firmware for the CinnamonBun Bootloader
  *

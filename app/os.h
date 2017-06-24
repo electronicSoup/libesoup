@@ -1,6 +1,6 @@
 /**
  *
- * \file es_lib/app/os.h
+ * \file libesoup/app/os.h
  *
  * OS function prototypes
  *
@@ -24,7 +24,7 @@
 
 #define SYSTEM_TICK_ms  5 //mSeconds
 
-#include "es_lib/core.h"
+#include "libesoup/core.h"
 
 extern void        os_init(void);
 

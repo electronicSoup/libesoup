@@ -2,7 +2,7 @@
 
 #include "system.h"
 #include <stdio.h>
-#include "es_lib/timers/hw_timers.h"
+#include "libesoup/timers/hw_timers.h"
 
 extern void check_timer(uint8_t timer);
 

@@ -1,6 +1,6 @@
 /**
  *
- * \file es_lib/timers/rtc.c
+ * \file libesoup/timers/rtc.c
  *
  * This file contains code for dealing with Real Date Time values
  *
@@ -29,23 +29,23 @@
 #define HOURS_PER_DAY       24
 
 #include "system.h"
-#include "es_lib/logger/serial_log.h"
-#include "es_lib/timers/hw_timers.h"
-#include "es_lib/timers/rtc.h"
-#include "es_lib/jobs/jobs.h"
+#include "libesoup/logger/serial_log.h"
+#include "libesoup/timers/hw_timers.h"
+#include "libesoup/timers/rtc.h"
+#include "libesoup/jobs/jobs.h"
 
 /*
  * Check required system.h defines are found
  */
 #ifndef SYS_LOG_LEVEL
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
 #endif
 
 /*
  * Check required system.h defines are found
  */
 #ifndef SYS_SW_TIMER_TICK_ms
-#error system.h file should define SYS_SW_TIMER_TICK_ms (see es_lib/examples/system.h)
+#error system.h file should define SYS_SW_TIMER_TICK_ms (see libesoup/examples/system.h)
 #endif
 
 struct alarm_data {

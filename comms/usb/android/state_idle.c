@@ -1,6 +1,6 @@
 /**
  *
- * \file es_lib/usb/android/states/idle.c
+ * \file libesoup/usb/android/states/idle.c
  *
  * The Bootloader Idle state for the Android Communications.
  *
@@ -30,10 +30,10 @@
 #include "usb/inc/usb.h"
 #include "usb/inc/usb_host_android.h"
 
-#include "es_lib/comms/usb/android/state.h"
+#include "libesoup/comms/usb/android/state.h"
 
 #define DEBUG_FILE TRUE
-#include "es_lib/logger/serial_log.h"
+#include "libesoup/logger/serial_log.h"
 
 #define TAG "Idle"
 
@@ -41,7 +41,7 @@
  * Check required system.h defines are found
  */
 #ifndef SYS_LOG_LEVEL
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
 #endif
 
 /*

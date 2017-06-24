@@ -1,6 +1,6 @@
 /**
  *
- * \file es_lib/app/app.h
+ * \file libesoup/app/app.h
  *
  * Application header which must be used in main.c of Application
  *
@@ -19,7 +19,7 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  *
  */
-#include "es_lib/core.h"
+#include "libesoup/core.h"
 
 /*
  * The following are definitions for setting up the identification strings

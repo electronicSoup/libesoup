@@ -1,6 +1,6 @@
 /**
  *
- * \file es_lib/can/dcncp/cinnamonbun_info.h
+ * \file libesoup/can/dcncp/cinnamonbun_info.h
  *
  * Function prototypes for retrieving the CinnamonBun Info Strings
  *

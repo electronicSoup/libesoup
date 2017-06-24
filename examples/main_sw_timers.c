@@ -10,20 +10,20 @@
  * Set up the configuration words of the processor:
  */
 
-#include "es_lib/../system.h"
+#include "libesoup/../system.h"
 
 #define DEBUG_FILE TRUE
 #define TAG "Main"
 
-#include "es_lib/logger/serial_log.h"
-#include "es_lib/timers/hw_timers.h"
-#include "es_lib/timers/sw_timers.h"
+#include "libesoup/logger/serial_log.h"
+#include "libesoup/timers/hw_timers.h"
+#include "libesoup/timers/sw_timers.h"
 
 /*
  * Check required system.h defines are found
  */
 #ifndef SYS_LOG_LEVEL
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
 #endif
 
 static void expiry(timer_t timer_id, union sigval);

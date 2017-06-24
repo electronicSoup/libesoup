@@ -1,6 +1,6 @@
 /**
  *
- * \file es_lib/timers/sw_timers.h
+ * \file libesoup/timers/sw_timers.h
  *
  * Software Timer definitions and function prototypes
  *
@@ -69,7 +69,7 @@ typedef uint8_t timer_t;
  * integer value or a pointer.
  *
  * The reason for Linux API conformance is so that code is portable between
- * Linux and Microchip devices. In the case of MCP @see es_lib/timers/timers.h
+ * Linux and Microchip devices. In the case of MCP @see libesoup/timers/timers.h
  * provides the timer functionality, where as under Linux its timer code is
  * used. In both cases user code will be the same.
  *
@@ -87,7 +87,7 @@ union sigval {
  * @brief call signiture of the timer expiry function.
  *
  * When a timer is created an expiry function is passed to the creation
- * function. The es_lib timer code executes this expiry_function when the timer
+ * function. The libesoup timer code executes this expiry_function when the timer
  * expires, passing the expiry function any data provided on timer creation.
  *
  * The expiry_function is a pointer to a function which accepts as parameter
@@ -97,7 +97,7 @@ union sigval {
  * timer library code.
  *
  * Any timer expiry function should be short and sweet and return control as
- * soon as possible to the es_lib timer functionality.
+ * soon as possible to the libesoup timer functionality.
  */
 typedef void (*expiry_function)(timer_t timer_id, union sigval);
 
@@ -152,7 +152,7 @@ extern void timer_tick(void);
  * structures. The project's system.h header file should define the number
  * of timers the library should define space for an manage. See the
  * definition of SYS_NUMBER_OF_TIMERS in the example system.h file in the
- * es_lib directory.
+ * libesoup directory.
  */
 extern void sw_timer_init(void);
 

@@ -1,6 +1,6 @@
 /**
  *
- * \file es_lib/usb/android/android.c
+ * \file libesoup/usb/android/android.c
  *
  * Functions for communicating with Android Apps
  *
@@ -27,10 +27,10 @@
 #include "usb/inc/usb.h"
 #include "usb/inc/usb_host_android.h"
 
-#include "es_lib/comms/usb/android/state.h"
+#include "libesoup/comms/usb/android/state.h"
 
 #define DEBUG_FILE TRUE
-#include "es_lib/logger/serial_log.h"
+#include "libesoup/logger/serial_log.h"
 
 #define TAG "Android-Com"
 

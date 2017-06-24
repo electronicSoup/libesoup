@@ -1,10 +1,10 @@
 /**
  *
- * \file es_lib/jobs/jobs.c
+ * \file libesoup/jobs/jobs.c
  *
  * Functions for using system Jobs.
  *
- * The first uart port is used by the logger. See es_lib/logger
+ * The first uart port is used by the logger. See libesoup/logger
  *
  * Copyright 2015 John Whitmore <jwhitmore@electronicsoup.com>
  *
@@ -25,14 +25,14 @@
 #define TAG "JOBS"
 
 #include "system.h"
-#include "es_lib/logger/serial_log.h"
-#include "es_lib/jobs/jobs.h"
+#include "libesoup/logger/serial_log.h"
+#include "libesoup/jobs/jobs.h"
 
 /*
  * Check required system.h defines are found
  */
 #ifndef SYS_LOG_LEVEL 
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
 #endif
 
 struct job {

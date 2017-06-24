@@ -1,8 +1,8 @@
 /*
  * This is a template main.c file for a Cinnamon Bun Node Application
  */
-#incldue "es_lib/app/app.h"
-#include "es_lib/os/os.h"
+#incldue "libesoup/app/app.h"
+#include "libesoup/os/os.h"
 
 /*
  * These Strings identify your application. It is important that the first

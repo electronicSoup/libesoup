@@ -1,6 +1,6 @@
 /**
  *
- * \file es_lib/utils/eeprom.c
+ * \file libesoup/utils/eeprom.c
  *
  * eeprom functions of the electronicSoup Cinnamon Bun
  *
@@ -24,7 +24,7 @@
  * address is defined in core.h as EEPROM_MAX_ADDRESS any address passed to
  * the eeprom functions exceedign this maximum address will cause a returned
  * error code of ERR_ADDRESS_RANGE. The error code type is also defined in
- * core.h of es_lib.
+ * core.h of libesoup.
  *
  * The eeprom address map is split into two sections with the first 32 Bytes
  * being reserved for a Bootloader. This size is specified in core.h by the
@@ -46,10 +46,10 @@
  * The EEPROM chip is connected to the first SPI bus of the PIC24FJ256GB106
  * so spi code is required.
  */
-#include "es_lib/utils/spi.h"
+#include "libesoup/utils/spi.h"
 
 #define DEBUG_FILE TRUE
-#include "es_lib/logger/serial_log.h"
+#include "libesoup/logger/serial_log.h"
 
 #define TAG "EEPROM"
 
@@ -57,12 +57,12 @@
  * Check required system.h defines are found
  */
 #ifndef SYS_LOG_LEVEL
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
 #endif
 
 #if defined(SYS_EEPROM_USE_BOOT_PAGE)
 #ifndef SYS_EEPROM_BOOT_PAGE_SIZE
-#error system.h file should define SYS_EEPROM_BOOT_PAGE_SIZE (see es_lib/examples/system.h)
+#error system.h file should define SYS_EEPROM_BOOT_PAGE_SIZE (see libesoup/examples/system.h)
 #endif
 #endif // #if defined(SYS_EEPROM_USE_BOOT_PAGE)
 

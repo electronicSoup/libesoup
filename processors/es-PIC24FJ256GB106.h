@@ -1,13 +1,13 @@
 /**
  *
- * @file es_lib/processors/es-PIC24FJ256GB106.h
+ * @file libesoup/processors/es-PIC24FJ256GB106.h
  *
  * @author John Whitmore
  *
  * This file contains microcontroller specific definitions for the Microchip
  * PIC24FJ256GB106. 
  *
- * The es_lib library of source code expects a system.h header file to exist
+ * The libesoup library of source code expects a system.h header file to exist
  * in your include path. The file contains the various switches and definitions
  * which configure the various features of the library.
  *
@@ -36,7 +36,7 @@
 /**
  * \brief Identifers for the hardware timers in the pic24FG256GB106
  * 
- * These identifiers are used in es_lib/timers/hw_timers.c when managing the 
+ * These identifiers are used in libesoup/timers/hw_timers.c when managing the 
  * timers in the micro-controller. Different micro-controllers will use
  * different numbering, perhaps starting a timer 0.
  */

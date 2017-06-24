@@ -1,6 +1,6 @@
 /**
  *
- * \file es_lib/logger/iso15765_log.c
+ * \file libesoup/logger/iso15765_log.c
  *
  * ISO15765 Logger Protocol Functionality
  *
@@ -22,12 +22,12 @@
 #include <stdio.h>
 #include <string.h>
 #include "system.h"
-#include "es_lib/can/dcncp/dcncp_can.h"
-#include "es_lib/can/es_can.h"
+#include "libesoup/can/dcncp/dcncp_can.h"
+#include "libesoup/can/es_can.h"
 
 #define DEBUG_FILE TRUE
-#include "es_lib/logger/serial_log.h"
-#include "es_lib/logger/iso15765_log.h"
+#include "libesoup/logger/serial_log.h"
+#include "libesoup/logger/iso15765_log.h"
 
 #define TAG "ISO15765_LOG"
 
@@ -35,7 +35,7 @@
  * Check required system.h defines are found
  */
 #ifndef SYS_LOG_LEVEL 
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
 #endif
 
 /*

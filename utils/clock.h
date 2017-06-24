@@ -1,6 +1,6 @@
 /**
  *
- * \file es_lib/utils/clock.h
+ * \file libesoup/utils/clock.h
  *
  * Definitions for changing the clock speed of the  processor.
  *

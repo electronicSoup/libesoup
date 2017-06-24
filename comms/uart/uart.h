@@ -1,6 +1,6 @@
 /**
  *
- * \file es_lib/comms/uart.h
+ * \file libesoup/comms/uart.h
  *
  * UART functionalty for the electronicSoup Cinnamon Bun
  *

@@ -1,12 +1,12 @@
 /**
  *
- * @file es_lib/processors/cb-PIC24FJ256GB106.h
+ * @file libesoup/processors/cb-PIC24FJ256GB106.h
  *
  * @author John Whitmore
  *
- * This file contains an example es_lib system.h configuration file. 
+ * This file contains an example libesoup system.h configuration file. 
  *
- * The es_lib library of source code expects a system.h header file to exist
+ * The libesoup library of source code expects a system.h header file to exist
  * in your include path. The file contains the various switches and definitions
  * which configure the various features of the library.
  *
@@ -29,7 +29,7 @@
 #ifndef _CB_dsPIC33EP256MU806_H
 #define _CB_dsPIC33EP256MU806_H
 
-#include "es_lib/processors/es-dsPIC33EP256MU806.h"
+#include "libesoup/processors/es-dsPIC33EP256MU806.h"
 
 /**
  * @brief Crystal Frequency of the Hardware Device.
@@ -75,7 +75,7 @@
  *
  * At present four bytes of EEPROM data are reserved for use by the 
  * electronicSoup bootloader. This is all taken care of automatically by 
- * @see es_lib/utils/eeprom.h.
+ * @see libesoup/utils/eeprom.h.
  *
  * Setting @see EEPROM_USE_BOOT_PAGE in your system.h configuration file,
  * will negate the reservation. Use this only if you are overwriting the 
@@ -268,6 +268,6 @@
 #define USB_HOST    TRISDbits.TRISD9 = OUTPUT_PIN; LATDbits.LATD9 = 1; USBInitialize(0);
 #define USB_DEVICE  TRISDbits.TRISD9 = OUTPUT_PIN; LATDbits.LATD9 = 0;
 
-#include "es_lib/core.h"
+#include "libesoup/core.h"
 
 #endif // _CB_dsPIC33EP256MU806_H

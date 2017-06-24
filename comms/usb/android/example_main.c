@@ -41,12 +41,12 @@
  * lrwxrwxrwx  1 john users   65 Jun 27 19:26 usb_host_local.h -> /opt/microchip/mla/v2014_07_22/framework/usb/src/usb_host_local.h
  * 
  * there is a bash script to link the files
- * Also need usb_handlers.c from es_lib
+ * Also need usb_handlers.c from libesoup
  *
  *     Also need a heap size  512
  */
-#include "es_lib/usb/android/android_comms.h"
-#include "es_lib/usb/android/state_idle.h"
+#include "libesoup/usb/android/android_comms.h"
+#include "libesoup/usb/android/state_idle.h"
 
 /*
  *  Microchip USB Includes
@@ -58,7 +58,7 @@
  *
  * You must also include the path:
  *
- * es_lib/usb/android
+ * libesoup/usb/android
  *
  * In your project properties for the system_config.h file which the Microchip
  * source files expect to find.
@@ -66,7 +66,7 @@
 #include "usb/usb.h"
 #include "usb/usb_host_android.h"
 
-#include "es_lib/firmware/firmware.h"
+#include "libesoup/firmware/firmware.h"
 
 DEF_FIRMWARE_AUTHOR_40("me@mail.com")
 DEF_FIRMWARE_DESCRIPTION_50("My Project")

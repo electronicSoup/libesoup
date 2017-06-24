@@ -1,6 +1,6 @@
 /**
  *
- * \file es_lib/usb/android/states_idle.h
+ * \file libesoup/usb/android/states_idle.h
  *
  * Definitions for the Android states defined by the Firmware.
  *

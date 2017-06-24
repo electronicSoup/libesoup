@@ -1,6 +1,6 @@
 /**
  *
- * \file es_lib/utils/spi.c
+ * \file libesoup/utils/spi.c
  *
  * SPI Interface functions for the electronicSoup Cinnamon Bun
  *
@@ -21,7 +21,7 @@
  */
 #include "system.h"
 #define DEBUG_FILE TRUE
-#include "es_lib/logger/serial_log.h"
+#include "libesoup/logger/serial_log.h"
 
 #define TAG "SPI"
 
@@ -29,7 +29,7 @@
  * Check required system.h defines are found
  */
 #ifndef SYS_LOG_LEVEL
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
 #endif
 
 void spi_init(void)

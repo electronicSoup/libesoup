@@ -1,6 +1,6 @@
 /**
  *
- * \file es_lib/logger/serial_log.h
+ * \file libesoup/logger/serial_log.h
  *
  * Definitions for configuration of the Serial Port
  *

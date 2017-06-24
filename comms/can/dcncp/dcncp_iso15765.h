@@ -1,6 +1,6 @@
 /**
  *
- * \file es_lib/can/dcncp/dcncp_iso15765.h
+ * \file libesoup/can/dcncp/dcncp_iso15765.h
  *
  * ISO15765 based node managment
  *

@@ -1,6 +1,6 @@
 /**
  *
- * \file es_lib/utils/clock.c
+ * \file libesoup/utils/clock.c
  *
  * Functions for changing the clock speed of the  processor.
  *
@@ -25,7 +25,7 @@
  * Check required system.h defines are found
  */
 #ifndef SYS_CLOCK_FREQ
-#error system.h should define SYS_CLOCK_FREQ (see es_lib/examples/system.h)
+#error system.h should define SYS_CLOCK_FREQ (see libesoup/examples/system.h)
 #endif
 
 /*

@@ -1,6 +1,6 @@
 /*
  *
- * file es_lib/timers/sw_timers.c
+ * file libesoup/timers/sw_timers.c
  *
  * Timer functionalty for the electronicSoup Cinnamon Bun
  *
@@ -41,14 +41,14 @@
  * Both of these utilities should be used for portability, just in case the 
  * timer tick period is changed.
  *
- * The es_lib/examples directory contains an example main.c named 
+ * The libesoup/examples directory contains an example main.c named 
  * main_sw_timers.c
  *
  */
 #include "system.h"
-#include "es_lib/logger/serial_log.h"
-#include "es_lib/timers/hw_timers.h"
-#include "es_lib/timers/sw_timers.h"
+#include "libesoup/logger/serial_log.h"
+#include "libesoup/timers/hw_timers.h"
+#include "libesoup/timers/sw_timers.h"
 
 #ifdef ES_LINUX
 #include <stdlib.h>
@@ -64,11 +64,11 @@
  * Check required system.h defines are found
  */
 #ifndef SYS_LOG_LEVEL
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
 #endif
 
 #ifndef SYS_NUMBER_OF_SW_TIMERS
-#error system.h file should define SYS_NUMBER_OF_SW_TIMERS (see es_lib/examples/system.h)
+#error system.h file should define SYS_NUMBER_OF_SW_TIMERS (see libesoup/examples/system.h)
 #endif
 
 #ifdef MCP

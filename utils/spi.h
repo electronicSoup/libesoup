@@ -1,6 +1,6 @@
 /**
  *
- * \file es_lib/utils/spi.h
+ * \file libesoup/utils/spi.h
  *
  * SPI Interface functions for the electronicSoup Cinnamon Bun
  *

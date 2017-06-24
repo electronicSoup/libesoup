@@ -1,6 +1,6 @@
 /**
  *
- * \file es_lib/can/dcncp/cinnamonbun_info.c
+ * \file libesoup/can/dcncp/cinnamonbun_info.c
  *
  * Functions for retrieving the CinnamonBun Info Strings
  *
@@ -21,11 +21,11 @@
  */
 #include "system.h"
 #define DEBUG_FILE TRUE
-#include "es_lib/utils/flash.h"
-#include "es_lib/logger/serial_log.h"
-#include "es_lib/comms/can/dcncp/cinnamonbun_info.h"
-#include "es_lib/firmware/firmware.h"
-#include "es_lib/utils/eeprom.h"
+#include "libesoup/utils/flash.h"
+#include "libesoup/logger/serial_log.h"
+#include "libesoup/comms/can/dcncp/cinnamonbun_info.h"
+#include "libesoup/firmware/firmware.h"
+#include "libesoup/utils/eeprom.h"
 
 #define TAG "CB_INFO"
 
@@ -33,7 +33,7 @@
  * Check required system.h defines are found
  */
 #ifndef SYS_LOG_LEVEL
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
 #endif
 
 result_t cb_get_hardware_info(uint8_t *data, uint16_t *data_len)

@@ -1,6 +1,6 @@
 /*********************************************************************
  *
- * \file es_lib/usb/xpad/usb_host_xpad_events.h
+ * \file libesoup/usb/xpad/usb_host_xpad_events.h
  *
  * File contains the xpad Driver defined USB Events which are sent 
  * to the Application's event handler for changes on the xpad 

@@ -1,6 +1,6 @@
 /**
  *
- * \file es_lib/logger/iso15765_log.h
+ * \file libesoup/logger/iso15765_log.h
  *
  * Definitions for the SYS_ISO15765 Network Logger
  *

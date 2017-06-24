@@ -1,6 +1,6 @@
 /**
  *
- * \file es_lib/can/es_can.h
+ * \file libesoup/can/es_can.h
  *
  * Core CAN Bus definitions
  *

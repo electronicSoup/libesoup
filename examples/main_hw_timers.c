@@ -12,7 +12,7 @@
 #define DEBUG_FILE TRUE
 #define TAG "Main"
 
-#include "es_lib/timers/hw_timers.h"
+#include "libesoup/timers/hw_timers.h"
 
 /*
  * Forward declaration of our Hardware timer expiry function, which will be

@@ -4,12 +4,12 @@
 
 #include "system.h"
 
-#include "es_lib/comms/can/l2_dsPIC33EP256MU806.h"
-#include "es_lib/timers/sw_timers.h"
-#include "es_lib/comms/can/es_can.h"
+#include "libesoup/comms/can/l2_dsPIC33EP256MU806.h"
+#include "libesoup/timers/sw_timers.h"
+#include "libesoup/comms/can/es_can.h"
 
 #define DEBUG_FILE TRUE
-#include "es_lib/logger/serial_log.h"
+#include "libesoup/logger/serial_log.h"
 
 #define TAG "dsPIC33_CAN"
 
@@ -17,7 +17,7 @@
  * Check required system.h defines are found
  */
 #ifndef SYS_LOG_LEVEL
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
 #endif
 
 #if DEBUG_LEVEL < NO_LOGGING

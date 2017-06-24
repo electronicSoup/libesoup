@@ -1,6 +1,6 @@
 /**
  *
- * \file es_lib/utils/eeprom.h
+ * \file libesoup/utils/eeprom.h
  *
  * Cinnamon Bun EEPROM functions of the electronicSoup code Library
  *

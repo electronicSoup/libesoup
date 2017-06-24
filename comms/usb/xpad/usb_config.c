@@ -1,6 +1,6 @@
 /*********************************************************************
  *
- * \file es_lib/usb/xpad/usb_config.c
+ * \file libesoup/usb/xpad/usb_config.c
  *
  * Required by the Microchip USB Library 
  *

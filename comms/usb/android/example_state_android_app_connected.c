@@ -1,6 +1,6 @@
 /**
  *
- * \file es_lib/usb/android/example_state_android_app_connected.c
+ * \file libesoup/usb/android/example_state_android_app_connected.c
  *
  * An exmaple of an Android app connected state file.
  *
@@ -25,11 +25,11 @@
 #include "system.h"
 #include "usb/inc/usb.h"
 #include "usb/inc/usb_host_android.h"
-#include "es_lib/usb/android/state.h"
-#include "es_lib/usb/android/state_idle.h"
+#include "libesoup/usb/android/state.h"
+#include "libesoup/usb/android/state_idle.h"
 
 #define DEBUG_FILE TRUE
-#include "es_lib/logger/serial_log.h"
+#include "libesoup/logger/serial_log.h"
 
 #define TAG "Android-AppConnected"
 
@@ -37,7 +37,7 @@
  * Check required system.h defines are found
  */
 #ifndef SYS_LOG_LEVEL
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
 #endif
 
 /*
@@ -61,7 +61,7 @@ void example_set_app_connected_state(void)
  * app_connected_process_msg
  *
  * The function which processes messages received from the Connected Android Device.
- * NB The es_lib Android Comms code passes the data pointer to this function but as
+ * NB The libesoup Android Comms code passes the data pointer to this function but as
  * soon as this function returns the buffer WILL be reused for the next message from
  * the connected Android. If you want to keep this received after the function returns
  * then copy it out to your own buffer!

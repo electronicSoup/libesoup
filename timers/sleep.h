@@ -1,6 +1,6 @@
 /**
  *
- * \file es_lib/utils/sleep.h
+ * \file libesoup/utils/sleep.h
  *
  * Functionality for sleep
  *

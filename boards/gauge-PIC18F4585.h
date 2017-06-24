@@ -1,12 +1,12 @@
 /**
  *
- * @file es_lib/processors/guage-PIC18F4585.h
+ * @file libesoup/processors/guage-PIC18F4585.h
  *
  * @author John Whitmore
  *
- * This file contains an example es_lib system.h configuration file. 
+ * This file contains an example libesoup system.h configuration file. 
  *
- * The es_lib library of source code expects a system.h header file to exist
+ * The libesoup library of source code expects a system.h header file to exist
  * in your include path. The file contains the various switches and definitions
  * which configure the various features of the library.
  *
@@ -29,7 +29,7 @@
 #ifndef _GUAGE_PIC18F4585_H
 #define _GUAGE_PIC18F4585_H
 
-#include "es_lib/processors/es-PIC18F4585.h"
+#include "libesoup/processors/es-PIC18F4585.h"
 
 /**
  * @brief Crystal Frequency of the Hardware Device.
@@ -39,6 +39,6 @@
 //#define HEARTBEAT_LED_DIRECTION    TRISBbits.RB4
 //#define HEARTBEAT_LED              LATBbits.LATB4
 
-#include "es_lib/core.h"
+#include "libesoup/core.h"
 
 #endif // _GUAGE-PIC18F4585_H

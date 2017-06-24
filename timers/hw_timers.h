@@ -21,7 +21,7 @@
  * Public header file containing API Functions for using hardware timers.
  * This API is...
  *
- * \file es_lib/timers/hw_timers.h
+ * \file libesoup/timers/hw_timers.h
  *
  * \brief Hardware Timer API definitions
  * 

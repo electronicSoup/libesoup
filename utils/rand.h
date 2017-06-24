@@ -1,6 +1,6 @@
 /**
  *
- * \file es_lib/utils/rand.h
+ * \file libesoup/utils/rand.h
  *
  * prototype of the random initialisation function.
  *

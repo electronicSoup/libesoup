@@ -1,6 +1,6 @@
 /*********************************************************************
  *
- * \file es_lib/usb/xpad/usb_config.c
+ * \file libesoup/usb/xpad/usb_config.c
  *
  * The USB Driver for the Logitech xbox gamepad
  *
@@ -32,13 +32,13 @@
 #define DEBUG_FILE
 #define TAG "XPAD"
 
-#include "es_lib/logger/serial_log.h"
+#include "libesoup/logger/serial_log.h"
 
 /*
  * Check required system.h defines are found
  */
 #ifndef SYS_LOG_LEVEL
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
 #endif
 
 /*

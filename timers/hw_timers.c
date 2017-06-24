@@ -1,6 +1,6 @@
 /*
  *
- * es_lib/timers/hw_timers.c
+ * libesoup/timers/hw_timers.c
  *
  * Hardware Timer functionality for the electronicSoup Cinnamon Bun
  *
@@ -25,14 +25,14 @@
 #define TAG "HW_TIMERS"
 
 #include "system.h"
-#include "es_lib/logger/serial_log.h"
-#include "es_lib/timers/hw_timers.h"
+#include "libesoup/logger/serial_log.h"
+#include "libesoup/timers/hw_timers.h"
 
 /*
  * Check required system.h defines are found
  */
 #ifndef SYS_LOG_LEVEL
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
 #endif
 
 #ifndef SYS_CLOCK_FREQ
@@ -74,10 +74,10 @@ struct hw_timer_data {
 /*
  * Private array managing the hardware timers in the micro-controller. The size
  * is defined by the constant NUMBER_OF_TIMERS which should be defined in a
- * processor header file, located in es_lib/processors.
+ * processor header file, located in libesoup/processors.
  * 
  * The processor header file should be included in a board header file 
- * "es_lib/boards/..." which is included by the system.h configuration header
+ * "libesoup/boards/..." which is included by the system.h configuration header
  * file. So the system.h file defines the board being used and the board file
  * defines the micro controller being used. The microcontroller ultimately 
  * dictates the number of hardware timers.

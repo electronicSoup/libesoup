@@ -1,6 +1,6 @@
 /**
  *
- * \file es_lib/usb/android/android.h
+ * \file libesoup/usb/android/android.h
  *
  * Function prototypes for Android Comms
  *

@@ -1,6 +1,6 @@
 /**
  *
- * \file es_lib/utils/heartbeat.c
+ * \file libesoup/utils/heartbeat.c
  *
  * General utility functions of the electronicSoup CAN code Library
  *
@@ -25,12 +25,12 @@
 //#include <string.h>
 //#include <stdio.h>
 #include "system.h"
-//#include "es_lib/utils/utils.h"
+//#include "libesoup/utils/utils.h"
 //#ifdef HEARTBEAT
-//#include "es_lib/timers/timer_sys.h"
+//#include "libesoup/timers/timer_sys.h"
 //#endif
 #define DEBUG_FILE
-#include "es_lib/logger/serial_log.h"
+#include "libesoup/logger/serial_log.h"
 
 #define TAG "HEARTBEAT"
 

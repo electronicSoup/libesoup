@@ -1,8 +1,8 @@
 #if defined(__PIC24FJ256GB106__)
 
 #include <xc.h>
-#include "es_lib/utils/spi.h"
-#include "es_lib/utils/clock.h"
+#include "libesoup/utils/spi.h"
+#include "libesoup/utils/clock.h"
 
 /*
  * /opt/microchip/mla/v2015_08_10/apps/usb/device/hid_joystick/firmware/src/system_config/exp16/pic24fj256gb110_pim/system.c

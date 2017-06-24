@@ -1,10 +1,10 @@
 /**
  *
- * \file es_lib/utils/modbus.h
+ * \file libesoup/utils/modbus.h
  *
  * Function prototypes for using modbus Comms.
  *
- * The first uart port is used by the logger. See es_lib/logger
+ * The first uart port is used by the logger. See libesoup/logger
  *
  * Copyright 2015 John Whitmore <jwhitmore@electronicsoup.com>
  *
@@ -21,8 +21,8 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  *
  */
-#include "es_lib/comms/uart/uart.h"
-#include "es_lib/timers/sw_timers.h"
+#include "libesoup/comms/uart/uart.h"
+#include "libesoup/timers/sw_timers.h"
 
 typedef void (*modbus_response_function)(uint8_t *msg, uint8_t size, void *data);
 

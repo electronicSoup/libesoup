@@ -1,6 +1,6 @@
 /**
  *
- * \file es_lib/can/dcncp/dcncp.c
+ * \file libesoup/can/dcncp/dcncp.c
  *
  * Dynamic SYS_CAN Node Configuration Protocol 
  *
@@ -26,13 +26,13 @@
 #include "system.h"
 
 #define DEBUG_FILE TRUE
-#include "es_lib/logger/serial_log.h"
-#include "es_lib/can/es_can.h"
+#include "libesoup/logger/serial_log.h"
+#include "libesoup/can/es_can.h"
 
-#include "es_lib/can/dcncp/dcncp_can.h"
-#include "es_lib/timers/sw_timers.h"
+#include "libesoup/can/dcncp/dcncp_can.h"
+#include "libesoup/timers/sw_timers.h"
 #if defined(ISO15765_LOGGER) || defined(SYS_ISO15765_LOGGING)
-#include "es_lib/logger/iso15765_log.h"
+#include "libesoup/logger/iso15765_log.h"
 #endif
 
 #define TAG "DCNCP_CAN"
@@ -111,7 +111,7 @@ void dcncp_init(void (*arg_status_handler)(uint8_t mask, can_status_t status, ca
 	log_d(TAG, "Node Address Register handler Mask 0x%lx, Filter 0x%lx\n\r", target.mask, target.filter);
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
 #endif //  if defined(SYS_LOG_LEVEL)
 #elif defined(ES_LINUX)
 #if defined(SYS_LOG_LEVEL)
@@ -119,7 +119,7 @@ void dcncp_init(void (*arg_status_handler)(uint8_t mask, can_status_t status, ca
 	log_d(TAG, "Node Address Register handler Mask 0x%x, Filter 0x%x\n\r", target.mask, target.filter);
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
 #endif //  if defined(SYS_LOG_LEVEL)
 #endif
 	can_l2_dispatch_reg_handler(&target);
@@ -141,7 +141,7 @@ void dcncp_init(void (*arg_status_handler)(uint8_t mask, can_status_t status, ca
 		log_e(TAG, "Failed to start Register Timer\n\r");
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
 #endif //  if defined(SYS_LOG_LEVEL)
 	}
 #endif // SYS_ISO15765 || SYS_ISO11783
@@ -163,7 +163,7 @@ void dcncp_request_network_baud_change(can_baud_rate_t baud)
 	log_d(TAG, "dcncp_request_network_baud_change()\n\r");
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
 #endif //  if defined(SYS_LOG_LEVEL)
 
         if(!status.bit_field.dcncp_initialised) {
@@ -172,7 +172,7 @@ void dcncp_request_network_baud_change(can_baud_rate_t baud)
 		log_w(TAG, "Ignoring DCNCP not ready!\n\r");
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
 #endif //  if defined(SYS_LOG_LEVEL)
 		return;
 	}
@@ -183,7 +183,7 @@ void dcncp_request_network_baud_change(can_baud_rate_t baud)
 		log_w(TAG, "Ignoring spurious request!\n\r");
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
 #endif //  if defined(SYS_LOG_LEVEL)
 		return;
 	}
@@ -209,7 +209,7 @@ void dcncp_request_network_baud_change(can_baud_rate_t baud)
 		log_e(TAG, "Failed to start BaudRate change Request Timer\n\r");
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
 #endif //  if defined(SYS_LOG_LEVEL)
 		return;
 	}
@@ -219,7 +219,7 @@ void dcncp_request_network_baud_change(can_baud_rate_t baud)
 	log_d(TAG, "send network baudrate change request\n\r");
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
 #endif //  if defined(SYS_LOG_LEVEL)
 
 	msg.can_id = CAN_DCNCP_NetworkChangeBaudRateReq;
@@ -244,7 +244,7 @@ static void exp_resend_network_baud_chage_req(timer_t timer_id, union sigval dat
 	log_d(TAG, "exp_resend_network_baud_chage_req()\n\r");
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
 #endif //  if defined(SYS_LOG_LEVEL)
 	/*
 	 * Resend a Layer 2 message to inform network of impending change!
@@ -259,7 +259,7 @@ static void exp_resend_network_baud_chage_req(timer_t timer_id, union sigval dat
 	log_d(TAG, "Time left %d\n\r", time_left);
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
 #endif //  if defined(SYS_LOG_LEVEL)
 
 	if(time_left > 0) {
@@ -278,7 +278,7 @@ static void exp_resend_network_baud_chage_req(timer_t timer_id, union sigval dat
 			log_e(TAG, "Failed to start BaudRate change Request Timer\n\r");
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
 #endif //  if defined(SYS_LOG_LEVEL)
 			return;
 		}
@@ -288,7 +288,7 @@ static void exp_resend_network_baud_chage_req(timer_t timer_id, union sigval dat
 		log_d(TAG, "send network baudrate change request\n\r");
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
 #endif //  if defined(SYS_LOG_LEVEL)
 
 		msg.can_id = CAN_DCNCP_NetworkChangeBaudRateReq;
@@ -303,7 +303,7 @@ static void exp_resend_network_baud_chage_req(timer_t timer_id, union sigval dat
 		log_d(TAG, "TIME UP Change Baud Rate\n\r");
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
 #endif //  if defined(SYS_LOG_LEVEL)
 		can_l2_set_node_baudrate(baud);
 	}
@@ -318,7 +318,7 @@ static void exp_network_baud_chage_req(timer_t timer_id, union sigval data)
 	log_d(TAG, "!!! exp_network_baud_chage_req() !!!\n\r");
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
 #endif //  if defined(SYS_LOG_LEVEL)
 	can_l2_set_node_baudrate((can_baud_rate_t)(data.sival_int & 0xff));
 }
@@ -352,7 +352,7 @@ void exp_send_address_register_request(timer_t timer_id, union sigval data)
 	log_d(TAG, "exp_send_address_register_request() Send Initial Register Req\n\r");
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
 #endif //  if defined(SYS_LOG_LEVEL)
 	TIMER_INIT(node_send_reg_req_timer);
 
@@ -363,7 +363,7 @@ void exp_send_address_register_request(timer_t timer_id, union sigval data)
 	log_d(TAG, "sendRegisterReq(%x)\n\r", (uint16_t) dcncp_node_address);
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
 #endif //  if defined(SYS_LOG_LEVEL)
 
 	msg.can_id = CAN_DCNCP_AddressRegisterReq;
@@ -386,7 +386,7 @@ void exp_send_address_register_request(timer_t timer_id, union sigval data)
 		log_e(TAG, "Failed to start Node Registered Timer\n\r");
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
 #endif //  if defined(SYS_LOG_LEVEL)
 	}
 }
@@ -409,7 +409,7 @@ void exp_node_address_registered(timer_t timer_id __attribute__((unused)), union
 	log_d(TAG, "nodeRegistered()\n\r");
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
 #endif //  if defined(SYS_LOG_LEVEL)
 
         status.bit_field.dcncp_node_address_valid = 1;
@@ -444,7 +444,7 @@ void can_l2_msg_handler(can_frame *frame)
 				log_d(TAG, "reject Register Request\n\r");
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
 #endif //  if defined(SYS_LOG_LEVEL)
 				tx_frame.can_id = CAN_DCNCP_AddressRegisterReject;
 				tx_frame.can_dlc = 1;
@@ -457,7 +457,7 @@ void can_l2_msg_handler(can_frame *frame)
 				log_d(TAG, "Register Node Address clash. Get New Node Address!\n\r");
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
 #endif //  if defined(SYS_LOG_LEVEL)
 				/*
 				 *Have to create a new node address for this node
@@ -481,7 +481,7 @@ void can_l2_msg_handler(can_frame *frame)
 				log_e(TAG, "Sending Can Error Message\n\r");
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
 #endif //  if defined(SYS_LOG_LEVEL)
 				tx_frame.can_id = CAN_DCNCP_NodeAddressError;
 				tx_frame.can_dlc = 1;
@@ -494,7 +494,7 @@ void can_l2_msg_handler(can_frame *frame)
 				log_d(TAG, "Address Regected so get a new one!\n\r");
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
 #endif //  if defined(SYS_LOG_LEVEL)
 				/*
 				 *Have to create a new node address for this node
@@ -515,7 +515,7 @@ void can_l2_msg_handler(can_frame *frame)
 		log_d(TAG, "DCNCP_CAN_NodeAddressReportReq:\n\r");
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
 #endif //  if defined(SYS_LOG_LEVEL)
 #if defined(ISO15765) || defined(ISO11783)
 		// Create a random timer between 100 and  1000 miliSeconds for firing node report message
@@ -527,7 +527,7 @@ void can_l2_msg_handler(can_frame *frame)
 			log_e(TAG, "Failed to start Node Registered Timer\n\r");
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
 #endif //  if defined(SYS_LOG_LEVEL)
 		}
 #endif // SYS_ISO15765 || SYS_ISO11783
@@ -538,7 +538,7 @@ void can_l2_msg_handler(can_frame *frame)
 			log_d(TAG, "Foreign Node Rep Registered Node Address 0x%x\n\r", frame->data[1]);
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
 #endif //  if defined(SYS_LOG_LEVEL)
 		} else {
 #if defined(SYS_LOG_LEVEL)
@@ -546,7 +546,7 @@ void can_l2_msg_handler(can_frame *frame)
 			log_d(TAG, "Foreign Node Rep UN-Registered Node Address 0x%x\n\r", frame->data[1]);
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
 #endif //  if defined(SYS_LOG_LEVEL)
 		}
 	} else if (frame->can_id == CAN_DCNCP_NetworkChangeBaudRateReq) {
@@ -556,7 +556,7 @@ void can_l2_msg_handler(can_frame *frame)
 		log_d(TAG, "***Baud Rate Change Request New Baud Rate %s Time left %dS\n\r", can_baud_rate_strings[frame->data[0]], frame->data[1]);
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
 #endif //  if defined(SYS_LOG_LEVEL)
 
 		timer_cancel(&dcncp_network_baudrate_req_timer);
@@ -574,7 +574,7 @@ void can_l2_msg_handler(can_frame *frame)
 			log_e(TAG, "Failed to start BaudRate change Request Timer\n\r");
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
 #endif //  if defined(SYS_LOG_LEVEL)
 			return;
 		}
@@ -584,7 +584,7 @@ void can_l2_msg_handler(can_frame *frame)
 		log_e(TAG, "CAN Baudrate change! NO code in place to process request!\n\r");
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
 #endif //  if defined(SYS_LOG_LEVEL)
 #endif // SYS_CAN_DCNCP_BAUDRATE
 	} else if (frame->can_id == CAN_DCNCP_NodePingMessage) {
@@ -594,7 +594,7 @@ void can_l2_msg_handler(can_frame *frame)
 		log_d(TAG, "Received NetLogger Registration Message\n\r");
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
 #endif //  if defined(SYS_LOG_LEVEL)
 #ifdef SYS_ISO15765_LOGGING
 		iso15765_logger_register_remote(frame->data[0], frame->data[1]);
@@ -605,7 +605,7 @@ void can_l2_msg_handler(can_frame *frame)
 		log_d(TAG, "Received NetLogger UnRegistration Message\n\r");
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
 #endif //  if defined(SYS_LOG_LEVEL)
 #ifdef SYS_ISO15765_LOGGING
 		iso15765_logger_unregister_remote(frame->data[0]);
@@ -617,7 +617,7 @@ void can_l2_msg_handler(can_frame *frame)
 		log_w(TAG, "Node Unrecognised Request %lx \n\r", frame->can_id);
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
 #endif //  if defined(SYS_LOG_LEVEL)
 #elif defined(ES_LINUX)
 #if defined(SYS_LOG_LEVEL)
@@ -625,7 +625,7 @@ void can_l2_msg_handler(can_frame *frame)
 		log_w(TAG, "Node Unrecognised Request %x \n\r", frame->can_id);
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
 #endif //  if defined(SYS_LOG_LEVEL)
 #endif
 	}
@@ -646,7 +646,7 @@ void exp_send_node_addr_report(timer_t timer_id __attribute__((unused)), union s
 	log_d(TAG, "exp_send_node_addr_report(Address %x)\n\r", dcncp_node_address);
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
 #endif //  if defined(SYS_LOG_LEVEL)
 
 	frame.can_id = CAN_DCNCP_NodeAddressReporting;
@@ -673,7 +673,7 @@ result_t dcncp_register_this_node_net_logger(log_level_t level)
 	log_d(TAG, "register_this_node_net_logger()\n\r");
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
 #endif //  if defined(SYS_LOG_LEVEL)
 
 	if(!iso15765_initialised())
@@ -690,7 +690,7 @@ result_t dcncp_register_this_node_net_logger(log_level_t level)
 	log_d(TAG, "NetLogger message sent\n\r");
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
 #endif //  if defined(SYS_LOG_LEVEL)
 	TIMER_INIT(local_iso15765_logger_timer);
 	timer_start(SECONDS_TO_TICKS(SYS_ISO15765_LOGGER_PING_PERIOD), 
@@ -713,7 +713,7 @@ void exp_iso15765_logger_ping(timer_t timer_id __attribute__((unused)), union si
 	log_d(TAG, "NetLogger message sent\n\r");
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
 #endif //  if defined(SYS_LOG_LEVEL)
 	TIMER_INIT(local_iso15765_logger_timer);
 	timer_start(SECONDS_TO_TICKS(SYS_ISO15765_LOGGER_PING_PERIOD),
@@ -733,7 +733,7 @@ result_t dcncp_unregister_this_node_net_logger()
 	log_d(TAG, "DeRegAsNetLogger()\n\r");
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
 #endif //  if defined(SYS_LOG_LEVEL)
 
 	frame.can_id = CAN_DCNCP_UnRegisterNetLogger;
@@ -746,7 +746,7 @@ result_t dcncp_unregister_this_node_net_logger()
 	log_d(TAG, "CancelNetLogger message sent\n\r");
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
 #endif //  if defined(SYS_LOG_LEVEL)
 
 	if(local_iso15765_logger_timer.status == ACTIVE)
@@ -771,7 +771,7 @@ void dcncp_send_ping(void)
 	log_d(TAG, "Ping message sent\n\r");
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
 #endif //  if defined(SYS_LOG_LEVEL)
 #endif // SYS_CAN_L2_PING_LOGGING
 }

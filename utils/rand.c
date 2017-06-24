@@ -1,6 +1,6 @@
 /**
  *
- * \file es_lib/utils/rand.c
+ * \file libesoup/utils/rand.c
  *
  * Random initialisation function for the electronicSoup Cinnamon Bun
  *
@@ -23,7 +23,7 @@
 #include <stdlib.h>    // needed for srand()
 #include "system.h"
 #define DEBUG_FILE
-#include "es_lib/logger/serial_log.h"
+#include "libesoup/logger/serial_log.h"
 
 #define TAG "RAND"
 
@@ -31,7 +31,7 @@
  * Check required system.h defines are found
  */
 #ifndef SYS_LOG_LEVEL
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
 #endif
 
 static uint8_t initialised = FALSE;

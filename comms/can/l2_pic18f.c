@@ -5,11 +5,11 @@
 
 #include "l2_pic18f.h"
 
-#include "es_lib/timers/sw_timers.h"
+#include "libesoup/timers/sw_timers.h"
 
 #define DEBUG_FILE TRUE
-#include "es_lib/logger/serial_log.h"
-#include "es_lib/comms/can/es_can.h"
+#include "libesoup/logger/serial_log.h"
+#include "libesoup/comms/can/es_can.h"
 
 #define TAG "PIC_CAN"
 

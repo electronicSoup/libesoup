@@ -1,6 +1,6 @@
 /**
  *
- * \file es_lib/modbus/modbus_awaiting_response.c
+ * \file libesoup/modbus/modbus_awaiting_response.c
  *
  * This file contains code for Modbus awaiting response state
  *
@@ -24,14 +24,14 @@
 
 #include "system.h"
 
-#include "es_lib/logger/serial_log.h"
-#include "es_lib/comms/modbus/modbus.h"
+#include "libesoup/logger/serial_log.h"
+#include "libesoup/comms/modbus/modbus.h"
 
 /*
  * Check required system.h defines are found
  */
 #ifndef SYS_LOG_LEVEL
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
 #endif
 
 extern struct modbus_state modbus_state;

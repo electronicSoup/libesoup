@@ -1,6 +1,6 @@
 /**
  *
- * \file es_lib/can/l2_mcp2515.c
+ * \file libesoup/can/l2_mcp2515.c
  *
  * CAN L2 Functionality for MCP2515 Chip
  *
@@ -26,13 +26,13 @@
 
 #define DEBUG_FILE TRUE
 //#define SYS_LOG_LEVEL LOG_INFO
-#include "es_lib/logger/serial_log.h"
-#include "es_lib/comms/can/es_can.h"
-#include "es_lib/comms/can/dcncp/dcncp_can.h"
-#include "es_lib/comms/can/l2_mcp2515.h"
-#include "es_lib/timers/sw_timers.h"
+#include "libesoup/logger/serial_log.h"
+#include "libesoup/comms/can/es_can.h"
+#include "libesoup/comms/can/dcncp/dcncp_can.h"
+#include "libesoup/comms/can/l2_mcp2515.h"
+#include "libesoup/timers/sw_timers.h"
 
-#include "es_lib/utils/spi.h"
+#include "libesoup/utils/spi.h"
 
 #define TAG "MCP2515"
 
@@ -40,15 +40,15 @@
  * Check required system.h defines are found
  */
 #ifndef SYS_LOG_LEVEL
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
 #endif
 
 #ifndef SYS_CAN_L2_HANDLER_ARRAY_SIZE
-#error system.h file should define SYS_CAN_L2_HANDLER_ARRAY_SIZE (see es_lib/examples/system.h)
+#error system.h file should define SYS_CAN_L2_HANDLER_ARRAY_SIZE (see libesoup/examples/system.h)
 #endif
 
 #ifndef SYS_CAN_RX_CIR_BUFFER_SIZE
-#error system.h file should define SYS_CAN_RX_CIR_BUFFER_SIZE (see es_lib/examples/system.h)
+#error system.h file should define SYS_CAN_RX_CIR_BUFFER_SIZE (see libesoup/examples/system.h)
 #endif
 
 typedef struct

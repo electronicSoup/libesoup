@@ -1,6 +1,6 @@
 /**
  *
- * \file es_lib/morse.morse.c
+ * \file libesoup/morse.morse.c
  *
  * This file contains code for dealing Morse code
  *
@@ -23,14 +23,14 @@
 #define TAG "Morse"
 
 #include "system.h"
-#include "es_lib/logger/serial_log.h"
-#include "es_lib/timers/timers.h"
+#include "libesoup/logger/serial_log.h"
+#include "libesoup/timers/timers.h"
 
 /*
  * Check required system.h defines are found
  */
 #ifndef SYS_LOG_LEVEL
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
 #endif
 
 struct character

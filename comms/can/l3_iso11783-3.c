@@ -1,6 +1,6 @@
 /**
  *
- * \file es_lib/can/l3_can.c
+ * \file libesoup/can/l3_can.c
  *
  * Implementation of ISO 11783-3
  *
@@ -20,10 +20,10 @@
  *
  */
 #include "system.h"
-#include "es_lib/can/es_can.h"
+#include "libesoup/can/es_can.h"
 
 #define DEBUG_FILE
-#include "es_lib/logger/serial_log.h"
+#include "libesoup/logger/serial_log.h"
 
 #define TAG "ISO11783"
 
@@ -132,7 +132,7 @@ result_t iso11783_init(uint8_t address)
 	log_d(TAG, "iso11783_init(0x%x)\n\r", address);
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
 #endif //  if defined(SYS_LOG_LEVEL)
 
 	node_address = address;
@@ -240,7 +240,7 @@ result_t iso11783_tx_msg(iso11783_msg_t *msg)
 	log_d(TAG, "iso11783_tx_msg()\n\r");
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
 #endif //  if defined(SYS_LOG_LEVEL)
 
 	frame.can_id = pgn_to_canid(msg->priority, msg->pgn, msg->destination);
@@ -259,7 +259,7 @@ result_t iso11783_tx_pgn_request(uint8_t priority, u8 dst, u32 pgn)
 	log_d(TAG, "iso11783_tx_pgn_request()\n\r");
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
 #endif //  if defined(SYS_LOG_LEVEL)
 
 	frame.can_id = pgn_to_canid(priority, PGN_REQUEST, dst);
@@ -284,7 +284,7 @@ result_t iso11783_tx_ack_pgn(uint8_t priority, u8 dst, u32 pgn, iso11783_ack_t a
 	log_d(TAG, "iso11783_tx_ack_pgn()\n\r");
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
 #endif //  if defined(SYS_LOG_LEVEL)
 
 	frame.can_id = pgn_to_canid(priority, PGN_ACK, dst);
@@ -321,7 +321,7 @@ void iso11783_frame_handler(can_frame *frame)
 	log_d(TAG, "iso11783_frame_handler(frame id 0x%x)\n\r", frame->can_id);
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
 #endif //  if defined(SYS_LOG_LEVEL)
 
 	/*
@@ -338,7 +338,7 @@ void iso11783_frame_handler(can_frame *frame)
 	log_d(TAG, "iso11783_frame_handler received PGN %d  =  0x%lx\n\r", pgn, pgn);
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
 #endif //  if defined(SYS_LOG_LEVEL)
 
 //	printf("iso11783:(frame id 0x%x) SA 0x%x,", frame->can_id, sa);
@@ -350,7 +350,7 @@ void iso11783_frame_handler(can_frame *frame)
 	log_d(TAG, " PGN %d (0x%x) [", pgn, pgn);
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
 #endif //  if defined(SYS_LOG_LEVEL)
 
 	for(loop = 0; loop < frame->can_dlc; loop++) {
@@ -381,7 +381,7 @@ void iso11783_frame_handler(can_frame *frame)
 	}
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
 #endif //  if defined(SYS_LOG_LEVEL)
 
 	handled = 0x00;
@@ -411,7 +411,7 @@ result_t iso11783_dispatch_reg_handler(iso11783_target_t *target)
 	log_d(TAG, "iso11783_dispatch_register_handler(0x%lx)\n\r", target->pgn);
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
 #endif //  if defined(SYS_LOG_LEVEL)
 
 	/*
@@ -432,7 +432,7 @@ result_t iso11783_dispatch_reg_handler(iso11783_target_t *target)
 	log_e(TAG, "ISO11783 Dispatch full!\n\r");
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
 #endif //  if defined(SYS_LOG_LEVEL)
 	return(ERR_NO_RESOURCES);
 }

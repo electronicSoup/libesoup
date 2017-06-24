@@ -1,6 +1,6 @@
 /**
  *
- * \file es_lib/usb/android/usb_config.c
+ * \file libesoup/usb/android/usb_config.c
  *
  * File sets up the Target Peripheral List required by the Microchip 
  * USB Host stack. It sets up the deriver functions and the VID/PID

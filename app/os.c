@@ -1,6 +1,6 @@
 /**
  *
- * \file es_lib/app/os.c
+ * \file libesoup/app/os.c
  *
  * OS initialise routine
  *
@@ -19,8 +19,8 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  *
  */
-#include "es_lib/core.h"
-//#include "es_lib/app/os.h"
+#include "libesoup/core.h"
+//#include "libesoup/app/os.h"
 
 #define OS_FNS 0x8A92
 

@@ -3,8 +3,8 @@
 #define DEBUG_FILE
 #define TAG "CAN_PING"
 
-#include "es_lib/logger/serial_log.h"
-#include "es_lib/timers/timers.h"
+#include "libesoup/logger/serial_log.h"
+#include "libesoup/timers/timers.h"
 
 /**
  * \brief Network Idle functionality

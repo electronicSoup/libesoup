@@ -1,5 +1,5 @@
 /**
- * @file es_lib/core.h
+ * @file libesoup/core.h
  *
  * @author John Whitmore
  *
@@ -115,7 +115,7 @@ typedef enum {
  * Bun message is transmitted from the Cinnamon Bun to the Android Device App
  *
  * Messages carry a Byte Identifier so there are 255 possible messages. The
- * lower message id's are reserved for use by es_lib system so a user's Android
+ * lower message id's are reserved for use by libesoup system so a user's Android
  * App messages should be defined relative to these. For portability and to 
  * future proof code you would define your messages to send from the CinnamonBun
  * as:
@@ -327,10 +327,10 @@ typedef enum {
 
 /** @}*/
 
-/** @defgroup group2 es_lib Return Codes
+/** @defgroup group2 libesoup Return Codes
  *
  * @enum  result_t
- * @brief Error codes returned by es_lib API Functions.
+ * @brief Error codes returned by libesoup API Functions.
  *
  *  @{
  *
@@ -338,16 +338,16 @@ typedef enum {
  * @brief API function executed without error.
  *
  * @enum  ERR_GENERAL_ERROR,
- * @brief Unspecified error occured in es_lib API Function execution.
+ * @brief Unspecified error occured in libesoup API Function execution.
  *
  * @enum  ERR_BAD_INPUT_PARAMETER,
- * @brief Bad parameter passed to es_lib API funtion.
+ * @brief Bad parameter passed to libesoup API funtion.
  *
  * @enum  ERR_TIMER_ACTIVE,
  * @brief Attempt to start a timer which is already active.
  *
  * @enum  ERR_NO_RESOURCES,
- * @brief No resources available to execute the requested es_lib API function.
+ * @brief No resources available to execute the requested libesoup API function.
  *
  * This error indicates that system resources have been exhausted. The solution
  * to this error can be as simple as changing the number of resources declared
@@ -359,25 +359,25 @@ typedef enum {
  * up in timer table, in this case.
  *
  * @enum  ERR_ADDRESS_RANGE,
- * @brief An address passed to an es_lib API function is out of valid range.
+ * @brief An address passed to an libesoup API function is out of valid range.
  *
  * @enum  ERR_NOT_READY,
  * @brief API function no ready to execute request.
  *
  * @enum  ERR_GENERAL_CAN_ERROR,
- * @brief Error in CAN es_lib API function.
+ * @brief Error in CAN libesoup API function.
  *
  * @enum  ERR_CAN_NOT_CONNECTED,
  * @brief Attempt to perform action on CAN Bus prior to its connection.
  *
  * @enum  ERR_CAN_BAUDRATE,
- * @brief Invalid Baudrate specified in es_lib API funciton call.
+ * @brief Invalid Baudrate specified in libesoup API funciton call.
  *
  * @enum  ERR_CAN_NO_FREE_BUFFER,
  * @brief No free CAN buffer to complete request.
  *
  * @enum  ERR_UNINITIALISED,
- * @brief Attempt to call es_lib API function prior to initialisation.
+ * @brief Attempt to call libesoup API function prior to initialisation.
  *
  * @enum  ERR_BUSY
  * @brief I'm busy call back later.
@@ -435,7 +435,7 @@ typedef enum {
  * @def   CAN_EFF_FLAG
  * @brief Extended CAN Frame format Flag.
  *
- * A CAN Identifer passed around the es_lib is a 32 bit integer. as the Extended
+ * A CAN Identifer passed around the libesoup is a 32 bit integer. as the Extended
  * CAN Frame format has a 29 Bit identifer the 3 most significant bits of the 
  * 32 Bit integer are used for flags.
  *

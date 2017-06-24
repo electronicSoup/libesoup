@@ -1,6 +1,6 @@
 /**
  *
- * \file es_lib/utils/flash.c
+ * \file libesoup/utils/flash.c
  *
  * Flash functions of the electronicSoup Cinnamon Bun code Library
  *
@@ -26,7 +26,7 @@
 
 #define DEBUG_FILE TRUE
 
-#include "es_lib/logger/serial_log.h"
+#include "libesoup/logger/serial_log.h"
 
 #define TAG "FLASH"
 
@@ -34,7 +34,7 @@
  * Check required system.h defines are found
  */
 #ifndef SYS_LOG_LEVEL
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
 #endif
 
 /*

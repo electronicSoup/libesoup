@@ -1,10 +1,10 @@
 /**
  *
- * \file es_lib/jobs/jobs.h
+ * \file libesoup/jobs/jobs.h
  *
  * Functions for using a MODBUS Comms.
  *
- * The first uart port is used by the logger. See es_lib/logger
+ * The first uart port is used by the logger. See libesoup/logger
  *
  * Copyright 2015 John Whitmore <jwhitmore@electronicsoup.com>
  *

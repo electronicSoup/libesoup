@@ -1,6 +1,6 @@
 /**
  *
- * \file es_lib/usb/android/android_state.h
+ * \file libesoup/usb/android/android_state.h
  *
  * Definitions of structures for Android state.
  *

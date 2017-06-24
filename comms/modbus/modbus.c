@@ -1,10 +1,10 @@
 /**
  *
- * \file es_lib/utils/modbus.c
+ * \file libesoup/utils/modbus.c
  *
  * Functions for using a MODBUS Comms.
  *
- * The first uart port is used by the logger. See es_lib/logger
+ * The first uart port is used by the logger. See libesoup/logger
  *
  * Copyright 2015 John Whitmore <jwhitmore@electronicsoup.com>
  *
@@ -24,12 +24,12 @@
 #include "system.h"
 
 #define DEBUG_FILE TRUE
-#include "es_lib/logger/serial_log.h"
-#include "es_lib/timers/hw_timers.h"
-#include "es_lib/timers/sw_timers.h"
-#include "es_lib/comms/modbus/modbus.h"
-#include "es_lib/comms/uart/uart.h"
-#include "es_lib/jobs/jobs.h"
+#include "libesoup/logger/serial_log.h"
+#include "libesoup/timers/hw_timers.h"
+#include "libesoup/timers/sw_timers.h"
+#include "libesoup/comms/modbus/modbus.h"
+#include "libesoup/comms/uart/uart.h"
+#include "libesoup/jobs/jobs.h"
 
 #define TAG "MODBUS"
 
@@ -37,7 +37,7 @@
  * Check required system.h defines are found
  */
 #ifndef SYS_LOG_LEVEL
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
 #endif
 
 struct modbus_channel modbus_channels[NUM_UARTS];
