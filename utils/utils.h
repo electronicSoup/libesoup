@@ -24,7 +24,7 @@
 #define UTILS_H
 
 #include "libesoup/core.h"
-#include "system.h"
+#include "libesoup_config.h"
 
 #ifdef HEARTBEAT
 extern void heartbeat_on(union sigval data);

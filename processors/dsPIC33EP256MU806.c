@@ -1,6 +1,6 @@
 #if defined(__dsPIC33EP256MU806__)
 
-#include "system.h"
+#include "libesoup_config.h"
 
 /*
  * Set up the configuration words of the processor:

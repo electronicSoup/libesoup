@@ -2,7 +2,7 @@
 
 #include <p33EP256MU806.h>
 
-#include "system.h"
+#include "libesoup_config.h"
 
 #include "libesoup/comms/can/l2_dsPIC33EP256MU806.h"
 #include "libesoup/timers/sw_timers.h"
@@ -14,10 +14,10 @@
 #define TAG "dsPIC33_CAN"
 
 /*
- * Check required system.h defines are found
+ * Check required libesoup_config.h defines are found
  */
 #ifndef SYS_LOG_LEVEL
-#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
+#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
 #endif
 
 #if DEBUG_LEVEL < NO_LOGGING

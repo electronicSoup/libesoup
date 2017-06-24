@@ -27,7 +27,7 @@
 #include "usb/inc/usb.h"
 #include "usb_host_xpad_events.h"
 
-#include "system.h"
+#include "libesoup_config.h"
 
 #define DEBUG_FILE
 #define TAG "XPAD"
@@ -35,10 +35,10 @@
 #include "libesoup/logger/serial_log.h"
 
 /*
- * Check required system.h defines are found
+ * Check required libesoup_config.h defines are found
  */
 #ifndef SYS_LOG_LEVEL
-#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
+#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
 #endif
 
 /*

@@ -19,7 +19,7 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  *
  */
-#include "system.h"
+#include "libesoup_config.h"
 
 #define DEBUG_FILE
 #define TAG "SLEEP"

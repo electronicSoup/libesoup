@@ -31,7 +31,7 @@
  * constant SYS_EEPROM_BOOT_PAGE_SIZE. If your project is not using a Bootloader,
  * i.e. is being programmed directly into the PIC Processor using a PicKit3, or
  * similar flash programmer, then defining the switch SYS_EEPROM_USE_BOOT_PAGE in
- * your system.h file will ignore this restriction and allow access to the full
+ * your libesoup_config.h file will ignore this restriction and allow access to the full
  * eeprom address space.
  *
  * If you do rely on a bootloader which uses this flash page then comment out
@@ -40,7 +40,7 @@
  * SYS_EEPROM_BOOT_PAGE_SIZE to any given address.
  */
 
-#include "system.h"
+#include "libesoup_config.h"
 
 /*
  * The EEPROM chip is connected to the first SPI bus of the PIC24FJ256GB106
@@ -54,15 +54,15 @@
 #define TAG "EEPROM"
 
 /*
- * Check required system.h defines are found
+ * Check required libesoup_config.h defines are found
  */
 #ifndef SYS_LOG_LEVEL
-#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
+#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
 #endif
 
 #if defined(SYS_EEPROM_USE_BOOT_PAGE)
 #ifndef SYS_EEPROM_BOOT_PAGE_SIZE
-#error system.h file should define SYS_EEPROM_BOOT_PAGE_SIZE (see libesoup/examples/system.h)
+#error libesoup_config.h file should define SYS_EEPROM_BOOT_PAGE_SIZE (see libesoup/examples/libesoup_config.h)
 #endif
 #endif // #if defined(SYS_EEPROM_USE_BOOT_PAGE)
 

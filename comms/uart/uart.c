@@ -26,21 +26,21 @@
 
 #include <stdio.h>
 
-#include "system.h"
+#include "libesoup_config.h"
 #include "libesoup/logger/serial_log.h"
 #include "libesoup/utils/rand.h"
 
 #include "libesoup/comms/uart/uart.h"
 
 /*
- * Check required system.h defines are found
+ * Check required libesoup_config.h defines are found
  */
 #ifndef SYS_LOG_LEVEL
-#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
+#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
 #endif
 
 #ifndef SYS_CLOCK_FREQ
-#error system.h file should define the SYS_CLOCK_FREQ
+#error libesoup_config.h file should define the SYS_CLOCK_FREQ
 #endif
 
 enum uart_status {

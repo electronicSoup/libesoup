@@ -22,7 +22,7 @@
  *
  */
 
-#include "system.h"
+#include "libesoup_config.h"
 
 #define DEBUG_FILE TRUE
 
@@ -31,10 +31,10 @@
 #define TAG "FLASH"
 
 /*
- * Check required system.h defines are found
+ * Check required libesoup_config.h defines are found
  */
 #ifndef SYS_LOG_LEVEL
-#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
+#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
 #endif
 
 /*

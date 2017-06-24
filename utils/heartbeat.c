@@ -24,7 +24,7 @@
 //#include <stdlib.h>
 //#include <string.h>
 //#include <stdio.h>
-#include "system.h"
+#include "libesoup_config.h"
 //#include "libesoup/utils/utils.h"
 //#ifdef HEARTBEAT
 //#include "libesoup/timers/timer_sys.h"

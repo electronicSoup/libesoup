@@ -19,7 +19,7 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  *
  */
-#include "system.h"
+#include "libesoup_config.h"
 #include "libesoup/comms/can/es_can.h"
 #ifdef SYS_CAN_DCNCP
 #include "libesoup/can/dcncp/dcncp_can.h"
@@ -55,7 +55,7 @@ char can_baud_rate_strings[8][10] = {
 };
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
+#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
 #endif //  if defined(SYS_LOG_LEVEL)
 
 static can_status_t can_status;
@@ -66,10 +66,10 @@ static void status_handler(uint8_t mask, can_status_t status, can_baud_rate_t ba
 can_status_handler_t app_status_handler = (can_status_handler_t)NULL;
 
 /*
- * Check required system.h defines are found
+ * Check required libesoup_config.h defines are found
  */
 #ifndef SYS_LOG_LEVEL
-#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
+#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
 #endif
 
 result_t can_init(can_baud_rate_t baudrate,

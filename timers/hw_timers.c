@@ -24,19 +24,19 @@
 #define DEBUG_FILE TRUE
 #define TAG "HW_TIMERS"
 
-#include "system.h"
+#include "libesoup_config.h"
 #include "libesoup/logger/serial_log.h"
 #include "libesoup/timers/hw_timers.h"
 
 /*
- * Check required system.h defines are found
+ * Check required libesoup_config.h defines are found
  */
 #ifndef SYS_LOG_LEVEL
-#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
+#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
 #endif
 
 #ifndef SYS_CLOCK_FREQ
-#error system.h file should define the SYS_CLOCK_FREQ
+#error libesoup_config.h file should define the SYS_CLOCK_FREQ
 #endif
 
 /*
@@ -77,8 +77,8 @@ struct hw_timer_data {
  * processor header file, located in libesoup/processors.
  * 
  * The processor header file should be included in a board header file 
- * "libesoup/boards/..." which is included by the system.h configuration header
- * file. So the system.h file defines the board being used and the board file
+ * "libesoup/boards/..." which is included by the libesoup_config.h configuration header
+ * file. So the libesoup_config.h file defines the board being used and the board file
  * defines the micro controller being used. The microcontroller ultimately 
  * dictates the number of hardware timers.
  */

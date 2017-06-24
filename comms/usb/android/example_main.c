@@ -1,5 +1,5 @@
 /*
- * Remember to Add Android to your system.h file along with definition for your
+ * Remember to Add Android to your libesoup_config.h file along with definition for your
  * connected function:
  *
  * 

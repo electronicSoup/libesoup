@@ -1,7 +1,7 @@
 #ifndef L2_PIC18F_H
 #define L2_PIC18F_H
 
-#include "system.h"
+#include "libesoup_config.h"
 #include <stdint.h>
 
 /*

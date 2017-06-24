@@ -23,7 +23,7 @@
 #ifndef FLASH_H
 #define FLASH_H
 
-#include "system.h"
+#include "libesoup_config.h"
 
 extern boolean  flash_page_empty(uint32_t address);
 extern result_t flash_erase_page(uint32_t address);

@@ -22,7 +22,7 @@
 #ifndef ES_CAN_H
 #define ES_CAN_H
 
-#include "system.h"
+#include "libesoup_config.h"
 
 /*
  * ISO15765 Protocols

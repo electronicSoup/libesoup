@@ -28,24 +28,24 @@
 #define MINUTES_PER_HOUR    60
 #define HOURS_PER_DAY       24
 
-#include "system.h"
+#include "libesoup_config.h"
 #include "libesoup/logger/serial_log.h"
 #include "libesoup/timers/hw_timers.h"
 #include "libesoup/timers/rtc.h"
 #include "libesoup/jobs/jobs.h"
 
 /*
- * Check required system.h defines are found
+ * Check required libesoup_config.h defines are found
  */
 #ifndef SYS_LOG_LEVEL
-#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
+#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
 #endif
 
 /*
- * Check required system.h defines are found
+ * Check required libesoup_config.h defines are found
  */
 #ifndef SYS_SW_TIMER_TICK_ms
-#error system.h file should define SYS_SW_TIMER_TICK_ms (see libesoup/examples/system.h)
+#error libesoup_config.h file should define SYS_SW_TIMER_TICK_ms (see libesoup/examples/libesoup_config.h)
 #endif
 
 struct alarm_data {

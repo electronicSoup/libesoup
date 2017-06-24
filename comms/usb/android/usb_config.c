@@ -22,7 +22,7 @@
  *
  */
 
-#include "system.h"
+#include "libesoup_config.h"
 //#include "usb/usb.h"
 //#include "usb/usb_host_android.h"
 #include "usb/inc/usb.h"

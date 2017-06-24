@@ -1,4 +1,4 @@
-#include "system.h"
+#include "libesoup_config.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdint.h>

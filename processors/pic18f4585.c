@@ -1,6 +1,6 @@
 #if defined(__18F4585)
 
-#include "system.h"
+#include "libesoup_config.h"
 #include <stdio.h>
 #include "libesoup/timers/hw_timers.h"
 

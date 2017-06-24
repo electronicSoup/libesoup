@@ -7,7 +7,7 @@
  * Set up the configuration words of the processor:
  */
 
-#include "system.h"
+#include "libesoup_config.h"
 
 #define DEBUG_FILE TRUE
 #define TAG "Main"

@@ -21,7 +21,7 @@
  */
 #include <stdlib.h>
 #include <stdio.h>
-#include "system.h"
+#include "libesoup_config.h"
 
 
 #define DEBUG_FILE TRUE
@@ -37,18 +37,18 @@
 #define TAG "MCP2515"
 
 /*
- * Check required system.h defines are found
+ * Check required libesoup_config.h defines are found
  */
 #ifndef SYS_LOG_LEVEL
-#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
+#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
 #endif
 
 #ifndef SYS_CAN_L2_HANDLER_ARRAY_SIZE
-#error system.h file should define SYS_CAN_L2_HANDLER_ARRAY_SIZE (see libesoup/examples/system.h)
+#error libesoup_config.h file should define SYS_CAN_L2_HANDLER_ARRAY_SIZE (see libesoup/examples/libesoup_config.h)
 #endif
 
 #ifndef SYS_CAN_RX_CIR_BUFFER_SIZE
-#error system.h file should define SYS_CAN_RX_CIR_BUFFER_SIZE (see libesoup/examples/system.h)
+#error libesoup_config.h file should define SYS_CAN_RX_CIR_BUFFER_SIZE (see libesoup/examples/libesoup_config.h)
 #endif
 
 typedef struct

@@ -351,7 +351,7 @@ typedef enum {
  *
  * This error indicates that system resources have been exhausted. The solution
  * to this error can be as simple as changing the number of resources declared
- * in your system.h file.
+ * in your libesoup_config.h file.
  *
  * For example if an attempt to start a timer returns the no resources return
  * code then you can rebuild your system with more timers, 
@@ -655,7 +655,7 @@ typedef enum
  * This series of defines are here as they should be included very early. At 
  * leasy before the serial logging code. These macros are used to conditionally
  * compile debugging code out of an executable. The actual logging level of the
- * build should be defined in system.h
+ * build should be defined in libesoup_config.h
  */
 #define LOG_DEBUG   0
 #define LOG_INFO    1

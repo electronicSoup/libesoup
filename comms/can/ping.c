@@ -1,4 +1,4 @@
-#include "system.h"
+#include "libesoup_config.h"
 
 #define DEBUG_FILE
 #define TAG "CAN_PING"

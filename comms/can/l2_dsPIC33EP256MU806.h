@@ -3,7 +3,7 @@
 
 #if defined(__dsPIC33EP256MU806__)
 
-#include "system.h"
+#include "libesoup_config.h"
 
 #if 0
 /*

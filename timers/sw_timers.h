@@ -149,9 +149,9 @@ extern void timer_tick(void);
  *
  * This function should be called to initialise the timer functionality
  * of the electronicSoup CinnamonBun Library. It initialises all data
- * structures. The project's system.h header file should define the number
+ * structures. The project's libesoup_config.h header file should define the number
  * of timers the library should define space for an manage. See the
- * definition of SYS_NUMBER_OF_TIMERS in the example system.h file in the
+ * definition of SYS_NUMBER_OF_TIMERS in the example libesoup_config.h file in the
  * libesoup directory.
  */
 extern void sw_timer_init(void);
@@ -202,7 +202,7 @@ extern void sw_timer_init(void);
  * 
  * ERR_NO_RESOURCES : Out of Software timers. The number of Software timers
  *                    available in the system is defined by NUMBER_OF_TIMERS
- *                    in your system.h configuration file.
+ *                    in your libesoup_config.h configuration file.
  * 
  */
 extern result_t sw_timer_start(uint16_t duration, expiry_function fn, union sigval data, timer_t *timer);

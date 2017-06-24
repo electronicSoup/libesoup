@@ -1,4 +1,4 @@
-#include "system.h"
+#include "libesoup_config.h"
 
 /*
  * Microchip USB Includes
@@ -15,10 +15,10 @@
 #define TAG "USB_Handlers"
 
 /*
- * Check required system.h defines are found
+ * Check required libesoup_config.h defines are found
  */
 #ifndef SYS_LOG_LEVEL
-#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
+#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
 #endif
 
 bool USB_ApplicationDataEventHandler( uint8_t address, USB_EVENT event, void *data, uint32_t size )

@@ -1,6 +1,6 @@
 //#include "os_api.h"
 
-#include "system.h"
+#include "libesoup_config.h"
 //#include "logging.h"
 
 #include <string.h>
@@ -70,7 +70,7 @@ result_t can_l2_init(can_baud_rate_t arg_baud_rate,
 	log_d(TAG, "l2_can_init(%s)\n\r", SYS_CAN_INTERFACE);
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
+#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
 #endif //  if defined(SYS_LOG_LEVEL)
  
 	if((can_socket = socket(PF_CAN, SOCK_RAW, CAN_RAW)) < 0) {
@@ -79,7 +79,7 @@ result_t can_l2_init(can_baud_rate_t arg_baud_rate,
 		log_e(TAG, "Error while opening socket\n\r");
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
+#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
 #endif //  if defined(SYS_LOG_LEVEL)
 		return(ERR_GENERAL_ERROR);
 	}
@@ -96,7 +96,7 @@ result_t can_l2_init(can_baud_rate_t arg_baud_rate,
 		log_d(TAG, "Error binding socket\n\r");
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
+#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
 #endif //  if defined(SYS_LOG_LEVEL)
 		return(ERR_GENERAL_ERROR);
 	}
@@ -108,7 +108,7 @@ result_t can_l2_init(can_baud_rate_t arg_baud_rate,
 		log_e(TAG, "Failed to create read thead\n\r");
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
+#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
 #endif //  if defined(SYS_LOG_LEVEL)
 		return(ERR_GENERAL_ERROR);
 	}
@@ -117,7 +117,7 @@ result_t can_l2_init(can_baud_rate_t arg_baud_rate,
 	log_d(TAG, "New Thread created\n\r");
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
+#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
 #endif //  if defined(SYS_LOG_LEVEL)
 
 	pthread_detach(thread_id);
@@ -141,7 +141,7 @@ result_t can_l2_tx_frame(can_frame *frame)
 	log_d(TAG, "L2_CanTxMessage(0x%x)\n\r", frame->can_id);
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
+#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
 #endif //  if defined(SYS_LOG_LEVEL)
 	if(can_status.bit_field.l2_status != L2_Connected)
 		return(ERR_CAN_NOT_CONNECTED);
@@ -160,7 +160,7 @@ result_t can_l2_tx_frame(can_frame *frame)
 		log_e(TAG, "Wrote %d bytes! Expected %d\n\r", nbytes, sizeof(can_frame));
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
+#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
 #endif //  if defined(SYS_LOG_LEVEL)
 		return(ERR_GENERAL_ERROR);
 	}
@@ -177,7 +177,7 @@ result_t can_l2_dispatch_reg_handler(can_l2_target_t *target)
 	log_d(TAG, "sys_l2_can_dispatch_reg_handler() Mask 0x%x, Filter 0x%x\n\r", target->mask, target->filter);
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
+#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
 #endif //  if defined(SYS_LOG_LEVEL)
 
 	/*
@@ -195,7 +195,7 @@ result_t can_l2_dispatch_reg_handler(can_l2_target_t *target)
 			log_d(TAG, "Target stored at target %d\n\r", loop);
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
+#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
 #endif //  if defined(SYS_LOG_LEVEL)
 			registered[loop].bitField.used = TRUE;
 			registered[loop].bitField.system = FALSE;
@@ -228,7 +228,7 @@ void *create_read_thread(void *arg)
 			log_e(TAG, "thread error in size of read data\n\r");
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
+#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
 #endif //  if defined(SYS_LOG_LEVEL)
 			return((void *)NULL);
     		}
@@ -240,7 +240,7 @@ void *create_read_thread(void *arg)
 			log_e(TAG, "thread error in size of read data\n\r");
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
+#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
 #endif //  if defined(SYS_LOG_LEVEL)
 			return((void *)NULL);
     		}

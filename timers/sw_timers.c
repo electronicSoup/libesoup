@@ -45,7 +45,7 @@
  * main_sw_timers.c
  *
  */
-#include "system.h"
+#include "libesoup_config.h"
 #include "libesoup/logger/serial_log.h"
 #include "libesoup/timers/hw_timers.h"
 #include "libesoup/timers/sw_timers.h"
@@ -61,14 +61,14 @@
 #define TAG "SW_TIMERS"
 
 /*
- * Check required system.h defines are found
+ * Check required libesoup_config.h defines are found
  */
 #ifndef SYS_LOG_LEVEL
-#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
+#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
 #endif
 
 #ifndef SYS_NUMBER_OF_SW_TIMERS
-#error system.h file should define SYS_NUMBER_OF_SW_TIMERS (see libesoup/examples/system.h)
+#error libesoup_config.h file should define SYS_NUMBER_OF_SW_TIMERS (see libesoup/examples/libesoup_config.h)
 #endif
 
 #ifdef MCP
@@ -92,7 +92,7 @@ typedef struct {
 
 /*
  * The Cinnamon Bun maintains a table of timers which can be activated
- * by the calling code. The SYS_NUMBER_OF_SW_TIMERS, defined in your system.h
+ * by the calling code. The SYS_NUMBER_OF_SW_TIMERS, defined in your libesoup_config.h
  * file defines how many timers the code maintains. 
  *
  * If your project uses a limited number of know timers then you can set 

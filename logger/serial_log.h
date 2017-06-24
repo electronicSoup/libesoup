@@ -29,7 +29,7 @@
  * microcontroller so the switch MCP must be defined as part of your
  * Project.
  * 
- * In additon the system.h config file should define the baud rate to
+ * In additon the libesoup_config.h config file should define the baud rate to
  * be used and the physical pin configuration of the 3 pin serial port:
  * GndRxTx or GndTxRx
  *

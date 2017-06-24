@@ -27,7 +27,7 @@
     #include <stdlib.h>
 #endif
 
-#include "system.h"
+#include "libesoup_config.h"
 #include "libesoup/can/es_can.h"
 #include "libesoup/can/dcncp/dcncp_can.h"
 #include "libesoup/timers/sw_timers.h"
@@ -226,7 +226,7 @@ result_t iso15765_init(uint8_t address)
 	log_i(TAG, "l3_init() node address = 0x%x\n\r", node_address);
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
+#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
 #endif //  if defined(SYS_LOG_LEVEL)
 
 	/*
@@ -271,7 +271,7 @@ result_t iso15765_tx_msg(iso15765_msg_t *msg)
 	log_i(TAG, "Tx to 0x%x, Protocol-0x%x, len(0x%x)\n\r",
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
+#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
 #endif //  if defined(SYS_LOG_LEVEL)
 		   (uint16_t)msg->address,
 		   (uint16_t)msg->protocol,
@@ -289,7 +289,7 @@ result_t iso15765_tx_msg(iso15765_msg_t *msg)
 		log_e(TAG, "ISO15765 not Initialised\n\r");
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
+#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
 #endif //  if defined(SYS_LOG_LEVEL)
 		return(ERR_UNINITIALISED);
 	}
@@ -300,7 +300,7 @@ result_t iso15765_tx_msg(iso15765_msg_t *msg)
 		log_e(TAG, "ISO15765 Message Zero size not Sending\n\r");
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
+#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
 #endif //  if defined(SYS_LOG_LEVEL)
 		return(ERR_BAD_INPUT_PARAMETER);
 	}
@@ -311,7 +311,7 @@ result_t iso15765_tx_msg(iso15765_msg_t *msg)
 		log_e(TAG, "L3_Can Message exceeds size limit\n\r");
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
+#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
 #endif //  if defined(SYS_LOG_LEVEL)
 		return(ERR_BAD_INPUT_PARAMETER);
 	}
@@ -323,7 +323,7 @@ result_t iso15765_tx_msg(iso15765_msg_t *msg)
 		log_e(TAG, "ISO15765 transmitter already busy\n\r");
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
+#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
 #endif //  if defined(SYS_LOG_LEVEL)
 		return(ERR_BUSY);
 	}
@@ -338,7 +338,7 @@ result_t iso15765_tx_msg(iso15765_msg_t *msg)
 		log_e(TAG, "ISO15765 transmitter already busy\n\r");
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
+#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
 #endif //  if defined(SYS_LOG_LEVEL)
 		return(ERR_BUSY);
 	}
@@ -350,7 +350,7 @@ result_t iso15765_tx_msg(iso15765_msg_t *msg)
 		log_e(TAG, "Malloc Failed\n\r");
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
+#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
 #endif //  if defined(SYS_LOG_LEVEL)
 		exit(1);
 	}
@@ -376,7 +376,7 @@ result_t iso15765_tx_msg(iso15765_msg_t *msg)
 		log_d(TAG, "Tx Single Frame\n\r");
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
+#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
 #endif //  if defined(SYS_LOG_LEVEL)
 		for(loop = 0; loop < msg->size; loop++) {
 			tx_buffer->frame.data[loop + 2] = *data_ptr++;
@@ -385,7 +385,7 @@ result_t iso15765_tx_msg(iso15765_msg_t *msg)
 			log_d(TAG, "ISO15765 TX Byte 0x%x\n\r", tx_buffer->frame.data[loop + 2]);
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
+#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
 #endif //  if defined(SYS_LOG_LEVEL)
 		}
 		can_l2_tx_frame(&(tx_buffer->frame));
@@ -423,7 +423,7 @@ result_t iso15765_tx_msg(iso15765_msg_t *msg)
 		log_d(TAG, "Tx First Frame\n\r");
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
+#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
 #endif //  if defined(SYS_LOG_LEVEL)
 		tx_buffer->sequence = (tx_buffer->sequence + 1) % 0x0f;
 		can_l2_tx_frame(&tx_buffer->frame);
@@ -451,7 +451,7 @@ void exp_sendConsecutiveFrame(timer_t timer_id, union sigval data)
 	log_d(TAG, "Tx Consecutive Frame tx Seq %d\n\r", tx_buffer->sequence);
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
+#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
 #endif //  if defined(SYS_LOG_LEVEL)
 
 	tx_buffer->consecutive_frame_timer.status = INACTIVE;
@@ -468,7 +468,7 @@ void exp_sendConsecutiveFrame(timer_t timer_id, union sigval data)
 			log_d(TAG, "Bytes Sent %d Bytes to send %d\n\r", tx_buffer->bytes_sent, tx_buffer->bytes_to_send);
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
+#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
 #endif //  if defined(SYS_LOG_LEVEL)
 			if(tx_buffer->bytes_sent == tx_buffer->bytes_to_send) {
 				loop++;
@@ -519,7 +519,7 @@ void sendFlowControlFrame(rx_buffer_t *rx_buffer, uint8_t flowStatus)
 		log_d(TAG, "Send Flow Control Frame\n\r");
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
+#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
 #endif //  if defined(SYS_LOG_LEVEL)
 		can_l2_tx_frame(&frame);
 	} else {
@@ -528,7 +528,7 @@ void sendFlowControlFrame(rx_buffer_t *rx_buffer, uint8_t flowStatus)
 		log_w(TAG, "Bad Flow Status\n\r");
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
+#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
 #endif //  if defined(SYS_LOG_LEVEL)
 	}
 }
@@ -551,7 +551,7 @@ void iso15765_frame_handler(can_frame *frame)
 		log_d(TAG, "ISO15765 Message not for this node\n\r");
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
+#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
 #endif //  if defined(SYS_LOG_LEVEL)
 		return;
 	}
@@ -563,7 +563,7 @@ void iso15765_frame_handler(can_frame *frame)
 	log_d(TAG, "iso15765_frame_handler(0x%lx) got a frame from 0x%x\n\r",frame->can_id, source);
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
+#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
 #endif //  if defined(SYS_LOG_LEVEL)
 	type = frame->data[0] & 0xf0;
 
@@ -575,7 +575,7 @@ void iso15765_frame_handler(can_frame *frame)
 		log_d(TAG, "SF\n\r");
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
+#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
 #endif //  if defined(SYS_LOG_LEVEL)
 #if defined(MCP)
                 rx_buffer = &mcp_rx_buffer;
@@ -585,7 +585,7 @@ void iso15765_frame_handler(can_frame *frame)
 			log_e(TAG, "ERROR: ISO15765 Received First Frame whilst RxBuffer Busy\n\r");
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
+#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
 #endif //  if defined(SYS_LOG_LEVEL)
 			return;
 		}
@@ -596,7 +596,7 @@ void iso15765_frame_handler(can_frame *frame)
 			log_e(TAG, "ISO15765 transmitter already busy\n\r");
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
+#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
 #endif //  if defined(SYS_LOG_LEVEL)
 			return;
 		}
@@ -608,7 +608,7 @@ void iso15765_frame_handler(can_frame *frame)
 			log_e(TAG, "Malloc Failed\n\r");
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
+#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
 #endif //  if defined(SYS_LOG_LEVEL)
 			exit(1);
 		}
@@ -628,7 +628,7 @@ void iso15765_frame_handler(can_frame *frame)
 			log_d(TAG, "Rx Protocol %d L3 Length %d\n\r",
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
+#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
 #endif //  if defined(SYS_LOG_LEVEL)
 				   (uint16_t)rx_buffer->protocol,
 				   (uint16_t)rx_buffer->bytes_expected);
@@ -642,7 +642,7 @@ void iso15765_frame_handler(can_frame *frame)
 				log_d(TAG, "Rx Data byte %d - 0x%x\n\r",
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
+#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
 #endif //  if defined(SYS_LOG_LEVEL)
 					   rx_buffer->index,
 					   frame->data[loop]);
@@ -668,7 +668,7 @@ void iso15765_frame_handler(can_frame *frame)
 			log_e(TAG, "Error in received length");
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
+#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
 #endif //  if defined(SYS_LOG_LEVEL)
 		}
 	} else if(type == ISO15765_FF) {
@@ -678,7 +678,7 @@ void iso15765_frame_handler(can_frame *frame)
 		log_d(TAG, "Rx First Frame\n\r");
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
+#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
 #endif //  if defined(SYS_LOG_LEVEL)
 #if defined(MCP)
 		if(mcp_receiver_busy) {
@@ -687,7 +687,7 @@ void iso15765_frame_handler(can_frame *frame)
 			log_e(TAG, "ERROR: Can L3 Received First Frame whilst RxBuffer Busy\n\r");
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
+#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
 #endif //  if defined(SYS_LOG_LEVEL)
 			return;
 		}
@@ -701,7 +701,7 @@ void iso15765_frame_handler(can_frame *frame)
 			log_e(TAG, "ISO15765 transmitter already busy\n\r");
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
+#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
 #endif //  if defined(SYS_LOG_LEVEL)
 			return;
 		}
@@ -713,7 +713,7 @@ void iso15765_frame_handler(can_frame *frame)
 			log_e(TAG, "Malloc Failed\n\r");
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
+#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
 #endif //  if defined(SYS_LOG_LEVEL)
 			exit(1);
 		}
@@ -732,7 +732,7 @@ void iso15765_frame_handler(can_frame *frame)
 			log_e(TAG, "Message received overflows Max Size\n\r");
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
+#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
 #endif //  if defined(SYS_LOG_LEVEL)
 			sendFlowControlFrame(rx_buffer, FS_Overflow); //source
 			return;
@@ -745,7 +745,7 @@ void iso15765_frame_handler(can_frame *frame)
 		log_d(TAG, "Size expected %d\n\r", rx_buffer->bytes_expected);
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
+#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
 #endif //  if defined(SYS_LOG_LEVEL)
 		if(frame->can_dlc == 8) {
 			rx_buffer->source = source;
@@ -757,7 +757,7 @@ void iso15765_frame_handler(can_frame *frame)
 //                              log_d(TAG, "Add Byte 0x%x\n\r", (UINT16)rxMsg->data[loop]);
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
+#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
 #endif //  if defined(SYS_LOG_LEVEL)
 				rx_buffer->data[rx_buffer->index++] = frame->data[loop];
 				rx_buffer->bytes_received++;
@@ -772,7 +772,7 @@ void iso15765_frame_handler(can_frame *frame)
 			log_e(TAG, "expected a L2 Message of size 8\n\r");
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
+#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
 #endif //  if defined(SYS_LOG_LEVEL)
 		}
 	} else if(type == ISO15765_CF) {
@@ -784,7 +784,7 @@ void iso15765_frame_handler(can_frame *frame)
 		}
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
+#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
 #endif //  if defined(SYS_LOG_LEVEL)
 #if defined(MCP)
 		// If the Receiver isn't busy not sure why we're gettting a CF
@@ -794,7 +794,7 @@ void iso15765_frame_handler(can_frame *frame)
 			log_e(TAG, "ERROR: ISO15765 Received CF whilst RxBuffer NOT Busy\n\r");
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
+#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
 #endif //  if defined(SYS_LOG_LEVEL)
 			return;
 		}
@@ -807,7 +807,7 @@ void iso15765_frame_handler(can_frame *frame)
 			log_e(TAG, "ISO15765 CF and NOT busy??\n\r");
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
+#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
 #endif //  if defined(SYS_LOG_LEVEL)
 			return;
 		}
@@ -829,7 +829,7 @@ void iso15765_frame_handler(can_frame *frame)
 			log_d(TAG, "received %d bytes expecting %d\n\r", rx_buffer->bytes_received, rx_buffer->bytes_expected);
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
+#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
 #endif //  if defined(SYS_LOG_LEVEL)
 
 			if (rx_buffer->bytes_received == rx_buffer->bytes_expected) {
@@ -838,7 +838,7 @@ void iso15765_frame_handler(can_frame *frame)
 				log_d(TAG, "Complete Message\n\r");
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
+#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
 #endif //  if defined(SYS_LOG_LEVEL)
 				rx_buffer->msg.protocol = rx_buffer->protocol;
 				rx_buffer->msg.data = rx_buffer->data;
@@ -850,7 +850,7 @@ void iso15765_frame_handler(can_frame *frame)
 				log_d(TAG, "RX Msg from-0x%x, Protocol-0x%x, Size-0x%x\n\r",
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
+#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
 #endif //  if defined(SYS_LOG_LEVEL)
 					   (uint16_t)rx_buffer->msg.address,
 					   (uint16_t)rx_buffer->msg.protocol,
@@ -891,7 +891,7 @@ void iso15765_frame_handler(can_frame *frame)
 			log_d(TAG, "Bad Sequence Number: expected 0x%x received 0x%x\n\r", rx_buffer->sequence, (frame->data[0] & 0x0f));
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
+#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
 #endif //  if defined(SYS_LOG_LEVEL)
 		}
 	} else if(type == ISO15765_FC) {
@@ -902,7 +902,7 @@ void iso15765_frame_handler(can_frame *frame)
 		log_d(TAG, "BlockSize %d, Seperation time %x\n\r", frame->data[1], frame->data[2]);
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
+#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
 #endif //  if defined(SYS_LOG_LEVEL)
 
 #if defined(MCP)
@@ -913,7 +913,7 @@ void iso15765_frame_handler(can_frame *frame)
 			log_e(TAG, "ERROR: ISO15765 Received FC whilst TxBuffer NOT Busy\n\r");
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
+#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
 #endif //  if defined(SYS_LOG_LEVEL)
 			return;
 		}
@@ -926,7 +926,7 @@ void iso15765_frame_handler(can_frame *frame)
 			log_e(TAG, "ISO15765 FC and NOT busy??\n\r");
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
+#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
 #endif //  if defined(SYS_LOG_LEVEL)
 			return;
 		}
@@ -977,7 +977,7 @@ void iso15765_frame_handler(can_frame *frame)
 		log_d(TAG, "Unrecognised L3 CAN Frame type\n\r");
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
+#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
 #endif //  if defined(SYS_LOG_LEVEL)
 	}
 }
@@ -997,7 +997,7 @@ void startConsecutiveFrameTimer(tx_buffer_t *tx_buffer)
 	log_d(TAG, "startConsecutiveFrameTimer %d Ticks\n\r", ticks);
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
+#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
 #endif //  if defined(SYS_LOG_LEVEL)
 	result = sw_timer_start(ticks, exp_sendConsecutiveFrame, (union sigval)(void *)tx_buffer, &tx_buffer->consecutive_frame_timer);
 	if(result != SUCCESS) {
@@ -1006,7 +1006,7 @@ void startConsecutiveFrameTimer(tx_buffer_t *tx_buffer)
 		log_e(TAG, "Failed to start N_Cr Timer\n\r");
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
+#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
 #endif //  if defined(SYS_LOG_LEVEL)
 	}
 }
@@ -1026,7 +1026,7 @@ void startTimer_N_Cr(rx_buffer_t *rx_buffer)
 		log_e(TAG, "Failed to start N_Cr Timer\n\r");
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
+#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
 #endif //  if defined(SYS_LOG_LEVEL)
 	}
 }
@@ -1046,7 +1046,7 @@ void exp_timer_N_Cr_Expired(timer_t timer_id __attribute__((unused)), union sigv
 	log_d(TAG, "timer_N_Cr_Expired\n\r");
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
+#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
 #endif //  if defined(SYS_LOG_LEVEL)
 	rx_buffer = (rx_buffer_t *)data.sival_ptr;
 
@@ -1076,7 +1076,7 @@ void startTimer_N_Bs(tx_buffer_t *tx_buffer)
 		log_e(TAG, "Failed to start N_Bs Timer\n\r");
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
+#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
 #endif //  if defined(SYS_LOG_LEVEL)
 	}
 }
@@ -1096,7 +1096,7 @@ void exp_timer_N_Bs_Expired(timer_t timer_id __attribute__((unused)), union sigv
 	log_d(TAG, "timer_N_Bs_Expired\n\r");
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
+#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
 #endif //  if defined(SYS_LOG_LEVEL)
 	tx_buffer = (tx_buffer_t *)data.sival_ptr;
 
@@ -1124,7 +1124,7 @@ void dispatcher_iso15765_msg_handler(iso15765_msg_t *message)
 	log_i(TAG, "ISO15765 Dis from-0x%x Protocol-0x%x len(0x%x)\n\r",
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
+#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
 #endif //  if defined(SYS_LOG_LEVEL)
 		   (uint16_t)message->address,
 		   (uint16_t)message->protocol,
@@ -1143,7 +1143,7 @@ void dispatcher_iso15765_msg_handler(iso15765_msg_t *message)
 			log_d(TAG, " => Dispatch\n\r");
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
+#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
 #endif //  if defined(SYS_LOG_LEVEL)
 			registered[loop].handler(message);
 			return;
@@ -1154,7 +1154,7 @@ void dispatcher_iso15765_msg_handler(iso15765_msg_t *message)
 	log_d(TAG, " No Handler found for Protocol 0x%x\n\r", (uint16_t)message->protocol);
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
+#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
 #endif //  if defined(SYS_LOG_LEVEL)
 }
 
@@ -1169,7 +1169,7 @@ result_t iso15765_dispatch_reg_handler(iso15765_target_t *target)
 	log_i(TAG, "iso15765_dispatch_register_handler(0x%x)\n\r", (uint16_t)target->protocol);
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
+#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
 #endif //  if defined(SYS_LOG_LEVEL)
 
 	/*
@@ -1190,7 +1190,7 @@ result_t iso15765_dispatch_reg_handler(iso15765_target_t *target)
 	log_e(TAG, "ISO15765 Dispatch full!\n\r");
 #endif
 #else  //  if defined(SYS_LOG_LEVEL)
-#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
+#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
 #endif //  if defined(SYS_LOG_LEVEL)
 	return(ERR_NO_RESOURCES);
 }

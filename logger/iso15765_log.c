@@ -21,7 +21,7 @@
  */
 #include <stdio.h>
 #include <string.h>
-#include "system.h"
+#include "libesoup_config.h"
 #include "libesoup/can/dcncp/dcncp_can.h"
 #include "libesoup/can/es_can.h"
 
@@ -32,10 +32,10 @@
 #define TAG "ISO15765_LOG"
 
 /*
- * Check required system.h defines are found
+ * Check required libesoup_config.h defines are found
  */
 #ifndef SYS_LOG_LEVEL 
-#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
+#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
 #endif
 
 /*

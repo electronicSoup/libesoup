@@ -19,7 +19,7 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  *
  */
-#include "system.h"
+#include "libesoup_config.h"
 #define DEBUG_FILE TRUE
 #include "libesoup/utils/flash.h"
 #include "libesoup/logger/serial_log.h"
@@ -30,10 +30,10 @@
 #define TAG "CB_INFO"
 
 /*
- * Check required system.h defines are found
+ * Check required libesoup_config.h defines are found
  */
 #ifndef SYS_LOG_LEVEL
-#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
+#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
 #endif
 
 result_t cb_get_hardware_info(uint8_t *data, uint16_t *data_len)

@@ -25,35 +25,35 @@
 #define DEBUG_FILE TRUE
 #define TAG "serial"
 
-#include "system.h"
+#include "libesoup_config.h"
 #include "libesoup/logger/serial_log.h"
 
 /*
- * Check required system.h defines are found
+ * Check required libesoup_config.h defines are found
  */
 #ifndef SYS_LOG_LEVEL
-#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
+#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
 #endif
 
 
 
 #ifndef SYS_SERIAL_LOGGING_BAUD
-#error system.h file should define the SYS_SERIAL_LOGGING_BAUD
+#error libesoup_config.h file should define the SYS_SERIAL_LOGGING_BAUD
 #endif
 
 #ifndef ES_LINUX
 #if defined(__18F2680) || defined(__18F4585)
 #ifndef SYS_USART_TX_BUFFER_SIZE
-#error system.h should define SYS_USART_TX_BUFFER_SIZE (see libesoup/examples/system.h)
+#error libesoup_config.h should define SYS_USART_TX_BUFFER_SIZE (see libesoup/examples/libesoup_config.h)
 #endif
 #else
 #ifndef SERIAL_LOGGING_TX_DDR
-#error system.h should include a board file which defines SERIAL_LOGGING_TX_DDR (see libesoup/examples/system.h)
+#error libesoup_config.h should include a board file which defines SERIAL_LOGGING_TX_DDR (see libesoup/examples/libesoup_config.h)
 #endif
 #endif
 
 #ifndef SYS_CLOCK_FREQ
-#error system.h file should define the SYS_CLOCK_FREQ
+#error libesoup_config.h file should define the SYS_CLOCK_FREQ
 #endif
 #endif
 
@@ -113,7 +113,7 @@ void _ISR __attribute__((__no_auto_psv__)) _U1RXInterrupt(void)
  *
  * \brief Initialisation function for serial logging
  *
- * The system.h file should define serial port pin orientation, and include the 
+ * The libesoup_config.h file should define serial port pin orientation, and include the 
  * board file which defines the pins being used by the serial port.
  */
 void serial_logging_init(void)
@@ -125,7 +125,7 @@ void serial_logging_init(void)
 #if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__) || defined(__dsPIC33EP256MU806__)
 	/*
 	 * Serial Port pin configuration should be defined
-	 * in include file system.h
+	 * in include file libesoup_config.h
 	 */
 #ifdef SERIAL_LOGGING_RX_ENABLE
         SERIAL_LOGGING_RX_DDR = INPUT_PIN;
@@ -133,9 +133,9 @@ void serial_logging_init(void)
 	IEC0bits.U1RXIE = 1;
 #endif
         /*
-         * The system.h file should define the Serial Logging pin orientation
+         * The libesoup_config.h file should define the Serial Logging pin orientation
          * (either SYS_SERIAL_PORT_GndTxRx or SYS_SERIAL_PORT_GndRxTx) which is
-         * then used in the board header file included from the system.h file.
+         * then used in the board header file included from the libesoup_config.h file.
          * The board file defines the pins used by the serial port here. 
          */
         SERIAL_LOGGING_TX_DDR = OUTPUT_PIN;

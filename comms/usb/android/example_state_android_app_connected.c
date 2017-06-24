@@ -22,7 +22,7 @@
  *
  */
 #include <stdio.h>
-#include "system.h"
+#include "libesoup_config.h"
 #include "usb/inc/usb.h"
 #include "usb/inc/usb_host_android.h"
 #include "libesoup/usb/android/state.h"
@@ -34,10 +34,10 @@
 #define TAG "Android-AppConnected"
 
 /*
- * Check required system.h defines are found
+ * Check required libesoup_config.h defines are found
  */
 #ifndef SYS_LOG_LEVEL
-#error system.h file should define SYS_LOG_LEVEL (see libesoup/examples/system.h)
+#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
 #endif
 
 /*

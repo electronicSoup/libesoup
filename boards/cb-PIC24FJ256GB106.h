@@ -4,9 +4,9 @@
  *
  * @author John Whitmore
  *
- * This file contains an example libesoup system.h configuration file. 
+ * This file contains an example libesoup libesoup_config.h configuration file. 
  *
- * The libesoup library of source code expects a system.h header file to exist
+ * The libesoup library of source code expects a libesoup_config.h header file to exist
  * in your include path. The file contains the various switches and definitions
  * which configure the various features of the library.
  *
@@ -78,7 +78,7 @@
  * electronicSoup bootloader. This is all taken care of automatically by 
  * @see libesoup/utils/eeprom.h.
  *
- * Setting @see EEPROM_USE_BOOT_PAGE in your system.h configuration file,
+ * Setting @see EEPROM_USE_BOOT_PAGE in your libesoup_config.h configuration file,
  * will negate the reservation. Use this only if you are overwriting the 
  * Bootloader and programming the device directly with a flash programmer.
  */

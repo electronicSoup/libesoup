@@ -22,7 +22,7 @@
 #ifndef ANDROID_STATE_H
 #define ANDROID_STATE_H
 
-#include "system.h"
+#include "libesoup_config.h"
 //#include "usb/usb.h"
 #include "usb/inc/usb.h"
 

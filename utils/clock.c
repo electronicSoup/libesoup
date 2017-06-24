@@ -19,13 +19,13 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  *
  */
-#include "system.h"
+#include "libesoup_config.h"
 
 /*
- * Check required system.h defines are found
+ * Check required libesoup_config.h defines are found
  */
 #ifndef SYS_CLOCK_FREQ
-#error system.h should define SYS_CLOCK_FREQ (see libesoup/examples/system.h)
+#error libesoup_config.h should define SYS_CLOCK_FREQ (see libesoup/examples/libesoup_config.h)
 #endif
 
 /*

@@ -7,7 +7,7 @@
  * This file contains microcontroller specific definitions for the Microchip
  * PIC24FJ256GB106. 
  *
- * The libesoup library of source code expects a system.h header file to exist
+ * The libesoup library of source code expects a libesoup_config.h header file to exist
  * in your include path. The file contains the various switches and definitions
  * which configure the various features of the library.
  *

@@ -4,9 +4,9 @@
  *
  * @author John Whitmore
  *
- * This file contains an example libesoup system.h configuration file. 
+ * This file contains an example libesoup libesoup_config.h configuration file. 
  *
- * The libesoup library of source code expects a system.h header file to exist
+ * The libesoup library of source code expects a libesoup_config.h header file to exist
  * in your include path. The file contains the various switches and definitions
  * which configure the various features of the library.
  *

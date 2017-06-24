@@ -32,7 +32,7 @@
 #ifndef _HW_TIMERS_H
 #define _HW_TIMERS_H
 
-#include "system.h"
+#include "libesoup_config.h"
 
 /**
  * \brief Dummy timer identifier for a non existent timer.
