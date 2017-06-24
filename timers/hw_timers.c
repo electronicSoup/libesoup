@@ -64,7 +64,7 @@ struct hw_timer_data {
 	uint8_t       status:2;
 	uint8_t       repeat:1;
 	ty_time_units units;
-	uint16_t      time;
+	uint16_t      duration;
 	uint16_t      repeats;
 	uint16_t      remainder;
 	void        (*expiry_function)(void *data);
@@ -196,7 +196,7 @@ void hw_timer_init(void)
 #endif
 		timers[timer].status = TIMER_UNUSED;
 		timers[timer].repeat = 0;
-		timers[timer].time = 0;
+		timers[timer].duration = 0;
 		timers[timer].expiry_function = NULL;
 		timers[timer].data = 0;
 		timers[timer].repeats = 0;
@@ -235,7 +235,7 @@ void hw_timer_init(void)
 /*
  * hw_timer_start returns the id of the started timer.
  */
-uint8_t hw_timer_start(ty_time_units units, uint16_t time, uint8_t repeat, void (*expiry_function)(void *), void *data)
+uint8_t hw_timer_start(ty_time_units units, uint16_t duration, uint8_t repeat, void (*expiry_function)(void *), void *data)
 {
 	result_t rc;
 	uint8_t       timer;
@@ -250,7 +250,7 @@ uint8_t hw_timer_start(ty_time_units units, uint16_t time, uint8_t repeat, void 
 
 	while(timer < NUMBER_HW_TIMERS) {
 		if(timers[timer].status == TIMER_UNUSED) {
-			rc = start_timer(timer, units, time, repeat, expiry_function, data);
+			rc = start_timer(timer, units, duration, repeat, expiry_function, data);
 			if(rc == SUCCESS) {
 				return(timer);
 			} else {
@@ -363,7 +363,7 @@ void hw_timer_cancel(uint8_t timer)
 
                 timers[timer].status = TIMER_UNUSED;
                 timers[timer].repeat = 0;
-                timers[timer].time = 0;
+                timers[timer].duration = 0;
                 timers[timer].expiry_function = NULL;
                 timers[timer].data = 0;
                 timers[timer].repeats = (uint16_t)0;
@@ -399,7 +399,7 @@ void hw_timer_cancel_all()
 	for(timer = 0; timer < NUMBER_HW_TIMERS; timer++) {
 		timers[timer].status = TIMER_UNUSED;
 		timers[timer].repeat = 0;
-		timers[timer].time = 0;
+		timers[timer].duration = 0;
 		timers[timer].expiry_function = NULL;
 		timers[timer].data = 0;
 		timers[timer].repeats = (uint16_t)0;
@@ -407,7 +407,7 @@ void hw_timer_cancel_all()
 	}
 }
 
-static result_t start_timer(uint8_t timer, ty_time_units units, uint16_t time, uint8_t repeat, void (*expiry_function)(void *), void *data)
+static result_t start_timer(uint8_t timer, ty_time_units units, uint16_t duration, uint8_t repeat, void (*expiry_function)(void *), void *data)
 {
 	uint32_t ticks = 0;
 
@@ -422,19 +422,19 @@ static result_t start_timer(uint8_t timer, ty_time_units units, uint16_t time, u
 		case uSeconds:
 			set_clock_divide(timer, 1);
 #if defined(__18F4585) || defined(__18F2680)
-                        ticks = (uint32_t) ((uint32_t) (((uint32_t) SYS_CLOCK_FREQ / 4) / 1000000) * time);
+                        ticks = (uint32_t) ((uint32_t) (((uint32_t) SYS_CLOCK_FREQ / 4) / 1000000) * duration);
 #else
-			ticks = (uint32_t) ((uint32_t) (((uint32_t) SYS_CLOCK_FREQ) / 8000000) * time);
+			ticks = (uint32_t) ((uint32_t) (((uint32_t) SYS_CLOCK_FREQ) / 8000000) * duration);
 #endif
                 break;
 
 		case mSeconds:
 #if defined(__18F4585)  || defined(__18F2680)
 			set_clock_divide(timer, 4);
-			ticks = (uint32_t) ((uint32_t) (((uint32_t)(SYS_CLOCK_FREQ / 4)) / 4000) * time);
+			ticks = (uint32_t) ((uint32_t) (((uint32_t)(SYS_CLOCK_FREQ / 4)) / 4000) * duration);
 #else
 			set_clock_divide(timer, 64);
-			ticks = (uint32_t) ((uint32_t) (((uint32_t) SYS_CLOCK_FREQ) / 64000 ) * time);
+			ticks = (uint32_t) ((uint32_t) (((uint32_t) SYS_CLOCK_FREQ) / 64000 ) * duration);
 #endif
                 break;
 
@@ -442,10 +442,10 @@ static result_t start_timer(uint8_t timer, ty_time_units units, uint16_t time, u
 #if defined(__18F4585)  || defined(__18F2680)
                         if(timer == TIMER_0) {
                                 set_clock_divide(timer, 64);
-                                ticks = (uint32_t) ((uint32_t) (((uint32_t) SYS_CLOCK_FREQ / 4) / 64) * time);
+                                ticks = (uint32_t) ((uint32_t) (((uint32_t) SYS_CLOCK_FREQ / 4) / 64) * duration);
                         } else if(timer == TIMER_1) {
                                 set_clock_divide(timer, 8);
-                                ticks = (uint32_t) ((uint32_t) (((uint32_t) SYS_CLOCK_FREQ / 4) / 8) * time);
+                                ticks = (uint32_t) ((uint32_t) (((uint32_t) SYS_CLOCK_FREQ / 4) / 8) * duration);
                         } else {
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
                                 log_e(TAG, "Unknown Timers\n\r");
@@ -453,13 +453,13 @@ static result_t start_timer(uint8_t timer, ty_time_units units, uint16_t time, u
                         }
 #else
 			set_clock_divide(timer, 256);
-			ticks = (uint32_t) ((uint32_t) (((uint32_t) SYS_CLOCK_FREQ) / 256) * time);
+			ticks = (uint32_t) ((uint32_t) (((uint32_t) SYS_CLOCK_FREQ) / 256) * duration);
 #endif
                 break;
 
 		default:
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
-			log_e(TAG, "Unknown Timer Units\n\r");
+			log_e(TAG, "Bad duration Units for Hardware Timer\n\r");
 #endif
 			return(ERR_BAD_INPUT_PARAMETER);
 //			break;
@@ -469,7 +469,7 @@ static result_t start_timer(uint8_t timer, ty_time_units units, uint16_t time, u
 		timers[timer].status          = TIMER_RUNNING;
 		timers[timer].repeat          = repeat;
 		timers[timer].units           = units;
-		timers[timer].time            = time;
+		timers[timer].duration        = duration;
 		timers[timer].expiry_function = expiry_function;
 		timers[timer].data            = data;
 
@@ -848,7 +848,7 @@ void check_timer(uint8_t timer)
                 data = timers[timer].data;
 
 		if(timers[timer].repeat) {
-			start_timer(timer, timers[timer].units, timers[timer].time, timers[timer].repeat, timers[timer].expiry_function, timers[timer].data);
+			start_timer(timer, timers[timer].units, timers[timer].duration, timers[timer].repeat, timers[timer].expiry_function, timers[timer].data);
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
                         log_e(TAG, "XC8 can't call recursive function, No repeat\n\r");
 #endif

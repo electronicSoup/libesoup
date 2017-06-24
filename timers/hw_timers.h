@@ -40,27 +40,35 @@
 #define BAD_TIMER 0xff
 
 /**
- * \brief Function to initialisation the micro-controller's hardware timers.
+ * \brief Function to initialisation the data structures used to manage the 
+ *        micro-controller's hardware timers.
  * 
- * Function should be called on startup if hardware timers are to be used
+ * This function should be called on startup, if hardware timers are to be used
  * on the system. 
  * 
- * Note: no runtime checks are performed to ensure that this initialisation 
- * function has been called before a timer is started!
+ * Note: NO runtime checks are performed to ensure that this initialisation 
+ * function has been called before a timer is started! In other words you can
+ * call a function to start Hardware timer whilst the management data structures
+ * are in an undefined/uninitialised state.
  */
 extern void     hw_timer_init(void);
 
 /**
  * @brief Function to start a micro-controller hardware timer.
  * 
- * @param units Specifies units of time of the input time.
- * @param time  Duration of requested timer.
+ * @param units Specifies units of time of the input timer duration.
+ * @param duration  Duration of requested timer.
  * @param repeat If true the timer will repeat continuously.
  * @param expiry_function The function to be called on the expiry of timer.
  * @param data Caller defined data to be passed to the expiry function.
  * @return A timer identifier which can be used to cancel the started timer.
+ * 
+ * Note: The enumeration for units of time contains a number of different units
+ * from uSeconds up to Hours, but only uSeconds, mSeconds and Seconds are valid
+ * units for a Hardware timer. If a timer of duration measured in minutes, or
+ * greater, is required you'll need to use a Software based timer.
  */
-extern uint8_t  hw_timer_start(ty_time_units units, uint16_t time, uint8_t repeat, void (*expiry_function)(void *), void *data);
+extern uint8_t  hw_timer_start(ty_time_units units, uint16_t duration, uint8_t repeat, void (*expiry_function)(void *), void *data);
 
 /**
  * \brief Function to pause a started hardware timer
