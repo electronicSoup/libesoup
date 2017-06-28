@@ -43,6 +43,10 @@
 #error libesoup_config.h file should define the SYS_CLOCK_FREQ
 #endif
 
+#ifndef SYS_UART_TX_BUFFER_SIZE
+#error libesoup_config.h file should define the SYS_UART_TX_BUFFER_SIZE
+#endif
+
 enum uart_status {
 	UART_FREE,
 	UART_BUSY
@@ -660,32 +664,36 @@ static void uart_putchar(uint8_t uart, uint8_t ch)
 	}
 }
 
+#if defined(__dsPIC33EP256MU806__)
 static void uart_set_rx_pin(uint8_t uart, uint8_t pin)
 {
-//        AD1PCFGL = 0xffff;
+}
+#elif defined (__PIC24FJ256GB106__)
+static void uart_set_rx_pin(uint8_t uart, uint8_t pin)
+{
 	switch (pin) {
 		case RP0:
-                        AD1PCFGLbits.PCFG0 = 1;
-			TRISBbits.TRISB0 = 1;
+                        AD1PCFGLbits.PCFG0 = DIGITAL_PIN;
+			TRISBbits.TRISB0 = INPUT_PIN;
 			break;
 
 		case RP1:
-                        AD1PCFGLbits.PCFG1 = 1;
-			TRISBbits.TRISB1 = 1;
+                        AD1PCFGLbits.PCFG1 = DIGITAL_PIN;
+			TRISBbits.TRISB1 = INPUT_PIN;
 			break;
 
 		case RP13:
-                        AD1PCFGLbits.PCFG2 = 1;
-			TRISBbits.TRISB2 = 1;
+                        AD1PCFGLbits.PCFG2 = DIGITAL_PIN;
+			TRISBbits.TRISB2 = INPUT_PIN;
 			break;
 
 		case RP25:
-			TRISDbits.TRISD4 = 1;
+			TRISDbits.TRISD4 = INPUT_PIN;
 			break;
 
 		case RP28:
-                        AD1PCFGLbits.PCFG4 = 1;
-			TRISBbits.TRISB4 = 1;
+                        AD1PCFGLbits.PCFG4 = DIGITAL_PIN;
+			TRISBbits.TRISB4 = INPUT_PIN;
 			break;
 
 		default:
@@ -713,7 +721,13 @@ static void uart_set_rx_pin(uint8_t uart, uint8_t pin)
 			break;
 	}
 }
+#endif // if defined (__PIC24FJ256GB106__)
 
+#if defined(__dsPIC33EP256MU806__)
+static void uart_set_tx_pin(uint8_t uart, uint8_t pin)
+{
+}
+#elif defined (__PIC24FJ256GB106__)
 static void uart_set_tx_pin(uint8_t uart, uint8_t pin)
 {
 	uint8_t tx_function;
@@ -738,31 +752,31 @@ static void uart_set_tx_pin(uint8_t uart, uint8_t pin)
 
 	switch (pin) {
 		case RP0:
-                        AD1PCFGLbits.PCFG0 = 1;
-			TRISBbits.TRISB0 = 0;
+                        AD1PCFGLbits.PCFG0 = DIGITAL_PIN;
+			TRISBbits.TRISB0 = OUTPUT_PIN;
 			RPOR0bits.RP0R = tx_function;
 			break;
 
 		case RP1:
-                        AD1PCFGLbits.PCFG1 = 1;
-			TRISBbits.TRISB1 = 0;
+                        AD1PCFGLbits.PCFG1 = DIGITAL_PIN;
+			TRISBbits.TRISB1 = OUTPUT_PIN;
 			RPOR0bits.RP1R = tx_function;
 			break;
 
 		case RP13:
-                        AD1PCFGLbits.PCFG2 = 1;
-			TRISBbits.TRISB2 = 0;
+                        AD1PCFGLbits.PCFG2 = DIGITAL_PIN;
+			TRISBbits.TRISB2 = OUTPUT_PIN;
 			RPOR6bits.RP13R = tx_function;
 			break;
 
 		case RP25:
-			TRISDbits.TRISD4 = 0;
+			TRISDbits.TRISD4 = OUTPUT_PIN;
 			RPOR12bits.RP25R = tx_function;
 			break;
 
 		case RP28:
-                        AD1PCFGLbits.PCFG4 = 1;
-			TRISBbits.TRISB4 = 0;
+                        AD1PCFGLbits.PCFG4 = DIGITAL_PIN;
+			TRISBbits.TRISB4 = OUTPUT_PIN;
 			RPOR14bits.RP28R = tx_function;
 			break;
 
@@ -773,6 +787,7 @@ static void uart_set_tx_pin(uint8_t uart, uint8_t pin)
 			break;
 	}
 }
+#endif // if defined (__PIC24FJ256GB106__)
 
 static void uart_set_com_config(struct uart_data *com)
 {
