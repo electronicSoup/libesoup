@@ -119,7 +119,7 @@ static void uart_tx_isr(uint8_t uart)
 {
 	if ((uarts[uart].data == NULL) || (uarts[uart].status != UART_BUSY)) {
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
-		log_e(TAG, "UART Null in ISR!\n\r");
+		LOG_E("UART Null in ISR!\n\r");
 #endif
 		return;
 	}
@@ -255,7 +255,7 @@ static void uart_tx_isr(uint8_t uart)
 
 			default:
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
-				log_e(TAG, "Bad comm port given!\n\r");
+				LOG_E("Bad comm port given!\n\r");
 #endif
 				return;
 				break;
@@ -276,7 +276,7 @@ void _ISR __attribute__((__no_auto_psv__)) _U1RXInterrupt(void)
 
 	if (U1STAbits.OERR) {
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
-		log_e(TAG, "RX Buffer overrun\n\r");
+		LOG_E("RX Buffer overrun\n\r");
 #endif
 		U1STAbits.OERR = 0;   /* Clear the error flag */
 	}
@@ -297,7 +297,7 @@ void _ISR __attribute__((__no_auto_psv__)) _U2RXInterrupt(void)
 
 	if (U2STAbits.OERR) {
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
-		log_e(TAG, "RX Buffer overrun\n\r");
+		LOG_E("RX Buffer overrun\n\r");
 #endif
 		U2STAbits.OERR = 0;   /* Clear the error flag */
 	}
@@ -318,7 +318,7 @@ void _ISR __attribute__((__no_auto_psv__)) _U3RXInterrupt(void)
 
 	if (U3STAbits.OERR) {
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
-		log_e(TAG, "RX Buffer overrun\n\r");
+		LOG_E("RX Buffer overrun\n\r");
 #endif
 		U3STAbits.OERR = 0;   /* Clear the error flag */
 	}
@@ -339,7 +339,7 @@ void _ISR __attribute__((__no_auto_psv__)) _U4RXInterrupt(void)
 
 	if (U4STAbits.OERR) {
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
-		log_e(TAG, "RX Buffer overrun\n\r");
+		LOG_E("RX Buffer overrun\n\r");
 #endif
 		U4STAbits.OERR = 0;   /* Clear the error flag */
 	}
@@ -356,27 +356,27 @@ result_t uart_calculate_mode(uint16_t *mode, uint8_t databits, uint8_t parity, u
 
 	*mode |= UARTEN_MASK;
 
-	if (databits == 8) {
-		if (parity == PARITY_EVEN) {
+	if (databits == UART_8_DATABITS) {
+		if (parity == UART_PARITY_EVEN) {
 			*mode |= PDSEL0_MASK;
-		} else if (parity == PARITY_ODD) {
+		} else if (parity == UART_PARITY_ODD) {
 			*mode |= PDSEL1_MASK;
 		}
-	} else if (databits == 9) {
+	} else if (databits == UART_9_DATABITS) {
 		*mode |= PDSEL1_MASK;
 		*mode |= PDSEL0_MASK;
 	} else {
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
-                log_e(TAG, "Bad byte length\n\r");
+                LOG_E("Bad byte length\n\r");
 #endif
 		return(ERR_BAD_INPUT_PARAMETER);
 	}
 
-	if (stopbits == TWO_STOP_BITS) {
+	if (stopbits == UART_TWO_STOP_BITS) {
 		*mode |= STSEL_MASK;
 	}
 
-	if (rx_idle_level == IDLE_HIGH) {
+	if (rx_idle_level == UART_IDLE_HIGH) {
 		*mode |= RXINV_MASK;
 	}
 
@@ -384,7 +384,7 @@ result_t uart_calculate_mode(uint16_t *mode, uint8_t databits, uint8_t parity, u
 }
 
 /*
- * Initialisation
+ * Initialisation of the uart data structures
  */
 void uart_init(void)
 {
@@ -399,7 +399,7 @@ void uart_init(void)
 result_t uart_reserve(struct uart_data *data)
 {
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
-	log_d(TAG, "uart_reserve()\n\r");
+	LOG_D("uart_reserve()\n\r");
 #endif
 	/*
 	 * Find a free uart to use
@@ -440,12 +440,12 @@ result_t uart_release(struct uart_data *data)
 	uart = data->uart;
 
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
-	log_d(TAG, "uart_release()  %d\n\r", uart);
+	LOG_D("uart_release()  %d\n\r", uart);
 #endif
         
 	if(uarts[uart].data != data) {
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
-		log_e(TAG, "uart_tx called with bad data pointer\n\r");
+		LOG_E("uart_tx called with bad data pointer\n\r");
 #endif
 		return(ERR_BAD_INPUT_PARAMETER);
 	}
@@ -485,6 +485,7 @@ result_t uart_tx_buffer(struct uart_data *data, uint8_t *buffer, uint16_t len)
 
 	uart = data->uart;
 
+        printf("uart_tx_buffer %s length %d\n\r", buffer, len);
 	if(uarts[uart].data != data) {
 		return(ERR_BAD_INPUT_PARAMETER);
 	}
@@ -537,7 +538,7 @@ static void uart_putchar(uint8_t uart, uint8_t ch)
 
 				if(uarts[uart].tx_count == SYS_UART_TX_BUFFER_SIZE) {
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
-					log_e(TAG, "Circular buffer full!");
+					LOG_E("Circular buffer full!");
 #endif
 					return;
 				}
@@ -571,7 +572,7 @@ static void uart_putchar(uint8_t uart, uint8_t ch)
 
 				if(uarts[uart].tx_count == SYS_UART_TX_BUFFER_SIZE) {
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
-					log_e(TAG, "Circular buffer full!");
+					LOG_E("Circular buffer full!");
 #endif
 					return;
 				}
@@ -605,7 +606,7 @@ static void uart_putchar(uint8_t uart, uint8_t ch)
 
 				if(uarts[uart].tx_count == SYS_UART_TX_BUFFER_SIZE) {
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
-					log_e(TAG, "Circular buffer full!");
+					LOG_E("Circular buffer full!");
 #endif
 					return;
 				}
@@ -639,7 +640,7 @@ static void uart_putchar(uint8_t uart, uint8_t ch)
 
 				if(uarts[uart].tx_count == SYS_UART_TX_BUFFER_SIZE) {
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
-					log_e(TAG, "Circular buffer full!");
+					LOG_E("Circular buffer full!");
 #endif
 					return;
 				}
@@ -658,7 +659,7 @@ static void uart_putchar(uint8_t uart, uint8_t ch)
 
 		default:
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
-			log_e(TAG, "Unrecognised UART in putchar()\n\r");
+			LOG_E("Unrecognised UART in putchar()\n\r");
 #endif
 			break;
 	}
@@ -667,6 +668,36 @@ static void uart_putchar(uint8_t uart, uint8_t ch)
 #if defined(__dsPIC33EP256MU806__)
 static void uart_set_rx_pin(uint8_t uart, uint8_t pin)
 {
+	switch (pin) {
+		case RP120:
+                        ANSELGbits.ANSG8 = DIGITAL_PIN;
+			TRISGbits.TRISG8 = INPUT_PIN;
+			break;
+
+		default:
+#if (SYS_LOG_LEVEL <= LOG_ERROR)
+			LOG_E("Unknow Peripheral Rx Pin\n\r");
+#endif
+			break;
+        }
+
+	switch (uart) {
+		case UART_1:
+			PPS_UART_1_RX = pin;
+			break;
+
+		case UART_2:
+			PPS_UART_2_RX = pin;
+			break;
+
+		case UART_3:
+			PPS_UART_3_RX = pin;
+			break;
+
+		case UART_4:
+			PPS_UART_4_RX = pin;
+			break;
+	}
 }
 #elif defined (__PIC24FJ256GB106__)
 static void uart_set_rx_pin(uint8_t uart, uint8_t pin)
@@ -698,7 +729,7 @@ static void uart_set_rx_pin(uint8_t uart, uint8_t pin)
 
 		default:
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
-			log_e(TAG, "Unknow Peripheral Rx Pin\n\r");
+			LOG_E("Unknow Peripheral Rx Pin\n\r");
 #endif
 			break;
 	}
@@ -726,6 +757,39 @@ static void uart_set_rx_pin(uint8_t uart, uint8_t pin)
 #if defined(__dsPIC33EP256MU806__)
 static void uart_set_tx_pin(uint8_t uart, uint8_t pin)
 {
+	uint8_t tx_function;
+
+	switch (uart) {
+		case UART_1:
+			tx_function = PPS_UART_1_TX;
+			break;
+
+		case UART_2:
+			tx_function = PPS_UART_2_TX;
+			break;
+
+		case UART_3:
+			tx_function = PPS_UART_3_TX;
+			break;
+
+		case UART_4:
+			tx_function = PPS_UART_4_TX;
+			break;
+	}
+
+	switch (pin) {
+		case RP118:
+                        ANSELGbits.ANSG6 = DIGITAL_PIN;
+			TRISGbits.TRISG6 = OUTPUT_PIN;
+			PPS_RP118 = tx_function;
+			break;
+
+		default:
+#if (SYS_LOG_LEVEL <= LOG_ERROR)
+			LOG_E("Unknow Peripheral Tx Pin\n\r");
+#endif
+			break;
+	}
 }
 #elif defined (__PIC24FJ256GB106__)
 static void uart_set_tx_pin(uint8_t uart, uint8_t pin)
@@ -782,7 +846,7 @@ static void uart_set_tx_pin(uint8_t uart, uint8_t pin)
 
 		default:
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
-			log_e(TAG, "Unknow Peripheral Tx Pin\n\r");
+			LOG_E("Unknow Peripheral Tx Pin\n\r");
 #endif
 			break;
 	}
@@ -906,7 +970,7 @@ static void uart_set_com_config(struct uart_data *com)
 
 		default:
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
-			log_e(TAG, "Bad UART passed\n\r");
+			LOG_E("Bad UART passed\n\r");
 #endif
 			break;
 	}
@@ -991,7 +1055,7 @@ static uint16_t load_tx_buffer(uint8_t uart)
 
 //	return(com->tx_buffer_size - com->tx_buffer_read_index);
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
-	log_e(TAG, "load_tx_buffer() Bad UART\n\r");
+	LOG_E("load_tx_buffer() Bad UART\n\r");
 #endif
 	return(0);
 }

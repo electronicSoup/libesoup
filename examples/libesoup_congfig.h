@@ -110,7 +110,7 @@
  * #define TAG "MyMain"
  *
  * #if ((DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
- *         log_d(TAG, "logging message\n\r");
+ *         LOG_D("logging message\n\r");
  # #endif
  */
 #define SYS_LOG_LEVEL LOG_DEBUG
@@ -415,7 +415,7 @@
  *		       rc = eeprom_read(EEPROM_NODE_ADDRESS, &address);
  *		       if (rc != SUCCESS) {
  * #if (SYS_LOG_LEVEL <= LOG_ERROR)
- *		               log_e(TAG, "address Failed to read from eeprom return code 0x%x\n\r", rc);
+ *		               LOG_E("address Failed to read from eeprom return code 0x%x\n\r", rc);
  * #endif
  *			       do {
  *				       address = (uint8_t) (rand() & 0x0ff);
@@ -424,11 +424,11 @@
  *			       rc = eeprom_write(EEPROM_NODE_ADDRESS, address);
  *			       if (rc != SUCCESS) {
  * #if (SYS_LOG_LEVEL <= LOG_ERROR)
- *			       	       log_e(TAG, "Failed to write from eeprom return code 0x%x\n\r", rc);
+ *			       	       LOG_E("Failed to write from eeprom return code 0x%x\n\r", rc);
  * #endif
  *			       }
  *		       } else {
- *			       log_d(TAG, "address value read back from EEPROM address 0x02 = 0x%x\n\r", address);
+ *			       LOG_D("address value read back from EEPROM address 0x02 = 0x%x\n\r", address);
  *		       }
  *	       } else {
  *		       do {
@@ -438,14 +438,14 @@
  *		       rc = eeprom_write(EEPROM_NODE_ADDRESS, address);
  *		       if (rc != SUCCESS) {
  * #if (SYS_LOG_LEVEL <= LOG_ERROR)
- *			       log_e(TAG, "Failed to write from eeprom return code 0x%x\n\r", rc);
+ *			       LOG_E("Failed to write from eeprom return code 0x%x\n\r", rc);
  * #endif
  *		       }
  *	       }
  *
  *	       retry_count++;
  *
- *	       log_d(TAG, "node_get_address() Retry %d try address 0x%x\n\r", retry_count, address);
+ *	       LOG_D("node_get_address() Retry %d try address 0x%x\n\r", retry_count, address);
  *	       return(address);
  *     }
  *

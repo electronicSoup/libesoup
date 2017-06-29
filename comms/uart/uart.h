@@ -27,18 +27,21 @@
 /*
  * UART Defs
  */
-#define PARITY_NONE      0
-#define PARITY_ODD       1
-#define PARITY_EVEN      2
+#define UART_8_DATABITS       8
+#define UART_9_DATABITS       9
 
-#define ONE_STOP_BIT     1
-#define TWO_STOP_BITS    2
+#define UART_PARITY_NONE      0
+#define UART_PARITY_ODD       1
+#define UART_PARITY_EVEN      2
 
-#define IDLE_LOW         0
-#define IDLE_HIGH        1
+#define UART_ONE_STOP_BIT     1
+#define UART_TWO_STOP_BITS    2
+
+#define UART_IDLE_LOW         0
+#define UART_IDLE_HIGH        1
 #ifdef MCP
-#define LITTLE_ENDIAN    0
-#define BIG_ENDIAN       1
+#define UART_LITTLE_ENDIAN    0
+#define UART_BIG_ENDIAN       1
 #endif  // ifdef MCP
 
 #define UART_BAD         0xff
@@ -53,8 +56,26 @@ struct uart_data {
     void               (*process_rx_char)(uint8_t, uint8_t);
 };
 
+/**
+ * @brief uart_calculate_mode Calculates the bit field for the mode of operation
+ *        given the UART configuration options.
+ * 
+ * @param mode  The calculated bitfield for the required mode of operation. 
+ * 
+ * @param databits Number of databits required. Either UART_8_DATABITS or 
+ * UART_9_DATABITS
+ *
+ * @param parity Either #define UART_PARITY_NONE, UART_PARITY_ODD or 
+ * UART_PARITY_EVEN
+ *
+ * @param stopbits Either UART_ONE_STOP_BIT or UART_TWO_STOP_BITS
+ * 
+ * @param rx_idle_level Either UART_IDLE_LOW or UART_IDLE_HIGH
+ *
+ * @return Either ERR_BAD_INPUT_PARAMETER or SUCCESS 
+ */
+extern result_t uart_calculate_mode(uint16_t *mode, uint8_t databits, uint8_t parity, uint8_t stopbits, uint8_t rx_idle_level);
 
-extern result_t uart_calculate_mode(uint16_t *, uint8_t databits, uint8_t parity, uint8_t stopbits, uint8_t rx_idle_level);
 extern void     uart_init(void);
 extern result_t uart_reserve(struct uart_data *data);
 extern result_t uart_release(struct uart_data *data);

@@ -21,6 +21,7 @@
  */
 #include <stdarg.h>
 #include <stdio.h>
+#include <string.h>
 
 #define DEBUG_FILE TRUE
 #define TAG "serial"
@@ -63,8 +64,11 @@
 #include <stdio.h>
 #endif // if defined (ES_LINUX)
 
-//static struct uart_data serial_uart;
-
+/*
+ * Declaration of the data structure being used to manage UART connection.
+ * Static to this file only!
+ */
+static struct uart_data serial_uart;
 
 #if defined(__18F2680) || defined(__18F4585)
 /*
@@ -109,15 +113,17 @@ void _ISR __attribute__((__no_auto_psv__)) _U1RXInterrupt(void)
 #endif // 0
 
 /**
- * \fn serial_init()
+ * \fn serial_logging_init()
  *
  * \brief Initialisation function for serial logging
  *
  * The libesoup_config.h file should define serial port pin orientation, and include the 
  * board file which defines the pins being used by the serial port.
  */
-void serial_logging_init(void)
+result_t serial_logging_init(void)
 {
+        result_t rc;
+        
 #ifdef MCP
 	/*
 	 * CinnamonBun is running a PIC24FJ256GB106 or dsPIC33 processor
@@ -132,6 +138,24 @@ void serial_logging_init(void)
 	UART_1_RX = SERIAL_LOGGING_RX_PIN;
 	IEC0bits.U1RXIE = 1;
 #endif
+
+        /*
+         * Reserve a uart for the RS232 Comms
+         */
+        serial_uart.baud = SYS_SERIAL_LOGGING_BAUD;
+        serial_uart.tx_pin = RP118;
+        serial_uart.rx_pin = RP120;
+        rc = uart_calculate_mode(&serial_uart.uart_mode, UART_8_DATABITS, UART_PARITY_NONE, UART_ONE_STOP_BIT, UART_IDLE_HIGH);
+        if(rc != SUCCESS) {
+                return(rc);
+        }                
+
+        rc =  uart_reserve(&serial_uart);
+        if(rc != SUCCESS) {
+                return(rc);
+        }                
+        
+#if 0
         /*
          * The libesoup_config.h file should define the Serial Logging pin orientation
          * (either SYS_SERIAL_PORT_GndTxRx or SYS_SERIAL_PORT_GndRxTx) which is
@@ -152,7 +176,7 @@ void serial_logging_init(void)
 	 *
 	 */
 	U1BRG = ((SYS_CLOCK_FREQ / SYS_SERIAL_LOGGING_BAUD) / 16) - 1;
-
+#endif //0
 #elif defined(__18F2680) || defined(__18F4585)
 	/*
 	 * Analogue Guage is running a PIC18F2680 processor
@@ -199,6 +223,7 @@ void serial_logging_init(void)
 #endif // ifdef MCP
 
         printf("\n\r\n\r");
+        return(SUCCESS);
 }
 
 #if defined(__18F2680) || defined(__18F4585)
@@ -245,85 +270,3 @@ void putch(char character)
 	}
 }
 #endif // (__18F2680) || (__18F4585)
-
-void es_printf(const char *fmt, ...)
-{
-#if (SYS_LOG_LEVEL != NO_LOGGING)
-//        result_t  rc;
-        const char     *ptr;
-        
-        ptr = fmt;
-        
-        while(*ptr) {
-//                rc = uart_tx_char(&serial_uart, *ptr++);
-        }
-#endif
-}
-
-#if (SYS_LOG_LEVEL <= LOG_DEBUG)
-void log_d(const char *tag, const char *fmt, ...)
-{
-        va_list arguments;           
-
-        /* Initializing arguments to store all values after num */
-        va_start ( arguments, fmt );
-#if defined(MCP)
-        es_printf("D :%s ", tag);
-        es_printf(fmt, arguments);
-#elif defined(ES_LINUX)
-        printf("D :%s ", tag);
-        printf(fmt, arguments);
-#endif
-}
-#endif // LOG_DEBUG
-
-#if (SYS_LOG_LEVEL <= LOG_INFO)
-void log_i(const char *tag, const char *fmt, ...)
-{
-        va_list arguments;                     
-
-        /* Initializing arguments to store all values after num */
-        va_start ( arguments, fmt );
-#if defined(MCP)
-        es_printf("I :%s ", tag);
-        es_printf(fmt, arguments);
-#elif defined(ES_LINUX)
-        printf("I :%s ", tag);
-        printf(fmt, arguments);
-#endif
-}
-#endif // LOG_INFO
-
-#if (SYS_LOG_LEVEL <= LOG_WARNING)
-void log_w(const char *tag, const char *fmt, ...)
-{
-        va_list arguments;                     
-
-        /* Initializing arguments to store all values after num */
-        va_start ( arguments, fmt );
-#if defined(MCP)
-        es_printf("W :%s ", tag);
-        es_printf(fmt, arguments);
-#elif defined(ES_LINUX)
-        printf("W :%s ", tag);
-        printf(fmt, arguments);
-#endif
-}
-#endif // LOG_WARNING
-
-#if (SYS_LOG_LEVEL <= LOG_ERROR)
-void log_e(const char *tag, const char *fmt, ...)
-{
-        va_list arguments;                     
-
-        /* Initializing arguments to store all values after num */
-        va_start ( arguments, fmt );
-#if defined(MCP)
-        es_printf("E :%s ", tag);
-        es_printf(fmt, arguments);
-#elif defined(ES_LINUX)
-        printf("E :%s ", tag);
-        printf(fmt, arguments);
-#endif
-}
-#endif  // LOG_ERROR

@@ -39,8 +39,8 @@
  *
  */
 #if defined(MCP)
-extern void serial_logging_init(void);
-extern void es_printf(const char *s, ...);
+extern result_t serial_logging_init(void);
+//extern void es_printf(const char *s, ...);
 
 /*
  * The PIC18 Processors process the serial Interrupt loading up the TXREG
@@ -53,10 +53,18 @@ extern void putch(char);
 
 #endif // MCP
 
-extern void log_d(const char *tag, const char *fmt, ...);
-extern void log_i(const char *tag, const char *fmt, ...);
-extern void log_w(const char *tag, const char *fmt, ...);
-extern void log_e(const char *tag, const char *fmt, ...);
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+#define LOG_D  printf("D - %s:", TAG); printf
+#endif
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_INFO))
+#define LOG_I  printf("I - %s:", TAG); printf
+#endif
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_WARNING))
+#define LOG_W  printf("W - %s:", TAG); printf
+#endif
+#if (SYS_LOG_LEVEL <= LOG_ERROR)
+#define LOG_E  printf("E - %s:", TAG); printf
+#endif
 
 
 
