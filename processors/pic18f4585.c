@@ -1,7 +1,8 @@
 #if defined(__18F4585)
 
 #include "libesoup_config.h"
-#include <stdio.h>
+//#include <stdio.h>
+#include "libesoup/utils/clock.h"
 #include "libesoup/timers/hw_timers.h"
 
 extern void check_timer(uint8_t timer);
@@ -31,11 +32,18 @@ extern void check_timer(uint8_t timer);
 #pragma config EBTR2 = OFF
 
 extern void pic18f_timer_isr(uint8_t timer);
-extern void pic18f_serial_isr(void);
+extern void pic18f_uart_isr(void);
 
 void cpu_init(void)
 {
+        /*
+         * clock_init does nothing for this chip but call it to clear a 
+         * compiler warning.
+         */
+        clock_init();
         RCONbits.IPEN = 0; // No Interrupt priority level
+	INTCONbits.GIE = 1;    // Enable Interrupts
+	INTCONbits.PEIE = 1;   // Enable Peripheral Interrupts
 }
 
 /*
@@ -87,7 +95,7 @@ void interrupt tc_int(void)
         }
 
 	if(PIR1bits.TXIF) {
-                pic18f_serial_isr();
+                pic18f_uart_isr();
         }
         // process other interrupt sources here, if required
 }

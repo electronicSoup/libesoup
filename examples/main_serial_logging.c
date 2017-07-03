@@ -1,5 +1,5 @@
 #include "libesoup_config.h"
-#include "stdio.h"
+#include <stdio.h>
 
 #define DEBUG_FILE TRUE
 #define TAG "Main"
@@ -35,7 +35,6 @@ int main()
                 return(1);
         }
 #endif
-
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
         LOG_D("Debug logging statement uint_8 x is 0x%x\n\r", x);
 #endif
@@ -50,4 +49,11 @@ int main()
 #endif
         while(1) {
         }
+
+        /*
+         * To get rid of a compiler warning cleanup serial logging.
+         */
+        rc = serial_logging_exit();
+        
+        return(0);
 }

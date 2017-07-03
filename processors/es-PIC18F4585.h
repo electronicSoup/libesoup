@@ -32,8 +32,29 @@
 //#include <p18cxxx.h>
 #include <xc.h>
 
-#define TIMER_0 0
-#define TIMER_1 1
+#define OUTPUT_PIN      0
+#define INPUT_PIN       1
+
+#define DISABLE         0
+#define ENABLE          1
+/*
+ * I/O Pin Definitions
+ */
+#define RC6            25
+#define RC7            26
+
+#define TIMER_0         0
+#define TIMER_1         1
+
+#define NUM_UARTS       1
+#define UART_1       0x00
+
+#define U1_ENABLE          RCSTAbits.SPEN
+#define U1_RX_ISR_ENABLE   RCSTAbits.CREN
+#define U1_TX_ISR_ENABLE   TXSTAbits.TXEN
+
+#define SERIAL_LOGGING_TX_PIN RC6
+#define SERIAL_LOGGING_RX_PIN RC7
 
 #define NUMBER_HW_TIMERS  2
 

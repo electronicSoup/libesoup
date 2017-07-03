@@ -31,10 +31,14 @@
 
 #include <xc.h>
 
-#define OUTPUT_PIN 0
-#define INPUT_PIN  1
-#define ANALOG_PIN 1
+#define OUTPUT_PIN  0
+#define INPUT_PIN   1
+
 #define DIGITAL_PIN 0
+#define ANALOG_PIN  1
+
+#define DISABLE     0
+#define ENABLE      1
 
 #define TIMER_1                           0
 #define TIMER_2                           1
@@ -47,21 +51,25 @@
 /*
  * UART Settings.
  */
+#define U1_ENABLE        U1MODEbits.UARTEN
 #define U1_RX_ISR_FLAG   IFS0bits.U1RXIF
 #define U1_TX_ISR_FLAG   IFS0bits.U1TXIF
 #define U1_RX_ISR_ENABLE IEC0bits.U1RXIE
 #define U1_TX_ISR_ENABLE IEC0bits.U1TXIE
 
+#define U2_ENABLE        U2MODEbits.UARTEN
 #define U2_RX_ISR_FLAG   IFS1bits.U2RXIF
 #define U2_TX_ISR_FLAG   IFS1bits.U2TXIF
 #define U2_RX_ISR_ENABLE IEC1bits.U2RXIE
 #define U2_TX_ISR_ENABLE IEC1bits.U2TXIE
 
+#define U3_ENABLE        U3MODEbits.UARTEN
 #define U3_RX_ISR_FLAG   IFS5bits.U3RXIF
 #define U3_TX_ISR_FLAG   IFS5bits.U3TXIF
 #define U3_RX_ISR_ENABLE IEC5bits.U3RXIE
 #define U3_TX_ISR_ENABLE IEC5bits.U3TXIE
 
+#define U4_ENABLE        U4MODEbits.UARTEN
 #define U4_RX_ISR_FLAG   IFS5bits.U4RXIF
 #define U4_TX_ISR_FLAG   IFS5bits.U4TXIF
 #define U4_RX_ISR_ENABLE IEC5bits.U4RXIE

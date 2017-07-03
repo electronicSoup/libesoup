@@ -36,7 +36,7 @@
  * Include MicroChip's definitions
  */
 #if defined(MCP)
-    #include <stdint.h>
+    #include <stdint.h>     // For uintx_t types
 #ifndef	NULL
 #define NULL (0)
 #endif	/* NULL */
@@ -45,13 +45,6 @@
 #define FALSE 0x00
 #define TRUE (!FALSE)
 
-//    typedef uint8_t    uint8_t;
-//    typedef uint16_t   uint16_t;
-//    typedef uint32_t   u32;
-
-//    typedef int8_t     s8;
-//    typedef int16_t    s16;
-//    typedef int32_t    s32;
 #elif defined(ES_LINUX)
     #include <stdint.h>
 

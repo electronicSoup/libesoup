@@ -54,16 +54,18 @@
  * Serial Logging
  */
 #if defined(SYS_SERIAL_PORT_GndTxRx)
-        #define SERIAL_LOGGING_RX_DDR    TRISDbits.TRISD5
-        #define SERIAL_LOGGING_TX_DDR    TRISDbits.TRISD4
-
-        #define SERIAL_LOGGING_TX        RPOR12bits.RP25R
+//        #define SERIAL_LOGGING_RX_DDR    TRISDbits.TRISD5
+//        #define SERIAL_LOGGING_TX_DDR    TRISDbits.TRISD4
+//
+//        #define SERIAL_LOGGING_TX        RPOR12bits.RP25R
+//        #define SERIAL_LOGGING_RX_PIN    RP20
+        #define SERIAL_LOGGING_TX_PIN    RP25//    RPOR10bits.RP20R
         #define SERIAL_LOGGING_RX_PIN    RP20
 #elif defined(SYS_SERIAL_PORT_GndRxTx)
-        #define SERIAL_LOGGING_RX_DDR    TRISDbits.TRISD4
-        #define SERIAL_LOGGING_TX_DDR    TRISDbits.TRISD5
+//        #define SERIAL_LOGGING_RX_DDR    TRISDbits.TRISD4
+//        #define SERIAL_LOGGING_TX_DDR    TRISDbits.TRISD5
 
-        #define SERIAL_LOGGING_TX        RPOR10bits.RP20R
+        #define SERIAL_LOGGING_TX_PIN    RP20//    RPOR10bits.RP20R
         #define SERIAL_LOGGING_RX_PIN    RP25
 #endif
 

@@ -33,6 +33,15 @@
 //#include <p24Fxxxx.h>
 #include <xc.h>
 
+#define OUTPUT_PIN  0
+#define INPUT_PIN   1
+
+#define ANALOG_PIN  0
+#define DIGITAL_PIN 1
+
+#define DISABLE     0
+#define ENABLE      1
+
 /**
  * \brief Identifers for the hardware timers in the pic24FG256GB106
  * 
@@ -55,21 +64,25 @@
 /*
  * UART Settings.
  */
+#define U1_ENABLE        U1MODEbits.UARTEN
 #define U1_RX_ISR_FLAG   IFS0bits.U1RXIF
 #define U1_TX_ISR_FLAG   IFS0bits.U1TXIF
 #define U1_RX_ISR_ENABLE IEC0bits.U1RXIE
 #define U1_TX_ISR_ENABLE IEC0bits.U1TXIE
 
+#define U2_ENABLE        U2MODEbits.UARTEN
 #define U2_RX_ISR_FLAG   IFS1bits.U2RXIF
 #define U2_TX_ISR_FLAG   IFS1bits.U2TXIF
 #define U2_RX_ISR_ENABLE IEC1bits.U2RXIE
 #define U2_TX_ISR_ENABLE IEC1bits.U2TXIE
 
+#define U3_ENABLE        U3MODEbits.UARTEN
 #define U3_RX_ISR_FLAG   IFS5bits.U3RXIF
 #define U3_TX_ISR_FLAG   IFS5bits.U3TXIF
 #define U3_RX_ISR_ENABLE IEC5bits.U3RXIE
 #define U3_TX_ISR_ENABLE IEC5bits.U3TXIE
 
+#define U4_ENABLE        U4MODEbits.UARTEN
 #define U4_RX_ISR_FLAG   IFS5bits.U4RXIF
 #define U4_TX_ISR_FLAG   IFS5bits.U4TXIF
 #define U4_RX_ISR_ENABLE IEC5bits.U4RXIE
@@ -113,14 +126,22 @@
  * Peripheral Input functions
  */
 #define SPI_1_DATA_INPUT RPINR20bits.SDI1R 
-#define UART_1_RX        RPINR18bits.U1RXR
+#define PPS_UART_1_RX    RPINR18bits.U1RXR
+#define	PPS_UART_2_RX    RPINR19bits.U2RXR
+#define	PPS_UART_3_RX    RPINR17bits.U3RXR
+#define PPS_UART_4_RX    RPINR27bits.U4RXR
 
 /*
  * Peripheral Output functions
  */
-#define UART_1_TX             3
+#define PPS_UART_1_TX         3
+#define PPS_UART_2_TX         5
 #define SPI_1_DATA_OUTPUT     7
 #define SPI_1_CLOCK_OUTPUT    8
+#define PPS_UART_3_TX        28
+#define PPS_UART_4_TX        30
+
+
 
 extern void cpu_init(void);
 

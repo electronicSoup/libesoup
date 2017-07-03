@@ -22,6 +22,8 @@
 #ifndef SERIAL_LOG_H
 #define SERIAL_LOG_H
 
+#include <stdio.h>
+
 /*
  *  serial_logging_init()
  *
@@ -40,6 +42,7 @@
  */
 #if defined(MCP)
 extern result_t serial_logging_init(void);
+extern result_t serial_logging_exit(void);
 //extern void es_printf(const char *s, ...);
 
 /*
@@ -47,8 +50,8 @@ extern result_t serial_logging_init(void);
  * register. This function should be called from the PIC18 ISR
  */
 #if defined(__18F2680) || defined(__18F4585)
-extern void serial_isr(void);
-extern void putch(char);
+//extern void serial_isr(void);
+//extern void putch(char);
 #endif // (__18F2680) || (__18F4585)
 
 #endif // MCP
