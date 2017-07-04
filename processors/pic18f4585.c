@@ -94,9 +94,11 @@ void interrupt tc_int(void)
 #endif
         }
 
+#if (SYS_LOG_LEVEL != NO_LOGGING)
 	if(PIR1bits.TXIF) {
                 pic18f_uart_isr();
         }
+#endif // (SYS_LOG_LEVEL != NO_LOGGING)
         // process other interrupt sources here, if required
 }
 

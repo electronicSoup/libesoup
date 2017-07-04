@@ -3,11 +3,11 @@
     <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="0"/>
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
         <group>
-            <file>file:/home/john/Private/es/programming/mcp/CinnamonBun/Raw/Lessons/005-serial_logging.X/src/libesoup/processors/pic18f4585.c</file>
-            <file>file:/home/john/Private/es/programming/mcp/CinnamonBun/Raw/Lessons/005-serial_logging.X/src/libesoup/examples/projects/microchip/SerialLogging.X/libesoup_config.h</file>
             <file>file:/home/john/Private/es/programming/mcp/CinnamonBun/Raw/Lessons/005-serial_logging.X/src/libesoup/processors/dsPIC33EP256MU806.c</file>
             <file>file:/home/john/Private/es/programming/mcp/CinnamonBun/Raw/Lessons/005-serial_logging.X/src/libesoup/processors/pic18f2680.c</file>
+            <file>file:/home/john/Private/es/programming/mcp/CinnamonBun/Raw/Lessons/005-serial_logging.X/src/libesoup/processors/pic18f4585.c</file>
             <file>file:/home/john/Private/es/programming/mcp/CinnamonBun/Raw/Lessons/005-serial_logging.X/src/libesoup/processors/pic24FJ256GB106.c</file>
+            <file>file:/home/john/Private/es/programming/mcp/CinnamonBun/Raw/Lessons/005-serial_logging.X/src/libesoup/examples/projects/microchip/SerialLogging.X/libesoup_config.h</file>
             <file>file:/home/john/Private/es/programming/mcp/CinnamonBun/Raw/Lessons/005-serial_logging.X/src/libesoup/comms/uart/uart.c</file>
         </group>
     </open-files>

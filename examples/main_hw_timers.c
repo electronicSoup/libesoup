@@ -9,9 +9,6 @@
 
 #include "libesoup_config.h"
 
-#define DEBUG_FILE TRUE
-#define TAG "Main"
-
 #include "libesoup/timers/hw_timers.h"
 
 /*
