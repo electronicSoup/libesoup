@@ -10,8 +10,8 @@
 #pragma config GWRP = OFF
 #pragma config GSS = OFF
 #pragma config GSSK = OFF
-#pragma config FNOSC = FRC
-//#pragma config FNOSC = PRI   // Primary oscillator
+//#pragma config FNOSC = FRC
+#pragma config FNOSC = PRI   // Primary oscillator
 //#pragma config FNOSC = SOSC  // Secondary oscillator
 #pragma config IESO = OFF
 #pragma config POSCMD = HS
@@ -28,6 +28,9 @@
 void cpu_init(void)
 {
         clock_init();
+        
+        INTCON1bits.NSTDIS = 1; // No nested Interrupts
+        INTCON2bits.GIE = ENABLE;
 #ifdef SYS_SPI_BUS
         spi_init();
 #endif

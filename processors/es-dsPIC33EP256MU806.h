@@ -40,6 +40,9 @@
 #define DISABLE     0
 #define ENABLE      1
 
+#define OFF         0
+#define ON          1
+
 #define TIMER_1                           0
 #define TIMER_2                           1
 #define TIMER_3                           2
