@@ -45,6 +45,9 @@
  * main_sw_timers.c
  *
  */
+#define DEBUG_FILE TRUE
+#define TAG "SW_TIMERS"
+
 #include "libesoup_config.h"
 #include "libesoup/logger/serial_log.h"
 #include "libesoup/timers/hw_timers.h"
@@ -55,10 +58,6 @@
 #include <signal.h>
 #include <time.h>
 #endif // ES_LINUX
-
-#define DEBUG_FILE TRUE
-
-#define TAG "SW_TIMERS"
 
 /*
  * Check required libesoup_config.h defines are found
@@ -189,6 +188,10 @@ void timer_tick(void)
 	timer_ticked = FALSE;
 	timer_counter++;
 
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+        LOG_D("Tick\n\r");
+#endif
+
 	/*
 	 * Check for expired timers
 	 */
@@ -201,6 +204,9 @@ void timer_tick(void)
 				/*
 				 * timer expired so call expiry function.
 				 */
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+                                LOG_D("Expiry\n\r");
+#endif
 				timers[loop].active = FALSE;
 
 				function = timers[loop].function;
@@ -270,7 +276,7 @@ result_t sw_timer_start(uint16_t ticks,
                 if(*timer < SYS_NUMBER_OF_SW_TIMERS) {
                         if (timers[*timer].active) {
 #if (DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_WARNING)
-                                log_w(TAG, "sw_timer_start() timer passed in active. Cancelling!\n\r");
+                                LOG_W("sw_timer_start() timer passed in active. Cancelling!\n\r");
 #endif
                         }
                 }
@@ -282,6 +288,9 @@ result_t sw_timer_start(uint16_t ticks,
 	 */
 	for(loop=0; loop < SYS_NUMBER_OF_SW_TIMERS; loop++) {
 		if (!timers[loop].active) {
+#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+                        LOG_D("Using SW timer %d\n\r", loop);
+#endif
 			/*
 			 * Found an inactive timer so assign to this expiry
 			 */
@@ -303,7 +312,7 @@ result_t sw_timer_start(uint16_t ticks,
 			if(hw_timer_paused) {
 				if(hw_timer_restart(hw_timer, mSeconds, 5, TRUE, hw_expiry_function, NULL) != SUCCESS) {
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
-					log_e(TAG, "Failed to restart HW timer\n\r");
+					LOG_E("Failed to restart HW timer\n\r");
 #endif
 				}
 				hw_timer_paused = FALSE;
@@ -313,7 +322,7 @@ result_t sw_timer_start(uint16_t ticks,
 	}
 
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
-	log_e(TAG, "start_timer() ERR_NO_RESOURCES\n\r");
+	LOG_E("start_timer() ERR_NO_RESOURCES\n\r");
 #endif
 	return(ERR_NO_RESOURCES);
 
@@ -331,13 +340,13 @@ result_t sw_timer_start(uint16_t ticks,
 
 	if(ret) {
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
-		log_e(TAG, "Error can't create timer\n\r");
+		LOG_E("Error can't create timer\n\r");
 #endif
 		return(ERR_GENERAL_ERROR);
 	}
 	
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
-//	log_d(TAG, "Setting time to %d Seconds %d nano Seonds\n\r", 
+//	LOG_D("Setting time to %d Seconds %d nano Seonds\n\r", 
 #endif
 	its.it_value.tv_sec = (ticks * SYS_SW_TIMER_TICK_ms) / 1000;
 	its.it_value.tv_nsec = (ticks * SYS_SW_TIMER_TICK_ms) % 1000 * 1000000;
@@ -346,7 +355,7 @@ result_t sw_timer_start(uint16_t ticks,
 
 	if (timer_settime(timer, 0, &its, NULL) == -1) {
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
-		log_e(TAG, "Error can't set time\n\r");
+		LOG_E("Error can't set time\n\r");
 #endif
 		return(ERR_GENERAL_ERROR);
 	}
@@ -371,7 +380,7 @@ result_t sw_timer_cancel(timer_t timer)
 #ifdef MCP
 	if ((timer == BAD_TIMER) || (timer >= SYS_NUMBER_OF_SW_TIMERS)) {
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
-                log_e(TAG, "sw_timer_cancel() Bad timer identifier passed in!\n\r");
+                LOG_E("sw_timer_cancel() Bad timer identifier passed in!\n\r");
 #endif
                 return(ERR_BAD_INPUT_PARAMETER);
 	} else if (timers[timer].active) {
@@ -380,7 +389,7 @@ result_t sw_timer_cancel(timer_t timer)
                 timers[timer].function = (expiry_function) NULL;
         } else {
 #if (DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_INFO)
-                log_i(TAG, "sw_timer_cancel() timer not active!\n\r");
+                LOG_I("sw_timer_cancel() timer not active!\n\r");
 #endif
         }
         
@@ -394,7 +403,7 @@ result_t sw_timer_cancel(timer_t timer)
 
         if (timer_settime(timer, 0, &its, NULL) == -1) {
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
-                log_e(TAG, "Error can't create timer\n\r");
+                LOG_E("Error can't create timer\n\r");
 #endif
                 return(ERR_GENERAL_ERROR);
         }
@@ -411,7 +420,7 @@ result_t sw_timer_cancel_all(void)
 	uint8_t    loop;
 
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
-	log_d(TAG, "sw_timer_cancel_all()\n\r");
+	LOG_D("sw_timer_cancel_all()\n\r");
 #endif
 	for (loop = 0; loop < SYS_NUMBER_OF_SW_TIMERS; loop++) {
 		if (timers[loop].active) {

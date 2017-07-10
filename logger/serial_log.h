@@ -24,6 +24,33 @@
 
 #include <stdio.h>
 
+/**
+ * @def   LOG_DEBUG
+ * @brief Debug logging level
+ *
+ * @def   LOG_INFO
+ * @brief Info logging level
+ *
+ * @def   LOG_WARNING
+ * @brief Warning logging level
+ *
+ * @def   LOG_ERROR
+ * @brief ERROR logging level
+ *
+ * @def   NO_LOGGING
+ * @brief No logging in System
+ *
+ * This series of defines are here as they should be included very early. At 
+ * leasy before the serial logging code. These macros are used to conditionally
+ * compile debugging code out of an executable. The actual logging level of the
+ * build should be defined in libesoup_config.h
+ */
+#define LOG_DEBUG   0
+#define LOG_INFO    1
+#define LOG_WARNING 2
+#define LOG_ERROR   3
+#define NO_LOGGING  4
+
 /*
  *  serial_logging_init()
  *
@@ -43,7 +70,6 @@
 #if defined(MCP)
 extern result_t serial_logging_init(void);
 extern result_t serial_logging_exit(void);
-//extern void es_printf(const char *s, ...);
 
 /*
  * The PIC18 Processors process the serial Interrupt loading up the TXREG
@@ -68,7 +94,5 @@ extern result_t serial_logging_exit(void);
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
 #define LOG_E  printf("E - %s:", TAG); printf
 #endif
-
-
 
 #endif // SERIAL_LOG_H

@@ -78,13 +78,10 @@
 /**
  * @brief The size of the Transmit buffer to be used by the Serial Logging port.
  *
- * This constant is only used in the PIC18F2680 and PIC18F4585 micro-controller.
  * Default set to 300 Bytes as the serial port should be used for
  * relatively short debug messages and memory is limited.
  */
-#if defined(__18F4585)
-#define SYS_USART_TX_BUFFER_SIZE 300
-#endif // __18F4585
+#define SYS_UART_TX_BUFFER_SIZE 300
 
 /**
  * @brief Baud rate of the serial logging port

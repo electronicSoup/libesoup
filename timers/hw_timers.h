@@ -37,7 +37,10 @@
 /**
  * \brief Dummy timer identifier for a non existent timer.
  */
-#define BAD_TIMER 0xff
+#define BAD_TIMER   0xff
+
+#define SINGLE_SHOT FALSE
+#define REPEAT      TRUE
 
 /**
  * \brief Function to initialisation the data structures used to manage the 
