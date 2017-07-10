@@ -191,9 +191,6 @@ void hw_timer_init(void)
 	uint8_t timer;
 
 	for(timer = 0; timer < NUMBER_HW_TIMERS; timer++) {
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
-                LOG_D("Initialise timer 0x%x\n\r", timer);
-#endif
 		timers[timer].status = TIMER_UNUSED;
 		timers[timer].repeat = 0;
 		timers[timer].duration = 0;
@@ -209,20 +206,25 @@ void hw_timer_init(void)
 	 */
 	T1CONbits.TCS = 0;      // Internal FOSC/2
 	T1CONbits.TGATE = 0;
+        IPC0bits.T1IP = 0x07;   // Higest Priority
 
 	T2CONbits.T32 = 0;      // 16 Bit Timer
 	T2CONbits.TCS = 0;      // Internal FOSC/2
         T2CONbits.TGATE = 0;
+        IPC1bits.T2IP = 0x07;   // Higest Priority
         
 	T3CONbits.TCS = 0;      // Internal FOSC/2
         T3CONbits.TGATE = 0;
+        IPC2bits.T3IP = 0x07;   // Higest Priority
         
 	T4CONbits.T32 = 0;      // 16 Bit Timer
 	T4CONbits.TCS = 0;      // Internal FOSC/2
         T4CONbits.TGATE = 0;
+        IPC6bits.T4IP = 0x07;   // Higest Priority
         
 	T5CONbits.TCS = 0;      // Internal FOSC/2
         T5CONbits.TGATE = 0;
+        IPC7bits.T5IP = 0x07;   // Higest Priority
 #elif defined(__18F2680) || defined(__18F4585)
         T0CONbits.T08BIT = 0;   // 16 Bit timer
         T0CONbits.T0CS   = 0;   // Clock source Instruction Clock
@@ -241,7 +243,7 @@ uint8_t hw_timer_start(ty_time_units units, uint16_t duration, uint8_t repeat, v
 	uint8_t       timer;
 
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
-	LOG_D("hw_timer_start()\n\r");
+//	LOG_D("hw_timer_start()\n\r");
 #endif
 	/*
 	 * Find a free timer
@@ -761,7 +763,7 @@ void check_timer(uint8_t timer)
 #endif
 	} else if(timers[timer].remainder) {
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
-                LOG_D("Remainder %d\n\r", timers[timer].remainder);
+//                LOG_D("Remainder %d\n\r", timers[timer].remainder);
 #endif
 		switch (timer) {
 #if defined(__18F4585)
@@ -862,9 +864,6 @@ void check_timer(uint8_t timer)
 		}
 
 		if(expiry) {
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
-                        LOG_D("Call expiry\n\r");
-#endif
                         expiry(data);
                 }
 #elif defined(__18F4585)

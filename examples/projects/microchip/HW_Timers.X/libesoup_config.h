@@ -85,7 +85,7 @@
  * Default set to 19k2
  */
 #define SYS_SERIAL_LOGGING_BAUD 19200
-
+#define SYS_UART_TX_BUFFER_SIZE 256
 /**
  * @brief Serial logging level
  *
@@ -95,8 +95,8 @@
  * expect a logging level to be defined and a #define of "DEBUG_FILE" at the 
  * top of the file for logging to be enabled.
  */
-#define SYS_LOG_LEVEL NO_LOGGING
-//#define SYS_LOG_LEVEL LOG_DEBUG
+//#define SYS_LOG_LEVEL NO_LOGGING
+#define SYS_LOG_LEVEL LOG_DEBUG
 
 /**
  * @brief Number of timers available in the system.
