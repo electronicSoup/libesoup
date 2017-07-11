@@ -131,7 +131,7 @@ void serial_logging_init(void)
         SERIAL_LOGGING_RX_DDR = INPUT_PIN;
 	UART_1_RX = SERIAL_LOGGING_RX_PIN;
 	IEC0bits.U1RXIE = 1;
-#endif
+#endif // SERIAL_LOGGING_RX_ENABLE
         /*
          * The libesoup_config.h file should define the Serial Logging pin orientation
          * (either SYS_SERIAL_PORT_GndTxRx or SYS_SERIAL_PORT_GndRxTx) which is

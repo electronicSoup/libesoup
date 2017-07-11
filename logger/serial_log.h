@@ -22,7 +22,7 @@
 #ifndef SERIAL_LOG_H
 #define SERIAL_LOG_H
 
-/*
+/**
  *  serial_logging_init()
  *
  * This function is only defined for Code compiled for the Microchip
