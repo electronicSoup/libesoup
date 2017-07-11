@@ -2,3 +2,7 @@
 Documentation/html
 TAGS
 tmp
+default
+build
+dist
+private

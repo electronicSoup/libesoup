@@ -24,8 +24,6 @@
 #define DEBUG_FILE TRUE
 #define TAG "UART"
 
-#include <stdio.h>
-
 #include "libesoup_config.h"
 #include "libesoup/logger/serial_log.h"
 #include "libesoup/utils/rand.h"
@@ -41,6 +39,10 @@
 
 #ifndef SYS_CLOCK_FREQ
 #error libesoup_config.h file should define the SYS_CLOCK_FREQ
+#endif
+
+#ifndef SYS_UART_TX_BUFFER_SIZE
+#error libesoup_config.h file should define the SYS_UART_TX_BUFFER_SIZE
 #endif
 
 enum uart_status {
@@ -79,6 +81,7 @@ static uint16_t load_tx_buffer(uint8_t uart);
 /*
  * Interrupt Service Routines
  */
+#if defined(__dsPIC33EP256MU806__) || defined (__PIC24FJ256GB106__)
 void _ISR __attribute__((__no_auto_psv__)) _U1TXInterrupt(void)
 {
 	while(U1_TX_ISR_FLAG) {
@@ -86,7 +89,9 @@ void _ISR __attribute__((__no_auto_psv__)) _U1TXInterrupt(void)
 		U1_TX_ISR_FLAG = 0;
 	}
 }
+#endif // #if defined(__dsPIC33EP256MU806__) || defined (__PIC24FJ256GB106__)
 
+#if defined(__dsPIC33EP256MU806__) || defined (__PIC24FJ256GB106__)
 void _ISR __attribute__((__no_auto_psv__)) _U2TXInterrupt(void)
 {
 	while(U2_TX_ISR_FLAG) {
@@ -94,7 +99,9 @@ void _ISR __attribute__((__no_auto_psv__)) _U2TXInterrupt(void)
 		U2_TX_ISR_FLAG = 0;
 	}
 }
+#endif // #if defined(__dsPIC33EP256MU806__) || defined (__PIC24FJ256GB106__)
 
+#if defined(__dsPIC33EP256MU806__) || defined (__PIC24FJ256GB106__)
 void _ISR __attribute__((__no_auto_psv__)) _U3TXInterrupt(void)
 {
 	while(U3_TX_ISR_FLAG) {
@@ -102,7 +109,9 @@ void _ISR __attribute__((__no_auto_psv__)) _U3TXInterrupt(void)
 		U3_TX_ISR_FLAG = 0;
 	}
 }
+#endif // #if defined(__dsPIC33EP256MU806__) || defined (__PIC24FJ256GB106__)
 
+#if defined(__dsPIC33EP256MU806__) || defined (__PIC24FJ256GB106__)
 void _ISR __attribute__((__no_auto_psv__)) _U4TXInterrupt(void)
 {
 	while(U4_TX_ISR_FLAG) {
@@ -110,12 +119,13 @@ void _ISR __attribute__((__no_auto_psv__)) _U4TXInterrupt(void)
 		U4_TX_ISR_FLAG = 0;
 	}
 }
+#endif // #if defined(__dsPIC33EP256MU806__) || defined (__PIC24FJ256GB106__)
 
 static void uart_tx_isr(uint8_t uart)
 {
 	if ((uarts[uart].data == NULL) || (uarts[uart].status != UART_BUSY)) {
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
-		log_e(TAG, "UART Null in ISR!\n\r");
+		LOG_E("UART Null in ISR!\n\r");
 #endif
 		return;
 	}
@@ -125,7 +135,9 @@ static void uart_tx_isr(uint8_t uart)
 	 */
 	if (!load_tx_buffer(uart)) {
 		switch(uart) {
+#ifdef UART_1
 			case UART_1:
+#if defined(__dsPIC33EP256MU806__) || defined (__PIC24FJ256GB106__)
 				/*
 				 * Can't use U2STAbits.TRMT to detect when Tx Queue is empty
 				 * as it ain't reliable at all.
@@ -154,8 +166,10 @@ static void uart_tx_isr(uint8_t uart)
 					U1STAbits.UTXISEL1 = 0;
 					U1STAbits.UTXISEL0 = 1;
 				}
+#endif // MicroController Selection
 				break;
-
+#endif // UART_1
+#ifdef UART_2
 			case UART_2:
 				/*
 				 * Can't use U2STAbits.TRMT to detect when Tx Queue is empty
@@ -186,7 +200,8 @@ static void uart_tx_isr(uint8_t uart)
 					U2STAbits.UTXISEL0 = 1;
 				}
 				break;
-
+#endif // UART_2
+#ifdef UART_3
 			case UART_3:
 				/*
 				 * Can't use U2STAbits.TRMT to detect when Tx Queue is empty
@@ -217,7 +232,8 @@ static void uart_tx_isr(uint8_t uart)
 					U3STAbits.UTXISEL0 = 1;
 				}
 				break;
-
+#endif // UART_3
+#ifdef UART_4
 			case UART_4:
 				/*
 				 * Can't use U2STAbits.TRMT to detect when Tx Queue is empty
@@ -248,13 +264,13 @@ static void uart_tx_isr(uint8_t uart)
 					U4STAbits.UTXISEL0 = 1;
 				}
 				break;
-
+#endif // UART_4
 			default:
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
-				log_e(TAG, "Bad comm port given!\n\r");
+				LOG_E("Bad comm port given!\n\r");
 #endif
 				return;
-				break;
+//				break;
 		}
 	}
 }
@@ -262,6 +278,7 @@ static void uart_tx_isr(uint8_t uart)
 /*
  * Receive Interrupt Service Routines
  */
+#if defined(__dsPIC33EP256MU806__) || defined (__PIC24FJ256GB106__)
 void _ISR __attribute__((__no_auto_psv__)) _U1RXInterrupt(void)
 {
 	uint8_t ch;
@@ -272,7 +289,7 @@ void _ISR __attribute__((__no_auto_psv__)) _U1RXInterrupt(void)
 
 	if (U1STAbits.OERR) {
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
-		log_e(TAG, "RX Buffer overrun\n\r");
+		LOG_E("RX Buffer overrun\n\r");
 #endif
 		U1STAbits.OERR = 0;   /* Clear the error flag */
 	}
@@ -282,7 +299,9 @@ void _ISR __attribute__((__no_auto_psv__)) _U1RXInterrupt(void)
 		uarts[UART_1].data->process_rx_char(UART_1, ch);
 	}
 }
+#endif // #if defined(__dsPIC33EP256MU806__) || defined (__PIC24FJ256GB106__)
 
+#if defined(__dsPIC33EP256MU806__) || defined (__PIC24FJ256GB106__)
 void _ISR __attribute__((__no_auto_psv__)) _U2RXInterrupt(void)
 {
 	uint8_t ch;
@@ -293,7 +312,7 @@ void _ISR __attribute__((__no_auto_psv__)) _U2RXInterrupt(void)
 
 	if (U2STAbits.OERR) {
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
-		log_e(TAG, "RX Buffer overrun\n\r");
+		LOG_E("RX Buffer overrun\n\r");
 #endif
 		U2STAbits.OERR = 0;   /* Clear the error flag */
 	}
@@ -303,7 +322,9 @@ void _ISR __attribute__((__no_auto_psv__)) _U2RXInterrupt(void)
 		uarts[UART_2].data->process_rx_char(UART_2, ch);
 	}
 }
+#endif // #if defined(__dsPIC33EP256MU806__) || defined (__PIC24FJ256GB106__)
 
+#if defined(__dsPIC33EP256MU806__) || defined (__PIC24FJ256GB106__)
 void _ISR __attribute__((__no_auto_psv__)) _U3RXInterrupt(void)
 {
 	uint8_t ch;
@@ -314,7 +335,7 @@ void _ISR __attribute__((__no_auto_psv__)) _U3RXInterrupt(void)
 
 	if (U3STAbits.OERR) {
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
-		log_e(TAG, "RX Buffer overrun\n\r");
+		LOG_E("RX Buffer overrun\n\r");
 #endif
 		U3STAbits.OERR = 0;   /* Clear the error flag */
 	}
@@ -324,7 +345,9 @@ void _ISR __attribute__((__no_auto_psv__)) _U3RXInterrupt(void)
 		uarts[UART_3].data->process_rx_char(UART_3, ch);
 	}
 }
+#endif // #if defined(__dsPIC33EP256MU806__) || defined (__PIC24FJ256GB106__)
 
+#if defined(__dsPIC33EP256MU806__) || defined (__PIC24FJ256GB106__)
 void _ISR __attribute__((__no_auto_psv__)) _U4RXInterrupt(void)
 {
 	uint8_t ch;
@@ -335,7 +358,7 @@ void _ISR __attribute__((__no_auto_psv__)) _U4RXInterrupt(void)
 
 	if (U4STAbits.OERR) {
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
-		log_e(TAG, "RX Buffer overrun\n\r");
+		LOG_E("RX Buffer overrun\n\r");
 #endif
 		U4STAbits.OERR = 0;   /* Clear the error flag */
 	}
@@ -345,42 +368,87 @@ void _ISR __attribute__((__no_auto_psv__)) _U4RXInterrupt(void)
 		uarts[UART_4].data->process_rx_char(UART_4, ch);
 	}
 }
+#endif // #if defined(__dsPIC33EP256MU806__) || defined (__PIC24FJ256GB106__)
 
 result_t uart_calculate_mode(uint16_t *mode, uint8_t databits, uint8_t parity, uint8_t stopbits, uint8_t rx_idle_level)
 {
 	*mode = 0x00;
 
+#if defined(__dsPIC33EP256MU806__) || defined (__PIC24FJ256GB106__)
 	*mode |= UARTEN_MASK;
 
-	if (databits == 8) {
-		if (parity == PARITY_EVEN) {
+	if (databits == UART_8_DATABITS) {
+		if (parity == UART_PARITY_EVEN) {
 			*mode |= PDSEL0_MASK;
-		} else if (parity == PARITY_ODD) {
+		} else if (parity == UART_PARITY_ODD) {
 			*mode |= PDSEL1_MASK;
 		}
-	} else if (databits == 9) {
+	} else if (databits == UART_9_DATABITS) {
 		*mode |= PDSEL1_MASK;
 		*mode |= PDSEL0_MASK;
 	} else {
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
-                log_e(TAG, "Bad byte length\n\r");
+                LOG_E("Bad byte length\n\r");
 #endif
 		return(ERR_BAD_INPUT_PARAMETER);
 	}
 
-	if (stopbits == TWO_STOP_BITS) {
+	if (stopbits == UART_TWO_STOP_BITS) {
 		*mode |= STSEL_MASK;
 	}
 
-	if (rx_idle_level == IDLE_HIGH) {
+	if (rx_idle_level == UART_IDLE_HIGH) {
 		*mode |= RXINV_MASK;
 	}
+        
+        /*
+         * There's a different BAUD Rate formula for High or Low Baud rate.
+         * Have to investigate and merge dsPIC33 and PIC24
+         */
+#if defined (__PIC24FJ256GB106__)
+	*mode |= BRGH_MASK;
+#endif
+
+#elif defined(__18F2680) || defined(__18F4585)
+        /*
+         * The PIC18 doesn't have a MODE Register but instead uses the TXSTA,
+         * RCSTA and BAUDCON registers
+         */
+        TXSTAbits.SYNC = DISABLE;  // Asynchronous Mode
+        
+	if (databits == UART_8_DATABITS) {
+		if (parity == UART_PARITY_EVEN) {
+//			*mode |= PDSEL0_MASK;
+		} else if (parity == UART_PARITY_ODD) {
+//			*mode |= PDSEL1_MASK;
+		}
+	} else if (databits == UART_9_DATABITS) {
+//		*mode |= PDSEL1_MASK;
+//		*mode |= PDSEL0_MASK;
+	} else {
+#if (SYS_LOG_LEVEL <= LOG_ERROR)
+                LOG_E("Bad byte length\n\r");
+#endif
+		return(ERR_BAD_INPUT_PARAMETER);
+	}
+
+	if (stopbits == UART_TWO_STOP_BITS) {
+                /*
+                 * PIC18 only supports One Stop bit.
+                 */
+		return(ERR_BAD_INPUT_PARAMETER);
+	}
+
+	if (rx_idle_level == UART_IDLE_HIGH) {
+//		*mode |= RXINV_MASK;
+	}
+#endif // MicroController Selection
 
 	return(SUCCESS);
 }
 
 /*
- * Initialisation
+ * Initialisation of the uart data structures
  */
 void uart_init(void)
 {
@@ -394,15 +462,12 @@ void uart_init(void)
 
 result_t uart_reserve(struct uart_data *data)
 {
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
-	log_d(TAG, "uart_reserve()\n\r");
-#endif
 	/*
 	 * Find a free uart to use
 	 */
 	uint8_t  loop;
 
-	for(loop = 0; loop < NUM_UARTS; loop++) {
+	for(loop = UART_1; loop < NUM_UARTS; loop++) {
 		if(uarts[loop].status == UART_FREE) {
 
 			uarts[loop].data = data;
@@ -431,42 +496,59 @@ result_t uart_reserve(struct uart_data *data)
 
 result_t uart_release(struct uart_data *data)
 {
-	uint8_t  uart;
+	uint8_t  uart_index;
 
-	uart = data->uart;
+	uart_index = data->uart;
 
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
-	log_d(TAG, "uart_release()  %d\n\r", uart);
+	LOG_D("uart_release()  %d\n\r", uart_index);
 #endif
         
-	if(uarts[uart].data != data) {
+	if(uarts[uart_index].data != data) {
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
-		log_e(TAG, "uart_tx called with bad data pointer\n\r");
+		LOG_E("uart_tx called with bad data pointer\n\r");
 #endif
 		return(ERR_BAD_INPUT_PARAMETER);
 	}
 
-	uarts[uart].data = NULL;
-	uarts[uart].status = UART_FREE;
+	uarts[uart_index].data = NULL;
+	uarts[uart_index].status = UART_FREE;
 
-	switch (uart) {
-		case UART_2:
-			U2MODEbits.UARTEN = 0;
-			U2_RX_ISR_ENABLE = 0;
-			U2_TX_ISR_ENABLE = 0;
-			break;
-
-		case UART_3:
-			U3MODEbits.UARTEN = 0;
-			U3_RX_ISR_ENABLE = 0;
-			U3_TX_ISR_ENABLE = 0;
-			break;
-
-		case UART_4:
-			U4MODEbits.UARTEN = 0;
-			U4_RX_ISR_ENABLE = 0;
-			U4_TX_ISR_ENABLE = 0;
-			break;
+	switch (uart_index) {
+#ifdef UART_1
+        case UART_1:
+                U1_ENABLE = DISABLE;
+                U1_RX_ISR_ENABLE = DISABLE;
+                U1_TX_ISR_ENABLE = DISABLE;
+                break;
+#endif // UART_1
+#ifdef UART_2
+        case UART_2:
+                U2_ENABLE = DISABLE;
+                U2_RX_ISR_ENABLE = DISABLE;
+                U2_TX_ISR_ENABLE = DISABLE;
+                break;
+#endif // UART_2
+#ifdef UART_3
+        case UART_3:
+                U3_ENABLE = DISABLE;
+                U3_RX_ISR_ENABLE = DISABLE;
+                U3_TX_ISR_ENABLE = DISABLE;
+                break;
+#endif // UART_3
+#ifdef UART_4
+        case UART_4:
+                U4_ENABLE = DISABLE; ;;U4MODEbits.UARTEN = 0;
+                U4_RX_ISR_ENABLE = DISABLE;
+                U4_TX_ISR_ENABLE = DISABLE;
+                break;
+#endif // UART_4
+        default:
+#if (SYS_LOG_LEVEL <= LOG_ERROR)
+		LOG_E("Unrecognised UART\n\r");
+#endif
+		return(ERR_BAD_INPUT_PARAMETER);
+//                break;
 	}
 
 	data->uart = UART_BAD;
@@ -476,53 +558,54 @@ result_t uart_release(struct uart_data *data)
 
 result_t uart_tx_buffer(struct uart_data *data, uint8_t *buffer, uint16_t len)
 {
-	uint8_t  uart;
+	uint8_t  uart_index;
 	uint8_t *ptr;
 
-	uart = data->uart;
+	uart_index = data->uart;
 
-	if(uarts[uart].data != data) {
+	if(uarts[uart_index].data != data) {
 		return(ERR_BAD_INPUT_PARAMETER);
 	}
 
 	ptr = buffer;
 
 	while(len--) {
-		uart_putchar(uart, *ptr++);
+		uart_putchar(uart_index, *ptr++);
 	}
 	return(SUCCESS);
 }
 
 result_t uart_tx_char(struct uart_data *data, char ch)
 {
-	uint8_t  uart;
+	uint8_t  uart_index;
 
-	uart = data->uart;
+	uart_index = data->uart;
 
-	if(uarts[uart].data != data) {
+	if(uarts[uart_index].data != data) {
 		return(ERR_BAD_INPUT_PARAMETER);
 	}
 
-        uart_putchar(uart, ch);
+        uart_putchar(uart_index, ch);
 	return(SUCCESS);        
 }
 
-static void uart_putchar(uint8_t uart, uint8_t ch)
+static void uart_putchar(uint8_t uart_index, uint8_t ch)
 {
-//	uint8_t loop;
         uint8_t tmp;
 
 	/*
 	 * If the Transmitter queue is currently empty turn on chip select.
 	 */
-	switch(uart) {
+	switch(uart_index) {
+#ifdef UART_1
 		case UART_1:
+#if defined(__dsPIC33EP256MU806__) || defined (__PIC24FJ256GB106__)
 			/*
 			 * If either the TX Buffer is full OR there are already characters in
 			 * our SW Buffer then add to SW buffer
 			 */
-			if(U1STAbits.UTXBF || uarts[uart].tx_count) {
-				if (uarts[uart].tx_count == 0) {
+			if(U1STAbits.UTXBF || uarts[uart_index].tx_count) {
+				if (uarts[uart_index].tx_count == 0) {
 					/*
 					 * Interrupt when a character is transferred to the Transmit Shift
 					 * Register (TSR), and as a result, the transmit buffer becomes empty
@@ -531,32 +614,52 @@ static void uart_putchar(uint8_t uart, uint8_t ch)
 					U1STAbits.UTXISEL0 = 0;
 				}
 
-				if(uarts[uart].tx_count == SYS_UART_TX_BUFFER_SIZE) {
+				if(uarts[uart_index].tx_count == SYS_UART_TX_BUFFER_SIZE) {
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
-					log_e(TAG, "Circular buffer full!");
+					LOG_E("Circular buffer full!");
 #endif
 					return;
 				}
 
-				uarts[uart].tx_buffer[uarts[uart].tx_write_index] = ch;
+				uarts[uart_index].tx_buffer[uarts[uart_index].tx_write_index] = ch;
                                 /*
                                  * Compiler don't like following two lines in a oner
                                  */
-                                tmp = ++(uarts[uart].tx_write_index) % SYS_UART_TX_BUFFER_SIZE;
-				uarts[uart].tx_write_index = tmp;
-				uarts[uart].tx_count++;
+                                tmp = ++(uarts[uart_index].tx_write_index) % SYS_UART_TX_BUFFER_SIZE;
+				uarts[uart_index].tx_write_index = tmp;
+				uarts[uart_index].tx_count++;
 			} else {
 				U1TXREG = ch;
 			}
-			break;
+#elif defined(__18F2680) || defined(__18F4585)
+                        if(uarts[uart_index].tx_count == SYS_UART_TX_BUFFER_SIZE) {
+                                return;
+                        }
 
+                        if((uarts[uart_index].tx_count == 0) && PIR1bits.TXIF) {
+                                TXREG = ch;
+                                return;
+                        }
+
+                        uarts[uart_index].tx_buffer[uarts[uart_index].tx_write_index] = ch;
+                        /*
+                         * Compiler don't like following two lines in a oner
+                         */
+                        tmp = ++(uarts[uart_index].tx_write_index) % SYS_UART_TX_BUFFER_SIZE;
+                        uarts[uart_index].tx_write_index = tmp;
+                        uarts[uart_index].tx_count++;
+                        PIE1bits.TXIE = ENABLE;
+#endif // #if defined(__18F2680) || defined(__18F4585)
+			break;
+#endif // UART_1
+#ifdef UART_2
 		case UART_2:
 			/*
 			 * If either the TX Buffer is full OR there are already characters in
 			 * our SW Buffer then add to SW buffer
 			 */
-			if(U2STAbits.UTXBF || uarts[uart].tx_count) {
-				if (uarts[uart].tx_count == 0) {
+			if(U2STAbits.UTXBF || uarts[uart_index].tx_count) {
+				if (uarts[uart_index].tx_count == 0) {
 					/*
 					 * Interrupt when a character is transferred to the Transmit Shift
 					 * Register (TSR), and as a result, the transmit buffer becomes empty
@@ -565,32 +668,33 @@ static void uart_putchar(uint8_t uart, uint8_t ch)
 					U2STAbits.UTXISEL0 = 0;
 				}
 
-				if(uarts[uart].tx_count == SYS_UART_TX_BUFFER_SIZE) {
+				if(uarts[uart_index].tx_count == SYS_UART_TX_BUFFER_SIZE) {
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
-					log_e(TAG, "Circular buffer full!");
+					LOG_E("Circular buffer full!");
 #endif
 					return;
 				}
 
-				uarts[uart].tx_buffer[uarts[uart].tx_write_index] = ch;
+				uarts[uart_index].tx_buffer[uarts[uart_index].tx_write_index] = ch;
                                 /*
                                  * Compiler don't like following two lines in a oner
                                  */
-                                tmp = ++(uarts[uart].tx_write_index) % SYS_UART_TX_BUFFER_SIZE;
-				uarts[uart].tx_write_index = tmp;
-				uarts[uart].tx_count++;
+                                tmp = ++(uarts[uart_index].tx_write_index) % SYS_UART_TX_BUFFER_SIZE;
+				uarts[uart_index].tx_write_index = tmp;
+				uarts[uart_index].tx_count++;
 			} else {
 				U2TXREG = ch;
 			}
 			break;
-
+#endif // UART_2
+#ifdef UART_3
 		case UART_3:
 			/*
 			 * If either the TX Buffer is full OR there are already characters in
 			 * our SW Buffer then add to SW buffer
 			 */
-			if(U3STAbits.UTXBF || uarts[uart].tx_count) {
-				if (uarts[uart].tx_count == 0) {
+			if(U3STAbits.UTXBF || uarts[uart_index].tx_count) {
+				if (uarts[uart_index].tx_count == 0) {
 					/*
 					 * Interrupt when a character is transferred to the Transmit Shift
 					 * Register (TSR), and as a result, the transmit buffer becomes empty
@@ -599,32 +703,33 @@ static void uart_putchar(uint8_t uart, uint8_t ch)
 					U3STAbits.UTXISEL0 = 0;
 				}
 
-				if(uarts[uart].tx_count == SYS_UART_TX_BUFFER_SIZE) {
+				if(uarts[uart_index].tx_count == SYS_UART_TX_BUFFER_SIZE) {
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
-					log_e(TAG, "Circular buffer full!");
+					LOG_E("Circular buffer full!");
 #endif
 					return;
 				}
 
-				uarts[uart].tx_buffer[uarts[uart].tx_write_index] = ch;
+				uarts[uart_index].tx_buffer[uarts[uart_index].tx_write_index] = ch;
                                 /*
                                  * Compiler don't like following two lines in a oner
                                  */
-                                tmp = ++(uarts[uart].tx_write_index) % SYS_UART_TX_BUFFER_SIZE;
-				uarts[uart].tx_write_index = tmp;
-				uarts[uart].tx_count++;
+                                tmp = ++(uarts[uart_index].tx_write_index) % SYS_UART_TX_BUFFER_SIZE;
+				uarts[uart_index].tx_write_index = tmp;
+				uarts[uart_index].tx_count++;
 			} else {
 				U3TXREG = ch;
 			}
 			break;
-
+#endif // UART_3
+#ifdef UART_4
 		case UART_4:
 			/*
 			 * If either the TX Buffer is full OR there are already characters in
 			 * our SW Buffer then add to SW buffer
 			 */
-			if(U4STAbits.UTXBF || uarts[uart].tx_count) {
-				if (uarts[uart].tx_count == 0) {
+			if(U4STAbits.UTXBF || uarts[uart_index].tx_count) {
+				if (uarts[uart_index].tx_count == 0) {
 					/*
 					 * Interrupt when a character is transferred to the Transmit Shift
 					 * Register (TSR), and as a result, the transmit buffer becomes empty
@@ -633,162 +738,252 @@ static void uart_putchar(uint8_t uart, uint8_t ch)
 					U4STAbits.UTXISEL0 = 0;
 				}
 
-				if(uarts[uart].tx_count == SYS_UART_TX_BUFFER_SIZE) {
+				if(uarts[uart_index].tx_count == SYS_UART_TX_BUFFER_SIZE) {
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
-					log_e(TAG, "Circular buffer full!");
+					LOG_E("Circular buffer full!");
 #endif
 					return;
 				}
 
-				uarts[uart].tx_buffer[uarts[uart].tx_write_index] = ch;
+				uarts[uart_index].tx_buffer[uarts[uart_index].tx_write_index] = ch;
                                 /*
                                  * Compiler don't like following two lines in a oner
                                  */
-                                tmp = ++(uarts[uart].tx_write_index) % SYS_UART_TX_BUFFER_SIZE;
-				uarts[uart].tx_write_index = tmp;
-				uarts[uart].tx_count++;
+                                tmp = ++(uarts[uart_index].tx_write_index) % SYS_UART_TX_BUFFER_SIZE;
+				uarts[uart_index].tx_write_index = tmp;
+				uarts[uart_index].tx_count++;
 			} else {
 				U4TXREG = ch;
 			}
 			break;
-
+#endif // UART_4
 		default:
-#if (SYS_LOG_LEVEL <= LOG_ERROR)
-			log_e(TAG, "Unrecognised UART in putchar()\n\r");
-#endif
+//#if (SYS_LOG_LEVEL <= LOG_ERROR)
+//			LOG_E("Unrecognised UART in putchar()\n\r");
+//#endif
 			break;
 	}
 }
 
+#if defined(__dsPIC33EP256MU806__)
 static void uart_set_rx_pin(uint8_t uart, uint8_t pin)
 {
-//        AD1PCFGL = 0xffff;
 	switch (pin) {
-		case RP0:
-                        AD1PCFGLbits.PCFG0 = 1;
-			TRISBbits.TRISB0 = 1;
-			break;
-
-		case RP1:
-                        AD1PCFGLbits.PCFG1 = 1;
-			TRISBbits.TRISB1 = 1;
-			break;
-
-		case RP13:
-                        AD1PCFGLbits.PCFG2 = 1;
-			TRISBbits.TRISB2 = 1;
-			break;
-
-		case RP25:
-			TRISDbits.TRISD4 = 1;
-			break;
-
-		case RP28:
-                        AD1PCFGLbits.PCFG4 = 1;
-			TRISBbits.TRISB4 = 1;
+		case RP120:
+                        ANSELGbits.ANSG8 = DIGITAL_PIN;
+			TRISGbits.TRISG8 = INPUT_PIN;
 			break;
 
 		default:
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
-			log_e(TAG, "Unknow Peripheral Rx Pin\n\r");
+			LOG_E("Unknow Peripheral Rx Pin\n\r");
+#endif
+			break;
+        }
+
+	switch (uart) {
+		case UART_1:
+			PPS_UART_1_RX = pin;
+			break;
+
+		case UART_2:
+			PPS_UART_2_RX = pin;
+			break;
+
+		case UART_3:
+			PPS_UART_3_RX = pin;
+			break;
+
+		case UART_4:
+			PPS_UART_4_RX = pin;
+			break;
+	}
+}
+#elif defined (__PIC24FJ256GB106__)
+static void uart_set_rx_pin(uint8_t uart, uint8_t pin)
+{
+	switch (pin) {
+		case RP0:
+                        AD1PCFGLbits.PCFG0 = DIGITAL_PIN;
+			TRISBbits.TRISB0 = INPUT_PIN;
+			break;
+
+		case RP1:
+                        AD1PCFGLbits.PCFG1 = DIGITAL_PIN;
+			TRISBbits.TRISB1 = INPUT_PIN;
+			break;
+
+		case RP13:
+                        AD1PCFGLbits.PCFG2 = DIGITAL_PIN;
+			TRISBbits.TRISB2 = INPUT_PIN;
+			break;
+
+		case RP25:
+			TRISDbits.TRISD4 = INPUT_PIN;
+			break;
+
+		case RP28:
+                        AD1PCFGLbits.PCFG4 = DIGITAL_PIN;
+			TRISBbits.TRISB4 = INPUT_PIN;
+			break;
+
+		default:
+#if (SYS_LOG_LEVEL <= LOG_ERROR)
+			LOG_E("Unknow Peripheral Rx Pin\n\r");
 #endif
 			break;
 	}
 
 	switch (uart) {
 		case UART_1:
-			RPINR18bits.U1RXR = pin;
+			PPS_UART_1_RX = pin;
 			break;
 
 		case UART_2:
-			RPINR19bits.U2RXR = pin;
+			PPS_UART_2_RX = pin;
 			break;
 
 		case UART_3:
-			RPINR17bits.U3RXR = pin;
+			PPS_UART_3_RX = pin;
 			break;
 
 		case UART_4:
-			RPINR27bits.U4RXR = pin;
+			PPS_UART_4_RX = pin;
 			break;
 	}
 }
+#elif defined(__18F2680) || defined(__18F4585)
+static void uart_set_rx_pin(uint8_t uart, uint8_t pin)
+{
+        TRISCbits.TRISC7 = INPUT_PIN;
+}
+#endif // MicroContoller Selection
 
+#if defined(__dsPIC33EP256MU806__)
 static void uart_set_tx_pin(uint8_t uart, uint8_t pin)
 {
 	uint8_t tx_function;
 
 	switch (uart) {
 		case UART_1:
-			tx_function = 3;
+			tx_function = PPS_UART_1_TX;
 			break;
 
 		case UART_2:
-			tx_function = 5;
+			tx_function = PPS_UART_2_TX;
 			break;
 
 		case UART_3:
-			tx_function = 28;
+			tx_function = PPS_UART_3_TX;
 			break;
 
 		case UART_4:
-			tx_function = 30;
+			tx_function = PPS_UART_4_TX;
+			break;
+	}
+
+	switch (pin) {
+		case RP118:
+                        ANSELGbits.ANSG6 = DIGITAL_PIN;
+			TRISGbits.TRISG6 = OUTPUT_PIN;
+			PPS_RP118 = tx_function;
+			break;
+
+		default:
+#if (SYS_LOG_LEVEL <= LOG_ERROR)
+			LOG_E("Unknow Peripheral Tx Pin\n\r");
+#endif
+			break;
+	}
+}
+#elif defined (__PIC24FJ256GB106__)
+static void uart_set_tx_pin(uint8_t uart, uint8_t pin)
+{
+	uint8_t tx_function;
+
+	switch (uart) {
+		case UART_1:
+			tx_function = PPS_UART_1_TX;
+			break;
+
+		case UART_2:
+			tx_function = PPS_UART_2_TX;
+			break;
+
+		case UART_3:
+			tx_function = PPS_UART_3_TX;
+			break;
+
+		case UART_4:
+			tx_function = PPS_UART_4_TX;
 			break;
 	}
 
 	switch (pin) {
 		case RP0:
-                        AD1PCFGLbits.PCFG0 = 1;
-			TRISBbits.TRISB0 = 0;
+                        AD1PCFGLbits.PCFG0 = DIGITAL_PIN;
+			TRISBbits.TRISB0 = OUTPUT_PIN;
 			RPOR0bits.RP0R = tx_function;
 			break;
 
 		case RP1:
-                        AD1PCFGLbits.PCFG1 = 1;
-			TRISBbits.TRISB1 = 0;
+                        AD1PCFGLbits.PCFG1 = DIGITAL_PIN;
+			TRISBbits.TRISB1 = OUTPUT_PIN;
 			RPOR0bits.RP1R = tx_function;
 			break;
 
 		case RP13:
-                        AD1PCFGLbits.PCFG2 = 1;
-			TRISBbits.TRISB2 = 0;
+                        AD1PCFGLbits.PCFG2 = DIGITAL_PIN;
+			TRISBbits.TRISB2 = OUTPUT_PIN;
 			RPOR6bits.RP13R = tx_function;
 			break;
 
+		case RP20:
+			TRISDbits.TRISD5 = OUTPUT_PIN;
+			RPOR10bits.RP20R = tx_function;
+			break;
+
 		case RP25:
-			TRISDbits.TRISD4 = 0;
+			TRISDbits.TRISD4 = OUTPUT_PIN;
 			RPOR12bits.RP25R = tx_function;
 			break;
 
 		case RP28:
-                        AD1PCFGLbits.PCFG4 = 1;
-			TRISBbits.TRISB4 = 0;
+                        AD1PCFGLbits.PCFG4 = DIGITAL_PIN;
+			TRISBbits.TRISB4 = OUTPUT_PIN;
 			RPOR14bits.RP28R = tx_function;
 			break;
 
 		default:
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
-			log_e(TAG, "Unknow Peripheral Tx Pin\n\r");
+			LOG_E("Unknow Peripheral Tx Pin\n\r");
 #endif
 			break;
 	}
 }
+#elif defined(__18F2680) || defined(__18F4585)
+static void uart_set_tx_pin(uint8_t uart, uint8_t pin)
+{
+        TRISCbits.TRISC6 = OUTPUT_PIN;
+}
+#endif // MicroContoller Selection
 
 static void uart_set_com_config(struct uart_data *com)
 {
 	switch (com->uart) {
+#ifdef UART_1
 		case UART_1:
+#if defined(__dsPIC33EP256MU806__) || defined (__PIC24FJ256GB106__)
 			U1MODE = com->uart_mode;
-			U1MODEbits.UARTEN = 1;
-
-			U1STA = 0x8410;
 
 			/*
 			 * Interrupt when a character is transferred to the Transmit Shift
 			 * Register (TSR), and as a result, the transmit buffer becomes empty
 			 */
-			U1STAbits.UTXISEL1 = 1;
-			U1STAbits.UTXISEL0 = 0;
+//			U1STA = 0x8410;
+                        U1STAbits.URXISEL = 0b10;
+//			U1STAbits.UTXISEL1 = 1;
+//			U1STAbits.UTXISEL0 = 0;
 
 			/*
 			 * Desired Baud Rate = FCY/(16 (UxBRG + 1))
@@ -801,22 +996,46 @@ static void uart_set_com_config(struct uart_data *com)
 			U1BRG = ((SYS_CLOCK_FREQ / com->baud) / 16) - 1;
                         U1_RX_ISR_FLAG = 0;
                         U1_TX_ISR_FLAG = 0;
-			U1_RX_ISR_ENABLE = 1;
-			U1_TX_ISR_ENABLE = 1;
-			break;
+			U1_RX_ISR_ENABLE = ENABLE;
+			U1_TX_ISR_ENABLE = ENABLE;
 
+			U1_ENABLE = ENABLE;
+#elif defined(__18F2680) || defined(__18F4585)
+                        TXSTAbits.TXEN = 1;    // Transmitter enabled
+                        TXSTAbits.SYNC = 0;    // Asynchronous mode
+                        TXSTAbits.BRGH = 0;    // High Baud Rate Select bit
+
+#if defined(ENABLE_USART_RX)
+                        RCSTAbits.CREN = 1;    // Enable the Receiver
+#else
+                        RCSTAbits.CREN = 0;    // Disable the Receiver
+#endif
+                        BAUDCONbits.BRG16 = 0; // 16-bit Baud Rate Register Enable bit
+
+                        SPBRG = ((SYS_CLOCK_FREQ / com->baud) / 64 ) - 1;
+
+                        PIE1bits.TXIE = 1;
+#if defined(ENABLE_USART_RX)
+                        PIR1bits.RCIF = 0;
+                        PIE1bits.RCIE = 1;
+#endif // ENABLE_EUSART_RX
+                        RCSTAbits.SPEN = 1;
+                        TXREG = 'J';
+#endif // MicroController Selection
+			break;
+#endif // UART_1
+#ifdef UART_2
 		case UART_2:
 			U2MODE = com->uart_mode;
-			U2MODEbits.UARTEN = 1;
-
-			U2STA = 0x8410;
 
 			/*
 			 * Interrupt when a character is transferred to the Transmit Shift
 			 * Register (TSR), and as a result, the transmit buffer becomes empty
 			 */
-			U2STAbits.UTXISEL1 = 1;
-			U2STAbits.UTXISEL0 = 0;
+//			U2STA = 0x8410;
+                        U2STAbits.URXISEL = 0b10;
+//			U2STAbits.UTXISEL1 = 1;
+//			U2STAbits.UTXISEL0 = 0;
 
 			/*
 			 * Desired Baud Rate = FCY/(16 (UxBRG + 1))
@@ -831,20 +1050,22 @@ static void uart_set_com_config(struct uart_data *com)
                         U2_TX_ISR_FLAG = 0;
 			U2_RX_ISR_ENABLE = 1;
 			U2_TX_ISR_ENABLE = 1;
-			break;
 
+			U2_ENABLE = ENABLE;
+			break;
+#endif // UART_2
+#ifdef UART_3
 		case UART_3:
 			U3MODE = com->uart_mode;
-			U3MODEbits.UARTEN = 1;
-
-			U3STA = 0x8410;
 
 			/*
 			 * Interrupt when a character is transferred to the Transmit Shift
 			 * Register (TSR), and as a result, the transmit buffer becomes empty
 			 */
-			U3STAbits.UTXISEL1 = 1;
-			U3STAbits.UTXISEL0 = 0;
+//			U3STA = 0x8410;
+                        U3STAbits.URXISEL = 0b10;
+//			U3STAbits.UTXISEL1 = 1;
+//			U3STAbits.UTXISEL0 = 0;
 
 			/*
 			 * Desired Baud Rate = FCY/(16 (UxBRG + 1))
@@ -859,20 +1080,22 @@ static void uart_set_com_config(struct uart_data *com)
                         U3_TX_ISR_FLAG = 0;
 			U3_RX_ISR_ENABLE = 1;
 			U3_TX_ISR_ENABLE = 1;
-			break;
 
+			U3_ENABLE = ENABLE; //U3MODEbits.UARTEN = 1;
+			break;
+#endif // UART_3
+#ifdef UART_4
 		case UART_4:
 			U4MODE = com->uart_mode;
-			U4MODEbits.UARTEN = 1;
-
-			U4STA = 0x8410;
 
 			/*
 			 * Interrupt when a character is transferred to the Transmit Shift
 			 * Register (TSR), and as a result, the transmit buffer becomes empty
 			 */
-			U4STAbits.UTXISEL1 = 1;
-			U4STAbits.UTXISEL0 = 0;
+                        U4STAbits.URXISEL = 0b10;
+//			U4STA = 0x8410;
+//			U4STAbits.UTXISEL1 = 1;
+//			U4STAbits.UTXISEL0 = 0;
 
 			/*
 			 * Desired Baud Rate = FCY/(16 (UxBRG + 1))
@@ -885,13 +1108,15 @@ static void uart_set_com_config(struct uart_data *com)
 			U4BRG = ((SYS_CLOCK_FREQ / com->baud) / 16) - 1;
                         U4_RX_ISR_FLAG = 0;
                         U4_TX_ISR_FLAG = 0;
-			U4_RX_ISR_ENABLE = 1;
-			U4_TX_ISR_ENABLE = 1;
-			break;
+			U4_RX_ISR_ENABLE = ENABLE;
+			U4_TX_ISR_ENABLE = ENABLE;
 
+			U4_ENABLE = ENABLE; //U4MODEbits.UARTEN = 1;
+			break;
+#endif // UART_4
 		default:
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
-			log_e(TAG, "Bad UART passed\n\r");
+			LOG_E("Bad UART passed\n\r");
 #endif
 			break;
 	}
@@ -905,7 +1130,9 @@ static uint16_t load_tx_buffer(uint8_t uart)
         uint8_t tmp;
         
 	switch (uart) {
+#ifdef UART_1
 		case UART_1:
+#if defined(__dsPIC33EP256MU806__) || defined (__PIC24FJ256GB106__)
 			/*
 			 * If the TX buffer is not full load it from the circular buffer
 			 */
@@ -920,8 +1147,27 @@ static uint16_t load_tx_buffer(uint8_t uart)
 			}
 
 			return(uarts[uart].tx_count);
+#elif defined(__18F2680) || defined(__18F4585)
+                        /*
+                         * The TXIF Interrupt is cleared by writing to TXREG it
+                         * cannot be cleared by SW directly.
+                         */
+                        if(uarts[uart].tx_count > 0) {
+                                TXREG = uarts[uart].tx_buffer[uarts[uart].tx_read_index];
+                                /*
+                                 * Compiler don't like following two lines in a oner
+                                 */
+                                tmp = ++(uarts[uart].tx_read_index) % SYS_UART_TX_BUFFER_SIZE;
+				uarts[uart].tx_read_index = tmp;
+				uarts[uart].tx_count--;
+                        } else {
+                                PIE1bits.TXIE = DISABLE;
+                        }
+			return(uarts[uart].tx_count);
+#endif // MicroController selection
 			break;
-
+#endif // UART_1
+#ifdef UART_2
 		case UART_2:
 			/*
 			 * If the TX buffer is not full load it from the circular buffer
@@ -938,7 +1184,8 @@ static uint16_t load_tx_buffer(uint8_t uart)
 
 			return(uarts[uart].tx_count);
 			break;
-
+#endif // UART_2
+#ifdef UART_3
 		case UART_3:
 			/*
 			 * If the TX buffer is not full load it from the circular buffer
@@ -955,7 +1202,8 @@ static uint16_t load_tx_buffer(uint8_t uart)
 
 			return(uarts[uart].tx_count);
 			break;
-
+#endif // UART_3
+#ifdef UART_4
 		case UART_4:
 			/*
 			 * If the TX buffer is not full load it from the circular buffer
@@ -972,11 +1220,29 @@ static uint16_t load_tx_buffer(uint8_t uart)
 
 			return(uarts[uart].tx_count);
 			break;
+#endif // UART_4
 	}
 
-//	return(com->tx_buffer_size - com->tx_buffer_read_index);
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
-	log_e(TAG, "load_tx_buffer() Bad UART\n\r");
+	LOG_E("load_tx_buffer() Bad UART\n\r");
 #endif
 	return(0);
 }
+
+#if defined(__18F2680) || defined(__18F4585)
+void pic18f_uart_isr(void)
+{
+#if defined(ENABLE_USART_RX)
+	uint8_t data;
+#endif // (ENABLE_UASAT_RX)
+
+	if(PIR1bits.TXIF) {
+		uart_tx_isr(UART_1);
+	}
+#if defined(ENABLE_USART_RX)
+	if(PIR1bits.RCIF) {
+		data = RCREG;
+	}
+#endif
+}
+#endif // (__18F2680) || (__18F4585)

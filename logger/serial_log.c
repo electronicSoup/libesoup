@@ -21,6 +21,7 @@
  */
 #include <stdarg.h>
 #include <stdio.h>
+#include <string.h>
 
 #define DEBUG_FILE TRUE
 #define TAG "serial"
@@ -43,12 +44,12 @@
 
 #ifndef ES_LINUX
 #if defined(__18F2680) || defined(__18F4585)
-#ifndef SYS_USART_TX_BUFFER_SIZE
-#error libesoup_config.h should define SYS_USART_TX_BUFFER_SIZE (see libesoup/examples/libesoup_config.h)
+#ifndef SYS_UART_TX_BUFFER_SIZE
+#error libesoup_config.h should define SYS_UART_TX_BUFFER_SIZE (see libesoup/examples/libesoup_config.h)
 #endif
 #else
-#ifndef SERIAL_LOGGING_TX_DDR
-#error libesoup_config.h should include a board file which defines SERIAL_LOGGING_TX_DDR (see libesoup/examples/libesoup_config.h)
+#ifndef SERIAL_LOGGING_TX_PIN
+#error libesoup_config.h should include a board file which defines SERIAL_LOGGING_TX_PIN (see libesoup/examples/libesoup_config.h)
 #endif
 #endif
 
@@ -63,20 +64,23 @@
 #include <stdio.h>
 #endif // if defined (ES_LINUX)
 
-//static struct uart_data serial_uart;
-
-
-#if defined(__18F2680) || defined(__18F4585)
 /*
- * Definitions for the Transmit Circular buffer. Calls to putchar will load
- * up this circular buffer and the UASRT serial port will empty it.
+ * Declaration of the data structure being used to manage UART connection.
+ * Static to this file only!
  */
-static uint8_t tx_circular_buffer[SYS_USART_TX_BUFFER_SIZE];
+static struct uart_data serial_uart;
 
-static uint16_t tx_write_index = 0;
-static uint16_t tx_read_index = 0;
-static uint16_t tx_buffer_count = 0;
-#endif // (__18F2680) || (__18F4585)
+//#if defined(__18F2680) || defined(__18F4585)
+///*
+// * Definitions for the Transmit Circular buffer. Calls to putchar will load
+// * up this circular buffer and the UASRT serial port will empty it.
+// */
+//static uint8_t tx_circular_buffer[SYS_UART_TX_BUFFER_SIZE];
+//
+//static uint16_t tx_write_index = 0;
+//static uint16_t tx_read_index = 0;
+//static uint16_t tx_buffer_count = 0;
+//#endif // (__18F2680) || (__18F4585)
 
 /**
  * \fn _U1RXInterrupt()
@@ -109,20 +113,23 @@ void _ISR __attribute__((__no_auto_psv__)) _U1RXInterrupt(void)
 #endif // 0
 
 /**
- * \fn serial_init()
+ * \fn serial_logging_init()
  *
  * \brief Initialisation function for serial logging
  *
  * The libesoup_config.h file should define serial port pin orientation, and include the 
  * board file which defines the pins being used by the serial port.
  */
-void serial_logging_init(void)
+result_t serial_logging_init(void)
 {
+        result_t rc;
+        uint8_t  buffer[4] = {'\n', '\r', '\n', '\r'};
+        
 #ifdef MCP
 	/*
 	 * CinnamonBun is running a PIC24FJ256GB106 or dsPIC33 processor
 	 */
-#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__) || defined(__dsPIC33EP256MU806__)
+//#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__) || defined(__dsPIC33EP256MU806__)
 	/*
 	 * Serial Port pin configuration should be defined
 	 * in include file libesoup_config.h
@@ -133,101 +140,34 @@ void serial_logging_init(void)
 	IEC0bits.U1RXIE = 1;
 #endif // SERIAL_LOGGING_RX_ENABLE
         /*
-         * The libesoup_config.h file should define the Serial Logging pin orientation
-         * (either SYS_SERIAL_PORT_GndTxRx or SYS_SERIAL_PORT_GndRxTx) which is
-         * then used in the board header file included from the libesoup_config.h file.
-         * The board file defines the pins used by the serial port here. 
+         * Reserve a uart for the RS232 Comms
          */
-        SERIAL_LOGGING_TX_DDR = OUTPUT_PIN;
-	SERIAL_LOGGING_TX = UART_1_TX;
-	U1MODE = 0x8800;
-	U1STA = 0x0410;
+        serial_uart.baud = SYS_SERIAL_LOGGING_BAUD;
+        serial_uart.tx_pin = SERIAL_LOGGING_TX_PIN;
+        serial_uart.rx_pin = SERIAL_LOGGING_RX_PIN;
+        rc = uart_calculate_mode(&serial_uart.uart_mode, UART_8_DATABITS, UART_PARITY_NONE, UART_ONE_STOP_BIT, UART_IDLE_HIGH);
+        if(rc != SUCCESS) {
+                return(rc);
+        }                
 
-	/*
-	 * Desired Baud Rate = FCY/(16 (UxBRG + 1))
-	 *
-	 * UxBRG = ((FCY/Desired Baud Rate)/16) - 1
-	 *
-	 * UxBRG = ((CLOCK/SERIAL_BAUD)/16) -1
-	 *
-	 */
-	U1BRG = ((SYS_CLOCK_FREQ / SYS_SERIAL_LOGGING_BAUD) / 16) - 1;
-
-#elif defined(__18F2680) || defined(__18F4585)
-	/*
-	 * Analogue Guage is running a PIC18F2680 processor
-	 */
-	uint8_t baud;
-
-	/*
-	 * Initialise the TX Circular buffer
-	 */
-	tx_write_index = 0;
-	tx_read_index = 0;
-	tx_buffer_count = 0;
-        
-	TRISCbits.TRISC6 = 0;
-#if defined(ENABLE_USART_RX)
-	TRISCbits.TRISC7 = 1;
-#endif
-	TXSTAbits.TXEN = 1;    // Transmitter enabled
-	TXSTAbits.SYNC = 0;    // Asynchronous mode
-	TXSTAbits.BRGH = 0;    // High Baud Rate Select bit
-
-#if defined(ENABLE_USART_RX)
-	RCSTAbits.CREN = 1;    // Enable the Receiver
-#else
-	RCSTAbits.CREN = 0;    // Disable the Receiver
-#endif
-	RCSTAbits.SPEN = 1;
-
-	BAUDCONbits.BRG16 = 0; // 16-bit Baud Rate Register Enable bit
-
-	baud = ((SYS_CLOCK_FREQ / SYS_SERIAL_LOGGING_BAUD) / 64 ) - 1;
-
-	SPBRG = baud;
-
-	PIE1bits.TXIE = 0;
-	PIR1bits.TXIF = 0;
-#if defined(ENABLE_USART_RX)
-	PIR1bits.RCIF = 0;
-	PIE1bits.RCIE = 1;
-#endif // ENABLE_EUSART_RX
-
-	RCSTAbits.SPEN = 1;
-#endif // (__18F2680) || (__18F4585)
+        rc =  uart_reserve(&serial_uart);
+        if(rc != SUCCESS) {
+                return(rc);
+        }
 #endif // ifdef MCP
 
-        printf("\n\r\n\r");
+        /*
+         * Call uart_tx_buffer to clear XC8 compiler warning
+         */
+        rc = uart_tx_buffer(&serial_uart, buffer, 4);
+//        printf("\n\r\n\r");
+        return(SUCCESS);
 }
 
-#if defined(__18F2680) || defined(__18F4585)
-void pic18f_serial_isr(void)
+result_t serial_logging_exit(void)
 {
-#if defined(ENABLE_USART_RX)
-	uint8_t data;
-#endif // (ENABLE_UASAT_RX)
-
-	if(PIR1bits.TXIF) {
-		/*
-		 * The TXIF Interrupt is cleared by writing to TXREG it
-		 * cannot be cleared by SW directly.
-		 */
-		if(tx_buffer_count > 0) {
-			TXREG = tx_circular_buffer[tx_read_index];
-			tx_read_index = ++tx_read_index % SYS_USART_TX_BUFFER_SIZE;
-			tx_buffer_count--;
-		} else {
-			PIE1bits.TXIE = 0;
-		}
-	}
-#if defined(ENABLE_USART_RX)
-	if(PIR1bits.RCIF) {
-		data = RCREG;
-	}
-#endif
+        return(uart_release(&serial_uart));
 }
-#endif // (__18F2680) || (__18F4585)
 
 #if defined(__18F2680) || defined(__18F4585)
 /**
@@ -237,93 +177,8 @@ void pic18f_serial_isr(void)
  */
 void putch(char character)
 {
-	if(tx_buffer_count < SYS_USART_TX_BUFFER_SIZE) {
-		tx_circular_buffer[tx_write_index] = character;
-		tx_write_index = ++tx_write_index % SYS_USART_TX_BUFFER_SIZE;
-		tx_buffer_count++;
-		PIE1bits.TXIE = 1;
-	}
+        result_t rc = SUCCESS;
+
+        rc = uart_tx_char(&serial_uart, character);
 }
 #endif // (__18F2680) || (__18F4585)
-
-void es_printf(const char *fmt, ...)
-{
-#if (SYS_LOG_LEVEL != NO_LOGGING)
-//        result_t  rc;
-        const char     *ptr;
-        
-        ptr = fmt;
-        
-        while(*ptr) {
-//                rc = uart_tx_char(&serial_uart, *ptr++);
-        }
-#endif
-}
-
-#if (SYS_LOG_LEVEL <= LOG_DEBUG)
-void log_d(const char *tag, const char *fmt, ...)
-{
-        va_list arguments;           
-
-        /* Initializing arguments to store all values after num */
-        va_start ( arguments, fmt );
-#if defined(MCP)
-        es_printf("D :%s ", tag);
-        es_printf(fmt, arguments);
-#elif defined(ES_LINUX)
-        printf("D :%s ", tag);
-        printf(fmt, arguments);
-#endif
-}
-#endif // LOG_DEBUG
-
-#if (SYS_LOG_LEVEL <= LOG_INFO)
-void log_i(const char *tag, const char *fmt, ...)
-{
-        va_list arguments;                     
-
-        /* Initializing arguments to store all values after num */
-        va_start ( arguments, fmt );
-#if defined(MCP)
-        es_printf("I :%s ", tag);
-        es_printf(fmt, arguments);
-#elif defined(ES_LINUX)
-        printf("I :%s ", tag);
-        printf(fmt, arguments);
-#endif
-}
-#endif // LOG_INFO
-
-#if (SYS_LOG_LEVEL <= LOG_WARNING)
-void log_w(const char *tag, const char *fmt, ...)
-{
-        va_list arguments;                     
-
-        /* Initializing arguments to store all values after num */
-        va_start ( arguments, fmt );
-#if defined(MCP)
-        es_printf("W :%s ", tag);
-        es_printf(fmt, arguments);
-#elif defined(ES_LINUX)
-        printf("W :%s ", tag);
-        printf(fmt, arguments);
-#endif
-}
-#endif // LOG_WARNING
-
-#if (SYS_LOG_LEVEL <= LOG_ERROR)
-void log_e(const char *tag, const char *fmt, ...)
-{
-        va_list arguments;                     
-
-        /* Initializing arguments to store all values after num */
-        va_start ( arguments, fmt );
-#if defined(MCP)
-        es_printf("E :%s ", tag);
-        es_printf(fmt, arguments);
-#elif defined(ES_LINUX)
-        printf("E :%s ", tag);
-        printf(fmt, arguments);
-#endif
-}
-#endif  // LOG_ERROR

@@ -4,9 +4,6 @@
 #include "libesoup/utils/spi.h"
 #include "libesoup/utils/clock.h"
 
-/*
- * /opt/microchip/mla/v2015_08_10/apps/usb/device/hid_joystick/firmware/src/system_config/exp16/pic24fj256gb110_pim/system.c
- */
 #pragma config FWDTEN   = OFF
 #pragma config JTAGEN   = OFF
 #pragma config WDTPS    = PS32768          // Watchdog Timer Postscaler (1:32,768)

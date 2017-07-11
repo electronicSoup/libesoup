@@ -191,9 +191,6 @@ void hw_timer_init(void)
 	uint8_t timer;
 
 	for(timer = 0; timer < NUMBER_HW_TIMERS; timer++) {
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
-                log_d(TAG, "Initialise timer 0x%x\n\r", timer);
-#endif
 		timers[timer].status = TIMER_UNUSED;
 		timers[timer].repeat = 0;
 		timers[timer].duration = 0;
@@ -209,20 +206,25 @@ void hw_timer_init(void)
 	 */
 	T1CONbits.TCS = 0;      // Internal FOSC/2
 	T1CONbits.TGATE = 0;
+        IPC0bits.T1IP = 0x07;   // Higest Priority
 
 	T2CONbits.T32 = 0;      // 16 Bit Timer
 	T2CONbits.TCS = 0;      // Internal FOSC/2
         T2CONbits.TGATE = 0;
+        IPC1bits.T2IP = 0x07;   // Higest Priority
         
 	T3CONbits.TCS = 0;      // Internal FOSC/2
         T3CONbits.TGATE = 0;
+        IPC2bits.T3IP = 0x07;   // Higest Priority
         
 	T4CONbits.T32 = 0;      // 16 Bit Timer
 	T4CONbits.TCS = 0;      // Internal FOSC/2
         T4CONbits.TGATE = 0;
+        IPC6bits.T4IP = 0x07;   // Higest Priority
         
 	T5CONbits.TCS = 0;      // Internal FOSC/2
         T5CONbits.TGATE = 0;
+        IPC7bits.T5IP = 0x07;   // Higest Priority
 #elif defined(__18F2680) || defined(__18F4585)
         T0CONbits.T08BIT = 0;   // 16 Bit timer
         T0CONbits.T0CS   = 0;   // Clock source Instruction Clock
@@ -241,7 +243,7 @@ uint8_t hw_timer_start(ty_time_units units, uint16_t duration, uint8_t repeat, v
 	uint8_t       timer;
 
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
-	log_d(TAG, "hw_timer_start()\n\r");
+//	LOG_D("hw_timer_start()\n\r");
 #endif
 	/*
 	 * Find a free timer
@@ -255,20 +257,20 @@ uint8_t hw_timer_start(ty_time_units units, uint16_t duration, uint8_t repeat, v
 				return(timer);
 			} else {
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
-				log_e(TAG, "Failed to start HW Timer rc 0x%x\n\r", rc);
+				LOG_D("Failed to start HW Timer rc 0x%x\n\r", rc);
 #endif
                                 return(BAD_TIMER);
 			}
 		} else {
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
-                        log_d(TAG, "Timer Busy\n\r");
+                        LOG_D("Timer Busy\n\r");
 #endif
                 }
 		timer++;
 	}
 
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
-	log_e(TAG, "Failed to start the HW Timer\n\r");
+	LOG_E("Failed to start the HW Timer\n\r");
 #endif
 	return(BAD_TIMER);
 }
@@ -280,7 +282,7 @@ result_t hw_timer_restart(uint8_t timer, ty_time_units units, uint16_t time, uin
 	}
 	if(timer >= NUMBER_HW_TIMERS) {
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
-		log_e(TAG, "Bad time passed to hw_timer_restart()\n\r!");
+		LOG_E("Bad time passed to hw_timer_restart()\n\r!");
 #endif
 		return(ERR_BAD_INPUT_PARAMETER);
 	}
@@ -292,14 +294,14 @@ result_t hw_timer_pause(uint8_t timer)
 {
 	if(timer >= NUMBER_HW_TIMERS) {
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
-		log_e(TAG, "Bad timer passed to hw_timer_pause(0x%x)\n\r!", timer);
+		LOG_E("Bad timer passed to hw_timer_pause(0x%x)\n\r!", timer);
 #endif
 		return(ERR_BAD_INPUT_PARAMETER);
 	}
 
 	if(timers[timer].status == TIMER_UNUSED) {
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
-		log_e(TAG, "Timer passed to hw_timer_pause() is NOT in use\n\r");
+		LOG_E("Timer passed to hw_timer_pause() is NOT in use\n\r");
 #endif
 		return(ERR_BAD_INPUT_PARAMETER);
 	}
@@ -347,7 +349,7 @@ result_t hw_timer_pause(uint8_t timer)
 
         default:
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
-                log_e(TAG, "Unknown Timer\n\r");
+                LOG_E("Unknown Timer\n\r");
 #endif
                 break;
 	}
@@ -370,7 +372,7 @@ void hw_timer_cancel(uint8_t timer)
                 timers[timer].remainder = (uint16_t)0;
         } else {
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
-                log_e(TAG, "Bad timer passed to hw_timer_cancel(0x%x)\n\r", timer);
+                LOG_E("Bad timer passed to hw_timer_cancel(0x%x)\n\r", timer);
 #endif
         }
 }
@@ -413,7 +415,7 @@ static result_t start_timer(uint8_t timer, ty_time_units units, uint16_t duratio
 
 	if(timer >= NUMBER_HW_TIMERS) {
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
-                log_e(TAG, "Bad time passed to start_timer(0x%x)\n\r", timer);
+                LOG_E("Bad time passed to start_timer(0x%x)\n\r", timer);
 #endif
                 return(ERR_BAD_INPUT_PARAMETER);
         }
@@ -448,7 +450,7 @@ static result_t start_timer(uint8_t timer, ty_time_units units, uint16_t duratio
                                 ticks = (uint32_t) ((uint32_t) (((uint32_t) SYS_CLOCK_FREQ / 4) / 8) * duration);
                         } else {
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
-                                log_e(TAG, "Unknown Timers\n\r");
+                                LOG_E("Unknown Timers\n\r");
 #endif
                         }
 #else
@@ -459,7 +461,7 @@ static result_t start_timer(uint8_t timer, ty_time_units units, uint16_t duratio
 
 		default:
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
-			log_e(TAG, "Bad duration Units for Hardware Timer\n\r");
+			LOG_E("Bad duration Units for Hardware Timer\n\r");
 #endif
 			return(ERR_BAD_INPUT_PARAMETER);
 //			break;
@@ -477,7 +479,7 @@ static result_t start_timer(uint8_t timer, ty_time_units units, uint16_t duratio
 		timers[timer].remainder       = (uint16_t)(ticks & 0xffff);
 
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
-//                log_d(TAG, "Ticks 0x%lx, Repeats 0x%x, remainder 0x%x\n\r", ticks, timers[timer].repeats, timers[timer].remainder);
+//                LOG_D("Ticks 0x%lx, Repeats 0x%x, remainder 0x%x\n\r", ticks, timers[timer].repeats, timers[timer].remainder);
 #endif
 		check_timer(timer);
 
@@ -490,7 +492,7 @@ static result_t start_timer(uint8_t timer, ty_time_units units, uint16_t duratio
 static void set_clock_divide(uint8_t timer, uint16_t clock_divide)
 {
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
-//	log_d(TAG, "set_clock_divide()\n\r");
+//	LOG_D("set_clock_divide()\n\r");
 #endif
 
 	switch(timer) {
@@ -519,7 +521,7 @@ static void set_clock_divide(uint8_t timer, uint16_t clock_divide)
                                 T0CONbits.T0PS = 0x07;   // Divide by 256
                         } else {
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
-                                log_e(TAG, "Unknown divide\n\r");
+                                LOG_E("Unknown divide\n\r");
 #endif
                         }
                 }
@@ -538,7 +540,7 @@ static void set_clock_divide(uint8_t timer, uint16_t clock_divide)
                         T1CONbits.T1CKPS = 0x03;   // Divide by 8
                 } else {
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
-                        log_e(TAG, "Unknow divide\n\r");
+                        LOG_E("Unknow divide\n\r");
 #endif
                 }
                 break;
@@ -560,7 +562,7 @@ static void set_clock_divide(uint8_t timer, uint16_t clock_divide)
                         T1CONbits.TCKPS0 = 1;
                 } else {
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
-                        log_e(TAG, "Bad clock divider!\n\r");
+                        LOG_E("Bad clock divider!\n\r");
 #endif
                 }
                 break;
@@ -582,7 +584,7 @@ static void set_clock_divide(uint8_t timer, uint16_t clock_divide)
                         T2CONbits.TCKPS0 = 1;
                 } else {
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
-                        log_e(TAG, "Bad clock divider!\n\r");
+                        LOG_E("Bad clock divider!\n\r");
 #endif
                 }
                 break;
@@ -604,7 +606,7 @@ static void set_clock_divide(uint8_t timer, uint16_t clock_divide)
                         T3CONbits.TCKPS0 = 1;
                 } else {
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
-                        log_e(TAG, "Bad clock divider!\n\r");
+                        LOG_E("Bad clock divider!\n\r");
 #endif
                 }
                 break;
@@ -626,7 +628,7 @@ static void set_clock_divide(uint8_t timer, uint16_t clock_divide)
                         T4CONbits.TCKPS0 = 1;
                 } else {
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
-                        log_e(TAG, "Bad clock divider!\n\r");
+                        LOG_E("Bad clock divider!\n\r");
 #endif
                 }
                 break;
@@ -648,7 +650,7 @@ static void set_clock_divide(uint8_t timer, uint16_t clock_divide)
                         T5CONbits.TCKPS0 = 1;
                 } else {
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
-                        log_e(TAG, "Bad clock divider!\n\r");
+                        LOG_E("Bad clock divider!\n\r");
 #endif
                 }
                 break;
@@ -656,7 +658,7 @@ static void set_clock_divide(uint8_t timer, uint16_t clock_divide)
 
         default:
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
-                log_e(TAG, "Unknown Timer\n\r");
+                LOG_E("Unknown Timer\n\r");
 #endif
                 break;
 
@@ -676,7 +678,7 @@ void check_timer(uint8_t timer)
 	void         *data;
 #endif
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
-//	log_d(TAG, "check_timer(%d) repeats 0x%x, remainder 0x%x\n\r", timer, timers[timer].repeats, timers[timer].remainder);
+//	LOG_D("check_timer(%d) repeats 0x%x, remainder 0x%x\n\r", timer, timers[timer].repeats, timers[timer].remainder);
 #endif
 
 	if(timers[timer].repeats) {
@@ -751,17 +753,17 @@ void check_timer(uint8_t timer)
 
                 default:
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
-                        log_e(TAG, "Unknown Timer\n\r");
+                        LOG_E("Unknown Timer\n\r");
 #endif
                         break;
 		}
 		timers[timer].repeats--;
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
-  //              log_d(TAG, "After Repeats %d\n\r", timers[timer].repeats);
+  //              LOG_D("After Repeats %d\n\r", timers[timer].repeats);
 #endif
 	} else if(timers[timer].remainder) {
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
-                log_d(TAG, "Remainder %d\n\r", timers[timer].remainder);
+//                LOG_D("Remainder %d\n\r", timers[timer].remainder);
 #endif
 		switch (timer) {
 #if defined(__18F4585)
@@ -836,7 +838,7 @@ void check_timer(uint8_t timer)
 
                 default:
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
-                        log_e(TAG, "Unknown Timer\n\r");
+                        LOG_E("Unknown Timer\n\r");
 #endif
                         break;
 		}
@@ -850,7 +852,7 @@ void check_timer(uint8_t timer)
 		if(timers[timer].repeat) {
 			start_timer(timer, timers[timer].units, timers[timer].duration, timers[timer].repeat, timers[timer].expiry_function, timers[timer].data);
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
-                        log_e(TAG, "XC8 can't call recursive function, No repeat\n\r");
+                        LOG_E("XC8 can't call recursive function, No repeat\n\r");
 #endif
 		} else {
 			timers[timer].status = TIMER_UNUSED;
@@ -862,9 +864,6 @@ void check_timer(uint8_t timer)
 		}
 
 		if(expiry) {
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
-                        log_d(TAG, "Call expiry\n\r");
-#endif
                         expiry(data);
                 }
 #elif defined(__18F4585)

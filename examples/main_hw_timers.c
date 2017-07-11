@@ -3,16 +3,14 @@
  * 
  * Not used on the RPi platform.
  */
-/*
- * Set up the configuration words of the processor:
- */
+#define DEBUG_FILE TRUE
+#define TAG "MAIN"
 
 #include "libesoup_config.h"
 
-#define DEBUG_FILE TRUE
-#define TAG "Main"
-
 #include "libesoup/timers/hw_timers.h"
+#include "libesoup/comms/uart/uart.h"
+#include "libesoup/logger/serial_log.h"
 
 /*
  * Forward declaration of our Hardware timer expiry function, which will be
@@ -26,6 +24,8 @@ int main(void)
 
 	cpu_init();
         hw_timer_init();
+        uart_init();
+        serial_logging_init();
 
         /*
          * set pin RE0 as an Input pin
@@ -103,6 +103,7 @@ int main(void)
 
 void exp_func(void *data)
 {
+        LOG_D("exp_func()\n\r");
 #if defined(__dsPIC33EP256MU806__) || defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__)
         LATEbits.LATE3 = ~LATEbits.LATE3;
 #endif

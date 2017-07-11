@@ -1,12 +1,12 @@
 /**
  *
- * @file libesoup/example/libesoup_config.h
+ * @file es_lib/example/system.h
  *
  * @author John Whitmore
  *
- * This file contains an example libesoup libesoup_config.h configuration file. 
+ * This file contains an example es_lib system.h configuration file. 
  *
- * The libesoup library of source code expects a libesoup_config.h header file to exist
+ * The es_lib library of source code expects a system.h header file to exist
  * in your include path. The file contains the various switches and definitions
  * which configure the various features of the library.
  *
@@ -67,24 +67,14 @@
  * initialise the device to this clock frequency.
  */
 #if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__)
-#define SYS_CLOCK_FREQ 16000000     // 8MHz
+#define SYS_CLOCK_FREQ 16000000     // 16MHz
 #elif defined(__dsPIC33EP256MU806__)
-//#define SYS_CLOCK_FREQ 8000000     // 8MHz
-#define SYS_CLOCK_FREQ 60000000    // 60MHz
+#define SYS_CLOCK_FREQ 8000000     // 8MHz
+//#define SYS_CLOCK_FREQ 60000000    // 60MHz
 #elif defined(__18F4585)
 #define SYS_CLOCK_FREQ 16000000     // 8MHz
 #endif
 
-/**
- * @brief The size of the Transmit buffer to be used by the Serial Logging port.
- *
- * This constant is only used in the PIC18F2680 and PIC18F4585 micro-controller.
- * Default set to 300 Bytes as the serial port should be used for
- * relatively short debug messages and memory is limited.
- */
-#if defined(__18F4585)
-#define SYS_USART_TX_BUFFER_SIZE 300
-#endif // __18F4585
 
 /**
  * @brief Baud rate of the serial logging port
@@ -96,54 +86,51 @@
  * 
  * Default set to 19k2
  */
-#define SYS_SERIAL_LOGGING_BAUD 19200
+#define SYS_SERIAL_LOGGING_BAUD           19200
+
+/**
+ * @brief The size of the Transmit buffer to be used by the UARTs.
+ *
+ * Default set to 300 Bytes as the serial port
+ */
+#define SYS_UART_TX_BUFFER_SIZE 300
 
 /**
  * @brief Serial logging level
  *
- * The valid log levels are defined in libesoup/core.h.
+ * The valid log levels are defined in es_lib/core.h.
  * Default set to Debug logging level. This switch is used in conjunction
- * with libesoup/logging/serial_log.h. That file defines Logging macros which 
+ * with es_lib/logging/serial_log.h. That file defines Logging macros which 
  * expect a logging level to be defined and a #define of "DEBUG_FILE" at the 
  * top of the file for logging to be enabled.
- *
- * #define TAG "MyMain"
- *
- * #if ((DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
- *         log_d(TAG, "logging message\n\r");
- # #endif
  */
 #define SYS_LOG_LEVEL LOG_DEBUG
 
 /**
  * @brief Number of Software timers available in the system.
  *
- * If your project includes libesoup Software Timer code then you must use this 
+ * If your project includes es_lib Software Timer code then you must use this 
  * definition to define number of timers actually avalible in the system. 
  *
  * In addition to adding this Switch your code must initialise the timer
  * functionality and regularly check the timers with the "CHECK_TIMERS()" MACRO
- * defined in libesoup/timers/sw_timers.h
+ * defined in es_lib/timers/sw_timers.h
  *
  * For an example of using the Software timers take a look at:
- * libesoup/examples/main_sw_timers.c
+ * es_lib/examples/main_sw_timers.c
  * 
  * Default : Switch is commented out assuming timer functionality not included
  * in project.
  */
-//#define SYS_SW_TIMERS
-
-#ifdef SYS_SW_TIMERS
 #define SYS_NUMBER_OF_SW_TIMERS 20 
-#define SYS_SW_TIMER_TICK_ms           5        // mSeconds
-#endif // SYS_SW_TIMERS
+#define SYS_SW_TICK_ms           5        // mSeconds
 
 /*
  * System jobs
  */
 //#define SYS_JOBS
 
-#ifdef SYS_JOBS
+#ifdef JOBS
 #define SYS_NUMBER_OF_JOBS 10
 #endif
 
@@ -174,7 +161,7 @@
  * @brief SYS_CAN Bus Enable
  *
  * Switch to enable CAN Bus functionality. There are more specific switches for
- * various aspects of the CAN Bus functionality, of the libesoup, but this is
+ * various aspects of the CAN Bus functionality, of the es_lib, but this is
  * the global switch for CAN Bus.
  */
 #define SYS_CAN                    // Default Disabled
@@ -183,7 +170,7 @@
 /**
  * @brief Number of CAN Bus Frame handlers.
  *
- * Code registers an interest in certain CAN Identifiers received by the libesoup
+ * Code registers an interest in certain CAN Identifiers received by the es_lib
  * CAN Bus frame processing layer, (Layer 2). If your application is only
  * interested in one CAN Identifier then this array size can be limited to a
  * single entry.
@@ -208,7 +195,7 @@
  * Especially if your Network can dynamically change it's baud rate.
  *
  * There are a finite number of available Baud rates defined in an ennumerated
- * type (can_baud_rate_t) in libesoup/can/es_can.h  
+ * type (can_baud_rate_t) in es_lib/can/es_can.h  
  * 
  *     typedef enum {
  *             baud_10K   = 0x00,
@@ -257,7 +244,7 @@
  * The actual exact period defined by SYS_CAN_PING_PROTOCOL_PERIOD is not used but
  * rather a random duration within one second of that duration is used. For
  * that reason if you're code uses the Ping Protcol then it should include 
- * libesoup/utils/rand.c and during startup initialise a random seed with a call
+ * es_lib/utils/rand.c and during startup initialise a random seed with a call
  * to the function:
  * 
  * random_init();
@@ -349,7 +336,7 @@
 /**
  * @brief Include SYS_ISO15765 Functionality
  *
- * SYS_ISO15765 has a dependance on random! Add libesoup/utils/rand.c to your project 
+ * SYS_ISO15765 has a dependance on random! Add es_lib/utils/rand.c to your project 
  * and, to initialise a seed, on startup call:
  * 
  * init_rand();
@@ -362,15 +349,15 @@
  * across the Bus. The larger messages are segmented into short frames for 
  * transmission across the bus and reassembly on the other side.
  *
- * The libesoup implementation of SYS_ISO15765 is not a strict implementation of the
+ * The es_lib implementation of SYS_ISO15765 is not a strict implementation of the
  * standard. For example the standard enables a maximum message size for 
- * transmission of 4095 Bytes whilst libesoup defines SYS_ISO15765_MAX_MSG as 270
- * in libesoup/core.h. Seperate from this size is a Protocol or Layer 3 message
- * type. The libesoup implementation defines the first byte of the transmitted
+ * transmission of 4095 Bytes whilst es_lib defines SYS_ISO15765_MAX_MSG as 270
+ * in es_lib/core.h. Seperate from this size is a Protocol or Layer 3 message
+ * type. The es_lib implementation defines the first byte of the transmitted
  * message as a Protocol Identifier which specifies the type of the message.
  *
- * The libesoup CAN implementation reserves two SYS_ISO15765 Protocol ID's for
- * specific use in libesoup/can/es_can.h:
+ * The es_lib CAN implementation reserves two SYS_ISO15765 Protocol ID's for
+ * specific use in es_lib/can/es_can.h:
  * 
  * #define SYS_ISO15765_LOGGER_PROTOCOL_ID    0x01
  * #define SYS_ISO15765_DCNCP_PROTOCOL_ID     0x02
@@ -384,7 +371,7 @@
  * with a destination address. Therefore a CAN Node using SYS_ISO15765 must have
  * a BYTE value defining the Layer 3 address of the node.
  *
- * The SYS_ISO15765 functionality in the libesoup code does not dictate how a Layer
+ * The SYS_ISO15765 functionality in the es_lib code does not dictate how a Layer
  * 3 node address is obtained. If your project is including SYS_ISO15765 you will
  * have to add a function to the project which the library code can call to 
  * obtain it's layer 3 node address.
@@ -395,7 +382,7 @@
  *     }
  *
  * The above example, whilst valid, is too simplistic to be used in producton.
- * Whilst the libesoup SYS_ISO15765 functionality will request a Layer 3 node address
+ * Whilst the es_lib SYS_ISO15765 functionality will request a Layer 3 node address
  * from your higher level code a DCNCP peer to peer based protocol is used to 
  * confirm that the address is not already in use on the network. If the Layer
  * 3 node address you have specified is already in use your "node_get_address()
@@ -415,7 +402,7 @@
  *		       rc = eeprom_read(EEPROM_NODE_ADDRESS, &address);
  *		       if (rc != SUCCESS) {
  * #if (SYS_LOG_LEVEL <= LOG_ERROR)
- *		               log_e(TAG, "address Failed to read from eeprom return code 0x%x\n\r", rc);
+ *		               LOG_E("address Failed to read from eeprom return code 0x%x\n\r", rc);
  * #endif
  *			       do {
  *				       address = (uint8_t) (rand() & 0x0ff);
@@ -424,11 +411,11 @@
  *			       rc = eeprom_write(EEPROM_NODE_ADDRESS, address);
  *			       if (rc != SUCCESS) {
  * #if (SYS_LOG_LEVEL <= LOG_ERROR)
- *			       	       log_e(TAG, "Failed to write from eeprom return code 0x%x\n\r", rc);
+ *			       	       LOG_E("Failed to write from eeprom return code 0x%x\n\r", rc);
  * #endif
  *			       }
  *		       } else {
- *			       log_d(TAG, "address value read back from EEPROM address 0x02 = 0x%x\n\r", address);
+ *			       LOG_D("address value read back from EEPROM address 0x02 = 0x%x\n\r", address);
  *		       }
  *	       } else {
  *		       do {
@@ -438,19 +425,19 @@
  *		       rc = eeprom_write(EEPROM_NODE_ADDRESS, address);
  *		       if (rc != SUCCESS) {
  * #if (SYS_LOG_LEVEL <= LOG_ERROR)
- *			       log_e(TAG, "Failed to write from eeprom return code 0x%x\n\r", rc);
+ *			       LOG_E("Failed to write from eeprom return code 0x%x\n\r", rc);
  * #endif
  *		       }
  *	       }
  *
  *	       retry_count++;
  *
- *	       log_d(TAG, "node_get_address() Retry %d try address 0x%x\n\r", retry_count, address);
+ *	       LOG_D("node_get_address() Retry %d try address 0x%x\n\r", retry_count, address);
  *	       return(address);
  *     }
  *
  * The above node_get_address() function can be called multiple times by the
- * libesoup code until it finds an address which is not being used.
+ * es_lib code until it finds an address which is not being used.
  *
  * If your network is your own private network and it only has limited nodes
  * then you can hardcode an address into each node on the network.
@@ -462,9 +449,9 @@
 /**
  * @brief Size of SYS_ISO15765 register array.
  *
- * The libesoup implementation of SYS_ISO15765 uses the first byte of each message
+ * The es_lib implementation of SYS_ISO15765 uses the first byte of each message
  * as a message type, or Layer 3 Protocol Identifier. So in theory you can send 
- * 256 different message types between nodes. This number is reduced as libesoup 
+ * 256 different message types between nodes. This number is reduced as es_lib 
  * reserves two layer 3 protocol numbers for specific uses.
  *
  * Default is 2
@@ -476,7 +463,7 @@
  * 
  * Enable this switch if your project uses the SYS_ISO15765 Logging functionality
  * to send information across the CAN Bus network. The code for this 
- * functionality is in files libesoup/logger/iso15765_log.c and iso15765_log.h.
+ * functionality is in files es_lib/logger/iso15765_log.c and iso15765_log.h.
  * your code can send debug messages with a call to:
  * 
  *     iso15765_log(log_level_t level, char *msg);
@@ -515,7 +502,7 @@
  *
  *     iso15765_log(Debug, "Hello World");
  *
- * The libesoup SYS_ISO15765 logging code will actually totally ignore these requests
+ * The es_lib SYS_ISO15765 logging code will actually totally ignore these requests
  * if it does not know of a registered SYS_ISO15765 Network Logger. An SYS_ISO15765
  * message is sent to a specific destination so if no destination address is
  * known then there is nowhere to send the messages.
@@ -537,7 +524,7 @@
  * @brief Enable Dynamic Can Node Configuration Protocol in SYS_ISO15765 layer.
  *
  * We've previously discussed SYS_ISO15765 Network logging functionality. The other
- * reserved SYS_ISO15765 Layer 3 protocol, 0x02 (libesoup/can/es_can.h), is for the
+ * reserved SYS_ISO15765 Layer 3 protocol, 0x02 (es_lib/can/es_can.h), is for the
  * Dynamic CAN Node Configuration Protocol. 
  */
 #define SYS_ISO15765_DCNCP
@@ -587,15 +574,15 @@
 /**
  * @brief Android App connected state handler.
  *
- * Interaction with a connected Android device is handeled in libesoup by a small
+ * Interaction with a connected Android device is handeled in es_lib by a small
  * state machine. On startup your firmware should initialise the android state 
  * to the idle state:
  *
- *     #include "libesoup/usb/android/state_idle.h"
+ *     #include "es_lib/usb/android/state_idle.h"
  *
  *     set_idle_state();
  *
- * The Android state structure is defined in libesoup/usb/android/state.h
+ * The Android state structure is defined in es_lib/usb/android/state.h
  *
  *     typedef struct android_state_t
  *     {
@@ -610,20 +597,20 @@
  * USB Events.
  *
  * The current android state is stored in a variable defined in
- * libesoup/usb/android/state.h:
+ * es_lib/usb/android/state.h:
  * 
  *     extern android_state_t android_state;
  * 
- * libesoup contains only two android states, namely the idle state and the
+ * es_lib contains only two android states, namely the idle state and the
  * Android device connected state. As has been said on startup your firmware
  * should set the idle state. Once an Android device is physically connected
- * the libesoup changes state to the device connected state. Now once an Android
- * Application starts up which communicates with your firmware libesoup's Android
+ * the es_lib changes state to the device connected state. Now once an Android
+ * Application starts up which communicates with your firmware es_lib's Android
  * device connected state will trasition to the App Connected state.
  * 
  * What your firmware does with the connected Android Application is up to you
  * you simply have to define a function which will set the correct Android state
- * functions and tell libesoup what function to call with the 
+ * functions and tell es_lib what function to call with the 
  * SYS_ANDROID_SET_APPLICATION_CONNECTED_STATE switch:
  *  
  *     extern void example_set_app_connected_state(void);
@@ -654,9 +641,9 @@ extern void example_no_android_app_function(void);
 /**
  * @brief Use Bootloader EEPROM space.
  *
- * By default libesoup assumes that your firmware is using the bootloader and as
+ * By default es_lib assumes that your firmware is using the bootloader and as
  * a result the lower section of EEPROM is reserved for the Bootloader. The 
- * number of bytes reserved for the Bootloader is defined in libesoup/core.h
+ * number of bytes reserved for the Bootloader is defined in es_lib/core.h
  *
  *     #define SYS_EEPROM_BOOT_PAGE_SIZE   0x04
  *

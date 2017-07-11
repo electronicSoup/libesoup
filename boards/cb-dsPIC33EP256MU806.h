@@ -53,17 +53,11 @@
  * Serial Logging
  */
 #if defined(SYS_SERIAL_PORT_GndTxRx)
-        #define SERIAL_LOGGING_RX_DDR    TRISGbits.TRISG6
-        #define SERIAL_LOGGING_TX_DDR    TRISGbits.TRISG8
-
-        #define SERIAL_LOGGING_TX        RPOR14bits.RP120R
-        #define SERIAL_LOGGING_RX_PIN    RP118
+        #define SERIAL_LOGGING_TX_PIN  RP120;
+        #define SERIAL_LOGGING_RX_PIN  RP118;
 #elif defined(SYS_SERIAL_PORT_GndRxTx)
-        #define SERIAL_LOGGING_RX_DDR    TRISGbits.TRISG8
-        #define SERIAL_LOGGING_TX_DDR    TRISGbits.TRISG6
-
-        #define SERIAL_LOGGING_TX        RPOR13bits.RP118R
-        #define SERIAL_LOGGING_RX_PIN    RP120
+        #define SERIAL_LOGGING_TX_PIN  RP118;
+        #define SERIAL_LOGGING_RX_PIN  RP120;
 #endif
 
 /*
