@@ -51,7 +51,7 @@
 #define LOG_ERROR   3
 #define NO_LOGGING  4
 
-/*
+/**
  *  serial_logging_init()
  *
  * This function is only defined for Code compiled for the Microchip

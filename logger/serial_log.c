@@ -138,8 +138,7 @@ result_t serial_logging_init(void)
         SERIAL_LOGGING_RX_DDR = INPUT_PIN;
 	UART_1_RX = SERIAL_LOGGING_RX_PIN;
 	IEC0bits.U1RXIE = 1;
-#endif
-
+#endif // SERIAL_LOGGING_RX_ENABLE
         /*
          * Reserve a uart for the RS232 Comms
          */
