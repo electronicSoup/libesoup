@@ -26,21 +26,21 @@
 
 #include "libesoup/timers/hw_timers.h"
 
-static volatile uint8_t sleep_over;
+static volatile uint8_t delay_over;
 
 static void hw_expiry_function(void *data)
 {
-	sleep_over = TRUE;
+	delay_over = TRUE;
 }
 
-void sleep(ty_time_units units, uint16_t duration)
+void delay(ty_time_units units, uint16_t duration)
 {
 	uint8_t hw_timer;
 
-	sleep_over = FALSE;
+	delay_over = FALSE;
 	hw_timer = hw_timer_start(units, duration, FALSE, hw_expiry_function, NULL);
 
-	while(!sleep_over) {
+	while(!delay_over) {
 		asm ("CLRWDT");
 	}
 }

@@ -1,6 +1,6 @@
 /**
  *
- * \file libesoup/utils/sleep.h
+ * \file libesoup/utils/delay.h
  *
  * Functionality for sleep
  *
@@ -25,4 +25,4 @@
  * @param units
  * @param duration
  */
-extern void sleep(ty_time_units units, uint16_t duration);
+extern void delay(ty_time_units units, uint16_t duration);
