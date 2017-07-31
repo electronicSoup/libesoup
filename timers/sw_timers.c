@@ -188,10 +188,6 @@ void timer_tick(void)
 	timer_ticked = FALSE;
 	timer_counter++;
 
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
-        LOG_D("Tick\n\r");
-#endif
-
 	/*
 	 * Check for expired timers
 	 */
@@ -289,7 +285,7 @@ result_t sw_timer_start(uint16_t ticks,
 	for(loop=0; loop < SYS_NUMBER_OF_SW_TIMERS; loop++) {
 		if (!timers[loop].active) {
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
-                        LOG_D("Using SW timer %d\n\r", loop);
+//                        LOG_D("Using SW timer %d\n\r", loop);
 #endif
 			/*
 			 * Found an inactive timer so assign to this expiry

@@ -29,7 +29,6 @@ void cpu_init(void)
 {
         clock_init();
         
-        INTCON1bits.NSTDIS = 1; // No nested Interrupts
         INTCON2bits.GIE = ENABLE;
 #ifdef SYS_SPI_BUS
         spi_init();

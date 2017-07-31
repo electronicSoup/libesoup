@@ -239,7 +239,7 @@ void hw_timer_init(void)
  */
 uint8_t hw_timer_start(ty_time_units units, uint16_t duration, uint8_t repeat, void (*expiry_function)(void *), void *data)
 {
-	result_t rc;
+	result_t      rc;
 	uint8_t       timer;
 
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
@@ -261,11 +261,7 @@ uint8_t hw_timer_start(ty_time_units units, uint16_t duration, uint8_t repeat, v
 #endif
                                 return(BAD_TIMER);
 			}
-		} else {
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
-                        LOG_D("Timer Busy\n\r");
-#endif
-                }
+		}
 		timer++;
 	}
 
@@ -678,7 +674,7 @@ void check_timer(uint8_t timer)
 	void         *data;
 #endif
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
-//	LOG_D("check_timer(%d) repeats 0x%x, remainder 0x%x\n\r", timer, timers[timer].repeats, timers[timer].remainder);
+//        LOG_D("check_timer(%d) repeats 0x%x, remainder 0x%x\n\r", timer, timers[timer].repeats, timers[timer].remainder);
 #endif
 
 	if(timers[timer].repeats) {
@@ -851,7 +847,7 @@ void check_timer(uint8_t timer)
 
 		if(timers[timer].repeat) {
 			start_timer(timer, timers[timer].units, timers[timer].duration, timers[timer].repeat, timers[timer].expiry_function, timers[timer].data);
-#if (SYS_LOG_LEVEL <= LOG_ERROR)
+#if defined(XC8) && (SYS_LOG_LEVEL <= LOG_ERROR)
                         LOG_E("XC8 can't call recursive function, No repeat\n\r");
 #endif
 		} else {
