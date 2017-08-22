@@ -35,13 +35,14 @@
 
 struct character
 {
-  char ch;
-  struct character *previous;
-  struct character *dash;
-  struct character *dot;
+	char ch;
+	struct character *previous;
+	struct character *dash;
+	struct character *dot;
 };
 
-static struct character alphabet['z' -'a' + 1];
+// Todo add special characters
+static struct character alphabet['z' -'a' + 1];  // Add one for the root node of the tree
 
 #define IDLE_STATE             0x00
 #define DOT_STATE              0x01
@@ -50,14 +51,14 @@ static struct character alphabet['z' -'a' + 1];
 #define CHARACTER_SPACE_STATE  0x04
 #define WORD_SPACE_STATE       0x05
 
-#define INDEX(x)  ((x - 'a') + 1)
+#define INDEX(x)  ((x - 'a') + 1)                // Add one for the root node of the tree
 
 #ifdef MORSE_TX
 static struct character *tx_current_character;
 static uint8_t tx_current_state;
 
-extern void morse_tone_on(void);
-extern void morse_tone_off(void);
+static void (*morse_tone_on)(void)  = (void (*)(void))NULL;
+static void (*morse_tone_off)(void) = (void (*)(void))NULL;
 
 static void tx_start_dot(void);
 static void tx_start_dash(void);
@@ -71,15 +72,21 @@ static void exp_function(timer_t timer_id, union sigval data);
 /*
  * Tx Buffer is a circular buffer
  */
-static char   tx_buffer[MORSE_TX_BUFFER_SIZE];
-static uint16_t tx_buffer_write_index = 0;
-static uint16_t tx_buffer_read_index = 0;
-static uint16_t tx_buffer_count = 0;
-static es_timer     tx_timer;
+static char     tx_char_buffer[MORSE_TX_BUFFER_SIZE];
+static uint16_t tx_char_buffer_write_index = 0;
+static uint16_t tx_char_buffer_read_index = 0;
+static uint16_t tx_char_buffer_count = 0;
+static es_timer tx_timer;
 
+/*
+ * Buffer for the elemets which have to be transmitted for the current character
+ */
+static uint8_t  tx_elements;
+static uint8_t  tx_num_elements;
 #endif // MORSE_TX
 
-void morse_init(void)
+#if defined (MORSE_TX) || defined (MORSE_RX)
+static void morse_init(void)
 {
 	uint8_t loop;
 
@@ -175,47 +182,124 @@ void morse_init(void)
 
 	alphabet[INDEX('z')].previous = &alphabet[INDEX('g')];
 }
+#endif  // defined (MORSE_TX) || defined (MORSE_RX)
+
+#if defined (MORSE_RX)
+void morse_rx_init(void (*process_string)(char *))
+{
+}
+
+void morse_rx_on(void)
+{
+}
+
+void morse_rx_off(void)
+{
+}
+#endif
 
 #ifdef MORSE_TX
 void morse_tx_init(void (*on)(void), void (*off)(void))
 {
+	if(!no || !off) {
+		/*
+		 * Todo - Error Condition
+		 * Need two valid functions to enable transmission
+		 */
+		return;
+	}
+	
+	morse_tone_on  = on;
+	morse_tone_off = off;
+
 	morse_init();
 
-	tx_buffer_write_index = 0;
-	tx_buffer_read_index = 0;
-	tx_buffer_count = 0;
+	tx_char_buffer_write_index = 0;
+	tx_char_buffer_read_index = 0;
+	tx_char_buffer_count = 0;
 }
 #endif // MORSE_TX
 
 #ifdef MORSE_TX
-static void morse_tx_char(uint8_t ch)
+static void tx_char(uint8_t ch)
 {
 	struct character *previous_character;
 
+	/*
+	 * Make sure that the mini buffer for character elements is clear to use
+	 */
+	if(tx_element_pos != 0) {
+		/*
+		 * Todo - Handle an error condition.
+		 */
+		return;
+	}
+	
 	if(ch == ' ') {
 		tx_start_word_space();
 	}
+	
 	tx_current_character = &alphabet[INDEX(ch)];
 
 	previous_character = tx_current_character->previous;
 
-	if(previous_character) {
+	/*
+	 * We have at lest one element so initialise the position we're going to 
+	 * push the next element to
+	 */
+	tx_elements = 0x00;
+	tx_element_pos = 0x01;
+	
+	while(previous_character != alphabet[0]) {
 		if (previous_character->dot == tx_current_character) {
-			tx_start_dot();
+			/*
+			 * Element is alreay cleared by initialisation just shuffle
+			 * the position.
+			 */
+			tx_element_pos = tx_element_pos << 1;
 		} else if (previous_character->dash == tx_current_character) {
-			tx_start_dash();
+			/*
+			 * Or the bit high at the current position for a dash
+			 */
+			tx_elements = tx_elements | tx_element_pos;
+			tx_element_pos = tx_element_pos << 1;
 		}
 
-		tx_current_character = previous_character;
-
-	} else {
 		/*
-		 * Character finished so start the inter character pause
+		 * Walk back up the binary tree to the preious node.
 		 */
-		tx_start_character_space();
+		previous_character = previous_character->previous;
+	}
+
+	/*
+	 * Shuffle the position back one position as we'll have gone over by one
+	 */
+	tx_element_pos = tx_element_pos >> 1;
+	
+	/*
+	 * Elements for the current character are now loaded into the element byte
+	 * so start transmitting them.
+	 */
+	if(tx_element_pos != 0x00) {
+		tx_element();
 	}
 }
 #endif // MORSE_TX
+
+#ifdef MORSE_TX
+static void tx_element(void)
+{
+	if (tx_elements & tx_element_pos) {
+		tx_start_dash();
+	} else {
+		tx_start_dot();
+	}
+	/*
+	 * Shuffle the position
+	 */
+	tx_element_pos = tx_element_pos >> 1;
+}
+#endif
 
 #ifdef MORSE_TX
 void morse_tx(char *msg)
@@ -225,7 +309,7 @@ void morse_tx(char *msg)
 	ptr = msg;
 
 	if (tx_buffer_count == 0) {
-		morse_tx_char(*ptr++);
+		tx_char(*ptr++);
 	}
 	
 	while((*ptr) && (tx_buffer_count < MORSE_TX_BUFFER_SIZE)) {
@@ -251,7 +335,7 @@ void tx_start_dot(void)
 #endif
 
 #ifdef MORSE_RX
-void start_dot(void)
+void rx_start_dot(void)
 {
 	tone_on();
 	timer_on(1);
@@ -279,7 +363,7 @@ void tx_start_dash(void)
 #endif
 
 #ifdef MORSE_RX
-void start_dash(void)
+void rx_start_dash(void)
 {
 	putchar('_');
 	tone_on();
@@ -363,15 +447,20 @@ void exp_function(timer_t timer_id, union sigval data)
 	} else if (tx_current_state == DASH_STATE) {
 		tx_start_element_space();
 	} else if (tx_current_state == ELEMENT_SPACE_STATE) {
-		morse_tx_char(tx_current_character->ch);
+		if(tx_element_pos != 0x00) {
+			tx_element();
+		} else {
+			tx_start_character_space();
+		}
 	} else if (   (tx_current_state == CHARACTER_SPACE_STATE)
 	           || (tx_current_state == WORD_SPACE_STATE)) {
+
 		// TODO Would be next character
 		if (tx_buffer_count > 0) {
 #if ((DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 			log_d(TAG, "Tx '%c'\n\r", tx_buffer[tx_buffer_read_index]);
 #endif
-			morse_tx_char(tx_buffer[tx_buffer_read_index]);
+			tx_char(tx_buffer[tx_buffer_read_index]);
 			tx_buffer_read_index = (tx_buffer_read_index + 1) % MORSE_TX_BUFFER_SIZE;
 			tx_buffer_count--;
 		} else {

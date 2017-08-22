@@ -19,8 +19,15 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  *
  */
+#include "libesoup_config.h"
 
-#ifdef MORSE_TX
-extern void morse_tx_init();
+#if defined (MORSE_RX)
+extern void morse_rx_init(void (*process_string)(char *));
+extern void morse_rx_on(void);
+extern void morse_rx_off(void);
+#endif
+
+#if defined (MORSE_TX)
+extern void morse_tx_init(void (*on)(void), void (*off)(void));
 extern void morse_tx(char *);
 #endif
