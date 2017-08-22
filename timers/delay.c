@@ -35,12 +35,12 @@ static void hw_expiry_function(void *data)
 
 void delay(ty_time_units units, uint16_t duration)
 {
-	uint8_t hw_timer;
+	uint8_t  hw_timer;
 
-	delay_over = FALSE;
-	hw_timer = hw_timer_start(units, duration, FALSE, hw_expiry_function, NULL);
+        delay_over = FALSE;
+        hw_timer = hw_timer_start(units, duration, FALSE, hw_expiry_function, NULL);
 
-	while(!delay_over) {
-		asm ("CLRWDT");
-	}
+        while(!delay_over) {
+                __asm__ ("CLRWDT");
+        }
 }
