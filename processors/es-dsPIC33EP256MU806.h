@@ -37,8 +37,8 @@
 #define DIGITAL_PIN 0
 #define ANALOG_PIN  1
 
-#define DISABLE     0
-#define ENABLE      1
+#define DISABLED    0
+#define ENABLED     1
 
 #define OFF         0
 #define ON          1
@@ -98,6 +98,64 @@
 #define UART_2           0x01
 #define UART_3           0x02
 #define UART_4           0x03
+
+/*
+ * 
+ */
+enum pin_t {
+    RE5,
+    RE6,
+    RE7,
+    RG6,
+    RG7,
+    RG8,
+    RG9,
+    RB5,
+    RB4,
+    RB3,
+    RB2,
+    RB1,
+    RB0,
+    RB6,
+    RB7,
+    RB8,
+    RB9,
+    RB10,
+    RB11,
+    RB12,
+    RB13,
+    RB14,
+    RB15,
+    RF4,
+    RF5,
+    RF3,
+    RG3,
+    RG2,
+    RC12,
+    RC15,
+    RD8,
+    RD9,
+    RD10,
+    RD11,
+    RD0,
+    RC13,
+    RC14,
+    RD1,
+    RD2,
+    RD3,
+    RD4,
+    RD5,
+    RD6,
+    RD7,
+    RF0,
+    RF1,
+    RE0,
+    RE1,
+    RE2,
+    RE3,
+    RE4,
+    INVALID_PIN = 0xff,
+};
 
 /*
  * Peripheral Input Pin Definitions
