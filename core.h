@@ -89,17 +89,6 @@ typedef enum {
  * @}
  */
 
-/**
- * @def   INPUT_PIN
- * @brief Direction setting for an input pin
- *
- * @def   OUTPUT_PIN
- * @brief Direction setting for an output pin
- *
- */
-#define INPUT_PIN  1
-#define OUTPUT_PIN 0
-
 /** @defgroup group1 Android Message Identifiers
  *
  *  Android IPC
@@ -391,7 +380,8 @@ typedef enum {
     ERR_CAN_NO_FREE_BUFFER,
     ERR_UNINITIALISED,
     ERR_BUSY,
-    ERR_NOTHING_TO_DO
+    ERR_NOTHING_TO_DO,
+    ERR_NO_RESPONSE
 } result_t;
 
 /** @}*/
