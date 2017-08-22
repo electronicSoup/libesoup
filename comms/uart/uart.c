@@ -517,30 +517,30 @@ result_t uart_release(struct uart_data *data)
 	switch (uart_index) {
 #ifdef UART_1
         case UART_1:
-                U1_ENABLE = DISABLE;
-                U1_RX_ISR_ENABLE = DISABLE;
-                U1_TX_ISR_ENABLE = DISABLE;
+                U1_ENABLE = DISABLED;
+                U1_RX_ISR_ENABLE = DISABLED;
+                U1_TX_ISR_ENABLE = DISABLED;
                 break;
 #endif // UART_1
 #ifdef UART_2
         case UART_2:
-                U2_ENABLE = DISABLE;
-                U2_RX_ISR_ENABLE = DISABLE;
-                U2_TX_ISR_ENABLE = DISABLE;
+                U2_ENABLE = DISABLED;
+                U2_RX_ISR_ENABLE = DISABLED;
+                U2_TX_ISR_ENABLE = DISABLED;
                 break;
 #endif // UART_2
 #ifdef UART_3
         case UART_3:
-                U3_ENABLE = DISABLE;
-                U3_RX_ISR_ENABLE = DISABLE;
-                U3_TX_ISR_ENABLE = DISABLE;
+                U3_ENABLE = DISABLED;
+                U3_RX_ISR_ENABLE = DISABLED;
+                U3_TX_ISR_ENABLE = DISABLED;
                 break;
 #endif // UART_3
 #ifdef UART_4
         case UART_4:
-                U4_ENABLE = DISABLE; ;;U4MODEbits.UARTEN = 0;
-                U4_RX_ISR_ENABLE = DISABLE;
-                U4_TX_ISR_ENABLE = DISABLE;
+                U4_ENABLE = DISABLED;
+                U4_RX_ISR_ENABLE = DISABLED;
+                U4_TX_ISR_ENABLE = DISABLED;
                 break;
 #endif // UART_4
         default:
@@ -996,10 +996,10 @@ static void uart_set_com_config(struct uart_data *com)
 			U1BRG = ((SYS_CLOCK_FREQ / com->baud) / 16) - 1;
                         U1_RX_ISR_FLAG = 0;
                         U1_TX_ISR_FLAG = 0;
-			U1_RX_ISR_ENABLE = ENABLE;
-			U1_TX_ISR_ENABLE = ENABLE;
+			U1_RX_ISR_ENABLE = ENABLED;
+			U1_TX_ISR_ENABLE = ENABLED;
 
-			U1_ENABLE = ENABLE;
+			U1_ENABLE = ENABLED;
 #elif defined(__18F2680) || defined(__18F4585)
                         TXSTAbits.TXEN = 1;    // Transmitter enabled
                         TXSTAbits.SYNC = 0;    // Asynchronous mode
@@ -1051,7 +1051,7 @@ static void uart_set_com_config(struct uart_data *com)
 			U2_RX_ISR_ENABLE = 1;
 			U2_TX_ISR_ENABLE = 1;
 
-			U2_ENABLE = ENABLE;
+			U2_ENABLE = ENABLED;
 			break;
 #endif // UART_2
 #ifdef UART_3
@@ -1081,7 +1081,7 @@ static void uart_set_com_config(struct uart_data *com)
 			U3_RX_ISR_ENABLE = 1;
 			U3_TX_ISR_ENABLE = 1;
 
-			U3_ENABLE = ENABLE; //U3MODEbits.UARTEN = 1;
+			U3_ENABLE = ENABLED; //U3MODEbits.UARTEN = 1;
 			break;
 #endif // UART_3
 #ifdef UART_4
@@ -1108,10 +1108,10 @@ static void uart_set_com_config(struct uart_data *com)
 			U4BRG = ((SYS_CLOCK_FREQ / com->baud) / 16) - 1;
                         U4_RX_ISR_FLAG = 0;
                         U4_TX_ISR_FLAG = 0;
-			U4_RX_ISR_ENABLE = ENABLE;
-			U4_TX_ISR_ENABLE = ENABLE;
+			U4_RX_ISR_ENABLE = ENABLED;
+			U4_TX_ISR_ENABLE = ENABLED;
 
-			U4_ENABLE = ENABLE; //U4MODEbits.UARTEN = 1;
+			U4_ENABLE = ENABLED; //U4MODEbits.UARTEN = 1;
 			break;
 #endif // UART_4
 		default:
