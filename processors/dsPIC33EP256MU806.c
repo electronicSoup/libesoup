@@ -29,7 +29,7 @@ void cpu_init(void)
 {
         clock_init();
         
-        INTCON2bits.GIE = ENABLE;
+        INTCON2bits.GIE = ENABLED;
 #ifdef SYS_SPI_BUS
         spi_init();
 #endif
