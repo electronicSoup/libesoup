@@ -206,25 +206,25 @@ void hw_timer_init(void)
 	 */
 	T1CONbits.TCS = 0;      // Internal FOSC/2
 	T1CONbits.TGATE = 0;
-        IPC0bits.T1IP = 0x07;   // Higest Priority
+        IPC0bits.T1IP = 0x06;   // Higest Priority
 
 	T2CONbits.T32 = 0;      // 16 Bit Timer
 	T2CONbits.TCS = 0;      // Internal FOSC/2
         T2CONbits.TGATE = 0;
-        IPC1bits.T2IP = 0x07;   // Higest Priority
+        IPC1bits.T2IP = 0x06;   // Higest Priority
         
 	T3CONbits.TCS = 0;      // Internal FOSC/2
         T3CONbits.TGATE = 0;
-        IPC2bits.T3IP = 0x07;   // Higest Priority
+        IPC2bits.T3IP = 0x06;   // Higest Priority
         
 	T4CONbits.T32 = 0;      // 16 Bit Timer
 	T4CONbits.TCS = 0;      // Internal FOSC/2
         T4CONbits.TGATE = 0;
-        IPC6bits.T4IP = 0x07;   // Higest Priority
+        IPC6bits.T4IP = 0x06;   // Higest Priority
         
 	T5CONbits.TCS = 0;      // Internal FOSC/2
         T5CONbits.TGATE = 0;
-        IPC7bits.T5IP = 0x07;   // Higest Priority
+        IPC7bits.T5IP = 0x06;   // Higest Priority
 #elif defined(__18F2680) || defined(__18F4585)
         T0CONbits.T08BIT = 0;   // 16 Bit timer
         T0CONbits.T0CS   = 0;   // Clock source Instruction Clock
@@ -233,6 +233,20 @@ void hw_timer_init(void)
         T1CONbits.TMR1ON = 0;   // Clock source Instruction Clock
 #endif
 }
+
+#if (SYS_LOG_LEVEL != NO_LOGGING)
+uint8_t hw_timer_active_count(void)
+{
+        uint8_t count = 0;
+	uint8_t timer;
+
+	for(timer = 0; timer < NUMBER_HW_TIMERS; timer++) {
+		if(timers[timer].status != TIMER_UNUSED)
+                        count++;
+        }
+        return(count);
+}
+#endif
 
 /*
  * hw_timer_start returns the id of the started timer.
@@ -422,7 +436,33 @@ static result_t start_timer(uint8_t timer, ty_time_units units, uint16_t duratio
 #if defined(__18F4585) || defined(__18F2680)
                         ticks = (uint32_t) ((uint32_t) (((uint32_t) SYS_CLOCK_FREQ / 4) / 1000000) * duration);
 #else
-			ticks = (uint32_t) ((uint32_t) (((uint32_t) SYS_CLOCK_FREQ) / 8000000) * duration);
+                        /*
+                         * SYS_CLOCK_FREQ ticks in a Second 
+                         * 1uS = 1Sec/1,000,000
+                         * Ticks in a uS = SYS_CLOCK_FREQ/1,000,000
+                         * 
+                         * dsPIC33EP256MU806 @ 60,000,000 :
+                         * Minimum time is 13uS if ticks is set to 1 the overhead of 
+                         * functions calls to here and back to the expiry function are
+                         * that long.
+                         */
+#if defined(__dsPIC33EP256MU806__)
+#if (SYS_CLOCK_FREQ == 60000000)
+                        if(duration > 13) {
+                                ticks = (uint32_t) ((uint32_t) (((uint32_t) SYS_CLOCK_FREQ) / 1000000) * (duration - 13));
+                        } else {
+                                ticks = 0;
+                        }
+#elif (SYS_CLOCK_FREQ == 8000000)
+                        if(duration > 88) {
+                                ticks = (uint32_t) ((uint32_t) (((uint32_t) SYS_CLOCK_FREQ) / 1000000) * (duration - 88));
+                        } else {
+                                ticks = 0;
+                        }
+#else
+#error SYS_CLOCK_FREQ Not coded in hw_timers.c
+#endif
+#endif                        
 #endif
                 break;
 
@@ -431,6 +471,12 @@ static result_t start_timer(uint8_t timer, ty_time_units units, uint16_t duratio
 			set_clock_divide(timer, 4);
 			ticks = (uint32_t) ((uint32_t) (((uint32_t)(SYS_CLOCK_FREQ / 4)) / 4000) * duration);
 #else
+                        /*
+                         * Divided by 64 so SYS_CLOCK_FREQ/64 ticks in a Second
+                         * 1mS = 1Sec/1,000
+                         * Ticks in 1mS = (SYS_CLOCK_FREQ/64)/1,000
+                         *              = SYS_CLOCK_FREQ / 64 * 1,000
+                         */
 			set_clock_divide(timer, 64);
 			ticks = (uint32_t) ((uint32_t) (((uint32_t) SYS_CLOCK_FREQ) / 64000 ) * duration);
 #endif
@@ -450,6 +496,10 @@ static result_t start_timer(uint8_t timer, ty_time_units units, uint16_t duratio
 #endif
                         }
 #else
+                        /*
+                         * Divide by 256 so 
+                         * in 1 Second (SYS_CLOCK_FREQ/256) ticks
+                         */
 			set_clock_divide(timer, 256);
 			ticks = (uint32_t) ((uint32_t) (((uint32_t) SYS_CLOCK_FREQ) / 256) * duration);
 #endif
@@ -480,7 +530,13 @@ static result_t start_timer(uint8_t timer, ty_time_units units, uint16_t duratio
 		check_timer(timer);
 
                 return(SUCCESS);
-	}
+	} else {
+                /*
+                 * Simply call the expiry function
+                 */
+                expiry_function(data);
+                return(SUCCESS);
+        }
 
 	return(ERR_BAD_INPUT_PARAMETER);
 }
@@ -676,6 +732,8 @@ void check_timer(uint8_t timer)
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 //        LOG_D("check_timer(%d) repeats 0x%x, remainder 0x%x\n\r", timer, timers[timer].repeats, timers[timer].remainder);
 #endif
+
+        LATDbits.LATD3 = ~LATDbits.LATD3;
 
 	if(timers[timer].repeats) {
 		switch (timer) {

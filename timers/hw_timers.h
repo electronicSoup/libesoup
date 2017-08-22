@@ -56,6 +56,10 @@
  */
 extern void     hw_timer_init(void);
 
+#if (SYS_LOG_LEVEL != NO_LOGGING)
+extern uint8_t hw_timer_active_count(void);
+#endif
+
 /**
  * @brief Function to start a micro-controller hardware timer.
  * 
