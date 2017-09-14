@@ -25,11 +25,36 @@
 #include "libesoup/utils/clock.h"
 #include "libesoup/utils/spi.h"
 
+#include "libesoup/logger/serial_log.h"
+
+#ifdef SYS_HW_TIMERS
+#include "libesoup/timers/hw_timers.h"
+#endif
+
+#ifdef SYS_SW_TIMERS
+#include "libesoup/timers/sw_timers.h"
+#endif
+
 void cpu_init(void)
 {
+	result_t rc;
+	
         clock_init();
         
         INTCON2bits.GIE = ENABLED;
+	
+#if (SYS_LOG_LEVEL != NO_LOGGING)
+	rc = serial_logging_init();
+#endif
+
+#ifdef SYS_HW_TIMERS
+	hw_timer_init();
+#endif
+	
+#ifdef SYS_SW_TIMERS
+	sw_timer_init();
+#endif
+
 #ifdef SYS_SPI_BUS
         spi_init();
 #endif
