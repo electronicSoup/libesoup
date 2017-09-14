@@ -113,6 +113,11 @@
 #define SYS_LOG_LEVEL LOG_DEBUG
 
 /**
+ * @brief Enable the Hardware timers of the target device
+ */
+//#define SYS_HW_TIMERS
+
+/**
  * @brief Number of Software timers available in the system.
  *
  * If your project includes libesoup Software Timer code then you must use this 
