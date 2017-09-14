@@ -45,10 +45,14 @@
  * main_sw_timers.c
  *
  */
+
 #define DEBUG_FILE TRUE
 #define TAG "SW_TIMERS"
 
 #include "libesoup_config.h"
+
+#ifdef SYS_SW_TIMERS
+
 #include "libesoup/logger/serial_log.h"
 #include "libesoup/timers/hw_timers.h"
 #include "libesoup/timers/sw_timers.h"
@@ -426,3 +430,6 @@ result_t sw_timer_cancel_all(void)
 	return (SUCCESS);
 }
 #endif // if defined(MCP)
+
+
+#endif // #ifdef SYS_SW_TIMERS
