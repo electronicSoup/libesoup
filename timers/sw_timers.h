@@ -32,6 +32,10 @@
 #ifndef SW_TIMERS_H
 #define SW_TIMERS_H
 
+#include "hw_timers.h"
+
+#define TIMER_INIT(timer) timer = BAD_TIMER;
+
 /*
  * timer_t Timer identifier
  *
@@ -39,7 +43,6 @@
  */
 #if defined(MCP)
 typedef uint8_t timer_t;
-#endif  // if defined(MCP)
 
 /**
  * @brief convience macro to convert a Seconds value to system ticks
@@ -59,7 +62,6 @@ typedef uint8_t timer_t;
  */
 #define MILLI_SECONDS_TO_TICKS(ms) ((ms < SYS_SW_TIMER_TICK_ms) ? 1 : (ms / SYS_SW_TIMER_TICK_ms))
 
-#if defined(MCP)
 /**
  * @brief Data passed to expiry funciton on timer expiry.
  *
@@ -113,7 +115,6 @@ typedef void (*expiry_function)(timer_t timer_id, union sigval);
 #define TMR0L_VAL (0xFFFF - ((SYS_SW_TIMER_TICK_ms * SYS_CLOCK_FREQ) / 4000)) & 0xFF
 #endif // (__18F2680) || __18F4585)
 
-
 /*
  * CHECK_TIMERS()
  *
@@ -121,9 +122,9 @@ typedef void (*expiry_function)(timer_t timer_id, union sigval);
  * so taht it calls the library timer functionality when ever the tick
  * interrup has occured.
  */
-#define CHECK_TIMERS()  if(timer_ticked) timer_tick();
-
 extern volatile boolean timer_ticked;
+
+#define CHECK_TIMERS()  if(timer_ticked) timer_tick();
 
 /*
  * timer_tick()
