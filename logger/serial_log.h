@@ -4,7 +4,7 @@
  *
  * Definitions for configuration of the Serial Port
  *
- * Copyright 2014 John Whitmore <jwhitmore@electronicsoup.com>
+ * Copyright 2017 John Whitmore <jwhitmore@electronicsoup.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 2 of the GNU Lesser General Public License
@@ -55,8 +55,7 @@
  *  serial_logging_init()
  *
  * This function is only defined for Code compiled for the Microchip
- * microcontroller so the switch MCP must be defined as part of your
- * Project.
+ * microcontroller
  * 
  * In additon the libesoup_config.h config file should define the baud rate to
  * be used and the physical pin configuration of the 3 pin serial port:
@@ -67,7 +66,7 @@
  * And either : #define SYS_SERIAL_PORT_GndTxRx or #define SYS_SERIAL_PORT_GndRxTx
  *
  */
-#if defined(MCP)
+#if defined(XC16) || defined(__XC8)
 extern result_t serial_logging_init(void);
 extern result_t serial_logging_exit(void);
 
@@ -80,7 +79,7 @@ extern result_t serial_logging_exit(void);
 //extern void putch(char);
 #endif // (__18F2680) || (__18F4585)
 
-#endif // MCP
+#endif // XC16 || __XC8
 
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 #define LOG_D  printf("D - %s:", TAG); printf

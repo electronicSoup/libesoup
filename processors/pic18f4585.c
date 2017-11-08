@@ -41,6 +41,11 @@ void cpu_init(void)
          * compiler warning.
          */
         clock_init();
+	
+#ifdef SYS_HW_TIMERS
+	hw_timer_init();
+#endif
+	
         RCONbits.IPEN = 0; // No Interrupt priority level
 	INTCONbits.GIE = 1;    // Enable Interrupts
 	INTCONbits.PEIE = 1;   // Enable Peripheral Interrupts

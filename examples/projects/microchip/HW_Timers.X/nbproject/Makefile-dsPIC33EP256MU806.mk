@@ -98,49 +98,49 @@ ${OBJECTDIR}/_ext/566826655/pic24FJ256GB106.o: ../../../../processors/pic24FJ256
 	@${MKDIR} "${OBJECTDIR}/_ext/566826655" 
 	@${RM} ${OBJECTDIR}/_ext/566826655/pic24FJ256GB106.o.d 
 	@${RM} ${OBJECTDIR}/_ext/566826655/pic24FJ256GB106.o 
-	${MP_CC} $(MP_EXTRA_CC_PRE)  ../../../../processors/pic24FJ256GB106.c  -o ${OBJECTDIR}/_ext/566826655/pic24FJ256GB106.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/_ext/566826655/pic24FJ256GB106.o.d"      -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1  -mno-eds-warn  -omf=elf -DXPRJ_dsPIC33EP256MU806=$(CND_CONF)  -legacy-libc  $(COMPARISON_BUILD)  -O0 -I"." -I"../../../../../" -DMCP -msmart-io=1 -Wall -msfr-warn=off  
+	${MP_CC} $(MP_EXTRA_CC_PRE)  ../../../../processors/pic24FJ256GB106.c  -o ${OBJECTDIR}/_ext/566826655/pic24FJ256GB106.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/_ext/566826655/pic24FJ256GB106.o.d"      -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1  -mno-eds-warn  -omf=elf -DXPRJ_dsPIC33EP256MU806=$(CND_CONF)  -legacy-libc  $(COMPARISON_BUILD)  -O0 -I"." -I"../../../../../" -msmart-io=1 -Wall -msfr-warn=off  
 	@${FIXDEPS} "${OBJECTDIR}/_ext/566826655/pic24FJ256GB106.o.d" $(SILENT)  -rsi ${MP_CC_DIR}../ 
 	
 ${OBJECTDIR}/_ext/566826655/pic18f2680.o: ../../../../processors/pic18f2680.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} "${OBJECTDIR}/_ext/566826655" 
 	@${RM} ${OBJECTDIR}/_ext/566826655/pic18f2680.o.d 
 	@${RM} ${OBJECTDIR}/_ext/566826655/pic18f2680.o 
-	${MP_CC} $(MP_EXTRA_CC_PRE)  ../../../../processors/pic18f2680.c  -o ${OBJECTDIR}/_ext/566826655/pic18f2680.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/_ext/566826655/pic18f2680.o.d"      -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1  -mno-eds-warn  -omf=elf -DXPRJ_dsPIC33EP256MU806=$(CND_CONF)  -legacy-libc  $(COMPARISON_BUILD)  -O0 -I"." -I"../../../../../" -DMCP -msmart-io=1 -Wall -msfr-warn=off  
+	${MP_CC} $(MP_EXTRA_CC_PRE)  ../../../../processors/pic18f2680.c  -o ${OBJECTDIR}/_ext/566826655/pic18f2680.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/_ext/566826655/pic18f2680.o.d"      -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1  -mno-eds-warn  -omf=elf -DXPRJ_dsPIC33EP256MU806=$(CND_CONF)  -legacy-libc  $(COMPARISON_BUILD)  -O0 -I"." -I"../../../../../" -msmart-io=1 -Wall -msfr-warn=off  
 	@${FIXDEPS} "${OBJECTDIR}/_ext/566826655/pic18f2680.o.d" $(SILENT)  -rsi ${MP_CC_DIR}../ 
 	
 ${OBJECTDIR}/_ext/566826655/dsPIC33EP256MU806.o: ../../../../processors/dsPIC33EP256MU806.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} "${OBJECTDIR}/_ext/566826655" 
 	@${RM} ${OBJECTDIR}/_ext/566826655/dsPIC33EP256MU806.o.d 
 	@${RM} ${OBJECTDIR}/_ext/566826655/dsPIC33EP256MU806.o 
-	${MP_CC} $(MP_EXTRA_CC_PRE)  ../../../../processors/dsPIC33EP256MU806.c  -o ${OBJECTDIR}/_ext/566826655/dsPIC33EP256MU806.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/_ext/566826655/dsPIC33EP256MU806.o.d"      -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1  -mno-eds-warn  -omf=elf -DXPRJ_dsPIC33EP256MU806=$(CND_CONF)  -legacy-libc  $(COMPARISON_BUILD)  -O0 -I"." -I"../../../../../" -DMCP -msmart-io=1 -Wall -msfr-warn=off  
+	${MP_CC} $(MP_EXTRA_CC_PRE)  ../../../../processors/dsPIC33EP256MU806.c  -o ${OBJECTDIR}/_ext/566826655/dsPIC33EP256MU806.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/_ext/566826655/dsPIC33EP256MU806.o.d"      -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1  -mno-eds-warn  -omf=elf -DXPRJ_dsPIC33EP256MU806=$(CND_CONF)  -legacy-libc  $(COMPARISON_BUILD)  -O0 -I"." -I"../../../../../" -msmart-io=1 -Wall -msfr-warn=off  
 	@${FIXDEPS} "${OBJECTDIR}/_ext/566826655/dsPIC33EP256MU806.o.d" $(SILENT)  -rsi ${MP_CC_DIR}../ 
 	
 ${OBJECTDIR}/_ext/566826655/pic18f4585.o: ../../../../processors/pic18f4585.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} "${OBJECTDIR}/_ext/566826655" 
 	@${RM} ${OBJECTDIR}/_ext/566826655/pic18f4585.o.d 
 	@${RM} ${OBJECTDIR}/_ext/566826655/pic18f4585.o 
-	${MP_CC} $(MP_EXTRA_CC_PRE)  ../../../../processors/pic18f4585.c  -o ${OBJECTDIR}/_ext/566826655/pic18f4585.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/_ext/566826655/pic18f4585.o.d"      -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1  -mno-eds-warn  -omf=elf -DXPRJ_dsPIC33EP256MU806=$(CND_CONF)  -legacy-libc  $(COMPARISON_BUILD)  -O0 -I"." -I"../../../../../" -DMCP -msmart-io=1 -Wall -msfr-warn=off  
+	${MP_CC} $(MP_EXTRA_CC_PRE)  ../../../../processors/pic18f4585.c  -o ${OBJECTDIR}/_ext/566826655/pic18f4585.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/_ext/566826655/pic18f4585.o.d"      -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1  -mno-eds-warn  -omf=elf -DXPRJ_dsPIC33EP256MU806=$(CND_CONF)  -legacy-libc  $(COMPARISON_BUILD)  -O0 -I"." -I"../../../../../" -msmart-io=1 -Wall -msfr-warn=off  
 	@${FIXDEPS} "${OBJECTDIR}/_ext/566826655/pic18f4585.o.d" $(SILENT)  -rsi ${MP_CC_DIR}../ 
 	
 ${OBJECTDIR}/_ext/1924324082/hw_timers.o: ../../../../timers/hw_timers.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} "${OBJECTDIR}/_ext/1924324082" 
 	@${RM} ${OBJECTDIR}/_ext/1924324082/hw_timers.o.d 
 	@${RM} ${OBJECTDIR}/_ext/1924324082/hw_timers.o 
-	${MP_CC} $(MP_EXTRA_CC_PRE)  ../../../../timers/hw_timers.c  -o ${OBJECTDIR}/_ext/1924324082/hw_timers.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/_ext/1924324082/hw_timers.o.d"      -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1  -mno-eds-warn  -omf=elf -DXPRJ_dsPIC33EP256MU806=$(CND_CONF)  -legacy-libc  $(COMPARISON_BUILD)  -O0 -I"." -I"../../../../../" -DMCP -msmart-io=1 -Wall -msfr-warn=off  
+	${MP_CC} $(MP_EXTRA_CC_PRE)  ../../../../timers/hw_timers.c  -o ${OBJECTDIR}/_ext/1924324082/hw_timers.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/_ext/1924324082/hw_timers.o.d"      -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1  -mno-eds-warn  -omf=elf -DXPRJ_dsPIC33EP256MU806=$(CND_CONF)  -legacy-libc  $(COMPARISON_BUILD)  -O0 -I"." -I"../../../../../" -msmart-io=1 -Wall -msfr-warn=off  
 	@${FIXDEPS} "${OBJECTDIR}/_ext/1924324082/hw_timers.o.d" $(SILENT)  -rsi ${MP_CC_DIR}../ 
 	
 ${OBJECTDIR}/_ext/1030658703/clock.o: ../../../../utils/clock.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} "${OBJECTDIR}/_ext/1030658703" 
 	@${RM} ${OBJECTDIR}/_ext/1030658703/clock.o.d 
 	@${RM} ${OBJECTDIR}/_ext/1030658703/clock.o 
-	${MP_CC} $(MP_EXTRA_CC_PRE)  ../../../../utils/clock.c  -o ${OBJECTDIR}/_ext/1030658703/clock.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/_ext/1030658703/clock.o.d"      -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1  -mno-eds-warn  -omf=elf -DXPRJ_dsPIC33EP256MU806=$(CND_CONF)  -legacy-libc  $(COMPARISON_BUILD)  -O0 -I"." -I"../../../../../" -DMCP -msmart-io=1 -Wall -msfr-warn=off  
+	${MP_CC} $(MP_EXTRA_CC_PRE)  ../../../../utils/clock.c  -o ${OBJECTDIR}/_ext/1030658703/clock.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/_ext/1030658703/clock.o.d"      -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1  -mno-eds-warn  -omf=elf -DXPRJ_dsPIC33EP256MU806=$(CND_CONF)  -legacy-libc  $(COMPARISON_BUILD)  -O0 -I"." -I"../../../../../" -msmart-io=1 -Wall -msfr-warn=off  
 	@${FIXDEPS} "${OBJECTDIR}/_ext/1030658703/clock.o.d" $(SILENT)  -rsi ${MP_CC_DIR}../ 
 	
 ${OBJECTDIR}/_ext/2124829536/main_hw_timers.o: ../../../main_hw_timers.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} "${OBJECTDIR}/_ext/2124829536" 
 	@${RM} ${OBJECTDIR}/_ext/2124829536/main_hw_timers.o.d 
 	@${RM} ${OBJECTDIR}/_ext/2124829536/main_hw_timers.o 
-	${MP_CC} $(MP_EXTRA_CC_PRE)  ../../../main_hw_timers.c  -o ${OBJECTDIR}/_ext/2124829536/main_hw_timers.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/_ext/2124829536/main_hw_timers.o.d"      -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1  -mno-eds-warn  -omf=elf -DXPRJ_dsPIC33EP256MU806=$(CND_CONF)  -legacy-libc  $(COMPARISON_BUILD)  -O0 -I"." -I"../../../../../" -DMCP -msmart-io=1 -Wall -msfr-warn=off  
+	${MP_CC} $(MP_EXTRA_CC_PRE)  ../../../main_hw_timers.c  -o ${OBJECTDIR}/_ext/2124829536/main_hw_timers.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/_ext/2124829536/main_hw_timers.o.d"      -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1  -mno-eds-warn  -omf=elf -DXPRJ_dsPIC33EP256MU806=$(CND_CONF)  -legacy-libc  $(COMPARISON_BUILD)  -O0 -I"." -I"../../../../../" -msmart-io=1 -Wall -msfr-warn=off  
 	@${FIXDEPS} "${OBJECTDIR}/_ext/2124829536/main_hw_timers.o.d" $(SILENT)  -rsi ${MP_CC_DIR}../ 
 	
 else
@@ -148,49 +148,49 @@ ${OBJECTDIR}/_ext/566826655/pic24FJ256GB106.o: ../../../../processors/pic24FJ256
 	@${MKDIR} "${OBJECTDIR}/_ext/566826655" 
 	@${RM} ${OBJECTDIR}/_ext/566826655/pic24FJ256GB106.o.d 
 	@${RM} ${OBJECTDIR}/_ext/566826655/pic24FJ256GB106.o 
-	${MP_CC} $(MP_EXTRA_CC_PRE)  ../../../../processors/pic24FJ256GB106.c  -o ${OBJECTDIR}/_ext/566826655/pic24FJ256GB106.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/_ext/566826655/pic24FJ256GB106.o.d"      -mno-eds-warn  -g -omf=elf -DXPRJ_dsPIC33EP256MU806=$(CND_CONF)  -legacy-libc  $(COMPARISON_BUILD)  -O0 -I"." -I"../../../../../" -DMCP -msmart-io=1 -Wall -msfr-warn=off  
+	${MP_CC} $(MP_EXTRA_CC_PRE)  ../../../../processors/pic24FJ256GB106.c  -o ${OBJECTDIR}/_ext/566826655/pic24FJ256GB106.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/_ext/566826655/pic24FJ256GB106.o.d"      -mno-eds-warn  -g -omf=elf -DXPRJ_dsPIC33EP256MU806=$(CND_CONF)  -legacy-libc  $(COMPARISON_BUILD)  -O0 -I"." -I"../../../../../" -msmart-io=1 -Wall -msfr-warn=off  
 	@${FIXDEPS} "${OBJECTDIR}/_ext/566826655/pic24FJ256GB106.o.d" $(SILENT)  -rsi ${MP_CC_DIR}../ 
 	
 ${OBJECTDIR}/_ext/566826655/pic18f2680.o: ../../../../processors/pic18f2680.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} "${OBJECTDIR}/_ext/566826655" 
 	@${RM} ${OBJECTDIR}/_ext/566826655/pic18f2680.o.d 
 	@${RM} ${OBJECTDIR}/_ext/566826655/pic18f2680.o 
-	${MP_CC} $(MP_EXTRA_CC_PRE)  ../../../../processors/pic18f2680.c  -o ${OBJECTDIR}/_ext/566826655/pic18f2680.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/_ext/566826655/pic18f2680.o.d"      -mno-eds-warn  -g -omf=elf -DXPRJ_dsPIC33EP256MU806=$(CND_CONF)  -legacy-libc  $(COMPARISON_BUILD)  -O0 -I"." -I"../../../../../" -DMCP -msmart-io=1 -Wall -msfr-warn=off  
+	${MP_CC} $(MP_EXTRA_CC_PRE)  ../../../../processors/pic18f2680.c  -o ${OBJECTDIR}/_ext/566826655/pic18f2680.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/_ext/566826655/pic18f2680.o.d"      -mno-eds-warn  -g -omf=elf -DXPRJ_dsPIC33EP256MU806=$(CND_CONF)  -legacy-libc  $(COMPARISON_BUILD)  -O0 -I"." -I"../../../../../" -msmart-io=1 -Wall -msfr-warn=off  
 	@${FIXDEPS} "${OBJECTDIR}/_ext/566826655/pic18f2680.o.d" $(SILENT)  -rsi ${MP_CC_DIR}../ 
 	
 ${OBJECTDIR}/_ext/566826655/dsPIC33EP256MU806.o: ../../../../processors/dsPIC33EP256MU806.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} "${OBJECTDIR}/_ext/566826655" 
 	@${RM} ${OBJECTDIR}/_ext/566826655/dsPIC33EP256MU806.o.d 
 	@${RM} ${OBJECTDIR}/_ext/566826655/dsPIC33EP256MU806.o 
-	${MP_CC} $(MP_EXTRA_CC_PRE)  ../../../../processors/dsPIC33EP256MU806.c  -o ${OBJECTDIR}/_ext/566826655/dsPIC33EP256MU806.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/_ext/566826655/dsPIC33EP256MU806.o.d"      -mno-eds-warn  -g -omf=elf -DXPRJ_dsPIC33EP256MU806=$(CND_CONF)  -legacy-libc  $(COMPARISON_BUILD)  -O0 -I"." -I"../../../../../" -DMCP -msmart-io=1 -Wall -msfr-warn=off  
+	${MP_CC} $(MP_EXTRA_CC_PRE)  ../../../../processors/dsPIC33EP256MU806.c  -o ${OBJECTDIR}/_ext/566826655/dsPIC33EP256MU806.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/_ext/566826655/dsPIC33EP256MU806.o.d"      -mno-eds-warn  -g -omf=elf -DXPRJ_dsPIC33EP256MU806=$(CND_CONF)  -legacy-libc  $(COMPARISON_BUILD)  -O0 -I"." -I"../../../../../" -msmart-io=1 -Wall -msfr-warn=off  
 	@${FIXDEPS} "${OBJECTDIR}/_ext/566826655/dsPIC33EP256MU806.o.d" $(SILENT)  -rsi ${MP_CC_DIR}../ 
 	
 ${OBJECTDIR}/_ext/566826655/pic18f4585.o: ../../../../processors/pic18f4585.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} "${OBJECTDIR}/_ext/566826655" 
 	@${RM} ${OBJECTDIR}/_ext/566826655/pic18f4585.o.d 
 	@${RM} ${OBJECTDIR}/_ext/566826655/pic18f4585.o 
-	${MP_CC} $(MP_EXTRA_CC_PRE)  ../../../../processors/pic18f4585.c  -o ${OBJECTDIR}/_ext/566826655/pic18f4585.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/_ext/566826655/pic18f4585.o.d"      -mno-eds-warn  -g -omf=elf -DXPRJ_dsPIC33EP256MU806=$(CND_CONF)  -legacy-libc  $(COMPARISON_BUILD)  -O0 -I"." -I"../../../../../" -DMCP -msmart-io=1 -Wall -msfr-warn=off  
+	${MP_CC} $(MP_EXTRA_CC_PRE)  ../../../../processors/pic18f4585.c  -o ${OBJECTDIR}/_ext/566826655/pic18f4585.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/_ext/566826655/pic18f4585.o.d"      -mno-eds-warn  -g -omf=elf -DXPRJ_dsPIC33EP256MU806=$(CND_CONF)  -legacy-libc  $(COMPARISON_BUILD)  -O0 -I"." -I"../../../../../" -msmart-io=1 -Wall -msfr-warn=off  
 	@${FIXDEPS} "${OBJECTDIR}/_ext/566826655/pic18f4585.o.d" $(SILENT)  -rsi ${MP_CC_DIR}../ 
 	
 ${OBJECTDIR}/_ext/1924324082/hw_timers.o: ../../../../timers/hw_timers.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} "${OBJECTDIR}/_ext/1924324082" 
 	@${RM} ${OBJECTDIR}/_ext/1924324082/hw_timers.o.d 
 	@${RM} ${OBJECTDIR}/_ext/1924324082/hw_timers.o 
-	${MP_CC} $(MP_EXTRA_CC_PRE)  ../../../../timers/hw_timers.c  -o ${OBJECTDIR}/_ext/1924324082/hw_timers.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/_ext/1924324082/hw_timers.o.d"      -mno-eds-warn  -g -omf=elf -DXPRJ_dsPIC33EP256MU806=$(CND_CONF)  -legacy-libc  $(COMPARISON_BUILD)  -O0 -I"." -I"../../../../../" -DMCP -msmart-io=1 -Wall -msfr-warn=off  
+	${MP_CC} $(MP_EXTRA_CC_PRE)  ../../../../timers/hw_timers.c  -o ${OBJECTDIR}/_ext/1924324082/hw_timers.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/_ext/1924324082/hw_timers.o.d"      -mno-eds-warn  -g -omf=elf -DXPRJ_dsPIC33EP256MU806=$(CND_CONF)  -legacy-libc  $(COMPARISON_BUILD)  -O0 -I"." -I"../../../../../" -msmart-io=1 -Wall -msfr-warn=off  
 	@${FIXDEPS} "${OBJECTDIR}/_ext/1924324082/hw_timers.o.d" $(SILENT)  -rsi ${MP_CC_DIR}../ 
 	
 ${OBJECTDIR}/_ext/1030658703/clock.o: ../../../../utils/clock.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} "${OBJECTDIR}/_ext/1030658703" 
 	@${RM} ${OBJECTDIR}/_ext/1030658703/clock.o.d 
 	@${RM} ${OBJECTDIR}/_ext/1030658703/clock.o 
-	${MP_CC} $(MP_EXTRA_CC_PRE)  ../../../../utils/clock.c  -o ${OBJECTDIR}/_ext/1030658703/clock.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/_ext/1030658703/clock.o.d"      -mno-eds-warn  -g -omf=elf -DXPRJ_dsPIC33EP256MU806=$(CND_CONF)  -legacy-libc  $(COMPARISON_BUILD)  -O0 -I"." -I"../../../../../" -DMCP -msmart-io=1 -Wall -msfr-warn=off  
+	${MP_CC} $(MP_EXTRA_CC_PRE)  ../../../../utils/clock.c  -o ${OBJECTDIR}/_ext/1030658703/clock.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/_ext/1030658703/clock.o.d"      -mno-eds-warn  -g -omf=elf -DXPRJ_dsPIC33EP256MU806=$(CND_CONF)  -legacy-libc  $(COMPARISON_BUILD)  -O0 -I"." -I"../../../../../" -msmart-io=1 -Wall -msfr-warn=off  
 	@${FIXDEPS} "${OBJECTDIR}/_ext/1030658703/clock.o.d" $(SILENT)  -rsi ${MP_CC_DIR}../ 
 	
 ${OBJECTDIR}/_ext/2124829536/main_hw_timers.o: ../../../main_hw_timers.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} "${OBJECTDIR}/_ext/2124829536" 
 	@${RM} ${OBJECTDIR}/_ext/2124829536/main_hw_timers.o.d 
 	@${RM} ${OBJECTDIR}/_ext/2124829536/main_hw_timers.o 
-	${MP_CC} $(MP_EXTRA_CC_PRE)  ../../../main_hw_timers.c  -o ${OBJECTDIR}/_ext/2124829536/main_hw_timers.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/_ext/2124829536/main_hw_timers.o.d"      -mno-eds-warn  -g -omf=elf -DXPRJ_dsPIC33EP256MU806=$(CND_CONF)  -legacy-libc  $(COMPARISON_BUILD)  -O0 -I"." -I"../../../../../" -DMCP -msmart-io=1 -Wall -msfr-warn=off  
+	${MP_CC} $(MP_EXTRA_CC_PRE)  ../../../main_hw_timers.c  -o ${OBJECTDIR}/_ext/2124829536/main_hw_timers.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/_ext/2124829536/main_hw_timers.o.d"      -mno-eds-warn  -g -omf=elf -DXPRJ_dsPIC33EP256MU806=$(CND_CONF)  -legacy-libc  $(COMPARISON_BUILD)  -O0 -I"." -I"../../../../../" -msmart-io=1 -Wall -msfr-warn=off  
 	@${FIXDEPS} "${OBJECTDIR}/_ext/2124829536/main_hw_timers.o.d" $(SILENT)  -rsi ${MP_CC_DIR}../ 
 	
 endif

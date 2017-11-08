@@ -4,7 +4,7 @@
  *
  * Software Timer definitions and function prototypes
  *
- * Copyright 2014 John Whitmore <jwhitmore@electronicsoup.com>
+ * Copyright 2017 John Whitmore <jwhitmore@electronicsoup.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 2 of the GNU Lesser General Public License
@@ -41,7 +41,7 @@
  *
  * A Timer identifer returned from a timer created by sw_timer_create()
  */
-#if defined(MCP)
+#if defined(XC16) || defined(__XC8)
 typedef uint8_t timer_t;
 
 /**
@@ -66,7 +66,7 @@ typedef uint8_t timer_t;
  * @brief Data passed to expiry funciton on timer expiry.
  *
  * The sigval union comes straight from the Linux timer API, which is why this
- * definition if encased in a test for MCP definition. The union is passed to
+ * definition if encased in a test for XC16 || __XC8 definition. The union is passed to
  * the expiry function if the timer expires. It can either carry a 16 bit
  * integer value or a pointer.
  *
@@ -83,7 +83,7 @@ union sigval {
            uint16_t     sival_int;         /**< 16 bit Integer value */
            void   *sival_ptr;         /**< Pointer value */
 };
-#endif  // if defined(MCP)
+#endif  // if defined(XC16) || __XC8
 
 /**
  * @brief call signiture of the timer expiry function.
@@ -104,7 +104,7 @@ union sigval {
 typedef void (*expiry_function)(timer_t timer_id, union sigval);
 
 
-#ifdef MCP
+#if defined(XC16) || defined(__XC8)
 
 #if defined (__18F2680) || defined(__18F4585)
 /*
@@ -143,7 +143,7 @@ extern void timer_tick(void);
     extern void timer_isr(void);
 #endif // (__18F2680) || (__18F4585)
 
-#endif // MCP
+#endif // XC16 || __XC8
 
 /*
  * sw_timer_init()

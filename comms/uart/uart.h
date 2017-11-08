@@ -4,7 +4,7 @@
  *
  * UART functionalty for the electronicSoup Cinnamon Bun
  *
- * Copyright 2016 John Whitmore <jwhitmore@electronicsoup.com>
+ * Copyright 2017 John Whitmore <jwhitmore@electronicsoup.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 2 of the GNU Lesser General Public License
@@ -39,10 +39,10 @@
 
 #define UART_IDLE_LOW         0
 #define UART_IDLE_HIGH        1
-#ifdef MCP
+#if defined(XC16) || defined(__XC8)
 #define UART_LITTLE_ENDIAN    0
 #define UART_BIG_ENDIAN       1
-#endif  // ifdef MCP
+#endif  // XC16 || __XC8
 
 #define UART_BAD         0xff
 

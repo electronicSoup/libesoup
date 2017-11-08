@@ -4,7 +4,7 @@
  *
  * Hardware Timer functionality for the electronicSoup Cinnamon Bun
  *
- * Copyright 2016 John Whitmore <jwhitmore@electronicsoup.com>
+ * Copyright 2017 John Whitmore <jwhitmore@electronicsoup.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 2 of the GNU Lesser General Public License
@@ -21,6 +21,9 @@
  *******************************************************************************
  *
  */
+#if !defined(XC16) && !defined(__XC8) && !defined(ES_LINUX)
+#error Unrecognised Compiler!
+#endif
 
 #define DEBUG_FILE TRUE
 #define TAG "HW_TIMERS"
@@ -541,8 +544,10 @@ static result_t start_timer(uint8_t timer, ty_time_units units, uint16_t duratio
                 expiry_function(data);
                 return(SUCCESS);
         }
-
+#ifndef __XC8 // X8 Compiler warns about unreachable code
 	return(ERR_BAD_INPUT_PARAMETER);
+
+#endif // __XC8
 }
 
 static void set_clock_divide(uint8_t timer, uint16_t clock_divide)

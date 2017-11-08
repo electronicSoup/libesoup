@@ -4,7 +4,7 @@
  *
  * Timer functionalty for the electronicSoup Cinnamon Bun
  *
- * Copyright 2014 John Whitmore <jwhitmore@electronicsoup.com>
+ * Copyright 2017 John Whitmore <jwhitmore@electronicsoup.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 2 of the GNU Lesser General Public License
@@ -74,14 +74,14 @@
 #error libesoup_config.h file should define SYS_NUMBER_OF_SW_TIMERS (see libesoup/examples/libesoup_config.h)
 #endif
 
-#ifdef MCP
+#if defined(XC16) || defined(__XC8)
 static uint16_t  timer_counter = 0;
 
 volatile boolean timer_ticked = FALSE;
 
 static uint8_t   hw_timer_paused = FALSE;
 static uint8_t   hw_timer = BAD_TIMER;
-#endif // MCP
+#endif // XC16 || __XC8
 
 /*
  * Data structure for a Timer on the Cinnamon Bun.
@@ -101,11 +101,11 @@ typedef struct {
  * If your project uses a limited number of know timers then you can set 
  * SYS_NUMBER_OF_SW_TIMERS to a known value.
  */
-#ifdef MCP
+#if defined(XC16) || defined(__XC8)
 #if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__) || (__dsPIC33EP256MU806__)
 #pragma udata
 #endif //__PIC24FJ256GB106__
-#endif // MCP
+#endif // XC16 || __XC8
 sys_timer_t timers[SYS_NUMBER_OF_SW_TIMERS];
 
 /*
@@ -114,12 +114,12 @@ sys_timer_t timers[SYS_NUMBER_OF_SW_TIMERS];
  * the main control loop of your project by calling the CHECK_TIMERS()
  * macro.
  */
-#ifdef MCP
+#if defined(XC16) || defined(__XC8)
 static void hw_expiry_function(void *data)
 {
 	timer_ticked = TRUE;
 }
-#endif // MCP
+#endif // XC16 || __XC8
 
 /*
  * void sw_timer_init(void)
@@ -180,7 +180,7 @@ void sw_timer_init(void)
  *
  * This function is not required by ES_LINUX systems
  */
-#ifdef MCP
+#if defined(XC16) || defined(__XC8)
 void timer_tick(void)
 {
 	uint16_t active_timers;
@@ -229,7 +229,7 @@ void timer_tick(void)
 	}
 
 }
-#endif // MCP
+#endif // XC16 || __XC8
 
 /*
  * result_t sw_timer_start(uint16_t ticks,
@@ -269,7 +269,7 @@ result_t sw_timer_start(uint16_t ticks,
 		     union sigval data,
 		     timer_t *timer)
 {
-#ifdef MCP
+#if defined(XC16) || defined(__XC8)
 	timer_t loop;
 
 	if(*timer != BAD_TIMER) {
@@ -377,7 +377,7 @@ result_t sw_timer_start(uint16_t ticks,
  */
 result_t sw_timer_cancel(timer_t timer)
 {
-#ifdef MCP
+#if defined(XC16) || defined(__XC8)
 	if ((timer == BAD_TIMER) || (timer >= SYS_NUMBER_OF_SW_TIMERS)) {
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
                 LOG_E("sw_timer_cancel() Bad timer identifier passed in!\n\r");
@@ -414,7 +414,7 @@ result_t sw_timer_cancel(timer_t timer)
 /*
  * sw_timer_cancel_all
  */
-#if defined(MCP)
+#if defined(XC16) || defined(__XC8)
 result_t sw_timer_cancel_all(void)
 {
 	uint8_t    loop;
@@ -429,7 +429,7 @@ result_t sw_timer_cancel_all(void)
 	}
 	return (SUCCESS);
 }
-#endif // if defined(MCP)
+#endif // XC16 || __XC8
 
 
 #endif // #ifdef SYS_SW_TIMERS

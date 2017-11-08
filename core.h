@@ -24,18 +24,9 @@
 #define _CORE_H
 
 /*
- * For documentation define all switches. These Must always be commented out
- * unless documenting code with doxygen!
- */
-//#define MCP
-//#define ES_LINUX
-//#define __18F4585
-//#define __PIC24FJ256GB106__
-
-/*
  * Include MicroChip's definitions
  */
-#if defined(MCP)
+#if defined(XC16) || defined(__XC8)
     #include <stdint.h>     // For uintx_t types
 #ifndef	NULL
 #define NULL (0)
@@ -413,7 +404,7 @@ typedef enum {
  */
 #define CAN_DATA_LENGTH 8
 
-#if defined(MCP)
+#if defined(XC16) || defined(__XC8)
 /**
  * @def   CAN_EFF_FLAG
  * @brief Extended CAN Frame format Flag.
@@ -495,10 +486,9 @@ typedef uint32_t canid_t;
  * Structure to define the Layer 2 CAN Frame. Simply the CAN Identifier, Data
  * length info and an array for the Data Bytes.
  */
-#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__) || defined(__dsPIC33EP256MU806__)
+#if defined(XC16)
 typedef struct __attribute__ ((packed))
-#endif //__PIC24FJ256GB106__
-#if defined(__18F2680) || defined(__18F4585)
+#elif defined(__XC8)  // (__18F2680) || defined(__18F4585)
 typedef struct
 #endif //__18F2680
 {
@@ -506,7 +496,7 @@ typedef struct
     uint8_t      can_dlc;
     uint8_t      data[CAN_DATA_LENGTH];
 } can_frame;
-#endif //MCP
+#endif // XC16
 
 /**
  * @type  can_l2_frame_handler_t

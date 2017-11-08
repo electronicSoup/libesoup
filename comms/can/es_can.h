@@ -4,7 +4,7 @@
  *
  * Core CAN Bus definitions
  *
- * Copyright 2014 John Whitmore <jwhitmore@electronicsoup.com>
+ * Copyright 2017 John Whitmore <jwhitmore@electronicsoup.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 2 of the GNU Lesser General Public License
@@ -140,7 +140,7 @@ extern can_baud_rate_t can_l2_get_baudrate(void);
 extern void can_l2_set_node_baudrate(can_baud_rate_t baudrate);
 extern void can_l2_get_status(can_status_t *, can_baud_rate_t *);
 
-#ifdef MCP
+#if defined(XC16) || defined(__XC8)
 extern void can_tasks(void);
 #endif
 

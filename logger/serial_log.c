@@ -4,7 +4,7 @@
  *
  * Functions for initialisation of the Serial Port.
  *
- * Copyright 2016 John Whitmore <jwhitmore@electronicsoup.com>
+ * Copyright 2017 John Whitmore <jwhitmore@electronicsoup.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 2 of the GNU Lesser General Public License
@@ -58,7 +58,7 @@
 #endif
 #endif
 
-#if defined (MCP)
+#if defined(XC16) || defined(__XC8)
 #include "libesoup/comms/uart/uart.h"
 #elif defined (ES_LINUX)
 #include <stdio.h>
@@ -125,11 +125,7 @@ result_t serial_logging_init(void)
         result_t rc;
         uint8_t  buffer[4] = {'\n', '\r', '\n', '\r'};
         
-#ifdef MCP
-	/*
-	 * CinnamonBun is running a PIC24FJ256GB106 or dsPIC33 processor
-	 */
-//#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__) || defined(__dsPIC33EP256MU806__)
+#if defined(XC16) || defined(__XC8)
 	/*
 	 * Serial Port pin configuration should be defined
 	 * in include file libesoup_config.h
@@ -154,7 +150,7 @@ result_t serial_logging_init(void)
         if(rc != SUCCESS) {
                 return(rc);
         }
-#endif // ifdef MCP
+#endif // ifdef XC16 || __XC8
 
         /*
          * Call uart_tx_buffer to clear XC8 compiler warning

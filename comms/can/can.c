@@ -4,7 +4,7 @@
  *
  * Core SYS_CAN Functionality of electronicSoup CAN code
  *
- * Copyright 2014 John Whitmore <jwhitmore@electronicsoup.com>
+ * Copyright 2017 John Whitmore <jwhitmore@electronicsoup.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 2 of the GNU Lesser General Public License
@@ -196,9 +196,9 @@ static void status_handler(uint8_t mask, can_status_t status, can_baud_rate_t ba
 #endif  // SYS_ISO11783
 }
 
-#if defined(MCP)
+#if defined(XC16) || defined(__XC8)
 void can_tasks(void)
 {
 	can_l2_tasks();
 }
-#endif
+#endif // XC16 || __XC8

@@ -4,7 +4,7 @@
  *
  * Dynamic SYS_CAN Node Configuration Protocol 
  *
- * Copyright 2014 John Whitmore <jwhitmore@electronicsoup.com>
+ * Copyright 2017 John Whitmore <jwhitmore@electronicsoup.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 2 of the GNU Lesser General Public License
@@ -25,7 +25,12 @@
 
 #include "libesoup_config.h"
 
+#ifndef SYS_LOG_LEVEL
+#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
+#endif
+
 #define DEBUG_FILE TRUE
+
 #include "libesoup/logger/serial_log.h"
 #include "libesoup/can/es_can.h"
 
@@ -105,22 +110,12 @@ void dcncp_init(void (*arg_status_handler)(uint8_t mask, can_status_t status, ca
 	target.mask    = (uint32_t)DCNCP_CAN_MASK;
 	target.filter  = (uint32_t)DCNCP_CAN_FILTER;
 	target.handler = can_l2_msg_handler;
-#ifdef MCP
-#if defined(SYS_LOG_LEVEL)
 #if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+#if defined(XC16) || defined(__XC8)
 	log_d(TAG, "Node Address Register handler Mask 0x%lx, Filter 0x%lx\n\r", target.mask, target.filter);
-#endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
-#endif //  if defined(SYS_LOG_LEVEL)
 #elif defined(ES_LINUX)
-#if defined(SYS_LOG_LEVEL)
-#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	log_d(TAG, "Node Address Register handler Mask 0x%x, Filter 0x%x\n\r", target.mask, target.filter);
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
-#endif //  if defined(SYS_LOG_LEVEL)
 #endif
 	can_l2_dispatch_reg_handler(&target);
 
@@ -611,22 +606,12 @@ void can_l2_msg_handler(can_frame *frame)
 		iso15765_logger_unregister_remote(frame->data[0]);
 #endif // SYS_ISO15765_LOGGING
 	} else {
-#if defined(MCP)
-#if defined(SYS_LOG_LEVEL)
 #if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_WARNING))
+#if defined(XC16) || defined(__XC8)
 		log_w(TAG, "Node Unrecognised Request %lx \n\r", frame->can_id);
-#endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
-#endif //  if defined(SYS_LOG_LEVEL)
 #elif defined(ES_LINUX)
-#if defined(SYS_LOG_LEVEL)
-#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_WARNING))
 		log_w(TAG, "Node Unrecognised Request %x \n\r", frame->can_id);
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
-#endif //  if defined(SYS_LOG_LEVEL)
 #endif
 	}
 }
