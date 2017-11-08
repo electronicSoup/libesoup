@@ -1,0 +1,1 @@
+Library of source code for a number of Microchip Microcontrollers. Specifically the cinnamonBun's dsPIC33EP256MU806 device.
