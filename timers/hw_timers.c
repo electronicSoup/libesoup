@@ -255,7 +255,7 @@ uint8_t hw_timer_active_count(void)
 /*
  * hw_timer_start returns the id of the started timer.
  */
-uint8_t  hw_timer_start(ty_time_units units, uint16_t duration, ty_hw_timer_type type, void (*expiry_function)(void *), void *data)
+uint8_t  hw_timer_start(ty_time_units units, uint16_t duration, hw_timer_type type, void (*expiry_function)(void *), void *data)
 {
 	result_t      rc;
 	uint8_t       timer;

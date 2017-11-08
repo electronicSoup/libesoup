@@ -42,10 +42,14 @@
  */
 #define BAD_TIMER   0xff
 
+/**
+ * \brief Enumerated type for the types of HW Timers:
+ *              single_shot or repeat
+ */
 typedef enum {
     single_shot,
     repeat,
-} ty_hw_timer_type;
+} hw_timer_type;
 
 /**
  * \brief Function to initialisation the data structures used to manage the 
@@ -80,7 +84,7 @@ extern uint8_t hw_timer_active_count(void);
  * units for a Hardware timer. If a timer of duration measured in minutes, or
  * greater, is required you'll need to use a Software based timer.
  */
-extern uint8_t  hw_timer_start(ty_time_units units, uint16_t duration, ty_hw_timer_type type, void (*expiry_function)(void *), void *data);
+extern uint8_t  hw_timer_start(ty_time_units units, uint16_t duration, hw_timer_type type, void (*expiry_function)(void *), void *data);
 
 /**
  * \brief Function to pause a started hardware timer
