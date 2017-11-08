@@ -1,5 +1,9 @@
 *~
+*.mk
+Makefile-genesis.properties
 Documentation/html
+nbproject/*.bash
+debug
 TAGS
 tmp
 default
