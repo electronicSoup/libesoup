@@ -23,9 +23,6 @@ int main(void)
         uint8_t timer;
 
 	cpu_init();
-        hw_timer_init();
-        uart_init();
-        serial_logging_init();
 
         /*
          * set pin RE0 as an Input pin
@@ -85,7 +82,7 @@ int main(void)
 	INTCONbits.PEIE = 1;   // Enable Periphal Interrupts
 #endif // (__18F4585)
         
-        timer = hw_timer_start(Seconds, 5, FALSE, exp_func, (void *)NULL);
+        timer = hw_timer_start(Seconds, 5, single_shot, exp_func, (void *)NULL);
 #if defined(__dsPIC33EP256MU806__) || defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__)
         LATEbits.LATE3 = 1;
 #endif
@@ -103,7 +100,6 @@ int main(void)
 
 void exp_func(void *data)
 {
-        LOG_D("exp_func()\n\r");
 #if defined(__dsPIC33EP256MU806__) || defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__)
         LATEbits.LATE3 = ~LATEbits.LATE3;
 #endif

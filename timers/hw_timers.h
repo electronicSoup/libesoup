@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2016 John Whitmore <jwhitmore@electronicsoup.com>
+ * Copyright 2017 John Whitmore <jwhitmore@electronicsoup.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 2 of the GNU Lesser General Public License
@@ -29,18 +29,23 @@
  *******************************************************************************
  *
  */
+
 #ifndef _HW_TIMERS_H
 #define _HW_TIMERS_H
 
 #include "libesoup_config.h"
+
+#ifdef SYS_HW_TIMERS
 
 /**
  * \brief Dummy timer identifier for a non existent timer.
  */
 #define BAD_TIMER   0xff
 
-#define SINGLE_SHOT FALSE
-#define REPEAT      TRUE
+typedef enum {
+    single_shot,
+    repeat,
+} ty_hw_timer_type;
 
 /**
  * \brief Function to initialisation the data structures used to manage the 
@@ -65,7 +70,7 @@ extern uint8_t hw_timer_active_count(void);
  * 
  * @param units Specifies units of time of the input timer duration.
  * @param duration  Duration of requested timer.
- * @param repeat If true the timer will repeat continuously.
+ * @param type      The timer can be a single shot timer or repeat forever.
  * @param expiry_function The function to be called on the expiry of timer.
  * @param data Caller defined data to be passed to the expiry function.
  * @return A timer identifier which can be used to cancel the started timer.
@@ -75,7 +80,7 @@ extern uint8_t hw_timer_active_count(void);
  * units for a Hardware timer. If a timer of duration measured in minutes, or
  * greater, is required you'll need to use a Software based timer.
  */
-extern uint8_t  hw_timer_start(ty_time_units units, uint16_t duration, uint8_t repeat, void (*expiry_function)(void *), void *data);
+extern uint8_t  hw_timer_start(ty_time_units units, uint16_t duration, ty_hw_timer_type type, void (*expiry_function)(void *), void *data);
 
 /**
  * \brief Function to pause a started hardware timer
@@ -116,7 +121,10 @@ extern void     hw_timer_cancel(uint8_t timer);
  */
 extern void     hw_timer_cancel_all();
 
+#endif // #ifdef SYS_HW_TIMERS
+
 #endif // _HW_TIMERS_H
+
 
 /**
  * @}

@@ -37,8 +37,9 @@
 
 void cpu_init(void)
 {
+#if (SYS_LOG_LEVEL != NO_LOGGING)
 	result_t rc;
-	
+#endif	
         clock_init();
         
         INTCON2bits.GIE = ENABLED;
