@@ -25,6 +25,14 @@
 #error Unrecognised Compiler!
 #endif
 
+/*
+ * XC8 Compiler warns about unused functions
+ */
+#if defined (__XC8)
+#pragma warning disable 520
+#endif
+
+
 #define DEBUG_FILE TRUE
 #define TAG "HW_TIMERS"
 
