@@ -17,6 +17,15 @@
 void cpu_init(void)
 {
         clock_init();
+	
+#ifdef SYS_HW_TIMERS
+	hw_timer_init();
+#endif
+	
+#ifdef SYS_SW_TIMERS
+	sw_timer_init();
+#endif
+
 #ifdef SYS_SPI_BUS
         spi_init();
 #endif

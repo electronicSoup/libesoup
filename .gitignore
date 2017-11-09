@@ -2,7 +2,7 @@
 *.mk
 Makefile-genesis.properties
 Documentation/html
-nbproject/*.bash
+*.bash
 debug
 TAGS
 tmp
