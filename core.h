@@ -5,7 +5,7 @@
  *
  * Core definitions required by electronicSoup Code Library
  *
- * Copyright 2014 John Whitmore <jwhitmore@electronicsoup.com>
+ * Copyright 2017 John Whitmore <jwhitmore@electronicsoup.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 2 of the GNU Lesser General Public License
@@ -22,6 +22,8 @@
  */
 #ifndef _CORE_H
 #define _CORE_H
+
+extern void libesoup_init(void);
 
 /*
  * Include MicroChip's definitions

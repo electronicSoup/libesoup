@@ -1,3 +1,23 @@
+/**
+ * @file libesoup/processors/dsPIC33EP256MU806.c
+ *
+ * @author John Whitmore
+ *
+ * Copyright 2017 John Whitmore <jwhitmore@electronicsoup.com>
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the version 2 of the GNU Lesser General Public License
+ * as published by the Free Software Foundation
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program; if not, see <http://www.gnu.org/licenses/>.
+ *
+ */
 #if defined(__dsPIC33EP256MU806__)
 
 #include "libesoup_config.h"
@@ -24,44 +44,11 @@
 
 #include "libesoup/timers/clock.h"
 
-#ifdef SYS_SPI_BUS
-#include "libesoup/utils/spi.h"
-#endif
-
-#include "libesoup/logger/serial_log.h"
-
-#ifdef SYS_HW_TIMERS
-#include "libesoup/timers/hw_timers.h"
-#endif
-
-#ifdef SYS_SW_TIMERS
-#include "libesoup/timers/sw_timers.h"
-#endif
-
 void cpu_init(void)
 {
-#if (SYS_LOG_LEVEL != NO_LOGGING)
-	result_t rc;
-#endif	
         clock_init();
         
         INTCON2bits.GIE = ENABLED;
-	
-#if (SYS_LOG_LEVEL != NO_LOGGING)
-	rc = serial_logging_init();
-#endif
-
-#ifdef SYS_HW_TIMERS
-	hw_timer_init();
-#endif
-	
-#ifdef SYS_SW_TIMERS
-	sw_timer_init();
-#endif
-
-#ifdef SYS_SPI_BUS
-        spi_init();
-#endif
 }
 
 #endif // defined(__dsPIC33EP256MU806__)

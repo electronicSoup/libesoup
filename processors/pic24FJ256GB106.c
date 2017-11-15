@@ -1,3 +1,23 @@
+/**
+ * @file libesoup/processors/pic24FJ256GB106.c
+ *
+ * @author John Whitmore
+ *
+ * Copyright 2017 John Whitmore <jwhitmore@electronicsoup.com>
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the version 2 of the GNU Lesser General Public License
+ * as published by the Free Software Foundation
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program; if not, see <http://www.gnu.org/licenses/>.
+ *
+ */
 #if defined(__PIC24FJ256GB106__)
 
 #include <xc.h>
@@ -20,18 +40,6 @@
 void cpu_init(void)
 {
         clock_init();
-	
-#ifdef SYS_HW_TIMERS
-	hw_timer_init();
-#endif
-	
-#ifdef SYS_SW_TIMERS
-	sw_timer_init();
-#endif
-
-#ifdef SYS_SPI_BUS
-        spi_init();
-#endif
 }
         
 #endif // defined(__PIC24FJ256GB106__)

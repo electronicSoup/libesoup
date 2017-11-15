@@ -10,7 +10,7 @@
  * in your include path. The file contains the various switches and definitions
  * which configure the various features of the library.
  *
- * Copyright 2015 John Whitmore <jwhitmore@electronicsoup.com>
+ * Copyright 2017 John Whitmore <jwhitmore@electronicsoup.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -48,7 +48,7 @@
 #if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__)
 #define SYS_CLOCK_FREQ 16000000     // 8MHz
 #elif defined(__dsPIC33EP256MU806__)
-//#define CLOCK_FREQ 8000000     // 8MHz
+//#define SYS_CLOCK_FREQ 8000000     // 8MHz
 #define SYS_CLOCK_FREQ 60000000    // 60MHz
 #elif defined(__18F4585)
 #define SYS_CLOCK_FREQ 16000000     // 8MHz

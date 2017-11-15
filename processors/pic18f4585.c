@@ -1,9 +1,27 @@
+/**
+ * @file libesoup/processors/pic18f4585.c
+ *
+ * @author John Whitmore
+ *
+ * Copyright 2017 John Whitmore <jwhitmore@electronicsoup.com>
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the version 2 of the GNU Lesser General Public License
+ * as published by the Free Software Foundation
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program; if not, see <http://www.gnu.org/licenses/>.
+ *
+ */
 #if defined(__18F4585)
 
 #include "libesoup_config.h"
-//#include <stdio.h>
 #include "libesoup/timers/clock.h"
-#include "libesoup/timers/hw_timers.h"
 
 extern void check_timer(uint8_t timer);
 
@@ -41,10 +59,6 @@ void cpu_init(void)
          * compiler warning.
          */
         clock_init();
-	
-#ifdef SYS_HW_TIMERS
-	hw_timer_init();
-#endif
 	
         RCONbits.IPEN = 0; // No Interrupt priority level
 	INTCONbits.GIE = 1;    // Enable Interrupts

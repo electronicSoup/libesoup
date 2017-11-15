@@ -1,16 +1,30 @@
-/*
- * Example main.c file to demonstrate Hardware timers. 
+/**
+ * @file libesoup/core.h
+ *
+ * @author John Whitmore
  * 
- * Not used on the RPi platform.
+ * Example main.c file to demonstrate Hardware timers. 
+ *
+ * Core definitions required by electronicSoup Code Library
+ *
+ * Copyright 2017 John Whitmore <jwhitmore@electronicsoup.com>
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the version 2 of the GNU Lesser General Public License
+ * as published by the Free Software Foundation
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program; if not, see <http://www.gnu.org/licenses/>.
+ *
  */
-#define DEBUG_FILE TRUE
-#define TAG "MAIN"
-
 #include "libesoup_config.h"
 
 #include "libesoup/timers/hw_timers.h"
-#include "libesoup/comms/uart/uart.h"
-#include "libesoup/logger/serial_log.h"
 
 /*
  * Forward declaration of our Hardware timer expiry function, which will be
@@ -22,7 +36,10 @@ int main(void)
 {
         uint8_t timer;
 
-	cpu_init();
+	/*
+	 * Initialise the libesoup library
+	 */
+	libesoup_init();
 
         /*
          * set pin RE0 as an Input pin
@@ -89,7 +106,7 @@ int main(void)
         
         if(timer == BAD_TIMER) {
 	        /*
-		 * Handle the error conditon.
+		 * Handle the error condition.
 		 */
         }
         
