@@ -56,7 +56,11 @@ int main(void)
         return 0;
 }
 
+#if defined(XC16)
 static void expiry(timer_t timer_id  __attribute__((unused)), union sigval data __attribute__((unused)))
+#elif defined(__XC8)
+static void expiry(timer_t timer_id, union sigval data)
+#endif
 {
 	// Timer has expired
 }

@@ -741,14 +741,12 @@ void check_timer(uint8_t timer)
 {
 #if defined(__18F4585)
         uint16_t           remainder;
-#endif
-#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__) || defined(__dsPIC33EP256MU806__)
+#endif // __18F4585
+	
+#if defined(XC16)
 	void        (*expiry)(void *data);
 	void         *data;
-#endif
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
-//        LOG_D("check_timer(%d) repeats 0x%x, remainder 0x%x\n\r", timer, timers[timer].repeats, timers[timer].remainder);
-#endif
+#endif // XC16
 
         LATDbits.LATD3 = ~LATDbits.LATD3;
 
@@ -916,7 +914,7 @@ void check_timer(uint8_t timer)
 		timers[timer].remainder = 0;
 
 	} else {
-#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__) || defined(__dsPIC33EP256MU806__)
+#if defined(XC16)
                 expiry = timers[timer].expiry_function;
                 data = timers[timer].data;
 
@@ -942,7 +940,7 @@ void check_timer(uint8_t timer)
                 if(timers[timer].expiry_function) {
                         timers[timer].expiry_function(timers[timer].data);
                 }
-#endif        
+#endif  // if XC16 elif __18F4585
 	}
 }
 
