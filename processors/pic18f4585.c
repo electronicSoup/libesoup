@@ -2,7 +2,7 @@
 
 #include "libesoup_config.h"
 //#include <stdio.h>
-#include "libesoup/utils/clock.h"
+#include "libesoup/timers/clock.h"
 #include "libesoup/timers/hw_timers.h"
 
 extern void check_timer(uint8_t timer);

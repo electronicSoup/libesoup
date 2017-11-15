@@ -1,8 +1,11 @@
 #if defined(__PIC24FJ256GB106__)
 
 #include <xc.h>
+#include "libesoup/timers/clock.h"
+
+#ifdef SYS_SPI_BUS
 #include "libesoup/utils/spi.h"
-#include "libesoup/utils/clock.h"
+#endif
 
 #pragma config FWDTEN   = OFF
 #pragma config JTAGEN   = OFF

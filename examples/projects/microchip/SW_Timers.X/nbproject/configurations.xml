@@ -23,9 +23,7 @@
         <logicalFolder name="timers" displayName="timers" projectFiles="true">
           <itemPath>../../../../timers/hw_timers.c</itemPath>
           <itemPath>../../../../timers/sw_timers.c</itemPath>
-        </logicalFolder>
-        <logicalFolder name="utils" displayName="utils" projectFiles="true">
-          <itemPath>../../../../utils/clock.c</itemPath>
+          <itemPath>../../../../timers/clock.c</itemPath>
         </logicalFolder>
       </logicalFolder>
       <itemPath>../../../main_sw_timers.c</itemPath>

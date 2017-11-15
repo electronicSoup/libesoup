@@ -22,8 +22,11 @@
 #pragma config BOREN = OFF
 #pragma config JTAGEN = OFF
 
-#include "libesoup/utils/clock.h"
+#include "libesoup/timers/clock.h"
+
+#ifdef SYS_SPI_BUS
 #include "libesoup/utils/spi.h"
+#endif
 
 #include "libesoup/logger/serial_log.h"
 
