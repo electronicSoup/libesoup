@@ -23,6 +23,13 @@
 #ifndef _CORE_H
 #define _CORE_H
 
+/**
+ * \brief Function to initialise the libesoup library. The actual required 
+ * configuration should be defined using switches in libesoup_config.h. An
+ * example of that configuration file is included in libesoup/examples directory
+ *
+ * This function must be called prior to calling any libesoup API functions. 
+ */
 extern void libesoup_init(void);
 
 /*

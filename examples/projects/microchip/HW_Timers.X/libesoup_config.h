@@ -54,9 +54,11 @@
 #define SYS_CLOCK_FREQ 16000000     // 8MHz
 #endif
 
+/*
+ * Enable the Hardware timers functionality in libesoup
+ */
 #define SYS_HW_TIMERS
 
-#define SYS_LOG_LEVEL NO_LOGGING
 /*
  *******************************************************************************
  *
