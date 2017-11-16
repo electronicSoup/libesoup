@@ -28,7 +28,7 @@ int main(void)
 	struct uart_data uart;
 	uint8_t          buffer[] = "Hello World\n\r";
 	
-	libesoup_init();
+	rc = libesoup_init();
 
 #if defined(__dsPIC33EP256MU806__)	
 	uart.tx_pin = RP64;

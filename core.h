@@ -23,15 +23,6 @@
 #ifndef _CORE_H
 #define _CORE_H
 
-/**
- * \brief Function to initialise the libesoup library. The actual required 
- * configuration should be defined using switches in libesoup_config.h. An
- * example of that configuration file is included in libesoup/examples directory
- *
- * This function must be called prior to calling any libesoup API functions. 
- */
-extern void libesoup_init(void);
-
 /*
  * Include MicroChip's definitions
  */
@@ -598,5 +589,14 @@ typedef struct
     iso11783_msg_handler_t   handler;
     uint8_t                       handler_id;
 } iso11783_target_t;
+
+/**
+ * \brief Function to initialise the libesoup library. The actual required 
+ * configuration should be defined using switches in libesoup_config.h. An
+ * example of that configuration file is included in libesoup/examples directory
+ *
+ * This function must be called prior to calling any libesoup API functions. 
+ */
+extern result_t libesoup_init(void);
 
 #endif // _CORE_H

@@ -35,13 +35,19 @@
 #include "libesoup/comms/uart/uart.h"
 #endif
 
+#ifdef SYS_SERIAL_LOGGING
+#include "libesoup/logger/serial_log.h"
+#endif
+
 #ifdef SYS_SPI_BUS
 #include "libesoup/utils/spi.h"
 #endif
 
 
-void libesoup_init(void)
+result_t libesoup_init(void)
 {
+	result_t rc = SUCCESS;
+	
 	cpu_init();
 
 #ifdef SYS_HW_TIMERS
@@ -55,9 +61,19 @@ void libesoup_init(void)
 #ifdef SYS_UART
 	uart_init();
 #endif
+
+#ifdef SYS_SERIAL_LOGGING
+        rc = serial_logging_init();
+        if (rc != SUCCESS) {
+                /*
+                 * What to do?
+                 */
+                return(1);
+        }
+#endif
 	
 #ifdef SYS_SPI_BUS
         spi_init();
 #endif
-	
+	return(rc);
 }

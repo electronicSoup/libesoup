@@ -33,7 +33,7 @@ int main(void)
         union sigval data;
 	timer_t      timer;
 
-	cpu_init();
+	rc = libesoup_init();
 
         /*
          * Microchip platforms depend on a Hardware timer for the regular

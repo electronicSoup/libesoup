@@ -34,12 +34,13 @@ void exp_func(void *);
 
 int main(void)
 {
-        uint8_t timer;
+	result_t rc;
+        uint8_t  timer;
 
 	/*
 	 * Initialise the libesoup library
 	 */
-	libesoup_init();
+	rc = libesoup_init();
 
         /*
          * set pin RE0 as an Input pin

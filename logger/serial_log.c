@@ -27,6 +27,7 @@
 #define TAG "serial"
 
 #include "libesoup_config.h"
+
 #include "libesoup/logger/serial_log.h"
 
 /*
@@ -35,8 +36,6 @@
 #ifndef SYS_LOG_LEVEL
 #error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
 #endif
-
-
 
 #ifndef SYS_SERIAL_LOGGING_BAUD
 #error libesoup_config.h file should define the SYS_SERIAL_LOGGING_BAUD
@@ -64,6 +63,8 @@
 #include <stdio.h>
 #endif // if defined (ES_LINUX)
 
+static uint8_t printable(uint8_t ch);
+
 /*
  * Declaration of the data structure being used to manage UART connection.
  * Static to this file only!
@@ -83,36 +84,6 @@ static struct uart_data serial_uart;
 //#endif // (__18F2680) || (__18F4585)
 
 /**
- * \fn _U1RXInterrupt()
- *
- * \brief Interrupt Service Routine for received characters from UART 1
- */
-#if 0
-#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__)
-void __attribute__((__interrupt__, __no_auto_psv__)) _U1RXInterrupt(void)
-#elif defined(__dsPIC33EP256MU806__)
-void _ISR __attribute__((__no_auto_psv__)) _U1RXInterrupt(void)
-#endif
-#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__) || defined(__dsPIC33EP256MU806__)
-{
-	uint8_t ch;
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
-	log_d(TAG, "_U1RXInterrupt\n\r");
-#endif
-	while (U1STAbits.URXDA) {
-		ch = U1RXREG;
-
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
-		log_d(TAG, "Rx*0x%x*\n\r", ch);
-#endif
-	}
-
-	IFS0bits.U1RXIF = 0;
-}
-#endif
-#endif // 0
-
-/**
  * \fn serial_logging_init()
  *
  * \brief Initialisation function for serial logging
@@ -123,7 +94,6 @@ void _ISR __attribute__((__no_auto_psv__)) _U1RXInterrupt(void)
 result_t serial_logging_init(void)
 {
         result_t rc;
-        uint8_t  buffer[4] = {'\n', '\r', '\n', '\r'};
         
 #if defined(XC16) || defined(__XC8)
 	/*
@@ -155,14 +125,66 @@ result_t serial_logging_init(void)
         /*
          * Call uart_tx_buffer to clear XC8 compiler warning
          */
-        rc = uart_tx_buffer(&serial_uart, buffer, 4);
 //        printf("\n\r\n\r");
         return(SUCCESS);
 }
 
+#if defined(XC16) || defined(__XC8)
+void serial_log(const char * tag, const char * f, ...)
+{
+	result_t  rc;
+	char     *ptr;
+
+	/*
+	 * Print the tag field
+	 */
+	ptr = (char *)tag;
+	
+	while(*ptr) {
+		if(printable(*ptr)) {
+			rc = uart_tx_char(&serial_uart, *ptr);
+		}
+		
+		ptr++;
+	}
+#if 0
+	/*
+	 * Next print the format string
+	 */
+	ptr = (char *)f;
+	while(*ptr) {
+		
+		if(*ptr == '%') {
+			/*
+			 * Format specifier
+			 */
+		}
+		
+		if(printable(*ptr)) {
+			rc = uart_tx_char(&serial_uart, *ptr);
+		}
+		
+		ptr++;
+	}
+#endif	
+	
+}
+#endif // defined(XC16) || defined(__XC8)
+
 result_t serial_logging_exit(void)
 {
         return(uart_release(&serial_uart));
+}
+
+static uint8_t printable(uint8_t ch)
+{
+	if(  (ch >= '!' && ch <= '~')
+	   ||(ch == '\n')
+	   ||(ch == '\r') ) {
+		return(TRUE);
+	} else {
+		return(FALSE);
+	}
 }
 
 #if defined(__18F2680) || defined(__18F4585)
@@ -178,3 +200,4 @@ void putch(char character)
         rc = uart_tx_char(&serial_uart, character);
 }
 #endif // (__18F2680) || (__18F4585)
+

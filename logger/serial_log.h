@@ -68,6 +68,7 @@
  */
 #if defined(XC16) || defined(__XC8)
 extern result_t serial_logging_init(void);
+extern void     serial_log(const char * tag, const char * f, ...);
 extern result_t serial_logging_exit(void);
 
 /*

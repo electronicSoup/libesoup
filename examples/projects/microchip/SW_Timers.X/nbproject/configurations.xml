@@ -25,6 +25,7 @@
           <itemPath>../../../../timers/sw_timers.c</itemPath>
           <itemPath>../../../../timers/clock.c</itemPath>
         </logicalFolder>
+        <itemPath>../../../../core.c</itemPath>
       </logicalFolder>
       <itemPath>../../../main_sw_timers.c</itemPath>
     </logicalFolder>
