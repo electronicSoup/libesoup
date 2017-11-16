@@ -35,8 +35,9 @@
 #define OUTPUT_PIN      0
 #define INPUT_PIN       1
 
-#define DISABLE         0
-#define ENABLE          1
+#define DISABLED        0
+#define ENABLED         1
+
 /*
  * I/O Pin Definitions
  */

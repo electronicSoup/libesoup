@@ -3,8 +3,8 @@
     <type>com.microchip.mplab.nbide.embedded.makeproject</type>
     <configuration>
         <data xmlns="http://www.netbeans.org/ns/make-project/1">
-            <name>uart</name>
-            <creation-uuid>b8121dfe-dd97-4d8a-a3f4-62cec05516c6</creation-uuid>
+            <name>uart_tx</name>
+            <creation-uuid>1c4fb79a-4f69-4021-b31c-6ecc28d84ce9</creation-uuid>
             <make-project-type>0</make-project-type>
             <c-extensions>c</c-extensions>
             <cpp-extensions/>

@@ -21,6 +21,13 @@
  *******************************************************************************
  *
  */
+/*
+ * XC8 Compiler warns about unused functions
+ */
+#if defined (__XC8)
+#pragma warning disable 520
+#endif
+
 #define DEBUG_FILE TRUE
 #define TAG "UART"
 
@@ -410,7 +417,7 @@ result_t uart_calculate_mode(uint16_t *mode, uint8_t databits, uint8_t parity, u
          * The PIC18 doesn't have a MODE Register but instead uses the TXSTA,
          * RCSTA and BAUDCON registers
          */
-        TXSTAbits.SYNC = DISABLE;  // Asynchronous Mode
+        TXSTAbits.SYNC = DISABLED;  // Asynchronous Mode
         
 	if (databits == UART_8_DATABITS) {
 		if (parity == UART_PARITY_EVEN) {
@@ -644,7 +651,7 @@ static void uart_putchar(uint8_t uart_index, uint8_t ch)
                         tmp = ++(uarts[uart_index].tx_write_index) % SYS_UART_TX_BUFFER_SIZE;
                         uarts[uart_index].tx_write_index = tmp;
                         uarts[uart_index].tx_count++;
-                        PIE1bits.TXIE = ENABLE;
+                        PIE1bits.TXIE = ENABLED;
 #endif // #if defined(__18F2680) || defined(__18F4585)
 			break;
 #endif // UART_1
@@ -1008,7 +1015,7 @@ static void uart_set_com_config(struct uart_data *com)
 #endif
                         BAUDCONbits.BRG16 = 0; // 16-bit Baud Rate Register Enable bit
 
-                        SPBRG = ((SYS_CLOCK_FREQ / com->baud) / 64 ) - 1;
+                        SPBRG = (unsigned char)(((SYS_CLOCK_FREQ / com->baud) / 64 ) - 1);
 
                         PIE1bits.TXIE = 1;
 #if defined(ENABLE_USART_RX)
@@ -1157,11 +1164,13 @@ static uint16_t load_tx_buffer(uint8_t uart)
 				uarts[uart].tx_read_index = tmp;
 				uarts[uart].tx_count--;
                         } else {
-                                PIE1bits.TXIE = DISABLE;
+                                PIE1bits.TXIE = DISABLED;
                         }
 			return(uarts[uart].tx_count);
 #endif // MicroController selection
+#ifndef __XC8
 			break;
+#endif
 #endif // UART_1
 #ifdef UART_2
 		case UART_2:

@@ -39,8 +39,8 @@
 #define ANALOG_PIN  0
 #define DIGITAL_PIN 1
 
-#define DISABLE     0
-#define ENABLE      1
+#define DISABLED    0
+#define ENABLED     1
 
 /**
  * \brief Identifers for the hardware timers in the pic24FG256GB106

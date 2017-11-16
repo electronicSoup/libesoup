@@ -1,5 +1,13 @@
 /**
  * @mainpage es_lib
 
-   This is my main page
+<p>
+The electronicSoup library of source code, for a limited number of
+Microchip devices, was developed to facilitate faster development
+times for higher level application code for the cinnamonBun device.
+</p>
+
+<p>
+To use the code the library initialisation function <libesoup_init>"()"
+must be called.
 */
