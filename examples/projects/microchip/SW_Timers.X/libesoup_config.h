@@ -51,8 +51,6 @@
 #define SYS_CLOCK_FREQ 16000000     // 8MHz
 #endif
 
-#define SYS_LOG_LEVEL NO_LOGGING
-
 #define SYS_HW_TIMERS
 
 /**
@@ -75,14 +73,16 @@
 
 #ifdef SYS_SW_TIMERS
 /*
- * Software timers are based on a single Hardware timer so Hardware timers
- * have to be enabled in the system.
+ * On the Microchip PIC platform Software timers are based on a single Hardware
+ * timer, so Hardware timers have to be enabled in the system.
  */
 #ifndef SYS_HW_TIMERS  
+#if defined(XC16) || defined(__XC8)
 #define SYS_HW_TIMERS
 #endif
+#endif
 
-#define SYS_NUMBER_OF_SW_TIMERS       20 
+#define SYS_NUMBER_OF_SW_TIMERS        5
 #define SYS_SW_TIMER_TICK_ms           5        // mSeconds
 #endif // SYS_SW_TIMERS
 

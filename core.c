@@ -31,6 +31,9 @@
 #include "libesoup/timers/sw_timers.h"
 #endif
 
+#ifdef SYS_UART
+#include "libesoup/comms/uart/uart.h"
+#endif
 
 #ifdef SYS_SPI_BUS
 #include "libesoup/utils/spi.h"
@@ -49,6 +52,10 @@ void libesoup_init(void)
 	sw_timer_init();
 #endif
 
+#ifdef SYS_UART
+	uart_init();
+#endif
+	
 #ifdef SYS_SPI_BUS
         spi_init();
 #endif

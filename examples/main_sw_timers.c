@@ -23,7 +23,6 @@
 
 #include "libesoup_config.h"
 
-//#include "libesoup/timers/hw_timers.h"
 #include "libesoup/timers/sw_timers.h"
 
 static void expiry(timer_t timer_id, union sigval);
