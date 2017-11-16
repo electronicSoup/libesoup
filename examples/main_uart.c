@@ -16,9 +16,7 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  *
  */
-#include "config.h"
-
-#include "libesoup/comms/uart/uart.h"
+#include "libesoup_config.h"
 
 int main(void)
 {
