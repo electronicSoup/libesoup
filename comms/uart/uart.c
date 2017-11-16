@@ -868,35 +868,40 @@ static void uart_set_tx_pin(uint8_t uart, uint8_t pin)
 	uint8_t tx_function;
 
 	switch (uart) {
-		case UART_1:
-			tx_function = PPS_UART_1_TX;
-			break;
+	case UART_1:
+		tx_function = PPS_UART_1_TX;
+		break;
 
-		case UART_2:
-			tx_function = PPS_UART_2_TX;
-			break;
+	case UART_2:
+		tx_function = PPS_UART_2_TX;
+		break;
 
-		case UART_3:
-			tx_function = PPS_UART_3_TX;
-			break;
+	case UART_3:
+		tx_function = PPS_UART_3_TX;
+		break;
 
-		case UART_4:
-			tx_function = PPS_UART_4_TX;
-			break;
+	case UART_4:
+		tx_function = PPS_UART_4_TX;
+		break;
 	}
 
 	switch (pin) {
-		case RP118:
-                        ANSELGbits.ANSG6 = DIGITAL_PIN;
-			TRISGbits.TRISG6 = OUTPUT_PIN;
-			PPS_RP118 = tx_function;
-			break;
+	case RP64:
+		TRISDbits.TRISD0 = OUTPUT_PIN;
+		PPS_RP64 = tx_function;
+		break;
 
-		default:
+	case RP118:
+		ANSELGbits.ANSG6 = DIGITAL_PIN;
+		TRISGbits.TRISG6 = OUTPUT_PIN;
+		PPS_RP118 = tx_function;
+		break;
+
+	default:
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
-			LOG_E("Unknow Peripheral Tx Pin\n\r");
+		LOG_E("Unknow Peripheral Tx Pin\n\r");
 #endif
-			break;
+		break;
 	}
 }
 #elif defined (__PIC24FJ256GB106__)
@@ -923,45 +928,45 @@ static void uart_set_tx_pin(uint8_t uart, uint8_t pin)
 	}
 
 	switch (pin) {
-		case RP0:
-                        AD1PCFGLbits.PCFG0 = DIGITAL_PIN;
-			TRISBbits.TRISB0 = OUTPUT_PIN;
-			RPOR0bits.RP0R = tx_function;
-			break;
+	case RP0:
+		AD1PCFGLbits.PCFG0 = DIGITAL_PIN;
+		TRISBbits.TRISB0 = OUTPUT_PIN;
+		RPOR0bits.RP0R = tx_function;
+		break;
 
-		case RP1:
-                        AD1PCFGLbits.PCFG1 = DIGITAL_PIN;
-			TRISBbits.TRISB1 = OUTPUT_PIN;
-			RPOR0bits.RP1R = tx_function;
-			break;
+	case RP1:
+		AD1PCFGLbits.PCFG1 = DIGITAL_PIN;
+		TRISBbits.TRISB1 = OUTPUT_PIN;
+		RPOR0bits.RP1R = tx_function;
+		break;
 
-		case RP13:
-                        AD1PCFGLbits.PCFG2 = DIGITAL_PIN;
-			TRISBbits.TRISB2 = OUTPUT_PIN;
-			RPOR6bits.RP13R = tx_function;
-			break;
+	case RP13:
+		AD1PCFGLbits.PCFG2 = DIGITAL_PIN;
+		TRISBbits.TRISB2 = OUTPUT_PIN;
+		RPOR6bits.RP13R = tx_function;
+		break;
 
-		case RP20:
-			TRISDbits.TRISD5 = OUTPUT_PIN;
-			RPOR10bits.RP20R = tx_function;
-			break;
+	case RP20:
+		TRISDbits.TRISD5 = OUTPUT_PIN;
+		RPOR10bits.RP20R = tx_function;
+		break;
 
-		case RP25:
-			TRISDbits.TRISD4 = OUTPUT_PIN;
-			RPOR12bits.RP25R = tx_function;
-			break;
+	case RP25:
+		TRISDbits.TRISD4 = OUTPUT_PIN;
+		RPOR12bits.RP25R = tx_function;
+		break;
 
-		case RP28:
-                        AD1PCFGLbits.PCFG4 = DIGITAL_PIN;
-			TRISBbits.TRISB4 = OUTPUT_PIN;
-			RPOR14bits.RP28R = tx_function;
-			break;
-
-		default:
+	case RP28:
+		AD1PCFGLbits.PCFG4 = DIGITAL_PIN;
+		TRISBbits.TRISB4 = OUTPUT_PIN;
+		RPOR14bits.RP28R = tx_function;
+		break;
+			
+	default:
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
-			LOG_E("Unknow Peripheral Tx Pin\n\r");
+		LOG_E("Unknow Peripheral Tx Pin\n\r");
 #endif
-			break;
+		break;
 	}
 }
 #elif defined(__18F2680) || defined(__18F4585)

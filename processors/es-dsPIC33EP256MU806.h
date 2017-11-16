@@ -167,6 +167,7 @@ enum pin_t {
 #define RP23                             23
 #define RP25                             25
 #define RP28                             28
+#define RP64                             64
 #define RPI74                            74
 #define RP118                           118
 #define RP120                           120
@@ -187,6 +188,7 @@ enum pin_t {
 #define PPS_UART_3_TX                   0x1B
 #define PPS_UART_4_TX                   0x1D
  
+#define PPS_RP64                        RPOR0bits.RP64R
 #define PPS_RP118                       RPOR13bits.RP118R
 #define PPS_RP120                       RPOR14bits.RP120R
     
