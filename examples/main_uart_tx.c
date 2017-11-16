@@ -33,8 +33,12 @@ int main(void)
 #if defined(__dsPIC33EP256MU806__)	
 	uart.tx_pin = RP64;
 #elif defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__)
-	uart.tx_pin = RD0;
-#endif	
+	uart.tx_pin = RP0;
+#elif defined(__18F4585)
+	/*
+	 * There is only one option for the uart tx pin on this uC
+	 */
+#endif
 	rc = uart_calculate_mode(&uart.uart_mode, UART_8_DATABITS, UART_PARITY_NONE, UART_ONE_STOP_BIT, UART_IDLE_HIGH);
 	uart.baud = 9600;
 	uart.tx_finished = tx_finished;
