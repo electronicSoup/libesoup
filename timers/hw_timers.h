@@ -15,7 +15,7 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 /**
- * \defgroup hw_timer Hardware Timers
+ * \defgroup hw_timer HardwareTimers
  * @{
  *
  * Public header file containing API Functions for using hardware timers.
@@ -34,6 +34,7 @@
 #define _HW_TIMERS_H
 
 #include "libesoup_config.h"
+#include "libesoup/timers/time.h"
 
 #ifdef SYS_HW_TIMERS
 

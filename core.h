@@ -59,26 +59,6 @@ typedef union {
 	float value;
 } f32;
 
-/**
- * \defgroup Timers Timers
- * @{
- * 
- * \brief Enumeration for units of time. Used to specify durations for timers.
- * 
- * These are fairly straight forward and represent human representations of
- * time durations. When used to start timers the API functions will convert the 
- * duration in to a micro-controller specific tick count or crystal pulse count.
- */
-typedef enum {
-    uSeconds,
-    mSeconds,
-    Seconds,
-    Minutes,
-    Hours
-} ty_time_units;
-/**
- * @}
- */
 
 /** @defgroup group1 Android Message Identifiers
  *
