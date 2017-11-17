@@ -15,9 +15,9 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 /**
- * \defgroup hw_timer HardwareTimers
- * @{
- *
+/** \addtogroup timers Hardware Timers
+ *  @{
+ * 
  * Public header file containing API Functions for using hardware timers.
  * This API is...
  *
