@@ -14,7 +14,6 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
-/**
 /** \addtogroup timers Hardware Timers
  *  @{
  * 
@@ -25,6 +24,8 @@
  *
  * \brief Hardware Timer API definitions
  * 
+ * To include Hardware timer functionality in a build the configuration switch
+ * SYS_HW_TIMERS must be included in the libesoup_config.h file.
  * 
  *******************************************************************************
  *
