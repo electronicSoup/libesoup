@@ -296,7 +296,7 @@ uint8_t  hw_timer_start(ty_time_units units, uint16_t duration, hw_timer_type ty
 	return(BAD_TIMER);
 }
 
-result_t hw_timer_restart(uint8_t timer, ty_time_units units, uint16_t time, uint8_t repeat, void (*expiry_function)(void *), void *data)
+result_t hw_timer_restart(uint8_t timer, ty_time_units units, uint16_t time, hw_timer_type type, void (*expiry_function)(void *), void *data)
 {
 	if(timer == BAD_TIMER) {
 		return(hw_timer_start(units, time, repeat, expiry_function, data));

@@ -26,18 +26,16 @@
  * \defgroup Timers Timers
  * @{
  * 
- * \brief Enumeration for units of time. Used to specify durations for timers.
+ * @enum ty_time_units
+ * @brief Enumeration for units of time. Used to specify durations for timers.
  * 
- * These are fairly straight forward and represent human representations of
- * time durations. When used to start timers the API functions will convert the 
- * duration in to a micro-controller specific tick count or crystal pulse count.
  */
 typedef enum {
-    uSeconds,
-    mSeconds,
-    Seconds,
-    Minutes,
-    Hours
+    uSeconds,        /**< Micro Seconds */
+    mSeconds,        /**< Milli Seconds */
+    Seconds,         /**< Seconds */
+    Minutes,         /**< Minutes */
+    Hours            /**< Hours */
 } ty_time_units;
 /**
  * @}

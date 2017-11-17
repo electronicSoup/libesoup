@@ -2040,7 +2040,11 @@ PREDEFINED             = "DOXYGEN" \
                          "__PIC24FJ256GB106__" \
                          "__PIC24FJ64GB106__" \
                          "__dsPIC33EP256MU806__" \
-			 "SYS_HW_TIMERS"
+			 "SYS_HW_TIMERS" \
+			 "SYS_HW_TIMERS" \
+			 "SYS_LOG_LEVEL" \
+			 "SYS_UART" \
+			 "SYS_SERIAL_LOGGING"
 
 # If the MACRO_EXPANSION and EXPAND_ONLY_PREDEF tags are set to YES then this
 # tag can be used to specify a list of macro names that should be expanded. The

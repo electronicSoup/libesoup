@@ -61,7 +61,7 @@ typedef union {
 } f32;
 #endif // 0
 
-/** @defgroup returnCode Return Codes
+/** @defgroup Core Core Definitions
  *  @{
  * 
  * @enum  result_t
@@ -95,11 +95,21 @@ typedef enum {
 /** @}*/
 
 /**
- * \brief Function to initialise the libesoup library. The actual required 
- * configuration should be defined using switches in libesoup_config.h. An
- * example of that configuration file is included in libesoup/examples directory
+ * \ingroup Core
+ * \function libesoup_init()
+ * \brief Function to initialise the libesoup library. The configuraiton required 
+ * should be defined using switches in the configuraiton file libesoup_config.h. An
+ * example of that configuration file is included in libesoup/examples directory.
+ * 
+ * In addition example projects are included in libesoup/examples/projects. 
+ * Each example project contains the necessary configuration file for the project.
  *
  * This function must be called prior to calling any libesoup API functions. 
+ * The function calls each individual module initialisation function depending
+ * on the code included in the build, as specified by the configuration file
+ * libesoup_cofig.h. The fact that the function has been called is *NOT* 
+ * checked by API Functions, this is an embedded system and performing a check
+ * on each API call is viewed as a waste of clock cycles. 
  */
 extern result_t libesoup_init(void);
 

@@ -2,7 +2,7 @@
  *
  * \file libesoup/timers/sw_timers.h
  *
- * Software Timer definitions and function prototypes
+ * \brief Software Timer API definitions and function prototypes
  *
  * Copyright 2017 John Whitmore <jwhitmore@electronicsoup.com>
  *
@@ -31,6 +31,12 @@
  */
 #ifndef SW_TIMERS_H
 #define SW_TIMERS_H
+
+/*
+ * This API Code is only included in a build if the configuration file
+ * libesoup_config.h includes the definition SYS_SW_TIMERS
+ */
+#ifdef SYS_SW_TIMERS
 
 #include "hw_timers.h"
 
@@ -210,4 +216,7 @@ extern result_t sw_timer_start(uint16_t duration, expiry_function fn, union sigv
 extern result_t sw_timer_cancel(timer_t timer);
 extern result_t sw_timer_cancel_all(void);
 
+#endif // SYS_SW_TIEMRS
+
 #endif  // SW_TIMERS_H
+

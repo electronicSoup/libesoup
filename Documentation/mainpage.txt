@@ -8,6 +8,6 @@ times for higher level application code for the cinnamonBun device.
 </p>
 
 <p>
-To use the code the library initialisation function <libesoup_init>"()"
-must be called.
+To use the code the library initialisation function \ref <libesoup_init>"()"
+must be called. \ref Timers
 */
