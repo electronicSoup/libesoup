@@ -76,7 +76,7 @@ static uint16_t  timer_counter = 0;
 volatile boolean timer_ticked = FALSE;
 
 static uint8_t   hw_timer_paused = FALSE;
-static uint8_t   hw_timer = BAD_TIMER;
+static timer_t   hw_timer = BAD_TIMER;
 #endif // XC16 || __XC8
 
 /*
@@ -111,7 +111,7 @@ sys_timer_t timers[SYS_NUMBER_OF_SW_TIMERS];
  * macro.
  */
 #if defined(XC16) || defined(__XC8)
-static void hw_expiry_function(void *data)
+static void hw_expiry_function(timer_t timer, union sigval data)
 {
 	timer_ticked = TRUE;
 }
@@ -126,6 +126,10 @@ static void hw_expiry_function(void *data)
  */
 void sw_timer_init(void)
 {
+#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__) || defined(__dsPIC33EP256MU806__)
+	result_t     rc;
+	union sigval data;
+#endif
 	uint8_t loop;
 
 	/*
@@ -140,7 +144,7 @@ void sw_timer_init(void)
 #if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__) || defined(__dsPIC33EP256MU806__)
 	hw_timer = BAD_TIMER;
 
-	hw_timer = hw_timer_start(mSeconds, 5, TRUE, hw_expiry_function, NULL);
+	rc = hw_timer_start(mSeconds, 5, repeat, hw_expiry_function, data, &hw_timer);
 	hw_timer_paused = FALSE;
 #endif //__PIC24FJ256GB106__
 
@@ -260,11 +264,9 @@ void timer_tick(void)
  *          ERR_NO_RESOURCES    Error - No Free system timers available.
  *
  */
-result_t sw_timer_start(uint16_t ticks,
-		     expiry_function function,
-		     union sigval data,
-		     timer_t *timer)
+result_t sw_timer_start(ty_time_units units, uint16_t duration, timer_type type, expiry_function fn, union sigval data, timer_t *timer)
 {
+	uint16_t ticks;
 #if defined(XC16) || defined(__XC8)
 	timer_t loop;
 
@@ -279,6 +281,14 @@ result_t sw_timer_start(uint16_t ticks,
 		sw_timer_cancel(*timer);
 	}
 
+	if(units == mSeconds) {
+		ticks = ((duration < SYS_SW_TIMER_TICK_ms) ? 1 : (duration / SYS_SW_TIMER_TICK_ms));
+	} else if (units == Seconds) {
+		ticks = (duration * (1000 / SYS_SW_TIMER_TICK_ms));
+	} else {
+		return(ERR_BAD_INPUT_PARAMETER);
+	}
+	
 	/*
 	 * Find the First empty timer
 	 */
@@ -297,7 +307,7 @@ result_t sw_timer_start(uint16_t ticks,
 			} else {
 				timers[loop].expiry_count = ticks - (0xFFFF - timer_counter);
 			}
-			timers[loop].function = function;
+			timers[loop].function = fn;
 			timers[loop].expiry_data = data;
 
 			*timer = loop;
@@ -306,7 +316,7 @@ result_t sw_timer_start(uint16_t ticks,
 			 * If our hw_timer isn't running restart it:
 			 */
 			if(hw_timer_paused) {
-				if(hw_timer_restart(hw_timer, mSeconds, 5, TRUE, hw_expiry_function, NULL) != SUCCESS) {
+				if(hw_timer_restart(&hw_timer, mSeconds, 5, TRUE, hw_expiry_function, data) != SUCCESS) {
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
 					LOG_E("Failed to restart HW timer\n\r");
 #endif

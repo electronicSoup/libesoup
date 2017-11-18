@@ -21,9 +21,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
-/** \addtogroup Timers Hardware Timers
- *  @{
- * 
+/**
  * \brief API Functions for using hardware timers.
  * 
  * These API Functions are enabled in a build by defining SYS_HW_TIMERS in the
@@ -48,22 +46,6 @@
  * \name Hardware Timers 
  */
 /**@{*/
-/**
- * \ingroup Timers
- * \brief Dummy timer identifier for a non existent timer.
- */
-#define BAD_TIMER   0xff
-
-/**
- * \ingroup Timers
- * \enum    hw_timer_type
- * \brief   Enumerated type for the different types of HW Timers
- */
-typedef enum {
-    single_shot,  /**< Single shot time which expires once only */
-    repeat,       /**< Timer which repeats and will continuiously expire, unitl canceled */
-} hw_timer_type;
-
 /**
  * \ingroup Timers
  * \function hw_timer_init()
@@ -96,10 +78,11 @@ extern uint8_t hw_timer_active_count(void);
  * 
  * @param units Specifies units of time of the input timer duration. \ref ty_time_units
  * @param duration  Duration of requested timer. Number of time units specified by units parameter
- * @param type      The timer can be a single shot timer or repeat until canceled \ref hw_timer_type
- * @param expiry_function The function to be called on the expiry of timer.
- * @param data Caller defined data to be passed to the expiry function.
- * @return A timer identifier which can be used to cancel the started timer.
+ * @param type      The timer can be a single shot timer or repeat until canceled \ref timer_type
+ * @param fn        The function to be called on the expiry of timer \ref expiry_function
+ * @param data Caller defined data to be passed to the expiry function \ref union sigval
+ * @param *timer    The timer_id returned to the caller for the started timer \ref timer_t
+ * @return result of the API Call \ref result_t
  * 
  * Note: The enumeration for units of time contains a number of different units
  * from uSeconds up to Hours, but only uSeconds, mSeconds and Seconds are valid
@@ -108,7 +91,7 @@ extern uint8_t hw_timer_active_count(void);
  * 
  * \ref BAD_TIMER is returned if the call failed to start the requested timer.
  */
-extern uint8_t  hw_timer_start(ty_time_units units, uint16_t duration, hw_timer_type type, void (*expiry_function)(void *), void *data);
+extern result_t hw_timer_start(ty_time_units units, uint16_t duration, timer_type type, expiry_function fn, union sigval data, timer_t *timer);
 
 /**
  * \brief Function to pause a started hardware timer
@@ -130,14 +113,14 @@ extern result_t hw_timer_pause(uint8_t timer);
  *                 parameters for duration etc.
  * @param units Units of the duration being passed into the function \ref ty_time_units
  * @param duration The duration of the hardware timer to be started, units as specified by the units parameter
- * @param type  Type of timer to be started see \ref hw_timer_type
+ * @param type  Type of timer to be started see \ref timer_type
  * @param expiry_function Function to be called on timer expiry.
  * @param data User defined data to be passed to the expiry function.
  * @return Satus of the operation:
  *             - SUCCESS
  *             - ERR_BAD_INPUT_PARAMETER
  */
-extern result_t hw_timer_restart(uint8_t hw_timer, ty_time_units units, uint16_t duration, hw_timer_type type, void (*expiry_function)(void *), void *data);
+extern result_t hw_timer_restart(timer_t *timer, ty_time_units units, uint16_t duration, timer_type type, expiry_function fn, union sigval data);
 
 /**
  * \ingroup Timers
@@ -160,7 +143,3 @@ extern void     hw_timer_cancel_all();
 #endif // _HW_TIMERS_H
 
 /**}@*/ 
-
-/**
- * @}
- */

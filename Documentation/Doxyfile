@@ -2041,7 +2041,7 @@ PREDEFINED             = "DOXYGEN" \
                          "__PIC24FJ64GB106__" \
                          "__dsPIC33EP256MU806__" \
 			 "SYS_HW_TIMERS" \
-			 "SYS_HW_TIMERS" \
+			 "SYS_SW_TIMERS" \
 			 "SYS_LOG_LEVEL" \
 			 "SYS_UART" \
 			 "SYS_SERIAL_LOGGING"

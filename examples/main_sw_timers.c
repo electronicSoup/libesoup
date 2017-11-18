@@ -41,7 +41,7 @@ int main(void)
 	 * if required.
          */
 
-        rc = sw_timer_start(SECONDS_TO_TICKS(30), expiry, data, &timer);
+        rc = sw_timer_start(Seconds, 30, single_shot, expiry, data, &timer);
         
         if(rc != SUCCESS) {
 		// Error Condition

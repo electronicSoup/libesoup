@@ -72,14 +72,14 @@
  * should not be used outside this file.
  */
 struct hw_timer_data {
-	uint8_t       status:2;
-	uint8_t       repeat:1;
-	ty_time_units units;
-	uint16_t      duration;
-	uint16_t      repeats;
-	uint16_t      remainder;
-	void        (*expiry_function)(void *data);
-	void         *data;
+	uint8_t         status:2;
+	timer_type      type;
+	ty_time_units   units;
+	uint16_t        duration;
+	uint16_t        repeats;
+	uint16_t        remainder;
+	expiry_function fn;
+	union sigval    data;
 };
 
 /*
@@ -98,7 +98,7 @@ static struct hw_timer_data timers[NUMBER_HW_TIMERS];
 /*
  * Function definitions:
  */
-static result_t  start_timer(uint8_t timer, ty_time_units units, uint16_t time, uint8_t repeat, void (*expiry_function)(void *), void *data);
+static result_t  start_timer(timer_t timer, ty_time_units units, uint16_t duration, timer_type type, expiry_function fn, union sigval data);
 static void      set_clock_divide(uint8_t timer, uint16_t clock_divide);
 
 /*
@@ -203,10 +203,10 @@ void hw_timer_init(void)
 
 	for(timer = 0; timer < NUMBER_HW_TIMERS; timer++) {
 		timers[timer].status = TIMER_UNUSED;
-		timers[timer].repeat = 0;
+		timers[timer].type = single_shot;
 		timers[timer].duration = 0;
-		timers[timer].expiry_function = NULL;
-		timers[timer].data = 0;
+		timers[timer].fn = NULL;
+		timers[timer].data.sival_int = 0;
 		timers[timer].repeats = 0;
 		timers[timer].remainder = 0;
 	}
@@ -262,9 +262,8 @@ uint8_t hw_timer_active_count(void)
 /*
  * hw_timer_start returns the id of the started timer.
  */
-uint8_t  hw_timer_start(ty_time_units units, uint16_t duration, hw_timer_type type, void (*expiry_function)(void *), void *data)
+result_t hw_timer_start(ty_time_units units, uint16_t duration, timer_type type, expiry_function fn, union sigval data, timer_t *timer_id)
 {
-	result_t      rc;
 	uint8_t       timer;
 
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
@@ -277,15 +276,7 @@ uint8_t  hw_timer_start(ty_time_units units, uint16_t duration, hw_timer_type ty
 
 	while(timer < NUMBER_HW_TIMERS) {
 		if(timers[timer].status == TIMER_UNUSED) {
-			rc = start_timer(timer, units, duration, repeat, expiry_function, data);
-			if(rc == SUCCESS) {
-				return(timer);
-			} else {
-#if (SYS_LOG_LEVEL <= LOG_ERROR)
-				LOG_D("Failed to start HW Timer rc 0x%x\n\r", rc);
-#endif
-                                return(BAD_TIMER);
-			}
+			return(start_timer(timer, units, duration, repeat, fn, data));
 		}
 		timer++;
 	}
@@ -293,22 +284,22 @@ uint8_t  hw_timer_start(ty_time_units units, uint16_t duration, hw_timer_type ty
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
 	LOG_E("Failed to start the HW Timer\n\r");
 #endif
-	return(BAD_TIMER);
+	return(ERR_NO_RESOURCES);
 }
 
-result_t hw_timer_restart(uint8_t timer, ty_time_units units, uint16_t time, hw_timer_type type, void (*expiry_function)(void *), void *data)
+result_t hw_timer_restart(timer_t *timer, ty_time_units units, uint16_t duration, timer_type type, expiry_function fn, union sigval data)
 {
-	if(timer == BAD_TIMER) {
-		return(hw_timer_start(units, time, repeat, expiry_function, data));
+	if(*timer == BAD_TIMER) {
+		return(hw_timer_start(units, duration, repeat, fn, data, timer));
 	}
-	if(timer >= NUMBER_HW_TIMERS) {
+	if(*timer >= NUMBER_HW_TIMERS) {
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
 		LOG_E("Bad time passed to hw_timer_restart()\n\r!");
 #endif
 		return(ERR_BAD_INPUT_PARAMETER);
 	}
 
-	return(start_timer(timer, units, time, repeat, expiry_function, data));
+	return(start_timer(*timer, units, duration, repeat, fn, data));
 }
 
 result_t hw_timer_pause(uint8_t timer)
@@ -385,10 +376,10 @@ void hw_timer_cancel(uint8_t timer)
                 hw_timer_pause(timer);
 
                 timers[timer].status = TIMER_UNUSED;
-                timers[timer].repeat = 0;
+                timers[timer].type = single_shot;
                 timers[timer].duration = 0;
-                timers[timer].expiry_function = NULL;
-                timers[timer].data = 0;
+                timers[timer].fn = NULL;
+                timers[timer].data.sival_int = 0;
                 timers[timer].repeats = (uint16_t)0;
                 timers[timer].remainder = (uint16_t)0;
         } else {
@@ -421,16 +412,16 @@ void hw_timer_cancel_all()
 
 	for(timer = 0; timer < NUMBER_HW_TIMERS; timer++) {
 		timers[timer].status = TIMER_UNUSED;
-		timers[timer].repeat = 0;
+		timers[timer].type = single_shot;
 		timers[timer].duration = 0;
-		timers[timer].expiry_function = NULL;
-		timers[timer].data = 0;
+		timers[timer].fn = NULL;
+		timers[timer].data.sival_int = 0;
 		timers[timer].repeats = (uint16_t)0;
 		timers[timer].remainder = (uint16_t)0;
 	}
 }
 
-static result_t start_timer(uint8_t timer, ty_time_units units, uint16_t duration, uint8_t repeat, void (*expiry_function)(void *), void *data)
+static result_t  start_timer(timer_t timer, ty_time_units units, uint16_t duration, timer_type type, expiry_function fn, union sigval data)
 {
 	uint32_t ticks = 0;
 
@@ -526,10 +517,10 @@ static result_t start_timer(uint8_t timer, ty_time_units units, uint16_t duratio
 
 	if(ticks > 0) {
 		timers[timer].status          = TIMER_RUNNING;
-		timers[timer].repeat          = repeat;
+		timers[timer].type            = type;
 		timers[timer].units           = units;
 		timers[timer].duration        = duration;
-		timers[timer].expiry_function = expiry_function;
+		timers[timer].fn              = fn;
 		timers[timer].data            = data;
 
 		timers[timer].repeats         = (uint16_t)((ticks >> 16) & 0xffff);
@@ -545,7 +536,7 @@ static result_t start_timer(uint8_t timer, ty_time_units units, uint16_t duratio
                 /*
                  * Simply call the expiry function
                  */
-                expiry_function(data);
+                fn(timer, data);
                 return(SUCCESS);
         }
 #ifndef __XC8 // X8 Compiler warns about unreachable code
@@ -740,8 +731,8 @@ void check_timer(uint8_t timer)
 #endif // __18F4585
 	
 #if defined(XC16)
-	void        (*expiry)(void *data);
-	void         *data;
+	expiry_function  expiry;
+	union sigval     data;
 #endif // XC16
 
         LATDbits.LATD3 = ~LATDbits.LATD3;
@@ -911,11 +902,11 @@ void check_timer(uint8_t timer)
 
 	} else {
 #if defined(XC16)
-                expiry = timers[timer].expiry_function;
+                expiry = timers[timer].fn;
                 data = timers[timer].data;
 
-		if(timers[timer].repeat) {
-			start_timer(timer, timers[timer].units, timers[timer].duration, timers[timer].repeat, timers[timer].expiry_function, timers[timer].data);
+		if(timers[timer].type == repeat) {
+			start_timer(timer, timers[timer].units, timers[timer].duration, timers[timer].type, timers[timer].fn, timers[timer].data);
 #if defined(XC8) && (SYS_LOG_LEVEL <= LOG_ERROR)
                         LOG_E("XC8 can't call recursive function, No repeat\n\r");
 #endif
@@ -929,12 +920,12 @@ void check_timer(uint8_t timer)
 		}
 
 		if(expiry) {
-                        expiry(data);
+                        expiry(timer, data);
                 }
 #elif defined(__18F4585)
                 timers[timer].status = TIMER_UNUSED;
-                if(timers[timer].expiry_function) {
-                        timers[timer].expiry_function(timers[timer].data);
+                if(timers[timer].fn) {
+                        timers[timer].fn(timer, timers[timer].data);
                 }
 #endif  // if XC16 elif __18F4585
 	}

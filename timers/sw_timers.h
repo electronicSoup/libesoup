@@ -1,5 +1,4 @@
 /**
- *
  * \file libesoup/timers/sw_timers.h
  *
  * \brief Software Timer API definitions and function prototypes
@@ -19,7 +18,8 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  *
  */
-/*
+/**
+ * \brief
  * A note on timers. The timer structures used in this electronicSoup
  * CinnamonBun Library are not as simple as they could be, given the simplicity
  * usually aspired to in simple embedded code. The structures and functions
@@ -29,8 +29,8 @@
  * has the advantage that protocols written for the CinnamonBun can easily be
  * ported to the RaspberryPi platform.
  */
-#ifndef SW_TIMERS_H
-#define SW_TIMERS_H
+#ifndef _SW_TIMERS_H
+#define _SW_TIMERS_H
 
 /*
  * This API Code is only included in a build if the configuration file
@@ -38,76 +38,38 @@
  */
 #ifdef SYS_SW_TIMERS
 
-#include "hw_timers.h"
+#include "libesoup/timers/hw_timers.h"
+
+/**
+ * \name Software Timers 
+ */
+/**@{*/
 
 #define TIMER_INIT(timer) timer = BAD_TIMER;
 
-/*
- * timer_t Timer identifier
- *
- * A Timer identifer returned from a timer created by sw_timer_create()
- */
 #if defined(XC16) || defined(__XC8)
-typedef uint8_t timer_t;
 
 /**
- * @brief convience macro to convert a Seconds value to system ticks
+ * \ingroup Timers
+ * \brief convience macro to convert a Seconds value to system ticks
  *
  * For portability code should always use this macro to calculate system ticks
  * for a timer. If the system changes the @see SYS_SYSTEM_TICK_ms value for either
  * finer timer granularity or less granularity.
  */
-#define SECONDS_TO_TICKS(s)  ((s) * (1000 / SYS_SW_TIMER_TICK_ms))
+//#define SECONDS_TO_TICKS(s)  ((s) * (1000 / SYS_SW_TIMER_TICK_ms))
 
 /**
- * @brief convience macro to convert a MilliSeconds value to system ticks
+ * \ingroup Timers
+ * \brief convience macro to convert a MilliSeconds value to system ticks
  * 
  * as for @see SECONDS_TO_TICKS code should always use this macro in case system
  * timer granularity is changed. In addition future electronicSoup deivces may
  * well use different System Tick values.
  */
-#define MILLI_SECONDS_TO_TICKS(ms) ((ms < SYS_SW_TIMER_TICK_ms) ? 1 : (ms / SYS_SW_TIMER_TICK_ms))
+//#define MILLI_SECONDS_TO_TICKS(ms) ((ms < SYS_SW_TIMER_TICK_ms) ? 1 : (ms / SYS_SW_TIMER_TICK_ms))
 
-/**
- * @brief Data passed to expiry funciton on timer expiry.
- *
- * The sigval union comes straight from the Linux timer API, which is why this
- * definition if encased in a test for XC16 || __XC8 definition. The union is passed to
- * the expiry function if the timer expires. It can either carry a 16 bit
- * integer value or a pointer.
- *
- * The reason for Linux API conformance is so that code is portable between
- * Linux and Microchip devices. In the case of MCP @see libesoup/timers/timers.h
- * provides the timer functionality, where as under Linux its timer code is
- * used. In both cases user code will be the same.
- *
- * Data passed to the expiry function can either be interpreted as a 16 bit
- * value or a pointer. It's up to the creater of the timer and the connected 
- * expiry function to decide what is being passed.
- */
-union sigval {
-           uint16_t     sival_int;         /**< 16 bit Integer value */
-           void   *sival_ptr;         /**< Pointer value */
-};
 #endif  // if defined(XC16) || __XC8
-
-/**
- * @brief call signiture of the timer expiry function.
- *
- * When a timer is created an expiry function is passed to the creation
- * function. The libesoup timer code executes this expiry_function when the timer
- * expires, passing the expiry function any data provided on timer creation.
- *
- * The expiry_function is a pointer to a function which accepts as parameter
- * the timer_id identifer of the timer which has expired and any associated data
- *
- * The expiry function is declared void and will not return anything to the
- * timer library code.
- *
- * Any timer expiry function should be short and sweet and return control as
- * soon as possible to the libesoup timer functionality.
- */
-typedef void (*expiry_function)(timer_t timer_id, union sigval);
 
 
 #if defined(XC16) || defined(__XC8)
@@ -122,28 +84,44 @@ typedef void (*expiry_function)(timer_t timer_id, union sigval);
 #endif // (__18F2680) || __18F4585)
 
 /*
- * CHECK_TIMERS()
- *
- * this CHECK_TIMERS() macro should be placed in the main loop of you code
- * so taht it calls the library timer functionality when ever the tick
- * interrup has occured.
+ * global variable which is set by the System tick Hardware Timer. The 
+ * \ref CHCEK_TIMERS macro must be called in the main loop to constantly check
+ * for a system tick and process expired timers accordingly.
  */
 extern volatile boolean timer_ticked;
 
+/**
+ * \ingroup Timers
+ * \brief Macro to check the status of Software Timers in the system.
+ *
+ * The Software Timers Module starts a Hardware timer to repeatedly expire 
+ * at the interval get by the libesoup_config.h definition of SYS_SW_TIMER_TICK_ms.
+ * The Hardware timer will signal a system tick and the CHECK_TIMERS() macro
+ * must be called in the main loop of application code so that it calls the 
+ * library timer functionality when ever the tick interrup has occured.
+ */
 #define CHECK_TIMERS()  if(timer_ticked) timer_tick();
 
-/*
- * timer_tick()
+/**
+ * \ingroup Timers
+ * \function timer_tick()
+ * \brief Process a system tick. Search for expired timers and call expiry funcitons.
  *
  * This function should not be called directly but called with the
  * CHECK_TIMERS macro defined above. It should be called only when the
  * timer interrupt has fired for a timer tick. The period of the timer tick
- * is defined in core.h.
+ * is defined in the system configuraiton file \ref libesoup_config.h
  */
 extern void timer_tick(void);
 
-/*
- * timer_isr
+/**
+ * \ingroup Timers
+ * \function timer_isr()
+ * \brief The PIC18F timer interrupt 
+ * 
+ * The PIC18F uC's have a very limited interrupt structure containing only 
+ * high priority and low priority interrupts. This timer interrupt will be called
+ * from one of those main interrupt routines if the timer interrupt has occured.
  */
 #if defined(__18F2680) || defined(__18F4585)
     extern void timer_isr(void);
@@ -151,25 +129,28 @@ extern void timer_tick(void);
 
 #endif // XC16 || __XC8
 
-/*
- * sw_timer_init()
+/**
+ * \ingroup Timers
+ * \function sw_timer_init()
+ * \brief Initialisation function for the Software Timers modules. Called by \ref libesoup_init()
  *
- * This function should be called to initialise the timer functionality
- * of the electronicSoup CinnamonBun Library. It initialises all data
- * structures. The project's libesoup_config.h header file should define the number
- * of timers the library should define space for an manage. See the
- * definition of SYS_NUMBER_OF_TIMERS in the example libesoup_config.h file in the
- * libesoup directory.
+ * If the system configuration file \ref libesoup_config.h includes the definition
+ * of \ref SYS_SW_TIMERS this function will be called automatically by the 
+ * library initialisation funciton \ref libesoup_init()
+ * 
+ * The funciton initialises all data structures required by the module.
+ * In additon to enabling the module with \ref SYS_SW_TIMERS the configuration 
+ * file \ref libesoup_config.h should define the number of Software timers
+ * that this module should initialise and manage with the definition 
+ * \ref SYS_NUMBER_OF_TIMERS
  */
 extern void sw_timer_init(void);
 
-/*
- * sw_timer_start()
- * 
- */
 /**
- * @brief function to start a timer
- *
+ * \ingroup Timers
+ * \funciton sw_timer_start()
+ * \brief Start a Software based timer.
+ * 
  * @param in duration: duration of the timer in system ticks. @see SECONDS_TO_TICKS
  * 
  * Starting a timer:
@@ -212,11 +193,13 @@ extern void sw_timer_init(void);
  *                    in your libesoup_config.h configuration file.
  * 
  */
-extern result_t sw_timer_start(uint16_t duration, expiry_function fn, union sigval data, timer_t *timer);
+extern result_t sw_timer_start(ty_time_units units, uint16_t duration, timer_type type, expiry_function fn, union sigval data, timer_t *timer);
 extern result_t sw_timer_cancel(timer_t timer);
 extern result_t sw_timer_cancel_all(void);
 
-#endif // SYS_SW_TIEMRS
+/**}@*/
 
-#endif  // SW_TIMERS_H
+#endif // SYS_SW_TIMERS
+
+#endif  // _SW_TIMERS_H
 
