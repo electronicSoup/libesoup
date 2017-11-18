@@ -51,6 +51,7 @@
 /**
  * \ingroup Uart
  * \brief  Structure defining a uart configuration
+ * \var tx_pin Peripheral pin to use for transmission
  */
 struct uart_data {
      ty_peripheral_pin tx_pin; /**< GPIO Pin to be used for the transmit pin of connection \ref */
@@ -126,3 +127,7 @@ extern result_t uart_tx_char(struct uart_data *data, char ch);
 #endif // SYS_UART
 
 #endif // ES_LIB_UART_H
+
+/**
+ * @}
+ */
