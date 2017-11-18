@@ -30,7 +30,7 @@ struct modbus_channel {
     struct uart_data    *uart;
     uint8_t                       hw_15_timer;
     uint8_t                       hw_35_timer;
-    timer_t                 resp_timer;
+    timer_id                      resp_timer;
     uint8_t                       address;
     uint8_t                       rx_buffer[SYS_MODBUS_RX_BUFFER_SIZE];
     uint16_t                      rx_write_index;

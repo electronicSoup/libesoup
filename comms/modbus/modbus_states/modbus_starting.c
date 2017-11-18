@@ -27,22 +27,17 @@
 #include "libesoup/logger/serial_log.h"
 #include "libesoup/comms/modbus/modbus.h"
 
-/*
- * Check required libesoup_config.h defines are found
- */
-#ifndef SYS_LOG_LEVEL
-#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
-#endif
-
 extern struct modbus_state modbus_state;
 
 static void process_timer_35_expiry(void *);
 
 void set_modbus_starting_state(struct modbus_channel *channel)
 {
+#ifdef SYS_SERIAL_LOGGING
 #if ((DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_INFO))
 	log_i(TAG, "set_modbus_starting_state(channel %d)\n\r", channel->uart->uart);
 #endif
+#endif // SYS_SERIAL_LOGGING
 	channel->process_timer_15_expiry = NULL;
 	channel->process_timer_35_expiry = process_timer_35_expiry;
 	channel->transmit = NULL;
@@ -58,14 +53,17 @@ static void process_timer_35_expiry(void *data)
         struct modbus_channel *channel = (struct modbus_channel *)data;
         
         if(channel->uart) {
+#ifdef SYS_SERIAL_LOGGING
 #if ((DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
                 log_d(TAG, "process_timer_35_expiry(channel %d)\n\r", channel->uart->uart);
 #endif
-
+#endif // SYS_SERIAL_LOGGING
                 set_modbus_idle_state(channel);
         } else {
+#ifdef SYS_SERIAL_LOGGING
 #if ((DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
                 log_d(TAG, "process_timer_35_expiry() No Uart\n\r");
 #endif
+#endif // SYS_SERIAL_LOGGING
         }
 }

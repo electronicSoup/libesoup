@@ -275,10 +275,11 @@ result_t hw_timer_start(timer_id *timer, struct timer_req *request)
 		 */
 		(*timer)++;
 	}
-
+#ifdef SYS_SERIAL_LOGGING
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
 	LOG_E("Failed to start the HW Timer\n\r");
 #endif
+#endif // SYS_SERIAL_LOGGING
 	return(ERR_NO_RESOURCES);
 }
 
@@ -288,9 +289,11 @@ result_t hw_timer_restart(timer_id *timer, struct timer_req *request)
 		return(hw_timer_start(timer, request));
 	}
 	if(*timer >= NUMBER_HW_TIMERS) {
+#ifdef SYS_SERIAL_LOGGING
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
 		LOG_E("Bad time passed to hw_timer_restart()\n\r!");
 #endif
+#endif // SYS_SERIAL_LOGGING
 		return(ERR_BAD_INPUT_PARAMETER);
 	}
 
@@ -300,16 +303,20 @@ result_t hw_timer_restart(timer_id *timer, struct timer_req *request)
 result_t hw_timer_pause(timer_id timer)
 {
 	if(timer >= NUMBER_HW_TIMERS) {
+#ifdef SYS_SERIAL_LOGGING
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
 		LOG_E("Bad timer passed to hw_timer_pause(0x%x)\n\r!", timer);
 #endif
+#endif // SYS_SERIAL_LOGGING
 		return(ERR_BAD_INPUT_PARAMETER);
 	}
 
 	if(timers[timer].status == TIMER_UNUSED) {
+#ifdef SYS_SERIAL_LOGGING
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
 		LOG_E("Timer passed to hw_timer_pause() is NOT in use\n\r");
 #endif
+#endif // SYS_SERIAL_LOGGING
 		return(ERR_BAD_INPUT_PARAMETER);
 	}
 
@@ -355,9 +362,11 @@ result_t hw_timer_pause(timer_id timer)
 #endif
 
         default:
+#ifdef SYS_SERIAL_LOGGING
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
                 LOG_E("Unknown Timer\n\r");
 #endif
+#endif // SYS_SERIAL_LOGGING
                 break;
 	}
 
@@ -375,9 +384,11 @@ void hw_timer_cancel(timer_id timer)
                 timers[timer].repeats = (uint16_t)0;
                 timers[timer].remainder = (uint16_t)0;
         } else {
+#ifdef SYS_SERIAL_LOGGING
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
                 LOG_E("Bad timer passed to hw_timer_cancel(0x%x)\n\r", timer);
 #endif
+#endif // SYS_SERIAL_LOGGING
         }
 }
 
@@ -416,9 +427,11 @@ static result_t start_timer(timer_id timer, struct timer_req *request)
 	uint32_t ticks = 0;
 
 	if(timer >= NUMBER_HW_TIMERS) {
+#ifdef SYS_SERIAL_LOGGING
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
                 LOG_E("Bad time passed to start_timer(0x%x)\n\r", timer);
 #endif
+#endif // SYS_SERIAL_LOGGING
                 return(ERR_BAD_INPUT_PARAMETER);
         }
 
@@ -483,9 +496,11 @@ static result_t start_timer(timer_id timer, struct timer_req *request)
 			set_clock_divide(timer, 8);
 			ticks = (uint32_t) ((uint32_t) (((uint32_t) SYS_CLOCK_FREQ / 4) / 8) * request->duration);
 		} else {
+#ifdef SYS_SERIAL_LOGGING
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
 			LOG_E("Unknown Timers\n\r");
 #endif
+#endif // SYS_SERIAL_LOGGING
 		}
 #else
                 /*
@@ -498,9 +513,11 @@ static result_t start_timer(timer_id timer, struct timer_req *request)
                 break;
 
 	default:
+#ifdef SYS_SERIAL_LOGGING
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
 		LOG_E("Bad duration Units for Hardware Timer\n\r");
 #endif
+#endif // SYS_SERIAL_LOGGING
 		return(ERR_BAD_INPUT_PARAMETER);
 #ifndef __XC8
 		break;
@@ -567,9 +584,11 @@ static void set_clock_divide(uint8_t timer, uint16_t clock_divide)
                         } else if(clock_divide == 256) {
                                 T0CONbits.T0PS = 0x07;   // Divide by 256
                         } else {
+#ifdef SYS_SERIAL_LOGGING
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
                                 LOG_E("Unknown divide\n\r");
 #endif
+#endif // SYS_SERIAL_LOGGING
                         }
                 }
                 break;
@@ -586,9 +605,11 @@ static void set_clock_divide(uint8_t timer, uint16_t clock_divide)
                 } else if(clock_divide == 8) {
                         T1CONbits.T1CKPS = 0x03;   // Divide by 8
                 } else {
+#ifdef SYS_SERIAL_LOGGING
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
                         LOG_E("Unknow divide\n\r");
 #endif
+#endif // SYS_SERIAL_LOGGING
                 }
                 break;
 #endif
@@ -608,9 +629,11 @@ static void set_clock_divide(uint8_t timer, uint16_t clock_divide)
                         T1CONbits.TCKPS1 = 1; // Divide by 256
                         T1CONbits.TCKPS0 = 1;
                 } else {
+#ifdef SYS_SERIAL_LOGGING
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
                         LOG_E("Bad clock divider!\n\r");
 #endif
+#endif // SYS_SERIAL_LOGGING
                 }
                 break;
 #endif
@@ -630,9 +653,11 @@ static void set_clock_divide(uint8_t timer, uint16_t clock_divide)
                         T2CONbits.TCKPS1 = 1; // Divide by 256
                         T2CONbits.TCKPS0 = 1;
                 } else {
+#ifdef SYS_SERIAL_LOGGING
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
                         LOG_E("Bad clock divider!\n\r");
 #endif
+#endif // SYS_SERIAL_LOGGING
                 }
                 break;
 #endif
@@ -652,9 +677,11 @@ static void set_clock_divide(uint8_t timer, uint16_t clock_divide)
                         T3CONbits.TCKPS1 = 1; // Divide by 256
                         T3CONbits.TCKPS0 = 1;
                 } else {
+#ifdef SYS_SERIAL_LOGGING
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
                         LOG_E("Bad clock divider!\n\r");
 #endif
+#endif // SYS_SERIAL_LOGGING
                 }
                 break;
 #endif
@@ -674,9 +701,11 @@ static void set_clock_divide(uint8_t timer, uint16_t clock_divide)
                         T4CONbits.TCKPS1 = 1; // Divide by 256
                         T4CONbits.TCKPS0 = 1;
                 } else {
+#ifdef SYS_SERIAL_LOGGING
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
                         LOG_E("Bad clock divider!\n\r");
 #endif
+#endif // SYS_SERIAL_LOGGING
                 }
                 break;
 #endif
@@ -696,17 +725,21 @@ static void set_clock_divide(uint8_t timer, uint16_t clock_divide)
                         T5CONbits.TCKPS1 = 1; // Divide by 256
                         T5CONbits.TCKPS0 = 1;
                 } else {
+#ifdef SYS_SERIAL_LOGGING
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
                         LOG_E("Bad clock divider!\n\r");
 #endif
+#endif // SYS_SERIAL_LOGGING
                 }
                 break;
 #endif
 
         default:
+#ifdef SYS_SERIAL_LOGGING
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
                 LOG_E("Unknown Timer\n\r");
 #endif
+#endif // SYS_SERIAL_LOGGING
                 break;
 
 	}
@@ -799,9 +832,11 @@ void check_timer(timer_id timer)
 #endif
 
                 default:
+#ifdef SYS_SERIAL_LOGGING
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
                         LOG_E("Unknown Timer\n\r");
 #endif
+#endif // SYS_SERIAL_LOGGING
                         break;
 		}
 		timers[timer].repeats--;
@@ -884,9 +919,11 @@ void check_timer(timer_id timer)
 #endif
 
                 default:
+#ifdef SYS_SERIAL_LOGGING
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
                         LOG_E("Unknown Timer\n\r");
 #endif
+#endif // SYS_SERIAL_LOGGING
                         break;
 		}
 		timers[timer].remainder = 0;
@@ -898,9 +935,11 @@ void check_timer(timer_id timer)
 
 		if(timers[timer].request.type == repeat) {
 			start_timer(timer, &timers[timer].request);
+#ifdef SYS_SERIAL_LOGGING
 #if defined(XC8) && (SYS_LOG_LEVEL <= LOG_ERROR)
                         LOG_E("XC8 can't call recursive function, No repeat\n\r");
 #endif
+#endif // SYS_SERIAL_LOGGING
 		} else {
 			timers[timer].status = TIMER_UNUSED;
 		}

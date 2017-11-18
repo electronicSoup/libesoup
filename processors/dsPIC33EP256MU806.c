@@ -44,6 +44,23 @@
 
 #include "libesoup/timers/clock.h"
 
+/*
+ * Interrupts
+ */
+void _ISR __attribute__((__no_auto_psv__)) _AddressError(void)
+{
+//	LOG_E("Address error");
+	while (1) {
+	}
+}
+
+void _ISR __attribute__((__no_auto_psv__)) _StackError(void)
+{
+//	LOG_E("Stack error");
+	while (1)  {
+	}
+}
+
 void cpu_init(void)
 {
         clock_init();

@@ -4,11 +4,8 @@
  *
  * @author John Whitmore
  *
- * This file contains an example es_lib system.h configuration file. 
- *
- * The es_lib library of source code expects a system.h header file to exist
- * in your include path. The file contains the various switches and definitions
- * which configure the various features of the library.
+ * This file contains an example libesoup_config.h configuration file for 
+ * working with uarts. 
  *
  * Copyright 2017 John Whitmore <jwhitmore@electronicsoup.com>
  *
@@ -54,15 +51,38 @@
 #define SYS_CLOCK_FREQ 16000000     // 8MHz
 #endif
 
-/**
- * \ingroup Timers
- * \brief Switch to enable the Hardware Timers module of libesoup. 
- * 
- * Must be defined in the system configuration file libesoup_config.h for
- * code to be included in build.
- * 
- */
 #define SYS_HW_TIMERS
+#define SYS_SW_TIMERS
+
+/*
+ * Enable the uart functionality in libesoup
+ */
+#define SYS_UART
+
+#ifdef SYS_UART
+#define SYS_UART_TX_BUFFER_SIZE   200
+#endif
+
+/*
+ * System jobs
+ */
+//#define SYS_JOBS
+
+#ifdef SYS_JOBS
+#define SYS_NUMBER_OF_JOBS 10
+#endif
+
+/*
+ * MODBUS
+ */
+#define SYS_MODBUS
+
+#ifdef SYS_MODBUS
+#define SYS_MODBUS_RX_BUFFER_SIZE                  256
+#define SYS_MODBUS_RESPONSE_TIMEOUT                SECONDS_TO_TICKS(1)
+#define SYS_MODBUS_RESPONSE_BROADCAST_TIMEOUT      MILLI_SECONDS_TO_TICKS(500)
+#endif // SYS_MODBUS
+
 
 /*
  *******************************************************************************

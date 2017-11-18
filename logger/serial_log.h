@@ -19,10 +19,16 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  *
  */
-#ifndef SERIAL_LOG_H
-#define SERIAL_LOG_H
+/**
+ * \defgroup SerialLogging Serial Logging
+ * @{
+ */
+#ifndef _SERIAL_LOG_H
+#define _SERIAL_LOG_H
 
-#include <stdio.h>
+#ifdef SYS_SERIAL_LOGGING
+
+//#include <stdio.h>
 
 /**
  * @def   LOG_DEBUG
@@ -96,3 +102,8 @@ extern result_t serial_logging_exit(void);
 #endif
 
 #endif // SERIAL_LOG_H
+
+#endif // SYS_SERIAL_LOGGING
+/**
+ * @}
+ */
