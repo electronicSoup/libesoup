@@ -28,13 +28,6 @@
 #include "libesoup/logger/serial_log.h"
 #include "libesoup/jobs/jobs.h"
 
-/*
- * Check required libesoup_config.h defines are found
- */
-#ifndef SYS_LOG_LEVEL 
-#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
-#endif
-
 struct job {
     void (*function)(void *);
     void *data;
@@ -90,9 +83,11 @@ result_t jobs_execute(void)
 
                         function(data);
                 } else {
+#ifdef SYS_SERIAL_LOGGING
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
                         log_e(TAG, "Bad job at %d\n\r", read_index);
 #endif
+#endif // SYS_SERIAL_LOGGING
                         rc = ERR_GENERAL_ERROR;
                 }
 	}

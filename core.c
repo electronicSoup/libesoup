@@ -39,6 +39,10 @@
 #include "libesoup/logger/serial_log.h"
 #endif
 
+#ifdef SYS_JOBS
+#include "libesoup/jobs/jobs.h"
+#endif
+
 #ifdef SYS_SPI_BUS
 #include "libesoup/utils/spi.h"
 #endif
@@ -70,6 +74,10 @@ result_t libesoup_init(void)
                  */
                 return(1);
         }
+#endif
+
+#ifdef SYS_JOBS
+	jobs_init();
 #endif
 	
 #ifdef SYS_SPI_BUS
