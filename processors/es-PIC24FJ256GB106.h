@@ -111,16 +111,19 @@
 
 
 
-/*
- * Peripheral Input Pin Definitions
+/**
+ * \ingroup Core
+ * \bried Microchip Peripheral Input Pins
  */
-#define RP0  0
-#define RP1  1
-#define RP13 13
-#define RP20 20
-#define RP23 23
-#define RP25 25
-#define RP28 28
+typedef enum { 
+        RP0  = 0,
+        RP1  = 1,
+        RP13 = 13,
+        RP20 = 20,
+        RP23 = 23,
+        RP25 = 25,
+        RP28 = 28,
+} ty_peripheral_pin;
 
 /*
  * Peripheral Input functions

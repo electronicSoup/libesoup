@@ -30,13 +30,14 @@
  * Forward declaration of our Hardware timer expiry function, which will be
  * called when the timer expires.
  */
-void exp_func(timer_t timer, union sigval data);
+void exp_func(timer_id timer, union sigval data);
 
 int main(void)
 {
-	result_t     rc;
-        timer_t      timer;
-	union sigval data;
+	result_t         rc;
+        timer_id         timer;
+	struct timer_req request;
+	union sigval     data;
 
 	/*
 	 * Initialise the libesoup library
@@ -101,12 +102,18 @@ int main(void)
 	INTCONbits.PEIE = 1;   // Enable Periphal Interrupts
 #endif // (__18F4585)
         
-        rc = hw_timer_start(Seconds, 5, single_shot, exp_func, data, &timer);
+	request.units = Seconds;
+	request.duration = 5;
+	request.type = single_shot;
+	request.exp_fn = exp_func;
+	request.data = data;
+	
+        rc = hw_timer_start(&timer, &request);
 #if defined(__dsPIC33EP256MU806__) || defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__)
         LATEbits.LATE3 = 1;
 #endif
         
-        if(timer == BAD_TIMER) {
+        if(rc != SUCCESS) {
 	        /*
 		 * Handle the error condition.
 		 */
@@ -117,7 +124,7 @@ int main(void)
         return 0;
 }
 
-void exp_func(timer_t timer, union sigval data)
+void exp_func(timer_id timer, union sigval data)
 {
 #if defined(__dsPIC33EP256MU806__) || defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__)
         LATEbits.LATE3 = ~LATEbits.LATE3;

@@ -70,17 +70,23 @@
 #error libesoup_config.h file should define SYS_NUMBER_OF_SW_TIMERS (see libesoup/examples/libesoup_config.h)
 #endif
 
+#ifndef SYS_SW_TIMER_TICK_ms
+#error libesoup_config.h file should define SYS_SW_TIMER_TICK_ms (see libesoup/examples/libesoup_config.h)
+#endif
+
 #if defined(XC16) || defined(__XC8)
 static uint16_t  timer_counter = 0;
 
 volatile boolean timer_ticked = FALSE;
 
 static uint8_t   hw_timer_paused = FALSE;
-static timer_t   hw_timer = BAD_TIMER;
+static timer_id  hw_timer = BAD_TIMER_ID;
 #endif // XC16 || __XC8
 
+static	struct timer_req hw_timer_req;
+
 /*
- * Data structure for a Timer on the Cinnamon Bun.
+ * Data structure for a Timer
  */
 typedef struct {
 	boolean         active;
@@ -111,7 +117,7 @@ sys_timer_t timers[SYS_NUMBER_OF_SW_TIMERS];
  * macro.
  */
 #if defined(XC16) || defined(__XC8)
-static void hw_expiry_function(timer_t timer, union sigval data)
+static void hw_expiry_function(timer_id timer, union sigval data)
 {
 	timer_ticked = TRUE;
 }
@@ -127,8 +133,8 @@ static void hw_expiry_function(timer_t timer, union sigval data)
 void sw_timer_init(void)
 {
 #if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__) || defined(__dsPIC33EP256MU806__)
-	result_t     rc;
-	union sigval data;
+	result_t         rc;
+	union sigval     data;
 #endif
 	uint8_t loop;
 
@@ -142,9 +148,15 @@ void sw_timer_init(void)
 	}
 
 #if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__) || defined(__dsPIC33EP256MU806__)
-	hw_timer = BAD_TIMER;
+	hw_timer = BAD_TIMER_ID;
 
-	rc = hw_timer_start(mSeconds, 5, repeat, hw_expiry_function, data, &hw_timer);
+	hw_timer_req.units = mSeconds;
+	hw_timer_req.duration = SYS_SW_TIMER_TICK_ms;
+	hw_timer_req.type = repeat;
+	hw_timer_req.exp_fn = hw_expiry_function;
+	hw_timer_req.data = data;
+	
+	rc = hw_timer_start(&hw_timer, &hw_timer_req);
 	hw_timer_paused = FALSE;
 #endif //__PIC24FJ256GB106__
 
@@ -264,13 +276,13 @@ void timer_tick(void)
  *          ERR_NO_RESOURCES    Error - No Free system timers available.
  *
  */
-result_t sw_timer_start(ty_time_units units, uint16_t duration, timer_type type, expiry_function fn, union sigval data, timer_t *timer)
+result_t sw_timer_start(timer_id *timer, struct timer_req *request)
 {
 	uint16_t ticks;
 #if defined(XC16) || defined(__XC8)
-	timer_t loop;
+	timer_id loop;
 
-	if(*timer != BAD_TIMER) {
+	if(*timer != BAD_TIMER_ID) {
                 if(*timer < SYS_NUMBER_OF_SW_TIMERS) {
                         if (timers[*timer].active) {
 #if (DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_WARNING)
@@ -281,10 +293,10 @@ result_t sw_timer_start(ty_time_units units, uint16_t duration, timer_type type,
 		sw_timer_cancel(*timer);
 	}
 
-	if(units == mSeconds) {
-		ticks = ((duration < SYS_SW_TIMER_TICK_ms) ? 1 : (duration / SYS_SW_TIMER_TICK_ms));
-	} else if (units == Seconds) {
-		ticks = (duration * (1000 / SYS_SW_TIMER_TICK_ms));
+	if(request->units == mSeconds) {
+		ticks = ((request->duration < SYS_SW_TIMER_TICK_ms) ? 1 : (request->duration / SYS_SW_TIMER_TICK_ms));
+	} else if (request->units == Seconds) {
+		ticks = (request->duration * (1000 / SYS_SW_TIMER_TICK_ms));
 	} else {
 		return(ERR_BAD_INPUT_PARAMETER);
 	}
@@ -307,8 +319,8 @@ result_t sw_timer_start(ty_time_units units, uint16_t duration, timer_type type,
 			} else {
 				timers[loop].expiry_count = ticks - (0xFFFF - timer_counter);
 			}
-			timers[loop].function = fn;
-			timers[loop].expiry_data = data;
+			timers[loop].function = request->exp_fn;
+			timers[loop].expiry_data = request->data;
 
 			*timer = loop;
 
@@ -316,7 +328,7 @@ result_t sw_timer_start(ty_time_units units, uint16_t duration, timer_type type,
 			 * If our hw_timer isn't running restart it:
 			 */
 			if(hw_timer_paused) {
-				if(hw_timer_restart(&hw_timer, mSeconds, 5, TRUE, hw_expiry_function, data) != SUCCESS) {
+				if(hw_timer_restart(&hw_timer, &hw_timer_req) != SUCCESS) {
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
 					LOG_E("Failed to restart HW timer\n\r");
 #endif
@@ -381,10 +393,10 @@ result_t sw_timer_start(ty_time_units units, uint16_t duration, timer_type type,
  * Return : SUCCESS
  *
  */
-result_t sw_timer_cancel(timer_t timer)
+result_t sw_timer_cancel(timer_id timer)
 {
 #if defined(XC16) || defined(__XC8)
-	if ((timer == BAD_TIMER) || (timer >= SYS_NUMBER_OF_SW_TIMERS)) {
+	if ((timer == BAD_TIMER_ID) || (timer >= SYS_NUMBER_OF_SW_TIMERS)) {
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
                 LOG_E("sw_timer_cancel() Bad timer identifier passed in!\n\r");
 #endif

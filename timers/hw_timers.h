@@ -76,22 +76,18 @@ extern uint8_t hw_timer_active_count(void);
  * \function hw_timer_start()
  * @brief Function to start a uC hardware timer.
  * 
- * @param units Specifies units of time of the input timer duration. \ref ty_time_units
- * @param duration  Duration of requested timer. Number of time units specified by units parameter
- * @param type      The timer can be a single shot timer or repeat until canceled \ref timer_type
- * @param fn        The function to be called on the expiry of timer \ref expiry_function
- * @param data Caller defined data to be passed to the expiry function \ref union sigval
- * @param *timer    The timer_id returned to the caller for the started timer \ref timer_t
- * @return result of the API Call \ref result_t
+ * @param *timer    The timer_id returned to the caller for the started timer \ref timer_id
+ * @param *request  Structure containing all details of timer to be created \ref timer_req
+ * @return Satus of the operation:
+ *             - SUCCESS
+ *             - ERR_BAD_INPUT_PARAMETER
  * 
- * Note: The enumeration for units of time contains a number of different units
- * from uSeconds up to Hours, but only uSeconds, mSeconds and Seconds are valid
+ * Note: Only uSeconds, mSeconds and Seconds are valid
  * units for a Hardware timer. If a timer of duration measured in minutes, or
  * greater, is required you'll need to use a Software based timer.
  * 
- * \ref BAD_TIMER is returned if the call failed to start the requested timer.
  */
-extern result_t hw_timer_start(ty_time_units units, uint16_t duration, timer_type type, expiry_function fn, union sigval data, timer_t *timer);
+extern result_t hw_timer_start(timer_id *timer, struct timer_req *request);
 
 /**
  * \brief Function to pause a started hardware timer
@@ -101,35 +97,31 @@ extern result_t hw_timer_start(ty_time_units units, uint16_t duration, timer_typ
  *             - SUCCESS
  *             - ERR_BAD_INPUT_PARAMETER
  */
-extern result_t hw_timer_pause(uint8_t timer);
+extern result_t hw_timer_pause(timer_id timer);
 
 /**
  * \ingroup Timers
  * \function hw_timer_restart
  * \brief Function to restart a previously paused hardware timer.
  * 
- * @param hw_timer Identifier of the hardware timer, previously started with a 
+ * @param *timer Identifier of the hardware timer, previously started with a 
  *                 call to \ref hw_timer_start(), to be restart with new
- *                 parameters for duration etc.
- * @param units Units of the duration being passed into the function \ref ty_time_units
- * @param duration The duration of the hardware timer to be started, units as specified by the units parameter
- * @param type  Type of timer to be started see \ref timer_type
- * @param expiry_function Function to be called on timer expiry.
- * @param data User defined data to be passed to the expiry function.
+ *                 parameters for duration etc. \req timer_id
+ * @param *request  Structure containing all details of timer to be created \ref timer_req
  * @return Satus of the operation:
  *             - SUCCESS
  *             - ERR_BAD_INPUT_PARAMETER
  */
-extern result_t hw_timer_restart(timer_t *timer, ty_time_units units, uint16_t duration, timer_type type, expiry_function fn, union sigval data);
+extern result_t hw_timer_restart(timer_id *timer, struct timer_req *request);
 
 /**
  * \ingroup Timers
  * \function hw_timer_cancel()
  * \brief Function to cancel a hardware timer running in the system.
  * 
- * \param timer Identifier of the timer, previously started, to be cancelled
+ * \param timer Identifier of the timer, previously started, to be cancelled \ref timer_id
  */
-extern void     hw_timer_cancel(uint8_t timer);
+extern void     hw_timer_cancel(timer_id timer);
 
 /**
  * \ingroup Timers

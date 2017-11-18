@@ -1,9 +1,9 @@
 /**
- * @file libesoup/core.h
+ * @file libesoup/timers/time.h
  *
  * @author John Whitmore
  *
- * Core definitions required by electronicSoup Code Library
+ * time definitions required by both hardware and software timers
  *
  * Copyright 2017 John Whitmore <jwhitmore@electronicsoup.com>
  *
@@ -21,7 +21,8 @@
  *
  */
 #ifndef _TIME_H
-#define _TIMER_H
+#define _TIME_H
+
 /**
  * \defgroup Timers Timers
  * @{
@@ -53,43 +54,34 @@ typedef enum {
  * \brief timer identifier
  */
 #if defined(XC16) || defined(__XC8)
-typedef uint8_t timer_t;
+typedef uint8_t timer_id;
 #endif // Microchip Compiler
 
 /**
  * \ingroup Timers
  * \brief Dummy timer identifier for a non existent timer.
  */
-#define BAD_TIMER   0xff
+#define BAD_TIMER_ID   0xff
 
 #if defined(XC16) || defined(__XC8)
 /**
  * \ingroup Timers
- * \brief Data type passed to expiry funciton on timer expiry.
+ * \brief Data type passed to expiry function on timer expiry.
  *
  * The sigval union comes straight from the Linux timer API, which is why this
  * definition if encased in a test for XC16 || __XC8 definition. The union is passed to
  * the expiry function if the timer expires. It can either carry a 16 bit
  * integer value or a pointer.
- *
- * The reason for Linux API conformance is so that code is portable between
- * Linux and Microchip devices. In the case of MCP @see libesoup/timers/timers.h
- * provides the timer functionality, where as under Linux its timer code is
- * used. In both cases user code will be the same.
- *
- * Data passed to the expiry function can either be interpreted as a 16 bit
- * value or a pointer. It's up to the creater of the timer and the connected 
- * expiry function to decide what is being passed.
  */
 union sigval {
-           uint16_t     sival_int;         /**< 16 bit Integer value */
-           void   *sival_ptr;         /**< Pointer value */
+           uint16_t   sival_int;         /**< 16 bit Integer value */
+           void      *sival_ptr;         /**< Pointer value */
 };
 #endif  // if defined(XC16) || __XC8
 
 /**
  * \ingroup Timers
- * \brief call signiture of the timer expiry function.
+ * \brief call signature of the timer expiry function.
  *
  * When a timer is created an expiry function is passed to the creation
  * function. The libesoup timer code executes this expiry_function when the timer
@@ -104,8 +96,22 @@ union sigval {
  * Any timer expiry function should be short and sweet and return control as
  * soon as possible to the libesoup timer functionality.
  */
-typedef void (*expiry_function)(timer_t timer_id, union sigval);
+typedef void (*expiry_function)(timer_id timer, union sigval);
 
+/**
+ * \ingroup Timers
+ * \brief  data structure used when requesting a timer.
+ * 
+ * This structure is used when requesting both a Hardware timer and a Software
+ * timer.
+ */
+struct timer_req {
+    ty_time_units   units;    /**< Time units for timer \ref ty_time_units */
+    uint16_t        duration; /**< Duration of the timer in units */
+    timer_type      type;     /**< Type of timer to be created \ref timer_type */
+    expiry_function exp_fn;   /**< expiry function to be called \ref expiry_function */
+    union sigval    data;     /**< data to be passed to the expiry fnction on expiry \ref union sigval */
+};
 
 /**
  * @}

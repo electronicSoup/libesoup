@@ -25,13 +25,14 @@
 
 #include "libesoup/timers/sw_timers.h"
 
-static void expiry(timer_t timer_id, union sigval);
+static void expiry(timer_id timer_id, union sigval);
 
 int main(void)
 {
-        result_t     rc;
-        union sigval data;
-	timer_t      timer;
+        result_t         rc;
+	struct timer_req request;
+        union sigval     data;
+	timer_id         timer;
 
 	rc = libesoup_init();
 
@@ -41,7 +42,13 @@ int main(void)
 	 * if required.
          */
 
-        rc = sw_timer_start(Seconds, 30, single_shot, expiry, data, &timer);
+	request.units = Seconds;
+	request.duration = 30;
+	request.type = single_shot;
+	request.exp_fn = expiry;
+	request.data = data;
+	
+        rc = sw_timer_start(&timer, &request);
         
         if(rc != SUCCESS) {
 		// Error Condition
@@ -56,9 +63,9 @@ int main(void)
 }
 
 #if defined(XC16)
-static void expiry(timer_t timer_id  __attribute__((unused)), union sigval data __attribute__((unused)))
+static void expiry(timer_id timer  __attribute__((unused)), union sigval data __attribute__((unused)))
 #elif defined(__XC8)
-static void expiry(timer_t timer_id, union sigval data)
+static void expiry(timer_id timer, union sigval data)
 #endif
 {
 	// Timer has expired

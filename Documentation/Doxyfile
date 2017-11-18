@@ -659,7 +659,7 @@ MAX_INITIALIZER_LINES  = 30
 # list will mention the files that were used to generate the documentation.
 # The default value is: YES.
 
-SHOW_USED_FILES        = YES
+SHOW_USED_FILES        = NO
 
 # Set the SHOW_FILES tag to NO to disable the generation of the Files page. This
 # will remove the Files entry from the Quick Index and from the Folder Tree View
@@ -2037,6 +2037,8 @@ INCLUDE_FILE_PATTERNS  =
 # This tag requires that the tag ENABLE_PREPROCESSING is set to YES.
 
 PREDEFINED             = "DOXYGEN" \
+		         "XC16" \
+			 "__XC8" \
                          "__PIC24FJ256GB106__" \
                          "__PIC24FJ64GB106__" \
                          "__dsPIC33EP256MU806__" \

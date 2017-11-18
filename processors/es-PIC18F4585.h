@@ -44,6 +44,13 @@
 #define RC6            25
 #define RC7            26
 
+/*
+ * PIC18 doesn't have Peripheral pins so dummy definition
+ */
+typedef enum {
+    RP0 = 0
+} ty_peripheral_pin;
+
 #define TIMER_0         0
 #define TIMER_1         1
 
