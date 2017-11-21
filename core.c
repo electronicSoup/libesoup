@@ -72,7 +72,7 @@ result_t libesoup_init(void)
                 /*
                  * What to do?
                  */
-                return(1);
+                return(rc);
         }
 #endif
 
