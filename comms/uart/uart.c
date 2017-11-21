@@ -512,6 +512,7 @@ result_t uart_reserve(struct uart_data *data)
 			if (data->tx_pin != NO_PIN) {
 				uart_set_tx_pin((uint8_t) data->uart, data->tx_pin);
 			}
+
 			uart_set_uart_config(data);
 
 			return(SUCCESS);

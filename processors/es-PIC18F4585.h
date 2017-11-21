@@ -48,7 +48,8 @@
  * PIC18 doesn't have Peripheral pins so dummy definition
  */
 typedef enum {
-    RP0 = 0
+    RP0 = 0,
+    NO_PIN = 0xff
 } ty_peripheral_pin;
 
 #define TIMER_0         0

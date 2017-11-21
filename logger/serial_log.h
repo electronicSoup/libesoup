@@ -74,7 +74,11 @@
  */
 #if defined(XC16) || defined(__XC8)
 extern result_t serial_logging_init(void);
+#if defined(XC16)
 extern void     serial_log(uint8_t level, const char * tag, const char * f, ...);
+#elif defined(__XC8)
+extern void     serial_log(const char* fmt, ...);
+#endif
 extern result_t serial_logging_exit(void);
 
 /*
@@ -88,6 +92,7 @@ extern result_t serial_logging_exit(void);
 
 #endif // XC16 || __XC8
 
+#ifdef XC16
 #if (SYS_LOG_LEVEL <= LOG_DEBUG)
 #define LOG_D(...)  serial_log(LOG_DEBUG, TAG, __VA_ARGS__);
 #endif
@@ -103,6 +108,32 @@ extern result_t serial_logging_exit(void);
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
 #define LOG_E(...)  serial_log(LOG_ERROR, TAG, __VA_ARGS__);
 #endif
+#elif defined(__XC8)
+#if (SYS_LOG_LEVEL <= LOG_DEBUG)
+#define LOG_D     serial_log("D-");  \
+                  serial_log(TAG);   \
+                  serial_log
+#endif
+
+#if (SYS_LOG_LEVEL <= LOG_INFO)
+#define LOG_I     serial_log("I-");  \
+                  serial_log(TAG);   \
+                  serial_log
+#endif
+
+#if (SYS_LOG_LEVEL <= LOG_WARNING)
+#define LOG_W     serial_log("W-");  \
+                  serial_log(TAG);   \
+                  serial_log
+#endif
+
+#if (SYS_LOG_LEVEL <= LOG_ERROR)
+#define LOG_E     serial_log("E-");  \
+                  serial_log(TAG);   \
+                  serial_log
+#endif
+
+#endif // __XC8
 
 #endif // SERIAL_LOG_H
 
