@@ -18,15 +18,16 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  *
+ * http://www.geeksforgeeks.org/implement-itoa/
  */
-#include <stdarg.h>
-#include <stdio.h>
-#include <string.h>
+#include <stdarg.h>   // Required for vargs
 
 #define DEBUG_FILE TRUE
-#define TAG "serial"
+//static const char *TAG ="serial";
 
 #include "libesoup_config.h"
+
+#ifdef SYS_SERIAL_LOGGING
 
 #include "libesoup/logger/serial_log.h"
 
@@ -63,7 +64,17 @@
 #include <stdio.h>
 #endif // if defined (ES_LINUX)
 
-static uint8_t printable(uint8_t ch);
+#define LEVEL_STRING_LEN  2
+static uint8_t debug_string[LEVEL_STRING_LEN + 1] = "D-";
+static uint8_t info_string[LEVEL_STRING_LEN + 1] = "I-";
+static uint8_t warning_string[LEVEL_STRING_LEN + 1] = "W-";
+static uint8_t error_string[LEVEL_STRING_LEN + 1] = "E-";
+
+/*
+ */
+static uint8_t *itoa(int num, uint8_t *str, int base);
+static uint16_t strlen(char *string);
+static void reverse(uint8_t str[], uint16_t length);
 
 /*
  * Declaration of the data structure being used to manage UART connection.
@@ -94,6 +105,7 @@ static struct uart_data serial_uart;
 result_t serial_logging_init(void)
 {
         result_t rc;
+	uint16_t delay;
         
 #if defined(XC16) || defined(__XC8)
 	/*
@@ -110,7 +122,11 @@ result_t serial_logging_init(void)
          */
         serial_uart.baud = SYS_SERIAL_LOGGING_BAUD;
         serial_uart.tx_pin = SERIAL_LOGGING_TX_PIN;
+#ifdef SERIAL_LOGGING_RX_ENABLE
         serial_uart.rx_pin = SERIAL_LOGGING_RX_PIN;
+#else
+        serial_uart.rx_pin = NO_PIN;
+#endif
         rc = uart_calculate_mode(&serial_uart.uart_mode, UART_8_DATABITS, UART_PARITY_NONE, UART_ONE_STOP_BIT, UART_IDLE_HIGH);
         if(rc != SUCCESS) {
                 return(rc);
@@ -122,52 +138,112 @@ result_t serial_logging_init(void)
         }
 #endif // ifdef XC16 || __XC8
 
-        /*
-         * Call uart_tx_buffer to clear XC8 compiler warning
-         */
-//        printf("\n\r\n\r");
+	/*
+	 * Short delay to allow the line to stablaise before sending the 
+	 * first character on the channel
+	 */
+	for (delay = 0; delay < 0x100; delay++) Nop();
+
+	rc = uart_tx_char(&serial_uart, '\n');
+	rc = uart_tx_char(&serial_uart, '\r');
+	rc = uart_tx_char(&serial_uart, '\n');
+	rc = uart_tx_char(&serial_uart, '\r');
         return(SUCCESS);
 }
 
 #if defined(XC16) || defined(__XC8)
-void serial_log(const char * tag, const char * f, ...)
+void serial_log(uint8_t level, const char *tag, const char *fmt, ...)
 {
 	result_t  rc;
 	char     *ptr;
+	va_list   args;
+	uint16_t  i;
+	uint8_t   buf[256];
+	uint8_t  *string;
+
+	va_start(args, fmt);
+
+	/*
+	 * Print the log level
+	 */
+	switch(level) {
+	case LOG_DEBUG:
+		rc = uart_tx_buffer(&serial_uart, debug_string, LEVEL_STRING_LEN);
+		break;
+
+	case LOG_INFO:
+		rc = uart_tx_buffer(&serial_uart, info_string, LEVEL_STRING_LEN);
+		break;
+
+	case LOG_WARNING:
+		rc = uart_tx_buffer(&serial_uart, warning_string, LEVEL_STRING_LEN);
+		break;
+
+	case LOG_ERROR:
+		rc = uart_tx_buffer(&serial_uart, error_string, LEVEL_STRING_LEN);
+		break;
+	}
 
 	/*
 	 * Print the tag field
 	 */
 	ptr = (char *)tag;
-	
-	while(*ptr) {
-		if(printable(*ptr)) {
-			rc = uart_tx_char(&serial_uart, *ptr);
-		}
-		
-		ptr++;
-	}
-#if 0
+	rc = uart_tx_buffer(&serial_uart, (uint8_t*)ptr, strlen(ptr));
+	rc = uart_tx_char(&serial_uart, ':');
+
 	/*
 	 * Next print the format string
 	 */
-	ptr = (char *)f;
+	ptr = (char *)fmt;
 	while(*ptr) {
 		
-		if(*ptr == '%') {
+		if(*ptr != '%') {
+			rc = uart_tx_char(&serial_uart, *ptr);
+		} else {
 			/*
 			 * Format specifier
 			 */
+			switch(*++ptr) {
+			case '%' :
+				rc = uart_tx_char(&serial_uart, *ptr);
+				break;
+
+			case 'd':
+				i = va_arg(args, uint16_t);
+				string = itoa(i, buf, 10);
+				rc = uart_tx_buffer(&serial_uart, string, strlen((char*)string));
+				break;
+
+			case 's':
+				string = va_arg(args, uint8_t *);
+				rc = uart_tx_buffer(&serial_uart, string, strlen((char*)string));
+				break;
+
+			case 'x':
+				i = va_arg(args, uint16_t);
+				string = itoa(i, buf, 16);
+				rc = uart_tx_buffer(&serial_uart, string, strlen((char*)string));
+				break;
+				
+			case 'l':
+				switch(*++ptr) {
+				case 'd':
+					i = va_arg(args, uint32_t);
+					string = itoa(i, buf, 10);
+					rc = uart_tx_buffer(&serial_uart, string, strlen((char*)string));
+					break;
+
+				case 'x':
+					i = va_arg(args, uint32_t);
+					string = itoa(i, buf, 16);
+					rc = uart_tx_buffer(&serial_uart, string, strlen((char*)string));
+					break;
+				}
+				break;
+			}
 		}
-		
-		if(printable(*ptr)) {
-			rc = uart_tx_char(&serial_uart, *ptr);
-		}
-		
 		ptr++;
 	}
-#endif	
-	
 }
 #endif // defined(XC16) || defined(__XC8)
 
@@ -176,14 +252,66 @@ result_t serial_logging_exit(void)
         return(uart_release(&serial_uart));
 }
 
-static uint8_t printable(uint8_t ch)
+static uint8_t *itoa(int num, uint8_t *str, int base)
 {
-	if(  (ch >= '!' && ch <= '~')
-	   ||(ch == '\n')
-	   ||(ch == '\r') ) {
-		return(TRUE);
-	} else {
-		return(FALSE);
+    int i = 0;
+    boolean isNegative = FALSE;
+
+    /* Handle 0 explicitely, otherwise empty string is printed for 0 */
+    if (num == 0)
+    {
+        str[i++] = '0';
+        str[i] = '\0';
+        return str;
+    }
+
+    // In standard itoa(), negative numbers are handled only with 
+    // base 10. Otherwise numbers are considered unsigned.
+    if (num < 0 && base == 10)
+    {
+        isNegative = FALSE;
+        num = -num;
+    }
+
+    // Process individual digits
+    while (num != 0)
+    {
+        int rem = num % base;
+        str[i++] = (rem > 9)? (rem-10) + 'a' : rem + '0';
+        num = num/base;
+    }
+
+    // If number is negative, append '-'
+    if (isNegative)
+        str[i++] = '-';
+
+    str[i] = '\0'; // Append string terminator
+
+    // Reverse the string
+    reverse(str, i);
+
+    return str;
+}
+
+static uint16_t strlen(char *string)
+{
+	uint16_t len = 0;
+	
+	while(*string++) len++;
+	return(len);	
+}
+
+static void reverse(uint8_t str[], uint16_t length)
+{
+	uint8_t tmp;
+	uint16_t start = 0;
+	uint16_t end = length -1;
+	while (start < end) {
+		tmp = str[end];
+		str[end] = str[start];
+		str[start] = tmp;
+		start++;
+		end--;
 	}
 }
 
@@ -201,3 +329,4 @@ void putch(char character)
 }
 #endif // (__18F2680) || (__18F4585)
 
+#endif // SYS_SERIAL_LOGGING

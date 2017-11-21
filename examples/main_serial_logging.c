@@ -18,10 +18,17 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  *
  */
+#define DEBUG_FILE TRUE
 #include "libesoup_config.h"
 
-#define DEBUG_FILE TRUE
-#define TAG "Main"
+#include "libesoup/comms/uart/uart.h"
+
+#if defined(SYS_SERIAL_LOGGING)
+#include <stdio.h>
+
+static const char *TAG = "Main";
+#endif
+
 
 #include "libesoup/logger/serial_log.h"
 
@@ -41,26 +48,26 @@ int main()
          * Initialise the UART management data structures. Needed for Serial
          * Logging.
          */
-        
+#ifdef SYS_SERIAL_LOGGING
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
-        serial_log(TAG, "Debug logging statement uint_8 x is 0x%x\n\r", x);
-#endif
+        serial_log(LOG_DEBUG, TAG, "Testing\n\r");
+	LOG_D("string %s\n\r", "Bingo");
+	LOG_D("uint8_t  Hex 0x%x\n\r", x);
+	LOG_D("uint8_t  Dec %d\n\r", x);
+#endif // DEBUG
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_INFO))
-        LOG_I("Info logging statement uin16_t y is 0x%x\n\r", y);
-#endif
+	LOG_I("uint16_t Hex 0x%x\n\r", y);
+	LOG_I("uint16_t Dec %d\n\r", y);
+#endif // INFO
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_WARNING))
-        LOG_W("Warning logging statement uin32_t z is 0x%lx\n\r", z);
+	LOG_W("uint32_t 0x%lx\n\r", z);
 #endif
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
-        LOG_W("ERROR logging statement\n\r");
+	LOG_E("ERROR Oops\n\r");
 #endif
+#endif // SYS_SERIAL_LOGGING
         while(1) {
         }
 
-        /*
-         * Cleanup serial logging.
-         */
-        rc = serial_logging_exit();
-        
         return(0);
 }

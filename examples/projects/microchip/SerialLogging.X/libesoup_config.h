@@ -111,6 +111,14 @@
  */
 #define SYS_UART_TX_BUFFER_SIZE 300
 
+#else  // defined(SYS_SERIAL_LOGGING)
+#define SYS_UART
+/**
+ * @brief The size of the Transmit buffer to be used by the UARTs.
+ *
+ * Default set to 300 Bytes as the serial port
+ */
+#define SYS_UART_TX_BUFFER_SIZE 300
 #endif // defined(SYS_SERIAL_LOGGING)
 
 /*
