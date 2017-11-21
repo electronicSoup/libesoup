@@ -22,9 +22,13 @@
  *
  */
 #define DEBUG_FILE TRUE
-#define TAG "JOBS"
 
 #include "libesoup_config.h"
+
+#ifdef SYS_SERIAL_LOGGING
+static const char *TAG = "JOBS";
+#endif
+
 #include "libesoup/logger/serial_log.h"
 #include "libesoup/jobs/jobs.h"
 
@@ -85,7 +89,7 @@ result_t jobs_execute(void)
                 } else {
 #ifdef SYS_SERIAL_LOGGING
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
-                        log_e(TAG, "Bad job at %d\n\r", read_index);
+                        LOG_E("Bad job at %d\n\r", read_index);
 #endif
 #endif // SYS_SERIAL_LOGGING
                         rc = ERR_GENERAL_ERROR;
