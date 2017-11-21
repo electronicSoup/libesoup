@@ -32,9 +32,12 @@
 
 
 #define DEBUG_FILE TRUE
-#define TAG "HW_TIMERS"
 
 #include "libesoup_config.h"
+
+#ifdef SYS_SERIAL_LOGGING
+static const char *TAG = "HW_TIMERS";
+#endif // SYS_SERIAL_LOGGING
 
 #ifdef SYS_HW_TIMERS
 
@@ -258,9 +261,6 @@ uint8_t hw_timer_active_count(void)
  */
 result_t hw_timer_start(timer_id *timer, struct timer_req *request)
 {
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
-//	LOG_D("hw_timer_start()\n\r");
-#endif
 	/*
 	 * Find a free timer
 	 */
@@ -535,9 +535,11 @@ static result_t start_timer(timer_id timer, struct timer_req *request)
 		timers[timer].repeats           = (uint16_t)((ticks >> 16) & 0xffff);
 		timers[timer].remainder         = (uint16_t)(ticks & 0xffff);
 
+#if SYS_SERIAL_LOGGING
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 //                LOG_D("Ticks 0x%lx, Repeats 0x%x, remainder 0x%x\n\r", ticks, timers[timer].repeats, timers[timer].remainder);
 #endif
+#endif // SYS_SERIAL_LOGGING
 		check_timer(timer);
 
                 return(SUCCESS);
@@ -555,9 +557,11 @@ static result_t start_timer(timer_id timer, struct timer_req *request)
 
 static void set_clock_divide(uint8_t timer, uint16_t clock_divide)
 {
+#ifdef SYS_SERIAL_LOGGING
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 //	LOG_D("set_clock_divide()\n\r");
 #endif
+#endif // SYS_SERIAL_LOGGING
 
 	switch(timer) {
 #if defined(__18F4585) || defined(__18F2680)
@@ -840,13 +844,17 @@ void check_timer(timer_id timer)
                         break;
 		}
 		timers[timer].repeats--;
+#ifdef SYS_SERIAL_LOGGING
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
   //              LOG_D("After Repeats %d\n\r", timers[timer].repeats);
 #endif
+#endif // SYS_SERIAL_LOGGING
 	} else if(timers[timer].remainder) {
+#ifdef SYS_SERIAL_LOGGING
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 //                LOG_D("Remainder %d\n\r", timers[timer].remainder);
 #endif
+#endif // SYS_SERIAL_LOGGING
 		switch (timer) {
 #if defined(__18F4585)
                 case TIMER_0:
