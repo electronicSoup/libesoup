@@ -64,29 +64,57 @@
 /*
  * UART Settings.
  */
-#define U1_ENABLE        U1MODEbits.UARTEN
-#define U1_RX_ISR_FLAG   IFS0bits.U1RXIF
-#define U1_TX_ISR_FLAG   IFS0bits.U1TXIF
-#define U1_RX_ISR_ENABLE IEC0bits.U1RXIE
-#define U1_TX_ISR_ENABLE IEC0bits.U1TXIE
+/*
+ * UART_1
+ */
+#define U1_ENABLE          U1MODEbits.UARTEN
 
-#define U2_ENABLE        U2MODEbits.UARTEN
-#define U2_RX_ISR_FLAG   IFS1bits.U2RXIF
-#define U2_TX_ISR_FLAG   IFS1bits.U2TXIF
-#define U2_RX_ISR_ENABLE IEC1bits.U2RXIE
-#define U2_TX_ISR_ENABLE IEC1bits.U2TXIE
+#define U1_RX_ISR_FLAG     IFS0bits.U1RXIF
+#define U1_RX_ISR_PRIOTITY IPC2bits.U1RXIP
+#define U1_RX_ISR_ENABLE   IEC0bits.U1RXIE
 
-#define U3_ENABLE        U3MODEbits.UARTEN
-#define U3_RX_ISR_FLAG   IFS5bits.U3RXIF
-#define U3_TX_ISR_FLAG   IFS5bits.U3TXIF
-#define U3_RX_ISR_ENABLE IEC5bits.U3RXIE
-#define U3_TX_ISR_ENABLE IEC5bits.U3TXIE
+#define U1_TX_ISR_FLAG     IFS0bits.U1TXIF
+#define U1_TX_ISR_PRIOTITY IPC3bits.U1TXIP
+#define U1_TX_ISR_ENABLE   IEC0bits.U1TXIE
 
-#define U4_ENABLE        U4MODEbits.UARTEN
-#define U4_RX_ISR_FLAG   IFS5bits.U4RXIF
-#define U4_TX_ISR_FLAG   IFS5bits.U4TXIF
-#define U4_RX_ISR_ENABLE IEC5bits.U4RXIE
-#define U4_TX_ISR_ENABLE IEC5bits.U4TXIE
+/*
+ * UART_2
+ */
+#define U2_ENABLE          U2MODEbits.UARTEN
+
+#define U2_RX_ISR_FLAG     IFS1bits.U2RXIF
+#define U2_RX_ISR_PRIOTITY IPC7bits.U2RXIP
+#define U2_RX_ISR_ENABLE   IEC1bits.U2RXIE
+
+#define U2_TX_ISR_FLAG     IFS1bits.U2TXIF
+#define U2_TX_ISR_PRIOTITY IPC7bits.U2TXIP
+#define U2_TX_ISR_ENABLE   IEC1bits.U2TXIE
+
+/*
+ * UART_3
+ */
+#define U3_ENABLE          U3MODEbits.UARTEN
+
+#define U3_RX_ISR_FLAG     IFS5bits.U3RXIF
+#define U3_RX_ISR_PRIOTITY IPC20bits.U3RXIP
+#define U3_RX_ISR_ENABLE   IEC5bits.U3RXIE
+
+#define U3_TX_ISR_FLAG     IFS5bits.U3TXIF
+#define U3_TX_ISR_PRIOTITY IPC20bits.U3RXIP
+#define U3_TX_ISR_ENABLE   IEC5bits.U3TXIE
+
+/*
+ * UART_4
+ */
+#define U4_ENABLE          U4MODEbits.UARTEN
+
+#define U4_RX_ISR_FLAG     IFS5bits.U4RXIF
+#define U4_RX_ISR_PRIOTITY IPC22bits.U4RXIP
+#define U4_RX_ISR_ENABLE   IEC5bits.U4RXIE
+
+#define U4_TX_ISR_FLAG     IFS5bits.U4TXIF
+#define U4_TX_ISR_PRIOTITY IPC22bits.U4RXIP
+#define U4_TX_ISR_ENABLE   IEC5bits.U4TXIE
 
 #define UARTEN_MASK      0x8000
 #define USIDL_MASK       0x2000
@@ -123,6 +151,7 @@ typedef enum {
         RP23 = 23,
         RP25 = 25,
         RP28 = 28,
+        NO_PIN = 0xff
 } ty_peripheral_pin;
 
 /*
