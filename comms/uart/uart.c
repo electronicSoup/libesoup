@@ -32,6 +32,8 @@
 
 #include "libesoup_config.h"
 
+#ifdef SYS_UART
+
 #ifdef SYS_SERIAL_LOGGING
 const char *TAG = "UART";
 #endif
@@ -1345,3 +1347,5 @@ void pic18f_uart_isr(void)
 #endif
 }
 #endif // (__18F2680) || (__18F4585)
+
+#endif // SYS_UART
