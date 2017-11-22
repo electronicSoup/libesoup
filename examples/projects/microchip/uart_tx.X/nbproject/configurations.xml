@@ -25,9 +25,6 @@
           <itemPath>../../../../processors/dsPIC33EP256MU806.c</itemPath>
           <itemPath>../../../../processors/pic24FJ256GB106.c</itemPath>
         </logicalFolder>
-        <logicalFolder name="timers" displayName="timers" projectFiles="true">
-          <itemPath>../../../../timers/clock.c</itemPath>
-        </logicalFolder>
         <itemPath>../../../../core.c</itemPath>
       </logicalFolder>
       <itemPath>../../../main_uart_tx.c</itemPath>

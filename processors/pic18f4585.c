@@ -21,7 +21,6 @@
 #if defined(__18F4585)
 
 #include "libesoup_config.h"
-#include "libesoup/timers/clock.h"
 
 extern void check_timer(uint8_t timer);
 
@@ -54,12 +53,6 @@ extern void pic18f_uart_isr(void);
 
 void cpu_init(void)
 {
-        /*
-         * clock_init does nothing for this chip but call it to clear a 
-         * compiler warning.
-         */
-        clock_init();
-	
         RCONbits.IPEN = 0; // No Interrupt priority level
 	INTCONbits.GIE = 1;    // Enable Interrupts
 	INTCONbits.PEIE = 1;   // Enable Peripheral Interrupts
