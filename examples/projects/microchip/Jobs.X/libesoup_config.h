@@ -1,6 +1,6 @@
 /**
  *
- * @file libesoup_config.h
+ * @file jobs_libesoup_config.h
  *
  * @author John Whitmore
  *

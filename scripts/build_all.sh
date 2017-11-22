@@ -131,3 +131,35 @@ if [ $? -ne 0 ]; then
     exit
 fi
 cd -
+
+cd ../examples/projects/microchip/Jobs.X
+make clean &> /dev/null
+make -f nbproject/Makefile-dsPIC33EP256MU806.mk SUBPROJECTS= .build-conf &> /dev/null
+if [ $? -ne 0 ]; then
+    #
+    # The build failed so human intervention is required.
+    #
+    echo "Jobs dsPIC33EP256MU806 - Make failed!"
+    exit
+fi
+
+make clean &> /dev/null
+make -f nbproject/Makefile-PIC24FJ256GB106.mk SUBPROJECTS= .build-conf &> /dev/null
+if [ $? -ne 0 ]; then
+    #
+    # The build failed so human intervention is required.
+    #
+    echo "Jobs PIC24FJ256GB106 - Make failed!"
+    exit
+fi
+
+#make clean &> /dev/null
+#make -f nbproject/Makefile-PIC18F4585.mk SUBPROJECTS= .build-conf &> /dev/null
+#if [ $? -ne 0 ]; then
+#    #
+#    # The build failed so human intervention is required.
+#    #
+#    echo "SerialLogging PIC18F4585 Make failed!"
+#    exit
+#fi
+cd -
