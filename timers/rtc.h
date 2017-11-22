@@ -22,6 +22,8 @@
 #ifndef RTC_H
 #define RTC_H
 
+#include "libesoup/timers/time.h"
+
 struct datetime {
     uint16_t year;
     uint8_t  month;
@@ -31,12 +33,31 @@ struct datetime {
     uint8_t  seconds;
 };
 
-extern void rtc_init();
-extern result_t rtc_update_current_datetime(uint8_t *data, uint16_t len);
+struct bcd_datetime {
+    uint16_t second_one:4;
+    uint16_t second_ten:4;
+    uint16_t minute_one:4;
+    uint16_t minute_ten:4;
+    uint16_t hour_one:4;
+    uint16_t hour_ten:2;
+    uint16_t :2;
+    uint16_t weekday:3;
+    uint16_t :5;
+    uint16_t day_one:4;
+    uint16_t day_ten:2;
+    uint16_t :2;
+    uint16_t month_one:4;
+    uint16_t month_ten:1;
+    uint16_t :3;
+    uint16_t year_one:4;
+    uint16_t year_ten:4;
+};
 
-extern void    *rtc_set_alarm_offset(ty_time_units units, uint16_t time, uint8_t nice, void (*expiry_fn)(void *), void *expiry_data);
+extern result_t rtc_init(void);
+extern result_t rtc_set_datetime(struct bcd_datetime*);
+extern result_t rtc_get_datetime(struct bcd_datetime*);
 
-extern result_t rtc_get_current_datetime(struct datetime *dt);
-extern result_t rtc_get_dummy_datetime(struct datetime *dt);
+extern result_t rtc_set_alarm(struct bcd_datetime*, expiry_function, union sigval);
+
 
 #endif // RTC_H

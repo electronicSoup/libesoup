@@ -20,11 +20,15 @@
  *
  */
 #define DEBUG_FILE TRUE
-#define TAG "RTC"
 
 #include "libesoup_config.h"
+
+#ifdef SYS_HW_RTC
+
+#ifdef SYS_SERIAL_LOGGING
+static const char *TAG = "RTC";
+
 #include "libesoup/logger/serial_log.h"
-#include "libesoup/timers/rtc.h"
 
 /*
  * Check required libesoup_config.h defines are found
@@ -33,7 +37,29 @@
 #error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
 #endif
 
-static uint8_t  current_datetime_valid = FALSE;
+#endif
+
+#include "libesoup/timers/rtc.h"
+
+#define DATETIME_WRITE  RCFGCALbits.RTCWREN = ENABLED;
+#define DATETIME_LOCK   RCFGCALbits.RTCWREN = DISABLED;
+
+/*
+ * According to Microchip DS70584 RTCWREN has to be set to change RTCEN
+ */
+#define RTCC_ON 	RCFGCALbits.RTCWREN = ENABLED; \
+                        RCFGCALbits.RTCEN = ENABLED;   \
+			RCFGCALbits.RTCWREN = DISABLED;
+#define RTCC_OFF 	RCFGCALbits.RTCWREN = ENABLED; \
+                        RCFGCALbits.RTCEN = DISABLED;   \
+			RCFGCALbits.RTCWREN = DISABLED;
+#define VALUE_POINTER   RCFGCALbits.RTCPTR
+
+#define ALARM_ON	ALCFGRPTbits.ALRMEN = ENABLED;
+#define ALARM_OFF	ALCFGRPTbits.ALRMEN = DISABLED;
+#define ALARM_POINTER   ALCFGRPTbits.ALRMPTR
+
+static uint8_t  datetime_valid = FALSE;
 
 /*
  * Function prototypes
@@ -41,77 +67,126 @@ static uint8_t  current_datetime_valid = FALSE;
 
 void _ISR __attribute__((__no_auto_psv__)) _RTCCInterrupt(void)
 {
+#ifdef SYS_SERIAL_LOGGING
 #if ((DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-	log_d(TAG, "RTCC ISR\n\r");
+	LOG_D("RTCC ISR\n\r");
 #endif
+#endif // SYS_SERIAL_LOGGING
 }
 
-result_t rtc_update_current_datetime(uint8_t *data, uint16_t len)
+typedef enum {
+	minutes_seconds_ptr = 0b00,
+	weekday_hours_ptr = 0b01,
+	month_day_ptr = 0b10,
+	year_ptr = 0b11,
+} ty_rtc_pointer;
+
+/*
+ * Make sure the secondary clock is powered on
+ */
+result_t rtc_init(void)
 {
-	uint16_t year          = 0x00;
-	uint16_t month_day     = 0x00;
-	uint16_t weekday_hours = 0x00;
-	uint16_t min_sec       = 0x00;
-
-#if ((DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-	log_d(TAG, "rtc_update_current_datetime()\n\r");
-#endif
-
-	if(len != 17) {
-#if (SYS_LOG_LEVEL <= LOG_ERROR)
-		log_e(TAG, "Bad input datetime\n\r");
-#endif
-		return(ERR_BAD_INPUT_PARAMETER);
+	result_t            rc = SUCCESS;
+	struct bcd_datetime datetime;
+	
+	datetime_valid = FALSE;
+	
+	OSCCONbits.LPOSCEN = ENABLED;   // Enabled the secondary Crystal
+	RCFGCALbits.RTCOE = DISABLED;   // Output on RTCC Pin disabled for the moment
+	ALARM_OFF                       // Alarm disabled for the moment
+	
+	datetime.year_ten = 1;
+	datetime.year_one = 8;
+	datetime.month_ten = 0;
+	datetime.month_one = 1;
+	datetime.day_ten = 0;
+	datetime.day_one = 1;
+	datetime.hour_ten = 0;
+	datetime.hour_one = 0;
+	datetime.minute_ten = 0;
+	datetime.minute_one = 0;
+	datetime.second_ten = 0;
+	datetime.second_one = 0;
+	
+	rc = rtc_set_datetime(&datetime);
+	if(rc != SUCCESS) {
+		return(rc);
 	}
-	year = ((data[2] - '0') & 0x0f);
-	year = (year << 4) | ((data[3] - '0') & 0x0f);
+	
+	RTCC_ON
+		
+	return(SUCCESS);
+}
 
-	month_day = (data[4] - '0') & 0x0f;
-	month_day = (month_day < 4) | ((data[5] - '0') & 0x0f);
-	month_day = (month_day < 4) | ((data[6] - '0') & 0x0f);
-	month_day = (month_day < 4) | ((data[7] - '0') & 0x0f);
+result_t rtc_set_datetime(struct bcd_datetime *datetime)
+{
+	uint16_t *data;
+	
+	data = (uint16_t *)datetime;
 
-	weekday_hours = (data[9] - '0') & 0x0f;
-	weekday_hours = (weekday_hours < 4) | ((data[10] - '0') & 0x0f);
+#ifdef SYS_SERIAL_LOGGING
+#if ((DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+	LOG_D("rtc_update_current_datetime()\n\r");
+#endif
+#endif // SYS_SERIAL_LOGGING
 
-	min_sec = (data[12] - '0') & 0x0f;
-	min_sec = (min_sec < 4) | ((data[13] - '0') & 0x0f);
-	min_sec = (min_sec < 4) | ((data[15] - '0') & 0x0f);
-	min_sec = (min_sec < 4) | ((data[16] - '0') & 0x0f);
-
-	RCFGCALbits.RTCWREN = 1;
-
-//	asm ("__builtin_write_RTCWEN");
-	RCFGCALbits.RTCPTR = 0b11;  // Year
-
-	RTCVAL = year;
-	RTCVAL = month_day;
-	RTCVAL = weekday_hours;
-	RTCVAL = min_sec;
-
-	RCFGCALbits.RTCEN   = 1;
-	RCFGCALbits.RTCWREN = 0;
+	RTCC_OFF                        // Disable the RTCC for the moment
+	NVMKEY = 0x55;
+	NVMKEY = 0xAA;
+	DATETIME_WRITE
 
 	/*
-	 * Just to test the alarm feature: +10 Mins
-	 */
-	min_sec = ((data[12] - '0') & 0x0f) + 1;
-	min_sec = (min_sec < 4) | ((data[13] - '0') & 0x0f);
-	min_sec = (min_sec < 4) | ((data[15] - '0') & 0x0f);
-	min_sec = (min_sec < 4) | ((data[16] - '0') & 0x0f);
-
-	ALCFGRPTbits.ALRMPTR = 0b10;
-	ALRMVAL = year;
-	ALRMVAL = month_day;
-	ALRMVAL = weekday_hours;
-	ALRMVAL = min_sec;
-
-	ALCFGRPTbits.ALRMEN = 1;
-
-	IFS3bits.RTCIF = 0;
-	IEC3bits.RTCIE = 1;
-
-	current_datetime_valid = TRUE;
+	 * Set the datetime
+	 */	
+	VALUE_POINTER = year_ptr;
+	RTCVAL = *data++;
+	RTCVAL = *data++;
+	RTCVAL = *data++;
+	RTCVAL = *data++;
+	
+	DATETIME_LOCK
+	RTCC_ON
 
 	return(SUCCESS);
 }
+
+result_t rtc_get_datetime(struct bcd_datetime *datetime)
+{
+	uint16_t *data;
+	
+	data = (uint16_t *)datetime;
+
+	VALUE_POINTER = year_ptr;
+	
+	*data++ = RTCVAL;
+	*data++ = RTCVAL;
+	*data++ = RTCVAL;
+	*data++ = RTCVAL;
+	
+	return(SUCCESS);
+}
+
+
+result_t rtc_set_alarm(struct bcd_datetime *datetime, expiry_function fn, union sigval data)
+{
+	uint16_t *date;
+	
+	date = (uint16_t *)datetime;
+
+	ALARM_OFF
+
+	/*
+	 * Set the datetime
+	 */	
+	ALARM_POINTER = year_ptr;
+	ALRMVAL = *date++;
+	ALRMVAL = *date++;
+	ALRMVAL = *date++;
+	ALRMVAL = *date++;
+	
+	ALARM_ON
+
+	return(SUCCESS);
+}
+
+#endif // SYS_HW_RTC

@@ -43,6 +43,10 @@
 #include "libesoup/jobs/jobs.h"
 #endif
 
+#ifdef SYS_HW_RTC
+#include "libesoup/timers/rtc.h"
+#endif
+
 #ifdef SYS_SPI_BUS
 #include "libesoup/utils/spi.h"
 #endif
@@ -53,14 +57,6 @@ result_t libesoup_init(void)
 	result_t rc = SUCCESS;
 	
 	cpu_init();
-
-#ifdef SYS_HW_TIMERS
-	hw_timer_init();
-#endif
-	
-#ifdef SYS_SW_TIMERS
-	sw_timer_init();
-#endif
 
 #ifdef SYS_UART
 	uart_init();
@@ -76,6 +72,26 @@ result_t libesoup_init(void)
         }
 #endif
 
+#ifdef SYS_HW_TIMERS
+	hw_timer_init();
+#endif
+	
+#ifdef SYS_SW_TIMERS
+	sw_timer_init();
+#endif
+
+#ifdef SYS_HW_RTC
+	rc = rtc_init();
+        if (rc != SUCCESS) {
+#ifdef SYS_SERIAL_LOGGING
+#if (SYS_LOG_LEVEL <= LOG_ERROR))
+		LOG_E("Failed in initialise RTC Module\n\r");
+#endif
+#endif // SYS_SERIAL_LOGGING
+                return(rc);
+        }
+#endif
+		
 #ifdef SYS_JOBS
 	jobs_init();
 #endif
