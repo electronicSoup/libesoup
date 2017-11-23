@@ -21,7 +21,14 @@
  *******************************************************************************
  *
  */
+#define DEBUG_FILE TRUE
+
 #include "libesoup_config.h"
+
+#ifdef SYS_SERIAL_LOGGING
+#include "libesoup/logger/serial_log.h"
+static const char *TAG = "CORE";
+#endif
 
 #ifdef SYS_HW_TIMERS
 #include "libesoup/timers/hw_timers.h"
@@ -84,12 +91,12 @@ result_t libesoup_init(void)
 	rc = rtc_init();
         if (rc != SUCCESS) {
 #ifdef SYS_SERIAL_LOGGING
-#if (SYS_LOG_LEVEL <= LOG_ERROR))
+#if (SYS_LOG_LEVEL <= LOG_ERROR)
 		LOG_E("Failed in initialise RTC Module\n\r");
 #endif
 #endif // SYS_SERIAL_LOGGING
                 return(rc);
-        }
+	}
 #endif
 		
 #ifdef SYS_JOBS
@@ -99,5 +106,5 @@ result_t libesoup_init(void)
 #ifdef SYS_SPI_BUS
         spi_init();
 #endif
-	return(rc);
+	return(SUCCESS);
 }

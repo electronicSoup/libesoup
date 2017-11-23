@@ -66,7 +66,7 @@
  */
 #define SYS_HW_RTC
 
-//#define SYS_SERIAL_LOGGING
+#define SYS_SERIAL_LOGGING
 
 #ifdef SYS_SERIAL_LOGGING
 #define SYS_UART

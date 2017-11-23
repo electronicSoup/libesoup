@@ -34,28 +34,32 @@ struct datetime {
 };
 
 struct bcd_datetime {
-    uint16_t second_one:4;
-    uint16_t second_ten:4;
-    uint16_t minute_one:4;
-    uint16_t minute_ten:4;
-    uint16_t hour_one:4;
-    uint16_t hour_ten:2;
-    uint16_t :2;
-    uint16_t weekday:3;
-    uint16_t :5;
+    uint16_t year_one:4;
+    uint16_t year_ten:4;
+    uint16_t :8;
     uint16_t day_one:4;
     uint16_t day_ten:2;
     uint16_t :2;
     uint16_t month_one:4;
     uint16_t month_ten:1;
     uint16_t :3;
-    uint16_t year_one:4;
-    uint16_t year_ten:4;
+    uint16_t hour_one:4;
+    uint16_t hour_ten:2;
+    uint16_t :2;
+    uint16_t weekday:3;
+    uint16_t :5;
+    uint16_t second_one:4;
+    uint16_t second_ten:4;
+    uint16_t minute_one:4;
+    uint16_t minute_ten:4;
 };
 
 extern result_t rtc_init(void);
 extern result_t rtc_set_datetime(struct bcd_datetime*);
 extern result_t rtc_get_datetime(struct bcd_datetime*);
+#ifdef SYS_SERIAL_LOGGING
+extern void rtc_print_datetime(struct bcd_datetime*);
+#endif // SYS_SERIAL_LOGGING
 
 extern result_t rtc_set_alarm(struct bcd_datetime*, expiry_function, union sigval);
 

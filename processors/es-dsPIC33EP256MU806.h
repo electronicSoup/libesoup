@@ -52,6 +52,48 @@
 #define NUMBER_HW_TIMERS                  5
 
 /*
+ * Real Time Clock / Calendar Module
+ */
+#define DATETIME_WRITE  __builtin_write_RTCWEN();
+#define DATETIME_LOCK   RCFGCALbits.RTCWREN = DISABLED;
+
+/*
+ * According to Microchip DS70584 RTCWREN has to be set to change RTCEN
+ */
+#define RTCC_ON    __builtin_write_RTCWEN();    \
+                   RCFGCALbits.RTCEN = ENABLED;     \
+ 	               RCFGCALbits.RTCWREN = DISABLED; 
+
+#define RTCC_OFF   __builtin_write_RTCWEN();    \
+                   RCFGCALbits.RTCEN = DISABLED;    \
+	               RCFGCALbits.RTCWREN = DISABLED;
+
+#define VALUE_POINTER   RCFGCALbits.RTCPTR
+
+#define RTC_ALARM_EVERY_HALF_SECOND  0b0000
+#define RTC_ALARM_EVERY_SECOND       0b0001
+#define RTC_ALARM_EVERY_TEN_SECONDS  0b0010
+#define RTC_ALARM_EVERY_MINUTE       0b0011
+#define RTC_ALARM_EVERY_TEN_MINUTES  0b0100
+#define RTC_ALARM_EVERY_TEN_HOUR     0b0101
+#define RTC_ALARM_EVERY_TEN_DAY      0b0110
+#define RTC_ALARM_EVERY_TEN_WEEK     0b0111
+#define RTC_ALARM_EVERY_TEN_MONTH    0b1000
+#define RTC_ALARM_EVERY_TEN_YEAR     0b1001
+
+#define ALARM_ON	    ALCFGRPTbits.ALRMEN = ENABLED;
+#define ALARM_OFF	    ALCFGRPTbits.ALRMEN = DISABLED;
+#define ALARM_POINTER   ALCFGRPTbits.ALRMPTR
+#define ALARM_CHIME     ALCFGRPTbits.CHIME
+#define ALARM_REPEAT    ALCFGRPTbits.ARPT
+
+#define RTCC_ISR_FLAG     IFS3bits.RTCIF
+#define RTCC_ISR_PRIOTITY IPC15bits.RTCIP
+#define RTCC_ISR_ENABLE   IEC3bits.RTCIE
+
+#define RTCC_PIN          RCFGCALbits.RTCOE
+
+/*
  * UART Settings.
  */
 /*
@@ -231,6 +273,8 @@ typedef enum {
  */
 #define dsPIC33_PRIMARY_OSCILLATOR      0b010
 #define dsPIC33_PRIMARY_OSCILLATOR_PLL  0b011
+
+#define SECONDARY_OSCILLATOR            OSCCONbits.LPOSCEN
 
 extern void cpu_init(void);
 

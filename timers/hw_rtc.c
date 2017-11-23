@@ -37,29 +37,14 @@ static const char *TAG = "RTC";
 #error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
 #endif
 
-#endif
+#endif // SYS_SERIAL_LOGGING
 
 #include "libesoup/timers/rtc.h"
 
-#define DATETIME_WRITE  RCFGCALbits.RTCWREN = ENABLED;
-#define DATETIME_LOCK   RCFGCALbits.RTCWREN = DISABLED;
-
-/*
- * According to Microchip DS70584 RTCWREN has to be set to change RTCEN
- */
-#define RTCC_ON 	RCFGCALbits.RTCWREN = ENABLED; \
-                        RCFGCALbits.RTCEN = ENABLED;   \
-			RCFGCALbits.RTCWREN = DISABLED;
-#define RTCC_OFF 	RCFGCALbits.RTCWREN = ENABLED; \
-                        RCFGCALbits.RTCEN = DISABLED;   \
-			RCFGCALbits.RTCWREN = DISABLED;
-#define VALUE_POINTER   RCFGCALbits.RTCPTR
-
-#define ALARM_ON	ALCFGRPTbits.ALRMEN = ENABLED;
-#define ALARM_OFF	ALCFGRPTbits.ALRMEN = DISABLED;
-#define ALARM_POINTER   ALCFGRPTbits.ALRMPTR
-
 static uint8_t  datetime_valid = FALSE;
+
+static expiry_function exp_fn = NULL;
+static union sigval exp_data;
 
 /*
  * Function prototypes
@@ -67,11 +52,20 @@ static uint8_t  datetime_valid = FALSE;
 
 void _ISR __attribute__((__no_auto_psv__)) _RTCCInterrupt(void)
 {
+	result_t rc;
+	struct bcd_datetime datetime;
+
+	RTCC_ISR_FLAG = 0;
+	
 #ifdef SYS_SERIAL_LOGGING
 #if ((DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-	LOG_D("RTCC ISR\n\r");
+	rc =  rtc_get_datetime(&datetime);
+	LOG_D("RTCC ISR ");
+	rtc_print_datetime(&datetime);
 #endif
 #endif // SYS_SERIAL_LOGGING
+	
+	if (exp_fn) exp_fn(0x00, exp_data);
 }
 
 typedef enum {
@@ -84,17 +78,27 @@ typedef enum {
 /*
  * Make sure the secondary clock is powered on
  */
+#if defined(__dsPIC33EP256MU806__)
 result_t rtc_init(void)
 {
 	result_t            rc = SUCCESS;
 	struct bcd_datetime datetime;
 	
 	datetime_valid = FALSE;
-	
-	OSCCONbits.LPOSCEN = ENABLED;   // Enabled the secondary Crystal
-	RCFGCALbits.RTCOE = DISABLED;   // Output on RTCC Pin disabled for the moment
+
+	/*
+	 * Enable the Secondary 32.768KHz Oscillator.
+	 * This uses the XC16 Compiler's builtin assembly function  
+	 */	
+	__builtin_write_OSCCONL(OSCCONL | 0x02);
+
+	RTCC_PIN = DISABLED;            // Output on RTCC Pin disabled for the moment
 	ALARM_OFF                       // Alarm disabled for the moment
-	
+
+	RTCC_ISR_FLAG = 0;
+	RTCC_ISR_PRIOTITY = 0x07;
+	RTCC_ISR_ENABLE = ENABLED;
+		
 	datetime.year_ten = 1;
 	datetime.year_one = 8;
 	datetime.month_ten = 0;
@@ -107,32 +111,25 @@ result_t rtc_init(void)
 	datetime.minute_one = 0;
 	datetime.second_ten = 0;
 	datetime.second_one = 0;
-	
+
 	rc = rtc_set_datetime(&datetime);
 	if(rc != SUCCESS) {
 		return(rc);
 	}
-	
 	RTCC_ON
-		
+
 	return(SUCCESS);
 }
+#endif // __dsPIC33EP256MU806__
 
+#if defined(__dsPIC33EP256MU806__)
 result_t rtc_set_datetime(struct bcd_datetime *datetime)
 {
 	uint16_t *data;
 	
 	data = (uint16_t *)datetime;
 
-#ifdef SYS_SERIAL_LOGGING
-#if ((DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-	LOG_D("rtc_update_current_datetime()\n\r");
-#endif
-#endif // SYS_SERIAL_LOGGING
-
 	RTCC_OFF                        // Disable the RTCC for the moment
-	NVMKEY = 0x55;
-	NVMKEY = 0xAA;
 	DATETIME_WRITE
 
 	/*
@@ -149,7 +146,9 @@ result_t rtc_set_datetime(struct bcd_datetime *datetime)
 
 	return(SUCCESS);
 }
+#endif // __dsPIC33EP256MU806__
 
+#if defined(__dsPIC33EP256MU806__)
 result_t rtc_get_datetime(struct bcd_datetime *datetime)
 {
 	uint16_t *data;
@@ -165,8 +164,9 @@ result_t rtc_get_datetime(struct bcd_datetime *datetime)
 	
 	return(SUCCESS);
 }
+#endif // __dsPIC33EP256MU806__
 
-
+#if defined(__dsPIC33EP256MU806__)
 result_t rtc_set_alarm(struct bcd_datetime *datetime, expiry_function fn, union sigval data)
 {
 	uint16_t *date;
@@ -174,6 +174,9 @@ result_t rtc_set_alarm(struct bcd_datetime *datetime, expiry_function fn, union 
 	date = (uint16_t *)datetime;
 
 	ALARM_OFF
+		
+	exp_fn = fn;
+	exp_data = data;
 
 	/*
 	 * Set the datetime
@@ -184,9 +187,39 @@ result_t rtc_set_alarm(struct bcd_datetime *datetime, expiry_function fn, union 
 	ALRMVAL = *date++;
 	ALRMVAL = *date++;
 	
+	ALCFGRPTbits.AMASK = RTC_ALARM_EVERY_MINUTE; //RTC_ALARM_EVERY_MINUTE;
+	
+	/*
+	 * No repeat
+	 */
+	ALARM_CHIME = 0;
+	ALARM_REPEAT = 0;
+
+	RTCC_ISR_FLAG = 0;
 	ALARM_ON
 
 	return(SUCCESS);
 }
+#endif // __dsPIC33EP256MU806__
+
+#ifdef SYS_SERIAL_LOGGING
+void rtc_print_datetime(struct bcd_datetime *datetime)
+{
+	LOG_I("%d%d/%d%d/%d%d %d%d:%d%d:%d%d\n\r", 
+		datetime->day_ten,
+		datetime->day_one,
+		datetime->month_ten,
+		datetime->month_one,
+		datetime->year_ten,
+		datetime->year_one,
+		datetime->hour_ten,
+		datetime->hour_one,
+		datetime->minute_ten,
+		datetime->minute_one,
+		datetime->second_ten,
+		datetime->second_one);
+	
+}
+#endif // SYS_SERIAL_LOGGING
 
 #endif // SYS_HW_RTC

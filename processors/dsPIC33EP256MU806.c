@@ -20,8 +20,13 @@
  */
 #if defined(__dsPIC33EP256MU806__)
 
+#define DEBUG_FILE TRUE
 #include "libesoup_config.h"
 
+#ifdef SYS_SERIAL_LOGGING
+static const char *TAG = "dsPIC33";
+#include "libesoup/logger/serial_log.h"
+#endif // SYS_SERIAL_LOGGING
 /*
  * Check required libesoup_config.h defines are found
  */
@@ -56,14 +61,18 @@ static void clock_init(void);
  */
 void _ISR __attribute__((__no_auto_psv__)) _AddressError(void)
 {
-//	LOG_E("Address error");
+#ifdef SYS_SERIAL_LOGGING
+	LOG_E("Address error");
+#endif
 	while (1) {
 	}
 }
 
 void _ISR __attribute__((__no_auto_psv__)) _StackError(void)
 {
-//	LOG_E("Stack error");
+#ifdef SYS_SERIAL_LOGGING
+	LOG_E("Stack error");
+#endif
 	while (1)  {
 	}
 }
