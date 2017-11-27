@@ -7,7 +7,7 @@
  * This file contains an example libesoup_config configuration file for
  * working with Software Based timers. 
  *
- * Copyright 2017 John Whitmore <jwhitmore@electronicsoup.com>
+ * Copyright 2017 electronicSoup Limited
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by

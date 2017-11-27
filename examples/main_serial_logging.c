@@ -3,7 +3,7 @@
  *
  * Example main.c file for using serial logging.
  *
- * Copyright 2017 John Whitmore <jwhitmore@electronicsoup.com>
+ * Copyright 2017 electronicSoup Limited
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 2 of the GNU Lesser General Public License

@@ -7,7 +7,7 @@
  * The code in shti file has very string linkage to an Application which only
  * means anything to the CAN Node OS CinnamonBun Firmware
  *
- * Copyright 2015 John Whitmore <jwhitmore@electronicsoup.com>
+ * Copyright 2017 electronicSoup Limited
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 2 of the GNU Lesser General Public License

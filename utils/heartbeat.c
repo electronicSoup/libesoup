@@ -4,7 +4,7 @@
  *
  * General utility functions of the electronicSoup CAN code Library
  *
- * Copyright 2014 John Whitmore <jwhitmore@electronicsoup.com>
+ * Copyright 2017 electronicSoup Limited
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 2 of the GNU Lesser General Public License
