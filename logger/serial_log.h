@@ -93,6 +93,10 @@ extern result_t serial_logging_exit(void);
 #endif // XC16 || __XC8
 
 #ifdef XC16
+/*
+ * XC16 Compiler does support Variadic Macros see:
+ * https://gcc.gnu.org/onlinedocs/cpp/Variadic-Macros.html
+ */
 #if (SYS_LOG_LEVEL <= LOG_DEBUG)
 #define LOG_D(...)  serial_log(LOG_DEBUG, TAG, __VA_ARGS__);
 #endif
@@ -109,6 +113,10 @@ extern result_t serial_logging_exit(void);
 #define LOG_E(...)  serial_log(LOG_ERROR, TAG, __VA_ARGS__);
 #endif
 #elif defined(__XC8)
+/*
+ * XC8 Compiler does NOT support Variadic Macros see:
+ * https://gcc.gnu.org/onlinedocs/cpp/Variadic-Macros.html
+ */
 #if (SYS_LOG_LEVEL <= LOG_DEBUG)
 #define LOG_D     serial_log("D-");  \
                   serial_log(TAG);   \
