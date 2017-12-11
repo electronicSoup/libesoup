@@ -23,10 +23,6 @@
 
 #include "libesoup_config.h"
 
-#ifdef SYS_SERIAL_LOGGING
-static const char *TAG = "DELAY";
-#endif
-
 #include "libesoup/timers/hw_timers.h"
 
 
