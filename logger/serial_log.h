@@ -28,8 +28,6 @@
 
 #ifdef SYS_SERIAL_LOGGING
 
-//#include <stdio.h>
-
 /**
  * @def   LOG_DEBUG
  * @brief Debug logging level
