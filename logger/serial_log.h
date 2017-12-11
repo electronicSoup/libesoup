@@ -112,6 +112,7 @@ extern result_t serial_logging_exit(void);
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
 #define LOG_E(...)  serial_log(LOG_ERROR, TAG, __VA_ARGS__);
 #endif
+
 #elif defined(__XC8)
 /*
  * XC8 Compiler does NOT support Variadic Macros see:
