@@ -29,6 +29,7 @@
 
 #ifdef SYS_SERIAL_LOGGING
 
+#include "libesoup/comms/uart/uart.h"
 #include "libesoup/logger/serial_log.h"
 
 /*
