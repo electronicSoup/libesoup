@@ -27,7 +27,6 @@
 
 #ifdef SYS_SERIAL_LOGGING
 #include "libesoup/logger/serial_log.h"
-static const char *TAG = "CORE";
 #endif
 
 #ifdef SYS_HW_TIMERS
