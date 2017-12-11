@@ -54,6 +54,10 @@
 #endif
 #endif
 
+#ifndef SYS_UART
+#error libesoup_config.h file should define the SYS_UART required for serial logging!
+#endif
+
 #ifndef SYS_CLOCK_FREQ
 #error libesoup_config.h file should define the SYS_CLOCK_FREQ
 #endif
