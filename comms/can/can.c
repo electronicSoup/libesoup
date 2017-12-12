@@ -69,7 +69,7 @@ result_t can_init(can_baud_rate_t baudrate,
 		  can_status_handler_t arg_status_handler)
 {
 #ifdef SYS_SERIAL_LOGGING
-#if (DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	LOG_D("can_init\n\r");
 #endif
 #endif

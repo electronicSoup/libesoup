@@ -35,7 +35,7 @@
 #ifdef SYS_UART
 
 #ifdef SYS_SERIAL_LOGGING
-const char *TAG = "UART";
+static const char *TAG = "UART";
 #endif
 
 #include "libesoup/logger/serial_log.h"

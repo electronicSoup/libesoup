@@ -26,7 +26,7 @@
 #ifdef SYS_SERIAL_LOGGING
 #define DEBUG_FILE TRUE
 #include "libesoup/logger/serial_log.h"
-const char *TAG = "SPI";
+static const char *TAG = "SPI";
 #endif // SYS_SERIAL_LOGGING
 
 /*
@@ -44,7 +44,7 @@ void spi_init(void)
 
 #ifdef SYS_SERIAL_LOGGING
 #if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_INFO))
-	log_i(TAG, "spi_init()\n\r");
+	LOG_I("spi_init()\n\r");
 #endif
 #endif // SYS_SERIAL_LOGGING
 	/*

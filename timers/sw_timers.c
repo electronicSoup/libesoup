@@ -49,7 +49,7 @@
 
 #ifdef SYS_SERIAL_LOGGING
 #define DEBUG_FILE TRUE
-const char *TAG = "SW_TIMERS";
+static const char *TAG = "SW_TIMERS";
 #endif
 
 #ifdef SYS_SW_TIMERS
