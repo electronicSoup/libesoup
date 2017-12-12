@@ -28,12 +28,11 @@
 #include "libesoup/can/dcncp/dcncp_iso15765.h"
 #endif // SYS_ISO15765_DCNCP
 
+#ifdef SYS_SERIAL_LOGGING
 #define DEBUG_FILE TRUE
 #include "libesoup/logger/serial_log.h"
 
-#if defined(SYS_LOG_LEVEL)
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
-#define TAG "CAN"
+const char *TAG = "CAN";
 
 char can_l2_status_strings[5][17] = {
 	"L2_Uninitialised",
@@ -53,10 +52,7 @@ char can_baud_rate_strings[8][10] = {
 	"baud_800K",
 	"baud_1M"
 };
-#endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
-#endif //  if defined(SYS_LOG_LEVEL)
+#endif  // SYS_SERIAL_LOGGING
 
 static can_status_t can_status;
 static can_baud_rate_t  baud_status = no_baud;
