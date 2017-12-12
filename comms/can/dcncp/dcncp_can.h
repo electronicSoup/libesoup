@@ -22,7 +22,7 @@
 #ifndef NODE_ADDRESS_H
 #define NODE_ADDRESS_H
 
-#include "libesoup/comms/can/es_can.h"
+#include "libesoup/comms/can/can.h"
 
 /*
  * Node module will use standard CAN frames which are 11 bits for Id

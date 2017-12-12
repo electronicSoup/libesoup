@@ -20,25 +20,33 @@
  *
  */
 #include "libesoup_config.h"
+
+#ifdef SYS_SPI_BUS
+
+#ifdef SYS_SERIAL_LOGGING
 #define DEBUG_FILE TRUE
 #include "libesoup/logger/serial_log.h"
-
-#define TAG "SPI"
+const char *TAG = "SPI";
+#endif // SYS_SERIAL_LOGGING
 
 /*
  * Check required libesoup_config.h defines are found
  */
+#ifdef SYS_SERIAL_LOGGING
 #ifndef SYS_LOG_LEVEL
 #error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
 #endif
+#endif // SYS_SERIAL_LOGGING
 
 void spi_init(void)
 {
 	uint8_t loop;
 
+#ifdef SYS_SERIAL_LOGGING
 #if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_INFO))
 	log_i(TAG, "spi_init()\n\r");
 #endif
+#endif // SYS_SERIAL_LOGGING
 	/*
 	 * short delay before init SPI
 	 */
@@ -81,3 +89,5 @@ unsigned char spi_write_byte(unsigned char write)
 	while (!SPI_RW_FINISHED);
 	return(SPI1BUF);
 }
+
+#endif // #ifdef SYS_SPI_BUS

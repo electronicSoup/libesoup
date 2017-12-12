@@ -1,3 +1,5 @@
+#if defined( __18F2680) || defined(__18F4585)
+
 #include "libesoup_config.h"
 #include <stdlib.h>
 #include <stdio.h>
@@ -7,11 +9,13 @@
 
 #include "libesoup/timers/sw_timers.h"
 
+#ifdef SYS_SERIAL_LOGGING
 #define DEBUG_FILE TRUE
 #include "libesoup/logger/serial_log.h"
-#include "libesoup/comms/can/es_can.h"
+const char *TAG = "PIC_CAN";
+#endif // SYS_SERIAL_LOGGING
 
-#define TAG "PIC_CAN"
+#include "libesoup/comms/can/can.h"
 
 #undef L2_CAN_INTERRUPT_DRIVEN
 
@@ -732,3 +736,5 @@ static void pingNetwork(timer_t timer, union sigval data)
 	networkIdleTimer = sw_timer_start(networkIdleDuration, pingNetwork, data, &timer);
 	send_ping_message();
 }
+
+#endif // #if defined( __18F2680) || defined(__18F4585)
