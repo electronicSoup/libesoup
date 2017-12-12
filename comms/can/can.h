@@ -139,8 +139,8 @@ typedef struct
 #endif //__18F2680
 {
     canid_t can_id; /* 32 bit CAN_ID + EFF/RTR/ERR flags */
-    uint8_t      can_dlc;
-    uint8_t      data[CAN_DATA_LENGTH];
+    uint8_t can_dlc;
+    uint8_t data[CAN_DATA_LENGTH];
 } can_frame;
 #endif // XC16
 

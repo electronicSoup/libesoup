@@ -60,7 +60,11 @@
 
 result_t libesoup_init(void)
 {
+#ifdef XC16
 	result_t rc  __attribute__((unused)) = SUCCESS;
+#else
+	result_t rc = SUCCESS;
+#endif
 	
 	cpu_init();
 

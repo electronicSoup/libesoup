@@ -45,11 +45,12 @@
  * main_sw_timers.c
  *
  */
-
-#define DEBUG_FILE TRUE
-#define TAG "SW_TIMERS"
-
 #include "libesoup_config.h"
+
+#ifdef SYS_SERIAL_LOGGING
+#define DEBUG_FILE TRUE
+const char *TAG = "SW_TIMERS";
+#endif
 
 #ifdef SYS_SW_TIMERS
 
@@ -116,7 +117,7 @@ sys_timer_t timers[SYS_NUMBER_OF_SW_TIMERS];
  * the main control loop of your project by calling the CHECK_TIMERS()
  * macro.
  */
-#if defined(XC16) || defined(__XC8)
+#if defined(XC16)
 static void hw_expiry_function(timer_id timer, union sigval data)
 {
 	timer_ticked = TRUE;

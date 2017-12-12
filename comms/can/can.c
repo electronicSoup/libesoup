@@ -28,6 +28,10 @@
 #include "libesoup/can/dcncp/dcncp_iso15765.h"
 #endif // SYS_ISO15765_DCNCP
 
+#ifdef SYS_CAN_PING_PROTOCOL
+#include "libesoup/comms/can/ping.h"
+#endif // SYS_CAN_PING_PROTOCOL
+
 #ifdef SYS_SERIAL_LOGGING
 #define DEBUG_FILE TRUE
 #include "libesoup/logger/serial_log.h"
@@ -78,6 +82,9 @@ result_t can_init(can_baud_rate_t baudrate,
 
 	can_l2_init(baudrate, status_handler);
 
+#ifdef SYS_CAN_PING_PROTOCOL
+	can_ping_init();
+#endif
 	return(SUCCESS);
 }
 

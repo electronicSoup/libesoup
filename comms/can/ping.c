@@ -1,7 +1,11 @@
 #include "libesoup_config.h"
 
+#ifdef SYS_CAN_PING_PROTOCOL
+
+#ifdef SYS_SERIAL_LOGGING
 #define DEBUG_FILE
-#define TAG "CAN_PING"
+const char *TAG = "CAN_PING";
+#endif // SYS_SERIAL_LOGGING
 
 #include "libesoup/logger/serial_log.h"
 #include "libesoup/timers/timers.h"
@@ -40,3 +44,5 @@ void ping_network(u8 *data)
 //	networkIdleTimer = start_timer(networkIdleDuration, pingNetwork, NULL);
 	send_ping_message();
 }
+
+#endif // #ifdef SYS_CAN_PING_PROTOCOL
