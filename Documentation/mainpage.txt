@@ -2,12 +2,50 @@
  * @mainpage es_lib
 
 <p>
-The electronicSoup library of source code, for a limited number of
-Microchip devices, was developed to facilitate faster development
-times for higher level application code for the cinnamonBun device.
+The electronicSoup library contains source code for, at present, a limited number of
+Microchip devices. The library was developed to facilitate faster development
+of higher level application code for the cinnamonBun series of devices. 
+</p>
+
+<ul>
+<li>
+PIC18F2585/2680/4585/4680
+</li>
+<li>
+PIC24FJ256GB110 Family
+</li>
+<li>
+dsPIC33EPXXX(GP/MC/MU)806/810/814
+</li>
+</ul>
+
+<h2>Where to start?</h2>
+
+<p>
+The library is still in a state of flux as it's still under
+development. Having said that the main structure of the code should
+not change. There is however an open question with regard to the order
+of header file inclusion. The problem is that some definitions
+depend upon target micro-controller definitions and vice versa.
 </p>
 
 <p>
-To use the code the library initialisation function \ref <libesoup_init>"(void)"
-must be called. \ref Timers
+An example of this issue is that where Hardware allows the code allows
+the configuration of a 3 pin serial logging header to define the
+functionality of the 3 pins. The Ground pin is fixed but the remaining
+two pins can either be in the order Rx/Tx and the alternative
+Tx/Rx. This order has to be defined before the Hardware headers are
+included so that the correct pin definitions can be included in the
+compiled code.
+</p>
+
+<p>
+Similar to how the Linux Kernel is configured by the
+<em>.config.h</em> header file the electronicSoup Library is configure
+with a configuration file <em>libesoup_config.h</em>. The name is
+slightly less catchy then its Linux equivilent, but it should not
+clash with any other headers which may be used in the future.
+</p>
+
+
 */

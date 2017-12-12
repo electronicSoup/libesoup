@@ -23,10 +23,6 @@
 
 #include "libesoup_config.h"
 
-#ifdef SYS_SERIAL_LOGGING
-static const char *TAG = "DELAY";
-#endif
-
 #include "libesoup/timers/hw_timers.h"
 
 
@@ -35,7 +31,7 @@ static volatile uint8_t delay_over;
 /*
  * Hardware timer expiry function
  */
-static void hw_expiry_function(void *data)
+void hw_expiry_function(timer_id timer, union sigval data)
 {
 	delay_over = TRUE;
 }
@@ -45,12 +41,25 @@ static void hw_expiry_function(void *data)
  */
 void delay(ty_time_units units, uint16_t duration)
 {
-	uint8_t  hw_timer;
+	timer_id  hw_timer;
+	struct timer_req timer_request;
+	
+	TIMER_INIT(hw_timer);
+	timer_request.units = units;
+	timer_request.duration = duration;
+	timer_request.exp_fn = hw_expiry_function;
+	timer_request.data.sival_int = 0;
 
         delay_over = FALSE;
-        hw_timer = hw_timer_start(units, duration, FALSE, hw_expiry_function, NULL);
+        hw_timer = hw_timer_start(&hw_timer, &timer_request);
 
         while(!delay_over) {
+#if defined(XC16)
                 __asm__ ("CLRWDT");
+#elif defined(__XC8)
+		asm("CLRWDT");
+#else
+#error "Need a nop of watchdog macro for compiler"
+#endif
         }
 }

@@ -535,8 +535,8 @@ static result_t start_timer(timer_id timer, struct timer_req *request)
 		timers[timer].repeats           = (uint16_t)((ticks >> 16) & 0xffff);
 		timers[timer].remainder         = (uint16_t)(ticks & 0xffff);
 
-#if SYS_SERIAL_LOGGING
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+#ifdef SYS_SERIAL_LOGGING
+#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 //                LOG_D("Ticks 0x%lx, Repeats 0x%x, remainder 0x%x\n\r", ticks, timers[timer].repeats, timers[timer].remainder);
 #endif
 #endif // SYS_SERIAL_LOGGING

@@ -29,6 +29,7 @@
 
 #ifdef SYS_SERIAL_LOGGING
 
+#include "libesoup/comms/uart/uart.h"
 #include "libesoup/logger/serial_log.h"
 
 /*
@@ -51,6 +52,10 @@
 #ifndef SERIAL_LOGGING_TX_PIN
 #error libesoup_config.h should include a board file which defines SERIAL_LOGGING_TX_PIN (see libesoup/examples/libesoup_config.h)
 #endif
+#endif
+
+#ifndef SYS_UART
+#error libesoup_config.h file should define the SYS_UART required for serial logging!
 #endif
 
 #ifndef SYS_CLOCK_FREQ
