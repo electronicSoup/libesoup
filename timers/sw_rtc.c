@@ -37,13 +37,6 @@
 /*
  * Check required libesoup_config.h defines are found
  */
-#ifndef SYS_LOG_LEVEL
-#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
-#endif
-
-/*
- * Check required libesoup_config.h defines are found
- */
 #ifndef SYS_SW_TIMER_TICK_ms
 #error libesoup_config.h file should define SYS_SW_TIMER_TICK_ms (see libesoup/examples/libesoup_config.h)
 #endif

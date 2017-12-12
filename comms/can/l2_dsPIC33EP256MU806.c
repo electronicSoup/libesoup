@@ -6,20 +6,14 @@
 
 #include "libesoup/comms/can/l2_dsPIC33EP256MU806.h"
 #include "libesoup/timers/sw_timers.h"
-#include "libesoup/comms/can/es_can.h"
+#include "libesoup/comms/can/can.h"
 
 #define DEBUG_FILE TRUE
 #include "libesoup/logger/serial_log.h"
 
 #define TAG "dsPIC33_CAN"
 
-/*
- * Check required libesoup_config.h defines are found
- */
-#ifndef SYS_LOG_LEVEL
-#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
-#endif
-
+#ifdef SYS_SERIAL_LOGGING
 #if DEBUG_LEVEL < NO_LOGGING
 char baud_rate_strings[8][10] = {
     "baud_10K",
@@ -31,6 +25,7 @@ char baud_rate_strings[8][10] = {
     "baud_800K",
     "baud_1M"
 };
+#endif
 #endif
 
 #define MASK_0    0b00
@@ -111,114 +106,151 @@ CxTRmnCON *tx_control[NUM_TX_CONTROL];
 //struct can_buffer *tx_buffers[TX_BUFFERS];
 //struct can_buffer *rx_buffers[RX_BUFFERS];
 
-static void set_mode(uint8_t mode);
-static void set_bit_rate(can_baud_rate_t baudRate);
-
-static void (*status_handler)(uint8_t mask, can_status_t status, can_baud_rate_t baud);
+//static void set_mode(uint8_t mode);
+//static void set_bit_rate(can_baud_rate_t baudRate);
+//static void (*status_handler)(uint8_t mask, can_status_t status, can_baud_rate_t baud);
 
 void __attribute__((__interrupt__, __no_auto_psv__)) _C1RxRdyInterrupt(void)
 {
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
-        log_d(TAG, "C1RxRdy Isr");
+#ifdef SYS_SERIAL_LOGGING
+#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+        LOG_D("C1RxRdy Isr");
+#endif
 #endif
 }
 
 void __attribute__((__interrupt__, __no_auto_psv__)) _C1Interrupt(void)
 {
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
-        log_d(TAG, "C1 Isr Flag 0x%x - 0lx%lx ICODE 0x%x\n\r", C1INTF, C1INTF, C1VECbits.ICODE);
-#endif        
+#ifdef SYS_SERIAL_LOGGING
+#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+        LOG_D("C1 Isr Flag 0x%x - 0lx%lx ICODE 0x%x\n\r", C1INTF, C1INTF, C1VECbits.ICODE);
+#endif
+#endif
         if(C1INTFbits.TBIF) {
                 C1INTFbits.TBIF = 0;
+#ifdef SYS_SERIAL_LOGGING
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
-                log_d(TAG, "TBIF\n\r");
+                LOG_D("TBIF\n\r");
+#endif
 #endif
         } else if(C1INTFbits.RBIF) {
                 C1INTFbits.RBIF = 0;
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+#ifdef SYS_SERIAL_LOGGING
+#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
                 log_d(TAG, "RBIF\n\r");
+#endif
 #endif
         } else if(C1INTFbits.RBOVIF) {
                 C1INTFbits.RBOVIF = 0;
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+#ifdef SYS_SERIAL_LOGGING
+#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
                 log_d(TAG, "RBOVIF\n\r");
+#endif
 #endif
         } else if(C1INTFbits.FIFOIF) {
                 C1INTFbits.FIFOIF = 0;
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
-                log_d(TAG, "FIFOIF\n\r");
+#ifdef SYS_SERIAL_LOGGING
+#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+                LOG_D("FIFOIF\n\r");
 #endif
+#endif		
         } else if(C1INTFbits.ERRIF) {
                 C1INTFbits.ERRIF = 0;
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
-                log_d(TAG, "ERRIF\n\r");
+#ifdef SYS_SERIAL_LOGGING
+#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+                LOG_D("ERRIF\n\r");
+#endif
 #endif
         } else if(C1INTFbits.WAKIF) {
                 C1INTFbits.WAKIF = 0;
+#ifdef SYS_SERIAL_LOGGING
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
                 log_d(TAG, "WAKIF\n\r");
 #endif
+#endif
         } else if(C1INTFbits.IVRIF) {
                 C1INTFbits.IVRIF = 0;
+#ifdef SYS_SERIAL_LOGGING
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
                 log_d(TAG, "IVRIF\n\r");
 #endif
+#endif
         } else if(C1INTFbits.EWARN) {
                 C1INTFbits.EWARN = 0;
+#ifdef SYS_SERIAL_LOGGING
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
                 log_d(TAG, "EWARN\n\r");
 #endif
+#endif
         } else if(C1INTFbits.RXWAR) {
                 C1INTFbits.RXWAR = 0;
+#ifdef SYS_SERIAL_LOGGING
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
                 log_d(TAG, "RXWAR\n\r");
 #endif
+#endif
         } else if(C1INTFbits.TXWAR) {
                 C1INTFbits.TXWAR = 0;
+#ifdef SYS_SERIAL_LOGGING
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
                 log_d(TAG, "TXWAR\n\r");
 #endif
+#endif
         } else if(C1INTFbits.RXBP) {
                 C1INTFbits.RXBP = 0;
+#ifdef SYS_SERIAL_LOGGING
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
                 log_d(TAG, "RXBP\n\r");
 #endif
+#endif
         } else if(C1INTFbits.TXBP) {
                 C1INTFbits.TXBP = 0;
+#ifdef SYS_SERIAL_LOGGING
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
                 log_d(TAG, "TXBP\n\r");
 #endif
+#endif
         } else if(C1INTFbits.TXBO) {
                 C1INTFbits.TXBO = 0;
+#ifdef SYS_SERIAL_LOGGING
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
                 log_d(TAG, "TXBO\n\r");
 #endif
+#endif
         } else {
+#ifdef SYS_SERIAL_LOGGING
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
                 log_d(TAG, "Unprocessed ISR\n\r");
+#endif
 #endif
         }
 }
 
 void __attribute__((__interrupt__, __no_auto_psv__)) _DMA0Interrupt(void)
 {
+#ifdef SYS_SERIAL_LOGGING
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
         log_d(TAG, "DMA-0 ISR");
+#endif
 #endif
         IFS0bits.DMA0IF = 0;
 }
 
 void __attribute__((__interrupt__, __no_auto_psv__)) _DMA1Interrupt(void)
 {
+#ifdef SYS_SERIAL_LOGGING
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
         log_d(TAG, "DMA-1 ISR");
+#endif
 #endif
 }
 
 void __attribute__((__interrupt__, __no_auto_psv__)) _DMA2Interrupt(void)
 {
+#ifdef SYS_SERIAL_LOGGING
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
         log_d(TAG, "DMA-2 ISR");
+#endif
 #endif
 }
 
@@ -353,9 +385,11 @@ result_t can_l2_init(can_baud_rate_t arg_baud_rate, void (*arg_status_handler)(u
         
         address = (uint32_t)&can_buffers;
         
+#ifdef SYS_SERIAL_LOGGING
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
         log_d(TAG, "Address of CAN Buffers is 0x%lx\n\r", address);
-#endif        
+#endif
+#endif
 //        DMA2STAL = __builtin_dmaoffset(can_buffers);
 //        DMA2STAH = 0x00;
 
@@ -427,8 +461,10 @@ result_t can_l2_init(can_baud_rate_t arg_baud_rate, void (*arg_status_handler)(u
         C1TR01CONbits.TXREQ0 = 1;
         while(C1TR01CONbits.TXREQ0 == 1);
         
+#ifdef SYS_SERIAL_LOGGING
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
         log_d(TAG, "Test frame sent\n\r");
+#endif
 #endif
 #endif // 0
         return(SUCCESS);
@@ -461,9 +497,11 @@ result_t can_l2_tx_frame(can_frame *frame)
 	 */
         C1TR01CONbits.TXREQ0 = 1;
 //        while(C1TR01CONbits.TXREQ0 == 1);        
+#ifdef SYS_SERIAL_LOGGING
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
         log_d(TAG, "Test frame sent\n\r");
-#endif        
+#endif
+#endif
         return(SUCCESS);
 }
 #if 0
@@ -472,12 +510,16 @@ result_t can_l2_init(can_baud_rate_t arg_baud_rate, void (*arg_status_handler)(u
 	uint8_t loop;
 
 	if (arg_baud_rate <= no_baud) {
+#ifdef SYS_SERIAL_LOGGING
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 		log_d(TAG, "L2_CanInit() Baud Rate %s\n\r", baud_rate_strings[arg_baud_rate]);
 #endif
+#endif
 	} else {
+#ifdef SYS_SERIAL_LOGGING
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
 		log_e(TAG, "L2_CanInit() ToDo!!! No Baud Rate Specified\n\r");
+#endif
 #endif
 		return (ERR_BAD_INPUT_PARAMETER);
 	}
@@ -646,8 +688,10 @@ result_t can_l2_init(can_baud_rate_t arg_baud_rate, void (*arg_status_handler)(u
 	// Network Idle Ping message
 //	networkIdleDuration = (uint16_t) ((rand() % 500) + 1000);
 
+#ifdef SYS_SERIAL_LOGGING
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 //	log_d(TAG, "Network Idle Duration set to %d milliSeconds\n\r", networkIdleDuration);
+#endif
 #endif
 //	networkIdleTimer = start_timer(networkIdleDuration, pingNetwork, NULL);
 
@@ -671,8 +715,10 @@ void can_l2_tasks(void)
 		/*
 		 * cancel the timer if running we've received a frame
 		 */
+#ifdef SYS_SERIAL_LOGGING
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 		log_d(TAG, Debug, TAG, "Rx L2 Message so restart Idle Timer\n\r");
+#endif
 #endif
 		cancel_timer(networkIdleTimer);
 		networkIdleTimer = start_timer(networkIdleDuration, pingNetwork, NULL);
@@ -712,14 +758,18 @@ void can_l2_tasks(void)
 
 		/* Clear the received flag */
 		rx_buffers[buffer]->ctrl &= ~CNTL_RXFUL;
+#ifdef SYS_SERIAL_LOGGING
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 		log_d(TAG, "rxMsg %lx\n\r", rxMsg.header.can_id.id);
+#endif
 #endif
 		if(l2Handler) {
 			l2Handler(&rxMsg);
 		} else {
+#ifdef SYS_SERIAL_LOGGING
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 			log_d(TAG, "No Handler so ignoring received message\n\r");
+#endif
 #endif
 		}
 		buffer = CANCON & 0x0f;
@@ -739,8 +789,10 @@ result_t can_l2_tx_frame(can_frame *frame)
 //		return (CAN_ERROR);
 //	}
 
+#ifdef SYS_SERIAL_LOGGING
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	log_d(TAG, "L2_CanTxMessage(0x%lx)\n\r", frame->can_id);
+#endif
 #endif
         WIN_ONE
                 
@@ -762,14 +814,18 @@ result_t can_l2_tx_frame(can_frame *frame)
         }
         
 	if (loop == NUM_TX_CONTROL) {
+#ifdef SYS_SERIAL_LOGGING
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
 		log_e(TAG, "No empty TX buffer\n\r");
+#endif
 #endif
 		return (ERR_NO_RESOURCES); //No Empty buffers
 	}
 #endif
+#ifdef SYS_SERIAL_LOGGING
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
         log_d(TAG, "use_buffer %d\n\r", use_buffer);
+#endif
 #endif
 	/*
 	 * Trasmit buffer with index "use_buffer" is empty
@@ -812,8 +868,10 @@ result_t can_l2_tx_frame(can_frame *frame)
         C1TR01CONbits.TXREQ0 = 1;
         while(C1TR01CONbits.TXREQ0 == 1);
         
+#ifdef SYS_SERIAL_LOGGING
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
         log_d(TAG, "Sent\n\r");
+#endif
 #endif
 #if 0
         if(use_buffer & 0x01) {
@@ -899,8 +957,10 @@ static void set_bit_rate(can_baud_rate_t baudRate)
 			break;
 
 		default:
+#ifdef SYS_SERIAL_LOGGING
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
 			log_e(TAG, "Invalid Baud Rate Specified\n\r");
+#endif
 #endif
 			break;
 	}
@@ -931,8 +991,10 @@ static void set_mode(uint8_t mode)
 
 result_t can_l2_dispatch_reg_handler(can_l2_target_t *target)
 {
+#ifdef SYS_SERIAL_LOGGING
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
         log_d(TAG, "can_l2_dispatch_reg_handler()\n\r");
+#endif
 #endif
         return(SUCCESS);
 }

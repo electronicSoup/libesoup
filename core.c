@@ -60,7 +60,7 @@
 
 result_t libesoup_init(void)
 {
-	result_t rc = SUCCESS;
+	result_t rc  __attribute__((unused)) = SUCCESS;
 	
 	cpu_init();
 
