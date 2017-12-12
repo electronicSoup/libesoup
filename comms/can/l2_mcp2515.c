@@ -70,15 +70,6 @@ uint8_t        buffer_next_read = 0;
 uint8_t        buffer_next_write = 0;
 uint8_t        buffer_count = 0;
 
-typedef struct
-{
-	uint8_t used;
-	can_l2_target_t target;
-} can_register_t;
-
-static can_register_t registered_handlers[SYS_CAN_L2_HANDLER_ARRAY_SIZE];
-static can_l2_frame_handler_t unhandled_handler;
-
 static uint8_t connecting_errors = 0;
 
 static boolean mcp2515_isr = FALSE;
@@ -125,8 +116,6 @@ static uint8_t       find_free_tx_buffer(void);
 //static uint8_t CheckErrors(void);
 //static void checkSubErrors(void);
 
-static void can_l2_dispatcher_frame_handler(can_frame *message);
-
 #if SYS_LOG_LEVEL < NO_LOGGING
 void print_error_counts(void);
 #endif
@@ -153,6 +142,13 @@ static uint8_t listen_timer;
 #endif
 static void (*status_handler)(uint8_t mask, can_status_t status, can_baud_rate_t baud) = NULL;
 
+/*
+ * Frame dispatcher is in separate file but shouldn't be seen by Application 
+ * code.
+ */
+extern void frame_dispatch_init(void);
+extern void frame_dispatch_handle_frame(can_frame *message);
+
 /**
  * \brief Initialise the CAN Bus.
  *
@@ -166,7 +162,6 @@ static void (*status_handler)(uint8_t mask, can_status_t status, can_baud_rate_t
 result_t can_l2_init(can_baud_rate_t arg_baud_rate,
                      void (*arg_status_handler)(uint8_t mask, can_status_t status, can_baud_rate_t baud))
 {
-	uint8_t        loop = 0x00;
 	uint8_t        exit_mode = NORMAL_MODE;
 	uint32_t       delay;
 #ifndef SYS_CAN_PING_PROTOCOL
@@ -188,23 +183,13 @@ result_t can_l2_init(can_baud_rate_t arg_baud_rate,
 #endif // SYS_CAN_BAUD_AUTO_DETECT
 	mcp2515_isr = FALSE;
 
-	unhandled_handler = (can_l2_frame_handler_t)NULL;
-
 	/*
          * Intialise the status info. and status_baud
          */
         status.byte = 0x00;
         status_baud = no_baud;
 
-        /*
-         * Initialise the Handlers table
-         */
-        for(loop = 0; loop < SYS_CAN_L2_HANDLER_ARRAY_SIZE; loop++) {
-		registered_handlers[loop].used = FALSE;
-		registered_handlers[loop].target.mask = 0x00;
-		registered_handlers[loop].target.filter = 0x00;
-		registered_handlers[loop].target.handler = (can_l2_frame_handler_t)NULL;
-	}
+	frame_dispatch_init();
 
 	status_handler = arg_status_handler;
 
@@ -726,7 +711,7 @@ void can_l2_tasks(void)
 
 		buffer_next_read = (buffer_next_read + 1) % SYS_CAN_RX_CIR_BUFFER_SIZE;
 		buffer_count--;
-		can_l2_dispatcher_frame_handler(&rx_can_msg);
+		frame_dispatch_handle_frame(&rx_can_msg);
 	}
 
 #ifdef TEST
@@ -1555,96 +1540,5 @@ void test_can()
 #endif
 }
 #endif
-
-static void can_l2_dispatcher_frame_handler(can_frame *frame)
-{
-	uint8_t loop;
-	boolean found = FALSE;
-
-#ifdef SYS_SERIAL_LOGGING
-//	printf("L2_CanDispatcherL2MsgHandler 0x%lx [", frame->can_id);
-//	for(loop = 0; loop < frame->can_dlc; loop++) {
-//		printf("0x%2x,", frame->data[loop]);
-//	}
-//	printf("]\n\r");
-#endif
-	for (loop = 0; loop < SYS_CAN_L2_HANDLER_ARRAY_SIZE; loop++) {
-
-		if(registered_handlers[loop].used) {
-			if ((frame->can_id & registered_handlers[loop].target.mask) == (registered_handlers[loop].target.filter & registered_handlers[loop].target.mask)) {
-				registered_handlers[loop].target.handler(frame);
-				found = TRUE;
-			}
-		}
-	}
-
-	if(!found) {
-		/*
-		 * No handler found so pass the received message to the Application
-		 */
-#ifdef SYS_SERIAL_LOGGING
-#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-		LOG_D("No Handler for 0x%lx\n\r", frame->can_id);
-#endif
-#endif
-	}
-}
-
-result_t can_l2_dispatch_reg_handler(can_l2_target_t *target)
-{
-	uint8_t loop;
-#ifdef SYS_SERIAL_LOGGING
-#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_INFO))
-	LOG_I("sys_l2_can_dispatch_reg_handler mask 0x%lx, filter 0x%lx\n\r",
-		target->mask, target->filter);
-#endif
-#endif
-	/*
-	 * clean up the target in case the caller has included spurious bits
-	 */
-	if(target->mask & CAN_EFF_FLAG) {
-		target->mask = target->mask & (CAN_EFF_FLAG | CAN_EFF_MASK);
-	} else {
-		target->mask = target->mask & CAN_SFF_MASK;
-	}
-
-	// Find a free slot
-	for(loop = 0; loop < SYS_CAN_L2_HANDLER_ARRAY_SIZE; loop++) {
-		if(registered_handlers[loop].used == FALSE) {
-#ifdef SYS_SERIAL_LOGGING
-#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_INFO))
-			LOG_I("Target stored at target %d\n\r", loop);
-#endif
-#endif
-			registered_handlers[loop].used = TRUE;
-			registered_handlers[loop].target.mask = target->mask;
-			registered_handlers[loop].target.filter = target->filter;
-			registered_handlers[loop].target.handler = target->handler;
-			target->handler_id = loop;
-			return(SUCCESS);
-		}
-	}
-	return(ERR_NO_RESOURCES);
-}
-
-result_t can_l2_dispatch_unreg_handler(uint8_t id)
-{
-	if(id < SYS_CAN_L2_HANDLER_ARRAY_SIZE) {
-		if (registered_handlers[id].used) {
-			registered_handlers[id].used = FALSE;
-			registered_handlers[id].target.mask = 0x00;
-			registered_handlers[id].target.filter = 0x00;
-			registered_handlers[id].target.handler = (void (*)(can_frame *))NULL;
-			return (SUCCESS);
-		}
-	}
-	return(ERR_CAN_ERROR);
-}
-
-result_t can_l2_dispatch_set_unhandled_handler(can_l2_frame_handler_t handler)
-{
-	unhandled_handler = (can_l2_frame_handler_t)handler;
-	return(SUCCESS);
-}
 
 #endif // #ifdef SYS_CAN_MCP2515

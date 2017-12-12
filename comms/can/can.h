@@ -340,9 +340,9 @@ extern result_t can_l2_init(can_baud_rate_t arg_baud_rate,
 extern void can_l2_tasks(void);
 
 extern result_t can_l2_tx_frame(can_frame *frame);
-extern result_t can_l2_dispatch_reg_handler(can_l2_target_t *target);
-extern result_t can_l2_dispatch_unreg_handler(uint8_t id);
-extern result_t can_l2_dispatch_set_unhandled_handler(can_l2_frame_handler_t handler);
+extern result_t frame_dispatch_reg_handler(can_l2_target_t *target);
+extern result_t frame_dispatch_unreg_handler(uint8_t id);
+extern result_t frame_dispatch_set_unhandled_handler(can_l2_frame_handler_t handler);
 
 //extern void can_l2_ISR(void);
 
