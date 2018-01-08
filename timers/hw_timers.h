@@ -46,7 +46,7 @@
  * \name Hardware Timers 
  */
 /**@{*/
-/**
+/*
  * \ingroup Timers
  * \function hw_timer_init()
  * \brief Function to initialisation the data structures used to manage the 
