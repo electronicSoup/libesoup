@@ -26,17 +26,18 @@
 
 #ifdef SYS_CAN_MCP2515
 
+#ifdef SYS_SERIAL_LOGGING
 #define DEBUG_FILE TRUE
+static const char *TAG = "MCP2515";
 //#define SYS_LOG_LEVEL LOG_INFO
 #include "libesoup/logger/serial_log.h"
+#endif // SYS_SERIAL_LOGGING
+
 #include "libesoup/comms/can/can.h"
-#include "libesoup/comms/can/dcncp/dcncp_can.h"
 #include "libesoup/comms/can/l2_mcp2515.h"
-#include "libesoup/timers/sw_timers.h"
 
 #include "libesoup/comms/spi/spi.h"
 
-#define TAG "MCP2515"
 
 /*
  * Check required libesoup_config.h defines are found
@@ -79,28 +80,10 @@ static boolean mcp2515_isr = FALSE;
  */
 //static uint8_t txrtsctrl = 0x00;
 
-#if defined(CAN_PING_PROTOCOL)
-/*
- * Idle duration before sending a Ping Message. Initialised to a random value
- * on powerup.
- */
-static uint16_t ping_time;
-//static result_t send_ping(void);
-#endif
-
 static void     service_device(void);
 static void     set_can_mode(uint8_t mode);
 static void     set_baudrate(can_baud_rate_t baudRate);
-#if defined(SYS_CAN_BAUD_AUTO_DETECT)
-static void     exp_check_network_connection(timer_t timer_id, union sigval);
-#endif // SYS_CAN_BAUD_AUTO_DETECT
-static void     exp_finalise_baudrate_change(timer_id timer, union sigval data);
-static void     exp_resend_baudrate_change(timer_id timer, union sigval data);
-#if defined(SYS_CAN_PING_PROTOCOL)
-static void     exp_test_ping(timer_t timer_id, union sigval data);
-static void     restart_ping_timer(void);
-static uint8_t ping_timer;
-#endif
+
 
 
 static void     enable_rx_interrupts(void);
@@ -108,15 +91,16 @@ static void     disable_rx_interrupts(void);
 
 static void     reset(void);
 static void     set_reg_mask_value(uint8_t reg, uint8_t mask, uint8_t value);
-static uint8_t       read_reg(uint8_t reg);
+static uint8_t  read_reg(uint8_t reg);
 static void     write_reg(uint8_t reg, uint8_t value);
 static void     read_rx_buffer(uint8_t reg, uint8_t *buffer);
-static uint8_t       find_free_tx_buffer(void);
+static uint8_t  find_free_tx_buffer(void);
 
 //static uint8_t CheckErrors(void);
 //static void checkSubErrors(void);
 
-#if SYS_LOG_LEVEL < NO_LOGGING
+
+#ifdef SYS_SERIAL_LOGGING
 void print_error_counts(void);
 #endif
 
@@ -124,27 +108,16 @@ void print_error_counts(void);
  * Global record of CAN Bus error flags.
  */
 static can_baud_rate_t connected_baudrate = no_baud;
-#if defined(CAN_BAUD_AUTO_DETECT)
-static can_baud_rate_t listen_baudrate = no_baud;
-#endif
-static uint8_t changing_baud_tx_error;
-//static uint8_t g_CanErrors = 0x00;
-//static UINT32 g_missedMessageCount = 0;
-static uint32_t rx_msg_count = 0;
-//static UINT32 messageSentCount = 0;
-//static UINT32 wakeUpCount = 0;
-static can_frame rx_can_msg;
-
-static can_status_t status;
+static uint8_t         changing_baud_tx_error;
+static uint32_t        rx_msg_count = 0;
+static can_frame       rx_can_msg;
+static can_status_t    status;
 static can_baud_rate_t status_baud = no_baud;
-#if defined(CAN_BAUD_AUTO_DETECT)
-static uint8_t listen_timer;
-#endif
 static void (*status_handler)(uint8_t mask, can_status_t status, can_baud_rate_t baud) = NULL;
 
 /*
  * Frame dispatcher is in separate file but shouldn't be seen by Application 
- * code.
+ * code. Just include a sneaky extern declaration here.
  */
 extern void frame_dispatch_init(void);
 extern void frame_dispatch_handle_frame(can_frame *message);
@@ -164,15 +137,17 @@ result_t can_l2_init(can_baud_rate_t arg_baud_rate,
 {
 	uint8_t        exit_mode = NORMAL_MODE;
 	uint32_t       delay;
-#ifndef SYS_CAN_PING_PROTOCOL
-	can_frame frame;
-#endif // SYS_CAN_PING_PROTOCOL
+
 #ifdef SYS_SERIAL_LOGGING
 #if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	LOG_D("l2_init()\n\r");
 #endif
 #endif
 
+#ifdef SYS_CAN_PING_PROTOCOL
+	ping_init();
+#endif // SYS_CAN_PING_PROTOCOL
+	
 #ifndef SYS_CAN_BAUD_AUTO_DETECT
 	if(arg_baud_rate >= no_baud) {
 #ifdef SYS_SERIAL_LOGGING
@@ -219,7 +194,7 @@ result_t can_l2_init(can_baud_rate_t arg_baud_rate,
 #if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 		LOG_D("Valid Baud Rate specified - %s\n\r", can_baud_rate_strings[arg_baud_rate]);
 #endif
-#endif
+#endif  // SYS_SERIAL_LOGGING
 		connected_baudrate = arg_baud_rate;
 		set_baudrate(arg_baud_rate);
 		exit_mode = NORMAL_MODE;
@@ -230,28 +205,8 @@ result_t can_l2_init(can_baud_rate_t arg_baud_rate,
 		if(status_handler)
 			status_handler(L2_STATUS_MASK, status, status_baud);
 	} else {
-#if defined(CAN_BAUD_AUTO_DETECT)
-		/*
-		 * Have to search for the Networks baud rate. Start at the bottom
-		 */
-		rx_msg_count = 0;
-#ifdef SYS_SERIAL_LOGGING
-#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-		LOG_D("Before trying 10K REC - %d, rxCount - %ld\n\r", read_reg(REC), rx_msg_count);
-#endif
-#endif
-		listen_baudrate = baud_10K;
-		set_baudrate(listen_baudrate);
-		exit_mode = LISTEN_MODE;
-
-		connecting_errors = 0;
-		status.bit_field.l2_status = L2_Listening;
-		status_baud = listen_baudrate;
-		if(status_handler)
-			status_handler(L2_STATUS_MASK, status, status_baud);
-
-		/* Now wait and see if we have errors */
-		sw_timer_start(SECONDS_TO_TICKS(CAN_BAUD_AUTO_DETECT_LISTEN_PERIOD), exp_check_network_connection, (union sigval)(void *)NULL, &listen_timer);
+#if defined(SYS_CAN_BAUD_AUTO_DETECT)
+		baud_auto_detect_init();
 #endif // SYS_CAN_BAUD_AUTO_DETECT
 	}
 	asm ("CLRWDT");
@@ -272,18 +227,6 @@ result_t can_l2_init(can_baud_rate_t arg_baud_rate,
         IFS0bits.INT0IF = 0;    // Clear the flag
         IEC0bits.INT0IE = 1;    //Interrupt Enabled
 
-	// Create a random timer for firing the
-	// Network Idle Ping message
-#if defined(SYS_CAN_PING_PROTOCOL)
-	ping_time = (uint16_t)((rand() % SECONDS_TO_TICKS(1)) + (SECONDS_TO_TICKS(CAN_PING_PROTOCOL_PERIOD) - MILLI_SECONDS_TO_TICKS(500)));
-        restart_ping_timer();
-#else
-	frame.can_id = CAN_DCNCP_NodePingMessage;
-	frame.can_dlc = 0;
-
-	can_l2_tx_frame(&frame);
-#endif
-
 #ifdef SYS_SERIAL_LOGGING
 #if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	LOG_D("CAN Layer 2 Initialised\n\r");
@@ -291,121 +234,6 @@ result_t can_l2_init(can_baud_rate_t arg_baud_rate,
 #endif
 	return(SUCCESS);
 }
-
-#if defined(SYS_CAN_PING_PROTOCOL)
-void exp_test_ping(timer_t timer_id __attribute__((unused)), union sigval data __attribute__((unused)))
-{
-#ifdef SYS_SERIAL_LOGGING
-#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-        LOG_D("exp_test_ping()\n\r");
-#endif
-#endif
-	dcncp_send_ping();
-        restart_ping_timer();
-}
-#endif
-
-#if defined(SYS_CAN_PING_PROTOCOL)
-void restart_ping_timer(void)
-{
-	if(ping_timer.status == ACTIVE) {
-#ifdef SYS_SERIAL_LOGGING
-#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-//		LOG_D("Cancel running ping timer\n\r");
-#endif
-#endif
- 		if(timer_cancel(&ping_timer) != SUCCESS) {
-#ifdef SYS_SERIAL_LOGGING
-#if (SYS_LOG_LEVEL <= LOG_ERROR)
-			LOG_E("Failed to cancel the Ping timer\n\r");
-#endif
-#endif
-			return;
-		}
-	}
-
-	sw_timer_start(ping_time, exp_test_ping, (union sigval)(void *) NULL, &ping_timer);
-}
-#endif // defined(SYS_CAN_PING_PROTOCOL)
-
-#if defined(SYS_CAN_BAUD_AUTO_DETECT)
-void exp_check_network_connection(timer_t timer_id __attribute__((unused)), union sigval data __attribute__((unused)))
-{
-	result_t result;
-//	uint8_t rec = read_reg(REC);
-
-	if(listen_baudrate < no_baud) {
-#ifdef SYS_SERIAL_LOGGING
-#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-		LOG_D("After trying %s Errors - %d, rxCount - %ld\n\r", can_baud_rate_strings[listen_baudrate], connecting_errors, rx_msg_count);
-#endif
-#endif
-	} else {
-#ifdef SYS_SERIAL_LOGGING
-#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-		LOG_D("After trying %s Errors - %d, rxCount - %ld\n\r", "NO BAUD RATE", connecting_errors, rx_msg_count);
-#endif
-#endif
-	}
-	/*
-	 * If we heard valid messages with no errors we've found the baud rate.
-	 */
-	if(rx_msg_count > 0 && connecting_errors == 0) {
-#ifdef SYS_SERIAL_LOGGING
-#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-		LOG_D("*** Network connected ***\n\r");
-#endif
-#endif
-		connected_baudrate = listen_baudrate;
-
-		set_can_mode(NORMAL_MODE);
-
-		status.bit_field.l2_status = L2_Connected;
-		status_baud = connected_baudrate;
-
-		if(status_handler)
-			status_handler(L2_STATUS_MASK, status, status_baud);
-	} else {
-		listen_baudrate++;
-		if(listen_baudrate == no_baud)
-			listen_baudrate = baud_10K;
-
-#ifdef SYS_SERIAL_LOGGING
-#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-		LOG_D("No joy try Baud Rate - %s\n\r", can_baud_rate_strings[listen_baudrate]);
-#endif
-#endif
-		set_can_mode(CONFIG_MODE);
-		set_baudrate(listen_baudrate);
-		set_can_mode(LISTEN_MODE);
-
-                rx_msg_count = 0;
-		connecting_errors = 0;
-		status.bit_field.l2_status = L2_Listening;
-	        status_baud = listen_baudrate;
-
-		if(status_handler)
-			status_handler(L2_STATUS_MASK, status, status_baud);
-
-#ifdef SYS_SERIAL_LOGGING
-#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-		LOG_D("Restart timer\n\r");
-#endif
-#endif
-		result = sw_timer_start(SECONDS_TO_TICKS(CAN_BAUD_AUTO_DETECT_LISTEN_PERIOD),
-				     exp_check_network_connection,
-				     (union sigval)(void *)NULL,
-				     &listen_timer);
-		if(result != SUCCESS) {
-#ifdef SYS_SERIAL_LOGGING
-#if (SYS_LOG_LEVEL <= LOG_ERROR)
-			LOG_E("Failed to start listen timer, result 0x%x\n\r", result);
-#endif
-#endif
-		}
-	}
-}
-#endif // SYS_CAN_BAUD_AUTO_DETECT
 
 /*
  * CAN L2 ISR
@@ -1253,143 +1081,6 @@ void get_status(can_status_t *arg_status, can_baud_rate_t *arg_baud)
 can_baud_rate_t can_l2_get_baudrate(void)
 {
 	return(connected_baudrate);
-}
-
-void can_l2_set_node_baudrate(can_baud_rate_t baudrate)
-{
-	timer_id timer;
-	struct timer_req timer_request;
-	
-
-#ifdef SYS_SERIAL_LOGGING
-#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-	LOG_D("set_can_node_baudrate()\n\r");
-#endif
-#endif
-	status.bit_field.l2_status = L2_ChangingBaud;
-	status_baud = baudrate;
-
-	if (status_handler)
-		status_handler(L2_STATUS_MASK, status, status_baud);
-
-	set_can_mode(CONFIG_MODE);
-
-	set_baudrate(baudrate);
-
-	/*
-	 * The Baud rate is being changed so going to stay in config mode
-	 * for 5 Seconds and let the Network settle down.
-	 */
-	timer_request.units = Seconds;
-	timer_request.duration = 5;
-	timer_request.type = single_shot;
-	timer_request.exp_fn = exp_finalise_baudrate_change;
-	timer_request.data.sival_int = 0;
-	sw_timer_start(&timer, &timer_request);
-}
-
-static void exp_finalise_baudrate_change(timer_id timer __attribute__((unused)), union sigval data __attribute__((unused)))
-{
-#ifdef SYS_SERIAL_LOGGING
-#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-	LOG_D("exp_finalise_baudrate_change()\n\r");
-#endif
-#endif	
-        set_can_mode(NORMAL_MODE);
-
-	status.bit_field.l2_status = L2_Connected;
-
-	if (status_handler)
-		status_handler(L2_STATUS_MASK, status, status_baud);
-}
-
-/*
- * TODO Change name to initiate
- */
-void can_l2_initiate_baudrate_change(can_baud_rate_t rate)
-{
-	timer_id         timer;
-	struct timer_req timer_request;
-	can_frame        msg;
-	result_t         result = SUCCESS;
-
-#ifdef SYS_SERIAL_LOGGING
-#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-	LOG_D("initiate_can_baudrate_change()\n\r");
-#endif
-#endif
-	msg.can_id = 0x705;
-	msg.can_dlc = 1;
-
-	msg.data[0] = rate;
-
-	result = can_l2_tx_frame(&msg);
-
-	if (result == SUCCESS) {
-		status.bit_field.l2_status = L2_ChangingBaud;
-		status_baud = rate;
-		changing_baud_tx_error = 0;
-
-		if (status_handler)
-			status_handler(L2_STATUS_MASK, status, status_baud);
-
-		timer_request.units = mSeconds;
-		timer_request.duration = 500;
-		timer_request.type = single_shot;
-		timer_request.exp_fn = exp_resend_baudrate_change;
-		timer_request.data.sival_int = 0;
-		sw_timer_start(&timer, &timer_request);
-	}
-}
-
-static void exp_resend_baudrate_change(timer_id exp_timer __attribute__((unused)), union sigval data __attribute__((unused)))
-{
-	can_frame        msg;
-	timer_id         timer;
-	struct timer_req timer_request;
-
-#ifdef SYS_SERIAL_LOGGING
-#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-	LOG_D("exp_resend_baudrate_change()\n\r");
-#endif
-#endif
-	if(changing_baud_tx_error < 3) {
-#ifdef SYS_SERIAL_LOGGING
-#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-		LOG_D("resending Baud Rate Change Request %d\n\r", changing_baud_tx_error);
-#endif
-#endif
-		msg.can_id = 0x705;
-		msg.can_dlc = 1;
-
-		msg.data[0] = status_baud;
-
-		if(can_l2_tx_frame(&msg) != ERR_CAN_NO_FREE_BUFFER) {
-			timer_request.units = mSeconds;
-			timer_request.duration = 500;
-			timer_request.type = single_shot;
-			timer_request.exp_fn = exp_resend_baudrate_change;
-			timer_request.data.sival_int = 0;
-			sw_timer_start(&timer, &timer_request);
-		} else {
-#ifdef SYS_SERIAL_LOGGING
-#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-			LOG_D("No Free Buffers so change the Baud Rate\n\r");
-#endif
-#endif
-			set_reg_mask_value(TXB0CTRL, TXREQ, 0x00);
-			set_reg_mask_value(TXB1CTRL, TXREQ, 0x00);
-			set_reg_mask_value(TXB2CTRL, TXREQ, 0x00);
-                        can_l2_set_node_baudrate(status_baud);
-		}
-	} else {
-#ifdef SYS_SERIAL_LOGGING
-#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-		LOG_D("3 Errors so NOT Resending Baud Rate Change Request\n\r");
-#endif
-#endif
-                can_l2_set_node_baudrate(status_baud);
-	}
 }
 
 static void enable_rx_interrupts(void)
