@@ -2,7 +2,7 @@
  * @mainpage es_lib
 
 <p>
-The electronicSoup library contains source code for, at present, a limited number of
+The electronicSoup library contains source code for a limited number of
 Microchip devices. The library was developed to facilitate faster development
 of higher level application code for the cinnamonBun series of devices. 
 </p>
@@ -47,5 +47,32 @@ slightly less catchy then its Linux equivilent, but it should not
 clash with any other headers which may be used in the future.
 </p>
 
+<p>
+The <em>libesoup_config.h</em> configuration file defines all aspects
+of a project's build of the libesoup library of code. The first thing
+that should be defined is the target board. There are only a few
+prototype boards that I'm currently working with, all of which are
+defined in the libesoup/boards directory. The target platform is
+selected by including the necessary board header file.
+</p>
+
+<p>
+#include "libesoup/boards/cb-dsPIC33EP256MU806.h"
+</p>
+
+<p>
+After the board has been defined the required clock frequency must be
+defined. Some of the target micro-controllers contain a Phased Lock Loop to
+change the frequency of the physically connected hardware crystal.
+</p>
+
+<p>
+#define SYS_CLOCK_FREQ 60000000    // 60MHz
+</p>
+
+<p>
+the functionality which is to be included
+in a project build. For example, starting at the basics
+</p>
 
 */
