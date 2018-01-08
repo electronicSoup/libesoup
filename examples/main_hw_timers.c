@@ -102,11 +102,11 @@ int main(void)
 	INTCONbits.PEIE = 1;   // Enable Periphal Interrupts
 #endif // (__18F4585)
         
-	request.units = Seconds;
+	request.units    = Seconds;
 	request.duration = 5;
-	request.type = single_shot;
-	request.exp_fn = exp_func;
-	request.data = data;
+	request.type     = single_shot;
+	request.exp_fn   = exp_func;
+	request.data     = data;
 
         rc = hw_timer_start(&timer, &request);
         if(rc != SUCCESS) {
