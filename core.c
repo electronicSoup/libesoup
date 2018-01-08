@@ -54,13 +54,17 @@
 #endif
 
 #ifdef SYS_SPI_BUS
-#include "libesoup/utils/spi.h"
+#include "libesoup/comms/spi/spi.h"
 #endif
 
 
 result_t libesoup_init(void)
 {
+#ifdef XC16
+	result_t rc  __attribute__((unused)) = SUCCESS;
+#else
 	result_t rc = SUCCESS;
+#endif
 	
 	cpu_init();
 

@@ -107,18 +107,18 @@ int main(void)
 	request.type = single_shot;
 	request.exp_fn = exp_func;
 	request.data = data;
-	
+
         rc = hw_timer_start(&timer, &request);
-#if defined(__dsPIC33EP256MU806__) || defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__)
-        LATEbits.LATE3 = 1;
-#endif
-        
         if(rc != SUCCESS) {
 	        /*
 		 * Handle the error condition.
 		 */
         }
-        
+	
+#if defined(__dsPIC33EP256MU806__) || defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__)
+        LATEbits.LATE3 = 1;
+#endif
+        	        
         while(1) {
         }
         return 0;

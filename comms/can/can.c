@@ -20,7 +20,7 @@
  *
  */
 #include "libesoup_config.h"
-#include "libesoup/comms/can/es_can.h"
+#include "libesoup/comms/can/can.h"
 #ifdef SYS_CAN_DCNCP
 #include "libesoup/can/dcncp/dcncp_can.h"
 #endif
@@ -28,12 +28,15 @@
 #include "libesoup/can/dcncp/dcncp_iso15765.h"
 #endif // SYS_ISO15765_DCNCP
 
+#ifdef SYS_CAN_PING_PROTOCOL
+#include "libesoup/comms/can/ping.h"
+#endif // SYS_CAN_PING_PROTOCOL
+
+#ifdef SYS_SERIAL_LOGGING
 #define DEBUG_FILE TRUE
 #include "libesoup/logger/serial_log.h"
 
-#if defined(SYS_LOG_LEVEL)
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
-#define TAG "CAN"
+const char *TAG = "CAN";
 
 char can_l2_status_strings[5][17] = {
 	"L2_Uninitialised",
@@ -53,10 +56,7 @@ char can_baud_rate_strings[8][10] = {
 	"baud_800K",
 	"baud_1M"
 };
-#endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
-#endif //  if defined(SYS_LOG_LEVEL)
+#endif  // SYS_SERIAL_LOGGING
 
 static can_status_t can_status;
 static can_baud_rate_t  baud_status = no_baud;
@@ -65,18 +65,13 @@ static void status_handler(uint8_t mask, can_status_t status, can_baud_rate_t ba
 
 can_status_handler_t app_status_handler = (can_status_handler_t)NULL;
 
-/*
- * Check required libesoup_config.h defines are found
- */
-#ifndef SYS_LOG_LEVEL
-#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
-#endif
-
 result_t can_init(can_baud_rate_t baudrate,
 		  can_status_handler_t arg_status_handler)
 {
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
-	log_d(TAG, "can_init\n\r");
+#ifdef SYS_SERIAL_LOGGING
+#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+	LOG_D("can_init\n\r");
+#endif
 #endif
 
         /*
@@ -87,58 +82,77 @@ result_t can_init(can_baud_rate_t baudrate,
 
 	can_l2_init(baudrate, status_handler);
 
+#ifdef SYS_CAN_PING_PROTOCOL
+	can_ping_init();
+#endif
 	return(SUCCESS);
 }
 
 static void status_handler(uint8_t mask, can_status_t status, can_baud_rate_t baud)
 {
+#ifdef SYS_SERIAL_LOGGING
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
-	log_d(TAG, "status_handler(mask-0x%x, status-0x%x\n\r", mask, status.byte);
+	LOG_D("status_handler(mask-0x%x, status-0x%x\n\r", mask, status.byte);
+#endif
 #endif
 
 	if (mask == L2_STATUS_MASK) {
 		switch(status.bit_field.l2_status) {
 			case L2_Uninitialised:
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
-				log_d(TAG, "L2_Uninitialised\n\r");
+#ifdef SYS_SERIAL_LOGGING
+#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+				LOG_D("L2_Uninitialised\n\r");
+#endif
 #endif
 				break;
 				
 			case L2_Listening:
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
-				log_d(TAG, "L2_Listening\n\r");
+#ifdef SYS_SERIAL_LOGGING
+#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+				LOG_D("L2_Listening\n\r");
+#endif
 #endif
 				break;
 				
 			case L2_Connecting:
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
-				log_d(TAG, "L2_Connecting\n\r");
+#ifdef SYS_SERIAL_LOGGING
+#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+				LOG_D("L2_Connecting\n\r");
+#endif
 #endif
 				break;
 				
 			case L2_Connected:
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
-				log_d(TAG, "L2_Connected\n\r");
+#ifdef SYS_SERIAL_LOGGING
+#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+				LOG_D("L2_Connected\n\r");
+#endif
 #endif
 				break;
 				
 			case L2_ChangingBaud:
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
-				log_d(TAG, "L2_ChangingBaud\n\r");
+#ifdef SYS_SERIAL_LOGGING
+#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+				LOG_D("L2_ChangingBaud\n\r");
+#endif
 #endif
 				break;
 			
 			default:
+#ifdef SYS_SERIAL_LOGGING
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
-				log_e(TAG, "Unrecognised SYS_CAN Layer 2 status\n\r");
+				LOG_E("Unrecognised SYS_CAN Layer 2 status\n\r");
+#endif
 #endif
 				break;
 		}
 
 #ifdef SYS_CAN_DCNCP
 		if ((status.bit_field.l2_status == L2_Connected) && (can_status.bit_field.l2_status != L2_Connected)) {
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
-			log_d(TAG, "Layer 2 Connected so start DCNCP\n\r");
+#ifdef SYS_SERIAL_LOGGING
+#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+			LOG_D("Layer 2 Connected so start DCNCP\n\r");
+#endif
 #endif
 			dcncp_init(status_handler);
 		}

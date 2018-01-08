@@ -19,11 +19,14 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  *
  */
-#ifndef SPI_H
-#define SPI_H
+#ifndef _SPI_H
+#define _SPI_H
+
+#ifdef SYS_SPI_BUS
 
 extern void spi_init(void);
 extern unsigned char spi_write_byte(unsigned char write);
 
+#endif // #ifdef SYS_SPI_BUS
 
-#endif // SPI_H
+#endif // _SPI_H

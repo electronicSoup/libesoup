@@ -1,3 +1,5 @@
+#if defined( __18F2680) || defined(__18F4585)
+
 #include "libesoup_config.h"
 #include <stdlib.h>
 #include <stdio.h>
@@ -7,11 +9,17 @@
 
 #include "libesoup/timers/sw_timers.h"
 
+#ifdef SYS_CAN_PING_PROTOCOL
+#include "libesoup/comms/can/ping.h"
+#endif
+
+#ifdef SYS_SERIAL_LOGGING
 #define DEBUG_FILE TRUE
 #include "libesoup/logger/serial_log.h"
-#include "libesoup/comms/can/es_can.h"
+const char *TAG = "PIC_CAN";
+#endif // SYS_SERIAL_LOGGING
 
-#define TAG "PIC_CAN"
+#include "libesoup/comms/can/can.h"
 
 #undef L2_CAN_INTERRUPT_DRIVEN
 
@@ -36,11 +44,15 @@ char baud_rate_strings[8][10] = {
  * we'll keep a timer and if nothing has been received or transmitted in this
  * time we'll fire a ping message.
  */
-static uint16_t     networkIdleDuration = 0;
-static uint8_t      networkIdleTimer;
-//static ty_CanStatus canStatus = Listening;
+#ifdef SYS_CAN_PING_PROTOCOL
+static uint16_t         networkIdleDuration = 0;
+static timer_id         networkIdleTimer = BAD_TIMER_ID;
+static struct timer_req idle_timer_request;
+#endif
 
-static void pingNetwork(timer_t timer, union sigval data);
+//static ty_CanStatus canStatus = Listening;
+static void set_baud_rate(can_baud_rate_t baudRate);
+static void finaliseBaudRateChange(timer_id timer, union sigval data);
 
 #ifdef L2_CAN_INTERRUPT_DRIVEN
 
@@ -80,8 +92,11 @@ can_mask masks[MASKS] =
 
 
 static void setMode(uint8_t mode);
-static void setBitRate(can_baud_rate_t baudRate);
-static void finaliseBaudRateChange(uint8_t *data);
+//static void setBitRate(can_baud_rate_t baudRate);
+
+#ifdef SYS_CAN_PING_PROTOCOL
+static void restart_idle_timer(void);
+#endif
 
 result_t can_l2_init(can_baud_rate_t arg_baud_rate, void (*arg_status_handler)(uint8_t mask, can_status_t status, can_baud_rate_t baud))
 {
@@ -89,12 +104,16 @@ result_t can_l2_init(can_baud_rate_t arg_baud_rate, void (*arg_status_handler)(u
 	uint8_t loop;
 
 	if (baudRate <= BAUD_MAX) {
+#ifdef SYS_SERIAL_LOGGING
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 		log_d(TAG, "L2_CanInit() Baud Rate %s\n\r", baud_rate_strings[baudRate]);
 #endif
+#endif
 	} else {
+#ifdef SYS_SERIAL_LOGGING
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
 		log_e(TAG, "L2_CanInit() ToDo!!! No Baud Rate Specified\n\r");
+#endif
 #endif
 		return (baudRate);
 	}
@@ -114,10 +133,10 @@ result_t can_l2_init(can_baud_rate_t arg_baud_rate, void (*arg_status_handler)(u
 	/*
 	 * Set the Baud rate.
 	 */
-	set_bit_rate(baudRate);
+	set_baud_rate(baudRate);
 
 	/*
-	 * Set out Functional mode of opperation
+	 * Set out Functional mode of operation
 	 */
 #ifdef L2_CAN_INTERRUPT_DRIVEN
 	// Mode 0 Legacy
@@ -201,14 +220,24 @@ result_t can_l2_init(can_baud_rate_t arg_baud_rate, void (*arg_status_handler)(u
 
 	canStatus = Connected;
 
+#ifdef SYS_CAN_PING_PROTOCOL
 	// Create a random timer between 1 and 1.5 seconds for firing the
 	// Network Idle Ping message
 	networkIdleDuration = (UINT16) ((rand() % 500) + 1000);
 
+	idle_timer_request.units = Seconds;
+	idle_timer_request.duration = networkIdleDuration;
+	idle_timer_request.type = single_shot;
+	idle_timer_request.exp_fn = pingNetwork;
+	idle_timer_request.data.sival_int = 0;
+	restart_idle_timer();
+#endif // SYS_CAN_PING_PROTOCOL
+	
+#ifdef SYS_SERIAL_LOGGING
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	log_d(TAG, "Network Idle Duration set to %d milliSeconds\n\r", networkIdleDuration);
 #endif
-	networkIdleTimer = start_timer(networkIdleDuration, pingNetwork, NULL);
+#endif
 	return (baudRate);
 #endif
         return(SUCCESS);
@@ -229,8 +258,10 @@ void L2_ISR(void)
 	 * are volatile.
 	 */
 	flags = PIR3;
+#ifdef SYS_SERIAL_LOGGING
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	log_d(TAG, "CAN L2 ISR Flag-%x\n\r", flags);
+#endif
 #endif
 //    if(flags & MERRE)
 //    {
@@ -298,8 +329,10 @@ void L2_ISR(void)
 			cirBufferNextWrite = (cirBufferNextWrite + 1) % SYS_CAN_RX_CIR_BUFFER_SIZE;
 			cirBufferCount++;
 		} else {
+#ifdef SYS_SERIAL_LOGGING
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
 			log_e(TAG, "Circular Buffer overflow!");
+#endif
 #endif
 		}
 
@@ -323,8 +356,10 @@ void L2_ISR(void)
 			cirBufferNextWrite = (cirBufferNextWrite + 1) % SYS_CAN_RX_CIR_BUFFER_SIZE;
 			cirBufferCount++;
 		} else {
+#ifdef SYS_SERIAL_LOGGING
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
 			log_e(TAG, "Circular Buffer overflow!");
+#endif
 #endif
 		}
 
@@ -339,8 +374,10 @@ void L2_CanTasks(void)
 {
 	uint8_t loop;
 
+#ifdef SYS_SERIAL_LOGGING
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	log_d(TAG, "L2_CanTasks()\n\r");
+#endif
 #endif
 	while (cirBufferCount > 0) {
 		// Check if it's an extended
@@ -368,8 +405,10 @@ void L2_CanTasks(void)
 		rxCanMsg.data[loop] = cirBuffer[cirBufferNextRead].data[loop];
 	}
 
+#ifdef SYS_SERIAL_LOGGING
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
         log_d(TAG, "Received a message id - %lx\n\r", rxCanMsg.header.can_id.id);
+#endif
 #endif
 //        networkGood = TRUE;
 	cirBufferNextRead = (cirBufferNextRead + 1) % SYS_CAN_RX_CIR_BUFFER_SIZE;
@@ -384,11 +423,10 @@ void L2_CanTasks(void)
 #else
 void can_l2_tasks(void)
 {
-        union sigval data;
-        timer_t      timer;
-	uint8_t      i;
-	uint8_t      buffer;
-	uint8_t     *ptr;
+	result_t  rc = SUCCESS;
+	uint8_t   i;
+	uint8_t   buffer;
+	uint8_t  *ptr;
 
 	buffer = CANCON & 0x0f;
 
@@ -399,59 +437,67 @@ void can_l2_tasks(void)
 		/*
 		 * cancel the timer if running we've received a frame
 		 */
+#ifdef SYS_SERIAL_LOGGING
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 		log_d(TAG, "Rx L2 Message so restart Idle Timer\n\r");
 #endif
-		sw_timer_cancel(networkIdleTimer);
-		networkIdleTimer = sw_timer_start(networkIdleDuration, pingNetwork, data, &timer);
+#endif
+#ifdef SYS_CAN_PING_PROTOCOL
+		restart_idle_timer();
+#endif
+
 		if (rx_buffers[buffer]->sidl & SIDL_EXIDE) {
 			/*
 			 * Extended message identifer ???
 			 */
-			rxMsg.  .header.extended_id = TRUE;
-			rxMsg.header.can_id.id = rx_buffers[buffer]->sidh;
-			rxMsg.header.can_id.id = rxMsg.header.can_id.id << 3 | ((rx_buffers[buffer]->sidl >> 5) & 0x07);
-			rxMsg.header.can_id.id = rxMsg.header.can_id.id << 2 | (rx_buffers[buffer]->sidl & 0x03);
-			rxMsg.header.can_id.id = rxMsg.header.can_id.id << 8 | rx_buffers[buffer]->eid8;
-			rxMsg.header.can_id.id = rxMsg.header.can_id.id << 8 | rx_buffers[buffer]->eid0;
+			rxMsg.can_id = rx_buffers[buffer]->sidh;
+			rxMsg.can_id = rxMsg.can_id << 3 | ((rx_buffers[buffer]->sidl >> 5) & 0x07);
+			rxMsg.can_id = rxMsg.can_id << 2 | (rx_buffers[buffer]->sidl & 0x03);
+			rxMsg.can_id = rxMsg.can_id << 8 | rx_buffers[buffer]->eid8;
+			rxMsg.can_id = rxMsg.can_id << 8 | rx_buffers[buffer]->eid0;
+			rxMsg.can_id |= CAN_EFF_FLAG;
 		} else {
-			rxMsg.header.extended_id = FALSE;
-
 			/*
 			 * Pull out the identifier
 			 */
-			rxMsg.header.can_id.id = rx_buffers[buffer]->sidh;
-			rxMsg.header.can_id.id = rxMsg.header.can_id.id << 3 | ((rx_buffers[buffer]->sidl >> 5) & 0x07);
+			rxMsg.can_id = rx_buffers[buffer]->sidh;
+			rxMsg.can_id = rxMsg.can_id << 3 | ((rx_buffers[buffer]->sidl >> 5) & 0x07);
 		}
 
 		/*
 		 * Pull out Data Length
 		 */
-		rxMsg.header.data_length = rx_buffers[buffer]->dcl & 0x0f;
-		rxMsg.header.rnr_frame = rx_buffers[buffer]->dcl & DCL_RNR;
+		rxMsg.can_dlc = rx_buffers[buffer]->dcl & 0x0f;
+		if(rx_buffers[buffer]->dcl & DCL_RNR) {
+			rxMsg.can_id |= CAN_RTR_FLAG;
+		}
 
 		/*
 		 * Pull out the data bytes
 		 */
 		ptr = rx_buffers[buffer]->data;
-		for (i = 0; i < rxMsg.header.data_length; i++, ptr++) {
+		for (i = 0; i < rxMsg.can_dlc; i++, ptr++) {
 			rxMsg.data[i] = *ptr;
 		}
 
 		/* Clear the received flag */
 		rx_buffers[buffer]->ctrl &= ~CNTL_RXFUL;
+#ifdef SYS_SERIAL_LOGGING
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 		log_d(TAG, "rxMsg %lx\n\r", rxMsg.header.can_id.id);
 #endif
-
-		if(l2Handler) {
-			l2Handler(&rxMsg);
-		} else {
+#endif
+		// Todo
+//		if(l2Handler) {
+//			l2Handler(&rxMsg);
+//		} else {
+#ifdef SYS_SERIAL_LOGGING
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 			log_d(TAG, "No Handler so ignoring received message\n\r");
 #endif
-		}
-		buffer = SYS_CANCON & 0x0f;
+#endif
+//		}
+//		buffer = SYS_CANCON & 0x0f;
 	}
 }
 #endif
@@ -469,8 +515,10 @@ result_t can_l2_tx_frame(can_frame *frame)
 		return (CAN_ERROR);
 	}
 
+#ifdef SYS_SERIAL_LOGGING
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	log_d(TAG, "L2_CanTxMessage(0x%lx)\n\r", msg->header.can_id.id);
+#endif
 #endif
 	/*
 	 * Find a free buffer
@@ -482,8 +530,10 @@ result_t can_l2_tx_frame(can_frame *frame)
 	}
 
 	if (buffer == TX_BUFFERS) {
+#ifdef SYS_SERIAL_LOGGING
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
 		log_e(TAG, "No empty TX buffer\n\r");
+#endif
 #endif
 		return (CAN_ERROR); //No Empty buffers
 	}
@@ -514,8 +564,10 @@ result_t can_l2_tx_frame(can_frame *frame)
 	}
 
 	if (msg->header.data_length > 8) {
+#ifdef SYS_SERIAL_LOGGING
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
 		log_e(TAG, "Copy across the data length %d\n\r", msg->header.data_length);
+#endif
 #endif
 	}
 
@@ -532,11 +584,12 @@ result_t can_l2_tx_frame(can_frame *frame)
 	/*
 	 * cancel the timer if running we've received a frame
 	 */
+#ifdef SYS_SERIAL_LOGGING
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	log_d(TAG, "Transmitting L2 Message so restart Idle Timer\n\r");
 #endif
-	cancel_timer(networkIdleTimer);
-	networkIdleTimer = start_timer(networkIdleDuration, pingNetwork, NULL);
+#endif
+	restart_idle_timer();
 #endif
 	return (SUCCESS);
 }
@@ -563,41 +616,59 @@ void L2_CanTxError(uint8_t node_type, uint8_t node_number, UINT32 errorCode)
 
 void L2_SetCanNodeBuadRate(can_baud_rate_t baudRate)
 {
-	baud_rate_t testRate;
+	timer_id         timer;
+	struct timer_req timer_request;	
+	
+	TIMER_INIT(timer);
+	
+	can_baud_rate_t testRate;
+#ifdef SYS_SERIAL_LOGGING
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	log_d(TAG, "L2_SetCanNodeBuadRate()\n\r");
 #endif
+#endif
+	// Todo
+	//sys_eeprom_write(NETWORK_BAUD_RATE, (uint8_t) baudRate);
 
-	sys_eeprom_write(NETWORK_BAUD_RATE, (uint8_t) baudRate);
-
-	sys_eeprom_read(NETWORK_BAUD_RATE, (uint8_t *) & testRate);
+	//sys_eeprom_read(NETWORK_BAUD_RATE, (uint8_t *) & testRate);
 
 	if (testRate != baudRate) {
+#ifdef SYS_SERIAL_LOGGING
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
 		log_e(TAG, "Baud Rate NOT Stored!\n\r");
 #endif
+#endif
 	} else {
+#ifdef SYS_SERIAL_LOGGING
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 		log_d(TAG, "Baud Rate Stored\n\r");
+#endif
 #endif
 	}
 
 //	canStatus = ChangingBaud;
-	set_mode(CONFIG_MODE);
+//	set_mode(CONFIG_MODE);
 
-	set_bit_rate(baudRate);
+	set_baud_rate(baudRate);
 
 	/*
 	 * The Baud rate is being changed so going to stay in config mode
 	 * for 10 Seconds and let the Network settle down.
 	 */
-	start_timer(SECONDS_TO_TICKS(10), finalise_baud_rate_change, NULL);
+	timer_request.units = Seconds;
+	timer_request.duration = 10;
+	timer_request.type = single_shot;
+	timer_request.exp_fn = finaliseBaudRateChange;
+	timer_request.data.sival_int = 0;
+	sw_timer_start(&timer, &timer_request);
 }
 
-static void finaliseBaudRateChange(uint8_t *data)
+static void finaliseBaudRateChange(timer_id timer, union sigval data)
 {
+#ifdef SYS_SERIAL_LOGGING
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	log_d(TAG, "finaliseBaudRateChange()\n\r");
+#endif
 #endif
 //	canStatus = Connected;
 	setMode(NORMAL_MODE);
@@ -605,15 +676,17 @@ static void finaliseBaudRateChange(uint8_t *data)
 
 void L2_SetCanNetworkBuadRate(can_baud_rate_t baudRate)
 {
+#ifdef SYS_SERIAL_LOGGING
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	log_d(TAG, "L2_SetCanNetworkBuadRate()\n\r");
 #endif
+#endif
 	setMode(CONFIG_MODE);
-	setBitRate(baudRate);
+	set_baud_rate(baudRate);
 	setMode(NORMAL_MODE);
 }
 
-static void set_bit_rate(can_baud_rate_t baudRate)
+static void set_baud_rate(can_baud_rate_t baudRate)
 {
 	uint8_t sjw = 0;
 	uint8_t brp = 0;
@@ -687,8 +760,10 @@ static void set_bit_rate(can_baud_rate_t baudRate)
 			break;
 
 		default:
+#ifdef SYS_SERIAL_LOGGING
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
 			log_e(TAG, "Invalid Baud Rate Specified\n\r");
+#endif
 #endif
 			break;
 	}
@@ -712,7 +787,8 @@ static void setMode(uint8_t mode)
 	/*
 	 * Enter SYS_CAN Configuration mode
 	 */
-	value = SYS_CANCON;
+	// Todo
+//	value = SYS_CANCON;
 
 	value = value & ~MODE_MASK;
 	value = value | (mode & MODE_MASK);
@@ -724,11 +800,13 @@ static void setMode(uint8_t mode)
 	while ((CANSTAT & MODE_MASK) != mode);
 }
 
-static void pingNetwork(timer_t timer, union sigval data)
+#ifdef SYS_CAN_PING_PROTOCOL
+static void restart_idle_timer(void)
 {
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
-	log_d(TAG, "Network Idle Expired so send a ping message and restart\n\r");
-#endif
-	networkIdleTimer = sw_timer_start(networkIdleDuration, pingNetwork, data, &timer);
-	send_ping_message();
+	sw_timer_cancel(networkIdleTimer);
+	TIMER_INIT(networkIdleTimer);
+	sw_timer_start(networkIdleTimer, &timer_request);	
 }
+#endif
+
+#endif // #if defined( __18F2680) || defined(__18F4585)

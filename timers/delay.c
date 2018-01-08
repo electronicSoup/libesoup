@@ -23,6 +23,11 @@
 
 #include "libesoup_config.h"
 
+/*
+ * Code should only be compiled if SYS_HW_TIMERS is enabled in libesoup_config.h
+ */
+#ifdef SYS_HW_TIMERS
+
 #include "libesoup/timers/hw_timers.h"
 
 
@@ -63,3 +68,5 @@ void delay(ty_time_units units, uint16_t duration)
 #endif
         }
 }
+
+#endif // #ifdef SYS_HW_TIMERS
