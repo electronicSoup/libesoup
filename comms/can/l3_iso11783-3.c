@@ -4,7 +4,7 @@
  *
  * Implementation of ISO 11783-3
  *
- * Copyright 2017 electronicSoup Limited
+ * Copyright 2017 2018 electronicSoup Limited
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 2 of the GNU Lesser General Public License
@@ -22,10 +22,14 @@
 #include "libesoup_config.h"
 #include "libesoup/can/es_can.h"
 
+#ifdef SYS_SERIAL_LOGGING
 #define DEBUG_FILE
+static const char *TAG = "ISO11783";
 #include "libesoup/logger/serial_log.h"
-
-#define TAG "ISO11783"
+#ifndef SYS_LOG_LEVEL
+#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
+#endif // SYS_LOG_LEVEL
+#endif // SYS_SERIAL_LOGGING
 
 /*
  * The SYS_CAN ID as used by the 11783-3 Protocol
@@ -127,13 +131,9 @@ result_t iso11783_init(uint8_t address)
 	uint16_t loop;
 	can_l2_target_t target;
 
-#if defined(SYS_LOG_LEVEL)
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
-	log_d(TAG, "iso11783_init(0x%x)\n\r", address);
+#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+	LOG_D("iso11783_init(0x%x)\n\r", address);
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
-#endif //  if defined(SYS_LOG_LEVEL)
 
 	node_address = address;
 
@@ -235,14 +235,9 @@ result_t iso11783_tx_msg(iso11783_msg_t *msg)
 {
 	can_frame frame;
 
-#if defined(SYS_LOG_LEVEL)
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
-	log_d(TAG, "iso11783_tx_msg()\n\r");
+#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+	LOG_D("iso11783_tx_msg()\n\r");
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
-#endif //  if defined(SYS_LOG_LEVEL)
-
 	frame.can_id = pgn_to_canid(msg->priority, msg->pgn, msg->destination);
 	frame.can_dlc = 0x00;
 
@@ -254,13 +249,9 @@ result_t iso11783_tx_msg(iso11783_msg_t *msg)
 result_t iso11783_tx_pgn_request(uint8_t priority, u8 dst, u32 pgn)
 {
 	can_frame frame;
-#if defined(SYS_LOG_LEVEL)
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
-	log_d(TAG, "iso11783_tx_pgn_request()\n\r");
+#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+	LOG_D("iso11783_tx_pgn_request()\n\r");
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
-#endif //  if defined(SYS_LOG_LEVEL)
 
 	frame.can_id = pgn_to_canid(priority, PGN_REQUEST, dst);
 	frame.can_dlc = 0x03;
@@ -279,13 +270,9 @@ result_t iso11783_tx_ack_pgn(uint8_t priority, u8 dst, u32 pgn, iso11783_ack_t a
 	uint8_t        loop;
 	u32       tmp_pgn;
 	can_frame frame;
-#if defined(SYS_LOG_LEVEL)
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
-	log_d(TAG, "iso11783_tx_ack_pgn()\n\r");
+#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+	LOG_D("iso11783_tx_ack_pgn()\n\r");
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
-#endif //  if defined(SYS_LOG_LEVEL)
 
 	frame.can_id = pgn_to_canid(priority, PGN_ACK, dst);
 	frame.can_dlc = 0x08;
@@ -316,14 +303,9 @@ void iso11783_frame_handler(can_frame *frame)
 	uint8_t             handled;
 	iso11783_msg_t msg;
 
-#if defined(SYS_LOG_LEVEL)
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
-	log_d(TAG, "iso11783_frame_handler(frame id 0x%x)\n\r", frame->can_id);
+#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+	LOG_D("iso11783_frame_handler(frame id 0x%x)\n\r", frame->can_id);
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
-#endif //  if defined(SYS_LOG_LEVEL)
-
 	/*
 	 * Parameter Group Numbers PGN:
 	 *
@@ -333,56 +315,40 @@ void iso11783_frame_handler(can_frame *frame)
 	 */
 	pgn = canid_to_pgn(frame->can_id);
 
-#if defined(SYS_LOG_LEVEL)
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
-	log_d(TAG, "iso11783_frame_handler received PGN %d  =  0x%lx\n\r", pgn, pgn);
+#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+	LOG_D("iso11783_frame_handler received PGN %d  =  0x%lx\n\r", pgn, pgn);
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
-#endif //  if defined(SYS_LOG_LEVEL)
 
-//	printf("iso11783:(frame id 0x%x) SA 0x%x,", frame->can_id, sa);
-//	if(da_valid) {
-//		printf(" DA 0x%x, ", da);
-//	}
-#if defined(SYS_LOG_LEVEL)
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
-	log_d(TAG, " PGN %d (0x%x) [", pgn, pgn);
+#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+	LOG_D(" PGN %d (0x%x) [", pgn, pgn);
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
-#endif //  if defined(SYS_LOG_LEVEL)
 
 	for(loop = 0; loop < frame->can_dlc; loop++) {
 		printf("%x,", frame->data[loop]);
 	}
 	printf("\n\r");
 
-#if defined(SYS_LOG_LEVEL)
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	if(pgn == 126992) {
-		log_d(TAG, "System Time\n\r");
+		LOG_D("System Time\n\r");
 	} else if(pgn == 128267) {
-		log_d(TAG, "Depth\n\r");
+		LOG_D("Depth\n\r");
 	} else if(pgn == 129025) {
-		log_d(TAG, "Position\n\r");
+		LOG_D("Position\n\r");
 	} else if(pgn == 129026) {
-		log_d(TAG, "Corse Over Ground (COG) & Speed over Ground (SOG)\n\r");
+		LOG_D("Corse Over Ground (COG) & Speed over Ground (SOG)\n\r");
 	} else if(pgn == 129027) {
-		log_d(TAG, "Position Delta\n\r");
+		LOG_D("Position Delta\n\r");
 	} else if(pgn == 129029) {
-		log_d(TAG, "GNSS Position Data\n\r");
+		LOG_D("GNSS Position Data\n\r");
 	} else if(pgn == 129033) {
-		log_d(TAG, "Time & Date\n\r");
+		LOG_D("Time & Date\n\r");
 	} else if(pgn == 129539) {
-		log_d(TAG, "GNSS and DOP Dilution Of Precision\n\r");
+		LOG_D("GNSS and DOP Dilution Of Precision\n\r");
 	} else if(pgn == 129540) {
-		log_d(TAG, "Satalites in View\n\r");
+		LOG_D("Satalites in View\n\r");
 	}
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
-#endif //  if defined(SYS_LOG_LEVEL)
 
 	handled = 0x00;
 
@@ -406,14 +372,9 @@ result_t iso11783_dispatch_reg_handler(iso11783_target_t *target)
 
 	target->handler_id = 0xff;
 
-#if defined(SYS_LOG_LEVEL)
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
-	log_d(TAG, "iso11783_dispatch_register_handler(0x%lx)\n\r", target->pgn);
+#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+	LOG_D("iso11783_dispatch_register_handler(0x%lx)\n\r", target->pgn);
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
-#endif //  if defined(SYS_LOG_LEVEL)
-
 	/*
 	 * Find a free slot and add the Protocol
 	 */
@@ -427,13 +388,9 @@ result_t iso11783_dispatch_reg_handler(iso11783_target_t *target)
 		}
 	}
 
-#if defined(SYS_LOG_LEVEL)
-#if (SYS_LOG_LEVEL <= LOG_ERROR)
-	log_e(TAG, "ISO11783 Dispatch full!\n\r");
+#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
+	LOG_E("ISO11783 Dispatch full!\n\r");
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
-#endif //  if defined(SYS_LOG_LEVEL)
 	return(ERR_NO_RESOURCES);
 }
 

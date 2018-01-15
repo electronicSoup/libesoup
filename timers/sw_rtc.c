@@ -19,17 +19,19 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  *
  */
-#include <stdlib.h>
+//#include <stdlib.h>
+#include "libesoup_config.h"
 
-#define DEBUG_FILE TRUE
-#define TAG "SW_RTC"
+#ifdef SYS_SERIAL_LOGGING
+#define DEBUG_FILE
+static const char *TAG = "SW_RTC";
+#include "libesoup/logger/serial_log.h"
+#endif
 
 #define SECONDS_PER_MINUTE  60
 #define MINUTES_PER_HOUR    60
 #define HOURS_PER_DAY       24
 
-#include "libesoup_config.h"
-#include "libesoup/logger/serial_log.h"
 #include "libesoup/timers/hw_timers.h"
 #include "libesoup/timers/rtc.h"
 #include "libesoup/jobs/jobs.h"
@@ -99,13 +101,13 @@ static void increment_current_time(uint16_t secs)
 
 result_t rtc_update_current_datetime(uint8_t *data, uint16_t len)
 {
-#if ((DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-	log_d(TAG, "rtc_update_current_datetime()\n\r");
+#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+	LOG_D("rtc_update_current_datetime()\n\r");
 #endif
 
 	if(len != 17) {
-#if (SYS_LOG_LEVEL <= LOG_ERROR)
-		log_e(TAG, "Bad input datetime\n\r");
+#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
+		LOG_E("Bad input datetime\n\r");
 #endif
 		return(ERR_BAD_INPUT_PARAMETER);
 	}
@@ -119,8 +121,8 @@ result_t rtc_update_current_datetime(uint8_t *data, uint16_t len)
 
 	current_datetime_valid = TRUE;
 
-#if ((DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-	log_d(TAG, "Current datetime set to %d%d%d-%d:%d:%d\n\r",
+#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+	LOG_D("Current datetime set to %d%d%d-%d:%d:%d\n\r",
 #endif
 		current_datetime.year,
 		current_datetime.month,
@@ -169,8 +171,8 @@ void *rtc_set_alarm_offset(ty_time_units units, uint16_t time, uint8_t nice, voi
 		tmp_datetime.day     = current_datetime.day + tmp_datetime.hours / 24;
 		tmp_datetime.hours   = tmp_datetime.hours % 24;
 	} else if (units == Minutes) {
-#if ((DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-		log_d(TAG, "rtc_set_alarm_offset(Minutes, %d)\n\r", time);
+#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+		LOG_D("rtc_set_alarm_offset(Minutes, %d)\n\r", time);
 #endif
 		tmp_datetime.seconds = 0;
 
@@ -200,8 +202,8 @@ void *rtc_set_alarm_offset(ty_time_units units, uint16_t time, uint8_t nice, voi
 		tmp_datetime.day     = current_datetime.day + tmp_datetime.hours / HOURS_PER_DAY;
 		tmp_datetime.hours   = tmp_datetime.hours % HOURS_PER_DAY;
 	} else {
-#if (SYS_LOG_LEVEL <= LOG_ERROR)
-		log_e(TAG, "Unrecognised Alarm offset units\n\r");
+#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
+		LOG_E("Unrecognised Alarm offset units\n\r");
 #endif
 		return(NULL);
 	}
@@ -235,8 +237,8 @@ static void add_alarm_to_list(struct alarm_data *alarm)
 	struct alarm_data *next = NULL;
 	struct alarm_data *prev = NULL;
 
-#if ((DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-	log_d(TAG, "add_alarm_to_list(%2d:%2d)\n\r", alarm->datetime.hours, alarm->datetime.minutes);
+#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+	LOG_D("add_alarm_to_list(%2d:%2d)\n\r", alarm->datetime.hours, alarm->datetime.minutes);
 #endif
 	if (alarm_list == NULL) {
 		alarm_list = alarm;
@@ -339,8 +341,8 @@ static void check_alarm()
 	 */
 	while (alarm_list && !finished) {
 		if(datetime_cmp(&current_datetime, &alarm_list->datetime) >= 0) {
-#if ((DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-			log_d(TAG, "Alarm Expired - %d:%d:%d\n\r",
+#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+			LOG_D("Alarm Expired - %d:%d:%d\n\r",
 				alarm_list->datetime.hours,
 				alarm_list->datetime.minutes,
 				alarm_list->datetime.seconds);

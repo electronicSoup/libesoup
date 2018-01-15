@@ -4,7 +4,7 @@
  *
  * CAN L2 Functionality for dispatching received frames
  *
- * Copyright 2017 electronicSoup Limited
+ * Copyright 2017 2018 electronicSoup Limited
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 2 of the GNU Lesser General Public License
@@ -38,7 +38,7 @@
 
 
 #ifdef SYS_SERIAL_LOGGING
-#define DEBUG_FILE TRUE
+#define DEBUG_FILE
 #include "libesoup/logger/serial_log.h"
 
 static const char *TAG = "FRAME_DISPATCH";
@@ -75,11 +75,9 @@ void frame_dispatch_init(void)
 result_t frame_dispatch_reg_handler(can_l2_target_t *target)
 {
 	uint8_t loop;
-#ifdef SYS_SERIAL_LOGGING
-#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_INFO))
+#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_INFO))
 	LOG_I("sys_l2_can_dispatch_reg_handler mask 0x%lx, filter 0x%lx\n\r",
 		target->mask, target->filter);
-#endif
 #endif
 	/*
 	 * clean up the target in case the caller has included spurious bits
@@ -93,10 +91,8 @@ result_t frame_dispatch_reg_handler(can_l2_target_t *target)
 	// Find a free slot
 	for(loop = 0; loop < SYS_CAN_L2_HANDLER_ARRAY_SIZE; loop++) {
 		if(registered_handlers[loop].used == FALSE) {
-#ifdef SYS_SERIAL_LOGGING
-#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_INFO))
+#if (defined(SYS_SERIAL_LOGGING) defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_INFO))
 			LOG_I("Target stored at target %d\n\r", loop);
-#endif
 #endif
 			registered_handlers[loop].used = TRUE;
 			registered_handlers[loop].target.mask = target->mask;
@@ -154,10 +150,8 @@ void frame_dispatch_handle_frame(can_frame *frame)
 		/*
 		 * No handler found so pass the received message to the Application
 		 */
-#ifdef SYS_SERIAL_LOGGING
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 		LOG_D("No Handler for 0x%lx\n\r", frame->can_id);
-#endif
 #endif
 	}
 }

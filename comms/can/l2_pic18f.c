@@ -1,6 +1,28 @@
+/**
+ *
+ * \file libesoup/comms/can/l2_pic18f.c
+ *
+ * Functions for retrieving the CinnamonBun Info Strings
+ *
+ * Copyright 2017 2018 electronicSoup Limited
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the version 2 of the GNU Lesser General Public License
+ * as published by the Free Software Foundation
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program; if not, see <http://www.gnu.org/licenses/>.
+ *
+ */
 #if defined( __18F2680) || defined(__18F4585)
 
 #include "libesoup_config.h"
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdint.h>
@@ -14,16 +36,10 @@
 #endif
 
 #ifdef SYS_SERIAL_LOGGING
-#define DEBUG_FILE TRUE
+#define DEBUG_FILE
 #include "libesoup/logger/serial_log.h"
 const char *TAG = "PIC_CAN";
-#endif // SYS_SERIAL_LOGGING
 
-#include "libesoup/comms/can/can.h"
-
-#undef L2_CAN_INTERRUPT_DRIVEN
-
-#if SYS_DEBUG_LEVEL < NO_LOGGING
 char baud_rate_strings[8][10] = {
     "baud_10K",
     "baud_20K",
@@ -34,7 +50,11 @@ char baud_rate_strings[8][10] = {
     "baud_800K",
     "baud_1M"
 };
-#endif
+#endif // SYS_SERIAL_LOGGING
+
+#include "libesoup/comms/can/can.h"
+
+#undef L2_CAN_INTERRUPT_DRIVEN
 
 /**
  * \brief Network Idle functionality
@@ -104,16 +124,12 @@ result_t can_l2_init(can_baud_rate_t arg_baud_rate, void (*arg_status_handler)(u
 	uint8_t loop;
 
 	if (baudRate <= BAUD_MAX) {
-#ifdef SYS_SERIAL_LOGGING
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
-		log_d(TAG, "L2_CanInit() Baud Rate %s\n\r", baud_rate_strings[baudRate]);
-#endif
+#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+		LOG_D("L2_CanInit() Baud Rate %s\n\r", baud_rate_strings[baudRate]);
 #endif
 	} else {
-#ifdef SYS_SERIAL_LOGGING
-#if (SYS_LOG_LEVEL <= LOG_ERROR)
-		log_e(TAG, "L2_CanInit() ToDo!!! No Baud Rate Specified\n\r");
-#endif
+#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
+		LOG_E("L2_CanInit() ToDo!!! No Baud Rate Specified\n\r");
 #endif
 		return (baudRate);
 	}
@@ -233,10 +249,8 @@ result_t can_l2_init(can_baud_rate_t arg_baud_rate, void (*arg_status_handler)(u
 	restart_idle_timer();
 #endif // SYS_CAN_PING_PROTOCOL
 	
-#ifdef SYS_SERIAL_LOGGING
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
-	log_d(TAG, "Network Idle Duration set to %d milliSeconds\n\r", networkIdleDuration);
-#endif
+#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+	LOG_D("Network Idle Duration set to %d milliSeconds\n\r", networkIdleDuration);
 #endif
 	return (baudRate);
 #endif
@@ -258,14 +272,12 @@ void L2_ISR(void)
 	 * are volatile.
 	 */
 	flags = PIR3;
-#ifdef SYS_SERIAL_LOGGING
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
-	log_d(TAG, "CAN L2 ISR Flag-%x\n\r", flags);
-#endif
+#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+	LOG_D("CAN L2 ISR Flag-%x\n\r", flags);
 #endif
 //    if(flags & MERRE)
 //    {
-//#if DEBUG_LEVEL <= LOG_DEBUG
+//#if (defined(SYS_SERIAL_LOGGING) && (DEBUG_LEVEL <= LOG_DEBUG))
 //        serial_log(Debug, TAG, "CAN MERRE Flag\n\r");
 //#endif
 //        /*
@@ -329,10 +341,8 @@ void L2_ISR(void)
 			cirBufferNextWrite = (cirBufferNextWrite + 1) % SYS_CAN_RX_CIR_BUFFER_SIZE;
 			cirBufferCount++;
 		} else {
-#ifdef SYS_SERIAL_LOGGING
-#if (SYS_LOG_LEVEL <= LOG_ERROR)
-			log_e(TAG, "Circular Buffer overflow!");
-#endif
+#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
+			LOG_E("Circular Buffer overflow!");
 #endif
 		}
 
@@ -356,10 +366,8 @@ void L2_ISR(void)
 			cirBufferNextWrite = (cirBufferNextWrite + 1) % SYS_CAN_RX_CIR_BUFFER_SIZE;
 			cirBufferCount++;
 		} else {
-#ifdef SYS_SERIAL_LOGGING
-#if (SYS_LOG_LEVEL <= LOG_ERROR)
-			log_e(TAG, "Circular Buffer overflow!");
-#endif
+#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
+			LOG_E("Circular Buffer overflow!");
 #endif
 		}
 
@@ -374,10 +382,8 @@ void L2_CanTasks(void)
 {
 	uint8_t loop;
 
-#ifdef SYS_SERIAL_LOGGING
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
-	log_d(TAG, "L2_CanTasks()\n\r");
-#endif
+#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+	LOG_D("L2_CanTasks()\n\r");
 #endif
 	while (cirBufferCount > 0) {
 		// Check if it's an extended
@@ -405,10 +411,8 @@ void L2_CanTasks(void)
 		rxCanMsg.data[loop] = cirBuffer[cirBufferNextRead].data[loop];
 	}
 
-#ifdef SYS_SERIAL_LOGGING
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
-        log_d(TAG, "Received a message id - %lx\n\r", rxCanMsg.header.can_id.id);
-#endif
+#if (defined(SYS_SERIAL_LOGGING) defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+        LOG_D("Received a message id - %lx\n\r", rxCanMsg.header.can_id.id);
 #endif
 //        networkGood = TRUE;
 	cirBufferNextRead = (cirBufferNextRead + 1) % SYS_CAN_RX_CIR_BUFFER_SIZE;
@@ -437,10 +441,8 @@ void can_l2_tasks(void)
 		/*
 		 * cancel the timer if running we've received a frame
 		 */
-#ifdef SYS_SERIAL_LOGGING
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
-		log_d(TAG, "Rx L2 Message so restart Idle Timer\n\r");
-#endif
+#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+		LOG_D("Rx L2 Message so restart Idle Timer\n\r");
 #endif
 #ifdef SYS_CAN_PING_PROTOCOL
 		restart_idle_timer();
@@ -482,19 +484,15 @@ void can_l2_tasks(void)
 
 		/* Clear the received flag */
 		rx_buffers[buffer]->ctrl &= ~CNTL_RXFUL;
-#ifdef SYS_SERIAL_LOGGING
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
-		log_d(TAG, "rxMsg %lx\n\r", rxMsg.header.can_id.id);
-#endif
+#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+		LOG_D("rxMsg %lx\n\r", rxMsg.header.can_id.id);
 #endif
 		// Todo
 //		if(l2Handler) {
 //			l2Handler(&rxMsg);
 //		} else {
-#ifdef SYS_SERIAL_LOGGING
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
-			log_d(TAG, "No Handler so ignoring received message\n\r");
-#endif
+#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+			LOG_D("No Handler so ignoring received message\n\r");
 #endif
 //		}
 //		buffer = SYS_CANCON & 0x0f;
@@ -515,10 +513,8 @@ result_t can_l2_tx_frame(can_frame *frame)
 		return (CAN_ERROR);
 	}
 
-#ifdef SYS_SERIAL_LOGGING
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
-	log_d(TAG, "L2_CanTxMessage(0x%lx)\n\r", msg->header.can_id.id);
-#endif
+#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+	LOG_D("L2_CanTxMessage(0x%lx)\n\r", msg->header.can_id.id);
 #endif
 	/*
 	 * Find a free buffer
@@ -530,10 +526,8 @@ result_t can_l2_tx_frame(can_frame *frame)
 	}
 
 	if (buffer == TX_BUFFERS) {
-#ifdef SYS_SERIAL_LOGGING
-#if (SYS_LOG_LEVEL <= LOG_ERROR)
-		log_e(TAG, "No empty TX buffer\n\r");
-#endif
+#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
+		LOG_E("No empty TX buffer\n\r");
 #endif
 		return (CAN_ERROR); //No Empty buffers
 	}
@@ -564,10 +558,8 @@ result_t can_l2_tx_frame(can_frame *frame)
 	}
 
 	if (msg->header.data_length > 8) {
-#ifdef SYS_SERIAL_LOGGING
-#if (SYS_LOG_LEVEL <= LOG_ERROR)
-		log_e(TAG, "Copy across the data length %d\n\r", msg->header.data_length);
-#endif
+#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
+		LOG_E("Copy across the data length %d\n\r", msg->header.data_length);
 #endif
 	}
 
@@ -584,10 +576,8 @@ result_t can_l2_tx_frame(can_frame *frame)
 	/*
 	 * cancel the timer if running we've received a frame
 	 */
-#ifdef SYS_SERIAL_LOGGING
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
-	log_d(TAG, "Transmitting L2 Message so restart Idle Timer\n\r");
-#endif
+#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+	LOG_D("Transmitting L2 Message so restart Idle Timer\n\r");
 #endif
 	restart_idle_timer();
 #endif
@@ -622,10 +612,8 @@ void L2_SetCanNodeBuadRate(can_baud_rate_t baudRate)
 	TIMER_INIT(timer);
 	
 	can_baud_rate_t testRate;
-#ifdef SYS_SERIAL_LOGGING
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
-	log_d(TAG, "L2_SetCanNodeBuadRate()\n\r");
-#endif
+#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+	LOG_D("L2_SetCanNodeBuadRate()\n\r");
 #endif
 	// Todo
 	//sys_eeprom_write(NETWORK_BAUD_RATE, (uint8_t) baudRate);
@@ -633,16 +621,12 @@ void L2_SetCanNodeBuadRate(can_baud_rate_t baudRate)
 	//sys_eeprom_read(NETWORK_BAUD_RATE, (uint8_t *) & testRate);
 
 	if (testRate != baudRate) {
-#ifdef SYS_SERIAL_LOGGING
-#if (SYS_LOG_LEVEL <= LOG_ERROR)
-		log_e(TAG, "Baud Rate NOT Stored!\n\r");
-#endif
+#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
+		LOG_E("Baud Rate NOT Stored!\n\r");
 #endif
 	} else {
-#ifdef SYS_SERIAL_LOGGING
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
-		log_d(TAG, "Baud Rate Stored\n\r");
-#endif
+#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+		LOG_D("Baud Rate Stored\n\r");
 #endif
 	}
 
@@ -665,10 +649,8 @@ void L2_SetCanNodeBuadRate(can_baud_rate_t baudRate)
 
 static void finaliseBaudRateChange(timer_id timer, union sigval data)
 {
-#ifdef SYS_SERIAL_LOGGING
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
-	log_d(TAG, "finaliseBaudRateChange()\n\r");
-#endif
+#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+	LOG_D("finaliseBaudRateChange()\n\r");
 #endif
 //	canStatus = Connected;
 	setMode(NORMAL_MODE);
@@ -676,10 +658,8 @@ static void finaliseBaudRateChange(timer_id timer, union sigval data)
 
 void L2_SetCanNetworkBuadRate(can_baud_rate_t baudRate)
 {
-#ifdef SYS_SERIAL_LOGGING
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
-	log_d(TAG, "L2_SetCanNetworkBuadRate()\n\r");
-#endif
+#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+	LOG_D("L2_SetCanNetworkBuadRate()\n\r");
 #endif
 	setMode(CONFIG_MODE);
 	set_baud_rate(baudRate);
@@ -760,10 +740,8 @@ static void set_baud_rate(can_baud_rate_t baudRate)
 			break;
 
 		default:
-#ifdef SYS_SERIAL_LOGGING
-#if (SYS_LOG_LEVEL <= LOG_ERROR)
-			log_e(TAG, "Invalid Baud Rate Specified\n\r");
-#endif
+#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
+			LOG_E("Invalid Baud Rate Specified\n\r");
 #endif
 			break;
 	}

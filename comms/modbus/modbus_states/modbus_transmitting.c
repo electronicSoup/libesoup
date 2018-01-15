@@ -19,12 +19,14 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  *
  */
-#define TAG "MODBUS_TRANSMITTING"
-#define DEBUG_FILE TRUE
-
 #include "libesoup_config.h"
 
+#ifdef SYS_SERIAL_LOGGING
+#define DEBUG_FILE
+static const char *TAG = "MODBUS_Tx";
 #include "libesoup/logger/serial_log.h"
+#endif
+
 #include "libesoup/comms/modbus/modbus.h"
 
 extern struct modbus_state modbus_state;
@@ -34,8 +36,8 @@ static void tx_finished(void *);
 void set_modbus_transmitting_state(struct modbus_channel *channel)
 {
 #ifdef SYS_SERIAL_LOGGING
-#if ((DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-	log_d(TAG, "set_modbus_transmitting_state()\n\r");
+#if (SYS_SERIAL_LOGGING) && define(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+	LOG_D("set_modbus_transmitting_state()\n\r");
 #endif
 #endif // SYS_SERIAL_LOGGING
 	channel->process_timer_15_expiry = NULL;
@@ -51,8 +53,8 @@ void tx_finished(void *data)
         struct modbus_channel *channel = (struct modbus_channel *)data;
 
 #ifdef SYS_SERIAL_LOGGING
-#if ((DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-        log_d(TAG, "tx_finished()\n\r");
+#if (defined(SYS_SERIAL_LOGGING && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+        LOG_D("tx_finished()\n\r");
 #endif
 #endif // SYS_SERIAL_LOGGING
 	set_modbus_awaiting_response_state(channel);

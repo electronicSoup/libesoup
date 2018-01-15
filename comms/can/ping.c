@@ -1,3 +1,26 @@
+/*
+ *
+ * libesoup/comms/can/ping.c
+ *
+ * Hardware Timer functionality for the electronicSoup Cinnamon Bun
+ *
+ * Copyright 2017 2018 electronicSoup Limited
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the version 2 of the GNU Lesser General Public License
+ * as published by the Free Software Foundation
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program; if not, see <http://www.gnu.org/licenses/>.
+ *
+ *******************************************************************************
+ *
+ */
 #include "libesoup_config.h"
 
 #ifdef SYS_CAN_PING_PROTOCOL
@@ -5,9 +28,9 @@
 #ifdef SYS_SERIAL_LOGGING
 #define DEBUG_FILE
 const char *TAG = "CAN_PING";
+#include "libesoup/logger/serial_log.h"
 #endif // SYS_SERIAL_LOGGING
 
-#include "libesoup/logger/serial_log.h"
 #include "libesoup/timers/timers.h"
 
 /**
@@ -73,10 +96,8 @@ void ping_network(u8 *data)
 
 void exp_test_ping(timer_t timer_id __attribute__((unused)), union sigval data __attribute__((unused)))
 {
-#ifdef SYS_SERIAL_LOGGING
-#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
         LOG_D("exp_test_ping()\n\r");
-#endif
 #endif
 	dcncp_send_ping();
         restart_ping_timer();
@@ -85,16 +106,12 @@ void exp_test_ping(timer_t timer_id __attribute__((unused)), union sigval data _
 void restart_ping_timer(void)
 {
 	if(ping_timer.status == ACTIVE) {
-#ifdef SYS_SERIAL_LOGGING
-#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 //		LOG_D("Cancel running ping timer\n\r");
 #endif
-#endif
  		if(timer_cancel(&ping_timer) != SUCCESS) {
-#ifdef SYS_SERIAL_LOGGING
-#if (SYS_LOG_LEVEL <= LOG_ERROR)
+#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
 			LOG_E("Failed to cancel the Ping timer\n\r");
-#endif
 #endif
 			return;
 		}

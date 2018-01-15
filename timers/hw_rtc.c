@@ -4,7 +4,7 @@
  *
  * This file contains code for dealing with Real Date Time values
  *
- * Copyright 2017 electronicSoup Limited
+ * Copyright 2017 2018 electronicSoup Limited
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 2 of the GNU Lesser General Public License
@@ -19,13 +19,12 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  *
  */
-#define DEBUG_FILE TRUE
-
 #include "libesoup_config.h"
 
 #ifdef SYS_HW_RTC
 
 #ifdef SYS_SERIAL_LOGGING
+#define DEBUG_FILE
 static const char *TAG = "RTC";
 
 #include "libesoup/logger/serial_log.h"
@@ -57,13 +56,11 @@ void _ISR __attribute__((__no_auto_psv__)) _RTCCInterrupt(void)
 
 	RTCC_ISR_FLAG = 0;
 	
-#ifdef SYS_SERIAL_LOGGING
-#if ((DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	rc =  rtc_get_datetime(&datetime);
 	LOG_D("RTCC ISR ");
 	rtc_print_datetime(&datetime);
 #endif
-#endif // SYS_SERIAL_LOGGING
 	
 	if (exp_fn) exp_fn(0x00, exp_data);
 }

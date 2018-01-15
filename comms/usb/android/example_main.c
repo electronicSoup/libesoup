@@ -1,3 +1,35 @@
+/**
+ *
+ * \file libesoup/comms/usb/android/example_main.c
+ *
+ * The Bootloader Idle state for the Android Communications.
+ *
+ * Basically the state waits for an Android device to connect and moves
+ * to the Connected state.
+ * 
+ * Copyright 2017 2018 electronicSoup Limited
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the version 2 of the GNU Lesser General Public License
+ * as published by the Free Software Foundation
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program; if not, see <http://www.gnu.org/licenses/>.
+ *
+ */
+#include "libesoup_config.h"
+
+#ifdef SYS_SERIAL_LOGGING_BAUD
+#define DEBUG_FILE
+static const char *TAG  = "MAIN";
+#include "libesoup/logger/serial_log.h"
+#endif
+
 /*
  * Remember to Add Android to your libesoup_config.h file along with definition for your
  * connected function:
@@ -45,8 +77,8 @@
  *
  *     Also need a heap size  512
  */
-#include "libesoup/usb/android/android_comms.h"
-#include "libesoup/usb/android/state_idle.h"
+#include "libesoup/comms/usb/android/android_comms.h"
+#include "libesoup/comms/usb/android/state_idle.h"
 
 /*
  *  Microchip USB Includes
@@ -63,8 +95,8 @@
  * In your project properties for the system_config.h file which the Microchip
  * source files expect to find.
  */
-#include "usb/usb.h"
-#include "usb/usb_host_android.h"
+#include "usb/inc/usb.h"
+#include "usb/inc/usb_host_android.h"
 
 #include "libesoup/firmware/firmware.h"
 
@@ -105,10 +137,10 @@ int main(void)
 	flash_strcpy(uri, firmware_uri, &length);
 
 #if ((DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-	log_d(TAG, "manufacturer - %s\n\r", manufacturer);
-	log_d(TAG, "model - %s\n\r", model);
-	log_d(TAG, "version - %s\n\r", version);
-	log_d(TAG, "uri - %s\n\r", uri);
+	LOG_D("manufacturer - %s\n\r", manufacturer);
+	LOG_D("model - %s\n\r", model);
+	LOG_D("version - %s\n\r", version);
+	LOG_D("uri - %s\n\r", uri);
 #endif
 
 	android_device_info.manufacturer = manufacturer;

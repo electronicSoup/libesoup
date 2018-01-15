@@ -4,7 +4,7 @@
  *
  * Core SYS_CAN Functionality of electronicSoup CAN code
  *
- * Copyright 2017 electronicSoup Limited
+ * Copyright 2017 2018 electronicSoup Limited
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 2 of the GNU Lesser General Public License
@@ -33,10 +33,9 @@
 #endif // SYS_CAN_PING_PROTOCOL
 
 #ifdef SYS_SERIAL_LOGGING
-#define DEBUG_FILE TRUE
-#include "libesoup/logger/serial_log.h"
-
+#define DEBUG_FILE
 const char *TAG = "CAN";
+#include "libesoup/logger/serial_log.h"
 
 char can_l2_status_strings[5][17] = {
 	"L2_Uninitialised",
@@ -68,10 +67,8 @@ can_status_handler_t app_status_handler = (can_status_handler_t)NULL;
 result_t can_init(can_baud_rate_t baudrate,
 		  can_status_handler_t arg_status_handler)
 {
-#ifdef SYS_SERIAL_LOGGING
-#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	LOG_D("can_init\n\r");
-#endif
 #endif
 
         /*
@@ -90,69 +87,52 @@ result_t can_init(can_baud_rate_t baudrate,
 
 static void status_handler(uint8_t mask, can_status_t status, can_baud_rate_t baud)
 {
-#ifdef SYS_SERIAL_LOGGING
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	LOG_D("status_handler(mask-0x%x, status-0x%x\n\r", mask, status.byte);
 #endif
-#endif
-
 	if (mask == L2_STATUS_MASK) {
 		switch(status.bit_field.l2_status) {
 			case L2_Uninitialised:
-#ifdef SYS_SERIAL_LOGGING
-#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 				LOG_D("L2_Uninitialised\n\r");
-#endif
 #endif
 				break;
 				
 			case L2_Listening:
-#ifdef SYS_SERIAL_LOGGING
-#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 				LOG_D("L2_Listening\n\r");
-#endif
 #endif
 				break;
 				
 			case L2_Connecting:
-#ifdef SYS_SERIAL_LOGGING
-#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 				LOG_D("L2_Connecting\n\r");
-#endif
 #endif
 				break;
 				
 			case L2_Connected:
-#ifdef SYS_SERIAL_LOGGING
-#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 				LOG_D("L2_Connected\n\r");
-#endif
 #endif
 				break;
 				
 			case L2_ChangingBaud:
-#ifdef SYS_SERIAL_LOGGING
-#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 				LOG_D("L2_ChangingBaud\n\r");
-#endif
 #endif
 				break;
 			
 			default:
-#ifdef SYS_SERIAL_LOGGING
-#if (SYS_LOG_LEVEL <= LOG_ERROR)
+#if ((defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
 				LOG_E("Unrecognised SYS_CAN Layer 2 status\n\r");
-#endif
 #endif
 				break;
 		}
 
 #ifdef SYS_CAN_DCNCP
 		if ((status.bit_field.l2_status == L2_Connected) && (can_status.bit_field.l2_status != L2_Connected)) {
-#ifdef SYS_SERIAL_LOGGING
-#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 			LOG_D("Layer 2 Connected so start DCNCP\n\r");
-#endif
 #endif
 			dcncp_init(status_handler);
 		}
@@ -167,12 +147,12 @@ static void status_handler(uint8_t mask, can_status_t status, can_baud_rate_t ba
 #ifdef SYS_CAN_DCNCP
 	else if (mask == DCNCP_INIT_STATUS_MASK) {
 		if(status.bit_field.dcncp_initialised) {
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
-			log_d(TAG, "DCNCP_Initialised\n\r");
+#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+			LOG_D("DCNCP_Initialised\n\r");
 #endif
 		} else {
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
-			log_d(TAG, "DCNCP_Uninitilised\n\r");
+#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+			LOG_D("DCNCP_Uninitilised\n\r");
 #endif
 		}
 
@@ -182,8 +162,8 @@ static void status_handler(uint8_t mask, can_status_t status, can_baud_rate_t ba
 	}
 #if defined(ISO15765) || defined(ISO11783)
 	else if (mask == DCNCP_NODE_ADDRESS_STATUS_MASK) {
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
-		log_d(TAG, "L3 Status update\n\r");
+#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+		LOG_D("L3 Status update\n\r");
 #endif
 		if (status.bit_field.dcncp_node_address_valid && !can_status.bit_field.dcncp_node_address_valid) {
 			can_status.bit_field.dcncp_node_address_valid = status.bit_field.dcncp_node_address_valid;
@@ -205,7 +185,7 @@ static void status_handler(uint8_t mask, can_status_t status, can_baud_rate_t ba
 #if defined(ISO11783)
 	iso11783_init(185);
 #if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
-	log_d(TAG, "iso11783 Initialised\n\r");
+	LOG_D("iso11783 Initialised\n\r");
 #endif
 #endif  // SYS_ISO11783
 }

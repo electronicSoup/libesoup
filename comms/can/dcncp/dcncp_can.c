@@ -4,7 +4,7 @@
  *
  * Dynamic SYS_CAN Node Configuration Protocol 
  *
- * Copyright 2017 electronicSoup Limited
+ * Copyright 2017 2018 electronicSoup Limited
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 2 of the GNU Lesser General Public License
@@ -21,17 +21,20 @@
  */
 #include <stdlib.h>
 #include <string.h>
-#include <stdio.h>
+//#include <stdio.h>
 
 #include "libesoup_config.h"
 
-#ifndef SYS_LOG_LEVEL
+#if (defined(SYS_SERIAL_LOGGING) && !defined(SYS_LOG_LEVEL))
 #error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
 #endif
 
-#define DEBUG_FILE TRUE
-
+#ifdef SYS_SERIAL_LOGGING
+#define DEBUG_FILE
+static const char *TAG = "DCNCP_CAN";
 #include "libesoup/logger/serial_log.h"
+#endif
+
 #include "libesoup/can/es_can.h"
 
 #include "libesoup/can/dcncp/dcncp_can.h"
@@ -39,8 +42,6 @@
 #if defined(ISO15765_LOGGER) || defined(SYS_ISO15765_LOGGING)
 #include "libesoup/logger/iso15765_log.h"
 #endif
-
-#define TAG "DCNCP_CAN"
 
 #ifdef SYS_CAN_DCNCP_BAUDRATE
 static es_timer dcncp_network_baudrate_req_timer;
@@ -110,11 +111,11 @@ void dcncp_init(void (*arg_status_handler)(uint8_t mask, can_status_t status, ca
 	target.mask    = (uint32_t)DCNCP_CAN_MASK;
 	target.filter  = (uint32_t)DCNCP_CAN_FILTER;
 	target.handler = can_l2_msg_handler;
-#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 #if defined(XC16) || defined(__XC8)
-	log_d(TAG, "Node Address Register handler Mask 0x%lx, Filter 0x%lx\n\r", target.mask, target.filter);
+	LOG_D("Node Address Register handler Mask 0x%lx, Filter 0x%lx\n\r", target.mask, target.filter);
 #elif defined(ES_LINUX)
-	log_d(TAG, "Node Address Register handler Mask 0x%x, Filter 0x%x\n\r", target.mask, target.filter);
+	LOG_D("Node Address Register handler Mask 0x%x, Filter 0x%x\n\r", target.mask, target.filter);
 #endif
 #endif
 	can_l2_dispatch_reg_handler(&target);
@@ -131,13 +132,9 @@ void dcncp_init(void (*arg_status_handler)(uint8_t mask, can_status_t status, ca
 			 (union sigval)(void *) NULL,
 			 &node_send_reg_req_timer);
 	if(rc != SUCCESS) {
-#if defined(SYS_LOG_LEVEL)
-#if (SYS_LOG_LEVEL <= LOG_ERROR)
-		log_e(TAG, "Failed to start Register Timer\n\r");
+#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
+		LOG_E("Failed to start Register Timer\n\r");
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
-#endif //  if defined(SYS_LOG_LEVEL)
 	}
 #endif // SYS_ISO15765 || SYS_ISO11783
         status.bit_field.dcncp_initialised = 1;
@@ -153,33 +150,21 @@ void dcncp_request_network_baud_change(can_baud_rate_t baud)
 	can_frame    msg;
 	union sigval data;
 
-#if defined(SYS_LOG_LEVEL)
-#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-	log_d(TAG, "dcncp_request_network_baud_change()\n\r");
+#if (defined(SYS_SERIAL_LOGGING) defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+	LOG_D("dcncp_request_network_baud_change()\n\r");
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
-#endif //  if defined(SYS_LOG_LEVEL)
 
         if(!status.bit_field.dcncp_initialised) {
-#if defined(SYS_LOG_LEVEL)
-#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_WARNING))
-		log_w(TAG, "Ignoring DCNCP not ready!\n\r");
+#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_WARNING))
+		LOG_W("Ignoring DCNCP not ready!\n\r");
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
-#endif //  if defined(SYS_LOG_LEVEL)
 		return;
 	}
 
 	if(baud == can_l2_get_baudrate()) {
-#if defined(SYS_LOG_LEVEL)
-#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_WARNING))
-		log_w(TAG, "Ignoring spurious request!\n\r");
+#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_WARNING))
+		LOG_W("Ignoring spurious request!\n\r");
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
-#endif //  if defined(SYS_LOG_LEVEL)
 		return;
 	}
 	
@@ -199,23 +184,15 @@ void dcncp_request_network_baud_change(can_baud_rate_t baud)
 			 data,
 			 &dcncp_network_baudrate_req_timer);
 	if (rc != SUCCESS) {
-#if defined(SYS_LOG_LEVEL)
-#if (SYS_LOG_LEVEL <= LOG_ERROR)
-		log_e(TAG, "Failed to start BaudRate change Request Timer\n\r");
+#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
+		LOG_E("Failed to start BaudRate change Request Timer\n\r");
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
-#endif //  if defined(SYS_LOG_LEVEL)
 		return;
 	}
 
-#if defined(SYS_LOG_LEVEL)
-#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-	log_d(TAG, "send network baudrate change request\n\r");
+#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+	LOG_D("send network baudrate change request\n\r");
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
-#endif //  if defined(SYS_LOG_LEVEL)
 
 	msg.can_id = CAN_DCNCP_NetworkChangeBaudRateReq;
 	msg.can_dlc = 2;
@@ -234,13 +211,9 @@ static void exp_resend_network_baud_chage_req(timer_t timer_id, union sigval dat
 	uint8_t time_left;
 	can_baud_rate_t baud;
 
-#if defined(SYS_LOG_LEVEL)
-#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-	log_d(TAG, "exp_resend_network_baud_chage_req()\n\r");
+#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+	LOG_D("exp_resend_network_baud_chage_req()\n\r");
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
-#endif //  if defined(SYS_LOG_LEVEL)
 	/*
 	 * Resend a Layer 2 message to inform network of impending change!
 	 */
@@ -249,13 +222,9 @@ static void exp_resend_network_baud_chage_req(timer_t timer_id, union sigval dat
 	time_left = data.sival_int & 0xff;
 	baud = (data.sival_int >> 8) & 0xff;
 
-#if defined(SYS_LOG_LEVEL)
-#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-	log_d(TAG, "Time left %d\n\r", time_left);
+#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+	LOG_D("Time left %d\n\r", time_left);
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
-#endif //  if defined(SYS_LOG_LEVEL)
 
 	if(time_left > 0) {
 		data.sival_int--;
@@ -268,23 +237,15 @@ static void exp_resend_network_baud_chage_req(timer_t timer_id, union sigval dat
 				 data,
 				 &dcncp_network_baudrate_req_timer);
 		if (rc != SUCCESS) {
-#if defined(SYS_LOG_LEVEL)
-#if (SYS_LOG_LEVEL <= LOG_ERROR)
-			log_e(TAG, "Failed to start BaudRate change Request Timer\n\r");
+#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
+			LOG_E("Failed to start BaudRate change Request Timer\n\r");
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
-#endif //  if defined(SYS_LOG_LEVEL)
 			return;
 		}
 
-#if defined(SYS_LOG_LEVEL)
-#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-		log_d(TAG, "send network baudrate change request\n\r");
+#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+		LOG_D("send network baudrate change request\n\r");
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
-#endif //  if defined(SYS_LOG_LEVEL)
 
 		msg.can_id = CAN_DCNCP_NetworkChangeBaudRateReq;
 		msg.can_dlc = 2;
@@ -293,13 +254,9 @@ static void exp_resend_network_baud_chage_req(timer_t timer_id, union sigval dat
 
 		can_l2_tx_frame(&msg);
 	} else {
-#if defined(SYS_LOG_LEVEL)
-#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-		log_d(TAG, "TIME UP Change Baud Rate\n\r");
+#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+		LOG_D("TIME UP Change Baud Rate\n\r");
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
-#endif //  if defined(SYS_LOG_LEVEL)
 		can_l2_set_node_baudrate(baud);
 	}
 }
@@ -308,13 +265,9 @@ static void exp_resend_network_baud_chage_req(timer_t timer_id, union sigval dat
 #ifdef SYS_CAN_DCNCP_BAUDRATE
 static void exp_network_baud_chage_req(timer_t timer_id, union sigval data)
 {
-#if defined(SYS_LOG_LEVEL)
-#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-	log_d(TAG, "!!! exp_network_baud_chage_req() !!!\n\r");
+#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+	LOG_D("!!! exp_network_baud_chage_req() !!!\n\r");
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
-#endif //  if defined(SYS_LOG_LEVEL)
 	can_l2_set_node_baudrate((can_baud_rate_t)(data.sival_int & 0xff));
 }
 #endif // SYS_CAN_DCNCP_BAUDRATE
@@ -342,24 +295,16 @@ void exp_send_address_register_request(timer_t timer_id, union sigval data)
 	timer_id = timer_id;
 	data = data;
 
-#if defined(SYS_LOG_LEVEL)
-#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-	log_d(TAG, "exp_send_address_register_request() Send Initial Register Req\n\r");
+#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+	LOG_D("exp_send_address_register_request() Send Initial Register Req\n\r");
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
-#endif //  if defined(SYS_LOG_LEVEL)
 	TIMER_INIT(node_send_reg_req_timer);
 
 	dcncp_node_address = node_get_address();
 
-#if defined(SYS_LOG_LEVEL)
-#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-	log_d(TAG, "sendRegisterReq(%x)\n\r", (uint16_t) dcncp_node_address);
+#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+	LOG_D("sendRegisterReq(%x)\n\r", (uint16_t) dcncp_node_address);
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
-#endif //  if defined(SYS_LOG_LEVEL)
 
 	msg.can_id = CAN_DCNCP_AddressRegisterReq;
 	msg.can_dlc = 1;
@@ -376,13 +321,9 @@ void exp_send_address_register_request(timer_t timer_id, union sigval data)
 			     (union sigval)(void *) NULL,
 			     &node_reg_timer);
 	if (result != SUCCESS) {
-#if defined(SYS_LOG_LEVEL)
-#if (SYS_LOG_LEVEL <= LOG_ERROR)
-		log_e(TAG, "Failed to start Node Registered Timer\n\r");
+#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
+		LOG_E("Failed to start Node Registered Timer\n\r");
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
-#endif //  if defined(SYS_LOG_LEVEL)
 	}
 }
 #endif // SYS_ISO15765 || SYS_ISO11783
@@ -399,13 +340,9 @@ void exp_node_address_registered(timer_t timer_id __attribute__((unused)), union
 	data = data;
 	TIMER_INIT(node_reg_timer);
 
-#if defined(SYS_LOG_LEVEL)
-#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-	log_d(TAG, "nodeRegistered()\n\r");
+#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+	LOG_D("nodeRegistered()\n\r");
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
-#endif //  if defined(SYS_LOG_LEVEL)
 
         status.bit_field.dcncp_node_address_valid = 1;
 
@@ -434,26 +371,18 @@ void can_l2_msg_handler(can_frame *frame)
 #if defined(ISO15765) || defined(ISO11783)
 		if(frame->data[0] == dcncp_node_address) {
 			if(status.bit_field.dcncp_node_address_valid) {
-#if defined(SYS_LOG_LEVEL)
-#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-				log_d(TAG, "reject Register Request\n\r");
+#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+				LOG_D("reject Register Request\n\r");
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
-#endif //  if defined(SYS_LOG_LEVEL)
 				tx_frame.can_id = CAN_DCNCP_AddressRegisterReject;
 				tx_frame.can_dlc = 1;
 				tx_frame.data[0] = dcncp_node_address;
 
 				can_l2_tx_frame(&tx_frame);
 			} else {
-#if defined(SYS_LOG_LEVEL)
-#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-				log_d(TAG, "Register Node Address clash. Get New Node Address!\n\r");
+#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+				LOG_D("Register Node Address clash. Get New Node Address!\n\r");
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
-#endif //  if defined(SYS_LOG_LEVEL)
 				/*
 				 *Have to create a new node address for this node
 				 *cancel the timers
@@ -471,26 +400,18 @@ void can_l2_msg_handler(can_frame *frame)
 #if defined(ISO15765) || defined(ISO11783)
 		if(frame->data[0] == dcncp_node_address) {
 			if(status.bit_field.dcncp_node_address_valid) {
-#if defined(SYS_LOG_LEVEL)
-#if (SYS_LOG_LEVEL <= LOG_ERROR)
-				log_e(TAG, "Sending Can Error Message\n\r");
+#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
+				LOG_E("Sending Can Error Message\n\r");
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
-#endif //  if defined(SYS_LOG_LEVEL)
 				tx_frame.can_id = CAN_DCNCP_NodeAddressError;
 				tx_frame.can_dlc = 1;
 				tx_frame.data[0] = dcncp_node_address;
 
 				can_l2_tx_frame(&tx_frame);
 			} else {
-#if defined(SYS_LOG_LEVEL)
-#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-				log_d(TAG, "Address Regected so get a new one!\n\r");
+#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+				LOG_D("Address Regected so get a new one!\n\r");
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
-#endif //  if defined(SYS_LOG_LEVEL)
 				/*
 				 *Have to create a new node address for this node
 				 *cancel the timers
@@ -505,54 +426,34 @@ void can_l2_msg_handler(can_frame *frame)
 		}
 #endif // SYS_ISO15765 || SYS_ISO11783
 	} else if (frame->can_id == CAN_DCNCP_NodeAddressReportReq) {
-#if defined(SYS_LOG_LEVEL)
-#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-		log_d(TAG, "DCNCP_CAN_NodeAddressReportReq:\n\r");
+#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+		LOG_D("DCNCP_CAN_NodeAddressReportReq:\n\r");
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
-#endif //  if defined(SYS_LOG_LEVEL)
 #if defined(ISO15765) || defined(ISO11783)
 		// Create a random timer between 100 and  1000 miliSeconds for firing node report message
 		TIMER_INIT(timer);
 		rc = timer_start(MILLI_SECONDS_TO_TICKS((uint16_t) ((rand() % 900) + 100)), exp_send_node_addr_report, (union sigval)(void *)NULL, &timer);
 		if (rc != SUCCESS) {
-#if defined(SYS_LOG_LEVEL)
-#if (SYS_LOG_LEVEL <= LOG_ERROR)
-			log_e(TAG, "Failed to start Node Registered Timer\n\r");
+#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
+			LOG_E("Failed to start Node Registered Timer\n\r");
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
-#endif //  if defined(SYS_LOG_LEVEL)
 		}
 #endif // SYS_ISO15765 || SYS_ISO11783
 	} else if (frame->can_id == CAN_DCNCP_NodeAddressReporting) {
 		if(frame->data[0]) {
-#if defined(SYS_LOG_LEVEL)
-#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-			log_d(TAG, "Foreign Node Rep Registered Node Address 0x%x\n\r", frame->data[1]);
+#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+			LOG_D("Foreign Node Rep Registered Node Address 0x%x\n\r", frame->data[1]);
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
-#endif //  if defined(SYS_LOG_LEVEL)
 		} else {
-#if defined(SYS_LOG_LEVEL)
-#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-			log_d(TAG, "Foreign Node Rep UN-Registered Node Address 0x%x\n\r", frame->data[1]);
+#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+			LOG_D("Foreign Node Rep UN-Registered Node Address 0x%x\n\r", frame->data[1]);
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
-#endif //  if defined(SYS_LOG_LEVEL)
 		}
 	} else if (frame->can_id == CAN_DCNCP_NetworkChangeBaudRateReq) {
 #ifdef SYS_CAN_DCNCP_BAUDRATE
-#if defined(SYS_LOG_LEVEL)
-#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-		log_d(TAG, "***Baud Rate Change Request New Baud Rate %s Time left %dS\n\r", can_baud_rate_strings[frame->data[0]], frame->data[1]);
+#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+		LOG_D("***Baud Rate Change Request New Baud Rate %s Time left %dS\n\r", can_baud_rate_strings[frame->data[0]], frame->data[1]);
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
-#endif //  if defined(SYS_LOG_LEVEL)
 
 		timer_cancel(&dcncp_network_baudrate_req_timer);
 		TIMER_INIT(dcncp_network_baudrate_req_timer);
@@ -564,53 +465,37 @@ void can_l2_msg_handler(can_frame *frame)
 		 */
 		rc = timer_start(SECONDS_TO_TICKS(frame->data[1]), exp_network_baud_chage_req, data, &dcncp_network_baudrate_req_timer);
 		if (rc != SUCCESS) {
-#if defined(SYS_LOG_LEVEL)
-#if (SYS_LOG_LEVEL <= LOG_ERROR)
-			log_e(TAG, "Failed to start BaudRate change Request Timer\n\r");
+#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
+			LOG_E("Failed to start BaudRate change Request Timer\n\r");
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
-#endif //  if defined(SYS_LOG_LEVEL)
 			return;
 		}
 #else
-#if defined(SYS_LOG_LEVEL)
-#if (SYS_LOG_LEVEL <= LOG_ERROR)
-		log_e(TAG, "CAN Baudrate change! NO code in place to process request!\n\r");
+#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
+		LOG_E("CAN Baudrate change! NO code in place to process request!\n\r");
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
-#endif //  if defined(SYS_LOG_LEVEL)
 #endif // SYS_CAN_DCNCP_BAUDRATE
 	} else if (frame->can_id == CAN_DCNCP_NodePingMessage) {
 	} else if (frame->can_id == CAN_DCNCP_RegisterNetLogger) {
-#if defined(SYS_LOG_LEVEL)
-#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-		log_d(TAG, "Received NetLogger Registration Message\n\r");
+#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+		LOG_D("Received NetLogger Registration Message\n\r");
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
-#endif //  if defined(SYS_LOG_LEVEL)
 #ifdef SYS_ISO15765_LOGGING
 		iso15765_logger_register_remote(frame->data[0], frame->data[1]);
 #endif // SYS_ISO15765_LOGGING
 	} else if (frame->can_id == CAN_DCNCP_UnRegisterNetLogger) {
-#if defined(SYS_LOG_LEVEL)
-#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-		log_d(TAG, "Received NetLogger UnRegistration Message\n\r");
+#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+		LOG_D("Received NetLogger UnRegistration Message\n\r");
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
-#endif //  if defined(SYS_LOG_LEVEL)
 #ifdef SYS_ISO15765_LOGGING
 		iso15765_logger_unregister_remote(frame->data[0]);
 #endif // SYS_ISO15765_LOGGING
 	} else {
-#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_WARNING))
+#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_WARNING))
 #if defined(XC16) || defined(__XC8)
-		log_w(TAG, "Node Unrecognised Request %lx \n\r", frame->can_id);
+		LOG_W("Node Unrecognised Request %lx \n\r", frame->can_id);
 #elif defined(ES_LINUX)
-		log_w(TAG, "Node Unrecognised Request %x \n\r", frame->can_id);
+		LOG_W("Node Unrecognised Request %x \n\r", frame->can_id);
 #endif
 #endif
 	}
@@ -626,13 +511,9 @@ void exp_send_node_addr_report(timer_t timer_id __attribute__((unused)), union s
 	 */
 	data = data;
 
-#if defined(SYS_LOG_LEVEL)
-#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-	log_d(TAG, "exp_send_node_addr_report(Address %x)\n\r", dcncp_node_address);
+#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+	LOG_D("exp_send_node_addr_report(Address %x)\n\r", dcncp_node_address);
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
-#endif //  if defined(SYS_LOG_LEVEL)
 
 	frame.can_id = CAN_DCNCP_NodeAddressReporting;
 	frame.can_dlc = 2;
@@ -653,13 +534,9 @@ void exp_send_node_addr_report(timer_t timer_id __attribute__((unused)), union s
 #if defined(ISO15765_LOGGER)
 result_t dcncp_register_this_node_net_logger(log_level_t level)
 {
-#if defined(SYS_LOG_LEVEL)
-#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-	log_d(TAG, "register_this_node_net_logger()\n\r");
+#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+	LOG_D("register_this_node_net_logger()\n\r");
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
-#endif //  if defined(SYS_LOG_LEVEL)
 
 	if(!iso15765_initialised())
 		return(ERR_NOT_READY);
@@ -670,13 +547,9 @@ result_t dcncp_register_this_node_net_logger(log_level_t level)
 	local_iso15765_logger_frame.data[1] = level;
 
 	can_l2_tx_frame(&local_iso15765_logger_frame);
-#if defined(SYS_LOG_LEVEL)
-#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-	log_d(TAG, "NetLogger message sent\n\r");
+#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+	LOG_D("NetLogger message sent\n\r");
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
-#endif //  if defined(SYS_LOG_LEVEL)
 	TIMER_INIT(local_iso15765_logger_timer);
 	timer_start(SECONDS_TO_TICKS(SYS_ISO15765_LOGGER_PING_PERIOD), 
                     exp_iso15765_logger_ping, 
@@ -693,13 +566,9 @@ void exp_iso15765_logger_ping(timer_t timer_id __attribute__((unused)), union si
 	data = data;
 
 	can_l2_tx_frame(&local_iso15765_logger_frame);
-#if defined(SYS_LOG_LEVEL)
-#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-	log_d(TAG, "NetLogger message sent\n\r");
+#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+	LOG_D("NetLogger message sent\n\r");
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
-#endif //  if defined(SYS_LOG_LEVEL)
 	TIMER_INIT(local_iso15765_logger_timer);
 	timer_start(SECONDS_TO_TICKS(SYS_ISO15765_LOGGER_PING_PERIOD),
                     exp_iso15765_logger_ping, 
@@ -713,26 +582,18 @@ result_t dcncp_unregister_this_node_net_logger()
 {
 	can_frame frame;
 
-#if defined(SYS_LOG_LEVEL)
-#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-	log_d(TAG, "DeRegAsNetLogger()\n\r");
+#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+	LOG_D("DeRegAsNetLogger()\n\r");
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
-#endif //  if defined(SYS_LOG_LEVEL)
 
 	frame.can_id = CAN_DCNCP_UnRegisterNetLogger;
 	frame.can_dlc = 1;
 	frame.data[0] = dcncp_node_address;
 
 	can_l2_tx_frame(&frame);
-#if defined(SYS_LOG_LEVEL)
-#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-	log_d(TAG, "CancelNetLogger message sent\n\r");
+#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+	LOG_D("CancelNetLogger message sent\n\r");
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
-#endif //  if defined(SYS_LOG_LEVEL)
 
 	if(local_iso15765_logger_timer.status == ACTIVE)
 		timer_cancel(&local_iso15765_logger_timer);
@@ -751,12 +612,8 @@ void dcncp_send_ping(void)
 	can_l2_tx_frame(&frame);
 
 #ifdef SYS_CAN_L2_PING_LOGGING
-#if defined(SYS_LOG_LEVEL)
-#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-	log_d(TAG, "Ping message sent\n\r");
+#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+	LOG_D("Ping message sent\n\r");
 #endif
-#else  //  if defined(SYS_LOG_LEVEL)
-#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
-#endif //  if defined(SYS_LOG_LEVEL)
 #endif // SYS_CAN_L2_PING_LOGGING
 }

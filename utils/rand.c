@@ -22,17 +22,19 @@
 
 #include <stdlib.h>    // needed for srand()
 #include "libesoup_config.h"
+
+#ifdef SYS_SERIAL_LOGGING
 #define DEBUG_FILE
+static const char *TAG = "RAND";
 #include "libesoup/logger/serial_log.h"
-
-#define TAG "RAND"
-
 /*
  * Check required libesoup_config.h defines are found
  */
 #ifndef SYS_LOG_LEVEL
 #error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
 #endif
+#endif
+
 
 static uint8_t initialised = FALSE;
 
@@ -49,8 +51,8 @@ void random_init(void)
 		return;
 	}
 
-#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_INFO))
-	log_i("random_init()\n\r");
+#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_INFO))
+	LOG_I("random_init()\n\r");
 #endif
 	data = (uint8_t *)&IC1TMR;
 
@@ -62,8 +64,8 @@ void random_init(void)
 		data++;
 	}
 
-#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-	log_d(TAG, "Seed 0x%lx\n\r", seed);
+#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+	LOG_D("Seed 0x%lx\n\r", seed);
 #endif
 	srand(seed);
 }

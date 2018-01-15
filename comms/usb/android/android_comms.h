@@ -22,6 +22,8 @@
 #ifndef ANDROID_COMMS_H
 #define ANDROID_COMMS_H
 
+#include "libesoup_config.h"
+
 /** @defgroup group1 Android Message Identifiers
  *
  *  Android IPC

@@ -22,14 +22,16 @@
 #include <stdio.h>
 #include <string.h>
 #include "libesoup_config.h"
-#include "libesoup/can/dcncp/dcncp_can.h"
-#include "libesoup/can/es_can.h"
+#include "libesoup/comms/can/dcncp/dcncp_can.h"
+#include "libesoup/comms/can/can.h"
 
-#define DEBUG_FILE TRUE
-#include "libesoup/logger/serial_log.h"
 #include "libesoup/logger/iso15765_log.h"
 
-#define TAG "ISO15765_LOG"
+#ifdef SYS_SERIAL_LOGGING
+#define DEBUG_FILE
+#include "libesoup/logger/serial_log.h"
+
+static const char *TAG = "ISO15765_LOG";
 
 /*
  * Check required libesoup_config.h defines are found
@@ -37,6 +39,7 @@
 #ifndef SYS_LOG_LEVEL 
 #error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
 #endif
+#endif // SYS_SERIAL_LOGGING
 
 /*
  * Network Logging
@@ -76,8 +79,8 @@ result_t iso15765_logger_register_as_logger(void (*handler)(uint8_t, log_level_t
 {
 	iso15765_target_t target;
 
-#if ((DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-	log_d(TAG, "iso15765_log_reg_as_handler() level %x\n\r", level);
+#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+	LOG_D("iso15765_log_reg_as_handler() level %x\n\r", level);
 #endif
 	if(iso15765_initialised()) {
 		if(handler != NULL) {
@@ -90,8 +93,8 @@ result_t iso15765_logger_register_as_logger(void (*handler)(uint8_t, log_level_t
 
 			return (dcncp_register_this_node_net_logger(level));
 		} else {
-#if (SYS_LOG_LEVEL <= LOG_ERROR)
-			log_e(TAG, "No handler given\n\r");
+#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
+			LOG_E("No handler given\n\r");
 #endif
 			return(ERR_BAD_INPUT_PARAMETER);
 		}
@@ -109,8 +112,8 @@ result_t iso15765_logger_register_as_logger(void (*handler)(uint8_t, log_level_t
 #ifdef SYS_ISO15765_LOGGER
 result_t iso15765_logger_unregister_as_logger(void)
 {
-#if ((DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-	log_d(TAG, "iso15765_log_unreg_as_handler()\n\r");
+#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+	LOG_D("iso15765_log_unreg_as_handler()\n\r");
 #endif
 	iso15765_logger = FALSE;
 	iso15765_logger_handler = NULL;
@@ -128,8 +131,8 @@ void iso15765_log(log_level_t level, char *string)
 
 	iso15765_msg_t msg;
 
-#if ((DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-	log_d(TAG, "iso15765_log(0x%x, %s)\n\r", (uint16_t)level, string);
+#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+	LOG_D("iso15765_log(0x%x, %s)\n\r", (uint16_t)level, string);
 #endif
 
 	if(iso15765_logger) {
@@ -149,19 +152,19 @@ void iso15765_log(log_level_t level, char *string)
 				if(msg.size < SYS_ISO15765_MAX_MSG) {
 					iso15765_tx_msg(&msg);
 				} else {
-#if (SYS_LOG_LEVEL <= LOG_ERROR)
-					log_e(TAG, "message size limit exceeded!\n\r");
+#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
+					LOG_E("message size limit exceeded!\n\r");
 #endif
 				}
 			}
 		} else {
-#if ((DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-			log_d(TAG, "ISO15765 logger not logging insifficient Level\n\r");
+#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+			LOG_D("ISO15765 logger not logging insifficient Level\n\r");
 #endif
 		}
 	} else {
-#if ((DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-		log_d(TAG, "no Logger Registered\n\r");
+#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+		LOG_D("no Logger Registered\n\r");
 #endif
 	}
 }

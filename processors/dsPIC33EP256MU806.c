@@ -19,11 +19,10 @@
  *
  */
 #if defined(__dsPIC33EP256MU806__)
-
-#define DEBUG_FILE TRUE
 #include "libesoup_config.h"
 
 #ifdef SYS_SERIAL_LOGGING
+#define DEBUG_FILE
 static const char *TAG = "dsPIC33";
 #include "libesoup/logger/serial_log.h"
 #endif // SYS_SERIAL_LOGGING

@@ -104,7 +104,7 @@
  * expect a logging level to be defined and a #define of "DEBUG_FILE" at the 
  * top of the file for logging to be enabled.
  *
- * #define TAG "MyMain"
+ * static const char *TAG = "MyMain";
  *
  * #if ((DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
  *         LOG_D("logging message\n\r");

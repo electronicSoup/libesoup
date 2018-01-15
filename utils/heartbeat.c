@@ -29,11 +29,11 @@
 //#ifdef HEARTBEAT
 //#include "libesoup/timers/timer_sys.h"
 //#endif
+#ifdef SYS_SERIAL_LOGGING
 #define DEBUG_FILE
+static const char *TAG = "HEARTBEAT";
 #include "libesoup/logger/serial_log.h"
-
-#define TAG "HEARTBEAT"
-
+#endif
 
 void heartbeat_on(union sigval data);
 void heartbeat_off(union sigval data);

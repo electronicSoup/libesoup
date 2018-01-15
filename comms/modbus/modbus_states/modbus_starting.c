@@ -19,12 +19,14 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  *
  */
-#define TAG "MODBUS_STARTING"
-#define DEBUG_FILE TRUE
-
 #include "libesoup_config.h"
 
+#ifdef SYS_SERIAL_LOGGING
+#define DEBUG_FILE
+static const char *TAG = "MODBUS_STARTING";
 #include "libesoup/logger/serial_log.h"
+#endif
+
 #include "libesoup/comms/modbus/modbus.h"
 
 extern struct modbus_state modbus_state;
@@ -34,8 +36,8 @@ static void process_timer_35_expiry(void *);
 void set_modbus_starting_state(struct modbus_channel *channel)
 {
 #ifdef SYS_SERIAL_LOGGING
-#if ((DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_INFO))
-	log_i(TAG, "set_modbus_starting_state(channel %d)\n\r", channel->uart->uart);
+#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_INFO))
+	LOG_I("set_modbus_starting_state(channel %d)\n\r", channel->uart->uart);
 #endif
 #endif // SYS_SERIAL_LOGGING
 	channel->process_timer_15_expiry = NULL;
@@ -53,16 +55,13 @@ static void process_timer_35_expiry(void *data)
         struct modbus_channel *channel = (struct modbus_channel *)data;
         
         if(channel->uart) {
-#ifdef SYS_SERIAL_LOGGING
-#if ((DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-                log_d(TAG, "process_timer_35_expiry(channel %d)\n\r", channel->uart->uart);
+#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+                LOG_D("process_timer_35_expiry(channel %d)\n\r", channel->uart->uart);
 #endif
-#endif // SYS_SERIAL_LOGGING
                 set_modbus_idle_state(channel);
         } else {
-#ifdef SYS_SERIAL_LOGGING
-#if ((DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-                log_d(TAG, "process_timer_35_expiry() No Uart\n\r");
+#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+                LOG_D("process_timer_35_expiry() No Uart\n\r");
 #endif
 #endif // SYS_SERIAL_LOGGING
         }

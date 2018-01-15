@@ -1,6 +1,35 @@
+/*
+ *
+ * libesoup/comms/can/ping.c
+ *
+ * Hardware Timer functionality for the electronicSoup Cinnamon Bun
+ *
+ * Copyright 2017 2018 electronicSoup Limited
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the version 2 of the GNU Lesser General Public License
+ * as published by the Free Software Foundation
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program; if not, see <http://www.gnu.org/licenses/>.
+ *
+ *******************************************************************************
+ *
+ */
 #include "libesoup_config.h"
 
 #ifdef SYS_CAN_DYNAMIC_BAUD_RATE
+
+#ifdef SYS_SERIAL_LOGGING
+#define DEBUG_FILE
+static const char *TAG = "DYN_BAUD";
+#include "libesoup/logger/serial_log.h"
+#endif
 
 static void     exp_finalise_baudrate_change(timer_id timer, union sigval data);
 static void     exp_resend_baudrate_change(timer_id timer, union sigval data);
@@ -12,10 +41,8 @@ void can_l2_set_node_baudrate(can_baud_rate_t baudrate)
 	struct timer_req timer_request;
 	
 
-#ifdef SYS_SERIAL_LOGGING
-#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	LOG_D("set_can_node_baudrate()\n\r");
-#endif
 #endif
 	status.bit_field.l2_status = L2_ChangingBaud;
 	status_baud = baudrate;
@@ -41,11 +68,9 @@ void can_l2_set_node_baudrate(can_baud_rate_t baudrate)
 
 static void exp_finalise_baudrate_change(timer_id timer __attribute__((unused)), union sigval data __attribute__((unused)))
 {
-#ifdef SYS_SERIAL_LOGGING
-#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+#if (defeind(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	LOG_D("exp_finalise_baudrate_change()\n\r");
 #endif
-#endif	
         set_can_mode(NORMAL_MODE);
 
 	status.bit_field.l2_status = L2_Connected;
@@ -64,10 +89,8 @@ void can_l2_initiate_baudrate_change(can_baud_rate_t rate)
 	can_frame        msg;
 	result_t         result = SUCCESS;
 
-#ifdef SYS_SERIAL_LOGGING
-#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	LOG_D("initiate_can_baudrate_change()\n\r");
-#endif
 #endif
 	msg.can_id = 0x705;
 	msg.can_dlc = 1;
@@ -99,16 +122,12 @@ static void exp_resend_baudrate_change(timer_id exp_timer __attribute__((unused)
 	timer_id         timer;
 	struct timer_req timer_request;
 
-#ifdef SYS_SERIAL_LOGGING
-#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	LOG_D("exp_resend_baudrate_change()\n\r");
 #endif
-#endif
 	if(changing_baud_tx_error < 3) {
-#ifdef SYS_SERIAL_LOGGING
-#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 		LOG_D("resending Baud Rate Change Request %d\n\r", changing_baud_tx_error);
-#endif
 #endif
 		msg.can_id = 0x705;
 		msg.can_dlc = 1;
@@ -123,10 +142,8 @@ static void exp_resend_baudrate_change(timer_id exp_timer __attribute__((unused)
 			timer_request.data.sival_int = 0;
 			sw_timer_start(&timer, &timer_request);
 		} else {
-#ifdef SYS_SERIAL_LOGGING
-#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 			LOG_D("No Free Buffers so change the Baud Rate\n\r");
-#endif
 #endif
 			set_reg_mask_value(TXB0CTRL, TXREQ, 0x00);
 			set_reg_mask_value(TXB1CTRL, TXREQ, 0x00);
@@ -134,10 +151,8 @@ static void exp_resend_baudrate_change(timer_id exp_timer __attribute__((unused)
                         can_l2_set_node_baudrate(status_baud);
 		}
 	} else {
-#ifdef SYS_SERIAL_LOGGING
-#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 		LOG_D("3 Errors so NOT Resending Baud Rate Change Request\n\r");
-#endif
 #endif
                 can_l2_set_node_baudrate(status_baud);
 	}

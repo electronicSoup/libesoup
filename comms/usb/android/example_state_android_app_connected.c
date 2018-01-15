@@ -6,7 +6,7 @@
  *
  * State for processing comms from the Android Application.
  *
- * Copyright 2017 electronicSoup Limited
+ * Copyright 2017 2018 electronicSoup Limited
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 2 of the GNU Lesser General Public License
@@ -21,17 +21,14 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  *
  */
-#include <stdio.h>
+//#include <stdio.h>
 #include "libesoup_config.h"
-#include "usb/inc/usb.h"
-#include "usb/inc/usb_host_android.h"
-#include "libesoup/usb/android/state.h"
-#include "libesoup/usb/android/state_idle.h"
 
-#define DEBUG_FILE TRUE
+#ifdef SYS_SERIAL_LOGGING
+#define DEBUG_FILE
 #include "libesoup/logger/serial_log.h"
 
-#define TAG "Android-AppConnected"
+static const char *TAG = "Android-AppConnected";
 
 /*
  * Check required libesoup_config.h defines are found
@@ -39,6 +36,13 @@
 #ifndef SYS_LOG_LEVEL
 #error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
 #endif
+#endif
+
+#include "usb/inc/usb.h"
+#include "usb/inc/usb_host_android.h"
+#include "libesoup/comms/usb/android/state.h"
+#include "libesoup/comms/usb/android/state_idle.h"
+
 
 /*
  * Forward declarations of functions.
@@ -49,8 +53,8 @@ void app_connected_process_usb_event(USB_EVENT event);
 
 void example_set_app_connected_state(void)
 {
-#if ((DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-	log_d(TAG, "State -> App_connected\n\r");
+#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+	LOG_D("State -> App_connected\n\r");
 #endif
 	android_state.process_msg = app_connected_process_msg;
 	android_state.main = app_connected_main;

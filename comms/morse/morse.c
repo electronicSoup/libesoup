@@ -4,7 +4,7 @@
  *
  * This file contains code for dealing Morse code
  *
- * Copyright 2017 electronicSoup Limited
+ * Copyright 2017 2018 electronicSoup Limited
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 2 of the GNU Lesser General Public License
@@ -19,19 +19,21 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  *
  */
-#define DEBUG_FILE TRUE
-#define TAG "Morse"
-
 #include "libesoup_config.h"
-#include "libesoup/logger/serial_log.h"
-#include "libesoup/timers/timers.h"
 
+#ifdef SYS_SERIAL_LOGGING
+#define DEBUG_FILE
+static const char *TAG = "Morse";
+#include "libesoup/logger/serial_log.h"
 /*
  * Check required libesoup_config.h defines are found
  */
 #ifndef SYS_LOG_LEVEL
 #error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
 #endif
+#endif
+
+#include "libesoup/timers/timers.h"
 
 struct character
 {
@@ -319,7 +321,7 @@ void morse_tx(char *msg)
 	}
 
 #if ((DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-	log_d(TAG, "Leaving morse_tx() buffer count is %d\n\r", tx_buffer_count);
+	LOG_D("Leaving morse_tx() buffer count is %d\n\r", tx_buffer_count);
 #endif
 }
 #endif  // if MORSE_TX
@@ -400,8 +402,8 @@ void tx_start_character_space(void)
 	tx_current_state = CHARACTER_SPACE_STATE;
 #ifdef MORSE_RX
 	if(current_letter_valid) {
-#if ((DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-		log_d(TAG, "LETTER VALID -%c-\n\r", current_letter->ch);
+#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+		LOG_D("LETTER VALID -%c-\n\r", current_letter->ch);
 #endif
 	}
 	current_letter_valid = 0x01;
@@ -426,8 +428,8 @@ void timer_on(uint8_t duration)
 	result_t     rc;
 	union sigval data;
 
-#if ((DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-	log_d(TAG, "timer_on(%d)\n\r", MILLI_SECONDS_TO_TICKS(DOT_TIME * duration));
+#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+	LOG_D("timer_on(%d)\n\r", MILLI_SECONDS_TO_TICKS(DOT_TIME * duration));
 #endif
 	data.sival_int = 0x00;
 
@@ -457,8 +459,8 @@ void exp_function(timer_t timer_id, union sigval data)
 
 		// TODO Would be next character
 		if (tx_buffer_count > 0) {
-#if ((DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-			log_d(TAG, "Tx '%c'\n\r", tx_buffer[tx_buffer_read_index]);
+#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+			LOG_D("Tx '%c'\n\r", tx_buffer[tx_buffer_read_index]);
 #endif
 			tx_char(tx_buffer[tx_buffer_read_index]);
 			tx_buffer_read_index = (tx_buffer_read_index + 1) % MORSE_TX_BUFFER_SIZE;

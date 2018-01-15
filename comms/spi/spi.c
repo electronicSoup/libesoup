@@ -4,7 +4,7 @@
  *
  * SPI Interface functions for the electronicSoup Cinnamon Bun
  *
- * Copyright 2017 electronicSoup Limited
+ * Copyright 2017 2018 electronicSoup Limited
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 2 of the GNU Lesser General Public License
@@ -24,15 +24,12 @@
 #ifdef SYS_SPI_BUS
 
 #ifdef SYS_SERIAL_LOGGING
-#define DEBUG_FILE TRUE
-#include "libesoup/logger/serial_log.h"
+#define DEBUG_FILE
 static const char *TAG = "SPI";
-#endif // SYS_SERIAL_LOGGING
-
+#include "libesoup/logger/serial_log.h"
 /*
  * Check required libesoup_config.h defines are found
  */
-#ifdef SYS_SERIAL_LOGGING
 #ifndef SYS_LOG_LEVEL
 #error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
 #endif
@@ -42,11 +39,9 @@ void spi_init(void)
 {
 	uint8_t loop;
 
-#ifdef SYS_SERIAL_LOGGING
-#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_INFO))
+#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_INFO))
 	LOG_I("spi_init()\n\r");
 #endif
-#endif // SYS_SERIAL_LOGGING
 	/*
 	 * short delay before init SPI
 	 */

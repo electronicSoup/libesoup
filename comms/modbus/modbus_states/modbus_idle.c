@@ -4,7 +4,7 @@
  *
  * This file contains code for Modbus idle state
  *
- * Copyright 2017 electronicSoup Limited
+ * Copyright 2017 2018 electronicSoup Limited
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 2 of the GNU Lesser General Public License
@@ -19,12 +19,14 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  *
  */
-#define TAG "MODBUS_IDLE"
-#define DEBUG_FILE TRUE
-
 #include "libesoup_config.h"
 
+#ifdef SYS_SERIAL_LOGGING
+#define DEBUG_FILE
+static const char *TAG = "MODBUS_IDLE";
 #include "libesoup/logger/serial_log.h"
+#endif
+
 #include "libesoup/comms/modbus/modbus.h"
 
 /*
@@ -39,11 +41,9 @@ static void process_rx_character(struct modbus_channel *channel, uint8_t ch);
 
 void set_modbus_idle_state(struct modbus_channel *channel)
 {
-#ifdef SYS_SERIAL_LOGGING
-#if ((DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-	log_d(TAG, "set_modbus_idle_state(channel %d)\n\r", channel->uart->uart);
+#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+	LOG_D("set_modbus_idle_state(channel %d)\n\r", channel->uart->uart);
 #endif
-#endif // SYS_SERIAL_LOGGING
 	channel->process_timer_15_expiry = NULL;
 	channel->process_timer_35_expiry = process_timer_35_expiry;
 	channel->transmit = transmit;
@@ -59,11 +59,9 @@ void set_modbus_idle_state(struct modbus_channel *channel)
 
 void transmit(struct modbus_channel *channel, uint8_t *data, uint16_t len, modbus_response_function fn, void *callback_data)
 {
-#ifdef SYS_SERIAL_LOGGING
-#if ((DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-	log_d(TAG, "Modbus Idle state Transmit(%d)\n\r", channel->uart->uart);
+#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+	LOG_D("Modbus Idle state Transmit(%d)\n\r", channel->uart->uart);
 #endif
-#endif // SYS_SERIAL_LOGGING
 	/*
 	 * The response timeout timer is started when the transmission is
 	 * completed in the modbus_awaiting_response state.
@@ -80,28 +78,22 @@ void process_timer_35_expiry(void *data)
         struct modbus_channel *channel = (struct modbus_channel *)data;
 
 	uint8_t  start_index;
-#ifdef SYS_SERIAL_LOGGING
-#if ((DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	uint16_t loop;
 #endif
-#endif // SYS_SERIAL_LOGGING
 
-#ifdef SYS_SERIAL_LOGGING
-#if ((DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-	log_d(TAG, "process_timer_35_expiry() channel %d msg length %d\n\r", channel->uart->uart, channel->rx_write_index);
+#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+	LOG_D("process_timer_35_expiry() channel %d msg length %d\n\r", channel->uart->uart, channel->rx_write_index);
 #endif
-#endif // SYS_SERIAL_LOGGING
         start_index = 0;
         if (crc_check(&(channel->rx_buffer[start_index]), channel->rx_write_index - start_index)) {
                 /*
                  * Response Good
                  * Subtract 2 for the CRC
                  */
-#ifdef SYS_SERIAL_LOGGING
-#if ((DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-                log_d(TAG, "Message Good! Start at 0\n\r");
+#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+                LOG_D("Message Good! Start at 0\n\r");
 #endif
-#endif // SYS_SERIAL_LOGGING
                 if(channel->process_unsolicited_msg) {
                         channel->process_unsolicited_msg(&(channel->rx_buffer[start_index]), channel->rx_write_index - (start_index + 2), channel->response_callback_data);
                 }
@@ -115,11 +107,9 @@ void process_timer_35_expiry(void *data)
                  * Response Good
                  * Subtract 2 for the CRC
                  */
-#ifdef SYS_SERIAL_LOGGING
-#if ((DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-                log_d(TAG, "Message Good! Start at 1\n\r");
+#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+                LOG_D("Message Good! Start at 1\n\r");
 #endif
-#endif // SYS_SERIAL_LOGGING
                 if(channel->process_unsolicited_msg) {
                         channel->process_unsolicited_msg(&(channel->rx_buffer[start_index]), channel->rx_write_index - (start_index + 2), channel->response_callback_data);
                 }
@@ -127,14 +117,12 @@ void process_timer_35_expiry(void *data)
                 return;
         }
 
-#ifdef SYS_SERIAL_LOGGING
-#if ((DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-        log_d(TAG, "Message bad!\n\r");
+#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+        LOG_D("Message bad!\n\r");
 	for(loop = 0; loop < channel->rx_write_index; loop++) {
-		log_d(TAG, "Char %d - 0x%x\n\r", loop, channel->rx_buffer[loop]);
+		LOG_D("Char %d - 0x%x\n\r", loop, channel->rx_buffer[loop]);
 	}
 #endif
-#endif // SYS_SERIAL_LOGGING
         if(channel->process_unsolicited_msg) {
                 channel->process_unsolicited_msg(NULL, 0, channel->response_callback_data);
         }
@@ -152,10 +140,8 @@ void process_rx_character(struct modbus_channel *channel, uint8_t ch)
 	channel->rx_buffer[channel->rx_write_index++] = ch;
 
 	if (channel->rx_write_index == SYS_MODBUS_RX_BUFFER_SIZE) {
-#ifdef SYS_SERIAL_LOGGING
-#if (SYS_LOG_LEVEL <= LOG_ERROR)
-		log_e(TAG, "UART 2 Overflow: Line too long\n\r");
+#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
+		LOG_E("UART 2 Overflow: Line too long\n\r");
 #endif
-#endif // SYS_SERIAL_LOGGING
 	}
 }

@@ -1,4 +1,36 @@
+/**
+ *
+ * \file libesoup/comms/usb/android/example_usb_handlers.c
+ *
+ * Copyright 2017 2018 electronicSoup Limited
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the version 2 of the GNU Lesser General Public License
+ * as published by the Free Software Foundation
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program; if not, see <http://www.gnu.org/licenses/>.
+ *
+ */
 #include "libesoup_config.h"
+
+#ifdef SYS_SERIAL_LOGGING
+#define DEBUG_FILE
+static const char *TAG = "USB_Handlers";
+#include "libesoup/logger/serial_log.h"
+
+/*
+ * Check required libesoup_config.h defines are found
+ */
+#ifndef SYS_LOG_LEVEL
+#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
+#endif
+#endif
 
 /*
  * Microchip USB Includes
@@ -9,37 +41,25 @@
 #include "libesoup/comms/usb/android/state.h"
 #include "libesoup/comms/usb/android/android_comms.h"
 
-#define DEBUG_FILE TRUE
-#include "libesoup/logger/serial_log.h"
-
-#define TAG "USB_Handlers"
-
-/*
- * Check required libesoup_config.h defines are found
- */
-#ifndef SYS_LOG_LEVEL
-#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
-#endif
-
 bool USB_ApplicationDataEventHandler( uint8_t address, USB_EVENT event, void *data, uint32_t size )
 {
-#if ((DEBUG_FILE == TRUE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-	log_d(TAG, "USB_ApplicationDataEventHandler()\n\r");
+#if (defind(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+	LOG_D("USB_ApplicationDataEventHandler()\n\r");
 #endif
 	return FALSE;
 }
 
 bool USB_ApplicationEventHandler( uint8_t address, USB_EVENT event, void *data, uint32_t size )
 {
-#if ((DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-//	log_d(TAG, "USB_ApplicationEventHandler()\n\r");
+#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+//	LOG_D("USB_ApplicationEventHandler()\n\r");
 #endif
 	asm ("CLRWDT");
 
 	switch( event) {
 		case EVENT_VBUS_REQUEST_POWER:
-#if ((DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-//			log_d(TAG, "EVENT_VBUS_REQUEST_POWER current %d\n\r", ((USB_VBUS_POWER_EVENT_DATA*) data)->current);
+#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+//			LOG_D("EVENT_VBUS_REQUEST_POWER current %d\n\r", ((USB_VBUS_POWER_EVENT_DATA*) data)->current);
 #endif
 			// The data pointer points to a byte that represents the amount of power
 			// requested in mA, divided by two.  If the device wants too much power,
@@ -47,8 +67,8 @@ bool USB_ApplicationEventHandler( uint8_t address, USB_EVENT event, void *data, 
 			if (((USB_VBUS_POWER_EVENT_DATA*) data)->current <= (MAX_ALLOWED_CURRENT / 2)) {
 				return TRUE;
 			} else {
-#if (SYS_LOG_LEVEL <= LOG_ERROR)
-				log_e(TAG, "\r\n***** USB Error - device requires too much current *****\r\n");
+#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
+				LOG_E("\r\n***** USB Error - device requires too much current *****\r\n");
 #endif
 			}
 			break;
@@ -62,8 +82,8 @@ bool USB_ApplicationEventHandler( uint8_t address, USB_EVENT event, void *data, 
 		case EVENT_UNSPECIFIED_ERROR: // This should never be generated.
 		case EVENT_DETACH: // USB cable has been detached (data: BYTE, address of device)
 		case EVENT_ANDROID_DETACH:
-#if ((DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-			log_d(TAG, "Device Detached\n\r");
+#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+			LOG_D("Device Detached\n\r");
 #endif
 			/*
 			 * Pass a Detach event on to the state machine for processing.
@@ -75,8 +95,8 @@ bool USB_ApplicationEventHandler( uint8_t address, USB_EVENT event, void *data, 
 
 			// Android Specific events
 		case EVENT_ANDROID_ATTACH:
-#if ((DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-			log_d(TAG, "Device Attached\n\r");
+#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+			LOG_D("Device Attached\n\r");
 #endif
 			/*
 			 * Pass an Attach even on to the State machine.
@@ -86,14 +106,14 @@ bool USB_ApplicationEventHandler( uint8_t address, USB_EVENT event, void *data, 
 			return TRUE;
 
 		case EVENT_OVERRIDE_CLIENT_DRIVER_SELECTION:
-#if ((DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-			log_d(TAG, "Ignoring EVENT_OVERRIDE_CLIENT_DRIVER_SELECTION\n\r");
+#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+			LOG_D("Ignoring EVENT_OVERRIDE_CLIENT_DRIVER_SELECTION\n\r");
 #endif
 			break;
 
 		default:
-#if ((DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_WARNING))
-			log_w(TAG, "Unknown Event 0x%x\n\r", event);
+#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_WARNING))
+			LOG_W("Unknown Event 0x%x\n\r", event);
 #endif
 			break;
 	}

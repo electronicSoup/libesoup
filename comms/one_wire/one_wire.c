@@ -1,16 +1,37 @@
+/**
+ *
+ * \file libesoup/comms/one_wire/one_wire.c
+ *
+ * Copyright 2017 2018 electronicSoup Limited
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the version 2 of the GNU Lesser General Public License
+ * as published by the Free Software Foundation
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program; if not, see <http://www.gnu.org/licenses/>.
+ *
+ */
 #include "libesoup_config.h"
 
-#define DEBUG_FILE TRUE
-#define TAG "OneWire"
-
+#ifdef SYS_SERIAL_LOGGING
+#define DEBUG_FILE
+static const char *TAG = "OneWire";
 #include "libesoup/logger/serial_log.h"
+#ifndef SYS_LOG_LEVEL
+#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
+#endif
+#endif
+
 #include "libesoup/timers/hw_timers.h"
 #include "libesoup/timers/delay.h"
 //#include "libesoup/timers/sw_timers.h"
 
-#ifndef SYS_LOG_LEVEL
-#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
-#endif
 
 #if defined(__dsPIC33EP256MU806__)
 #if (SYS_CLOCK_FREQ == 60000000)
@@ -153,7 +174,7 @@ result_t one_wire_init(enum pin_t p)
                 
         default:
                 pin = INVALID_PIN;
-#if (SYS_LOG_LEVEL <= LOG_ERROR)
+#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
                 LOG_E("Pin has not been coded yet!\n\r");
 #endif
                 return(ERR_BAD_INPUT_PARAMETER);
@@ -194,7 +215,7 @@ static result_t set_pin(enum pin_t pin, uint8_t direction, uint8_t value)
                 
         default:
                 pin = INVALID_PIN;
-#if (SYS_LOG_LEVEL <= LOG_ERROR)
+#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
                 LOG_E("Pin has not been coded yet!\n\r");
 #endif
                 return(ERR_BAD_INPUT_PARAMETER);
@@ -220,7 +241,7 @@ static result_t get_pin(enum pin_t pin, uint8_t *value)
                 
         default:
                 pin = INVALID_PIN;
-#if (SYS_LOG_LEVEL <= LOG_ERROR)
+#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
                 LOG_E("Pin has not been coded yet!\n\r");
 #endif
                 return(ERR_BAD_INPUT_PARAMETER);
@@ -262,11 +283,11 @@ result_t one_wire_ds2502_read_rom(enum pin_t pin)
         rc =  rx_byte(pin, &byte);
         
         if (byte != DS2502_FAMILY_CODE) {
-#if (SYS_LOG_LEVEL != NO_LOGGING)
+#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL != NO_LOGGING))
                 LOG_E("Unexpected Family Code\n\r");
 #endif                
         } else {
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
                 LOG_D("DS2502 Present on OneWire Bus\n\r");
 #endif                
         }
@@ -327,7 +348,7 @@ static result_t reset_pulse(enum pin_t pin)
          * for the moment we'll assume it's in spec.
          */
         if(value) {
-#if (SYS_LOG_LEVEL != NO_LOGGING)
+#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL != NO_LOGGING))
                 LOG_E("Unexpected level detected on the BUS\n\r");
 #endif
                 return(ERR_GENERAL_ERROR);
@@ -351,7 +372,7 @@ static result_t reset_pulse(enum pin_t pin)
                         /*
                          * Oops? The Bus should have gone high
                          */
-#if (SYS_LOG_LEVEL != NO_LOGGING)
+#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL != NO_LOGGING))
                         LOG_E("Unexpected level detected on the BUS\n\r");
 #endif
                         return(ERR_GENERAL_ERROR);
@@ -520,7 +541,7 @@ void reset_pulse()
                         break;
 
                 default:
-#if (SYS_LOG_LEVEL <= LOG_ERROR)
+#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
                         LOG_E("Pin has not been coded yet!\n\r");
 #endif
                         break;
@@ -585,7 +606,7 @@ void exp_end_presence(void *data)
                 IEC1bits.CNIE = 0;
         
                 if(!device_present) {
-#if (SYS_LOG_LEVEL != NO_LOGGING)
+#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL != NO_LOGGING))
                         LOG_E("No Devices!\n\r");
 #endif
                 } else {
@@ -593,7 +614,7 @@ void exp_end_presence(void *data)
                                 callback();
                         } else {
                                 bus_busy = FALSE;
-#if (SYS_LOG_LEVEL != NO_LOGGING)
+#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL != NO_LOGGING))
                                 LOG_E("No callback function\n\r");
 #endif
                         }
@@ -756,7 +777,7 @@ void exp_end_read(void *data)
 
 void write_byte_fn(uint8_t data)
 {
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
         LOG_D("write_byte_fn(0x%x)\n\r", data);
 #endif
         write_byte = data;
@@ -779,7 +800,7 @@ void write_bit_fn(void)
                 if(callback) {
                         callback();
                 } else {
-#if (SYS_LOG_LEVEL != NO_LOGGING)
+#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL != NO_LOGGING))
 		        LOG_E("No callback function\n\r");
 #endif
                 }
@@ -788,7 +809,7 @@ void write_bit_fn(void)
 
 void rom_command(void)
 {
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
         LOG_D("rom_command()\n\r");
 #endif
         callback = read_rom;
@@ -797,7 +818,7 @@ void rom_command(void)
 
 void read_rom(void)
 {
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
         LOG_D("read_rom()\n\r");
 #endif
         read_count = 8;       
@@ -806,7 +827,7 @@ void read_rom(void)
 
 void bit_read(uint8_t read_bit)
 {
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
+#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
         LOG_D("bit_read(0x%x)\n\r", read_bit);
 #endif
         read_count--;        

@@ -6,7 +6,7 @@
  *
  * The first uart port is used by the logger. See libesoup/logger
  *
- * Copyright 2017 electronicSoup Limited
+ * Copyright 2017 2018 electronicSoup Limited
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 2 of the GNU Lesser General Public License
@@ -23,15 +23,17 @@
  */
 #include "libesoup_config.h"
 
-#define DEBUG_FILE TRUE
+#ifdef SYS_SERIAL_LOGGING
+#define DEBUG_FILE
+static const char *TAG = "MODBUS";
 #include "libesoup/logger/serial_log.h"
+#endif
+
 #include "libesoup/timers/hw_timers.h"
 #include "libesoup/timers/sw_timers.h"
 #include "libesoup/comms/modbus/modbus.h"
 #include "libesoup/comms/uart/uart.h"
 #include "libesoup/jobs/jobs.h"
-
-#define TAG "MODBUS"
 
 struct modbus_channel modbus_channels[NUM_UARTS];
 
@@ -156,11 +158,9 @@ static void hw_35_expiry_function(void *chan)
 		// modbus_chan->process_timer_35_expiry(modbus_chan);
 		jobs_add(modbus_chan->process_timer_35_expiry, (void *)modbus_chan);
 	} else {
-#ifdef SYS_SERIAL_LOGGING
-#if (SYS_LOG_LEVEL <= LOG_ERROR)
-		log_e(TAG, "T35 in unknown state\n\r");
+#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_ERROR))
+		LOG_E("T35 in unknown state\n\r");
 #endif
-#endif // SYS_SERIAL_LOGGING
 	}
 }
 
@@ -172,8 +172,8 @@ static void hw_15_expiry_function(void *chan)
 		// modbus_chan->process_timer_15_expiry(modbus_chan);
 		jobs_add(modbus_chan->process_timer_15_expiry, (void *)modbus_chan);
 	} else {
-#if (SYS_LOG_LEVEL <= LOG_ERROR)
-		log_e(TAG, "T15 in unknown state\n\r");
+#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
+		LOG_E("T15 in unknown state\n\r");
 #endif
 	}
 }
@@ -207,11 +207,9 @@ void modbus_tx_finished(void *data)
         struct uart_data *uart = (struct uart_data *)data;
 
 	if(!modbus_channels[uart->uart].uart) {
-#ifdef SYS_SERIAL_LOGGING
-#if (SYS_LOG_LEVEL <= LOG_ERROR)
-		log_e(TAG, "Error tx_finished channel %d no UART struct\n\r", uart->uart);
+#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
+		LOG_E("Error tx_finished channel %d no UART struct\n\r", uart->uart);
 #endif
-#endif // SYS_SERIAL_LOGGING
 		return;
 	}
 
@@ -222,11 +220,9 @@ void modbus_tx_finished(void *data)
 		//modbus_channels[channel_id].process_tx_finished(&modbus_channels[channel_id]);
 		jobs_add(modbus_channels[uart->uart].modbus_tx_finished, (void *)&modbus_channels[uart->uart]);
 	} else {
-#ifdef SYS_SERIAL_LOGGING
-#if (SYS_LOG_LEVEL <= LOG_ERROR)
-		log_e(TAG, "Error processing tx_finished\n\r");
+#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
+		LOG_E("Error processing tx_finished\n\r");
 #endif
-#endif // SYS_SERIAL_LOGGING
 	}
 
 	/*
@@ -243,11 +239,9 @@ result_t modbus_reserve(struct uart_data *uart, void (*idle_callback)(void *), m
 	result_t rc;
 	void (*app_tx_finished)(void *data);
 
-#ifdef SYS_SERIAL_LOGGING
-#if ((DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-        log_d(TAG, "modbus_reserve()\n\r");
+#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+        LOG_D("modbus_reserve()\n\r");
 #endif
-#endif // SYS_SERIAL_LOGGING
 	app_tx_finished = uart->tx_finished;
 
 	uart->process_rx_char = modbus_process_rx_character;
@@ -261,11 +255,9 @@ result_t modbus_reserve(struct uart_data *uart, void (*idle_callback)(void *), m
 	if(rc != SUCCESS) {
 		return(rc);
 	}
-#ifdef SYS_SERIAL_LOGGING
-#if ((DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-	log_d(TAG, "modbus_reserve took UART %d\n\r", uart->uart);
+#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+	LOG_D("modbus_reserve took UART %d\n\r", uart->uart);
 #endif
-#endif //SYS_SERIAL_LOGGING
 	modbus_channels[uart->uart].process_unsolicited_msg = unsolicited;
 	modbus_channels[uart->uart].idle_callback = idle_callback;
 	modbus_channels[uart->uart].idle_callback_data = data;
@@ -290,11 +282,9 @@ result_t modbus_release(struct uart_data *uart)
 {
 //	result_t rc;
 
-#ifdef SYS_SERIAL_LOGGING
-#if ((DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-	log_d(TAG, "modbus_relase() UART %d\n\r", uart->uart);
+#if (defined(SYS_SERIAL_LOGGING) && define(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+	LOG_D("modbus_relase() UART %d\n\r", uart->uart);
 #endif
-#endif // SYS_SERIAL_LOGGING
 	if(modbus_channels[uart->uart].hw_35_timer != BAD_TIMER) {
 		hw_timer_cancel(modbus_channels[uart->uart].hw_35_timer);
 	}
@@ -333,11 +323,9 @@ void modbus_tx_data(struct modbus_channel *channel, uint8_t *data, uint16_t len)
 	ptr = data;
 
 	crc = crc_calculate(data, len);
-#ifdef SYS_SERIAL_LOGGING
-#if ((DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-	log_d(TAG, "tx_data crc %x\n\r", crc);
+#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+	LOG_D("tx_data crc %x\n\r", crc);
 #endif
-#endif // SYS_SERIAL_LOGGING
 	for(loop = 0; loop < len; loop++) {
 		buffer[loop] = *ptr++;
 	}
@@ -348,11 +336,9 @@ void modbus_tx_data(struct modbus_channel *channel, uint8_t *data, uint16_t len)
 	rc = uart_tx_buffer(channel->uart, buffer, loop);
 
 	if(rc != SUCCESS) {
-#ifdef SYS_SERIAL_LOGGING
-#if (SYS_LOG_LEVEL <= LOG_ERROR)
-		log_e(TAG, "Failed to transmit modbus data\n\r");
+#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
+		LOG_E("Failed to transmit modbus data\n\r");
 #endif
-#endif // SYS_SERIAL_LOGGING
 	}
 }
 
@@ -362,11 +348,9 @@ result_t modbus_attempt_transmission(struct uart_data *uart, uint8_t *data, uint
 		modbus_channels[uart->uart].transmit(&modbus_channels[uart->uart], data, len, fn, callback_data);
 		return(SUCCESS);
 	} else {
-#ifdef SYS_SERIAL_LOGGING
-#if (SYS_LOG_LEVEL <= LOG_ERROR)
-		log_e(TAG, "Tx Attempted in unknown state\n\r");
+#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
+		LOG_E("Tx Attempted in unknown state\n\r");
 #endif
-#endif // SYS_SERIAL_LOGGING
 		return(ERR_NOT_READY);
 	}
 }
@@ -407,10 +391,8 @@ static void resp_timeout_expiry_fn(timer_t timer_id, union sigval data)
 	if (modbus_channels[data.sival_int].process_response_timeout) {
 		modbus_channels[data.sival_int].process_response_timeout(&modbus_channels[data.sival_int]);
 	} else {
-#ifdef SYS_SERIAL_LOGGING
-#if (SYS_LOG_LEVEL <= LOG_ERROR)
-		log_e(TAG, "Response Timout in unknown state\n\r");
+#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
+		LOG_E("Response Timout in unknown state\n\r");
 #endif
-#endif // SYS_SERIAL_LOGGING
 	}
 }

@@ -4,7 +4,7 @@
  *
  * eeprom functions of the electronicSoup Cinnamon Bun
  *
- * Copyright 2017 electronicSoup Limited
+ * Copyright 2017 2018 electronicSoup Limited
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 2 of the GNU Lesser General Public License
@@ -46,12 +46,12 @@
  * The EEPROM chip is connected to the first SPI bus of the PIC24FJ256GB106
  * so spi code is required.
  */
-#include "libesoup/utils/spi.h"
+#include "libesoup/hardware/spi.h"
 
-#define DEBUG_FILE TRUE
+#ifdef SYS_SERIAL_LOGGING
+#define DEBUG_FILE
+static const char *TAG = "EEPROM";
 #include "libesoup/logger/serial_log.h"
-
-#define TAG "EEPROM"
 
 /*
  * Check required libesoup_config.h defines are found
@@ -59,6 +59,8 @@
 #ifndef SYS_LOG_LEVEL
 #error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
 #endif
+#endif
+
 
 #if defined(SYS_EEPROM_USE_BOOT_PAGE)
 #ifndef SYS_EEPROM_BOOT_PAGE_SIZE
@@ -122,8 +124,8 @@ result_t eeprom_read(uint16_t address, uint8_t *data)
 		EEPROM_DeSelect
 		return(SUCCESS);
 	}
-#if (SYS_LOG_LEVEL <= LOG_ERROR)
-        log_e(TAG,"eeprom_read Address Range Error!\n\r");
+#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
+        LOG_E("eeprom_read Address Range Error!\n\r");
 #endif
 	return (ERR_ADDRESS_RANGE);
 }
@@ -168,8 +170,8 @@ result_t eeprom_write(uint16_t address, uint8_t data)
 		EEPROM_DeSelect
 		return(SUCCESS);
         }
-#if (SYS_LOG_LEVEL <= LOG_ERROR)
-        log_e(TAG, "eeprom_write Address Range Error!\n\r");
+#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
+        LOG_E("eeprom_write Address Range Error!\n\r");
 #endif
 	return (ERR_ADDRESS_RANGE);
 }
@@ -190,8 +192,8 @@ result_t eeprom_erase(uint16_t start_address)
 	uint16_t loop;
 	uint8_t  use_address;
 
-#if (SYS_LOG_LEVEL <= LOG_ERROR)
-        log_e(TAG, "eeprom_erase(0x%x)\n\r", start_address);
+#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
+        LOG_E("eeprom_erase(0x%x)\n\r", start_address);
 #endif
 #ifdef SYS_EEPROM_USE_BOOT_PAGE
 	use_address = (uint8_t)(start_address + SYS_EEPROM_BOOT_PAGE_SIZE);
@@ -207,8 +209,8 @@ result_t eeprom_erase(uint16_t start_address)
 
 		return (SUCCESS);
 	}
-#if (SYS_LOG_LEVEL <= LOG_ERROR)
-        log_e(TAG, "eeprom_erase Address Range Error!\n\r");
+#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
+        LOG_E("eeprom_erase Address Range Error!\n\r");
 #endif
 	return (ERR_ADDRESS_RANGE);
 }
@@ -239,8 +241,8 @@ result_t eeprom_str_read(uint16_t address, uint8_t *buffer, uint16_t *length)
 	uint8_t       num_read = 0;
 	result_t rc;
 
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
-	log_d(TAG, "eeprom_str_read()\n\r");
+#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+	LOG_D("eeprom_str_read()\n\r");
 #endif
 	ptr = buffer;
 
@@ -257,8 +259,8 @@ result_t eeprom_str_read(uint16_t address, uint8_t *buffer, uint16_t *length)
 	}
 	*ptr = 0x00;
 	*length = num_read;
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
-	log_d(TAG, "eeprom_str_read() read %s\n\r", buffer);
+#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+	LOG_D("eeprom_str_read() read %s\n\r", buffer);
 #endif
 	return (rc);
 }
@@ -284,22 +286,22 @@ result_t  eeprom_str_write(uint16_t address, uint8_t *buffer, uint16_t *length)
 	uint16_t      copied = 0;
 	result_t rc = SUCCESS;
 
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
-	log_d(TAG, "eeprom_str_write()\n\r");
+#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+	LOG_D("eeprom_str_write()\n\r");
 #endif
 	ptr = buffer;
 
 	while ( (*ptr) && (rc == SUCCESS) && (copied < (*length - 1))) {
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
-		log_d(TAG, "Write to location %d value 0x%x\n\r", address, *ptr);
+#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+		LOG_D("Write to location %d value 0x%x\n\r", address, *ptr);
 #endif
 		rc = eeprom_write(address++, *ptr++);
 		copied++;
 	}
 
 	if(rc == SUCCESS) {
-#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
-		log_d(TAG, "Write loop finished\n\r");
+#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+		LOG_D("Write loop finished\n\r");
 #endif
 		eeprom_write(address, 0x00);
 	}
