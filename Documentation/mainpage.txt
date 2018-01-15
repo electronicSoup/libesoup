@@ -70,9 +70,23 @@ change the frequency of the physically connected hardware crystal.
 #define SYS_CLOCK_FREQ 60000000    // 60MHz
 </p>
 
+<div class="warning">
+Not all frequencies have been coded so check source code.
+</div>
+
 <p>
-the functionality which is to be included
-in a project build. For example, starting at the basics
+With the board and frequency defined optional functionality can be
+included in the project build. For example to include Hardware Timer
+functionality in the build define SYS_HW_TIMERS.
+</p>
+
+<div class="code">
+#define SYS_HW_TIMERS
+</div>
+
+<p>
+The number of Hardware timers available depends on the
+micro-controller being used.
 </p>
 
 */
