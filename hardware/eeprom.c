@@ -46,7 +46,7 @@
  * The EEPROM chip is connected to the first SPI bus of the PIC24FJ256GB106
  * so spi code is required.
  */
-#include "libesoup/hardware/spi.h"
+#include "libesoup/comms/spi/spi.h"
 
 #ifdef SYS_SERIAL_LOGGING
 #define DEBUG_FILE
