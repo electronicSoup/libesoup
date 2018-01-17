@@ -678,7 +678,7 @@ static void set_clock_divide(uint8_t timer, uint16_t clock_divide)
                         T4CONbits.TCKPS1 = 1; // Divide by 256
                         T4CONbits.TCKPS0 = 1;
                 } else {
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR)
+#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
                         LOG_E("Bad clock divider!\n\r");
 #endif
                 }
