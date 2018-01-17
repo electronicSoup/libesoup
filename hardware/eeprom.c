@@ -42,6 +42,8 @@
 
 #include "libesoup_config.h"
 
+#if defined(SYS_EEPROM_RW)
+
 /*
  * The EEPROM chip is connected to the first SPI bus of the PIC24FJ256GB106
  * so spi code is required.
@@ -309,3 +311,5 @@ result_t  eeprom_str_write(uint16_t address, uint8_t *buffer, uint16_t *length)
 	*length = copied;
 	return (rc);
 }
+
+#endif // defined(SYS_EEPROM_RW)

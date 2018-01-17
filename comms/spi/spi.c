@@ -1,6 +1,6 @@
 /**
  *
- * \file libesoup/utils/spi.c
+ * \file libesoup/comms/spi/spi.c
  *
  * SPI Interface functions for the electronicSoup Cinnamon Bun
  *

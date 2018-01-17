@@ -32,6 +32,22 @@
 #pragma config POSCMOD  = HS               // Primary Oscillator Select (HS oscillator mode selected)
 #pragma config DISUVREG = OFF              // Internal USB 3.3V Regulator Disable bit (Regulator is disabled)
 
+/*
+ * Interrupt Handlers
+ */
+void _ISR __attribute__((__no_auto_psv__)) _AddressError(void)
+{
+	while (1) {
+	}
+}
+
+void _ISR __attribute__((__no_auto_psv__)) _StackError(void)
+{
+	while (1) {
+	}
+}
+
+
 void cpu_init(void)
 {
 }

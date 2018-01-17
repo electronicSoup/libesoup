@@ -1,8 +1,8 @@
 /**
  *
- * \file libesoup/can/dcncp/cinnamonbun_info.c
+ * \file libesoup/board/cd-PIC24FJ256GB106/cinnamonbun_info.c
  *
- * Functions for retrieving the CinnamonBun Info Strings
+ * Functions for retrieving the board's Info Strings
  *
  * Copyright 2017 2018 electronicSoup Limited
  *
@@ -21,24 +21,60 @@
  */
 #include "libesoup_config.h"
 
+#if (defined(SYS_BOARD_INFO) && (defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__)))
+
+//
+// Hardware Info
+//
+#define HARDWARE_INFO_BASE 0x200
+__prog__ char hardware_manufacturer[24] __attribute__ ((space(prog),address(HARDWARE_INFO_BASE))) = "electronicSoup";
+__prog__ char hardware_model[24]        __attribute__ ((space(prog),address(HARDWARE_INFO_BASE + 24))) = "Cinnamon Bun";
+__prog__ char hardware_description[50]  __attribute__ ((space(prog),address(HARDWARE_INFO_BASE + 24 + 24))) = "CAN Bus Node dev Platform";
+__prog__ char hardware_version[10]      __attribute__ ((space(prog),address(HARDWARE_INFO_BASE + 24 + 24 + 50))) = "1.0.0";
+__prog__ char hardware_uri[50]          __attribute__ ((space(prog),address(HARDWARE_INFO_BASE + 24 + 24 + 50 + 10))) = "http://www.electronicsoup.com/products/";
+//
+// Bootloader Info
+//
+__prog__ char bootcode_author[40]       __attribute__ ((space(prog),address(HARDWARE_INFO_BASE + 24 + 24 + 50 + 10 + 50))) = "electronicSoup";
+__prog__ char bootcode_description[50]  __attribute__ ((space(prog),address(HARDWARE_INFO_BASE + 24 + 24 + 50 + 10 + 50 + 40))) = "Android Bootloader";
+__prog__ char bootcode_version[10]      __attribute__ ((space(prog),address(HARDWARE_INFO_BASE + 24 + 24 + 50 + 10 + 50 + 40 + 50))) = "v0.8.0";
+__prog__ char bootcode_uri[50]          __attribute__ ((space(prog),address(HARDWARE_INFO_BASE + 24 + 24 + 50 + 10 + 50 + 40 + 50 + 10))) = "http://www.electronicsoup.com/cb/bootloader";
+
+/*
+ * Firmware Info
+ */
+#define FIRMWARE_STRINGS_BASE 0x8800
+__prog__ char firmware_author[40]       __attribute__ ((space(prog),address(FIRMWARE_STRINGS_BASE))) = "";
+__prog__ char firmware_description[50]  __attribute__ ((space(prog),address(FIRMWARE_STRINGS_BASE + 40))) = "";
+__prog__ char firmware_version[10]      __attribute__ ((space(prog),address(FIRMWARE_STRINGS_BASE + 40 + 50))) = "";
+__prog__ char firmware_uri[50]          __attribute__ ((space(prog),address(FIRMWARE_STRINGS_BASE + 40 + 50 + 10))) = "";
+
+
 #ifdef SYS_SERIAL_LOGGING
 #define DEBUG_FILE
 static const char * TAG = "CB_INFO";
 #include "libesoup/logger/serial_log.h"
-#endif
-
-#include "libesoup/utils/flash.h"
-#include "libesoup/comms/can/dcncp/cinnamonbun_info.h"
-#include "libesoup/firmware/firmware.h"
-#include "libesoup/utils/eeprom.h"
-
 
 /*
  * Check required libesoup_config.h defines are found
  */
-#if (defined(SYS_SERIAL_LOGGING) && !defined(SYS_LOG_LEVEL))
+#ifndef SYS_LOG_LEVEL
 #error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
 #endif
+#endif  // SYS_SERIAL_LOGGING
+
+#ifndef SYS_FLASH_RW
+#error libesoup_config.h file should define SYS_FLASH_RW Required by Board Info (see libesoup/examples/libesoup_config.h)
+#endif
+
+#ifndef SYS_EEPROM_RW
+#error libesoup_config.h file should define SYS_EEPROM_RW Required by Board Info (see libesoup/examples/libesoup_config.h)
+#endif
+
+#include "libesoup/hardware/flash.h"
+#include "libesoup/boards/cb-PIC24FJ256GB106/cinnamonbun_info.h"
+#include "libesoup/firmware/firmware.h"
+#include "libesoup/hardware/eeprom.h"
 
 result_t cb_get_hardware_info(uint8_t *data, uint16_t *data_len)
 {
@@ -440,7 +476,7 @@ result_t cb_get_firmware_info(uint8_t *data, uint16_t *data_len)
 	}
 
 	*data_len = size;
-#if (defined(SYS_SERIAL_LOGGING) defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	LOG_D("Boot info length %d\n\r", size);
 #endif
 	return (SUCCESS);
@@ -644,3 +680,5 @@ result_t cb_get_node_config_info(uint8_t *data, uint16_t *data_len)
 	return (SUCCESS);
 }
 #endif // SYS_CAN_NODE_OS
+
+#endif // SYS_BOARD_INFO

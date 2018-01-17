@@ -24,6 +24,8 @@
 
 #include "libesoup_config.h"
 
+#ifdef SYS_FLASH_RW
+
 #ifdef SYS_SERIAL_LOGGING
 #define DEBUG_FILE
 static const char *TAG = "FLASH";
@@ -247,3 +249,5 @@ uint16_t flash_strlen(__prog__ char *src)
 	}
 	return (i);
 }
+
+#endif // #ifdef SYS_FLASH_RW
