@@ -775,9 +775,11 @@ static void uart_putchar(uint8_t uart_index, uint8_t ch)
 		break;
 #endif // UART_4
 	default:
+#ifndef __XC8 // XC8 compiler don't like recursion
 #if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
 			LOG_E("Unrecognised UART in putchar()\n\r");
 #endif
+#endif // __XC8
 		break;
 	}
 }
