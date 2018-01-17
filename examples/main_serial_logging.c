@@ -60,7 +60,6 @@ int main()
 #if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
 	LOG_E("ERROR Oops\n\r");
 #endif
-#endif // SYS_SERIAL_LOGGING
         while(1) {
         }
 

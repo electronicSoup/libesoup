@@ -22,8 +22,8 @@
  */
 #include <stdarg.h>   // Required for vargs
 
-#define DEBUG_FILE
-static const char *TAG ="SERIAL_LOG";
+//#define DEBUG_FILE
+//static const char *TAG ="SERIAL_LOG";
 
 #include "libesoup_config.h"
 
