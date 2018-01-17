@@ -31,7 +31,6 @@
 #define _ES_PIC24FJ256GB106_H
 
 //#include <p24Fxxxx.h>
-#include <xc.h>
 
 #define OUTPUT_PIN  0
 #define INPUT_PIN   1

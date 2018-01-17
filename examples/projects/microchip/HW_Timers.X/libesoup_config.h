@@ -29,15 +29,7 @@
 #ifndef _LIBESOUP_CONFIG_H
 #define _LIBESOUP_CONFIG_H
 
-#if defined(__dsPIC33EP256MU806__)
-#include "libesoup/boards/cb-dsPIC33EP256MU806.h"
-#elif defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__)
-#include "libesoup/boards/cb-PIC24FJ256GB106/cb-PIC24FJ256GB106.h"
-#elif defined(__18F4585)
-#include "libesoup/boards/gauge-PIC18F4585.h"
-#elif defined(__RPI)
-#include "libesoup/boards/rpi.h"
-#endif
+#include <xc.h>
 
 /**
  * @brief The required clock frequency of the device. 
@@ -63,6 +55,19 @@
  * 
  */
 #define SYS_HW_TIMERS
+
+/*
+ * Having configured everything the board specific definitions are included
+ */
+#if defined(__dsPIC33EP256MU806__)
+#include "libesoup/boards/cb-dsPIC33EP256MU806.h"
+#elif defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__)
+#include "libesoup/boards/cb-PIC24FJ256GB106/cb-PIC24FJ256GB106.h"
+#elif defined(__18F4585)
+#include "libesoup/boards/gauge-PIC18F4585.h"
+#elif defined(__RPI)
+#include "libesoup/boards/rpi.h"
+#endif
 
 /*
  *******************************************************************************

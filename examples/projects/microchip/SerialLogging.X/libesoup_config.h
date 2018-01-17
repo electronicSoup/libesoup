@@ -29,32 +29,7 @@
 #ifndef _LIBESOUP_CONFIG_H
 #define _LIBESOUP_CONFIG_H
 
-/**
- * @brief Physical Pin configuration of the Serial Logging port.
- *
- * On the cinnamonBun the the Gnd pin is physically fixed but the remaining two
- * pins use Microchip peripheral select functionality to configure which pin is
- * the Receive pin and which is the Transmit.
- *
- * There are two valid settings SYS_SERIAL_PORT_GndTxRx or SERIAL_PORT_GndRXTx 
- * 
- * Default : SYS_SERIAL_PORT_GndRxTx
- */
-//#define SYS_SERIAL_PORT_GndTxRx
-#define SYS_SERIAL_PORT_GndRxTx
-
-/*
- * Include a board file
- */
-#if defined(__dsPIC33EP256MU806__)
-#include "libesoup/boards/cb-dsPIC33EP256MU806.h"
-#elif defined (__PIC24FJ256GB106__)
-#include "libesoup/boards/cb-PIC24FJ256GB106/cb-PIC24FJ256GB106.h"
-#elif defined(__18F4585)
-#include "libesoup/boards/gauge-PIC18F4585.h"
-#elif defined(__RPI)
-#include "libesoup/boards/rpi.h"
-#endif
+#include <xc.h>
 
 /**
  * @brief The required Instruction clock frequency of the device. 
@@ -78,6 +53,20 @@
 #define SYS_SERIAL_LOGGING
 
 #if defined(SYS_SERIAL_LOGGING)
+
+/**
+ * @brief Physical Pin configuration of the Serial Logging port.
+ *
+ * On the cinnamonBun the the Gnd pin is physically fixed but the remaining two
+ * pins use Microchip peripheral select functionality to configure which pin is
+ * the Receive pin and which is the Transmit.
+ *
+ * There are two valid settings SYS_SERIAL_PORT_GndTxRx or SERIAL_PORT_GndRXTx 
+ * 
+ * Default : SYS_SERIAL_PORT_GndRxTx
+ */
+//#define SYS_SERIAL_PORT_GndTxRx
+#define SYS_SERIAL_PORT_GndRxTx
 
 /**
  * @brief Serial logging level
@@ -120,6 +109,19 @@
  */
 #define SYS_UART_TX_BUFFER_SIZE 300
 #endif // defined(SYS_SERIAL_LOGGING)
+
+/*
+ * Include a board file
+ */
+#if defined(__dsPIC33EP256MU806__)
+#include "libesoup/boards/cb-dsPIC33EP256MU806.h"
+#elif defined (__PIC24FJ256GB106__)
+#include "libesoup/boards/cb-PIC24FJ256GB106/cb-PIC24FJ256GB106.h"
+#elif defined(__18F4585)
+#include "libesoup/boards/gauge-PIC18F4585.h"
+#elif defined(__RPI)
+#include "libesoup/boards/rpi.h"
+#endif
 
 /*
  *******************************************************************************
