@@ -47,15 +47,16 @@ int main()
 #if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
         serial_log(LOG_DEBUG, TAG, "Testing\n\r");
 	LOG_D("string %s\n\r", "Bingo");
-	LOG_D("uint8_t  Hex 0x%x\n\r", x);
-	LOG_D("uint8_t  Dec %d\n\r", x);
+	LOG_D("uint8_t Hex [0x12] 0x%x\n\r", x);
+	LOG_D("uint8_t Dec [18] %d\n\r", x);
 #endif // DEBUG
 #if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_INFO))
-	LOG_I("uint16_t Hex 0x%x\n\r", y);
-	LOG_I("uint16_t Dec %d\n\r", y);
+	LOG_I("uint16_t Hex [0x1234] 0x%x\n\r", y);
+	LOG_I("uint16_t Dec [4660] %d\n\r", y);
 #endif // INFO
 #if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_WARNING))
-	LOG_W("uint32_t 0x%lx\n\r", z);
+	LOG_W("uint32_t Hex [0x12345678] 0x%lx\n\r", z);
+	LOG_W("uint32_t Dec [305419896] %ld\n\r", z);
 #endif
 #if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
 	LOG_E("ERROR Oops\n\r");
