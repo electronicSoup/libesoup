@@ -77,7 +77,8 @@ static uint8_t error_string[LEVEL_STRING_LEN + 1] = "E-";
 
 /*
  */
-static uint8_t *itoa(int num, uint8_t *str, int base);
+static uint8_t *itoa(uint16_t num, uint8_t *str, uint8_t base);
+static uint8_t *itoa32bit(uint32_t num, uint8_t *str, uint8_t base);
 static uint16_t strlen(char *string);
 static void reverse(uint8_t str[], uint16_t length);
 
@@ -163,6 +164,7 @@ void serial_log(uint8_t level, const char *tag, const char *fmt, ...)
 	char     *ptr;
 	va_list   args;
 	uint16_t  i;
+	uint32_t  li;
 	uint8_t   buf[256];
 	uint8_t  *string;
 
@@ -215,7 +217,7 @@ void serial_log(uint8_t level, const char *tag, const char *fmt, ...)
 
 			case 'd':
 				i = va_arg(args, uint16_t);
-				string = itoa(i, buf, 10);
+				string = itoa((uint32_t)i, buf, 10);
 				rc = uart_tx_buffer(&serial_uart, string, strlen((char*)string));
 				break;
 
@@ -233,15 +235,17 @@ void serial_log(uint8_t level, const char *tag, const char *fmt, ...)
 			case 'l':
 				switch(*++ptr) {
 				case 'd':
-					i = va_arg(args, uint32_t);
-					string = itoa(i, buf, 10);
-					rc = uart_tx_buffer(&serial_uart, string, strlen((char*)string));
+					li = va_arg(args, uint32_t);
+					*buf = 0;
+					string = itoa32bit(li, buf, 10);
+					rc = uart_tx_buffer(&serial_uart, buf, strlen((char*)buf));
 					break;
 
 				case 'x':
-					i = va_arg(args, uint32_t);
-					string = itoa(i, buf, 16);
-					rc = uart_tx_buffer(&serial_uart, string, strlen((char*)string));
+					li = va_arg(args, uint32_t);
+					*buf = 0;
+					string = itoa32bit(li, buf, 16);
+					rc = uart_tx_buffer(&serial_uart, buf, strlen((char*)buf));
 					break;
 				}
 				break;
@@ -324,45 +328,79 @@ result_t serial_logging_exit(void)
         return(uart_release(&serial_uart));
 }
 
-static uint8_t *itoa(int num, uint8_t *str, int base)
+static uint8_t *itoa(uint16_t num, uint8_t *str, uint8_t base)
 {
-    int i = 0;
-    boolean isNegative = FALSE;
+	uint16_t rem;                 // successive remainder
+	uint16_t i = 0;               // Index into the resulting string
+	boolean isNegative = FALSE;
 
-    /* Handle 0 explicitely, otherwise empty string is printed for 0 */
-    if (num == 0)
-    {
-        str[i++] = '0';
-        str[i] = '\0';
-        return str;
-    }
+	/* Handle 0 explicitely, otherwise empty string is printed for 0 */
+	if (num == 0) {
+		str[i++] = '0';
+		str[i] = '\0';
+		return str;
+	}
 
-    // In standard itoa(), negative numbers are handled only with 
-    // base 10. Otherwise numbers are considered unsigned.
-    if (num < 0 && base == 10)
-    {
-        isNegative = FALSE;
-        num = -num;
-    }
+	// Negative numbers are handled only with base 10.
+	if (num < 0 && base == 10) {
+		isNegative = TRUE;
+		num = -num;          // Process number as positive add negative at the end.
+	}
 
-    // Process individual digits
-    while (num != 0)
-    {
-        int rem = num % base;
-        str[i++] = (rem > 9)? (rem-10) + 'a' : rem + '0';
-        num = num/base;
-    }
+	// Process individual digits
+	while (num != 0) {
+		rem = num % base;
+		str[i++] = (rem > 9)? (rem-10) + 'a' : rem + '0';
+		num = num/base;
+	}
 
-    // If number is negative, append '-'
-    if (isNegative)
-        str[i++] = '-';
+	// If number is negative, append '-'
+	if (isNegative)
+		str[i++] = '-';
+	
+	str[i] = '\0'; // Append string terminator
 
-    str[i] = '\0'; // Append string terminator
+	// Reverse the string
+	reverse(str, i);
 
-    // Reverse the string
-    reverse(str, i);
+	return str;
+}
 
-    return str;
+static uint8_t *itoa32bit(uint32_t num, uint8_t *str, uint8_t base)
+{
+	uint32_t rem;                // successive remainder
+	uint16_t i = 0;              // Index into the output string
+	boolean isNegative = FALSE;
+
+	if (num == 0) {
+		str[i++] = '0';
+		str[i] = '\0';
+		return str;
+	}
+
+	// Negative numbers are handled only in base 10.
+	if (num < 0 && base == 10) {
+		isNegative = TRUE;
+		num = -num;            // Process as positive add negative at the end.
+	}
+
+	// Process individual digits
+	while (num != 0) {
+		rem = num % base;
+		str[i++] = (rem > 9)? (rem-10) + 'a' : rem + '0';
+		num = num/base;
+	}
+
+	// If number is negative, append '-'
+	if (isNegative)
+		str[i++] = '-';
+
+	str[i] = '\0'; // Append string terminator
+
+	// Reverse the string
+	reverse(str, i);
+
+	return str;
 }
 
 static uint16_t strlen(char *string)
