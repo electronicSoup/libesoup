@@ -70,10 +70,10 @@
 #endif // if defined (ES_LINUX)
 
 #define LEVEL_STRING_LEN  2
-static uint8_t debug_string[LEVEL_STRING_LEN + 1] = "D-";
-static uint8_t info_string[LEVEL_STRING_LEN + 1] = "I-";
-static uint8_t warning_string[LEVEL_STRING_LEN + 1] = "W-";
-static uint8_t error_string[LEVEL_STRING_LEN + 1] = "E-";
+static const char debug_string[LEVEL_STRING_LEN + 1] = "D-";
+static const char info_string[LEVEL_STRING_LEN + 1] = "I-";
+static const char warning_string[LEVEL_STRING_LEN + 1] = "W-";
+static const char error_string[LEVEL_STRING_LEN + 1] = "E-";
 
 /*
  */
