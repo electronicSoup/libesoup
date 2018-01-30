@@ -251,6 +251,7 @@ typedef enum {
  */
 #define PPS_UART_1_RX                   RPINR18bits.U1RXR
 #define PPS_UART_2_RX                   RPINR19bits.U2RXR
+#define SPI_1_DATA_INPUT                RPINR20bits.SDI1R 
 #define PPS_UART_3_RX                   RPINR27bits.U3RXR
 #define PPS_UART_4_RX                   RPINR28bits.U4RXR
  
@@ -259,6 +260,8 @@ typedef enum {
  */
 #define PPS_UART_1_TX                   0x01
 #define PPS_UART_2_TX                   0x03
+#define SPI_1_DATA_OUTPUT               0x05
+#define SPI_1_CLOCK_OUTPUT              0x06
 #define PPS_UART_3_TX                   0x1B
 #define PPS_UART_4_TX                   0x1D
  
