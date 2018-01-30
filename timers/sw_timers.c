@@ -47,13 +47,13 @@
  */
 #include "libesoup_config.h"
 
+#ifdef SYS_SW_TIMERS
+
 #ifdef SYS_SERIAL_LOGGING
 #define DEBUG_FILE
 static const char *TAG = "SW_TIMERS";
 #include "libesoup/logger/serial_log.h"
 #endif
-
-#ifdef SYS_SW_TIMERS
 
 #include "libesoup/timers/hw_timers.h"
 #include "libesoup/timers/sw_timers.h"
