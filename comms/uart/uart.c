@@ -418,9 +418,7 @@ result_t uart_calculate_mode(uint16_t *mode, uint8_t databits, uint8_t parity, u
          * There's a different BAUD Rate formula for High or Low Baud rate.
          * Have to investigate and merge dsPIC33 and PIC24
          */
-#if defined (__PIC24FJ256GB106__)
-	*mode |= BRGH_MASK;  // High Speed Mode
-#endif
+//	*mode |= BRGH_MASK;  // High Speed Mode
 
 #elif defined(__18F2680) || defined(__18F4585)
         /*
@@ -1008,14 +1006,34 @@ static void uart_set_uart_config(struct uart_data *uart)
 		U1STAbits.UTXISEL0 = 0;
 
 		/*
-		 * Desired Baud Rate = FCY/(16 (UxBRG + 1))
+		 * with BRGH = 0 Slow Speed Mode:
+		 *        Baudrate - between  SYS_CLOCK_FREQ /(16 * 65536) and SYS_CLOCK_FREQ / 16
+		 *                   For SYS_CLOCK_FREQ = 16,000,000 Min 15bps Max 1Mbps 
+		 *                   For SYS_CLOCK_FREQ =  4,000,000 Min 3bps Max 250Kbps 
+		 * 
+		 *                   Desired Baud Rate = FCY/(16 (UxBRG + 1))
 		 *
-		 * UxBRG = ((FCY/Desired Baud Rate)/16) - 1
+		 *                   UxBRG = ((FCY/Desired Baud Rate)/16) - 1
 		 *
-		 * UxBRG = ((CLOCK/MODBUS_BAUD)/16) -1
+		 *                   UxBRG = ((CLOCK / BAUD)/16) -1
 		 *
+		 *
+		 * with BRGH = 1 : SYS_CLOCK_FREQ /(4 * 65536) <= Baudrate <= SYS_CLOCK_FREQ / 4
+		 *                   For SYS_CLOCK_FREQ = 16,000,000 Min 61bps Max 4Mbps 
+		 *                   For SYS_CLOCK_FREQ =  4,000,000 Min 15bps Max 1Mbps 
 		 */
-		U1BRG = ((SYS_CLOCK_FREQ / uart->baud) / 16) - 1;
+		if(uart->uart_mode & BRGH_MASK) {
+			/*
+			 * Hight Speed Mode:
+			 */
+			U1BRG = (uint16_t)((uint32_t)((uint32_t)SYS_CLOCK_FREQ / (uint32_t)uart->baud) / 4) - 1;
+		} else {
+			/*
+			 * Standard Mode:
+			 */
+			U1BRG = (uint16_t)((uint32_t)((uint32_t)SYS_CLOCK_FREQ / (uint32_t)uart->baud) / 16) - 1;
+		}
+
 		U1_RX_ISR_FLAG = 0;
 		U1_TX_ISR_FLAG = 0;
 
@@ -1071,14 +1089,34 @@ static void uart_set_uart_config(struct uart_data *uart)
 		U2STAbits.URXISEL = 0b10;
 
 		/*
-		 * Desired Baud Rate = FCY/(16 (UxBRG + 1))
+		 * with BRGH = 0 Slow Speed Mode:
+		 *        Baudrate - between  SYS_CLOCK_FREQ /(16 * 65536) and SYS_CLOCK_FREQ / 16
+		 *                   For SYS_CLOCK_FREQ = 16,000,000 Min 15bps Max 1Mbps 
+		 *                   For SYS_CLOCK_FREQ =  4,000,000 Min 3bps Max 250Kbps 
+		 * 
+		 *                   Desired Baud Rate = FCY/(16 (UxBRG + 1))
 		 *
-		 * UxBRG = ((FCY/Desired Baud Rate)/16) - 1
+		 *                   UxBRG = ((FCY/Desired Baud Rate)/16) - 1
 		 *
-		 * UxBRG = ((CLOCK/MODBUS_BAUD)/16) -1
+		 *                   UxBRG = ((CLOCK / BAUD)/16) -1
 		 *
+		 *
+		 * with BRGH = 1 : SYS_CLOCK_FREQ /(4 * 65536) <= Baudrate <= SYS_CLOCK_FREQ / 4
+		 *                   For SYS_CLOCK_FREQ = 16,000,000 Min 61bps Max 4Mbps 
+		 *                   For SYS_CLOCK_FREQ =  4,000,000 Min 15bps Max 1Mbps 
 		 */
-		U2BRG = ((SYS_CLOCK_FREQ / uart->baud) / 16) - 1;
+		if(uart->uart_mode & BRGH_MASK) {
+			/*
+			 * Hight Speed Mode:
+			 */
+			U2BRG = (uint16_t)((uint32_t)((uint32_t)SYS_CLOCK_FREQ / (uint32_t)uart->baud) / 4) - 1;
+		} else {
+			/*
+			 * Standard Mode:
+			 */
+			U2BRG = (uint16_t)((uint32_t)((uint32_t)SYS_CLOCK_FREQ / (uint32_t)uart->baud) / 16) - 1;
+		}
+
 
 		if (uart->rx_pin != NO_PIN) {
 			U2_RX_ISR_ENABLE = ENABLED;
@@ -1110,14 +1148,34 @@ static void uart_set_uart_config(struct uart_data *uart)
 		U3STAbits.URXISEL = 0b10;
 
 		/*
-		 * Desired Baud Rate = FCY/(16 (UxBRG + 1))
+		 * with BRGH = 0 Slow Speed Mode:
+		 *        Baudrate - between  SYS_CLOCK_FREQ /(16 * 65536) and SYS_CLOCK_FREQ / 16
+		 *                   For SYS_CLOCK_FREQ = 16,000,000 Min 15bps Max 1Mbps 
+		 *                   For SYS_CLOCK_FREQ =  4,000,000 Min 3bps Max 250Kbps 
+		 * 
+		 *                   Desired Baud Rate = FCY/(16 (UxBRG + 1))
 		 *
-		 * UxBRG = ((FCY/Desired Baud Rate)/16) - 1
+		 *                   UxBRG = ((FCY/Desired Baud Rate)/16) - 1
 		 *
-		 * UxBRG = ((CLOCK/MODBUS_BAUD)/16) -1
+		 *                   UxBRG = ((CLOCK / BAUD)/16) -1
 		 *
+		 *
+		 * with BRGH = 1 : SYS_CLOCK_FREQ /(4 * 65536) <= Baudrate <= SYS_CLOCK_FREQ / 4
+		 *                   For SYS_CLOCK_FREQ = 16,000,000 Min 61bps Max 4Mbps 
+		 *                   For SYS_CLOCK_FREQ =  4,000,000 Min 15bps Max 1Mbps 
 		 */
-		U3BRG = ((SYS_CLOCK_FREQ / uart->baud) / 16) - 1;
+		if(uart->uart_mode & BRGH_MASK) {
+			/*
+			 * Hight Speed Mode:
+			 */
+			U3BRG = (uint16_t)((uint32_t)((uint32_t)SYS_CLOCK_FREQ / (uint32_t)uart->baud) / 4) - 1;
+		} else {
+			/*
+			 * Standard Mode:
+			 */
+			U3BRG = (uint16_t)((uint32_t)((uint32_t)SYS_CLOCK_FREQ / (uint32_t)uart->baud) / 16) - 1;
+		}
+
 
 		if (uart->rx_pin != NO_PIN) {
 			U3_RX_ISR_ENABLE = ENABLED;
@@ -1149,14 +1207,34 @@ static void uart_set_uart_config(struct uart_data *uart)
 		U4STAbits.URXISEL = 0b10;
 
 		/*
-		 * Desired Baud Rate = FCY/(16 (UxBRG + 1))
+		 * with BRGH = 0 Slow Speed Mode:
+		 *        Baudrate - between  SYS_CLOCK_FREQ /(16 * 65536) and SYS_CLOCK_FREQ / 16
+		 *                   For SYS_CLOCK_FREQ = 16,000,000 Min 15bps Max 1Mbps 
+		 *                   For SYS_CLOCK_FREQ =  4,000,000 Min 3bps Max 250Kbps 
+		 * 
+		 *                   Desired Baud Rate = FCY/(16 (UxBRG + 1))
 		 *
-		 * UxBRG = ((FCY/Desired Baud Rate)/16) - 1
+		 *                   UxBRG = ((FCY/Desired Baud Rate)/16) - 1
 		 *
-		 * UxBRG = ((CLOCK/MODBUS_BAUD)/16) -1
+		 *                   UxBRG = ((CLOCK / BAUD)/16) -1
 		 *
+		 *
+		 * with BRGH = 1 : SYS_CLOCK_FREQ /(4 * 65536) <= Baudrate <= SYS_CLOCK_FREQ / 4
+		 *                   For SYS_CLOCK_FREQ = 16,000,000 Min 61bps Max 4Mbps 
+		 *                   For SYS_CLOCK_FREQ =  4,000,000 Min 15bps Max 1Mbps 
 		 */
-		U4BRG = ((SYS_CLOCK_FREQ / uart->baud) / 16) - 1;
+		if(uart->uart_mode & BRGH_MASK) {
+			/*
+			 * Hight Speed Mode:
+			 */
+			U4BRG = (uint16_t)((uint32_t)((uint32_t)SYS_CLOCK_FREQ / (uint32_t)uart->baud) / 4) - 1;
+		} else {
+			/*
+			 * Standard Mode:
+			 */
+			U4BRG = (uint16_t)((uint32_t)((uint32_t)SYS_CLOCK_FREQ / (uint32_t)uart->baud) / 16) - 1;
+		}
+
 
 		if (uart->rx_pin != NO_PIN) {
 			U4_RX_ISR_ENABLE = ENABLED;

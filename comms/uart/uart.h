@@ -58,7 +58,7 @@ struct uart_data {
      ty_peripheral_pin rx_pin; /**< GPIO Pin to be used for the transmit pin of connection \ref */
     uint8_t            uart;        /**< Uart identifier */
     uint16_t           uart_mode;   /**< Mode bits for the connection */
-    uint16_t           baud;        /**< Baud rate for the connection */
+    uint32_t           baud;        /**< Baud rate for the connection */
     void               (*tx_finished)(void *);  /**< Function to be called when a requested transmission has finished */
     void               (*process_rx_char)(uint8_t, uint8_t); /**< Function to be called when a character is received */
 };
