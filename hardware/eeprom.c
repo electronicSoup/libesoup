@@ -4,7 +4,7 @@
  *
  * eeprom functions of the electronicSoup Cinnamon Bun
  *
- * Copyright 2017 2018 electronicSoup Limited
+ * Copyright 2017 - 2018 electronicSoup Limited
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 2 of the GNU Lesser General Public License
@@ -43,6 +43,10 @@
 #include "libesoup_config.h"
 
 #if defined(SYS_EEPROM_RW)
+
+#ifndef SYS_SPI_BUS
+#error libesoup_config.h file should define SYS_SPI_BUS upon which EEPROM depends (see libesoup/examples)
+#endif
 
 /*
  * The EEPROM chip is connected to the first SPI bus of the PIC24FJ256GB106
