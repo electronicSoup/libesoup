@@ -4,7 +4,7 @@
  *
  * Functions for initialisation of the Serial Port.
  *
- * Copyright 2017 electronicSoup Limited
+ * Copyright 2017 - 2018 electronicSoup Limited
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 2 of the GNU Lesser General Public License
@@ -21,13 +21,12 @@
  * http://www.geeksforgeeks.org/implement-itoa/
  */
 #include <stdarg.h>   // Required for vargs
-
-//#define DEBUG_FILE
-//static const char *TAG ="SERIAL_LOG";
-
 #include "libesoup_config.h"
 
 #ifdef SYS_SERIAL_LOGGING
+
+//#define DEBUG_FILE
+//static const char *TAG ="SERIAL_LOG";
 
 #include "libesoup/comms/uart/uart.h"
 #include "libesoup/logger/serial_log.h"
@@ -70,12 +69,13 @@
 #endif // if defined (ES_LINUX)
 
 #define LEVEL_STRING_LEN  2
-static const char debug_string[LEVEL_STRING_LEN + 1] = "D-";
-static const char info_string[LEVEL_STRING_LEN + 1] = "I-";
+static const char debug_string[LEVEL_STRING_LEN + 1]   = "D-";
+static const char info_string[LEVEL_STRING_LEN + 1]    = "I-";
 static const char warning_string[LEVEL_STRING_LEN + 1] = "W-";
-static const char error_string[LEVEL_STRING_LEN + 1] = "E-";
+static const char error_string[LEVEL_STRING_LEN + 1]   = "E-";
 
 /*
+ * Local helper functions
  */
 static uint8_t *itoa(uint16_t num, uint8_t *str, uint8_t base);
 static uint8_t *itoa32bit(uint32_t num, uint8_t *str, uint8_t base);
@@ -84,7 +84,7 @@ static void reverse(uint8_t str[], uint16_t length);
 
 /*
  * Declaration of the data structure being used to manage UART connection.
- * Static to this file only!
+ * Static to this file only! A pointer will be passed to uart module.
  */
 static struct uart_data serial_uart;
 
@@ -118,11 +118,11 @@ result_t serial_logging_init(void)
 	 * Serial Port pin configuration should be defined
 	 * in include file libesoup_config.h
 	 */
-#ifdef SERIAL_LOGGING_RX_ENABLE
-        SERIAL_LOGGING_RX_DDR = INPUT_PIN;
-	UART_1_RX = SERIAL_LOGGING_RX_PIN;
-	IEC0bits.U1RXIE = 1;
-#endif // SERIAL_LOGGING_RX_ENABLE
+//#ifdef SERIAL_LOGGING_RX_ENABLE
+//        SERIAL_LOGGING_RX_DDR = INPUT_PIN;
+//	UART_1_RX = SERIAL_LOGGING_RX_PIN;
+//	IEC0bits.U1RXIE = 1;
+//#endif // SERIAL_LOGGING_RX_ENABLE
         /*
          * Reserve a uart for the RS232 Comms
          */
@@ -133,7 +133,12 @@ result_t serial_logging_init(void)
 #else
         serial_uart.rx_pin = NO_PIN;
 #endif
-        rc = uart_calculate_mode(&serial_uart.uart_mode, UART_8_DATABITS, UART_PARITY_NONE, UART_ONE_STOP_BIT, UART_IDLE_HIGH);
+	/*
+	 * Get the UART Module to calculate the mode of operation required for
+	 * the settings we want. This mode is filled into the uart request
+	 * data structure.
+	 */
+	rc = uart_calculate_mode(&serial_uart.uart_mode, UART_8_DATABITS, UART_PARITY_NONE, UART_ONE_STOP_BIT, UART_IDLE_HIGH);
         if(rc != SUCCESS) {
                 return(rc);
         }                
@@ -145,7 +150,7 @@ result_t serial_logging_init(void)
 #endif // ifdef XC16 || __XC8
 
 	/*
-	 * Short delay to allow the line to stablaise before sending the 
+	 * Short delay to allow the line to stabilise before sending the 
 	 * first character on the channel
 	 */
 	for (delay = 0; delay < 0x100; delay++) Nop();
