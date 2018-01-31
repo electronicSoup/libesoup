@@ -26,7 +26,7 @@
 
 #ifdef SYS_SERIAL_LOGGING
 #define DEBUG_FILE
-static const char *TAG = "CORE";
+static const char *TAG  __attribute__((unused))  = "CORE";
 #include "libesoup/logger/serial_log.h"
 #endif
 
