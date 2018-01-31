@@ -50,7 +50,8 @@
 #ifdef SYS_SW_TIMERS
 
 #ifdef SYS_SERIAL_LOGGING
-#define DEBUG_FILE
+//#define DEBUG_FILE
+#undef DEBUG_FILE
 static const char *TAG = "SW_TIMERS";
 #include "libesoup/logger/serial_log.h"
 #endif
@@ -131,7 +132,7 @@ static void hw_expiry_function(timer_id timer, union sigval data)
 {
 	timer_ticked = TRUE;
 }
-#endif // XC16 || __XC8
+#endif // XC16
 
 /*
  * void sw_timer_init(void)
