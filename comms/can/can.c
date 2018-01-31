@@ -123,7 +123,7 @@ static void status_handler(uint8_t mask, can_status_t status, can_baud_rate_t ba
 				break;
 			
 			default:
-#if ((defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
+#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
 				LOG_E("Unrecognised SYS_CAN Layer 2 status\n\r");
 #endif
 				break;

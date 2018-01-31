@@ -91,7 +91,7 @@ result_t frame_dispatch_reg_handler(can_l2_target_t *target)
 	// Find a free slot
 	for(loop = 0; loop < SYS_CAN_L2_HANDLER_ARRAY_SIZE; loop++) {
 		if(registered_handlers[loop].used == FALSE) {
-#if (defined(SYS_SERIAL_LOGGING) defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_INFO))
+#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_INFO))
 			LOG_I("Target stored at target %d\n\r", loop);
 #endif
 			registered_handlers[loop].used = TRUE;
