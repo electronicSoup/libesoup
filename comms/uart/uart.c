@@ -4,7 +4,7 @@
  *
  * UART functionalty for the electronicSoup Cinnamon Bun
  *
- * Copyright 2017 2018 electronicSoup Limited
+ * Copyright 2017 - 2018 electronicSoup Limited
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 2 of the GNU Lesser General Public License
@@ -471,6 +471,9 @@ void uart_init(void)
 	}
 }
 
+/*
+ * uart_reserve - Reserve a UART Channel for future use by the caller.
+ */
 result_t uart_reserve(struct uart_data *data)
 {
 	/*
@@ -1075,7 +1078,7 @@ static void uart_set_uart_config(struct uart_data *uart)
 #endif // ENABLE_EUSART_RX
 		RCSTAbits.SPEN = 1;
 		TXREG = 'J';
-#endif // MicroController Selection
+#endif // MicroController Selection 18Fxxx
 		break;
 #endif // UART_1
 #ifdef UART_2
