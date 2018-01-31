@@ -25,13 +25,16 @@
 #error Unrecognised Compiler!
 #endif
 
+#include "libesoup_config.h"
+
+#ifndef SYS_CAN_ISO15765
+
 #include <stdio.h>
 #include <string.h>
 #if defined(ES_LINUX)
     #include <stdlib.h>
 #endif
 
-#include "libesoup_config.h"
 
 #ifdef SYS_SERIAL_LOGGING
 #define DEBUG_FILE
@@ -995,3 +998,5 @@ result_t iso15765_dispatch_set_unhandled_handler(iso15765_msg_handler_t handler)
 	unhandled_handler = (iso15765_msg_handler_t)handler;
 	return(SUCCESS);
 }
+
+#endif // SYS_CAN_ISO15765
