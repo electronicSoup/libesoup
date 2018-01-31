@@ -25,26 +25,42 @@ static const char *TAG = "Main";
 #endif
 #endif
 
-#include "libesoup/comms/spi/spi.h"
+//#include "libesoup/comms/spi/spi.h"
 #include "libesoup/hardware/eeprom.h"
+#include "libesoup/timers/sw_timers.h"
+
+static struct timer_req timer_request;
 
 /*
  * Forward declaration of the timer expiry function
  */
-void exp_func(void *);
+void exp_func(timer_id timer, union sigval);
 
 int main(void)
 {
         result_t      rc;
         uint8_t       data;
         uint8_t       loop;
+	timer_id      timer;
 
 	rc = libesoup_init();
 	if(rc != SUCCESS) {
 		while(1){}
 	}
 	LOG_D("Testing\n\r");
-#if 1
+
+	TIMER_INIT(timer)
+	timer_request.units = Seconds;
+	timer_request.duration = 5;
+	timer_request.type = repeat;
+	timer_request.data.sival_int = 0;
+	timer_request.exp_fn = exp_func;
+	
+	rc = sw_timer_start(&timer, &timer_request);
+
+
+	
+#if 0
         for(loop = 0; loop <= EEPROM_MAX_ADDRESS; loop++) {
                 rc = eeprom_write((uint16_t)loop, loop);
                 if(rc != SUCCESS) {
@@ -55,15 +71,14 @@ int main(void)
         }
 #endif // 0
 	LOG_D("EEPROM Written\n\r");
+#if 0
         for(loop = 0; loop <= EEPROM_MAX_ADDRESS; loop++) {
-#if 1
                 rc = eeprom_read((uint16_t)loop, &data);
                 if(rc != SUCCESS) {
 #if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
 		        LOG_E("Failed to read to EEPROM\n\r");
 #endif
                 }
-#endif // 0
 #if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 //		if((loop % 10) == 0) {
 //			LOG_D("Read back 0x%x from %d\n\r", data, loop);
@@ -71,11 +86,19 @@ int main(void)
 //		}
 #endif
         }
+#endif // 0
 	
 	LOG_D("Entering main loop\n\r");
 
         while(1) {
-                Nop();
+		CHECK_TIMERS()
         }
         return 0;
+}
+
+void exp_func(timer_id timer, union sigval data)
+{
+#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+	LOG_D("Expiry()\n\r");
+#endif	
 }

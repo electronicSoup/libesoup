@@ -113,6 +113,11 @@
 #define SYS_UART_TX_BUFFER_SIZE 300
 #endif // defined(SYS_SERIAL_LOGGING)
 
+#define SYS_HW_TIMERS
+#define SYS_SW_TIMERS
+#define SYS_NUMBER_OF_SW_TIMERS    10
+#define SYS_SW_TIMER_TICK_ms        5
+
 /*
  * EEPROM Chip is connected via the SPI Interface so enable
  */
