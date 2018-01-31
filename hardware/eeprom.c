@@ -42,7 +42,7 @@
 
 #include "libesoup_config.h"
 
-#if defined(SYS_EEPROM_RW)
+#if defined(SYS_EEPROM)
 
 #ifndef SYS_SPI_BUS
 #error libesoup_config.h file should define SYS_SPI_BUS upon which EEPROM depends (see libesoup/examples)
@@ -65,6 +65,10 @@ static const char *TAG = "EEPROM";
 #ifndef SYS_LOG_LEVEL
 #error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
 #endif
+#endif // SYS_SERIAL_LOGGING
+
+#ifndef EEPROM_CS_PIN_DIRECTION
+#error Board file should define EEPROM_CS_PIN_DIRECTION (see libesoup/examples/libesoup_config.h)
 #endif
 
 
@@ -97,6 +101,18 @@ static void clear_write_in_progress(void)
 		status = spi_write_byte(0x00);
 		EEPROM_DeSelect
 	} while (status & EEPROM_STATUS_WIP);
+}
+
+/*
+ */
+result_t eprom_init(void)
+{
+		/*
+	 * Initialise the EEPROM Chip Select Pin
+	 */
+	// Todo - Check that this is defined and issue compiler error.
+	EEPROM_CS_PIN_DIRECTION = OUTPUT_PIN;
+	EEPROM_DeSelect
 }
 
 /*
@@ -316,4 +332,4 @@ result_t  eeprom_str_write(uint16_t address, uint8_t *buffer, uint16_t *length)
 	return (rc);
 }
 
-#endif // defined(SYS_EEPROM_RW)
+#endif // defined(SYS_EEPROM)

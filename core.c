@@ -106,6 +106,16 @@ result_t libesoup_init(void)
 #ifdef SYS_JOBS
 	jobs_init();
 #endif
+
+#ifdef SYS_EEPROM
+	rc = eprom_init();
+        if (rc != SUCCESS) {
+#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
+		LOG_E("Failed in initialise RTC Module\n\r");
+#endif
+                return(rc);
+	}
+#endif
 	
 #ifdef SYS_SPI_BUS
         spi_init();
