@@ -4,7 +4,7 @@
  *
  * Timer functionalty for the electronicSoup Cinnamon Bun
  *
- * Copyright 2017 2018 electronicSoup Limited
+ * Copyright 2017 - 2018 electronicSoup Limited
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 2 of the GNU Lesser General Public License
@@ -67,6 +67,10 @@ static const char *TAG = "SW_TIMERS";
 /*
  * Check required libesoup_config.h defines are found
  */
+#ifndef SYS_HW_TIMERS
+#error libesoup_config.h file should define SYS_HW_TIMERS (SW Timers depend on a Hardware timer)
+#endif
+
 #ifndef SYS_NUMBER_OF_SW_TIMERS
 #error libesoup_config.h file should define SYS_NUMBER_OF_SW_TIMERS (see libesoup/examples/libesoup_config.h)
 #endif
@@ -90,10 +94,9 @@ static	struct timer_req hw_timer_req;
  * Data structure for a Timer
  */
 typedef struct {
-	boolean         active;
-	uint16_t        expiry_count;
-	expiry_function function;
-	union sigval    expiry_data;
+	boolean           active;
+	uint16_t          expiry_count;
+	struct timer_req *request;
 } sys_timer_t;
 
 /*
@@ -110,6 +113,12 @@ typedef struct {
 #endif //__PIC24FJ256GB106__
 #endif // XC16 || __XC8
 sys_timer_t timers[SYS_NUMBER_OF_SW_TIMERS];
+
+/*
+ * Local static functions
+ */
+static result_t calculate_ticks(struct timer_req *request, uint16_t *ticks);
+static void calculate_expiry_count(timer_id timer, uint16_t ticks);
 
 /*
  * Timer_1 ISR. To keep ISR short it simply restarts TIMER_1 and sets 
@@ -145,7 +154,7 @@ void sw_timer_init(void)
 	for(loop=0; loop < SYS_NUMBER_OF_SW_TIMERS; loop++) {
 		timers[loop].active = FALSE;
 		timers[loop].expiry_count = 0;
-		timers[loop].function = (expiry_function)NULL;
+		timers[loop].request = (struct timer_req *)NULL;
 	}
 
 #if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__) || defined(__dsPIC33EP256MU806__)
@@ -196,10 +205,12 @@ void sw_timer_init(void)
 #if defined(XC16) || defined(__XC8)
 void timer_tick(void)
 {
-	uint16_t active_timers;
-	uint8_t loop;
+	uint16_t        ticks;
+	uint16_t        active_timers;
+	uint8_t         loop;
 	expiry_function function;
-	union sigval data;
+	union sigval    data;
+	result_t        rc = SUCCESS;
 
 	active_timers = 0;
 	timer_ticked = FALSE;
@@ -218,16 +229,26 @@ void timer_tick(void)
 				 * timer expired so call expiry function.
 				 */
 #if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-                                LOG_D("Expiry\n\r");
+                                LOG_D("Expiry timer %d\n\r", loop);
 #endif
-				timers[loop].active = FALSE;
-
-				function = timers[loop].function;
-				data = timers[loop].expiry_data;
-
-				timers[loop].expiry_count = 0;
-				timers[loop].function = (expiry_function) NULL;
+				function = timers[loop].request->exp_fn;
+				data = timers[loop].request->data;
 				function(loop, data);
+
+				if(timers[loop].request->type == single_shot) {
+					timers[loop].active = FALSE;
+					timers[loop].expiry_count = 0;
+					timers[loop].request = (struct timer_req *) NULL;
+				} else if(timers[loop].request->type == repeat) {
+					rc = calculate_ticks(timers[loop].request, &ticks);
+					if(rc != SUCCESS) {
+						timers[loop].active = FALSE;
+						timers[loop].expiry_count = 0;
+						timers[loop].request = (struct timer_req *) NULL;
+					} else {
+						calculate_expiry_count(loop, ticks);
+					}
+				}				
 			}
 		}
 	}
@@ -279,9 +300,10 @@ void timer_tick(void)
  */
 result_t sw_timer_start(timer_id *timer, struct timer_req *request)
 {
-	uint16_t ticks;
+	uint16_t  ticks;
+	result_t  rc = SUCCESS;
 #if defined(XC16) || defined(__XC8)
-	timer_id loop;
+	timer_id  loop;
 
 	if(*timer != BAD_TIMER_ID) {
                 if(*timer < SYS_NUMBER_OF_SW_TIMERS) {
@@ -294,13 +316,8 @@ result_t sw_timer_start(timer_id *timer, struct timer_req *request)
 		sw_timer_cancel(*timer);
 	}
 
-	if(request->units == mSeconds) {
-		ticks = ((request->duration < SYS_SW_TIMER_TICK_ms) ? 1 : (request->duration / SYS_SW_TIMER_TICK_ms));
-	} else if (request->units == Seconds) {
-		ticks = (request->duration * (1000 / SYS_SW_TIMER_TICK_ms));
-	} else {
-		return(ERR_BAD_INPUT_PARAMETER);
-	}
+	rc = calculate_ticks(request, &ticks);
+	if(rc != SUCCESS) return(rc);
 	
 	/*
 	 * Find the First empty timer
@@ -314,14 +331,8 @@ result_t sw_timer_start(timer_id *timer, struct timer_req *request)
 			 * Found an inactive timer so assign to this expiry
 			 */
 			timers[loop].active = TRUE;
-
-			if( (0xFFFF - timer_counter) > ticks) {
-				timers[loop].expiry_count = timer_counter + ticks;
-			} else {
-				timers[loop].expiry_count = ticks - (0xFFFF - timer_counter);
-			}
-			timers[loop].function = request->exp_fn;
-			timers[loop].expiry_data = request->data;
+			calculate_expiry_count(loop, ticks);
+			timers[loop].request = request;
 
 			*timer = loop;
 
@@ -403,7 +414,7 @@ result_t sw_timer_cancel(timer_id timer)
 	} else if (timers[timer].active) {
                 timers[timer].active = FALSE;
                 timers[timer].expiry_count = 0;
-                timers[timer].function = (expiry_function) NULL;
+                timers[timer].request = (struct timer_req *) NULL;
         } else {
 #if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_INFO))
                 LOG_I("sw_timer_cancel() timer not active!\n\r");
@@ -447,5 +458,25 @@ result_t sw_timer_cancel_all(void)
 }
 #endif // XC16 || __XC8
 
+static result_t calculate_ticks(struct timer_req *request, uint16_t *ticks)
+{
+	if(request->units == mSeconds) {
+		*ticks = ((request->duration < SYS_SW_TIMER_TICK_ms) ? 1 : (request->duration / SYS_SW_TIMER_TICK_ms));
+	} else if (request->units == Seconds) {
+		*ticks = (request->duration * (1000 / SYS_SW_TIMER_TICK_ms));
+	} else {
+		return(ERR_BAD_INPUT_PARAMETER);
+	}
+	return(SUCCESS);
+}
+
+static void calculate_expiry_count(timer_id timer, uint16_t ticks)
+{
+	if( (0xFFFF - timer_counter) > ticks) {
+		timers[timer].expiry_count = timer_counter + ticks;
+	} else {
+		timers[timer].expiry_count = ticks - (0xFFFF - timer_counter);
+	}
+}
 
 #endif // #ifdef SYS_SW_TIMERS
