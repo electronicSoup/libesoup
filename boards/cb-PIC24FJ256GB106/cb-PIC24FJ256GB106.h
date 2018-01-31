@@ -34,7 +34,7 @@
 /**
  * @brief Crystal Frequency of the Hardware Device.
  */
-#define CRYSTAL_FREQ 16000000
+#define CRYSTAL_FREQ 8000000  // This board is using the internal RC
 
 /**
  * @brief Bootloader pause on powerup, and listen for new Firmware?
@@ -227,6 +227,9 @@
 #define SPI_MISO_DIRECTION  TRISDbits.TRISD2
 #define SPI_MOSI_DIRECTION  TRISDbits.TRISD3
 
+/*
+ * Definitions of Peripheral pins
+ */
 #define SPI_MISO_PIN        RP23
 
 #define SPI_MOSI_PIN        RPOR11bits.RP22R
