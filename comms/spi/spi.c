@@ -35,6 +35,37 @@ static const char *TAG = "SPI";
 #endif
 #endif // SYS_SERIAL_LOGGING
 
+/*
+ * Board file definitions for the SPI Interface being used
+ */
+#ifndef SPI_RW_FINISHED
+#error Board file should define SPI Interface (SPI_RW_FINISHED)
+#endif
+
+#ifndef SPI_SCK_DIRECTION
+#error Board file should define SPI Interface (SPI_SCK_DIRECTION)
+#endif
+
+#ifndef SPI_MISO_DIRECTION
+#error Board file should define SPI Interface (SPI_MISO_DIRECTION)
+#endif
+
+#ifndef SPI_MOSI_DIRECTION
+#error Board file should define SPI Interface (SPI_MOSI_DIRECTION)
+#endif
+
+#ifndef SPI_MISO_PIN
+#error Board file should define SPI Interface (SPI_MISO_PIN)
+#endif
+
+#ifndef SPI_MOSI_PIN
+#error Board file should define SPI Interface (SPI_MOSI_PIN)
+#endif
+
+#ifndef SPI_SCK_PIN
+#error Board file should define SPI Interface (SPI_SCK_PIN)
+#endif
+
 void spi_init(void)
 {
 	uint8_t loop;
@@ -46,13 +77,6 @@ void spi_init(void)
 	 * short delay before init SPI
 	 */
 	for (loop = 0; loop < 0xff; loop++) Nop();
-
-	/*
-	 * Initialise the EEPROM Chip Select Pin
-	 */
-	// Todo - Check that this is defined and issue compiler error.
-	EEPROM_CS_PIN_DIRECTION = OUTPUT_PIN;
-	EEPROM_DeSelect
 
 	SPI_SCK_DIRECTION = OUTPUT_PIN;
 	SPI_MISO_DIRECTION = INPUT_PIN;
