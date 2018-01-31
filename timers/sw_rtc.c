@@ -4,7 +4,7 @@
  *
  * This file contains code for dealing with Real Date Time values
  *
- * Copyright 2017 electronicSoup Limited
+ * Copyright 2017 - 2018 electronicSoup Limited
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 2 of the GNU Lesser General Public License
@@ -19,8 +19,13 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  *
  */
-//#include <stdlib.h>
 #include "libesoup_config.h"
+
+/*
+ * This is an experimental piece of code never finished and will probably be
+ * removed as moved to an actual HW RTC.
+ */
+#ifdef SYS_SW_RTC
 
 #ifdef SYS_SERIAL_LOGGING
 #define DEBUG_FILE
@@ -398,3 +403,5 @@ result_t rtc_get_dummy_datetime(struct datetime *dt)
 
 	return (SUCCESS);
 }
+
+#endif // SYS_SW_RTC
