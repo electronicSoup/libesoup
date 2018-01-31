@@ -26,10 +26,8 @@
 
 #ifdef SYS_SERIAL_LOGGING
 #define DEBUG_FILE
-#ifdef SYS_HW_RTC
 static const char *TAG = "CORE";
 #include "libesoup/logger/serial_log.h"
-#endif
 #endif
 
 #ifdef SYS_HW_TIMERS
@@ -60,6 +58,9 @@ static const char *TAG = "CORE";
 #include "libesoup/comms/spi/spi.h"
 #endif
 
+#ifdef SYS_EEPROM
+#include "libesoup/hardware/eeprom.h"
+#endif
 
 result_t libesoup_init(void)
 {
