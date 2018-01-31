@@ -67,8 +67,8 @@ static const char * TAG = "CB_INFO";
 #error libesoup_config.h file should define SYS_FLASH_RW Required by Board Info (see libesoup/examples/libesoup_config.h)
 #endif
 
-#ifndef SYS_EEPROM_RW
-#error libesoup_config.h file should define SYS_EEPROM_RW Required by Board Info (see libesoup/examples/libesoup_config.h)
+#ifndef SYS_EEPROM
+#error libesoup_config.h file should define SYS_EEPROM Required by Board Info (see libesoup/examples/libesoup_config.h)
 #endif
 
 #include "libesoup/hardware/flash.h"

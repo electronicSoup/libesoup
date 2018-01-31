@@ -91,10 +91,10 @@
  * 
  * Default set to 19k2
  */
-//#define SYS_SERIAL_LOGGING_BAUD           19200
+#define SYS_SERIAL_LOGGING_BAUD           19200
 //#define SYS_SERIAL_LOGGING_BAUD           38400
 //#define SYS_SERIAL_LOGGING_BAUD           76800
-#define SYS_SERIAL_LOGGING_BAUD           115200
+//#define SYS_SERIAL_LOGGING_BAUD           115200
 
 /**
  * @brief The size of the Transmit buffer to be used by the UARTs.
@@ -121,7 +121,7 @@
 /*
  * Include access to the EEPROM Chip in the project
  */
-#define SYS_EEPROM_RW
+#define SYS_EEPROM
         
 /*
  * Include a board file
