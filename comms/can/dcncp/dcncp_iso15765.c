@@ -28,6 +28,8 @@
 
 #include "libesoup_config.h"
 
+#ifdef SYS_CAN_ISO15765_DCNCP
+
 #ifdef SYS_SERIAL_LOGGING
 #define DEBUG_FILE
 static const char *TAG = "ISO15765_DCNCP";
@@ -410,3 +412,5 @@ void send_ready_response(uint8_t address)
 	iso15765_tx_msg(&response);
 }
 #endif
+
+#endif // SYS_CAN_ISO15765_DCNCP

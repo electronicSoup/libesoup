@@ -1,6 +1,9 @@
 //#include "os_api.h"
 
 #include "libesoup_config.h"
+
+#ifdef ES_LINUX
+
 //#include "logging.h"
 
 #include <string.h>
@@ -211,3 +214,5 @@ void *create_read_thread(void *arg)
 	}
 	return((void *)NULL);
 }
+
+#endif // ES_LINUX

@@ -7,7 +7,7 @@
  * Basically the state waits for an Android device to connect and moves
  * to the Connected state.
  * 
- * Copyright 2017 2018 electronicSoup Limited
+ * Copyright 2017 - 2018 electronicSoup Limited
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 2 of the GNU Lesser General Public License
@@ -23,6 +23,8 @@
  *
  */
 #include "libesoup_config.h"
+
+#ifdef SYS_USB_ANDROID
 
 #ifdef SYS_SERIAL_LOGGING
 #define DEBUG_FILE
@@ -116,3 +118,5 @@ void idle_process_usb_event(USB_EVENT event)
 			break;
 	}
 }
+
+#endif // SYS_USB_ANDROID

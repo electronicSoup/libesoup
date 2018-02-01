@@ -4,7 +4,7 @@
  *
  * Dynamic SYS_CAN Node Configuration Protocol 
  *
- * Copyright 2017 2018 electronicSoup Limited
+ * Copyright 2017 - 2018 electronicSoup Limited
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 2 of the GNU Lesser General Public License
@@ -19,11 +19,13 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  *
  */
+#include "libesoup_config.h"
+
+#ifdef SYS_CAN_DCNCP
+
 #include <stdlib.h>
 #include <string.h>
 //#include <stdio.h>
-
-#include "libesoup_config.h"
 
 #if (defined(SYS_SERIAL_LOGGING) && !defined(SYS_LOG_LEVEL))
 #error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
@@ -617,3 +619,5 @@ void dcncp_send_ping(void)
 #endif
 #endif // SYS_CAN_L2_PING_LOGGING
 }
+
+#endif // SYS_CAN_DCNCP

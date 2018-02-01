@@ -19,7 +19,11 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  *
  */
-#include "libesoup/core.h"
+#include "libesoup_config.h"
+
+#ifdef NOS_API
+
+//#include "libesoup/core.h"
 //#include "libesoup/app/os.h"
 
 #define OS_FNS 0x8A92
@@ -93,3 +97,5 @@ void os_init(void)
 	get_io_address = (result_t (*)(uint8_t *))(OS_FNS + 76);
 	flash_strcpy = (result_t (*)(char *dst, __prog__ char *src, uint16_t *length))(OS_FNS + 80);
 }
+
+#endif // NOS_API

@@ -25,13 +25,16 @@
 #error Unrecognised Compiler!
 #endif
 
+#include "libesoup_config.h"
+
+#ifdef SYS_CAN_ISO15765
+
 #include <stdio.h>
 #include <string.h>
 #if defined(ES_LINUX)
     #include <stdlib.h>
 #endif
 
-#include "libesoup_config.h"
 
 #ifdef SYS_SERIAL_LOGGING
 #define DEBUG_FILE
@@ -316,8 +319,9 @@ result_t iso15765_tx_msg(iso15765_msg_t *msg)
 	 * Check for a transmit buffer already active to the destination
 	 */
 	if(node_buffers[msg->address].tx_buffer != NULL) {
-#if (SYS_LOG_LEVEL <= LOG_ERROR)
+#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR)
 		LOG_E("ISO15765 transmitter already busy\n\r");
+#endif
 #else
 #error Unrecognised Compiler!
 #endif
@@ -332,7 +336,7 @@ result_t iso15765_tx_msg(iso15765_msg_t *msg)
 		exit(1);
 	}
 	node_buffers[msg->address].tx_buffer = tx_buffer;
-#endif
+//#endif
 	init_tx_buffer(tx_buffer);
 
 	/*
@@ -519,6 +523,7 @@ void iso15765_frame_handler(can_frame *frame)
 		if(mcp_receiver_busy) {
 #if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
 			LOG_E("ERROR: ISO15765 Received First Frame whilst RxBuffer Busy\n\r");
+#endif
 			return;
 		}
 #elif defined(ES_LINUX)
@@ -995,3 +1000,5 @@ result_t iso15765_dispatch_set_unhandled_handler(iso15765_msg_handler_t handler)
 	unhandled_handler = (iso15765_msg_handler_t)handler;
 	return(SUCCESS);
 }
+
+#endif // SYS_CAN_ISO15765

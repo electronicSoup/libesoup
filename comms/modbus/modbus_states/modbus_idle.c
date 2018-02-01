@@ -21,6 +21,8 @@
  */
 #include "libesoup_config.h"
 
+#ifdef SYS_MODBUS
+
 #ifdef SYS_SERIAL_LOGGING
 #define DEBUG_FILE
 static const char *TAG = "MODBUS_IDLE";
@@ -145,3 +147,5 @@ void process_rx_character(struct modbus_channel *channel, uint8_t ch)
 #endif
 	}
 }
+
+#endif // SYS_MODBUS

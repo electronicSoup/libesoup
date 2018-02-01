@@ -4,7 +4,7 @@
  *
  * Implementation of ISO 11783-3
  *
- * Copyright 2017 2018 electronicSoup Limited
+ * Copyright 2017 - 2018 electronicSoup Limited
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 2 of the GNU Lesser General Public License
@@ -20,6 +20,9 @@
  *
  */
 #include "libesoup_config.h"
+
+#ifdef SYS_CAN_ISO11783
+
 #include "libesoup/can/es_can.h"
 
 #ifdef SYS_SERIAL_LOGGING
@@ -410,3 +413,5 @@ result_t iso11783_dispatch_set_unhandled_handler(iso11783_msg_handler_t handler)
 	unhandled_handler = (iso11783_msg_handler_t)handler;
 	return(SUCCESS);
 }
+
+#endif // SYS_CAN_ISO11783
