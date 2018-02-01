@@ -81,12 +81,12 @@ static const char *TAG = "EEPROM";
 /*
  * EEPROM SPI Commands.
  */
-#define SPI_EEPROM_READ           0x03
-#define SPI_EEPROM_WRITE          0x02
-#define SPI_EEPROM_WRITE_DISABLE  0x04
-#define SPI_EEPROM_WRITE_ENABLE   0x06
-#define SPI_EEPROM_STATUS_READ    0x05
 #define SPI_EEPROM_STATUS_WRITE   0x01
+#define SPI_EEPROM_WRITE          0x02
+#define SPI_EEPROM_READ           0x03
+#define SPI_EEPROM_WRITE_DISABLE  0x04
+#define SPI_EEPROM_STATUS_READ    0x05
+#define SPI_EEPROM_WRITE_ENABLE   0x06
 
 #define EEPROM_STATUS_WIP         0x01
 
