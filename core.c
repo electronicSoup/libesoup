@@ -121,5 +121,10 @@ result_t libesoup_init(void)
 #ifdef SYS_SPI_BUS
         spi_init();
 #endif
+
+#ifdef SYS_RAND
+	random_init();
+#endif
+
 	return(SUCCESS);
 }
