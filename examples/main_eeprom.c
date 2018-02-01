@@ -36,6 +36,12 @@ static struct timer_req timer_request;
  */
 void exp_func(timer_id timer, union sigval);
 
+/*
+ * Local variables, static to file
+ */
+static uint8_t eeprom_address = 0;
+static uint8_t eeprom_test_rd = 0;
+
 int main(void)
 {
         result_t      rc;
@@ -47,46 +53,18 @@ int main(void)
 	if(rc != SUCCESS) {
 		while(1){}
 	}
-	LOG_D("Testing\n\r");
 
+	eeprom_address = 0;
+	eeprom_test_rd = 0;
+	
 	TIMER_INIT(timer)
 	timer_request.units = Seconds;
-	timer_request.duration = 5;
+	timer_request.duration = 1;
 	timer_request.type = repeat;
 	timer_request.data.sival_int = 0;
 	timer_request.exp_fn = exp_func;
 	
 	rc = sw_timer_start(&timer, &timer_request);
-
-
-	
-#if 0
-        for(loop = 0; loop <= EEPROM_MAX_ADDRESS; loop++) {
-                rc = eeprom_write((uint16_t)loop, loop);
-                if(rc != SUCCESS) {
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
-		        LOG_E("Failed to write to EEPROM loop %d\n\r", loop);
-#endif
-                }
-        }
-#endif // 0
-	LOG_D("EEPROM Written\n\r");
-#if 0
-        for(loop = 0; loop <= EEPROM_MAX_ADDRESS; loop++) {
-                rc = eeprom_read((uint16_t)loop, &data);
-                if(rc != SUCCESS) {
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
-		        LOG_E("Failed to read to EEPROM\n\r");
-#endif
-                }
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-//		if((loop % 10) == 0) {
-//			LOG_D("Read back 0x%x from %d\n\r", data, loop);
-			LOG_D("Read back from 0\n\r");
-//		}
-#endif
-        }
-#endif // 0
 	
 	LOG_D("Entering main loop\n\r");
 
@@ -98,7 +76,31 @@ int main(void)
 
 void exp_func(timer_id timer, union sigval data)
 {
+	uint8_t  read;
+	result_t rc = SUCCESS;
+
+	if(!eeprom_test_rd) {
 #if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-	LOG_D("Expiry()\n\r");
-#endif	
-}
+		LOG_D("write to address %d\n\r", eeprom_address);
+#endif
+                rc = eeprom_write((uint16_t)eeprom_address, (uint8_t)eeprom_address);
+		if(rc != SUCCESS) {
+			LOG_E("Failed to Write\n\r");
+		}
+		eeprom_test_rd = 1;
+	} else {
+#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+		LOG_D("read from address %d\n\r", eeprom_address);
+#endif
+                rc = eeprom_read((uint16_t)eeprom_address, &read);
+		if(rc != SUCCESS) {
+			LOG_E("Failed to Read\n\r");
+		} else {
+			LOG_D("Read back a value of %d\n\r", read)
+		}
+		eeprom_address++;
+		if(eeprom_address == EEPROM_MAX_ADDRESS) eeprom_address = 0;
+		eeprom_test_rd = 0;
+	}
+}	
+
