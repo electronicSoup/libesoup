@@ -71,13 +71,6 @@ static const char *TAG = "EEPROM";
 #error Board file should define EEPROM_CS_PIN_DIRECTION (see libesoup/examples/libesoup_config.h)
 #endif
 
-
-#if defined(SYS_EEPROM_USE_BOOT_PAGE)
-#ifndef SYS_EEPROM_BOOT_PAGE_SIZE
-#error libesoup_config.h file should define SYS_EEPROM_BOOT_PAGE_SIZE (see libesoup/examples/libesoup_config.h)
-#endif
-#endif // #if defined(SYS_EEPROM_USE_BOOT_PAGE)
-
 /*
  * EEPROM SPI Commands.
  */
@@ -107,10 +100,9 @@ static void clear_write_in_progress(void)
  */
 result_t eprom_init(void)
 {
-		/*
+	/*
 	 * Initialise the EEPROM Chip Select Pin
 	 */
-	// Todo - Check that this is defined and issue compiler error.
 	EEPROM_CS_PIN_DIRECTION = OUTPUT_PIN;
 	EEPROM_DeSelect
 		
@@ -132,25 +124,15 @@ result_t eprom_init(void)
  */
 result_t eeprom_read(uint16_t address, uint8_t *data)
 {
-	uint8_t use_address;
-
-#ifdef SYS_EEPROM_USE_BOOT_PAGE
-	use_address = (uint8_t)(address + SYS_EEPROM_BOOT_PAGE_SIZE);
-#else
-	use_address = (uint8_t)address;
-#endif
-	if(use_address <= EEPROM_MAX_ADDRESS) {
+	if(address <= EEPROM_MAX_ADDRESS) {
 		clear_write_in_progress();
 		EEPROM_Select
 		spi_write_byte(SPI_EEPROM_READ);
-		spi_write_byte(use_address);
+		spi_write_byte(address);
 		*data = spi_write_byte(0x00);
 		EEPROM_DeSelect
 		return(SUCCESS);
 	}
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
-        LOG_E("eeprom_read Address Range Error!\n\r");
-#endif
 	return (ERR_ADDRESS_RANGE);
 }
 
@@ -169,14 +151,7 @@ result_t eeprom_read(uint16_t address, uint8_t *data)
  */
 result_t eeprom_write(uint16_t address, uint8_t data)
 {
-	uint8_t use_address;
-
-#ifdef SYS_EEPROM_USE_BOOT_PAGE
-	use_address = (uint8_t)(address + SYS_EEPROM_BOOT_PAGE_SIZE);
-#else
-	use_address = (uint8_t)address;
-#endif
-	if(use_address <= EEPROM_MAX_ADDRESS) {
+	if(address <= EEPROM_MAX_ADDRESS) {
 		clear_write_in_progress();
 		EEPROM_Select
 		spi_write_byte(SPI_EEPROM_WRITE_ENABLE);
@@ -185,7 +160,7 @@ result_t eeprom_write(uint16_t address, uint8_t data)
 		EEPROM_Select
 
 		spi_write_byte(SPI_EEPROM_WRITE);
-		spi_write_byte((uint8_t)use_address);
+		spi_write_byte((uint8_t)address);
 		spi_write_byte(data);
 		EEPROM_DeSelect
 		Nop();
@@ -194,9 +169,6 @@ result_t eeprom_write(uint16_t address, uint8_t data)
 		EEPROM_DeSelect
 		return(SUCCESS);
         }
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
-        LOG_E("eeprom_write Address Range Error!\n\r");
-#endif
 	return (ERR_ADDRESS_RANGE);
 }
 
@@ -214,19 +186,12 @@ result_t eeprom_write(uint16_t address, uint8_t data)
 result_t eeprom_erase(uint16_t start_address)
 {
 	uint16_t loop;
-	uint8_t  use_address;
 
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
-        LOG_E("eeprom_erase(0x%x)\n\r", start_address);
+#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_INFO))
+        LOG_I("eeprom_erase(0x%x)\n\r", start_address);
 #endif
-#ifdef SYS_EEPROM_USE_BOOT_PAGE
-	use_address = (uint8_t)(start_address + SYS_EEPROM_BOOT_PAGE_SIZE);
-#else
-	use_address = (uint8_t)start_address;
-#endif
-
-	if(use_address <= EEPROM_MAX_ADDRESS) {
-		for (loop = use_address; loop <= EEPROM_MAX_ADDRESS ; loop++) {
+	if(start_address <= EEPROM_MAX_ADDRESS) {
+		for (loop = start_address; loop <= EEPROM_MAX_ADDRESS ; loop++) {
 			asm ("CLRWDT");
 			eeprom_write(loop, 0x00);
 		}
