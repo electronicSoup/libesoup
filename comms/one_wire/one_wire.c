@@ -2,7 +2,7 @@
  *
  * \file libesoup/comms/one_wire/one_wire.c
  *
- * Copyright 2017 2018 electronicSoup Limited
+ * Copyright 2017 - 2018 electronicSoup Limited
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 2 of the GNU Lesser General Public License
@@ -18,6 +18,8 @@
  *
  */
 #include "libesoup_config.h"
+
+#ifdef SYS_ONE_WIRE
 
 #ifdef SYS_SERIAL_LOGGING
 #define DEBUG_FILE
@@ -836,3 +838,5 @@ void bit_read(uint8_t read_bit)
         }
 }
 #endif
+
+#endif // SYS_ONE_WIRE

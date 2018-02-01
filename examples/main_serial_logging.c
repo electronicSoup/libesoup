@@ -45,7 +45,7 @@ int main()
          * Logging.
          */
 #if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-        serial_log(LOG_DEBUG, TAG, "Testing\n\r");
+        LOG_D("\n\r\n\rTesting\n\r");
 	LOG_D("string %s\n\r", "Bingo");
 	LOG_D("uint8_t Hex [0x12] 0x%x\n\r", x);
 	LOG_D("uint8_t Dec [18] %d\n\r", x);

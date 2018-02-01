@@ -21,6 +21,8 @@
  */
 #include "libesoup_config.h"
 
+#ifdef SYS_MODBUS
+
 #ifdef SYS_SERIAL_LOGGING
 #define DEBUG_FILE
 static const char *TAG = "MODBUS_Tx";
@@ -59,3 +61,5 @@ void tx_finished(void *data)
 #endif // SYS_SERIAL_LOGGING
 	set_modbus_awaiting_response_state(channel);
 }
+
+#endif // SYS_MODBUS

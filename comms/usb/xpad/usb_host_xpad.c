@@ -6,7 +6,7 @@
  *
  * http://euc.jp/periphs/xbox-controller.ja.html
  *
- * Copyright 2017 2018 electronicSoup Limited
+ * Copyright 2017 - 2018 electronicSoup Limited
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 2 of the GNU Lesser General Public License
@@ -23,11 +23,13 @@
  *********************************************************************
  * 
  */
+#include "libesoup_config.h"
+
+#ifdef SYS_USB_XPAD
+
 //#include <stdio.h>
 #include "usb/inc/usb.h"
 #include "usb_host_xpad_events.h"
-
-#include "libesoup_config.h"
 
 #ifdef SYS_SERIAL_LOGGING
 #define DEBUG_FILE
@@ -604,3 +606,5 @@ bool xpad_data_event_handler( uint8_t address, USB_EVENT event, void *data, uint
 	}
 	return false;
 }
+
+#endif // SYS_USB_XPAD

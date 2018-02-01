@@ -4,7 +4,7 @@
  *
  * Required by the Microchip USB Library 
  *
- * Copyright 2017 electronicSoup Limited
+ * Copyright 2017 -2018 electronicSoup Limited
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 2 of the GNU Lesser General Public License
@@ -24,6 +24,10 @@
  * supported by this USB Driver. The TPL Structure has to be setup for
  * the Microchip Host stack.
  */
+#include "libesoup_config.h"
+
+#ifdef SYS_USB_XPAD
+
 //#include "usb/usb.h"
 #include "usb/inc/usb.h"
 #include "usb_host_xpad.h"
@@ -43,3 +47,4 @@ USB_TPL usbTPL[NUM_TPL_ENTRIES] =
     { INIT_VID_PID( 0x046Dul, 0xC21Dul ), 0, 0, {0} }, // Logitech Gamepad F310
 };
 
+#endif // SYS_USB_XPAD

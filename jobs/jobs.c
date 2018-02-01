@@ -23,6 +23,8 @@
  */
 #include "libesoup_config.h"
 
+#ifdef SYS_JOBS
+
 #ifdef SYS_SERIAL_LOGGING
 #define DEBUG_FILE
 static const char *TAG = "JOBS";
@@ -95,3 +97,5 @@ result_t jobs_execute(void)
 
 	return(rc);
 }
+
+#endif // SYS_JOBS

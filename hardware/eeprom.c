@@ -113,6 +113,8 @@ result_t eprom_init(void)
 	// Todo - Check that this is defined and issue compiler error.
 	EEPROM_CS_PIN_DIRECTION = OUTPUT_PIN;
 	EEPROM_DeSelect
+		
+	return(SUCCESS);
 }
 
 /*

@@ -21,6 +21,8 @@
  */
 #include "libesoup_config.h"
 
+#ifdef SYS_MODBUS
+
 #ifdef SYS_SERIAL_LOGGING
 #define DEBUG_FILE
 static const char *TAG = "MODBUS_AWAITING_RESPONSE";
@@ -140,3 +142,5 @@ static void process_response_timeout(struct modbus_channel *channel)
 #endif
 	}
 }
+
+#endif // SYS_MODBUS
