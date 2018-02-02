@@ -924,7 +924,7 @@ static void uart_set_tx_pin(uint8_t uart, uint8_t pin)
 #elif defined (__PIC24FJ256GB106__)
 static void uart_set_tx_pin(uint8_t uart, uint8_t pin)
 {
-	uint8_t tx_function;
+	uint8_t tx_function = 0x00;
 
 	switch (uart) {
 	case UART_1:
@@ -942,6 +942,11 @@ static void uart_set_tx_pin(uint8_t uart, uint8_t pin)
 	case UART_4:
 		tx_function = PPS_UART_4_TX;
 		break;
+		
+	default:
+#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
+		LOG_E("Bad input parameters\n\r");
+#endif
 	}
 
 	switch (pin) {
