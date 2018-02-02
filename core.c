@@ -62,6 +62,10 @@ static const char *TAG = "CORE";
 #include "libesoup/hardware/eeprom.h"
 #endif
 
+#ifdef SYS_RAND
+#include "libesoup/utils/rand.h"
+#endif
+
 result_t libesoup_init(void)
 {
 #ifdef XC16
