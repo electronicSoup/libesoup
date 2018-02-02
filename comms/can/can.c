@@ -1,10 +1,10 @@
 /**
  *
- * \file libesoup/can/can.c
+ * \file libesoup/comms/can/can.c
  *
- * Core SYS_CAN Functionality of electronicSoup CAN code
+ * Core SYS_CAN_BUS Functionality of electronicSoup CAN code
  *
- * Copyright 2017 2018 electronicSoup Limited
+ * Copyright 2017 - 2018 electronicSoup Limited
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 2 of the GNU Lesser General Public License
@@ -59,15 +59,13 @@ char can_baud_rate_strings[8][10] = {
 };
 #endif  // SYS_SERIAL_LOGGING
 
-static can_status_t can_status;
-static can_baud_rate_t  baud_status = no_baud;
+static can_status_t     can_status;
 
-static void status_handler(uint8_t mask, can_status_t status, can_baud_rate_t baud);
+static void this_status_handler(union ty_status status);
 
-can_status_handler_t app_status_handler = (can_status_handler_t)NULL;
+status_handler_t app_status_handler = (status_handler_t)NULL;
 
-result_t can_init(can_baud_rate_t baudrate,
-		  can_status_handler_t arg_status_handler)
+result_t can_init(can_baud_rate_t baudrate, uint8_t address, status_handler_t status_handler)
 {
 #if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	LOG_D("can_init\n\r");
@@ -77,9 +75,9 @@ result_t can_init(can_baud_rate_t baudrate,
          * Clear the stored SYS_CAN Status as nothing is done.
          */
 	can_status.byte = 0x00;
-	app_status_handler = arg_status_handler;
+	app_status_handler = status_handler;
 
-	can_l2_init(baudrate, status_handler);
+	can_l2_init(baudrate, this_status_handler);
 
 #ifdef SYS_CAN_PING_PROTOCOL
 	can_ping_init();
@@ -87,13 +85,16 @@ result_t can_init(can_baud_rate_t baudrate,
 	return(SUCCESS);
 }
 
-static void status_handler(uint8_t mask, can_status_t status, can_baud_rate_t baud)
+static void this_status_handler(union ty_status status)
 {
+	can_status_t        can_status;
+
 #if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-	LOG_D("status_handler(mask-0x%x, status-0x%x\n\r", mask, status.byte);
+	LOG_D("status_handler(mask-0x%x, status-0x%x\n\r", status.sword);
 #endif
-	if (mask == L2_STATUS_MASK) {
-		switch(status.bit_field.l2_status) {
+	if (status.sstruct.source == can_bus_status) {
+		can_status.byte = status.sstruct.status;
+		switch(can_status.bit_field.l2_status) {
 			case L2_Uninitialised:
 #if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 				LOG_D("L2_Uninitialised\n\r");
@@ -131,7 +132,7 @@ static void status_handler(uint8_t mask, can_status_t status, can_baud_rate_t ba
 				break;
 		}
 
-#ifdef SYS_CAN_DCNCP
+#ifdef SYS_CAN_BUS_DCNCP
 		if ((status.bit_field.l2_status == L2_Connected) && (can_status.bit_field.l2_status != L2_Connected)) {
 #if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 			LOG_D("Layer 2 Connected so start DCNCP\n\r");
@@ -139,14 +140,11 @@ static void status_handler(uint8_t mask, can_status_t status, can_baud_rate_t ba
 			dcncp_init(status_handler);
 		}
 #endif
-		can_status.bit_field.l2_status = status.bit_field.l2_status;
-		baud_status = baud;
-
 		if (app_status_handler)
-			app_status_handler(can_status, baud_status);
+			app_status_handler(status);
 	}
 
-#ifdef SYS_CAN_DCNCP
+#ifdef SYS_CAN_BUS_DCNCP
 	else if (mask == DCNCP_INIT_STATUS_MASK) {
 		if(status.bit_field.dcncp_initialised) {
 #if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))

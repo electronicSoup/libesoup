@@ -23,7 +23,7 @@
 #define ES_CAN_H
 
 #include "libesoup_config.h"
-
+#include "libesoup/status/status.h"
 /** @defgroup group3 CAN Bus definitions
  *
  * There are two main versions of the CAN Bus protocol. Origionally each
@@ -322,21 +322,17 @@ typedef enum {
 	no_baud    = 0x08
 } can_baud_rate_t;
 
-typedef void (*can_status_handler_t)(can_status_t, can_baud_rate_t);
-
 #if SYS_LOG_LEVEL < NO_LOGGING
 extern char can_baud_rate_strings[8][10];
 #endif
 
 //#define BAUD_MAX baud_1M
 
-extern result_t can_init(can_baud_rate_t      baud,
-	can_status_handler_t   status_default_handler);
+extern result_t can_init(can_baud_rate_t baud, uint8_t address, status_handler_t status_handler);
 
 //extern bool can_initialised(void);
 
-extern result_t can_l2_init(can_baud_rate_t arg_baud_rate,
-                 void (*arg_status_handler)(uint8_t mask, can_status_t status, can_baud_rate_t baud));
+extern result_t can_l2_init(can_baud_rate_t arg_baud_rate, status_handler_t status_handler);
 extern void can_l2_tasks(void);
 
 extern result_t can_l2_tx_frame(can_frame *frame);
