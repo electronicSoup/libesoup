@@ -47,10 +47,6 @@ void random_init(void)
 	uint32_t  seed;
 	uint8_t  *data;
 
-	if(initialised) {
-		return;
-	}
-
 #if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_INFO))
 	LOG_I("random_init()\n\r");
 #endif
