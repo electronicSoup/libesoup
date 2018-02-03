@@ -1,10 +1,10 @@
 /**
  *
- * \file libesoup/can/l2_mcp2515.c
+ * \file libesoup/comms/can/frame_dispatch.c
  *
  * CAN L2 Functionality for dispatching received frames
  *
- * Copyright 2017 2018 electronicSoup Limited
+ * Copyright 2017 - 2018 electronicSoup Limited
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 2 of the GNU Lesser General Public License
@@ -21,7 +21,7 @@
  */
 #include "libesoup_config.h"
 
-#ifdef SYS_CAN
+#ifdef SYS_CAN_BUS
 
 /*
  * Check required libesoup_config.h defines are found
@@ -91,7 +91,7 @@ result_t frame_dispatch_reg_handler(can_l2_target_t *target)
 	// Find a free slot
 	for(loop = 0; loop < SYS_CAN_L2_HANDLER_ARRAY_SIZE; loop++) {
 		if(registered_handlers[loop].used == FALSE) {
-#if (defined(SYS_SERIAL_LOGGING) defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_INFO))
+#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_INFO))
 			LOG_I("Target stored at target %d\n\r", loop);
 #endif
 			registered_handlers[loop].used = TRUE;
@@ -156,4 +156,4 @@ void frame_dispatch_handle_frame(can_frame *frame)
 	}
 }
 
-#endif // SYS_CAN
+#endif // SYS_CAN_BUS
