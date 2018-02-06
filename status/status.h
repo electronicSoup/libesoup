@@ -24,6 +24,8 @@
 #ifndef _STATUS_H
 #define _STATUS_H
 
+#ifdef SYS_SYSTEM_STATUS
+
 typedef enum {
 #if defined(SYS_CAN_BUS)
 	can_bus_status,
@@ -49,4 +51,7 @@ union ty_status {
 
 typedef void (*status_handler_t)(union ty_status);
 
+#endif // SYS_SYSTEM_STATUS
+
 #endif // _STATUS_H
+
