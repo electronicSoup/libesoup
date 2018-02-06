@@ -23,6 +23,8 @@
 
 #include "libesoup_config.h"
 
+#ifdef SYS_CAN_BUS
+
 #ifdef SYS_SERIAL_LOGGING
 #define DEBUG_FILE
 #include "libesoup/logger/serial_log.h"
@@ -937,4 +939,7 @@ result_t can_l2_dispatch_reg_handler(can_l2_target_t *target)
 }
 #endif // defined(__dsPIC33EP256MU806__)
 
-#endif
+#endif // #ifdef SYS_CAN_BUS
+
+#endif //  defined(__dsPIC33EP256MU806__)
+
