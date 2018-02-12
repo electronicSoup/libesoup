@@ -23,6 +23,11 @@
 #ifdef SYS_CAN_BUS
 
 #include "libesoup/comms/can/can.h"
+
+#ifndef SYS_SYSTEM_STATUS
+#error "CAN Module relies on System Status module libesoup.h must define SYS_SYSTEM_STATUS"
+#endif
+
 #ifdef SYS_CAN_DCNCP
 #include "libesoup/can/dcncp/dcncp_can.h"
 #endif
