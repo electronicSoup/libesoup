@@ -66,7 +66,7 @@ char can_baud_rate_strings[8][10] = {
 
 static can_status_t     can_status;
 
-static void this_status_handler(union ty_status status);
+static void can_status_handler(union ty_status status);
 
 status_handler_t app_status_handler = (status_handler_t)NULL;
 
@@ -82,7 +82,7 @@ result_t can_init(can_baud_rate_t baudrate, uint8_t address, status_handler_t st
 	can_status.byte = 0x00;
 	app_status_handler = status_handler;
 
-	can_l2_init(baudrate, this_status_handler);
+	can_l2_init(baudrate, can_status_handler);
 
 #ifdef SYS_CAN_PING_PROTOCOL
 	can_ping_init();
@@ -90,7 +90,7 @@ result_t can_init(can_baud_rate_t baudrate, uint8_t address, status_handler_t st
 	return(SUCCESS);
 }
 
-static void this_status_handler(union ty_status status)
+static void can_status_handler(union ty_status status)
 {
 	can_status_t        can_status;
 
