@@ -31,8 +31,20 @@
 static const char *TAG = "dsPIC33_CAN";
 #endif // SYS_SERIAL_LOGGING
 
+#ifndef SYS_SYSTEM_STATUS
+#error "CAN Module relies on System Status module libesoup.h must define SYS_SYSTEM_STATUS"
+#endif
+
+#include "libesoup/status/status.h"
 #include "libesoup/comms/can/l2_dsPIC33EP256MU806.h"
 #include "libesoup/comms/can/can.h"
+
+/*
+ * Check for required System Switches
+ */
+#ifndef SYS_SYSTEM_STATUS
+#error "CAN Module relies on System Status module libesoup.h must define SYS_SYSTEM_STATUS"
+#endif
 
 #define MASK_0    0b00
 #define MASK_1    0b01
@@ -41,6 +53,8 @@ static const char *TAG = "dsPIC33_CAN";
 #define WIN_ZERO  C1CTRL1bits.WIN = 0;
 #define WIN_ONE   C1CTRL1bits.WIN = 1;
 
+ static status_handler_t status_handler = NULL;
+ 
 #if 0
 struct __attribute__ ((packed))
 {
@@ -114,8 +128,8 @@ struct CxTRmnCON *tx_control[NUM_TX_CONTROL];
 //struct can_buffer *tx_buffers[TX_BUFFERS];
 //struct can_buffer *rx_buffers[RX_BUFFERS];
 
-//static void set_mode(uint8_t mode);
-//static void set_bit_rate(can_baud_rate_t baudRate);
+static void set_mode(ty_can_mode mode);
+static void set_bitrate(can_baud_rate_t baudRate);
 //static void (*status_handler)(uint8_t mask, can_status_t status, can_baud_rate_t baud);
 
 void __attribute__((__interrupt__, __no_auto_psv__)) _C1RxRdyInterrupt(void)
@@ -224,24 +238,24 @@ void __attribute__((__interrupt__, __no_auto_psv__)) _DMA2Interrupt(void)
 #endif
 }
 
-result_t can_l2_init(can_baud_rate_t arg_baud_rate, void (*arg_status_handler)(uint8_t mask, can_status_t status, can_baud_rate_t baud))
+result_t can_l2_init(can_baud_rate_t arg_baud_rate, status_handler_t arg_status_handler)
 {
-        uint32_t address;
-        
+	uint32_t address;
+	
+	status_handler = arg_status_handler;
+	
         /*
-         * Tx pin is RF4 (RP100)
-         * Rx is RG7 (RPI119)
+         * Initialis the I/O Pins and pipheral functions
          */
-        TRISFbits.TRISF4 = 0;
-        TRISGbits.TRISG7 = 1;
-        RPOR9bits.RP100R = 0x0e;
-        RPINR26bits.C1RXR = 119;
+        CAN_TX_PIN_DIRECTION = OUTPUT_PIN;
+        CAN_RX_PIN_DIRECTION = INPUT_PIN;
+	CAN_TX_OUTPUT_PERIPHERAL_PIN = PPS_CAN1_TX;
+	PPS_CAN1_RX = CAN_RX_INPUT_PERIPHERAL_PIN;
 
         /*
          * Enter configuration mode
          */
-        C1CTRL1bits.REQOP = 0b100;
-        while (C1CTRL1bits.OPMODE != 0b100) Nop();
+	set_mode(config);
 
         /*
          * Set 8 transmit buffers
@@ -270,36 +284,14 @@ result_t can_l2_init(can_baud_rate_t arg_baud_rate, void (*arg_status_handler)(u
         C1BUFPNT2 = 0xffff;
         C1BUFPNT3 = 0xffff;
         C1BUFPNT4 = 0xffff;
-//        C1BUFPNT1bits.F0BP = 0xf;
-//        C1BUFPNT1bits.F1BP = 0xf;
-//        C1BUFPNT1bits.F2BP = 0xf;
-//        C1BUFPNT1bits.F3BP = 0xf;
-//        C1BUFPNT2bits.F4BP = 0xf;
-//        C1BUFPNT2bits.F5BP = 0xf;
-//        C1BUFPNT2bits.F6BP = 0xf;
-//        C1BUFPNT2bits.F7BP = 0xf;
-//        C1BUFPNT3bits.F8BP = 0xf;
-//        C1BUFPNT3bits.F9BP = 0xf;
-//        C1BUFPNT3bits.F10BP = 0xf;
-//        C1BUFPNT3bits.F11BP = 0xf;
-//        C1BUFPNT4bits.F12BP = 0xf;
-//        C1BUFPNT4bits.F13BP = 0xf;
-//        C1BUFPNT4bits.F14BP = 0xf;
-//        C1BUFPNT4bits.F15BP = 0xf;
 
         /*
-         * All filters user mask 0
+         * All filters use mask 0
          */
 	C1CTRL1bits.WIN = 0;
         C1FMSKSEL1 = 0x0000;
         C1FMSKSEL2 = 0x0000;
 
-        /*
-         * Filter zero is looking for 0x555
-         */
-        C1RXF0SIDbits.SID = 0x555;
-        C1RXF0SIDbits.EXIDE = 0;
-        
         /*
          * Setup mask zero, much don't care
          */
@@ -330,16 +322,8 @@ result_t can_l2_init(can_baud_rate_t arg_baud_rate, void (*arg_status_handler)(u
 	/*
 	 * Set Baud rate 125Kbs
 	 */
-        C1CTRL1bits.CANCKS = 0;   //Use peripheral clock  
-        C1CFG1bits.SJW = 3;
-        C1CFG1bits.BRP = 3;
-
-        C1CFG2bits.PRSEG = 6;
-        C1CFG2bits.SEG1PH = 3;
-        C1CFG2bits.SEG2PH = 3;
-        
-	C1CFG2bits.SAM = 0; //One sample point
-
+	set_bitrate(baud_125K);
+	
         /*
          * Setup DMA Channel 2 for CAN 1 TX
          */
@@ -406,32 +390,10 @@ result_t can_l2_init(can_baud_rate_t arg_baud_rate, void (*arg_status_handler)(u
         IEC2bits.C1RXIE = 0x01;
 
 	/*
-	 * Drop out of the configuration mode into loopback
+	 * Drop out of the configuration mode
 	 */
-        C1CTRL1bits.REQOP = 0b000;
-        while (C1CTRL1bits.OPMODE != 0b000) Nop();
-#if 0
-	/*
-	 * Send a test frame out of buffer zero:
-	 */
-        can_buffers[0].rb0 = 0;
-        can_buffers[0].rb1 = 0;
-        can_buffers[0].ide = 0;
-        can_buffers[0].rtr = 0;
-        can_buffers[0].ssr = 0;
-        can_buffers[0].sid = 0x5aa;
-        can_buffers[0].dlc = 0;
+	set_mode(listen_all);
 
-	/*
-	 * Mark the buffer for transmission
-	 */
-        C1TR01CONbits.TXREQ0 = 1;
-        while(C1TR01CONbits.TXREQ0 == 1);
-        
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-        LOG_D("Test frame sent\n\r");
-#endif
-#endif // 0
         return(SUCCESS);
 }
 
@@ -586,7 +548,7 @@ result_t can_l2_init(can_baud_rate_t arg_baud_rate, void (*arg_status_handler)(u
 	 * Set the Baud rate.
 	 */
         WIN_ZERO;
-	set_bit_rate(arg_baud_rate);
+	set_bitrate(arg_baud_rate);
 
         /*
          * Setup DMA Channel 0 for CAN 1 TX
@@ -825,8 +787,9 @@ result_t can_l2_tx_frame(can_frame *frame)
 #endif
 	return (SUCCESS);
 }
+#endif // 0
 
-static void set_bit_rate(can_baud_rate_t baudRate)
+static void set_bitrate(can_baud_rate_t baudRate)
 {
 	uint8_t sjw = 0;
 	uint8_t brp = 0;
@@ -834,6 +797,8 @@ static void set_bit_rate(can_baud_rate_t baudRate)
 	uint8_t phseg2 = 0;
 	uint8_t propseg = 0;
 
+        C1CTRL1bits.CANCKS = 0;   //Use peripheral clock  
+	
 	switch (baudRate) {
 		case baud_10K:
 			brp = 49;
@@ -861,10 +826,10 @@ static void set_bit_rate(can_baud_rate_t baudRate)
 
 		case baud_125K:
 			brp = 3;
-			propseg = 7;
+			propseg = 6;
 			sjw = 3;
-			phseg1 = 4;
-			phseg2 = 4;
+			phseg1 = 3;
+			phseg2 = 3;
 			break;
 
 		case baud_250K:
@@ -920,7 +885,7 @@ static void set_bit_rate(can_baud_rate_t baudRate)
 /*
  * Function Header
  */
-static void set_mode(uint8_t mode)
+static void set_mode(ty_can_mode mode)
 {
         C1CTRL1bits.REQOP = mode;
 
@@ -930,6 +895,7 @@ static void set_mode(uint8_t mode)
 	while (C1CTRL1bits.OPMODE != mode) Nop();
 }
 
+#if 0
 result_t can_l2_dispatch_reg_handler(can_l2_target_t *target)
 {
 #if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))

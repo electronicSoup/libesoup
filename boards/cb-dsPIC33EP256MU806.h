@@ -75,7 +75,7 @@
  * will negate the reservation. Use this only if you are overwriting the 
  * Bootloader and programming the device directly with a flash programmer.
  */
-#define EEPROM_BOOT_PAGE_SIZE   0x04
+//#define EEPROM_BOOT_PAGE_SIZE   0x04
 
 /**
  * @brief Maximum address of the EEPROM Memory
@@ -98,7 +98,7 @@
  *
  * Only two bits of the Byte are used.
  */
-#define EEPROM_WDR_PROTOCOL_ADDR           0x00
+//#define EEPROM_WDR_PROTOCOL_ADDR           0x00
 
 /**
  * @brief The processor was reset by a Watch Dog Reset.
@@ -112,7 +112,7 @@
  * @see WDR_DO_NOT_INVALIDATE_FIRMWARE bit of the @see EEPROM_WDR_PROTOCOL_ADDR
  * has been set by the installed firmware.
  */
-#define WDR_PROCESSOR_RESET_BY_WATCHDOG    0x01
+//#define WDR_PROCESSOR_RESET_BY_WATCHDOG    0x01
 
 /**
  * @brief Force Bootloader NOT to invalidate firmware on Watch Dog Reset.
@@ -127,7 +127,7 @@
  * if a WDR has occured and proceed accordingly.
  *
  */
-#define WDR_DO_NOT_INVALIDATE_FIRMWARE     0x02
+//#define WDR_DO_NOT_INVALIDATE_FIRMWARE     0x02
 
 /**
  * @def   EEPROM_CS_PIN_DIRECTION
@@ -163,16 +163,11 @@
  * @brief Macro to deselect CAN Controller Chip on SPI Bus
  *
  */
-//#define CAN_CS_PIN_DIRECTION           TRISDbits.TRISD6
-//#define CAN_CS                         LATDbits.LATD6
-//#define CAN_SELECT                     CAN_CS = 0;
-//#define CAN_DESELECT                   CAN_CS = 1;
-#define CAN_TX_DDR                     TRISFbits.TRISF4
-#define CAN_RX_DDR                     TRISGbits.TRISG7
-#define CAN_TX_PIN                     RPOR9bits.RP100R
-#define CAN_RX_PIN                     RPI119
+#define CAN_TX_PIN_DIRECTION           TRISFbits.TRISF4
+#define CAN_RX_PIN_DIRECTION           TRISGbits.TRISG7
+#define CAN_TX_OUTPUT_PERIPHERAL_PIN   PPS_RP100
+#define CAN_RX_INPUT_PERIPHERAL_PIN    RPI119
  
-
 /**
  * SPI (Serial Peripheral Interface Definitions.
  *
