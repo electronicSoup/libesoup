@@ -43,6 +43,12 @@
 #define OFF         0
 #define ON          1
 
+/*
+ * DMA 
+ */
+
+#define ECAN1_TX    0b01000110
+
 #define TIMER_1                           0
 #define TIMER_2                           1
 #define TIMER_3                           2
@@ -178,7 +184,7 @@ typedef enum {
     disabled    = 0b001,
     loopback    = 0b010,
     listen_only = 0b011,
-    config        = 0b100,
+    config      = 0b100,
     listen_all  = 0b111,
 } ty_can_mode;
 
