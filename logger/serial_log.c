@@ -371,6 +371,7 @@ static uint8_t *itoa(uint16_t num, uint8_t *str, uint8_t base)
 	return str;
 }
 
+#ifdef XC16
 static uint8_t *itoa32bit(uint32_t num, uint8_t *str, uint8_t base)
 {
 	uint32_t rem;                // successive remainder
@@ -407,6 +408,7 @@ static uint8_t *itoa32bit(uint32_t num, uint8_t *str, uint8_t base)
 
 	return str;
 }
+#endif
 
 static uint16_t strlen(char *string)
 {
