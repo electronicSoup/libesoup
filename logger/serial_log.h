@@ -118,25 +118,25 @@ extern result_t serial_logging_exit(void);
  */
 #if (SYS_LOG_LEVEL <= LOG_DEBUG)
 #define LOG_D     serial_log("D-");  \
-                  serial_log(TAG);   \
+                  serial_log("%s:", TAG);   \
                   serial_log
 #endif
 
 #if (SYS_LOG_LEVEL <= LOG_INFO)
 #define LOG_I     serial_log("I-");  \
-                  serial_log(TAG);   \
+                  serial_log("%s:", TAG);   \
                   serial_log
 #endif
 
 #if (SYS_LOG_LEVEL <= LOG_WARNING)
 #define LOG_W     serial_log("W-");  \
-                  serial_log(TAG);   \
+                  serial_log("%s:", TAG);   \
                   serial_log
 #endif
 
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
 #define LOG_E     serial_log("E-");  \
-                  serial_log(TAG);   \
+                  serial_log("%s:", TAG);   \
                   serial_log
 #endif
 
