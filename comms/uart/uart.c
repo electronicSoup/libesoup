@@ -497,7 +497,7 @@ result_t uart_reserve(struct uart_data *data)
 			 * Set up the Rx & Tx pins
 			 */
 			if (data->rx_pin != NO_PIN) {
-			    uart_set_rx_pin((uint8_t) data->uart, data->rx_pin);
+				uart_set_rx_pin((uint8_t) data->uart, data->rx_pin);
 			}
 
 			if (data->tx_pin != NO_PIN) {
@@ -875,7 +875,7 @@ static void uart_set_rx_pin(uint8_t uart, uint8_t pin)
 #elif defined(__18F2680) || defined(__18F4585)
 static void uart_set_rx_pin(uint8_t uart, uint8_t pin)
 {
-        TRISCbits.TRISC7 = INPUT_PIN;
+//        TRISCbits.TRISC7 = INPUT_PIN;
 }
 #endif // MicroContoller Selection
 
@@ -998,12 +998,12 @@ static void uart_set_tx_pin(uint8_t uart, uint8_t pin)
 }
 #endif // MicroContoller Selection
 
+#if defined(__dsPIC33EP256MU806__) || defined (__PIC24FJ256GB106__)
 static void uart_set_uart_config(struct uart_data *uart)
 {
 	switch (uart->uart) {
 #ifdef UART_1
 	case UART_1:
-#if defined(__dsPIC33EP256MU806__) || defined (__PIC24FJ256GB106__)
 		U1MODE = uart->uart_mode;
 
 		/*
@@ -1062,30 +1062,9 @@ static void uart_set_uart_config(struct uart_data *uart)
 		}
 
 		U1_ENABLE = ENABLED;
-#elif defined(__18F2680) || defined(__18F4585)
-		TXSTAbits.TXEN = 1;    // Transmitter enabled
-		TXSTAbits.SYNC = 0;    // Asynchronous mode
-		TXSTAbits.BRGH = 0;    // High Baud Rate Select bit
-
-#if defined(ENABLE_USART_RX)
-		RCSTAbits.CREN = 1;    // Enable the Receiver
-#else
-		RCSTAbits.CREN = 0;    // Disable the Receiver
-#endif
-		BAUDCONbits.BRG16 = 0; // 16-bit Baud Rate Register Enable bit
-
-		SPBRG = (unsigned char)(((SYS_CLOCK_FREQ / uart->baud) / 64 ) - 1);
-
-		PIE1bits.TXIE = 1;
-#if defined(ENABLE_USART_RX)
-		PIR1bits.RCIF = 0;
-		PIE1bits.RCIE = 1;
-#endif // ENABLE_EUSART_RX
-		RCSTAbits.SPEN = 1;
-		TXREG = 'J';
-#endif // MicroController Selection 18Fxxx
 		break;
 #endif // UART_1
+
 #ifdef UART_2
 	case UART_2:
 		U2MODE = uart->uart_mode;
@@ -1270,6 +1249,44 @@ static void uart_set_uart_config(struct uart_data *uart)
 		break;
 	}
 }
+#endif  // defined(__dsPIC33EP256MU806__) || defined (__PIC24FJ256GB106__)
+
+#if defined(__18F2680) || defined(__18F4585)
+static void uart_set_uart_config(struct uart_data *uart)
+{
+	switch (uart->uart) {
+#ifdef UART_1
+	case UART_1:
+		TXSTAbits.TXEN = 1;    // Transmitter enabled
+		TXSTAbits.SYNC = 0;    // Asynchronous mode
+		TXSTAbits.BRGH = 0;    // High Baud Rate Select bit
+
+#if defined(SYS_ENABLE_USART_RX)
+		RCSTAbits.CREN = 1;    // Enable the Receiver
+#else
+		RCSTAbits.CREN = 0;    // Disable the Receiver
+#endif
+		BAUDCONbits.BRG16 = 0; // 16-bit Baud Rate Register Enable bit
+
+		SPBRG = (unsigned char)(((SYS_CLOCK_FREQ / uart->baud) / 64 ) - 1);
+
+		PIE1bits.TXIE = 1;
+#if defined(SYS_ENABLE_USART_RX)
+		PIR1bits.RCIF = 0;
+		PIE1bits.RCIE = 1;
+#endif // ENABLE_EUSART_RX
+		RCSTAbits.SPEN = 1;
+		break;
+#endif // UART_1
+
+	default:
+#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
+		LOG_E("Bad UART passed\n\r");
+#endif
+		break;
+	}
+}
+#endif // defined(__18F2680) || defined(__18F4585)
 
 /*
  * Returns the number of bytes still waiting to be loaded in HW TX Buffer.
