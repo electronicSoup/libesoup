@@ -328,7 +328,11 @@ extern char can_baud_rate_strings[8][10];
 
 //#define BAUD_MAX baud_1M
 
-extern result_t can_init(can_baud_rate_t baud, uint8_t address, status_handler_t status_handler);
+#if (defined(SYS_ISO15765) || defined(SYS_ISO11783))
+extern result_t can_init(can_baud_rate_t baudrate, uint8_t address, status_handler_t status_handler);
+#else
+extern result_t can_init(can_baud_rate_t baudrate, status_handler_t status_handler);
+#endif
 
 //extern bool can_initialised(void);
 

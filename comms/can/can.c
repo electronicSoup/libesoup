@@ -70,7 +70,11 @@ static void can_status_handler(union ty_status status);
 
 status_handler_t app_status_handler = (status_handler_t)NULL;
 
+#if (defined(SYS_ISO15765) || defined(SYS_ISO11783))
 result_t can_init(can_baud_rate_t baudrate, uint8_t address, status_handler_t status_handler)
+#else
+result_t can_init(can_baud_rate_t baudrate, status_handler_t status_handler)
+#endif
 {
 #if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	LOG_D("can_init\n\r");
