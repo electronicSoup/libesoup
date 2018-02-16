@@ -4,7 +4,7 @@
  *
  * Definitions for configuration of the Serial Port
  *
- * Copyright 2017 electronicSoup Limited
+ * Copyright 2017 - 2018 electronicSoup Limited
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 2 of the GNU Lesser General Public License
@@ -72,8 +72,12 @@
  */
 #if defined(XC16) || defined(__XC8)
 extern result_t serial_logging_init(void);
+#ifdef SYS_DEBUG_BUILD
+extern uint16_t serial_buffer_count(void);
+#endif
 #if defined(XC16)
 extern void     serial_log(uint8_t level, const char * tag, const char * f, ...);
+extern void     serial_printf(const char * f, ...);
 #elif defined(__XC8)
 extern void     serial_log(const char* fmt, ...);
 #endif

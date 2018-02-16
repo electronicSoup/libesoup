@@ -77,6 +77,7 @@ static const char error_string[LEVEL_STRING_LEN + 1]   = "E-";
 /*
  * Local helper functions
  */
+static void es_printf(const char * fmt, va_list args);
 static uint8_t *itoa(uint16_t num, uint8_t *str, uint8_t base);
 static uint8_t *itoa32bit(uint32_t num, uint8_t *str, uint8_t base);
 static uint16_t strlen(char *string);
@@ -155,23 +156,27 @@ result_t serial_logging_init(void)
 	 */
 	for (delay = 0; delay < 0x100; delay++) Nop();
 
-	rc = uart_tx_char(&serial_uart, '\n');
-	rc = uart_tx_char(&serial_uart, '\r');
-	rc = uart_tx_char(&serial_uart, '\n');
-	rc = uart_tx_char(&serial_uart, '\r');
+	serial_printf("\n\r\n\r");
         return(SUCCESS);
 }
+
+#ifdef SYS_DEBUG_BUILD
+uint16_t serial_buffer_count(void)
+{
+	return(uart_buffer_count(&serial_uart));	
+}
+#endif
 
 #if defined(XC16)
 void serial_log(uint8_t level, const char *tag, const char *fmt, ...)
 {
-	result_t  rc;
-	char     *ptr;
+//	result_t  rc;
+//	char     *ptr;
 	va_list   args;
-	uint16_t  i;
-	uint32_t  li;
-	uint8_t   buf[256];
-	uint8_t  *string;
+//	uint16_t  i;
+//	uint32_t  li;
+//	uint8_t   buf[256];
+//	uint8_t  *string;
 
 	va_start(args, fmt);
 
@@ -180,84 +185,37 @@ void serial_log(uint8_t level, const char *tag, const char *fmt, ...)
 	 */
 	switch(level) {
 	case LOG_DEBUG:
-		rc = uart_tx_buffer(&serial_uart, debug_string, LEVEL_STRING_LEN);
+		serial_printf(debug_string);
+//		rc = uart_tx_buffer(&serial_uart, debug_string, LEVEL_STRING_LEN);
 		break;
 
 	case LOG_INFO:
-		rc = uart_tx_buffer(&serial_uart, info_string, LEVEL_STRING_LEN);
+		serial_printf(info_string);
+//		rc = uart_tx_buffer(&serial_uart, info_string, LEVEL_STRING_LEN);
 		break;
 
 	case LOG_WARNING:
-		rc = uart_tx_buffer(&serial_uart, warning_string, LEVEL_STRING_LEN);
+		serial_printf(warning_string);
+//		rc = uart_tx_buffer(&serial_uart, warning_string, LEVEL_STRING_LEN);
 		break;
 
 	case LOG_ERROR:
-		rc = uart_tx_buffer(&serial_uart, error_string, LEVEL_STRING_LEN);
+		serial_printf(error_string);
+//		rc = uart_tx_buffer(&serial_uart, error_string, LEVEL_STRING_LEN);
 		break;
 	}
 
 	/*
 	 * Print the tag field
 	 */
-	ptr = (char *)tag;
-	rc = uart_tx_buffer(&serial_uart, (uint8_t*)ptr, strlen(ptr));
-	rc = uart_tx_char(&serial_uart, ':');
-
-	/*
-	 * Next print the format string
-	 */
-	ptr = (char *)fmt;
-	while(*ptr) {
-		
-		if(*ptr != '%') {
-			rc = uart_tx_char(&serial_uart, *ptr);
-		} else {
-			/*
-			 * Format specifier
-			 */
-			switch(*++ptr) {
-			case '%' :
-				rc = uart_tx_char(&serial_uart, *ptr);
-				break;
-
-			case 'd':
-				i = va_arg(args, uint16_t);
-				string = itoa((uint32_t)i, buf, 10);
-				rc = uart_tx_buffer(&serial_uart, string, strlen((char*)string));
-				break;
-
-			case 's':
-				string = va_arg(args, uint8_t *);
-				rc = uart_tx_buffer(&serial_uart, string, strlen((char*)string));
-				break;
-
-			case 'x':
-				i = va_arg(args, uint16_t);
-				string = itoa(i, buf, 16);
-				rc = uart_tx_buffer(&serial_uart, string, strlen((char*)string));
-				break;
-				
-			case 'l':
-				switch(*++ptr) {
-				case 'd':
-					li = va_arg(args, uint32_t);
-					*buf = 0;
-					string = itoa32bit(li, buf, 10);
-					rc = uart_tx_buffer(&serial_uart, buf, strlen((char*)buf));
-					break;
-
-				case 'x':
-					li = va_arg(args, uint32_t);
-					*buf = 0;
-					string = itoa32bit(li, buf, 16);
-					rc = uart_tx_buffer(&serial_uart, buf, strlen((char*)buf));
-					break;
-				}
-				break;
-			}
-		}
-		ptr++;
-	}
+//	ptr = (char *)tag;
+	serial_printf("%s:", tag);
+//	rc = uart_tx_buffer(&serial_uart, (uint8_t*)ptr, strlen(ptr));
+//	rc = uart_tx_char(&serial_uart, ':');
+	
+//	va_start(args, fmt);
+	es_printf(fmt, args);
+	va_end(args);
 }
 #elif defined(__XC8)
 void serial_log(const char* fmt, ...)
@@ -327,6 +285,138 @@ void serial_log(const char* fmt, ...)
 }
 #endif // defined(XC16) || defined(__XC8)
 
+void serial_printf(const char * fmt, ...)
+{
+	result_t  rc;
+	char     *ptr;
+	va_list   args;
+	uint16_t  i;
+	uint32_t  li;
+	uint8_t   buf[256];
+	uint8_t  *string;
+
+	va_start(args, fmt);
+
+	ptr = (char *)fmt;
+
+	while(*ptr) {
+		
+		if(*ptr != '%') {
+			rc = uart_tx_char(&serial_uart, *ptr);
+		} else {
+			/*
+			 * Format specifier
+			 */
+			switch(*++ptr) {
+			case '%' :
+				rc = uart_tx_char(&serial_uart, *ptr);
+				break;
+
+			case 'd':
+				i = va_arg(args, uint16_t);
+				string = itoa((uint32_t)i, buf, 10);
+				rc = uart_tx_buffer(&serial_uart, string, strlen((char*)string));
+				break;
+
+			case 's':
+				string = va_arg(args, uint8_t *);
+				rc = uart_tx_buffer(&serial_uart, string, strlen((char*)string));
+				break;
+
+			case 'x':
+				i = va_arg(args, uint16_t);
+				string = itoa(i, buf, 16);
+				rc = uart_tx_buffer(&serial_uart, string, strlen((char*)string));
+				break;
+				
+			case 'l':
+				switch(*++ptr) {
+				case 'd':
+					li = va_arg(args, uint32_t);
+					*buf = 0;
+					string = itoa32bit(li, buf, 10);
+					rc = uart_tx_buffer(&serial_uart, buf, strlen((char*)buf));
+					break;
+
+				case 'x':
+					li = va_arg(args, uint32_t);
+					*buf = 0;
+					string = itoa32bit(li, buf, 16);
+					rc = uart_tx_buffer(&serial_uart, buf, strlen((char*)buf));
+					break;
+				}
+				break;
+			}
+		}
+		ptr++;
+	}
+	
+	va_end(args);
+}
+
+static void es_printf(const char * fmt, va_list args)
+{
+	result_t  rc;
+	char     *ptr;
+	uint16_t  i;
+	uint32_t  li;
+	uint8_t   buf[256];
+	uint8_t  *string;
+
+	ptr = (char *)fmt;
+
+	while(*ptr) {
+		
+		if(*ptr != '%') {
+			rc = uart_tx_char(&serial_uart, *ptr);
+		} else {
+			/*
+			 * Format specifier
+			 */
+			switch(*++ptr) {
+			case '%' :
+				rc = uart_tx_char(&serial_uart, *ptr);
+				break;
+
+			case 'd':
+				i = va_arg(args, uint16_t);
+				string = itoa((uint32_t)i, buf, 10);
+				rc = uart_tx_buffer(&serial_uart, string, strlen((char*)string));
+				break;
+
+			case 's':
+				string = va_arg(args, uint8_t *);
+				rc = uart_tx_buffer(&serial_uart, string, strlen((char*)string));
+				break;
+
+			case 'x':
+				i = va_arg(args, uint16_t);
+				string = itoa(i, buf, 16);
+				rc = uart_tx_buffer(&serial_uart, string, strlen((char*)string));
+				break;
+				
+			case 'l':
+				switch(*++ptr) {
+				case 'd':
+					li = va_arg(args, uint32_t);
+					*buf = 0;
+					string = itoa32bit(li, buf, 10);
+					rc = uart_tx_buffer(&serial_uart, buf, strlen((char*)buf));
+					break;
+
+				case 'x':
+					li = va_arg(args, uint32_t);
+					*buf = 0;
+					string = itoa32bit(li, buf, 16);
+					rc = uart_tx_buffer(&serial_uart, buf, strlen((char*)buf));
+					break;
+				}
+				break;
+			}
+		}
+		ptr++;
+	}
+}
 
 result_t serial_logging_exit(void)
 {
