@@ -10,7 +10,7 @@
  * in your include path. The file contains the various switches and definitions
  * which configure the various features of the library.
  *
- * Copyright 2017 electronicSoup Limited
+ * Copyright 2017 - 2018 electronicSoup Limited
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU Lesser General Public License as published by
@@ -48,6 +48,15 @@
 //#define SYS_CLOCK_FREQ 60000000    // 60MHz
 #elif defined(__18F4585)
 #define SYS_CLOCK_FREQ 16000000     // 8MHz
+#endif
+
+#define SYS_DEBUG_BUILD
+
+#define SYS_HW_TIMERS
+#define SYS_SW_TIMERS
+#ifdef SYS_SW_TIMERS
+#define SYS_NUMBER_OF_SW_TIMERS    10
+#define SYS_SW_TIMER_TICK_ms        5
 #endif
 
 #define SYS_SERIAL_LOGGING
