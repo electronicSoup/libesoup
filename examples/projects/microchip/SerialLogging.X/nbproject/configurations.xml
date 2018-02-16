@@ -31,6 +31,13 @@
             <itemPath>../../../../processors/dsPIC33EP256MU806.c</itemPath>
             <itemPath>../../../../processors/pic18f4585.c</itemPath>
           </logicalFolder>
+          <logicalFolder name="timers" displayName="timers" projectFiles="true">
+            <itemPath>../../../../timers/hw_rtc.c</itemPath>
+            <itemPath>../../../../timers/delay.c</itemPath>
+            <itemPath>../../../../timers/hw_timers.c</itemPath>
+            <itemPath>../../../../timers/sw_timers.c</itemPath>
+            <itemPath>../../../../timers/sw_rtc.c</itemPath>
+          </logicalFolder>
           <itemPath>../../../../core.c</itemPath>
         </logicalFolder>
       </logicalFolder>
