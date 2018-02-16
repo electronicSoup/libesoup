@@ -26,7 +26,11 @@
 
 #ifdef SYS_SERIAL_LOGGING
 #define DEBUG_FILE
+#ifdef XC16
 static const char  __attribute__((unused)) *TAG = "CORE";
+#elif __XC8
+static const char  *TAG = "CORE";
+#endif
 #include "libesoup/logger/serial_log.h"
 #endif
 
@@ -72,6 +76,13 @@ result_t libesoup_init(void)
 	result_t rc  __attribute__((unused)) = SUCCESS;
 #else
 	result_t rc = SUCCESS;
+#endif
+
+#if __XC8
+#ifdef SYS_SERIAL_LOGGING
+	TAG = TAG;
+#endif // SYS_SERIAL_LOGGING
+	rc = SUCCESS;
 #endif
 	
 	cpu_init();

@@ -23,6 +23,9 @@
 #define ES_CAN_H
 
 #include "libesoup_config.h"
+
+#ifdef SYS_CAN_BUS
+
 #include "libesoup/status/status.h"
 /** @defgroup group3 CAN Bus definitions
  *
@@ -389,5 +392,7 @@ extern result_t iso11783_dispatch_reg_handler(iso11783_target_t *target);
 extern result_t iso11783_dispatch_unreg_handler(uint8_t id);
 extern result_t iso11783_dispatch_set_unhandled_handler(iso11783_msg_handler_t handler);
 #endif // SYS_ISO11783
+
+#endif // SYS_CAN_BUS
 
 #endif // ES_CAN_H

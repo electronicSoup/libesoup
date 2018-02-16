@@ -25,7 +25,11 @@
 #include "libesoup/comms/can/can.h"
 
 #ifndef SYS_SYSTEM_STATUS
-#error "CAN Module relies on System Status module libesoup.h must define SYS_SYSTEM_STATUS"
+#error "CAN Module relies on System Status module libesoup_config.h must define SYS_SYSTEM_STATUS"
+#endif
+
+#ifndef SYS_SW_TIMERS
+#error "CAN Module relies on Software Timers and must be enabled in libesoup_config.h"
 #endif
 
 #ifdef SYS_CAN_DCNCP
@@ -41,7 +45,7 @@
 
 #ifdef SYS_SERIAL_LOGGING
 #define DEBUG_FILE
-const char *TAG = "CAN";
+static const char *TAG = "CAN";
 #include "libesoup/logger/serial_log.h"
 
 char can_l2_status_strings[5][17] = {

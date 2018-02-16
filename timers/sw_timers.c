@@ -127,12 +127,12 @@ static void calculate_expiry_count(timer_id timer, uint16_t ticks);
  * the main control loop of your project by calling the CHECK_TIMERS()
  * macro.
  */
-#if defined(XC16)
+//#if defined(XC16)
 static void hw_expiry_function(timer_id timer, union sigval data)
 {
 	timer_ticked = TRUE;
 }
-#endif // XC16
+//#endif // XC16
 
 /*
  * void sw_timer_init(void)
@@ -143,10 +143,8 @@ static void hw_expiry_function(timer_id timer, union sigval data)
  */
 void sw_timer_init(void)
 {
-#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__) || defined(__dsPIC33EP256MU806__)
 	result_t         rc;
 	union sigval     data;
-#endif
 	uint8_t loop;
 
 	/*
@@ -158,7 +156,7 @@ void sw_timer_init(void)
 		timers[loop].request = (struct timer_req *)NULL;
 	}
 
-#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__) || defined(__dsPIC33EP256MU806__)
+//#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__) || defined(__dsPIC33EP256MU806__)
 	hw_timer = BAD_TIMER_ID;
 
 	hw_timer_req.units = mSeconds;
@@ -169,8 +167,8 @@ void sw_timer_init(void)
 	
 	rc = hw_timer_start(&hw_timer, &hw_timer_req);
 	hw_timer_paused = FALSE;
-#endif //__PIC24FJ256GB106__
-
+//#endif //__PIC24FJ256GB106__
+#if 0
 #if defined( __18F2680) || defined(__18F4585)
 	/*
 	 * Timer 0 set up
@@ -192,6 +190,7 @@ void sw_timer_init(void)
 	INTCONbits.TMR0IF = 0;  // Clear the Timer 0 interupt flag
 	INTCONbits.TMR0IE = 1;  // Timer 0 Interrupt Enable
 #endif // (__18F2680) || (__18F4585)
+#endif
 }
 
 /*
