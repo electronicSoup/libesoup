@@ -471,6 +471,23 @@ void uart_init(void)
 	}
 }
 
+#ifdef SYS_DEBUG_BUILD
+uint16_t uart_buffer_count(struct uart_data *data)
+{
+	uint8_t  uart_index;
+
+	uart_index = data->uart;
+
+	if(uarts[uart_index].data != data) {
+#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
+		LOG_E("Bad UART passed into uart_buffer_count()\n\r");
+#endif
+		return(0);
+	}
+	return(uarts[uart_index].tx_count);
+}
+#endif // SYS_DEBUG_BUILD
+
 /*
  * uart_reserve - Reserve a UART Channel for future use by the caller.
  */
