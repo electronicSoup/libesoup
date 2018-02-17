@@ -43,6 +43,10 @@
 #define OFF         0
 #define ON          1
 
+
+#define INTERRUPTS_DISABLED    INTCON2bits.GIE = 0;
+#define INTERRUPTS_ENABLED     INTCON2bits.GIE = 1;
+
 /*
  * DMA 
  */

@@ -85,6 +85,9 @@ static void uart_set_tx_pin(uint8_t uart, uint8_t pin);
 static void uart_set_uart_config(struct uart_data *uart);
 static void uart_putchar(uint8_t uart, uint8_t ch);
 
+static void buffer_write(int8_t uart_index, char ch);
+static char buffer_read(uint8_t uart_index);
+
 /*
  * Returns the number of bytes still waiting to be loaded in HW TX Buffer.
  */
@@ -626,8 +629,6 @@ result_t uart_tx_char(struct uart_data *data, char ch)
 
 static void uart_putchar(uint8_t uart_index, uint8_t ch)
 {
-        uint8_t tmp;
-
 	/*
 	 * If the Transmitter queue is currently empty turn on chip select.
 	 */
@@ -655,14 +656,8 @@ static void uart_putchar(uint8_t uart_index, uint8_t ch)
 #endif
 				return;
 			}
-
-			uarts[uart_index].tx_buffer[uarts[uart_index].tx_write_index] = ch;
-			/*
-                         * Compiler don't like following two lines in a oner
-                         */
-			tmp = ++(uarts[uart_index].tx_write_index) % SYS_UART_TX_BUFFER_SIZE;
-			uarts[uart_index].tx_write_index = tmp;
-			uarts[uart_index].tx_count++;
+			
+			buffer_write(uart_index, ch);
 		} else {
 			U1TXREG = ch;
 		}
@@ -676,13 +671,7 @@ static void uart_putchar(uint8_t uart_index, uint8_t ch)
 			return;
 		}
 
-		uarts[uart_index].tx_buffer[uarts[uart_index].tx_write_index] = ch;
-		/*
-                 * Compiler don't like following two lines in a oner
-                 */
-		tmp = ++(uarts[uart_index].tx_write_index) % SYS_UART_TX_BUFFER_SIZE;
-		uarts[uart_index].tx_write_index = tmp;
-		uarts[uart_index].tx_count++;
+		buffer_write(uart_index, ch);
 		PIE1bits.TXIE = ENABLED;
 #endif // #if defined(__18F2680) || defined(__18F4585)
 		break;
@@ -710,13 +699,7 @@ static void uart_putchar(uint8_t uart_index, uint8_t ch)
 				return;
 			}
 
-			uarts[uart_index].tx_buffer[uarts[uart_index].tx_write_index] = ch;
-			/*
-                         * Compiler don't like following two lines in a oner
-                         */
-			tmp = ++(uarts[uart_index].tx_write_index) % SYS_UART_TX_BUFFER_SIZE;
-			uarts[uart_index].tx_write_index = tmp;
-			uarts[uart_index].tx_count++;
+			buffer_write(uart_index, ch);
 		} else {
 			U2TXREG = ch;
 		}
@@ -745,13 +728,7 @@ static void uart_putchar(uint8_t uart_index, uint8_t ch)
 				return;
 			}
 
-			uarts[uart_index].tx_buffer[uarts[uart_index].tx_write_index] = ch;
-			/*
-                         * Compiler don't like following two lines in a oner
-                         */
-			tmp = ++(uarts[uart_index].tx_write_index) % SYS_UART_TX_BUFFER_SIZE;
-			uarts[uart_index].tx_write_index = tmp;
-			uarts[uart_index].tx_count++;
+			buffer_write(uart_index, ch);
 		} else {
 			U3TXREG = ch;
 		}
@@ -780,13 +757,7 @@ static void uart_putchar(uint8_t uart_index, uint8_t ch)
 				return;
 			}
 
-			uarts[uart_index].tx_buffer[uarts[uart_index].tx_write_index] = ch;
-			/*
-                         * Compiler don't like following two lines in a oner
-                         */
-			tmp = ++(uarts[uart_index].tx_write_index) % SYS_UART_TX_BUFFER_SIZE;
-			uarts[uart_index].tx_write_index = tmp;
-			uarts[uart_index].tx_count++;
+			buffer_write(uart_index, ch);
 		} else {
 			U4TXREG = ch;
 		}
@@ -800,6 +771,41 @@ static void uart_putchar(uint8_t uart_index, uint8_t ch)
 #endif // __XC8
 		break;
 	}
+}
+
+static void buffer_write(int8_t uart_index, char ch)
+{
+	uint16_t tmp;
+	
+	uarts[uart_index].tx_buffer[uarts[uart_index].tx_write_index] = ch;
+
+	INTERRUPTS_DISABLED
+	/*
+         * Compiler don't like following two lines in a oner
+         */
+	tmp = ++(uarts[uart_index].tx_write_index) % SYS_UART_TX_BUFFER_SIZE;
+	uarts[uart_index].tx_write_index = tmp;
+	uarts[uart_index].tx_count++;
+	INTERRUPTS_ENABLED
+}
+
+static char buffer_read(uint8_t uart_index)
+{
+	uint16_t tmp;
+	char     ch = 0x00;
+	
+	INTERRUPTS_DISABLED
+	if(uarts[uart_index].tx_count > 0) {
+		ch = uarts[uart_index].tx_buffer[uarts[uart_index].tx_read_index];
+		/*
+	         * Compiler don't like following two lines in a oner
+	         */
+		tmp = ++(uarts[uart_index].tx_read_index) % SYS_UART_TX_BUFFER_SIZE;
+		uarts[uart_index].tx_read_index = tmp;
+		uarts[uart_index].tx_count--;
+	}
+	INTERRUPTS_ENABLED
+	return(ch);
 }
 
 #if defined(__dsPIC33EP256MU806__)
@@ -1310,8 +1316,6 @@ static void uart_set_uart_config(struct uart_data *uart)
  */
 static uint16_t load_tx_buffer(uint8_t uart)
 {
-        uint8_t tmp;
-        
 	switch (uart) {
 #ifdef UART_1
 	case UART_1:
@@ -1320,13 +1324,7 @@ static uint16_t load_tx_buffer(uint8_t uart)
 		 * If the TX buffer is not full load it from the circular buffer
 		 */
 		while ((!U1STAbits.UTXBF) && (uarts[uart].tx_count)) {
-			U1TXREG = uarts[uart].tx_buffer[uarts[uart].tx_read_index];
-			/*
-                         * Compiler don't like following two lines in a oner
-                         */
-			tmp = ++(uarts[uart].tx_read_index) % SYS_UART_TX_BUFFER_SIZE;
-			uarts[uart].tx_read_index = tmp;
-			uarts[uart].tx_count--;
+			U1TXREG = buffer_read(uart);
 		}
 
 		return(uarts[uart].tx_count);
@@ -1336,13 +1334,7 @@ static uint16_t load_tx_buffer(uint8_t uart)
                  * cannot be cleared by SW directly.
                  */
 		if(uarts[uart].tx_count > 0) {
-			TXREG = uarts[uart].tx_buffer[uarts[uart].tx_read_index];
-			/*
-                         * Compiler don't like following two lines in a oner
-                         */
-			tmp = ++(uarts[uart].tx_read_index) % SYS_UART_TX_BUFFER_SIZE;
-			uarts[uart].tx_read_index = tmp;
-			uarts[uart].tx_count--;
+			TXREG = buffer_read(uart);
 		} else {
 			PIE1bits.TXIE = DISABLED;
 		}
@@ -1358,13 +1350,7 @@ static uint16_t load_tx_buffer(uint8_t uart)
 		 * If the TX buffer is not full load it from the circular buffer
 		 */
 		while ((!U2STAbits.UTXBF) && (uarts[uart].tx_count)) {
-			U2TXREG = uarts[uart].tx_buffer[uarts[uart].tx_read_index];
-			/*
-                         * Compiler don't like following two lines in a oner
-			 */
-			tmp = ++(uarts[uart].tx_read_index) % SYS_UART_TX_BUFFER_SIZE;
-			uarts[uart].tx_read_index = tmp;
-			uarts[uart].tx_count--;
+			U2TXREG = buffer_read(uart);
 		}
 
 		return(uarts[uart].tx_count);
@@ -1376,13 +1362,7 @@ static uint16_t load_tx_buffer(uint8_t uart)
 		 * If the TX buffer is not full load it from the circular buffer
 		 */
 		while ((!U3STAbits.UTXBF) && (uarts[uart].tx_count)) {
-			U3TXREG = uarts[uart].tx_buffer[uarts[uart].tx_read_index];
-			/*
-                         * Compiler don't like following two lines in a oner
-                         */
-			tmp = ++(uarts[uart].tx_read_index) % SYS_UART_TX_BUFFER_SIZE;
-			uarts[uart].tx_read_index = tmp;
-			uarts[uart].tx_count--;
+			U3TXREG = buffer_read(uart);
 		}
 
 		return(uarts[uart].tx_count);
@@ -1394,13 +1374,7 @@ static uint16_t load_tx_buffer(uint8_t uart)
 		 * If the TX buffer is not full load it from the circular buffer
 		 */
 		while ((!U4STAbits.UTXBF) && (uarts[uart].tx_count)) {
-			U4TXREG = uarts[uart].tx_buffer[uarts[uart].tx_read_index];
-			/*
-			 * Compiler don't like following two lines in a oner
-                         */
-			tmp = ++(uarts[uart].tx_read_index) % SYS_UART_TX_BUFFER_SIZE;
-			uarts[uart].tx_read_index = tmp;
-			uarts[uart].tx_count--;
+			U4TXREG = buffer_read(uart);
 		}
 
 		return(uarts[uart].tx_count);
