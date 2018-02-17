@@ -650,22 +650,11 @@ static void uart_putchar(uint8_t uart_index, uint8_t ch)
 				U1STAbits.UTXISEL0 = 0;
 			}
 
-			if(uarts[uart_index].tx_count == SYS_UART_TX_BUFFER_SIZE) {
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
-				LOG_E("Circular buffer full!");
-#endif
-				return;
-			}
-			
 			buffer_write(uart_index, ch);
 		} else {
 			U1TXREG = ch;
 		}
 #elif defined(__18F2680) || defined(__18F4585)
-		if(uarts[uart_index].tx_count == SYS_UART_TX_BUFFER_SIZE) {
-			return;
-		}
-
 		if((uarts[uart_index].tx_count == 0) && PIR1bits.TXIF) {
 			TXREG = ch;
 			return;
@@ -692,13 +681,6 @@ static void uart_putchar(uint8_t uart_index, uint8_t ch)
 				U2STAbits.UTXISEL0 = 0;
 			}
 
-			if(uarts[uart_index].tx_count == SYS_UART_TX_BUFFER_SIZE) {
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
-				LOG_E("Circular buffer full!");
-#endif
-				return;
-			}
-
 			buffer_write(uart_index, ch);
 		} else {
 			U2TXREG = ch;
@@ -719,13 +701,6 @@ static void uart_putchar(uint8_t uart_index, uint8_t ch)
 				 */
 				U3STAbits.UTXISEL1 = 1;
 				U3STAbits.UTXISEL0 = 0;
-			}
-
-			if(uarts[uart_index].tx_count == SYS_UART_TX_BUFFER_SIZE) {
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
-				LOG_E("Circular buffer full!");
-#endif
-				return;
 			}
 
 			buffer_write(uart_index, ch);
@@ -750,13 +725,6 @@ static void uart_putchar(uint8_t uart_index, uint8_t ch)
 				U4STAbits.UTXISEL0 = 0;
 			}
 
-			if(uarts[uart_index].tx_count == SYS_UART_TX_BUFFER_SIZE) {
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
-				LOG_E("Circular buffer full!");
-#endif
-				return;
-			}
-
 			buffer_write(uart_index, ch);
 		} else {
 			U4TXREG = ch;
@@ -777,16 +745,18 @@ static void buffer_write(int8_t uart_index, char ch)
 {
 	uint16_t tmp;
 	
-	uarts[uart_index].tx_buffer[uarts[uart_index].tx_write_index] = ch;
+	if(uarts[uart_index].tx_count < SYS_UART_TX_BUFFER_SIZE) {
+		uarts[uart_index].tx_buffer[uarts[uart_index].tx_write_index] = ch;
 
-	INTERRUPTS_DISABLED
-	/*
-         * Compiler don't like following two lines in a oner
-         */
-	tmp = ++(uarts[uart_index].tx_write_index) % SYS_UART_TX_BUFFER_SIZE;
-	uarts[uart_index].tx_write_index = tmp;
-	uarts[uart_index].tx_count++;
-	INTERRUPTS_ENABLED
+		INTERRUPTS_DISABLED
+		/*
+                 * Compiler don't like following two lines in a oner
+                 */
+		tmp = ++(uarts[uart_index].tx_write_index) % SYS_UART_TX_BUFFER_SIZE;
+		uarts[uart_index].tx_write_index = tmp;
+		uarts[uart_index].tx_count++;
+		INTERRUPTS_ENABLED
+	}
 }
 
 static char buffer_read(uint8_t uart_index)
