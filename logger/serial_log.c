@@ -170,13 +170,7 @@ uint16_t serial_buffer_count(void)
 #if defined(XC16)
 void serial_log(uint8_t level, const char *tag, const char *fmt, ...)
 {
-//	result_t  rc;
-//	char     *ptr;
 	va_list   args;
-//	uint16_t  i;
-//	uint32_t  li;
-//	uint8_t   buf[256];
-//	uint8_t  *string;
 
 	va_start(args, fmt);
 
@@ -186,34 +180,26 @@ void serial_log(uint8_t level, const char *tag, const char *fmt, ...)
 	switch(level) {
 	case LOG_DEBUG:
 		serial_printf(debug_string);
-//		rc = uart_tx_buffer(&serial_uart, debug_string, LEVEL_STRING_LEN);
 		break;
 
 	case LOG_INFO:
 		serial_printf(info_string);
-//		rc = uart_tx_buffer(&serial_uart, info_string, LEVEL_STRING_LEN);
 		break;
 
 	case LOG_WARNING:
 		serial_printf(warning_string);
-//		rc = uart_tx_buffer(&serial_uart, warning_string, LEVEL_STRING_LEN);
 		break;
 
 	case LOG_ERROR:
 		serial_printf(error_string);
-//		rc = uart_tx_buffer(&serial_uart, error_string, LEVEL_STRING_LEN);
 		break;
 	}
 
 	/*
 	 * Print the tag field
 	 */
-//	ptr = (char *)tag;
 	serial_printf("%s:", tag);
-//	rc = uart_tx_buffer(&serial_uart, (uint8_t*)ptr, strlen(ptr));
-//	rc = uart_tx_char(&serial_uart, ':');
-	
-//	va_start(args, fmt);
+
 	es_printf(fmt, args);
 	va_end(args);
 }
