@@ -5,7 +5,7 @@
  *
  * Core definitions required by electronicSoup Code Library
  *
- * Copyright 2017 electronicSoup Limited
+ * Copyright 2017 - 2018 electronicSoup Limited
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 2 of the GNU Lesser General Public License
@@ -28,6 +28,14 @@
  */
 #if defined(XC16) || defined(__XC8)
     #include <stdint.h>     // For uintx_t types
+
+/*
+ * The actual Instruction/Peripheral Clock frequency being used by the system
+ * as opposed to the requested Clock Frequence SYS_CLOCK_FREQ
+ */
+extern uint32_t sys_clock_freq;
+
+
 #ifndef	NULL
 #define NULL (0)
 #endif	/* NULL */
@@ -77,6 +85,7 @@ typedef enum {
     SUCCESS = 0x00,           /**< API function executed without error. */
     ERR_GENERAL_ERROR,        /**< Unspecified error occured in libesoup API Function execution.*/
     ERR_BAD_INPUT_PARAMETER,  /**< Bad parameter passed to libesoup API funtion. */
+    ERR_BUFFER_OVERFLOW,
     ERR_RANGE_ERROR,          /**< Error in the range of a parameter.*/
     ERR_TIMER_ACTIVE,         /**< Attempt to start a timer which is already active.*/
     ERR_NO_RESOURCES,         /**< No resources available to execute the requested libesoup API function. */
