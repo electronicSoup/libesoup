@@ -98,44 +98,51 @@ static void clock_init(void)
 	uint16_t m;
 	boolean  found = FALSE;
 
-	sys_clock_freq = SYS_CLOCK_FREQ;
-	fosc = sys_clock_freq * 2;
-	
-	if((fosc < 15000000) || (fosc > 120000000)) {
-		sys_clock_freq = CRYSTAL_FREQ/2;
+        /*
+         * There's a special case if the required clock frequency is 1/2 the
+         * Crystal Frequency then we can simple use Primary Clock.
+	 * NO PLL
+         */
+        if(sys_clock_freq != (CRYSTAL_FREQ/2)) {
+		sys_clock_freq = SYS_CLOCK_FREQ;
 		fosc = sys_clock_freq * 2;
-	}
+	
+		if((fosc < 15000000) || (fosc > 120000000)) {
+			sys_clock_freq = CRYSTAL_FREQ/2;
+			fosc = sys_clock_freq * 2;
+		}
 
-	/*
-	 * Assuming that we're only interested in Whole MHz frequencies choose
-	 * N1 so that Fplli is 1MHz 
-	 */
-	n1 = CRYSTAL_FREQ / 1000000;
+		/*
+	         * Assuming that we're only interested in Whole MHz frequencies choose
+	         * N1 so that Fplli is 1MHz 
+	         */
+		n1 = CRYSTAL_FREQ / 1000000;
 
-	/*
-	 * Now want a value for N2 which satisfies Fsys / N2 = requested Freq
-	 */
-	found = FALSE;
-	for(loop = 0; loop < 3; loop++) {
-		n2 = 2 << loop;
-		fsys = fosc * n2;
+		/*
+	         * Now want a value for N2 which satisfies Fsys / N2 = requested Freq
+	         */
+		found = FALSE;
+		for(loop = 0; loop < 3; loop++) {
+			n2 = 2 << loop;
+			fsys = fosc * n2;
 		
-		if((fsys >= 120000000) && (fsys <= 340000000)) {
-			found = TRUE;
-			break;
+			if((fsys >= 120000000) && (fsys <= 340000000)) {
+				found = TRUE;
+				break;
+			}
+		}
+
+		if(!found) {
+			sys_clock_freq = CRYSTAL_FREQ/2;
+		} else {
+			/*
+	                 * Finally we want a value for m which is fsys/fplli we've set N1
+	                 * to force fplli to be 1MHz so m is simple fsys/1MHz
+			 */
+			m = fsys / 1000000;
 		}
 	}
 
-	if(!found) {
-		sys_clock_freq = CRYSTAL_FREQ/2;
-	} else {
-		/*
-	         * Finally we want a value for m which is fsys/fplli we've set N1
-	         * to force fplli to be 1MHz so m is simple fsys/1MHz
-	         */
-		m = fsys / 1000000;
-	}
-	
         /*
          * There's a special case if the required clock frequency is 1/2 the
          * Crystal Frequency then we can simple use Primary Clock.
@@ -167,7 +174,7 @@ static void clock_init(void)
 			CLKDIVbits.PLLPOST = 0b11;			
 		}
 		
-                PLLFBDbits.PLLDIV  = m;
+                PLLFBDbits.PLLDIV  = m - 2;
         }
 
         __builtin_write_OSCCONL(OSCCON | 0x01);
