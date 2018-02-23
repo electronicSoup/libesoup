@@ -89,13 +89,59 @@ void cpu_init(void)
  */
 static void clock_init(void)
 {
-        uint8_t clock;
+	uint32_t fosc;             // See datasheet
+	uint32_t fsys;             // See datasheet
+        uint8_t  clock;
+	uint8_t  n1;
+	uint8_t  n2;
+	uint8_t  loop;
+	uint16_t m;
+	boolean  found = FALSE;
 
+	sys_clock_freq = SYS_CLOCK_FREQ;
+	fosc = sys_clock_freq * 2;
+	
+	if((fosc < 15000000) || (fosc > 120000000)) {
+		sys_clock_freq = CRYSTAL_FREQ/2;
+		fosc = sys_clock_freq * 2;
+	}
+
+	/*
+	 * Assuming that we're only interested in Whole MHz frequencies choose
+	 * N1 so that Fplli is 1MHz 
+	 */
+	n1 = CRYSTAL_FREQ / 1000000;
+
+	/*
+	 * Now want a value for N2 which satisfies Fsys / N2 = requested Freq
+	 */
+	found = FALSE;
+	for(loop = 0; loop < 3; loop++) {
+		n2 = 2 << loop;
+		fsys = fosc * n2;
+		
+		if((fsys >= 120000000) && (fsys <= 340000000)) {
+			found = TRUE;
+			break;
+		}
+	}
+
+	if(!found) {
+		sys_clock_freq = CRYSTAL_FREQ/2;
+	} else {
+		/*
+	         * Finally we want a value for m which is fsys/fplli we've set N1
+	         * to force fplli to be 1MHz so m is simple fsys/1MHz
+	         */
+		m = fsys / 1000000;
+	}
+	
         /*
          * There's a special case if the required clock frequency is 1/2 the
          * Crystal Frequency then we can simple use Primary Clock.
+	 * NO PLL
          */
-        if(SYS_CLOCK_FREQ == (CRYSTAL_FREQ/2)) {
+        if(sys_clock_freq == (CRYSTAL_FREQ/2)) {
                 // Initiate Clock Switch to Primary Oscillator
                 clock = dsPIC33_PRIMARY_OSCILLATOR;
                 __builtin_write_OSCCONH(clock);
@@ -111,10 +157,17 @@ static void clock_init(void)
                  *
                  * CLOCK = (CRYSTAL * M) / (N1 * N2)
                  */
-                CLKDIVbits.PLLPRE = 0x00;
+                CLKDIVbits.PLLPRE  = n1 - 2;
 
-                CLKDIVbits.PLLPOST = 0x00;
-                PLLFBDbits.PLLDIV = 28;
+		if(n2 == 2) {
+			CLKDIVbits.PLLPOST = 0b00;
+		} else if (n2 == 4) {
+			CLKDIVbits.PLLPOST = 0b01;			
+		} else if (n2 == 8) {
+			CLKDIVbits.PLLPOST = 0b11;			
+		}
+		
+                PLLFBDbits.PLLDIV  = m;
         }
 
         __builtin_write_OSCCONL(OSCCON | 0x01);
@@ -122,7 +175,7 @@ static void clock_init(void)
         // Wait for Clock switch to occur
         while (OSCCONbits.COSC!= clock);
 
-        if(SYS_CLOCK_FREQ != (CRYSTAL_FREQ/2)) {
+        if(sys_clock_freq != (CRYSTAL_FREQ/2)) {
                 // Wait for PLL to lock
                 while (OSCCONbits.LOCK!= 1);
         }

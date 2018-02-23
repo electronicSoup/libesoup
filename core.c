@@ -70,6 +70,14 @@ static const char  *TAG = "CORE";
 #include "libesoup/utils/rand.h"
 #endif
 
+/*
+ * The Instruction Clock Frequency being used by the system.
+ * 
+ * SYS_CLOCK_FREQ is the frequency requested by libesoup_config.h but that
+ * may not be possible, if invalid.
+ */
+uint32_t sys_clock_freq;
+
 result_t libesoup_init(void)
 {
 #ifdef XC16

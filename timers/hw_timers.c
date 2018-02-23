@@ -4,7 +4,7 @@
  *
  * Hardware Timer functionality for the electronicSoup Cinnamon Bun
  *
- * Copyright 2017 2018 electronicSoup Limited
+ * Copyright 2017 - 2018 electronicSoup Limited
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 2 of the GNU Lesser General Public License
@@ -48,13 +48,6 @@ static const char *TAG = "HW_TIMERS";
 #endif // SYS_SERIAL_LOGGING
 
 #include "libesoup/timers/hw_timers.h"
-
-/*
- * Check required libesoup_config.h defines are found
- */
-#ifndef SYS_CLOCK_FREQ
-#error libesoup_config.h file should define the SYS_CLOCK_FREQ
-#endif
 
 /*
  * Local definitions
@@ -441,18 +434,20 @@ static result_t start_timer(timer_id timer, struct timer_req *request)
 	case uSeconds:
 		set_clock_divide(timer, 1);
 #if defined(__18F4585) || defined(__18F2680)
-		ticks = (uint32_t) ((uint32_t) (((uint32_t) SYS_CLOCK_FREQ / 4) / 1000000) * request->duration);
+		ticks = (uint32_t) ((uint32_t) (((uint32_t) sys_clock_freq / 4) / 1000000) * request->duration);
 #elif defined(__dsPIC33EP256MU806__)
 		/*
-		 * SYS_CLOCK_FREQ ticks in a Second 
-                 * 1uS = 1Sec/1,000,000
-                 * Ticks in a uS = SYS_CLOCK_FREQ/1,000,000
+		 * sys_clock_freq ticks in a Second 
+                 * 1uS = 1 Sec/1,000,000
+                 * Ticks in a uS = sys_clock_freq/1,000,000
                  * 
                  * dsPIC33EP256MU806 @ 60,000,000 :
                  * Minimum time is 13uS if ticks is set to 1 the overhead of 
                  * functions calls to here and back to the expiry function are
                  * that long.
                  */
+		ticks = (uint32_t) ((uint32_t) (((uint32_t) sys_clock_freq) / 1000000) * (request->duration - 13));
+#if 0
 #if (SYS_CLOCK_FREQ == 60000000)
 		if(request->duration > 13) {
 			ticks = (uint32_t) ((uint32_t) (((uint32_t) SYS_CLOCK_FREQ) / 1000000) * (request->duration - 13));
@@ -468,22 +463,23 @@ static result_t start_timer(timer_id timer, struct timer_req *request)
 #else
 #error SYS_CLOCK_FREQ Not coded in hw_timers.c
 #endif // SYS_CLOCK_FREQ
+#endif // 0
 #endif // Target uC
                 break;
 
 	case mSeconds:
 #if defined(__18F4585)  || defined(__18F2680)
 		set_clock_divide(timer, 4);
-		ticks = (uint32_t) ((uint32_t) (((uint32_t)(SYS_CLOCK_FREQ / 4)) / 4000) * request->duration);
+		ticks = (uint32_t) ((uint32_t) (((uint32_t)(sys_clock_freq / 4)) / 4000) * request->duration);
 #else
                 /*
-                 * Divided by 64 so SYS_CLOCK_FREQ/64 ticks in a Second
+                 * Divided by 64 so sys_clock_freq/64 ticks in a Second
                  * 1mS = 1Sec/1,000
-                 * Ticks in 1mS = (SYS_CLOCK_FREQ/64)/1,000
-                 *              = SYS_CLOCK_FREQ / 64 * 1,000
+                 * Ticks in 1mS = (sys_clock_freq/64)/1,000
+                 *              = sys_clock_freq / 64 * 1,000
                  */
 		set_clock_divide(timer, 64);
-		ticks = (uint32_t) ((uint32_t) (((uint32_t) SYS_CLOCK_FREQ) / 64000 ) * request->duration);
+		ticks = (uint32_t) ((uint32_t) (((uint32_t) sys_clock_freq) / 64000 ) * request->duration);
 #endif
                 break;
 
@@ -491,10 +487,10 @@ static result_t start_timer(timer_id timer, struct timer_req *request)
 #if defined(__18F4585)  || defined(__18F2680)
 		if(timer == TIMER_0) {
 			set_clock_divide(timer, 64);
-			ticks = (uint32_t) ((uint32_t) (((uint32_t) SYS_CLOCK_FREQ / 4) / 64) * request->duration);
+			ticks = (uint32_t) ((uint32_t) (((uint32_t) sys_clock_freq / 4) / 64) * request->duration);
 		} else if(timer == TIMER_1) {
 			set_clock_divide(timer, 8);
-			ticks = (uint32_t) ((uint32_t) (((uint32_t) SYS_CLOCK_FREQ / 4) / 8) * request->duration);
+			ticks = (uint32_t) ((uint32_t) (((uint32_t) sys_clock_freq / 4) / 8) * request->duration);
 		} else {
 #if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
 			LOG_E("Unknown Timers\n\r");
@@ -503,10 +499,10 @@ static result_t start_timer(timer_id timer, struct timer_req *request)
 #else
                 /*
                  * Divide by 256 so 
-                 * in 1 Second (SYS_CLOCK_FREQ/256) ticks
+                 * in 1 Second (sys_clock_freq/256) ticks
                  */
 		set_clock_divide(timer, 256);
-		ticks = (uint32_t) ((uint32_t) (((uint32_t) SYS_CLOCK_FREQ) / 256) * request->duration);
+		ticks = (uint32_t) ((uint32_t) (((uint32_t) sys_clock_freq) / 256) * request->duration);
 #endif
                 break;
 
