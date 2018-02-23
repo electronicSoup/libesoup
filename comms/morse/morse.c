@@ -4,7 +4,7 @@
  *
  * This file contains code for dealing Morse code
  *
- * Copyright 2017 2018 electronicSoup Limited
+ * Copyright 2017 - 2018 electronicSoup Limited
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 2 of the GNU Lesser General Public License
@@ -20,6 +20,8 @@
  *
  */
 #include "libesoup_config.h"
+
+#ifdef SYS_MORSE
 
 #ifdef SYS_SERIAL_LOGGING
 #define DEBUG_FILE
@@ -471,3 +473,5 @@ void exp_function(timer_t timer_id, union sigval data)
 	}
 }
 #endif // MORSE_TX
+
+#endif // SYS_MORSE

@@ -2,7 +2,7 @@
  *
  * \file libesoup/comms/one_wire/one_wire.c
  *
- * Copyright 2017 2018 electronicSoup Limited
+ * Copyright 2017 - 2018 electronicSoup Limited
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 2 of the GNU Lesser General Public License
@@ -19,6 +19,8 @@
  */
 #include "libesoup_config.h"
 
+#ifdef SYS_ONE_WIRE
+
 #ifdef SYS_SERIAL_LOGGING
 #define DEBUG_FILE
 static const char *TAG = "OneWire";
@@ -33,15 +35,15 @@ static const char *TAG = "OneWire";
 //#include "libesoup/timers/sw_timers.h"
 
 
-#if defined(__dsPIC33EP256MU806__)
-#if (SYS_CLOCK_FREQ == 60000000)
-#define NOP_DURATION 4.6
-#elif (SYS_CLOCK_FREQ == 8000000)
-#define NOP_DURATION 28.6
-#else
+//#if defined(__dsPIC33EP256MU806__)
+//#if (SYS_CLOCK_FREQ == 60000000)
+//#define NOP_DURATION 4.6
+//#elif (SYS_CLOCK_FREQ == 8000000)
+//#define NOP_DURATION 28.6
+//#else
 #error SYS_CLOCK_FREQ Not coded in hw_timers.c
-#endif
-#endif
+//#endif
+//#endif
 
 static uint32_t d;
 #define DELAY(x) for(d = 0; d < (uint32_t)(((float)x )/NOP_DURATION); d++) Nop();
@@ -836,3 +838,5 @@ void bit_read(uint8_t read_bit)
         }
 }
 #endif
+
+#endif // SYS_ONE_WIRE

@@ -4,7 +4,7 @@
  *
  * ISO15765 Logger Protocol Functionality
  *
- * Copyright 2017 electronicSoup Limited
+ * Copyright 2017 - 2018 electronicSoup Limited
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 2 of the GNU Lesser General Public License
@@ -22,6 +22,9 @@
 #include <stdio.h>
 #include <string.h>
 #include "libesoup_config.h"
+
+#ifdef SYS_CAN_ISO15765_LOG
+
 #include "libesoup/comms/can/dcncp/dcncp_can.h"
 #include "libesoup/comms/can/can.h"
 
@@ -192,3 +195,5 @@ void iso15765_logger_unregister_remote(uint8_t address)
 		iso15765_logger = FALSE;
 }
 #endif // SYS_ISO15765
+
+#endif // SYS_CAN_ISO15765_LOG

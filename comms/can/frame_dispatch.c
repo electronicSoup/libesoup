@@ -1,10 +1,10 @@
 /**
  *
- * \file libesoup/can/l2_mcp2515.c
+ * \file libesoup/comms/can/frame_dispatch.c
  *
  * CAN L2 Functionality for dispatching received frames
  *
- * Copyright 2017 2018 electronicSoup Limited
+ * Copyright 2017 - 2018 electronicSoup Limited
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 2 of the GNU Lesser General Public License
@@ -21,7 +21,7 @@
  */
 #include "libesoup_config.h"
 
-#ifdef SYS_CAN
+#ifdef SYS_CAN_BUS
 
 /*
  * Check required libesoup_config.h defines are found
@@ -156,4 +156,4 @@ void frame_dispatch_handle_frame(can_frame *frame)
 	}
 }
 
-#endif // SYS_CAN
+#endif // SYS_CAN_BUS

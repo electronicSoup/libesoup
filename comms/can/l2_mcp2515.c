@@ -1,6 +1,6 @@
 /**
  *
- * \file libesoup/can/l2_mcp2515.c
+ * \file libesoup/comms/can/l2_mcp2515.c
  *
  * CAN L2 Functionality for MCP2515 Chip
  *
@@ -24,7 +24,7 @@
 #include <stdio.h>
 #include "libesoup_config.h"
 
-#ifdef SYS_CAN_MCP2515
+#ifdef SYS_CAN_BUS_MCP2515
 
 #ifdef SYS_SERIAL_LOGGING
 #define DEBUG_FILE
@@ -37,7 +37,7 @@ static const char *TAG = "MCP2515";
 #include "libesoup/comms/can/l2_mcp2515.h"
 
 #include "libesoup/comms/spi/spi.h"
-
+#include "libesoup/timers/delay.h"
 
 /*
  * Check required libesoup_config.h defines are found
@@ -84,8 +84,6 @@ static void     service_device(void);
 static void     set_can_mode(uint8_t mode);
 static void     set_baudrate(can_baud_rate_t baudRate);
 
-
-
 static void     enable_rx_interrupts(void);
 static void     disable_rx_interrupts(void);
 
@@ -107,13 +105,14 @@ void print_error_counts(void);
 /*
  * Global record of CAN Bus error flags.
  */
-static can_baud_rate_t connected_baudrate = no_baud;
-static uint8_t         changing_baud_tx_error;
-static uint32_t        rx_msg_count = 0;
-static can_frame       rx_can_msg;
-static can_status_t    status;
-static can_baud_rate_t status_baud = no_baud;
-static void (*status_handler)(uint8_t mask, can_status_t status, can_baud_rate_t baud) = NULL;
+static can_baud_rate_t     connected_baudrate = no_baud;
+static uint8_t             changing_baud_tx_error;
+static uint32_t            rx_msg_count = 0;
+static can_frame           rx_can_msg;
+static union ty_status     status;
+static can_status_t        can_status;
+static can_baud_rate_t     status_baud = no_baud;
+static status_handler_t    status_handler = NULL;
 
 /*
  * Frame dispatcher is in separate file but shouldn't be seen by Application 
@@ -122,24 +121,12 @@ static void (*status_handler)(uint8_t mask, can_status_t status, can_baud_rate_t
 extern void frame_dispatch_init(void);
 extern void frame_dispatch_handle_frame(can_frame *message);
 
-/**
- * \brief Initialise the CAN Bus.
- *
- * \param baudRate The Baud rate that the bus is operating at
- * or "no_baud" if we don't know the speed of the Bus and have to
- * search for it.
- *
- * \param processCanL2Message The function to process received
- * Layer 2 Can messages.
- */
-result_t can_l2_init(can_baud_rate_t arg_baud_rate,
-                     void (*arg_status_handler)(uint8_t mask, can_status_t status, can_baud_rate_t baud))
+result_t can_l2_init(can_baud_rate_t arg_baud_rate, status_handler_t handler)
 {
 	uint8_t        exit_mode = NORMAL_MODE;
-	uint32_t       delay;
 
 #if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-	LOG_D("l2_init()\n\r");
+	LOG_D("can_l2_init()\n\r");
 #endif
 
 #ifdef SYS_CAN_PING_PROTOCOL
@@ -159,12 +146,14 @@ result_t can_l2_init(can_baud_rate_t arg_baud_rate,
 	/*
          * Intialise the status info. and status_baud
          */
-        status.byte = 0x00;
+        status.sstruct.source = can_bus_status;
+	status.sstruct.status = 0x00;
+	can_status.byte = 0x00;
         status_baud = no_baud;
 
 	frame_dispatch_init();
 
-	status_handler = arg_status_handler;
+	status_handler = handler;
 
 	CAN_INTERRUPT_PIN_DIRECTION = INPUT_PIN;
 	CAN_CS_PIN_DIRECTION = OUTPUT_PIN;
@@ -172,10 +161,7 @@ result_t can_l2_init(can_baud_rate_t arg_baud_rate,
 
 	reset();
 
-	for(delay = 0; delay < 0x40000; delay++) {
-		asm ("CLRWDT");
-		Nop();
-	}
+	delay(uSeconds, 500);
 
 	set_can_mode(CONFIG_MODE);
 
@@ -184,7 +170,7 @@ result_t can_l2_init(can_baud_rate_t arg_baud_rate,
 	write_reg(TXRTSCTRL, 0x00);
 	write_reg(BFPCTRL, 0x00);
 
-	/**
+	/*
 	 * Have to set the baud rate if one has been passed into the function
 	 */
 	if(arg_baud_rate < no_baud) {
@@ -195,11 +181,13 @@ result_t can_l2_init(can_baud_rate_t arg_baud_rate,
 		set_baudrate(arg_baud_rate);
 		exit_mode = NORMAL_MODE;
 
-		status.bit_field.l2_status = L2_Connecting;
+		can_status.bit_field.l2_status = L2_Connecting;
 		status_baud = arg_baud_rate;
+		
+		status.sstruct.status = can_status.byte;
 
 		if(status_handler)
-			status_handler(L2_STATUS_MASK, status, status_baud);
+			status_handler(status);
 	} else {
 #if defined(SYS_CAN_BAUD_AUTO_DETECT)
 		baud_auto_detect_init();
@@ -283,9 +271,9 @@ static void service_device(void)
 			LOG_E("*** SYS_CAN ERRIR Flag!!!\n\r");
 			LOG_E("*** SYS_CAN EFLG %x\n\r", eflg);
 #endif
-			if(status.bit_field.l2_status == L2_Listening) {
+			if(can_status.bit_field.l2_status == L2_Listening) {
 				connecting_errors++;
-                        } else if(status.bit_field.l2_status == L2_Connecting) {
+                        } else if(can_status.bit_field.l2_status == L2_Connecting) {
                                 tec = read_reg(TEC);
 #if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_WARNING))
                                 LOG_W("Tx Error Count = %d\n\r", tec);
@@ -309,9 +297,9 @@ static void service_device(void)
 #if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_WARNING))
 			LOG_W("CAN MERRE Flag\n\r");
 #endif
-			if(status.bit_field.l2_status == L2_Listening) {
+			if(can_status.bit_field.l2_status == L2_Listening) {
 				connecting_errors++;
-                        } else if(status.bit_field.l2_status == L2_Connecting) {
+                        } else if(can_status.bit_field.l2_status == L2_Connecting) {
                                 tec = read_reg(TEC);
 #if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_WARNING))
                                 LOG_W("Tx Error Count = %d\n\r", tec);
@@ -334,7 +322,7 @@ static void service_device(void)
 				LOG_E("Transmit Buffer Failed to send\n\r");
 #endif
 				set_reg_mask_value(ctrl, TXREQ, 0x00);
-				if (status.bit_field.l2_status == L2_ChangingBaud)
+				if (can_status.bit_field.l2_status == L2_ChangingBaud)
 					changing_baud_tx_error++;
 			}
 			ctrl = ctrl + 0x10;
@@ -351,7 +339,7 @@ static void service_device(void)
 			 * Increment the rx count in case we're listening for Baud
 			 * Rate settings.
 			 */
-			if (status.bit_field.l2_status == L2_Listening) {
+			if (can_status.bit_field.l2_status == L2_Listening) {
 				rx_msg_count++;
 			} else {
 				if (buffer_count < SYS_CAN_RX_CIR_BUFFER_SIZE) {
@@ -380,7 +368,7 @@ static void service_device(void)
 			 * Incrememnt the rx count incase we're listening for Baud
 			 * Rate seettings.
 			 */
-			if (status.bit_field.l2_status == L2_Listening) {
+			if (can_status.bit_field.l2_status == L2_Listening) {
 				rx_msg_count++;
 			} else {
 				if (buffer_count < SYS_CAN_RX_CIR_BUFFER_SIZE) {
@@ -401,11 +389,12 @@ static void service_device(void)
 #if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 			LOG_D("TX2IE\n\r");
 #endif
-			if (status.bit_field.l2_status == L2_Connecting) {
-				status.bit_field.l2_status = L2_Connected;
+			if (can_status.bit_field.l2_status == L2_Connecting) {
+				can_status.bit_field.l2_status = L2_Connected;
+				status.sstruct.status = can_status.byte;
 
 				if (status_handler)
-					status_handler(L2_STATUS_MASK, status, status_baud);
+					status_handler(status);
 			}
 
 			set_reg_mask_value(CANINTF, TX2IE, 0x00);
@@ -415,11 +404,12 @@ static void service_device(void)
 #if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 			LOG_D("TX1IE\n\r");
 #endif
-			if (status.bit_field.l2_status == L2_Connecting) {
-				status.bit_field.l2_status = L2_Connected;
+			if (can_status.bit_field.l2_status == L2_Connecting) {
+				can_status.bit_field.l2_status = L2_Connected;
+				status.sstruct.status = can_status.byte;
 
 				if (status_handler)
-					status_handler(L2_STATUS_MASK, status, status_baud);
+					status_handler(status);
 			}
 			set_reg_mask_value(CANINTF, TX1IE, 0x00);
 		}
@@ -428,11 +418,12 @@ static void service_device(void)
 #if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 			LOG_D("TX0IE\n\r");
 #endif
-			if (status.bit_field.l2_status == L2_Connecting) {
-				status.bit_field.l2_status = L2_Connected;
+			if (can_status.bit_field.l2_status == L2_Connecting) {
+				can_status.bit_field.l2_status = L2_Connected;
+				status.sstruct.status = can_status.byte;
 
 				if (status_handler)
-					status_handler(L2_STATUS_MASK, status, status_baud);
+					status_handler(status);
 			}
 
 			set_reg_mask_value(CANINTF, TX0IE, 0x00);
@@ -455,11 +446,12 @@ void can_l2_tasks(void)
 		service_device();
 
 	while(buffer_count > 0) {
-		if (status.bit_field.l2_status == L2_Connecting) {
-			status.bit_field.l2_status = L2_Connected;
+		if (can_status.bit_field.l2_status == L2_Connecting) {
+			can_status.bit_field.l2_status = L2_Connected;
+			status.sstruct.status = can_status.byte;
 
 			if (status_handler)
-				status_handler(L2_STATUS_MASK, status, status_baud);
+				status_handler(status);
 		}
 
 		/*
@@ -612,7 +604,7 @@ result_t can_l2_tx_frame(can_frame  *frame)
 	 * Right all set for Transmission but check the current network status
 	 * and send in One Shot Mode if we're unsure of the Network.
 	 */
-	if (status.bit_field.l2_status == L2_Connecting) {
+	if (can_status.bit_field.l2_status == L2_Connecting) {
 #if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 		LOG_D("Network not good so sending OSM\n\r");
 #endif
@@ -862,7 +854,8 @@ static void set_reg_mask_value(uint8_t reg, uint8_t mask, uint8_t value)
 
 static void set_can_mode(uint8_t mode)
 {
-	unsigned char result;
+	unsigned char result = 0x00;
+
 #ifdef TEST
 	uint16_t delay;
 	uint16_t loop = 0;
@@ -996,7 +989,7 @@ static void set_baudrate(can_baud_rate_t baudrate)
 
 void get_status(can_status_t *arg_status, can_baud_rate_t *arg_baud)
 {
-	*arg_status = status;
+	*arg_status = can_status;
 	*arg_baud = status_baud;
 }
 

@@ -30,7 +30,7 @@
 #ifndef _ES_PIC24FJ256GB106_H
 #define _ES_PIC24FJ256GB106_H
 
-//#include <p24Fxxxx.h>
+#define RCON_WDTO   (1 << 4)
 
 #define OUTPUT_PIN  0
 #define INPUT_PIN   1
@@ -58,7 +58,6 @@
  * \brief Total number of Hardware timers present in the micro-controller
  */
 #define NUMBER_HW_TIMERS  5
-
 
 /*
  * UART Settings.

@@ -35,12 +35,13 @@
 #define _HW_TIMERS_H
 
 #include "libesoup_config.h"
-#include "libesoup/timers/time.h"
 
 /*
  * Code should only be compiled if SYS_HW_TIMERS is enabled in libesoup_config.h
  */
 #ifdef SYS_HW_TIMERS
+
+#include "libesoup/timers/time.h"
 
 /**
  * \name Hardware Timers 

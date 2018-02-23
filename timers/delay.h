@@ -23,6 +23,8 @@
 /**
  * \name Delay Delay 
  */
+#include "libesoup/timers/time.h"
+
 /**@{*/
 
 /**

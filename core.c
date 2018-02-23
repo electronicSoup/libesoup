@@ -26,9 +26,13 @@
 
 #ifdef SYS_SERIAL_LOGGING
 #define DEBUG_FILE
-static const char *TAG  __attribute__((unused))  = "CORE";
+#ifdef XC16
+static const char  __attribute__((unused)) *TAG = "CORE";
+#elif __XC8
+static const char  *TAG = "CORE";
+#endif // XC16 elif XC8
 #include "libesoup/logger/serial_log.h"
-#endif
+#endif  // SYS_SERIAL_LOGGING
 
 #ifdef SYS_HW_TIMERS
 #include "libesoup/timers/hw_timers.h"
@@ -62,12 +66,31 @@ static const char *TAG  __attribute__((unused))  = "CORE";
 #include "libesoup/hardware/eeprom.h"
 #endif
 
+#ifdef SYS_RAND
+#include "libesoup/utils/rand.h"
+#endif
+
+/*
+ * The Instruction Clock Frequency being used by the system.
+ * 
+ * SYS_CLOCK_FREQ is the frequency requested by libesoup_config.h but that
+ * may not be possible, if invalid.
+ */
+uint32_t sys_clock_freq;
+
 result_t libesoup_init(void)
 {
 #ifdef XC16
 	result_t rc  __attribute__((unused)) = SUCCESS;
 #else
 	result_t rc = SUCCESS;
+#endif
+
+#if __XC8
+#ifdef SYS_SERIAL_LOGGING
+	TAG = TAG;
+#endif // SYS_SERIAL_LOGGING
+	rc = SUCCESS;
 #endif
 	
 	cpu_init();
@@ -121,5 +144,10 @@ result_t libesoup_init(void)
 #ifdef SYS_SPI_BUS
         spi_init();
 #endif
+
+#ifdef SYS_RAND
+	random_init();
+#endif
+
 	return(SUCCESS);
 }

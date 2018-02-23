@@ -4,7 +4,7 @@
  *
  * Random initialisation function for the electronicSoup Cinnamon Bun
  *
- * Copyright 2017 electronicSoup Limited
+ * Copyright 2017 -2018 electronicSoup Limited
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 2 of the GNU Lesser General Public License
@@ -23,20 +23,20 @@
 #include <stdlib.h>    // needed for srand()
 #include "libesoup_config.h"
 
+#ifdef SYS_RAND
+
 #ifdef SYS_SERIAL_LOGGING
 #define DEBUG_FILE
 static const char *TAG = "RAND";
 #include "libesoup/logger/serial_log.h"
+
 /*
  * Check required libesoup_config.h defines are found
  */
 #ifndef SYS_LOG_LEVEL
 #error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
 #endif
-#endif
-
-
-static uint8_t initialised = FALSE;
+#endif // SYS_SERIAL_LOGGING
 
 /*
  * Function to generate a random seed to initialise the microchip random library
@@ -44,12 +44,8 @@ static uint8_t initialised = FALSE;
 void random_init(void)
 {
 	uint16_t  loop;
-	u32       seed;
+	uint32_t  seed;
 	uint8_t  *data;
-
-	if(initialised) {
-		return;
-	}
 
 #if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_INFO))
 	LOG_I("random_init()\n\r");
@@ -69,3 +65,5 @@ void random_init(void)
 #endif
 	srand(seed);
 }
+
+#endif // SYS_RAND

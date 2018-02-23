@@ -50,10 +50,6 @@ static const char *TAG = "UART";
 /*
  * Check required libesoup_config.h defines are found
  */
-#ifndef SYS_CLOCK_FREQ
-#error libesoup_config.h file should define the SYS_CLOCK_FREQ
-#endif
-
 #ifndef SYS_UART_TX_BUFFER_SIZE
 #error libesoup_config.h file should define the SYS_UART_TX_BUFFER_SIZE
 #endif
@@ -80,10 +76,13 @@ struct uart uarts[NUM_UARTS];
  */
 static void uart_tx_isr(uint8_t);
 
-static void uart_set_rx_pin(uint8_t uart, uint8_t pin);
-static void uart_set_tx_pin(uint8_t uart, uint8_t pin);
-static void uart_set_uart_config(struct uart_data *uart);
-static void uart_putchar(uint8_t uart, uint8_t ch);
+static void     uart_set_rx_pin(uint8_t uart, uint8_t pin);
+static void     uart_set_tx_pin(uint8_t uart, uint8_t pin);
+static void     uart_set_uart_config(struct uart_data *uart);
+static result_t uart_putchar(uint8_t uart, uint8_t ch);
+
+static result_t buffer_write(int8_t uart_index, char ch);
+static char     buffer_read(uint8_t uart_index);
 
 /*
  * Returns the number of bytes still waiting to be loaded in HW TX Buffer.
@@ -471,6 +470,23 @@ void uart_init(void)
 	}
 }
 
+#ifdef SYS_DEBUG_BUILD
+uint16_t uart_buffer_count(struct uart_data *data)
+{
+	uint8_t  uart_index;
+
+	uart_index = data->uart;
+
+	if(uarts[uart_index].data != data) {
+#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
+		LOG_E("Bad UART passed into uart_buffer_count()\n\r");
+#endif
+		return(0);
+	}
+	return(uarts[uart_index].tx_count);
+}
+#endif // SYS_DEBUG_BUILD
+
 /*
  * uart_reserve - Reserve a UART Channel for future use by the caller.
  */
@@ -497,7 +513,7 @@ result_t uart_reserve(struct uart_data *data)
 			 * Set up the Rx & Tx pins
 			 */
 			if (data->rx_pin != NO_PIN) {
-			    uart_set_rx_pin((uint8_t) data->uart, data->rx_pin);
+				uart_set_rx_pin((uint8_t) data->uart, data->rx_pin);
 			}
 
 			if (data->tx_pin != NO_PIN) {
@@ -576,8 +592,9 @@ result_t uart_release(struct uart_data *data)
 
 result_t uart_tx_buffer(struct uart_data *data, uint8_t *buffer, uint16_t len)
 {
-	uint8_t  uart_index;
-	uint8_t *ptr;
+	uint8_t   uart_index;
+	uint8_t  *ptr;
+	result_t  rc = SUCCESS;
 
 	uart_index = data->uart;
 
@@ -587,10 +604,10 @@ result_t uart_tx_buffer(struct uart_data *data, uint8_t *buffer, uint16_t len)
 
 	ptr = buffer;
 
-	while(len--) {
-		uart_putchar(uart_index, *ptr++);
+	while(len-- && (rc == SUCCESS)) {
+		rc = uart_putchar(uart_index, *ptr++);
 	}
-	return(SUCCESS);
+	return(rc);
 }
 
 result_t uart_tx_char(struct uart_data *data, char ch)
@@ -603,14 +620,11 @@ result_t uart_tx_char(struct uart_data *data, char ch)
 		return(ERR_BAD_INPUT_PARAMETER);
 	}
 
-        uart_putchar(uart_index, ch);
-	return(SUCCESS);        
+        return(uart_putchar(uart_index, ch));
 }
 
-static void uart_putchar(uint8_t uart_index, uint8_t ch)
+static result_t uart_putchar(uint8_t uart_index, uint8_t ch)
 {
-        uint8_t tmp;
-
 	/*
 	 * If the Transmitter queue is currently empty turn on chip select.
 	 */
@@ -632,40 +646,17 @@ static void uart_putchar(uint8_t uart_index, uint8_t ch)
 				U1STAbits.UTXISEL0 = 0;
 			}
 
-			if(uarts[uart_index].tx_count == SYS_UART_TX_BUFFER_SIZE) {
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
-				LOG_E("Circular buffer full!");
-#endif
-				return;
-			}
-
-			uarts[uart_index].tx_buffer[uarts[uart_index].tx_write_index] = ch;
-			/*
-                         * Compiler don't like following two lines in a oner
-                         */
-			tmp = ++(uarts[uart_index].tx_write_index) % SYS_UART_TX_BUFFER_SIZE;
-			uarts[uart_index].tx_write_index = tmp;
-			uarts[uart_index].tx_count++;
+			return(buffer_write(uart_index, ch));
 		} else {
 			U1TXREG = ch;
 		}
 #elif defined(__18F2680) || defined(__18F4585)
-		if(uarts[uart_index].tx_count == SYS_UART_TX_BUFFER_SIZE) {
-			return;
-		}
-
 		if((uarts[uart_index].tx_count == 0) && PIR1bits.TXIF) {
 			TXREG = ch;
 			return;
 		}
 
-		uarts[uart_index].tx_buffer[uarts[uart_index].tx_write_index] = ch;
-		/*
-                 * Compiler don't like following two lines in a oner
-                 */
-		tmp = ++(uarts[uart_index].tx_write_index) % SYS_UART_TX_BUFFER_SIZE;
-		uarts[uart_index].tx_write_index = tmp;
-		uarts[uart_index].tx_count++;
+		return(buffer_write(uart_index, ch));
 		PIE1bits.TXIE = ENABLED;
 #endif // #if defined(__18F2680) || defined(__18F4585)
 		break;
@@ -686,20 +677,7 @@ static void uart_putchar(uint8_t uart_index, uint8_t ch)
 				U2STAbits.UTXISEL0 = 0;
 			}
 
-			if(uarts[uart_index].tx_count == SYS_UART_TX_BUFFER_SIZE) {
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
-				LOG_E("Circular buffer full!");
-#endif
-				return;
-			}
-
-			uarts[uart_index].tx_buffer[uarts[uart_index].tx_write_index] = ch;
-			/*
-                         * Compiler don't like following two lines in a oner
-                         */
-			tmp = ++(uarts[uart_index].tx_write_index) % SYS_UART_TX_BUFFER_SIZE;
-			uarts[uart_index].tx_write_index = tmp;
-			uarts[uart_index].tx_count++;
+			return(buffer_write(uart_index, ch));
 		} else {
 			U2TXREG = ch;
 		}
@@ -721,20 +699,7 @@ static void uart_putchar(uint8_t uart_index, uint8_t ch)
 				U3STAbits.UTXISEL0 = 0;
 			}
 
-			if(uarts[uart_index].tx_count == SYS_UART_TX_BUFFER_SIZE) {
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
-				LOG_E("Circular buffer full!");
-#endif
-				return;
-			}
-
-			uarts[uart_index].tx_buffer[uarts[uart_index].tx_write_index] = ch;
-			/*
-                         * Compiler don't like following two lines in a oner
-                         */
-			tmp = ++(uarts[uart_index].tx_write_index) % SYS_UART_TX_BUFFER_SIZE;
-			uarts[uart_index].tx_write_index = tmp;
-			uarts[uart_index].tx_count++;
+			return(buffer_write(uart_index, ch));
 		} else {
 			U3TXREG = ch;
 		}
@@ -756,20 +721,7 @@ static void uart_putchar(uint8_t uart_index, uint8_t ch)
 				U4STAbits.UTXISEL0 = 0;
 			}
 
-			if(uarts[uart_index].tx_count == SYS_UART_TX_BUFFER_SIZE) {
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
-				LOG_E("Circular buffer full!");
-#endif
-				return;
-			}
-
-			uarts[uart_index].tx_buffer[uarts[uart_index].tx_write_index] = ch;
-			/*
-                         * Compiler don't like following two lines in a oner
-                         */
-			tmp = ++(uarts[uart_index].tx_write_index) % SYS_UART_TX_BUFFER_SIZE;
-			uarts[uart_index].tx_write_index = tmp;
-			uarts[uart_index].tx_count++;
+			return(buffer_write(uart_index, ch));
 		} else {
 			U4TXREG = ch;
 		}
@@ -783,6 +735,52 @@ static void uart_putchar(uint8_t uart_index, uint8_t ch)
 #endif // __XC8
 		break;
 	}
+	
+	return(SUCCESS);
+}
+
+static result_t buffer_write(int8_t uart_index, char ch)
+{
+	uint16_t tmp;
+
+	/*
+	 * Todo - This potential buffer overflow should be handled
+	 *        Might change the function to return an error code
+	 */	
+	if(uarts[uart_index].tx_count < SYS_UART_TX_BUFFER_SIZE) {
+		uarts[uart_index].tx_buffer[uarts[uart_index].tx_write_index] = ch;
+
+		INTERRUPTS_DISABLED
+		/*
+                 * Compiler don't like following two lines in a oner
+                 */
+		tmp = ++(uarts[uart_index].tx_write_index) % SYS_UART_TX_BUFFER_SIZE;
+		uarts[uart_index].tx_write_index = tmp;
+		uarts[uart_index].tx_count++;
+		INTERRUPTS_ENABLED
+		return(SUCCESS);
+	}
+
+	return(ERR_BUFFER_OVERFLOW);
+}
+
+static char buffer_read(uint8_t uart_index)
+{
+	uint16_t tmp;
+	char     ch = 0x00;
+	
+	INTERRUPTS_DISABLED
+	if(uarts[uart_index].tx_count > 0) {
+		ch = uarts[uart_index].tx_buffer[uarts[uart_index].tx_read_index];
+		/*
+	         * Compiler don't like following two lines in a oner
+	         */
+		tmp = ++(uarts[uart_index].tx_read_index) % SYS_UART_TX_BUFFER_SIZE;
+		uarts[uart_index].tx_read_index = tmp;
+		uarts[uart_index].tx_count--;
+	}
+	INTERRUPTS_ENABLED
+	return(ch);
 }
 
 #if defined(__dsPIC33EP256MU806__)
@@ -875,7 +873,7 @@ static void uart_set_rx_pin(uint8_t uart, uint8_t pin)
 #elif defined(__18F2680) || defined(__18F4585)
 static void uart_set_rx_pin(uint8_t uart, uint8_t pin)
 {
-        TRISCbits.TRISC7 = INPUT_PIN;
+//        TRISCbits.TRISC7 = INPUT_PIN;
 }
 #endif // MicroContoller Selection
 
@@ -924,7 +922,7 @@ static void uart_set_tx_pin(uint8_t uart, uint8_t pin)
 #elif defined (__PIC24FJ256GB106__)
 static void uart_set_tx_pin(uint8_t uart, uint8_t pin)
 {
-	uint8_t tx_function;
+	uint8_t tx_function = 0x00;
 
 	switch (uart) {
 	case UART_1:
@@ -942,6 +940,11 @@ static void uart_set_tx_pin(uint8_t uart, uint8_t pin)
 	case UART_4:
 		tx_function = PPS_UART_4_TX;
 		break;
+		
+	default:
+#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
+		LOG_E("Bad input parameters\n\r");
+#endif
 	}
 
 	switch (pin) {
@@ -993,12 +996,12 @@ static void uart_set_tx_pin(uint8_t uart, uint8_t pin)
 }
 #endif // MicroContoller Selection
 
+#if defined(__dsPIC33EP256MU806__) || defined (__PIC24FJ256GB106__)
 static void uart_set_uart_config(struct uart_data *uart)
 {
 	switch (uart->uart) {
 #ifdef UART_1
 	case UART_1:
-#if defined(__dsPIC33EP256MU806__) || defined (__PIC24FJ256GB106__)
 		U1MODE = uart->uart_mode;
 
 		/*
@@ -1010,9 +1013,9 @@ static void uart_set_uart_config(struct uart_data *uart)
 
 		/*
 		 * with BRGH = 0 Slow Speed Mode:
-		 *        Baudrate - between  SYS_CLOCK_FREQ /(16 * 65536) and SYS_CLOCK_FREQ / 16
-		 *                   For SYS_CLOCK_FREQ = 16,000,000 Min 15bps Max 1Mbps 
-		 *                   For SYS_CLOCK_FREQ =  4,000,000 Min 3bps Max 250Kbps 
+		 *        Baudrate - between  sys_clock_freq /(16 * 65536) and sys_clock_freq / 16
+		 *                   For sys_clock_freq = 16,000,000 Min 15bps Max 1Mbps 
+		 *                   For sys_clock_freq =  4,000,000 Min 3bps Max 250Kbps 
 		 * 
 		 *                   Desired Baud Rate = FCY/(16 (UxBRG + 1))
 		 *
@@ -1021,20 +1024,20 @@ static void uart_set_uart_config(struct uart_data *uart)
 		 *                   UxBRG = ((CLOCK / BAUD)/16) -1
 		 *
 		 *
-		 * with BRGH = 1 : SYS_CLOCK_FREQ /(4 * 65536) <= Baudrate <= SYS_CLOCK_FREQ / 4
-		 *                   For SYS_CLOCK_FREQ = 16,000,000 Min 61bps Max 4Mbps 
-		 *                   For SYS_CLOCK_FREQ =  4,000,000 Min 15bps Max 1Mbps 
+		 * with BRGH = 1 : sys_clock_freq /(4 * 65536) <= Baudrate <= sys_clock_freq / 4
+		 *                   For sys_clock_freq = 16,000,000 Min 61bps Max 4Mbps 
+		 *                   For sys_clock_freq =  4,000,000 Min 15bps Max 1Mbps 
 		 */
 		if(uart->uart_mode & BRGH_MASK) {
 			/*
 			 * Hight Speed Mode:
 			 */
-			U1BRG = (uint16_t)((uint32_t)((uint32_t)SYS_CLOCK_FREQ / (uint32_t)uart->baud) / 4) - 1;
+			U1BRG = (uint16_t)((uint32_t)((uint32_t)sys_clock_freq / (uint32_t)uart->baud) / 4) - 1;
 		} else {
 			/*
 			 * Standard Mode:
 			 */
-			U1BRG = (uint16_t)((uint32_t)((uint32_t)SYS_CLOCK_FREQ / (uint32_t)uart->baud) / 16) - 1;
+			U1BRG = (uint16_t)((uint32_t)((uint32_t)sys_clock_freq / (uint32_t)uart->baud) / 16) - 1;
 		}
 
 		U1_RX_ISR_FLAG = 0;
@@ -1057,30 +1060,9 @@ static void uart_set_uart_config(struct uart_data *uart)
 		}
 
 		U1_ENABLE = ENABLED;
-#elif defined(__18F2680) || defined(__18F4585)
-		TXSTAbits.TXEN = 1;    // Transmitter enabled
-		TXSTAbits.SYNC = 0;    // Asynchronous mode
-		TXSTAbits.BRGH = 0;    // High Baud Rate Select bit
-
-#if defined(ENABLE_USART_RX)
-		RCSTAbits.CREN = 1;    // Enable the Receiver
-#else
-		RCSTAbits.CREN = 0;    // Disable the Receiver
-#endif
-		BAUDCONbits.BRG16 = 0; // 16-bit Baud Rate Register Enable bit
-
-		SPBRG = (unsigned char)(((SYS_CLOCK_FREQ / uart->baud) / 64 ) - 1);
-
-		PIE1bits.TXIE = 1;
-#if defined(ENABLE_USART_RX)
-		PIR1bits.RCIF = 0;
-		PIE1bits.RCIE = 1;
-#endif // ENABLE_EUSART_RX
-		RCSTAbits.SPEN = 1;
-		TXREG = 'J';
-#endif // MicroController Selection 18Fxxx
 		break;
 #endif // UART_1
+
 #ifdef UART_2
 	case UART_2:
 		U2MODE = uart->uart_mode;
@@ -1093,9 +1075,9 @@ static void uart_set_uart_config(struct uart_data *uart)
 
 		/*
 		 * with BRGH = 0 Slow Speed Mode:
-		 *        Baudrate - between  SYS_CLOCK_FREQ /(16 * 65536) and SYS_CLOCK_FREQ / 16
-		 *                   For SYS_CLOCK_FREQ = 16,000,000 Min 15bps Max 1Mbps 
-		 *                   For SYS_CLOCK_FREQ =  4,000,000 Min 3bps Max 250Kbps 
+		 *        Baudrate - between  sys_clock_freq /(16 * 65536) and sys_clock_freq / 16
+		 *                   For sys_clock_freq = 16,000,000 Min 15bps Max 1Mbps 
+		 *                   For sys_clock_freq =  4,000,000 Min 3bps Max 250Kbps 
 		 * 
 		 *                   Desired Baud Rate = FCY/(16 (UxBRG + 1))
 		 *
@@ -1104,20 +1086,20 @@ static void uart_set_uart_config(struct uart_data *uart)
 		 *                   UxBRG = ((CLOCK / BAUD)/16) -1
 		 *
 		 *
-		 * with BRGH = 1 : SYS_CLOCK_FREQ /(4 * 65536) <= Baudrate <= SYS_CLOCK_FREQ / 4
-		 *                   For SYS_CLOCK_FREQ = 16,000,000 Min 61bps Max 4Mbps 
-		 *                   For SYS_CLOCK_FREQ =  4,000,000 Min 15bps Max 1Mbps 
+		 * with BRGH = 1 : sys_clock_freq /(4 * 65536) <= Baudrate <= sys_clock_freq / 4
+		 *                   For sys_clock_freq = 16,000,000 Min 61bps Max 4Mbps 
+		 *                   For sys_clock_freq =  4,000,000 Min 15bps Max 1Mbps 
 		 */
 		if(uart->uart_mode & BRGH_MASK) {
 			/*
 			 * Hight Speed Mode:
 			 */
-			U2BRG = (uint16_t)((uint32_t)((uint32_t)SYS_CLOCK_FREQ / (uint32_t)uart->baud) / 4) - 1;
+			U2BRG = (uint16_t)((uint32_t)((uint32_t)sys_clock_freq / (uint32_t)uart->baud) / 4) - 1;
 		} else {
 			/*
 			 * Standard Mode:
 			 */
-			U2BRG = (uint16_t)((uint32_t)((uint32_t)SYS_CLOCK_FREQ / (uint32_t)uart->baud) / 16) - 1;
+			U2BRG = (uint16_t)((uint32_t)((uint32_t)sys_clock_freq / (uint32_t)uart->baud) / 16) - 1;
 		}
 
 
@@ -1152,9 +1134,9 @@ static void uart_set_uart_config(struct uart_data *uart)
 
 		/*
 		 * with BRGH = 0 Slow Speed Mode:
-		 *        Baudrate - between  SYS_CLOCK_FREQ /(16 * 65536) and SYS_CLOCK_FREQ / 16
-		 *                   For SYS_CLOCK_FREQ = 16,000,000 Min 15bps Max 1Mbps 
-		 *                   For SYS_CLOCK_FREQ =  4,000,000 Min 3bps Max 250Kbps 
+		 *        Baudrate - between  sys_clock_freq /(16 * 65536) and sys_clock_freq / 16
+		 *                   For sys_clock_freq = 16,000,000 Min 15bps Max 1Mbps 
+		 *                   For sys_clock_freq =  4,000,000 Min 3bps Max 250Kbps 
 		 * 
 		 *                   Desired Baud Rate = FCY/(16 (UxBRG + 1))
 		 *
@@ -1163,20 +1145,20 @@ static void uart_set_uart_config(struct uart_data *uart)
 		 *                   UxBRG = ((CLOCK / BAUD)/16) -1
 		 *
 		 *
-		 * with BRGH = 1 : SYS_CLOCK_FREQ /(4 * 65536) <= Baudrate <= SYS_CLOCK_FREQ / 4
-		 *                   For SYS_CLOCK_FREQ = 16,000,000 Min 61bps Max 4Mbps 
-		 *                   For SYS_CLOCK_FREQ =  4,000,000 Min 15bps Max 1Mbps 
+		 * with BRGH = 1 : sys_clock_freq /(4 * 65536) <= Baudrate <= sys_clock_freq / 4
+		 *                   For sys_clock_freq = 16,000,000 Min 61bps Max 4Mbps 
+		 *                   For sys_clock_freq =  4,000,000 Min 15bps Max 1Mbps 
 		 */
 		if(uart->uart_mode & BRGH_MASK) {
 			/*
 			 * Hight Speed Mode:
 			 */
-			U3BRG = (uint16_t)((uint32_t)((uint32_t)SYS_CLOCK_FREQ / (uint32_t)uart->baud) / 4) - 1;
+			U3BRG = (uint16_t)((uint32_t)((uint32_t)sys_clock_freq / (uint32_t)uart->baud) / 4) - 1;
 		} else {
 			/*
 			 * Standard Mode:
 			 */
-			U3BRG = (uint16_t)((uint32_t)((uint32_t)SYS_CLOCK_FREQ / (uint32_t)uart->baud) / 16) - 1;
+			U3BRG = (uint16_t)((uint32_t)((uint32_t)sys_clock_freq / (uint32_t)uart->baud) / 16) - 1;
 		}
 
 
@@ -1211,9 +1193,9 @@ static void uart_set_uart_config(struct uart_data *uart)
 
 		/*
 		 * with BRGH = 0 Slow Speed Mode:
-		 *        Baudrate - between  SYS_CLOCK_FREQ /(16 * 65536) and SYS_CLOCK_FREQ / 16
-		 *                   For SYS_CLOCK_FREQ = 16,000,000 Min 15bps Max 1Mbps 
-		 *                   For SYS_CLOCK_FREQ =  4,000,000 Min 3bps Max 250Kbps 
+		 *        Baudrate - between  sys_clock_freq /(16 * 65536) and sys_clock_freq / 16
+		 *                   For sys_clock_freq = 16,000,000 Min 15bps Max 1Mbps 
+		 *                   For sys_clock_freq =  4,000,000 Min 3bps Max 250Kbps 
 		 * 
 		 *                   Desired Baud Rate = FCY/(16 (UxBRG + 1))
 		 *
@@ -1222,20 +1204,20 @@ static void uart_set_uart_config(struct uart_data *uart)
 		 *                   UxBRG = ((CLOCK / BAUD)/16) -1
 		 *
 		 *
-		 * with BRGH = 1 : SYS_CLOCK_FREQ /(4 * 65536) <= Baudrate <= SYS_CLOCK_FREQ / 4
-		 *                   For SYS_CLOCK_FREQ = 16,000,000 Min 61bps Max 4Mbps 
-		 *                   For SYS_CLOCK_FREQ =  4,000,000 Min 15bps Max 1Mbps 
+		 * with BRGH = 1 : sys_clock_freq /(4 * 65536) <= Baudrate <= sys_clock_freq / 4
+		 *                   For sys_clock_freq = 16,000,000 Min 61bps Max 4Mbps 
+		 *                   For sys_clock_freq =  4,000,000 Min 15bps Max 1Mbps 
 		 */
 		if(uart->uart_mode & BRGH_MASK) {
 			/*
 			 * Hight Speed Mode:
 			 */
-			U4BRG = (uint16_t)((uint32_t)((uint32_t)SYS_CLOCK_FREQ / (uint32_t)uart->baud) / 4) - 1;
+			U4BRG = (uint16_t)((uint32_t)((uint32_t)sys_clock_freq / (uint32_t)uart->baud) / 4) - 1;
 		} else {
 			/*
 			 * Standard Mode:
 			 */
-			U4BRG = (uint16_t)((uint32_t)((uint32_t)SYS_CLOCK_FREQ / (uint32_t)uart->baud) / 16) - 1;
+			U4BRG = (uint16_t)((uint32_t)((uint32_t)sys_clock_freq / (uint32_t)uart->baud) / 16) - 1;
 		}
 
 
@@ -1265,14 +1247,50 @@ static void uart_set_uart_config(struct uart_data *uart)
 		break;
 	}
 }
+#endif  // defined(__dsPIC33EP256MU806__) || defined (__PIC24FJ256GB106__)
+
+#if defined(__18F2680) || defined(__18F4585)
+static void uart_set_uart_config(struct uart_data *uart)
+{
+	switch (uart->uart) {
+#ifdef UART_1
+	case UART_1:
+		TXSTAbits.TXEN = 1;    // Transmitter enabled
+		TXSTAbits.SYNC = 0;    // Asynchronous mode
+		TXSTAbits.BRGH = 0;    // High Baud Rate Select bit
+
+#if defined(SYS_ENABLE_USART_RX)
+		RCSTAbits.CREN = 1;    // Enable the Receiver
+#else
+		RCSTAbits.CREN = 0;    // Disable the Receiver
+#endif
+		BAUDCONbits.BRG16 = 0; // 16-bit Baud Rate Register Enable bit
+
+		SPBRG = (unsigned char)(((sys_clock_freq / uart->baud) / 64 ) - 1);
+
+		PIE1bits.TXIE = 1;
+#if defined(SYS_ENABLE_USART_RX)
+		PIR1bits.RCIF = 0;
+		PIE1bits.RCIE = 1;
+#endif // ENABLE_EUSART_RX
+		RCSTAbits.SPEN = 1;
+		break;
+#endif // UART_1
+
+	default:
+#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
+		LOG_E("Bad UART passed\n\r");
+#endif
+		break;
+	}
+}
+#endif // defined(__18F2680) || defined(__18F4585)
 
 /*
  * Returns the number of bytes still waiting to be loaded in HW TX Buffer.
  */
 static uint16_t load_tx_buffer(uint8_t uart)
 {
-        uint8_t tmp;
-        
 	switch (uart) {
 #ifdef UART_1
 	case UART_1:
@@ -1281,13 +1299,7 @@ static uint16_t load_tx_buffer(uint8_t uart)
 		 * If the TX buffer is not full load it from the circular buffer
 		 */
 		while ((!U1STAbits.UTXBF) && (uarts[uart].tx_count)) {
-			U1TXREG = uarts[uart].tx_buffer[uarts[uart].tx_read_index];
-			/*
-                         * Compiler don't like following two lines in a oner
-                         */
-			tmp = ++(uarts[uart].tx_read_index) % SYS_UART_TX_BUFFER_SIZE;
-			uarts[uart].tx_read_index = tmp;
-			uarts[uart].tx_count--;
+			U1TXREG = buffer_read(uart);
 		}
 
 		return(uarts[uart].tx_count);
@@ -1297,13 +1309,7 @@ static uint16_t load_tx_buffer(uint8_t uart)
                  * cannot be cleared by SW directly.
                  */
 		if(uarts[uart].tx_count > 0) {
-			TXREG = uarts[uart].tx_buffer[uarts[uart].tx_read_index];
-			/*
-                         * Compiler don't like following two lines in a oner
-                         */
-			tmp = ++(uarts[uart].tx_read_index) % SYS_UART_TX_BUFFER_SIZE;
-			uarts[uart].tx_read_index = tmp;
-			uarts[uart].tx_count--;
+			TXREG = buffer_read(uart);
 		} else {
 			PIE1bits.TXIE = DISABLED;
 		}
@@ -1319,13 +1325,7 @@ static uint16_t load_tx_buffer(uint8_t uart)
 		 * If the TX buffer is not full load it from the circular buffer
 		 */
 		while ((!U2STAbits.UTXBF) && (uarts[uart].tx_count)) {
-			U2TXREG = uarts[uart].tx_buffer[uarts[uart].tx_read_index];
-			/*
-                         * Compiler don't like following two lines in a oner
-			 */
-			tmp = ++(uarts[uart].tx_read_index) % SYS_UART_TX_BUFFER_SIZE;
-			uarts[uart].tx_read_index = tmp;
-			uarts[uart].tx_count--;
+			U2TXREG = buffer_read(uart);
 		}
 
 		return(uarts[uart].tx_count);
@@ -1337,13 +1337,7 @@ static uint16_t load_tx_buffer(uint8_t uart)
 		 * If the TX buffer is not full load it from the circular buffer
 		 */
 		while ((!U3STAbits.UTXBF) && (uarts[uart].tx_count)) {
-			U3TXREG = uarts[uart].tx_buffer[uarts[uart].tx_read_index];
-			/*
-                         * Compiler don't like following two lines in a oner
-                         */
-			tmp = ++(uarts[uart].tx_read_index) % SYS_UART_TX_BUFFER_SIZE;
-			uarts[uart].tx_read_index = tmp;
-			uarts[uart].tx_count--;
+			U3TXREG = buffer_read(uart);
 		}
 
 		return(uarts[uart].tx_count);
@@ -1355,13 +1349,7 @@ static uint16_t load_tx_buffer(uint8_t uart)
 		 * If the TX buffer is not full load it from the circular buffer
 		 */
 		while ((!U4STAbits.UTXBF) && (uarts[uart].tx_count)) {
-			U4TXREG = uarts[uart].tx_buffer[uarts[uart].tx_read_index];
-			/*
-			 * Compiler don't like following two lines in a oner
-                         */
-			tmp = ++(uarts[uart].tx_read_index) % SYS_UART_TX_BUFFER_SIZE;
-			uarts[uart].tx_read_index = tmp;
-			uarts[uart].tx_count--;
+			U4TXREG = buffer_read(uart);
 		}
 
 		return(uarts[uart].tx_count);

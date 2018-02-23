@@ -3,7 +3,7 @@
  *
  * @author John Whitmore
  *
- * Copyright 2017 electronicSoup Limited
+ * Copyright 2017 - 2018 electronicSoup Limited
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 2 of the GNU Lesser General Public License
@@ -53,64 +53,36 @@ extern void pic18f_uart_isr(void);
 
 void cpu_init(void)
 {
-        RCONbits.IPEN = 0; // No Interrupt priority level
-	INTCONbits.GIE = 1;    // Enable Interrupts
-	INTCONbits.PEIE = 1;   // Enable Peripheral Interrupts
+        RCONbits.IPEN   = 0;  // No Interrupt priority level
+	INTCONbits.GIE  = 1;  // Enable Interrupts
+	INTCONbits.PEIE = 1;  // Enable Peripheral Interrupts
 }
-
-/*
- * Two Interrupt Service Routines
- */
-#if 0
-void interrupt high_priority high_isr(void)
-{
-//	serial_isr();
-//	timer_isr();
-}
-#endif
-
-#if 0
-void interrupt low_priority low_isr(void)
-{
-	count++;
-	if(count > ROLLOVER) {
-		HEARTBEAT_LED = ~HEARTBEAT_LED;
-		count = 0;
-	}
-#ifdef SERIAL
-	serial_isr();
-#endif
-#ifdef TIME
-	timer_isr();
-#endif
-}
-#endif // 0
 
 void interrupt tc_int(void)
 {
+#ifndef SYS_CAN_BUS
+	LATBbits.LATB2 = ~LATBbits.LATB2;
+#endif // SYS_CAN_BUS
+	
         if (TMR0IE && TMR0IF) {
                 TMR0IF = 0;
                 TMR0IE = 0;
                 T0CONbits.TMR0ON = 0;
-#ifdef SYS_SW_TIMERS
                 check_timer(TIMER_0);
-#endif
         }
 
         if (TMR1IE && TMR1IF) {
                 TMR1IF=0;
                 TMR1IE = 0;
                 T1CONbits.TMR1ON = 0;
-#ifdef SYS_SW_TIMERS
                 check_timer(TIMER_1);
-#endif
         }
 
-#if (SYS_LOG_LEVEL != NO_LOGGING)
+#ifdef SYS_UART
 	if(PIR1bits.TXIF) {
                 pic18f_uart_isr();
         }
-#endif // (SYS_LOG_LEVEL != NO_LOGGING)
+#endif
         // process other interrupt sources here, if required
 }
 

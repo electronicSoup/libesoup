@@ -4,7 +4,7 @@
  *
  * Hardware Timer functionality for the electronicSoup Cinnamon Bun
  *
- * Copyright 2017 2018 electronicSoup Limited
+ * Copyright 2017 - 2018 electronicSoup Limited
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 2 of the GNU Lesser General Public License
@@ -48,13 +48,6 @@ static const char *TAG = "HW_TIMERS";
 #endif // SYS_SERIAL_LOGGING
 
 #include "libesoup/timers/hw_timers.h"
-
-/*
- * Check required libesoup_config.h defines are found
- */
-#ifndef SYS_CLOCK_FREQ
-#error libesoup_config.h file should define the SYS_CLOCK_FREQ
-#endif
 
 /*
  * Local definitions
@@ -239,11 +232,16 @@ void hw_timer_init(void)
         T5CONbits.TGATE = 0;
         IPC7bits.T5IP = 0x06;   // Higest Priority
 #elif defined(__18F2680) || defined(__18F4585)
-        T0CONbits.T08BIT = 0;   // 16 Bit timer
-        T0CONbits.T0CS   = 0;   // Clock source Instruction Clock
+        T0CONbits.T08BIT = 0;         // 16 Bit timer
+        T0CONbits.T0CS   = 0;         // Clock source Instruction Clock
+	T0CONbits.TMR0ON = DISABLED;  // Timer off for the moment
         
-        T1CONbits.TMR1CS = 0;   // Internal FOSC/4
-        T1CONbits.TMR1ON = 0;   // Clock source Instruction Clock
+        T1CONbits.TMR1CS = 0;         // Internal FOSC/4
+        T1CONbits.TMR1ON = DISABLED;  // Timer off for the moment
+	
+	/*
+	 * PIC18F TImer 2 is an 8 bit timer?
+	 */
 #endif
 }
 
@@ -266,6 +264,12 @@ uint8_t hw_timer_active_count(void)
  */
 result_t hw_timer_start(timer_id *timer, struct timer_req *request)
 {
+	/*
+	 * XC8 Compiler don't like recursion have to find a way around this.
+	 */
+#if defined(__XC8)
+	if(request->type == repeat) return(ERR_BAD_INPUT_PARAMETER);
+#endif // 18F4585
 	/*
 	 * Find a free timer
 	 */
@@ -430,19 +434,20 @@ static result_t start_timer(timer_id timer, struct timer_req *request)
 	case uSeconds:
 		set_clock_divide(timer, 1);
 #if defined(__18F4585) || defined(__18F2680)
-		ticks = (uint32_t) ((uint32_t) (((uint32_t) SYS_CLOCK_FREQ / 4) / 1000000) * request->duration);
-#else
+		ticks = (uint32_t) ((uint32_t) (((uint32_t) sys_clock_freq / 4) / 1000000) * request->duration);
+#elif defined(__dsPIC33EP256MU806__)
 		/*
-		 * SYS_CLOCK_FREQ ticks in a Second 
-                 * 1uS = 1Sec/1,000,000
-                 * Ticks in a uS = SYS_CLOCK_FREQ/1,000,000
+		 * sys_clock_freq ticks in a Second 
+                 * 1uS = 1 Sec/1,000,000
+                 * Ticks in a uS = sys_clock_freq/1,000,000
                  * 
                  * dsPIC33EP256MU806 @ 60,000,000 :
                  * Minimum time is 13uS if ticks is set to 1 the overhead of 
                  * functions calls to here and back to the expiry function are
                  * that long.
                  */
-#if defined(__dsPIC33EP256MU806__)
+		ticks = (uint32_t) ((uint32_t) (((uint32_t) sys_clock_freq) / 1000000) * (request->duration - 13));
+#if 0
 #if (SYS_CLOCK_FREQ == 60000000)
 		if(request->duration > 13) {
 			ticks = (uint32_t) ((uint32_t) (((uint32_t) SYS_CLOCK_FREQ) / 1000000) * (request->duration - 13));
@@ -457,24 +462,24 @@ static result_t start_timer(timer_id timer, struct timer_req *request)
 		}
 #else
 #error SYS_CLOCK_FREQ Not coded in hw_timers.c
-#endif
-#endif                        
-#endif
+#endif // SYS_CLOCK_FREQ
+#endif // 0
+#endif // Target uC
                 break;
 
 	case mSeconds:
 #if defined(__18F4585)  || defined(__18F2680)
 		set_clock_divide(timer, 4);
-		ticks = (uint32_t) ((uint32_t) (((uint32_t)(SYS_CLOCK_FREQ / 4)) / 4000) * request->duration);
+		ticks = (uint32_t) ((uint32_t) (((uint32_t)(sys_clock_freq / 4)) / 4000) * request->duration);
 #else
                 /*
-                 * Divided by 64 so SYS_CLOCK_FREQ/64 ticks in a Second
+                 * Divided by 64 so sys_clock_freq/64 ticks in a Second
                  * 1mS = 1Sec/1,000
-                 * Ticks in 1mS = (SYS_CLOCK_FREQ/64)/1,000
-                 *              = SYS_CLOCK_FREQ / 64 * 1,000
+                 * Ticks in 1mS = (sys_clock_freq/64)/1,000
+                 *              = sys_clock_freq / 64 * 1,000
                  */
 		set_clock_divide(timer, 64);
-		ticks = (uint32_t) ((uint32_t) (((uint32_t) SYS_CLOCK_FREQ) / 64000 ) * request->duration);
+		ticks = (uint32_t) ((uint32_t) (((uint32_t) sys_clock_freq) / 64000 ) * request->duration);
 #endif
                 break;
 
@@ -482,10 +487,10 @@ static result_t start_timer(timer_id timer, struct timer_req *request)
 #if defined(__18F4585)  || defined(__18F2680)
 		if(timer == TIMER_0) {
 			set_clock_divide(timer, 64);
-			ticks = (uint32_t) ((uint32_t) (((uint32_t) SYS_CLOCK_FREQ / 4) / 64) * request->duration);
+			ticks = (uint32_t) ((uint32_t) (((uint32_t) sys_clock_freq / 4) / 64) * request->duration);
 		} else if(timer == TIMER_1) {
 			set_clock_divide(timer, 8);
-			ticks = (uint32_t) ((uint32_t) (((uint32_t) SYS_CLOCK_FREQ / 4) / 8) * request->duration);
+			ticks = (uint32_t) ((uint32_t) (((uint32_t) sys_clock_freq / 4) / 8) * request->duration);
 		} else {
 #if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
 			LOG_E("Unknown Timers\n\r");
@@ -494,10 +499,10 @@ static result_t start_timer(timer_id timer, struct timer_req *request)
 #else
                 /*
                  * Divide by 256 so 
-                 * in 1 Second (SYS_CLOCK_FREQ/256) ticks
+                 * in 1 Second (sys_clock_freq/256) ticks
                  */
 		set_clock_divide(timer, 256);
-		ticks = (uint32_t) ((uint32_t) (((uint32_t) SYS_CLOCK_FREQ) / 256) * request->duration);
+		ticks = (uint32_t) ((uint32_t) (((uint32_t) sys_clock_freq) / 256) * request->duration);
 #endif
                 break;
 
@@ -719,40 +724,15 @@ static void set_clock_divide(uint8_t timer, uint16_t clock_divide)
 /*
  * Not static as called from pic18f4585.c processor
  */
+#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__) || defined(__dsPIC33EP256MU806__)
 void check_timer(timer_id timer)
 {
-#if defined(__18F4585)
-        uint16_t           remainder;
-#endif // __18F4585
-	
-#if defined(XC16)
 	expiry_function  expiry;
 	union sigval     data;
-#endif // XC16
-
-        LATDbits.LATD3 = ~LATDbits.LATD3;
 
 	if(timers[timer].repeats) {
 		switch (timer) {
-#if defined(__18F4585)
-                case TIMER_0:
-                        TMR0H = 0x00;
-                        TMR0L = 0x00;
-                        INTCONbits.T0IE = 1;
-                        T0CONbits.TMR0ON = 1;
-                        break;
-#endif
 
-#if defined(__18F4585)
-                case TIMER_1:
-                        TMR1H = 0x00;
-                        TMR1L = 0x00;
-                        TMR1IE = 1;
-                        T1CONbits.TMR1ON = 1;
-                        break;
-#endif
-
-#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__) || defined(__dsPIC33EP256MU806__)
                 case TIMER_1:
                         TMR1 = 0x00;
                         PR1 = 0xffff;
@@ -760,9 +740,7 @@ void check_timer(timer_id timer)
                         IEC0bits.T1IE = 1;
                         T1CONbits.TON = 1;
                         break;
-#endif
 
-#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__) || defined(__dsPIC33EP256MU806__)
                 case TIMER_2:
                         TMR2 = 0x00;
                         PR2 = 0xffff;
@@ -770,9 +748,7 @@ void check_timer(timer_id timer)
                         IEC0bits.T2IE = 1;
                         T2CONbits.TON = 1;
                         break;
-#endif
 
-#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__) || defined(__dsPIC33EP256MU806__)
                 case TIMER_3:
                         TMR3 = 0x00;
                         PR3 = 0xffff;
@@ -780,9 +756,7 @@ void check_timer(timer_id timer)
                         IEC0bits.T3IE = 1;
                         T3CONbits.TON = 1;
                         break;
-#endif
 
-#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__) || defined(__dsPIC33EP256MU806__)
                 case TIMER_4:
                         TMR4 = 0x00;
                         PR4 = 0xffff;
@@ -790,9 +764,7 @@ void check_timer(timer_id timer)
                         IEC1bits.T4IE = 1;
                         T4CONbits.TON = 1;
                         break;
-#endif
 
-#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__) || defined(__dsPIC33EP256MU806__)
                 case TIMER_5:
                         TMR5 = 0x00;
                         PR5 = 0xffff;
@@ -800,7 +772,6 @@ void check_timer(timer_id timer)
                         IEC1bits.T5IE = 1;
                         T5CONbits.TON = 1;
                         break;
-#endif
 
                 default:
 #if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
@@ -817,27 +788,6 @@ void check_timer(timer_id timer)
 //                LOG_D("Remainder %d\n\r", timers[timer].remainder);
 #endif
 		switch (timer) {
-#if defined(__18F4585)
-                case TIMER_0:
-                        remainder = 0xffff - timers[timer].remainder;
-                        TMR0H = (uint8_t)((remainder >> 8) & 0xff);
-                        TMR0L = (uint8_t)(remainder & 0xff);
-                        INTCONbits.T0IE = 1;
-                        T0CONbits.TMR0ON = 1;
-                        break;
-#endif
-
-#if defined(__18F4585)
-                case TIMER_1:
-                        remainder = 0xffff - timers[timer].remainder;
-                        TMR1H = (uint8_t)((remainder >> 8) & 0xff);
-                        TMR1L = (uint8_t)(remainder & 0xff);
-                        TMR1IE = 1;
-                        T1CONbits.TMR1ON = 1;
-                        break;
-#endif
-
-#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__) || defined(__dsPIC33EP256MU806__)
                 case TIMER_1:
                         TMR1 = 0x00;
                         PR1 = timers[timer].remainder;
@@ -845,9 +795,7 @@ void check_timer(timer_id timer)
                         IEC0bits.T1IE = 1;
                         T1CONbits.TON = 1;
                         break;
-#endif
                         
-#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__) || defined(__dsPIC33EP256MU806__)
                 case TIMER_2:
                         TMR2 = 0x00;
                         PR2 = timers[timer].remainder;
@@ -855,9 +803,7 @@ void check_timer(timer_id timer)
                         IEC0bits.T2IE = 1;
                         T2CONbits.TON = 1;
                         break;
-#endif
                         
-#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__) || defined(__dsPIC33EP256MU806__)
                 case TIMER_3:
                         TMR3 = 0x00;
                         PR3 = timers[timer].remainder;
@@ -865,9 +811,7 @@ void check_timer(timer_id timer)
                         IEC0bits.T3IE = 1;
                         T3CONbits.TON = 1;
                         break;
-#endif
 
-#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__) || defined(__dsPIC33EP256MU806__)
                 case TIMER_4:
                         TMR4 = 0x00;
                         PR4 = timers[timer].remainder;
@@ -875,9 +819,7 @@ void check_timer(timer_id timer)
                         IEC1bits.T4IE = 1;
                         T4CONbits.TON = 1;
                         break;
-#endif
 
-#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__) || defined(__dsPIC33EP256MU806__)
                 case TIMER_5:
                         TMR5 = 0x00;
                         PR5 = timers[timer].remainder;
@@ -885,7 +827,6 @@ void check_timer(timer_id timer)
                         IEC1bits.T5IE = 1;
                         T5CONbits.TON = 1;
                         break;
-#endif
 
                 default:
 #if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
@@ -896,15 +837,11 @@ void check_timer(timer_id timer)
 		timers[timer].remainder = 0;
 
 	} else {
-#if defined(XC16)
                 expiry = timers[timer].request.exp_fn;
                 data = timers[timer].request.data;
 
 		if(timers[timer].request.type == repeat) {
 			start_timer(timer, &timers[timer].request);
-#if (defined(XC8) && defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
-                        LOG_E("XC8 can't call recursive function, No repeat\n\r");
-#endif
 		} else {
 			timers[timer].status = TIMER_UNUSED;
 		}
@@ -912,14 +849,74 @@ void check_timer(timer_id timer)
 		if(expiry) {
                         expiry(timer, data);
                 }
-#elif defined(__18F4585)
+	}
+}
+#endif  // #if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__) || defined(__dsPIC33EP256MU806__)
+
+
+#if defined(__18F4585)
+void check_timer(timer_id timer)
+{
+        uint16_t           remainder;
+
+	if(timers[timer].repeats) {
+		switch (timer) {
+                case TIMER_0:
+                        TMR0H = 0x00;
+                        TMR0L = 0x00;
+                        INTCONbits.T0IE = 1;
+                        T0CONbits.TMR0ON = 1;
+                        break;
+
+                case TIMER_1:
+                        TMR1H = 0x00;
+                        TMR1L = 0x00;
+                        TMR1IE = 1;
+                        T1CONbits.TMR1ON = 1;
+                        break;
+
+                default:
+#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
+                        LOG_E("Unknown Timer\n\r");
+#endif
+                        break;
+		}
+		timers[timer].repeats--;
+	} else if(timers[timer].remainder) {
+
+		switch (timer) {
+                case TIMER_0:
+                        remainder = 0xffff - timers[timer].remainder;
+                        TMR0H = (uint8_t)((remainder >> 8) & 0xff);
+                        TMR0L = (uint8_t)(remainder & 0xff);
+                        INTCONbits.T0IE = 1;
+                        T0CONbits.TMR0ON = 1;
+                        break;
+
+                case TIMER_1:
+                        remainder = 0xffff - timers[timer].remainder;
+                        TMR1H = (uint8_t)((remainder >> 8) & 0xff);
+                        TMR1L = (uint8_t)(remainder & 0xff);
+                        TMR1IE = 1;
+                        T1CONbits.TMR1ON = 1;
+                        break;
+
+                default:
+#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
+                        LOG_E("Unknown Timer\n\r");
+#endif
+                        break;
+		}
+		timers[timer].remainder = 0;
+
+	} else {
                 timers[timer].status = TIMER_UNUSED;
                 if(timers[timer].request.exp_fn) {
                         timers[timer].request.exp_fn(timer, timers[timer].request.data);
                 }
-#endif  // if XC16 elif __18F4585
 	}
 }
+#endif // defined(__18F4585)
 
 #endif // #ifdef SYS_HW_TIMERS
 

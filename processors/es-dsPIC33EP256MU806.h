@@ -43,6 +43,16 @@
 #define OFF         0
 #define ON          1
 
+
+#define INTERRUPTS_DISABLED    INTCON2bits.GIE = 0;
+#define INTERRUPTS_ENABLED     INTCON2bits.GIE = 1;
+
+/*
+ * DMA 
+ */
+
+#define ECAN1_TX    0b01000110
+
 #define TIMER_1                           0
 #define TIMER_2                           1
 #define TIMER_3                           2
@@ -169,6 +179,19 @@
 #define UART_3           0x02
 #define UART_4           0x03
 
+
+/*
+ * CAN Bus Modes
+ */
+typedef enum { 
+    normal      = 0b000,
+    disabled    = 0b001,
+    loopback    = 0b010,
+    listen_only = 0b011,
+    config      = 0b100,
+    listen_all  = 0b111,
+} ty_can_mode;
+
 /*
  * 
  */
@@ -232,17 +255,18 @@ enum pin_t {
  * \bried Microchip Peripheral Input Pins
  */
 typedef enum { 
-    RP0   = 0,
-    RP1   = 1,
-    RP13  = 13,
-    RP20  = 20,
-    RP23  = 23,
-    RP25  = 25,
-    RP28  = 28,
-    RP64  = 64,
-    RPI74 = 74,
-    RP118 = 118,
-    RP120 = 120,
+    RP0    = 0,
+    RP1    = 1,
+    RP13   = 13,
+    RP20   = 20,
+    RP23   = 23,
+    RP25   = 25,
+    RP28   = 28,
+    RP64   = 64,
+    RPI74  = 74,
+    RP118  = 118,
+    RPI119 = 119,
+    RP120  = 120,
     NO_PIN = 0xff
 } ty_peripheral_pin;
 
@@ -251,10 +275,11 @@ typedef enum {
  */
 #define PPS_UART_1_RX                   RPINR18bits.U1RXR
 #define PPS_UART_2_RX                   RPINR19bits.U2RXR
-#define SPI_1_DATA_INPUT                RPINR20bits.SDI1R 
+#define PPS_SPI_1_DI                    RPINR20bits.SDI1R 
+#define PPS_CAN1_RX                     RPINR26bits.C1RXR
 #define PPS_UART_3_RX                   RPINR27bits.U3RXR
 #define PPS_UART_4_RX                   RPINR28bits.U4RXR
- 
+
 /*
  * Peripheral Output functions
  */
@@ -262,10 +287,12 @@ typedef enum {
 #define PPS_UART_2_TX                   0x03
 #define SPI_1_DATA_OUTPUT               0x05
 #define SPI_1_CLOCK_OUTPUT              0x06
+#define PPS_CAN1_TX                     0x0E
 #define PPS_UART_3_TX                   0x1B
 #define PPS_UART_4_TX                   0x1D
  
 #define PPS_RP64                        RPOR0bits.RP64R
+#define PPS_RP100                       RPOR9bits.RP100R
 #define PPS_RP118                       RPOR13bits.RP118R
 #define PPS_RP120                       RPOR14bits.RP120R
     

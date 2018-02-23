@@ -1,14 +1,8 @@
 /**
  *
- * @file es_lib/example/system.h
+ * @file libesoup/examples/projects/microchip/CAN-Bus.x/libesoup_config.h
  *
  * @author John Whitmore
- *
- * This file contains an example es_lib system.h configuration file. 
- *
- * The es_lib library of source code expects a system.h header file to exist
- * in your include path. The file contains the various switches and definitions
- * which configure the various features of the library.
  *
  * Copyright 2017 - 2018 electronicSoup Limited
  *
@@ -42,21 +36,12 @@
  * initialise the device to this clock frequency.
  */
 #if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__)
-#define SYS_CLOCK_FREQ 16000000     // 16MHz
+#define SYS_CLOCK_FREQ 4000000     // 4MHz
 #elif defined(__dsPIC33EP256MU806__)
-#define SYS_CLOCK_FREQ 8000000     // 8MHz
-//#define SYS_CLOCK_FREQ 60000000    // 60MHz
+//#define SYS_CLOCK_FREQ 8000000     // 8MHz
+#define SYS_CLOCK_FREQ 60000000    // 60MHz
 #elif defined(__18F4585)
 #define SYS_CLOCK_FREQ 16000000     // 8MHz
-#endif
-
-#define SYS_DEBUG_BUILD
-
-#define SYS_HW_TIMERS
-#define SYS_SW_TIMERS
-#ifdef SYS_SW_TIMERS
-#define SYS_NUMBER_OF_SW_TIMERS    10
-#define SYS_SW_TIMER_TICK_ms        5
 #endif
 
 #define SYS_SERIAL_LOGGING
@@ -101,6 +86,9 @@
  * Default set to 19k2
  */
 #define SYS_SERIAL_LOGGING_BAUD           19200
+//#define SYS_SERIAL_LOGGING_BAUD           38400
+//#define SYS_SERIAL_LOGGING_BAUD           76800
+//#define SYS_SERIAL_LOGGING_BAUD           115200
 
 /**
  * @brief The size of the Transmit buffer to be used by the UARTs.
@@ -118,6 +106,26 @@
  */
 #define SYS_UART_TX_BUFFER_SIZE 300
 #endif // defined(SYS_SERIAL_LOGGING)
+
+#define SYS_HW_TIMERS
+#define SYS_SW_TIMERS
+#define SYS_NUMBER_OF_SW_TIMERS    10
+#define SYS_SW_TIMER_TICK_ms        5
+
+/*
+ * EEPROM Chip is connected via the SPI Interface so enable
+ */
+#define SYS_SPI_BUS
+
+/*
+ * Include access to the EEPROM Chip in the project
+ */
+#define SYS_EEPROM
+
+/*
+ * Include CAN BUS Functionality in this project
+ */
+#define SYS_CAN_BUS
 
 /*
  * Include a board file

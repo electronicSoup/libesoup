@@ -6,7 +6,7 @@
  *
  * The first uart port is used by the logger. See libesoup/logger
  *
- * Copyright 2017 2018 electronicSoup Limited
+ * Copyright 2017 - 2018 electronicSoup Limited
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 2 of the GNU Lesser General Public License
@@ -22,6 +22,8 @@
  *
  */
 #include "libesoup_config.h"
+
+#ifdef SYS_MODBUS
 
 #ifdef SYS_SERIAL_LOGGING
 #define DEBUG_FILE
@@ -396,3 +398,5 @@ static void resp_timeout_expiry_fn(timer_t timer_id, union sigval data)
 #endif
 	}
 }
+
+#endif // SYS_MODBUS

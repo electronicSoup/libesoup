@@ -24,6 +24,9 @@
 
 #include "libesoup_config.h"
 
+#ifdef SYS_CAN_BUS
+
+#include "libesoup/status/status.h"
 /** @defgroup group3 CAN Bus definitions
  *
  * There are two main versions of the CAN Bus protocol. Origionally each
@@ -322,21 +325,21 @@ typedef enum {
 	no_baud    = 0x08
 } can_baud_rate_t;
 
-typedef void (*can_status_handler_t)(can_status_t, can_baud_rate_t);
-
 #if SYS_LOG_LEVEL < NO_LOGGING
 extern char can_baud_rate_strings[8][10];
 #endif
 
 //#define BAUD_MAX baud_1M
 
-extern result_t can_init(can_baud_rate_t      baud,
-	can_status_handler_t   status_default_handler);
+#if (defined(SYS_ISO15765) || defined(SYS_ISO11783))
+extern result_t can_init(can_baud_rate_t baudrate, uint8_t address, status_handler_t status_handler);
+#else
+extern result_t can_init(can_baud_rate_t baudrate, status_handler_t status_handler);
+#endif
 
 //extern bool can_initialised(void);
 
-extern result_t can_l2_init(can_baud_rate_t arg_baud_rate,
-                 void (*arg_status_handler)(uint8_t mask, can_status_t status, can_baud_rate_t baud));
+extern result_t can_l2_init(can_baud_rate_t arg_baud_rate, status_handler_t status_handler);
 extern void can_l2_tasks(void);
 
 extern result_t can_l2_tx_frame(can_frame *frame);
@@ -389,5 +392,7 @@ extern result_t iso11783_dispatch_reg_handler(iso11783_target_t *target);
 extern result_t iso11783_dispatch_unreg_handler(uint8_t id);
 extern result_t iso11783_dispatch_set_unhandled_handler(iso11783_msg_handler_t handler);
 #endif // SYS_ISO11783
+
+#endif // SYS_CAN_BUS
 
 #endif // ES_CAN_H
