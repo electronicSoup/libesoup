@@ -4,7 +4,7 @@
  *
  * Core SYS_CAN Functionality of electronicSoup CAN code
  *
- * Copyright 2017 2018 electronicSoup Limited
+ * Copyright 2017-2018 electronicSoup Limited
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 2 of the GNU Lesser General Public License
@@ -20,6 +20,8 @@
  *
  */
 #if defined(__dsPIC33EP256MU806__)
+
+#include <p33EP256MU806.h>
 
 #include "libesoup_config.h"
 
@@ -50,61 +52,61 @@ static const char *TAG = "dsPIC33_CAN";
 #define MASK_1    0b01
 #define MASK_2    0b10
 
-#define WIN_ZERO  C1CTRL1bits.WIN = 0;
-#define WIN_ONE   C1CTRL1bits.WIN = 1;
+#define MEMORY_MAP_WIN_CONFIG_STATUS  C1CTRL1bits.WIN = 0;
+#define MEMORY_MAP_WIN_MASK_FILTERS   C1CTRL1bits.WIN = 1;
 
  static status_handler_t status_handler = NULL;
  
-#if 0
-struct __attribute__ ((packed))
+struct  __attribute__ ((packed)) can_buffer
 {
         uint16_t ide   :1;
         uint16_t ssr   :1;
         uint16_t sid   :11;
         uint16_t       :3;
+
         uint16_t eid_h :12;
         uint16_t       :4;
+
         uint16_t dlc   :4;
         uint16_t rb0   :1;
         uint16_t       :3;
         uint16_t rb1   :1;
         uint16_t rtr   :1;
         uint16_t eid_l :6;
+
         uint8_t  data[8];
+
         uint16_t       :8;
         uint16_t filhit:5;
-} can_buffer;
-#endif
+        uint16_t       :3;
+};
 
 #define NUM_CAN_BUFFERS 32
 
-//static can_buffer can_buffers[NUM_CAN_BUFFERS] __attribute__((aligned(NUM_CAN_BUFFERS * 16)));
-//unsigned int can_buffers[NUM_CAN_BUFFERS][8] __attribute__((aligned(NUM_CAN_BUFFERS * 16)));
-__eds__ unsigned int can_buffers[NUM_CAN_BUFFERS][8] __attribute__((eds,space(dma)));
+/*
+ * Each CAN Buffer is 16 Bytes in length
+ */
+//#define MCP
+//#ifdef MCP
+//static uint16_t can_buffers[NUM_CAN_BUFFERS][8] __attribute__((aligned(NUM_CAN_BUFFERS * 16)));
+//#else
+static struct can_buffer can_buffers[NUM_CAN_BUFFERS] __attribute__((aligned(NUM_CAN_BUFFERS * 16)));
+//#endif
 
-//__eds__ unsigned int can_buffers[NUM_CAN_BUFFERS] __attribute__((eds,space(dma)));
-
-struct __attribute__ ((packed))
+struct __attribute__ ((packed)) TR_Control
 {
-        uint16_t TXmPRI:2;
-        uint16_t RTRENm:1;
-        uint16_t TXREQm:1;
-        uint16_t TXERRm:1;
-        uint16_t TXLARBm:1;
-        uint16_t TXABTm:1;
-        uint16_t TXENm:1;
-        uint16_t TXnPRI:2;
-        uint16_t RTRENn:1;
-        uint16_t TXREQn:1;
-        uint16_t TXERRn:1;
-        uint16_t TXLARBn:1;
-        uint16_t TXABTn:1;
-        uint16_t TXENn:1;
-} CxTRmnCON;
+        uint8_t priority       :2;
+        uint8_t auto_remote_tx :1;
+        uint8_t tx_request     :1;
+        uint8_t tx_error       :1;
+        uint8_t arbritation_err:1;
+        uint8_t aborted        :1;
+        uint8_t tx_buffer      :1;
+};
 
-#define NUM_TX_CONTROL  4
+#define NUM_TX_CONTROL  8
 
-struct CxTRmnCON *tx_control[NUM_TX_CONTROL];
+struct TR_Control *tx_control = (struct TR_Control *)&C1TR01CON;
 
 //static uint32_t rxMsgCount = 0;
 
@@ -129,7 +131,7 @@ struct CxTRmnCON *tx_control[NUM_TX_CONTROL];
 //struct can_buffer *rx_buffers[RX_BUFFERS];
 
 static void set_mode(ty_can_mode mode);
-static void set_bitrate(can_baud_rate_t baudRate);
+static result_t set_bitrate(can_baud_rate_t baudRate);
 //static void (*status_handler)(uint8_t mask, can_status_t status, can_baud_rate_t baud);
 
 void __attribute__((__interrupt__, __no_auto_psv__)) _C1RxRdyInterrupt(void)
@@ -137,13 +139,18 @@ void __attribute__((__interrupt__, __no_auto_psv__)) _C1RxRdyInterrupt(void)
 #if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
         LOG_D("C1RxRdy Isr");
 #endif
+        IEC2bits.C1IE = 0x00;
+        IEC2bits.C1RXIE = 0x00;
 }
 
 void __attribute__((__interrupt__, __no_auto_psv__)) _C1Interrupt(void)
 {
 #if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-        LOG_D("C1 Isr Flag 0x%x - 0lx%lx ICODE 0x%x\n\r", C1INTF, C1INTF, C1VECbits.ICODE);
+        LOG_D("C1 Isr Flag 0x%x - 0x%x ICODE 0x%x\n\r", C1INTF, C1INTF, C1VECbits.ICODE);
 #endif
+        IEC2bits.C1IE = 0x00;
+        IEC2bits.C1RXIE = 0x00;
+
         if(C1INTFbits.TBIF) {
                 C1INTFbits.TBIF = 0;
 #if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
@@ -222,6 +229,7 @@ void __attribute__((__interrupt__, __no_auto_psv__)) _DMA0Interrupt(void)
         LOG_D("DMA-0 ISR");
 #endif
         IFS0bits.DMA0IF = 0;
+        IEC0bits.DMA0IE = DISABLED;
 }
 
 void __attribute__((__interrupt__, __no_auto_psv__)) _DMA1Interrupt(void)
@@ -229,39 +237,55 @@ void __attribute__((__interrupt__, __no_auto_psv__)) _DMA1Interrupt(void)
 #if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
         LOG_D("DMA-1 ISR");
 #endif
+        IEC0bits.DMA1IE = DISABLED;
 }
 
-void __attribute__((__interrupt__, __no_auto_psv__)) _DMA2Interrupt(void)
-{
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-        LOG_D("DMA-2 ISR");
-#endif
-}
-
+/*
+ */
 result_t can_l2_init(can_baud_rate_t arg_baud_rate, status_handler_t arg_status_handler)
 {
+	result_t rc;
 	uint32_t address;
 	
+	if (arg_baud_rate <= no_baud) {
+#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+		LOG_D("L2_CanInit() Baud Rate %s\n\r", can_baud_rate_strings[arg_baud_rate]);
+
+		LOG_D("Todo tx_control - &C1TR01CON 0x%lx, &C1TR23CON 0x%lx\n\r", &C1TR01CON, &C1TR23CON);
+#endif
+	} else {
+#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
+		LOG_E("L2_CanInit() ToDo!!! No Baud Rate Specified\n\r");
+#endif
+		return (ERR_BAD_INPUT_PARAMETER);
+	}
+
 	status_handler = arg_status_handler;
 	
         /*
-         * Initialis the I/O Pins and pipheral functions
+         * Initialise the I/O Pins and pipheral functions
          */
-        CAN_TX_PIN_DIRECTION = OUTPUT_PIN;
+	CAN_RX_PIN_ANSEL = DIGITAL_PIN;
         CAN_RX_PIN_DIRECTION = INPUT_PIN;
-	CAN_TX_OUTPUT_PERIPHERAL_PIN = PPS_CAN1_TX;
 	PPS_CAN1_RX = CAN_RX_INPUT_PERIPHERAL_PIN;
+	
+        CAN_TX_PIN_DIRECTION = OUTPUT_PIN;
+	CAN_TX_OUTPUT_PERIPHERAL_PIN = PPS_CAN1_TX;
 
         /*
          * Enter configuration mode
          */
 	set_mode(config);
 
+	MEMORY_MAP_WIN_CONFIG_STATUS
+	rc = set_bitrate(baud_125K);
+	if(rc != SUCCESS) return(rc);
+
         /*
          * Set 8 transmit buffers
          */
         C1TR01CONbits.TXEN0 = 1;
-        C1TR01CONbits.TXEN1 = 1;
+	C1TR01CONbits.TXEN1 = 1;
         C1TR23CONbits.TXEN2 = 1;
         C1TR23CONbits.TXEN3 = 1;
         C1TR45CONbits.TXEN4 = 1;
@@ -271,15 +295,16 @@ result_t can_l2_init(can_baud_rate_t arg_baud_rate, status_handler_t arg_status_
     
         /*
          * Set the number of DMA buffers we're using to 32
-         */
-	C1CTRL1bits.WIN = 0;
+         */	
+	MEMORY_MAP_WIN_CONFIG_STATUS
+
 	C1FCTRLbits.DMABS = 0b110;   // 32 Buffers in RAM
         C1FCTRLbits.FSA   = 0x08;    // FIFO starts Buffer 8
         
         /*
          * All filters result in Rx'd frame going into FIFO
          */
-	C1CTRL1bits.WIN = 1;
+	MEMORY_MAP_WIN_MASK_FILTERS
         C1BUFPNT1 = 0xffff;
         C1BUFPNT2 = 0xffff;
         C1BUFPNT3 = 0xffff;
@@ -288,237 +313,14 @@ result_t can_l2_init(can_baud_rate_t arg_baud_rate, status_handler_t arg_status_
         /*
          * All filters use mask 0
          */
-	C1CTRL1bits.WIN = 0;
+	MEMORY_MAP_WIN_CONFIG_STATUS
         C1FMSKSEL1 = 0x0000;
         C1FMSKSEL2 = 0x0000;
 
         /*
          * Setup mask zero, much don't care
          */
-	C1CTRL1bits.WIN = 1;
-        C1RXM0SIDbits.SID = 0x3ff;// = 0x0000;
-        C1RXM0SIDbits.MIDE = 1; // Match Standard/Extended
-        C1RXM0EID = 0x0000;
-        
-        /*
-         * Setup mask one
-         */
-        C1RXM1SID = 0x0000;
-        C1RXM1EID = 0x0000;
-
-        /*
-         * Setup mask two
-         */
-        C1RXM2SID = 0x0000;
-        C1RXM2EID = 0x0000;
-
-        /*
-         * Enable all Rx Filters for the moment.
-         */
-        C1FEN1 = 0xffff;
-        
-	C1CTRL1bits.WIN = 0;
-
-	/*
-	 * Set Baud rate 125Kbs
-	 */
-	set_bitrate(baud_125K);
-	
-        /*
-         * Setup DMA Channel 2 for CAN 1 TX
-         */
-        DMA2CONbits.SIZE = 0x00;    // Word transfer mode
-        DMA2CONbits.DIR = 0x01;     // Direction - Device RAM to Peripheral
-        DMA2CONbits.AMODE = 0x02;   // Addressing mode: Peripheral indirect
-        DMA2CONbits.MODE = 0x00;    // Operating Mode: Continuous no Ping Pong
-        DMA2REQ = 70;               // ECAN1 Tx
-        DMA2CNT = 7;                // Buffer size, 8 words
-        
-        DMA2PAD = (volatile unsigned int)&C1TXD;
-        
-        address = (uint32_t)&can_buffers;
-        
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-        LOG_D("Address of CAN Buffers is 0x%lx\n\r", address);
-#endif
-//        DMA2STAL = __builtin_dmaoffset(can_buffers);
-//        DMA2STAH = 0x00;
-
-        DMA0STAL = (uint16_t)(int_least24_t)(&can_buffers);
-        DMA0STAH = 0;
-        
-        IEC1bits.DMA2IE = 1;        // Enable DMA-0 ISR        
-        DMA2CONbits.CHEN = 1;    // Enable DMA-0
-        
-        /*
-         * DMA Channel One for Rx
-         */
-        DMA1CONbits.SIZE = 0x0;    // Data Transfer Size: Word Transfer Mode
-        DMA1CONbits.DIR = 0x0;     // Direction: Peripheral to device RAM 
-        DMA1CONbits.AMODE = 0x2;   // Addressing Mode: Peripheral Indirect
-        DMA1CONbits.MODE = 0x0;    // Operating Mode: Continuous, no Ping Pong
-        DMA1REQ = 34;              // Assign ECAN1 Rx event for DMA Channel 1
-        DMA1CNT = 7;               // DMA Transfer per ECAN message to 8 words
-
-        /* 
-         * Peripheral Address: ECAN1 Receive Register 
-         */
-        DMA1PAD = (volatile unsigned int) &C1RXD; 
-        
-        
-//        DMA1STAL = ((unsigned int)(&can_buffers)) & 0xffff;
-//        DMA1STAH = (((unsigned int)(&can_buffers)) >> 16) & 0xff;
-        DMA1STAL = address & 0xffff;
-        DMA1STAH = (address >> 16) & 0xff;
-
-//        DMA1STAL = (unsigned int) &can_buffers;
-//        DMA1STAH = (unsigned int) &can_buffers;
-
-        DMA1CONbits.CHEN = 0x1;    // Channel Enable: Enable DMA Channel 1
-        IEC0bits.DMA1IE = 1;       // Enable DMA Channel 1 Interrupt
- 
-        /*
-         * Clear all interrupt flags and enable all interrupts for the moment.
-         */
-	C1CTRL1bits.WIN = 0;
-        C1INTF = 0x00;        
-        C1INTE = 0x00ff;
-
-        IFS2bits.C1IF = 0x00;
-        IFS2bits.C1RXIF = 0x00;
-        IEC2bits.C1IE = 0x01;
-        IEC2bits.C1RXIE = 0x01;
-
-	/*
-	 * Drop out of the configuration mode
-	 */
-	set_mode(listen_all);
-
-        return(SUCCESS);
-}
-
-result_t can_l2_tx_frame(can_frame *frame)
-{
-	/*
-	 * Send a test frame out of buffer zero:
-	 */
-#if 0
-        can_buffers[0].rb0 = 0;
-        can_buffers[0].rb1 = 0;
-        can_buffers[0].ide = 0;
-        can_buffers[0].rtr = 0;
-        can_buffers[0].ssr = 0;
-        can_buffers[0].sid = 0x5aa;
-        can_buffers[0].dlc = 0;
-#endif
-        can_buffers[0][0] = 0x123C;
-        can_buffers[0][1] = 0x0000;
-        can_buffers[0][2] = 0x0008;
-        can_buffers[0][3] = 0xabcd;
-        can_buffers[0][4] = 0xabcd;
-        can_buffers[0][5] = 0xabcd;
-        can_buffers[0][6] = 0xabcd;
-
-        /*
-	 * Mark the buffer for transmission
-	 */
-        C1TR01CONbits.TXREQ0 = 1;
-//        while(C1TR01CONbits.TXREQ0 == 1);        
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-        LOG_D("Test frame sent\n\r");
-#endif
-        return(SUCCESS);
-}
-#if 0
-result_t can_l2_init(can_baud_rate_t arg_baud_rate, void (*arg_status_handler)(uint8_t mask, can_status_t status, can_baud_rate_t baud))
-{
-	uint8_t loop;
-
-	if (arg_baud_rate <= no_baud) {
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-		LOG_D("L2_CanInit() Baud Rate %s\n\r", baud_rate_strings[arg_baud_rate]);
-#endif
-	} else {
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
-		LOG_E("L2_CanInit() ToDo!!! No Baud Rate Specified\n\r");
-#endif
-		return (ERR_BAD_INPUT_PARAMETER);
-	}
-
-        status_handler = arg_status_handler;
-
-	/*
-	 * Set up the CAN Pin Configuration
-	 */
-        CAN_TX_DDR = OUTPUT_PIN;
-        CAN_RX_DDR = INPUT_PIN;
-
-        CAN_TX_PIN = CAN_1_TX;
-        CAN_1_RX = CAN_RX_PIN;
-        
-	set_mode(CONFIG_MODE);
-
-        /*
-         * Set 8 transmit buffers
-         */
-        C1TR01CONbits.TXEN0 = 1;
-        C1TR01CONbits.TXEN1 = 1;
-        C1TR23CONbits.TXEN2 = 1;
-        C1TR23CONbits.TXEN3 = 1;
-        C1TR45CONbits.TXEN4 = 1;
-        C1TR45CONbits.TXEN5 = 1;
-        C1TR67CONbits.TXEN6 = 1;
-        C1TR67CONbits.TXEN7 = 1;
-#if 0
-        tx_control[0] = (CxTRmnCON *)&C1TR01CON;
-        tx_control[1] = (CxTRmnCON *)&C1TR23CON;
-        tx_control[2] = (CxTRmnCON *)&C1TR45CON;
-        tx_control[3] = (CxTRmnCON *)&C1TR67CON;
-
-        for(loop = 0; loop < NUM_TX_CONTROL; loop++) {
-                tx_control[loop]->TXENm = 1;
-                tx_control[loop]->TXENn = 1;
-        }
-#endif
-        /*
-         * Set the number of DMA buffers we're using to 32
-         */
-        WIN_ZERO;
-        C1FCTRLbits.DMABS = 0b110;   // 32 Buffers in RAM
-        C1FCTRLbits.FSA   = 0x08;    // FIFO starts Buffer 8
-        
-        /*
-         * All filters result in Rx'd frame going into FIFO
-         */
-        WIN_ONE;
-        C1BUFPNT1bits.F0BP = 0xf;
-        C1BUFPNT1bits.F1BP = 0xf;
-        C1BUFPNT1bits.F2BP = 0xf;
-        C1BUFPNT1bits.F3BP = 0xf;
-        C1BUFPNT2bits.F4BP = 0xf;
-        C1BUFPNT2bits.F5BP = 0xf;
-        C1BUFPNT2bits.F6BP = 0xf;
-        C1BUFPNT2bits.F7BP = 0xf;
-        C1BUFPNT3bits.F8BP = 0xf;
-        C1BUFPNT3bits.F9BP = 0xf;
-        C1BUFPNT3bits.F10BP = 0xf;
-        C1BUFPNT3bits.F11BP = 0xf;
-        C1BUFPNT4bits.F12BP = 0xf;
-        C1BUFPNT4bits.F13BP = 0xf;
-        C1BUFPNT4bits.F14BP = 0xf;
-        C1BUFPNT4bits.F15BP = 0xf;
-
-        /*
-         * All filters user mask 0
-         */
-        WIN_ZERO;
-        C1FMSKSEL1 = 0x0000;
-        C1FMSKSEL2 = 0x0000;
-
-        /*
-         * Setup mask zero, much don't care
-         */
-        WIN_ONE;
+	MEMORY_MAP_WIN_MASK_FILTERS
         C1RXM0SID = 0x0000;
         C1RXM0EID = 0x0000;
         
@@ -539,18 +341,8 @@ result_t can_l2_init(can_baud_rate_t arg_baud_rate, void (*arg_status_handler)(u
          */
         C1FEN1 = 0xffff;
         
-        /*
-         * Filter 0 Uses Mask 0
-         */
-        C1FMSKSEL1bits.F0MSK = MASK_0;
-        
-	/*
-	 * Set the Baud rate.
-	 */
-        WIN_ZERO;
-	set_bitrate(arg_baud_rate);
-
-        /*
+	MEMORY_MAP_WIN_CONFIG_STATUS
+       /*
          * Setup DMA Channel 0 for CAN 1 TX
          */
         DMA0CONbits.SIZE = 0x00;    // Word transfer mode
@@ -561,19 +353,21 @@ result_t can_l2_init(can_baud_rate_t arg_baud_rate, void (*arg_status_handler)(u
         DMA0CNT = 7;                // Buffer size, 8 words
         
         DMA0PAD = (volatile unsigned int)&C1TXD;
-        DMA0STAL = ((unsigned int)(&can_buffers)) & 0xffff;
-        DMA0STAH = (((unsigned int)(&can_buffers)) >> 16) & 0xff;
         
-        IEC0bits.DMA0IE = 1;        // Enable DMA-0 ISR        
-        DMA0CONbits.CHEN = 0x01;    // Enable DMA-0
-        
+        address  = (uint32_t)(&can_buffers);
+        DMA0STAL = (uint16_t)(address & 0xffff);
+        DMA0STAH = (uint16_t)((address >> 16) & 0xff);
+
+//	IEC0bits.DMA0IE = ENABLED;
+        DMA0CONbits.CHEN = ENABLED;
+
         /*
          * DMA Channel One for Rx
          */
-        DMA1CONbits.SIZE = 0x0;    // Data Transfer Size: Word Transfer Mode
-        DMA1CONbits.DIR = 0x0;     // Direction: Peripheral to device RAM 
+        DMA1CONbits.SIZE  = 0x0;    // Data Transfer Size: Word Transfer Mode
+        DMA1CONbits.DIR   = 0x0;     // Direction: Peripheral to device RAM 
         DMA1CONbits.AMODE = 0x2;   // Addressing Mode: Peripheral Indirect
-        DMA1CONbits.MODE = 0x0;    // Operating Mode: Continuous, no Ping Pong
+        DMA1CONbits.MODE  = 0x0;    // Operating Mode: Continuous, no Ping Pong
         DMA1REQ = 34;              // Assign ECAN1 Rx event for DMA Channel 1
         DMA1CNT = 7;               // DMA Transfer per ECAN message to 8 words
 
@@ -581,305 +375,272 @@ result_t can_l2_init(can_baud_rate_t arg_baud_rate, void (*arg_status_handler)(u
          * Peripheral Address: ECAN1 Receive Register 
          */
         DMA1PAD = (volatile unsigned int) &C1RXD; 
-        DMA1STAL = ((unsigned int)(&can_buffers)) & 0xffff;
-        DMA1STAH = (((unsigned int)(&can_buffers)) >> 16) & 0xff;
-
-//        DMA1STAL = (unsigned int) &can_buffers;
-//        DMA1STAH = (unsigned int) &can_buffers;
+        
+        address  = (uint32_t)(&can_buffers);
+        DMA1STAL = (uint16_t)(address & 0xffff);
+        DMA1STAH = (uint16_t)((address >> 16) & 0xff);
 
         DMA1CONbits.CHEN = 0x1;    // Channel Enable: Enable DMA Channel 1
-        IEC0bits.DMA1IE = 1;       // Enable DMA Channel 1 Interrupt
+        IEC0bits.DMA1IE  = 1;       // Enable DMA Channel 1 Interrupt
  
         /*
          * Clear all interrupt flags and enable all interrupts for the moment.
          */
-        WIN_ZERO
+	MEMORY_MAP_WIN_CONFIG_STATUS
         C1INTF = 0x00;        
-        C1INTE = 0xff;
-                
+        C1INTE = 0x00ff;
+
+        IFS2bits.C1IF   = 0x00;
+        IFS2bits.C1RXIF = 0x00;
+        IEC2bits.C1IE   = 0x01;
+        IEC2bits.C1RXIE = 0x01;
+
 	/*
 	 * Drop out of the configuration mode
-	 * we're good to go
 	 */
-	set_mode(LOOPBACK_MODE);
+	set_mode(normal);
 
-//        can_status = Connected;
-
-	// Create a random timer between 1 and 1.5 seconds for firing the
-	// Network Idle Ping message
-//	networkIdleDuration = (uint16_t) ((rand() % 500) + 1000);
-
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-//	LOG_D("Network Idle Duration set to %d milliSeconds\n\r", networkIdleDuration);
+	/*
+	 * Send a test frame
+	 */
+	
+	
+	
+	
+#if 1
+	can_buffers[0].ide = 0b0;
+	can_buffers[0].ssr = 0b0;
+	can_buffers[0].sid = 0x555;
+	can_buffers[0].rb0 = 0b0;
+	can_buffers[0].rb1 = 0b0;
+	can_buffers[0].rtr = 0b0;
+	can_buffers[0].dlc = 0x00;
+#else
+	can_buffers[0][0] = 0x123C;
+	can_buffers[0][1] = 0x0000;
+	can_buffers[0][2] = 0x0000;
 #endif
-//	networkIdleTimer = start_timer(networkIdleDuration, pingNetwork, NULL);
+	
+	LOG_D("0x%x - 0x%x - 0x%x\n\r", C1FIFObits.FNRB, C1RXFUL1, C1RXFUL2);
+	C1TR01CONbits.TXREQ0 = 0x1;
+	
+	while(C1TR01CONbits.TXREQ0 == 1);
 
+	LOG_D("0x%x - 0x%x - 0x%x\n\r", C1FIFObits.FNRB, C1RXFUL1, C1RXFUL2);
+	
         return(SUCCESS);
 }
-#endif // 0
+
+result_t can_l2_tx_frame(can_frame *frame)
+{
+	uint8_t  loop;
+	
+	/*
+	 * Find a free TX Buffer
+	 */
+	for(loop = 0; loop < NUM_TX_CONTROL; loop++) {
+		if(tx_control[loop].tx_buffer && !tx_control[loop].tx_request) {
+			can_buffers[loop].sid = 0x00;
+			can_buffers[loop].sid = frame->can_id & CAN_SFF_MASK;
+			
+			if(frame->can_id & CAN_EFF_FLAG) {
+				can_buffers[loop].ide = 0b1;
+				can_buffers[loop].ssr = 0b1;
+				can_buffers[loop].rtr = frame->can_id & CAN_RTR_FLAG;
+				can_buffers[loop].eid_l = (frame->can_id >> 11) & 0b111111; 
+				can_buffers[loop].eid_h = (frame->can_id >> 17) & 0x0fff;
+			} else {
+				can_buffers[loop].ssr = frame->can_id & CAN_RTR_FLAG;
+			}
+			
+			/*
+			 * Mark the buffer for transmission
+			 */
+			tx_control[loop].tx_request = 0b1;
+			
+			return(SUCCESS);
+		}
+	}
+	
+	return(ERR_NO_RESOURCES);
+}
 
 void can_l2_tasks(void)
 {
-#if 0
-	uint8_t i;
-	uint8_t buffer;
-	uint8_t *ptr;
+	can_frame frame;
+	uint8_t   fifo_rd_index;
+	boolean   buffer_full;
+	uint8_t   loop;
 
-	buffer = CANCON & 0x0f;
-
-	/*
-	 * Read all the messages present and process them
-	 */
-	while (rx_buffers[buffer]->ctrl & CNTL_RXFUL) {
-		/*
-		 * cancel the timer if running we've received a frame
-		 */
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-		LOG_D("Rx L2 Message so restart Idle Timer\n\r");
-#endif
-		cancel_timer(networkIdleTimer);
-		networkIdleTimer = start_timer(networkIdleDuration, pingNetwork, NULL);
-		if (rx_buffers[buffer]->sidl & SIDL_EXIDE) {
-			/*
-			 * Extended message identifer ???
-			 */
-			rxMsg.header.extended_id = TRUE;
-			rxMsg.header.can_id.id = rx_buffers[buffer]->sidh;
-			rxMsg.header.can_id.id = rxMsg.header.can_id.id << 3 | ((rx_buffers[buffer]->sidl >> 5) & 0x07);
-			rxMsg.header.can_id.id = rxMsg.header.can_id.id << 2 | (rx_buffers[buffer]->sidl & 0x03);
-			rxMsg.header.can_id.id = rxMsg.header.can_id.id << 8 | rx_buffers[buffer]->eid8;
-			rxMsg.header.can_id.id = rxMsg.header.can_id.id << 8 | rx_buffers[buffer]->eid0;
-		} else {
-			rxMsg.header.extended_id = FALSE;
-
-			/*
-			 * Pull out the identifier
-			 */
-			rxMsg.header.can_id.id = rx_buffers[buffer]->sidh;
-			rxMsg.header.can_id.id = rxMsg.header.can_id.id << 3 | ((rx_buffers[buffer]->sidl >> 5) & 0x07);
-		}
-
-		/*
-		 * Pull out Data Length
-		 */
-		rxMsg.header.data_length = rx_buffers[buffer]->dcl & 0x0f;
-		rxMsg.header.rnr_frame = rx_buffers[buffer]->dcl & DCL_RNR;
-
-		/*
-		 * Pull out the data bytes
-		 */
-		ptr = rx_buffers[buffer]->data;
-		for (i = 0; i < rxMsg.header.data_length; i++, ptr++) {
-			rxMsg.data[i] = *ptr;
-		}
-
-		/* Clear the received flag */
-		rx_buffers[buffer]->ctrl &= ~CNTL_RXFUL;
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-		LOG_D("rxMsg %lx\n\r", rxMsg.header.can_id.id);
-#endif
-		if(l2Handler) {
-			l2Handler(&rxMsg);
-		} else {
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-			LOG_D("No Handler so ignoring received message\n\r");
-#endif
-		}
-		buffer = CANCON & 0x0f;
-	}
-#endif //0
-}
-
-#if 0
-result_t can_l2_tx_frame(can_frame *frame)
-{
-	uint8_t loop;
-        uint8_t use_buffer;
-//	uint8_t i;
-//	uint8_t *ptr;
-
-//	if (can_status != Connected) {
-//		return (CAN_ERROR);
-//	}
-
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-	LOG_D("L2_CanTxMessage(0x%lx)\n\r", frame->can_id);
-#endif
-        WIN_ONE
-                
-	/*
-	 * Find a free buffer
-	 */
-        use_buffer = 0;
-#if 0
-        for(loop = 0; loop < NUM_TX_CONTROL; loop++) {
-                if (!tx_control[loop]->TXREQm) {
-                        use_buffer = loop * 2;
-                        break;
-                }
-                
-                if (!tx_control[loop]->TXREQn) {
-                        use_buffer = (loop * 2) + 1;
-                        break;
-                }
-        }
-        
-	if (loop == NUM_TX_CONTROL) {
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
-		LOG_E("No empty TX buffer\n\r");
-#endif
-		return (ERR_NO_RESOURCES); //No Empty buffers
-	}
-#endif
-#if ((defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-        LOG_D("use_buffer %d\n\r", use_buffer);
-#endif
-	/*
-	 * Trasmit buffer with index "use_buffer" is empty
-	 * so fill in the registers with data.
-	 */
-        can_buffers[0].rb0 = 0;
-        can_buffers[0].rb1 = 0;
-        can_buffers[0].ide = 0;
-        can_buffers[0].rtr = 0;
-        can_buffers[0].ssr = 0;
-        can_buffers[0].sid = 0x5aa;
-        can_buffers[0].dlc = 0;
-#if 0
-        can_buffers[use_buffer].rb0 = 0;
-        can_buffers[use_buffer].rb1 = 0;
-        can_buffers[use_buffer].ide = frame->can_id & CAN_EFF_FLAG;
-        can_buffers[use_buffer].rtr = frame->can_id & CAN_RTR_FLAG;
-        can_buffers[use_buffer].ssr = can_buffers[use_buffer].rtr;
-        can_buffers[use_buffer].sid = frame->can_id & CAN_SFF_MASK;
-
-	if (can_buffers[use_buffer].ide) {
-                can_buffers[use_buffer].ssr = 1;
-                
-                can_buffers[use_buffer].eid_h = (frame->can_id & 0x1ffe0000) >> 17;
-                can_buffers[use_buffer].eid_l = (frame->can_id & 0x1f800) >> 11;
-        }
-        
-        can_buffers[use_buffer].dlc = frame->can_dlc & 0x0f;
-
-        if(!can_buffers[use_buffer].rtr) {
-                for(loop = 0; loop < frame->can_dlc; loop++) {
-                        can_buffers[use_buffer].data[loop] = frame->data[loop];
-                }
-        }
-#endif   
-
-	/*
-	 * Mark the buffer for transmission
-	 */
-        C1TR01CONbits.TXREQ0 = 1;
-        while(C1TR01CONbits.TXREQ0 == 1);
-        
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-        LOG_D("Sent\n\r");
-#endif
-#if 0
-        if(use_buffer & 0x01) {
-                tx_control[use_buffer / 2]->TXREQn = 1;
-        } else {
-                tx_control[use_buffer / 2]->TXREQm = 1;
-        }
-#endif
-	return (SUCCESS);
-}
-#endif // 0
-
-static void set_bitrate(can_baud_rate_t baudRate)
-{
-	uint8_t sjw = 0;
-	uint8_t brp = 0;
-	uint8_t phseg1 = 0;
-	uint8_t phseg2 = 0;
-	uint8_t propseg = 0;
-
-        C1CTRL1bits.CANCKS = 0;   //Use peripheral clock  
+	MEMORY_MAP_WIN_CONFIG_STATUS
+	fifo_rd_index = C1FIFObits.FNRB;
 	
-	switch (baudRate) {
-		case baud_10K:
-			brp = 49;
-			propseg = 7;
-			sjw = 3;
-			phseg1 = 4;
-			phseg2 = 4;
-			break;
-
-		case baud_20K:
-			brp = 24;
-			propseg = 7;
-			sjw = 3;
-			phseg1 = 4;
-			phseg2 = 4;
-			break;
-
-		case baud_50K:
-			brp = 9;
-			propseg = 7;
-			sjw = 3;
-			phseg1 = 4;
-			phseg2 = 4;
-			break;
-
-		case baud_125K:
-			brp = 3;
-			propseg = 6;
-			sjw = 3;
-			phseg1 = 3;
-			phseg2 = 3;
-			break;
-
-		case baud_250K:
-			brp = 1;
-			propseg = 7;
-			sjw = 3;
-			phseg1 = 4;
-			phseg2 = 4;
-			break;
-
-		case baud_500K:
-			brp = 0;
-			propseg = 7;
-			sjw = 3;
-			phseg1 = 4;
-			phseg2 = 4;
-			break;
-
-		case baud_800K:
-			brp = 0;
-			propseg = 3;
-			sjw = 2;
-			phseg1 = 3;
-			phseg2 = 3;
-			break;
-
-		case baud_1M:
-			brp = 0;
-			propseg = 3;
-			sjw = 1;
-			phseg1 = 2;
-			phseg2 = 2;
-			break;
-
-		default:
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
-			LOG_E("Invalid Baud Rate Specified\n\r");
+	if(fifo_rd_index < 16) {
+		buffer_full = C1RXFUL1 & (0x01 << fifo_rd_index);
+	} else {
+		buffer_full = C1RXFUL2 & (0x01 << (fifo_rd_index - 16));		
+	}
+	
+	while(buffer_full) {
+		/*
+		 * Process the Rx'd buffer
+		 */
+		frame.can_id  = 0x00;  // Just to be safe clear the ID
+		frame.can_id  = can_buffers[fifo_rd_index].sid;
+		frame.can_id  |= ((uint32_t)can_buffers[fifo_rd_index].ide << 31);
+		if (can_buffers[fifo_rd_index].ide) {
+			/*
+			 * Extended message received
+			 */
+			frame.can_id  |= ((uint32_t)can_buffers[fifo_rd_index].rtr << 30);
+			frame.can_id  |= ((uint32_t)can_buffers[fifo_rd_index].eid_l << 11);
+			frame.can_id  |= ((uint32_t)can_buffers[fifo_rd_index].eid_h << 17);
+		} else {
+			/*
+			 * Standard message received
+			 */
+			frame.can_id  |= ((uint32_t)can_buffers[fifo_rd_index].ssr << 30);
+			
+		}
+		frame.can_dlc = can_buffers[fifo_rd_index].dlc;
+		
+		for(loop = 0; loop < frame.can_dlc; loop++) {
+			frame.data[loop] = can_buffers[fifo_rd_index].data[loop];
+		}
+		
+#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+//		LOG_D("rxMsg %lx\n\r", rxMsg.header.can_id.id);
 #endif
-			break;
+		
+		/*
+		 * Mark the buffer as read
+		 */
+		if(fifo_rd_index < 16) {
+			C1RXFUL1 &= ~(0x01 << fifo_rd_index);
+		} else {
+			C1RXFUL2 &= ~(0x01 << (fifo_rd_index - 16));		
+		}
+		
+		/*
+		 * Check is there another full buffer
+		 */
+		fifo_rd_index = C1FIFObits.FNRB;
+		if(fifo_rd_index < 16) {
+			buffer_full = C1RXFUL1 & (0x01 << fifo_rd_index);
+		} else {
+			buffer_full = C1RXFUL2 & (0x01 << (fifo_rd_index - 16));		
+		}
+	}
+}
+
+static result_t set_bitrate(can_baud_rate_t baud)
+{
+	uint32_t bit_freq;
+	uint32_t tq_freq;
+	uint8_t  tq_count = 25;
+	boolean  found = FALSE;
+	uint8_t  sjw = 1;
+	uint8_t  brp;
+	uint8_t  phseg1 = 0;
+	uint8_t  phseg2 = 0;
+	uint8_t  propseg = 0;
+
+	switch (baud) {
+	case baud_10K:
+		bit_freq = 10000;
+		break;
+	case baud_20K:
+		bit_freq = 20000;
+		break;
+	case baud_50K:
+		bit_freq = 50000;
+		break;
+	case baud_125K:
+		bit_freq = 125000;
+		break;
+	case baud_250K:
+		bit_freq = 250000;
+		break;
+	case baud_500K:
+		bit_freq = 500000;
+		break;
+	case baud_800K:
+		bit_freq = 800000;
+		break;
+	case baud_1M:
+		bit_freq = 1000000;
+		break;
+	default:
+		return(ERR_BAD_INPUT_PARAMETER);
+		break;		
 	}
 
+	for(brp = 1; brp <= 64 && !found; brp++) {
+		/*
+		 * Calculate the potential TQ Frequency (Fp/brp/2) 
+		 */
+#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+//		LOG_D("Testing BRP %d\n\r", brp);
+//		LOG_D("remainder %ld\n\r", sys_clock_freq % brp);
+#endif		
+		if((sys_clock_freq % brp != 0) || (((sys_clock_freq / brp) % 2) != 0)) continue;
+		tq_freq = ((sys_clock_freq / brp) / 2);
+		
+		/*
+		 * The Bits can be made up of from between 8 and 25 TQ periods
+		 * so test to see if the calculated potential tq_freq can give
+		 * us the required bit frequency.
+		 */
+		if( (bit_freq >= tq_freq/25) && (bit_freq <= tq_freq/8) ) {
+			/*
+			 * Now have a suitable tq Frequency have to establish
+			 * the number (8 - 25) of Tq periods required  
+			 */
+			for(tq_count = 25; tq_count >= 8 && !found; tq_count--) {
+				if(tq_freq % tq_count != 0) continue;
+				if(tq_freq / tq_count == bit_freq) {
+					found = TRUE;
+				}
+			}
+		}
+	}	
+
+	if(!found) return(ERR_CAN_INVALID_BAUDRATE);
+
+	brp--;       // End of the found loop will have incremented
+	tq_count++;  // ^^^
+	
+#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+	LOG_D("Fp %ld\n\r", sys_clock_freq);
+	LOG_D("BRP %d\n\r", brp);
+	LOG_D("Ftq %ld\n\r", tq_freq);
+	LOG_D("TQ Periods %d\n\r", tq_count);
+#endif
+	
+	sjw = 1;
+	phseg1 = phseg2 = (tq_count - sjw) / 3;
+	propseg = tq_count - sjw - phseg1 - phseg2;
+
+	/*
+	 * CANCKS: ECAN Module Clock Freg(CAN) Source Select bit
+	 * 1 = Freq(CAN) is equal to 2 * Freq(Peripheral)
+	 * 0 = Freq(CAN) is equal to Freq(Peripheral)
+	 */
         C1CTRL1bits.CANCKS = 0;   //Use peripheral clock  
         C1CFG1bits.SJW = sjw;
-        C1CFG1bits.BRP = brp;
+        C1CFG1bits.BRP = brp - 1;
 
         C1CFG2bits.PRSEG = propseg - 1;
         C1CFG2bits.SEG1PH = phseg1 - 1;
         C1CFG2bits.SEG2PH = phseg2 - 1;
         
 	C1CFG2bits.SAM = 0; //One sampe point
+
+#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_INFO))
+	LOG_I("propseg-%d, phseg1-%d, phseg2-%d\n\r", propseg, phseg1, phseg2);
+#endif
+	
+	return(SUCCESS);
 }
 
 /*
@@ -887,7 +648,7 @@ static void set_bitrate(can_baud_rate_t baudRate)
  */
 static void set_mode(ty_can_mode mode)
 {
-        C1CTRL1bits.REQOP = mode;
+	C1CTRL1bits.REQOP = mode;
 
 	/*
 	 * CAN Mode is a request so we have to wait for confirmation
