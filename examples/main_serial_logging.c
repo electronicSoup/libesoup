@@ -27,7 +27,7 @@
 static const char *TAG = "Main";
 #include "libesoup/logger/serial_log.h"
 #endif
-
+#include "libesoup/timers/delay.h"
 #include "libesoup/timers/sw_timers.h"
 
 #ifdef SYS_SW_TIMERS
@@ -44,18 +44,25 @@ int main()
         uint16_t y = 0x1234;
         uint32_t z = 0x12345678;
 
+
 #ifdef SYS_SW_TIMERS
 	timer_id         timer;
 	struct timer_req request;
 #endif
 
         rc = libesoup_init();
+
+	/*
+	 * Allow the clock to stabalise.
+	 */
+	delay(mSeconds, 500);
+
 	if (rc != SUCCESS) {
 #if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
 		LOG_E("ERROR Oops\n\r");
 #endif
 	}
-	
+
 #if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
         LOG_D("Testing\n\r");
 	LOG_D("string %s\n\r", "Bingo");

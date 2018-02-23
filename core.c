@@ -30,9 +30,9 @@
 static const char  __attribute__((unused)) *TAG = "CORE";
 #elif __XC8
 static const char  *TAG = "CORE";
-#endif
+#endif // XC16 elif XC8
 #include "libesoup/logger/serial_log.h"
-#endif
+#endif  // SYS_SERIAL_LOGGING
 
 #ifdef SYS_HW_TIMERS
 #include "libesoup/timers/hw_timers.h"
