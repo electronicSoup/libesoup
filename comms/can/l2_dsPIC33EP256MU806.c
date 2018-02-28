@@ -394,8 +394,12 @@ result_t can_l2_init(can_baud_rate_t arg_baud_rate, status_handler_t arg_status_
 	/*
 	 * Drop out of the configuration mode
 	 */
+#ifdef SYS_CAN_LOOPBACK
+	set_mode(loopback);
+#else
 	set_mode(normal);
-
+#endif
+	
         return(SUCCESS);
 }
 
@@ -434,10 +438,10 @@ result_t can_l2_tx_frame(can_frame *frame)
 
 void can_l2_tasks(void)
 {
-	can_frame frame;
-	uint8_t   fifo_rd_index;
-	boolean   buffer_full;
-	uint8_t   loop;
+	static can_frame frame;
+	uint8_t          fifo_rd_index;
+	boolean          buffer_full;
+	uint8_t          loop;
 
 	MEMORY_MAP_WIN_CONFIG_STATUS
 
