@@ -41,7 +41,7 @@
 #define DEBUG_FILE
 #include "libesoup/logger/serial_log.h"
 
-static const char *TAG = "FRAME_DISPATCH";
+static const char *TAG = "CAN_DISPATCH";
 #endif // SYS_SERIAL_LOGGING
 
 #include "libesoup/comms/can/can.h"
@@ -75,6 +75,7 @@ void frame_dispatch_init(void)
 result_t frame_dispatch_reg_handler(can_l2_target_t *target)
 {
 	uint8_t loop;
+
 #if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_INFO))
 	LOG_I("sys_l2_can_dispatch_reg_handler mask 0x%lx, filter 0x%lx\n\r",
 		target->mask, target->filter);
@@ -140,7 +141,6 @@ void frame_dispatch_handle_frame(can_frame *frame)
 //	printf("]\n\r");
 
 	for (loop = 0; loop < SYS_CAN_L2_HANDLER_ARRAY_SIZE; loop++) {
-
 		if(registered_handlers[loop].used) {
 			if ((frame->can_id & registered_handlers[loop].target.mask) == (registered_handlers[loop].target.filter & registered_handlers[loop].target.mask)) {
 				registered_handlers[loop].target.handler(frame);
