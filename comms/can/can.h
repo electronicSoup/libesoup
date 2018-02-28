@@ -167,7 +167,7 @@ typedef struct
 {
     uint32_t                     mask;
     uint32_t                     filter;
-    can_l2_frame_handler_t  handler;
+    can_l2_frame_handler_t       handler;
     uint8_t                      handler_id;
 } can_l2_target_t;
 
