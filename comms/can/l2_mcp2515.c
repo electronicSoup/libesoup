@@ -4,7 +4,7 @@
  *
  * CAN L2 Functionality for MCP2515 Chip
  *
- * Copyright 2017 2018 electronicSoup Limited
+ * Copyright 2017-2018 electronicSoup Limited
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 2 of the GNU Lesser General Public License
@@ -114,13 +114,6 @@ static can_status_t        can_status;
 static can_baud_rate_t     status_baud = no_baud;
 static status_handler_t    status_handler = NULL;
 
-/*
- * Frame dispatcher is in separate file but shouldn't be seen by Application 
- * code. Just include a sneaky extern declaration here.
- */
-extern void frame_dispatch_init(void);
-extern void frame_dispatch_handle_frame(can_frame *message);
-
 result_t can_l2_init(can_baud_rate_t arg_baud_rate, status_handler_t handler)
 {
 	uint8_t        exit_mode = NORMAL_MODE;
@@ -150,8 +143,6 @@ result_t can_l2_init(can_baud_rate_t arg_baud_rate, status_handler_t handler)
 	status.sstruct.status = 0x00;
 	can_status.byte = 0x00;
         status_baud = no_baud;
-
-	frame_dispatch_init();
 
 	status_handler = handler;
 

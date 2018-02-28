@@ -23,6 +23,7 @@
 #ifdef SYS_CAN_BUS
 
 #include "libesoup/comms/can/can.h"
+#include "libesoup/comms/can/frame_dispatch.h"
 
 #ifndef SYS_SYSTEM_STATUS
 #error "CAN Module relies on System Status module libesoup_config.h must define SYS_SYSTEM_STATUS"
@@ -90,6 +91,14 @@ result_t can_init(can_baud_rate_t baudrate, status_handler_t status_handler)
 	can_status.byte = 0x00;
 	app_status_handler = status_handler;
 
+	/*
+	 * Initialise the frame dispatcher
+	 */
+	frame_dispatch_init();
+
+	/*
+	 * Initialise layer 2
+	 */
 	can_l2_init(baudrate, can_status_handler);
 
 #ifdef SYS_CAN_PING_PROTOCOL

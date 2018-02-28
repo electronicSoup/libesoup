@@ -4,7 +4,7 @@
  *
  * CAN L2 Functionality for dispatching received frames
  *
- * Copyright 2017 - 2018 electronicSoup Limited
+ * Copyright 2017-2018 electronicSoup Limited
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 2 of the GNU Lesser General Public License
@@ -130,6 +130,9 @@ void frame_dispatch_handle_frame(can_frame *frame)
 	uint8_t loop;
 	boolean found = FALSE;
 
+#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+	LOG_D("frame_dispatch_handle_frame(%lx)\n\r", frame->can_id);
+#endif
 //	printf("L2_CanDispatcherL2MsgHandler 0x%lx [", frame->can_id);
 //	for(loop = 0; loop < frame->can_dlc; loop++) {
 //		printf("0x%2x,", frame->data[loop]);
