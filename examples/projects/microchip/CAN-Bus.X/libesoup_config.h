@@ -4,7 +4,7 @@
  *
  * @author John Whitmore
  *
- * Copyright 2017 - 2018 electronicSoup Limited
+ * Copyright 2017-2018 electronicSoup Limited
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU Lesser General Public License as published by
@@ -123,9 +123,18 @@
 #define SYS_EEPROM
 
 /*
+ * CAN Bus depends on System Status Code
+ */
+#define SYS_SYSTEM_STATUS
+
+/*
  * Include CAN BUS Functionality in this project
  */
 #define SYS_CAN_BUS
+#define SYS_CAN_LOOPBACK
+#define SYS_CAN_FRAME_HANDLER_ARRAY_SIZE  10
+#define SYS_CAN_L2_HANDLER_ARRAY_SIZE      5
+#define SYS_CAN_RX_CIR_BUFFER_SIZE         5        
 
 /*
  * Include a board file

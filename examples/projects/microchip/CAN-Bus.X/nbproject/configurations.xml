@@ -13,9 +13,6 @@
                    displayName="Source Files"
                    projectFiles="true">
       <logicalFolder name="libesoup" displayName="libesoup" projectFiles="true">
-        <logicalFolder name="app" displayName="app" projectFiles="true">
-          <itemPath>../../../../app/os.c</itemPath>
-        </logicalFolder>
         <logicalFolder name="boards" displayName="boards" projectFiles="true">
           <logicalFolder name="cb-PIC24FJ256GB106"
                          displayName="cb-PIC24FJ256GB106"
@@ -75,18 +72,8 @@
             </logicalFolder>
           </logicalFolder>
         </logicalFolder>
-        <logicalFolder name="Documentation"
-                       displayName="Documentation"
-                       projectFiles="true">
-          <logicalFolder name="html" displayName="html" projectFiles="true">
-            <logicalFolder name="search" displayName="search" projectFiles="true">
-            </logicalFolder>
-          </logicalFolder>
-        </logicalFolder>
         <logicalFolder name="examples" displayName="examples" projectFiles="true">
           <itemPath>../../../main_can.c</itemPath>
-        </logicalFolder>
-        <logicalFolder name="firmware" displayName="firmware" projectFiles="true">
         </logicalFolder>
         <logicalFolder name="hardware" displayName="hardware" projectFiles="true">
           <itemPath>../../../../hardware/eeprom.c</itemPath>
@@ -105,8 +92,6 @@
           <itemPath>../../../../processors/rpi.c</itemPath>
           <itemPath>../../../../processors/dsPIC33EP256MU806.c</itemPath>
           <itemPath>../../../../processors/pic24FJ256GB106.c</itemPath>
-        </logicalFolder>
-        <logicalFolder name="scripts" displayName="scripts" projectFiles="true">
         </logicalFolder>
         <logicalFolder name="timers" displayName="timers" projectFiles="true">
           <itemPath>../../../../timers/hw_rtc.c</itemPath>

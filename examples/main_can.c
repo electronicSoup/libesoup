@@ -1,71 +1,159 @@
-/*
- * File:   main.c
- * Author: john
+/**
  *
- * Created on 26 September 2016, 20:12
+ * \file main.c
+ *
+ * \brief main entry point for the CAN Node
+ *
+ * Copyright 2014 - 2018 electronicSoup
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the version 3 of the GNU General Public License
+ * as published by the Free Software Foundation
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, see <http://www.gnu.org/licenses/>.
+ *
  */
-
-/*
- * Set up the configuration words of the processor:
- */
-
 #include "libesoup_config.h"
+
+#include <stdlib.h>
 
 #ifdef SYS_SERIAL_LOGGING
 #define DEBUG_FILE
 static const char *TAG = "Main";
-
 #include "libesoup/logger/serial_log.h"
-
-/*
- * Check required system.h defines are found
- */
-#ifndef SYS_LOG_LEVEL
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
-#endif
-#endif  // SYS_SERIAL_LOGGING
+#endif // SYS_SERIAL_LOGGING
 
 #include "libesoup/timers/sw_timers.h"
+#include "libesoup/timers/delay.h"
+#include "libesoup/comms/can/can.h"
+#include "libesoup/hardware/eeprom.h"
+#include "libesoup/status/status.h"
 
-static struct timer_req timer_request;
+void system_status_handler(union ty_status status);
 
-/*
- * Forward declaration of the timer expiry function
- */
-void exp_func(timer_id timer, union sigval);
+#ifdef SYS_SW_TIMERS
+static void expiry(timer_id timer, union sigval);
+#endif
+static void frame_handler(can_frame *);
 
 int main(void)
 {
-        result_t      rc;
-        uint8_t       data;
-        uint8_t       loop;
-	timer_id      timer;
+	result_t         rc = SUCCESS;
+	can_l2_target_t  target;
+#ifdef SYS_SW_TIMERS
+	timer_id         timer;
+	struct timer_req request;
+#endif
 
-	rc = libesoup_init();
+	libesoup_init();
+
+	/*
+	 * Allow the clock to settle
+	 */
+	delay(mSeconds, 500);
+	
+#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+	LOG_D("************************\n\r");
+	LOG_D("***   CAN Bus Node   ***\n\r");
+	LOG_D("***   %ldMHz         ***\n\r", sys_clock_freq);
+	LOG_D("************************\n\r");
+#endif
+
+	delay(mSeconds, 500);
+ 	rc = can_init(baud_250K, system_status_handler);
 	if(rc != SUCCESS) {
-		while(1){}
+#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
+		LOG_E("Failed to initialise CAN Bus\n\r");
+#endif
 	}
 
-	TIMER_INIT(timer)
-	timer_request.units = Seconds;
-	timer_request.duration = 5;
-	timer_request.type = repeat;
-	timer_request.data.sival_int = 0;
-	timer_request.exp_fn = exp_func;
+	/*
+	 * If the build includes SW Timers start a ping pong timer one
+	 * can load the serial logging buffer and the other can check
+	 * that it's emptied
+	 */
+#ifdef SYS_SW_TIMERS
+	TIMER_INIT(timer);
+	request.units = Seconds;
+	request.duration = 30;
+	request.type = repeat;
+	request.exp_fn = expiry;
+	request.data.sival_int = 0x00;
 	
-	rc = sw_timer_start(&timer, &timer_request);
+	rc = sw_timer_start(&timer, &request);
+	if(rc != SUCCESS) {
+#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
+		LOG_E("Failed to start SW Timer\n\r");
+#endif		
+	}
+#endif	// SYS_SW_TIMERS
+	
+	/*
+	 * Register a frame handler
+	 */
+	target.filter = 0x555;
+	target.mask   = CAN_SFF_MASK;
+	target.handler = frame_handler;
 
-	LOG_D("Entering main loop\n\r");
+	delay(mSeconds, 500);
+	rc = frame_dispatch_reg_handler(&target);
+	if(rc != SUCCESS) {
+#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
+		LOG_E("Failed to register frame handler\n\r");
+#endif		
+	}
 
-        while(1) {
-		CHECK_TIMERS()
-        }
-        return 0;
+	/*
+	 * Enter the main loop
+	 */
+	LOG_D("Entering the main loop\n\r");
+	LOG_D("***   %ldMHz         ***\n\r", sys_clock_freq);
+	while(TRUE) {
+#ifdef SYS_SW_TIMERS
+		CHECK_TIMERS();
+#endif
+
+		can_tasks();
+	}
 }
 
-void exp_func(timer_id timer, union sigval data)
+void system_status_handler(union ty_status status)
 {
 #if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-	LOG_D("Expiry()\n\r");
-#endif	
+	LOG_D("status_handler()\n\r");
+#endif
+}
+
+/*
+ * Expiry Function if SYS_SW_TIMERS defined
+ */
+#ifdef SYS_SW_TIMERS
+static void expiry(timer_id timer, union sigval data)
+{
+	result_t  rc;
+	can_frame frame;
+
+	frame.can_id = 0x555;
+	frame.can_dlc = 0x00;
+
+	rc = can_l2_tx_frame(&frame);
+	if(rc != SUCCESS) {
+#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
+		LOG_E("Failed to send CAN Frame\n\r");
+#endif		
+	}
+}
+#endif // SYS_SW_TIMERS
+
+static void frame_handler(can_frame *frame)
+{
+#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+	LOG_D("handle(0x%lx)\n\r", frame->can_id);
+#endif
 }
