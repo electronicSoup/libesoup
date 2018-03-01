@@ -4,7 +4,7 @@
  *
  * Timer functionalty for the electronicSoup Cinnamon Bun
  *
- * Copyright 2017 - 2018 electronicSoup Limited
+ * Copyright 2017-2018 electronicSoup Limited
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 2 of the GNU Lesser General Public License
