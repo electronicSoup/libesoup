@@ -571,20 +571,32 @@ result_t can_l2_bitrate(can_baud_rate_t baud, boolean change)
 	}
 
 	/*
-	 * Assume that the requested bit rate is one we can't honour
+	 * Assume that the requested bit rate is one we can't attain
 	 */
-	rc = ERR_CAN_INVALID_BAUDRATE;
+	rc = ERR_CAN_BITRATE_LOW;
 	
-	for(brp = 1; brp <= 64 && (rc == ERR_CAN_INVALID_BAUDRATE); brp++) {
+	for(brp = 1; brp <= 64 && (rc != SUCCESS); brp++) {
 		/*
 		 * Calculate the potential TQ Frequency (Fp/brp/2) 
 		 */
 #if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 //		LOG_D("Testing BRP %d\n\r", brp);
 //		LOG_D("remainder %ld\n\r", sys_clock_freq % brp);
-#endif		
+#endif
+		/*
+		 * We're only looking for integer values of bit rate so ignore
+		 * fractional results of division by BRP.
+		 */
 		if((sys_clock_freq % brp != 0) || (((sys_clock_freq / brp) % 2) != 0)) continue;
 		tq_freq = ((sys_clock_freq / brp) / 2);
+		
+		/*
+		 * Check for a requested bit rate which is too high to attain
+		 */
+		if (brp == 1 && (bit_freq > tq_freq/8)) {
+			rc = ERR_CAN_BITRATE_HIGH;
+			goto exit;
+		}
 		
 		/*
 		 * The Bits can be made up of from between 8 and 25 TQ periods
@@ -596,7 +608,7 @@ result_t can_l2_bitrate(can_baud_rate_t baud, boolean change)
 			 * Now have a suitable tq Frequency have to establish
 			 * the number (8 - 25) of Tq periods required  
 			 */
-			for(tq_count = 25; tq_count >= 8 && (rc == ERR_CAN_INVALID_BAUDRATE); tq_count--) {
+			for(tq_count = 25; tq_count >= 8 && (rc != SUCCESS); tq_count--) {
 				if(tq_freq % tq_count != 0) continue;
 				if(tq_freq / tq_count == bit_freq) {
 					rc = SUCCESS;
@@ -605,7 +617,7 @@ result_t can_l2_bitrate(can_baud_rate_t baud, boolean change)
 		}
 	}	
 
-	if(change) {
+	if(change && (rc == SUCCESS)) {
 		brp--;       // End of the found loop will have incremented
 		tq_count++;  // ^^^
 	
@@ -651,6 +663,7 @@ result_t can_l2_bitrate(can_baud_rate_t baud, boolean change)
 	/*
 	 * Drop out of the configuration mode
 	 */
+exit:
 #ifdef SYS_CAN_LOOPBACK
 	set_mode(loopback);
 #else

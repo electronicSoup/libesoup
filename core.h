@@ -93,7 +93,8 @@ typedef enum {
     ERR_NOT_READY,            /**< API function no ready to execute request.*/
     ERR_CAN_ERROR,            /**< Error in CAN libesoup API function.*/
     ERR_CAN_NOT_CONNECTED,    /**< Attempt to perform action on CAN Bus prior to its connection.*/
-    ERR_CAN_INVALID_BAUDRATE, /**< Invalid Baudrate specified in libesoup API funciton call.*/
+    ERR_CAN_BITRATE_HIGH,     /**< Invalid Baudrate specified in libesoup API funciton call.*/
+    ERR_CAN_BITRATE_LOW,      /**< Invalid Baudrate specified in libesoup API funciton call.*/
     ERR_CAN_NO_FREE_BUFFER,   /**< No free CAN buffer to complete request.*/
     ERR_UNINITIALISED,        /**< Attempt to call libesoup API function prior to initialisation.*/
     ERR_BUSY,                 /**< I'm busy call back later.*/
