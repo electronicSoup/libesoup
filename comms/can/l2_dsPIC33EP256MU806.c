@@ -41,6 +41,9 @@ static const char *TAG = "dsPIC33_CAN";
 #include "libesoup/comms/can/l2_dsPIC33EP256MU806.h"
 #include "libesoup/comms/can/can.h"
 #include "libesoup/comms/can/frame_dispatch.h"
+#ifdef SYS_CAN_PING_PROTOCOL
+#include "libesoup/comms/can/ping.h"
+#endif // SYS_CAN_PING_PROTOCOL
 
 /*
  * Check for required System Switches
@@ -429,6 +432,10 @@ result_t can_l2_tx_frame(can_frame *frame)
 			 * Mark the buffer for transmission
 			 */
 			tx_control[loop].tx_request = 0b1;
+
+#ifdef SYS_CAN_PING_PROTOCOL
+			restart_ping_timer();
+#endif // SYS_CAN_PING_PROTOCOL
 			
 			return(SUCCESS);
 		}
@@ -490,6 +497,10 @@ void can_l2_tasks(void)
 		for(loop = 0; loop < frame.can_dlc; loop++) {
 			frame.data[loop] = can_buffers[fifo_rd_index].data[loop];
 		}
+#ifdef SYS_CAN_PING_PROTOCOL
+		restart_ping_timer();
+#endif // SYS_CAN_PING_PROTOCOL
+		
 		frame_dispatch_handle_frame(&frame);
 
 		/*
@@ -516,7 +527,7 @@ void can_l2_tasks(void)
 static result_t set_bitrate(can_baud_rate_t baud)
 {
 	uint32_t bit_freq;
-	uint32_t tq_freq;
+	uint32_t tq_freq = 0;
 	uint8_t  tq_count = 25;
 	boolean  found = FALSE;
 	uint8_t  sjw = 1;
