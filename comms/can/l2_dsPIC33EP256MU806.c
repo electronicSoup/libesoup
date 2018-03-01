@@ -106,7 +106,6 @@ struct __attribute__ ((packed)) TR_Control
 struct TR_Control *tx_control = (struct TR_Control *)&C1TR01CON;
 
 static void set_mode(ty_can_mode mode);
-static result_t set_bitrate(can_baud_rate_t baudRate);
 
 void __attribute__((__interrupt__, __no_auto_psv__)) _C1RxRdyInterrupt(void)
 {
@@ -246,13 +245,13 @@ result_t can_l2_init(can_baud_rate_t arg_baud_rate, status_handler_t arg_status_
         CAN_TX_PIN_DIRECTION = OUTPUT_PIN;
 	CAN_TX_OUTPUT_PERIPHERAL_PIN = PPS_CAN1_TX;
 
+	rc = can_l2_bitrate(baud_125K, TRUE);
+	if(rc != SUCCESS) return(rc);
+
         /*
          * Enter configuration mode
          */
 	set_mode(config);
-
-	rc = set_bitrate(baud_125K);
-	if(rc != SUCCESS) return(rc);
 
 	MEMORY_MAP_WIN_CONFIG_STATUS
 		
@@ -524,18 +523,23 @@ void can_l2_tasks(void)
 	}
 }
 
-static result_t set_bitrate(can_baud_rate_t baud)
+result_t can_l2_bitrate(can_baud_rate_t baud, boolean change)
 {
+	result_t rc = SUCCESS;
 	uint32_t bit_freq;
 	uint32_t tq_freq = 0;
 	uint8_t  tq_count = 25;
-	boolean  found = FALSE;
 	uint8_t  sjw = 1;
 	uint8_t  brp;
 	uint8_t  phseg1 = 0;
 	uint8_t  phseg2 = 0;
 	uint8_t  propseg = 0;
 
+        /*
+         * Enter configuration mode
+         */
+	set_mode(config);
+	
 	switch (baud) {
 	case baud_10K:
 		bit_freq = 10000;
@@ -566,7 +570,12 @@ static result_t set_bitrate(can_baud_rate_t baud)
 		break;		
 	}
 
-	for(brp = 1; brp <= 64 && !found; brp++) {
+	/*
+	 * Assume that the requested bit rate is one we can't honour
+	 */
+	rc = ERR_CAN_INVALID_BAUDRATE;
+	
+	for(brp = 1; brp <= 64 && (rc == ERR_CAN_INVALID_BAUDRATE); brp++) {
 		/*
 		 * Calculate the potential TQ Frequency (Fp/brp/2) 
 		 */
@@ -587,59 +596,67 @@ static result_t set_bitrate(can_baud_rate_t baud)
 			 * Now have a suitable tq Frequency have to establish
 			 * the number (8 - 25) of Tq periods required  
 			 */
-			for(tq_count = 25; tq_count >= 8 && !found; tq_count--) {
+			for(tq_count = 25; tq_count >= 8 && (rc == ERR_CAN_INVALID_BAUDRATE); tq_count--) {
 				if(tq_freq % tq_count != 0) continue;
 				if(tq_freq / tq_count == bit_freq) {
-					found = TRUE;
+					rc = SUCCESS;
 				}
 			}
 		}
 	}	
 
-	if(!found) return(ERR_CAN_INVALID_BAUDRATE);
-
-	brp--;       // End of the found loop will have incremented
-	tq_count++;  // ^^^
+	if(change) {
+		brp--;       // End of the found loop will have incremented
+		tq_count++;  // ^^^
 	
 #if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-	LOG_D("Fp %ld\n\r", sys_clock_freq);
-	LOG_D("BRP %d\n\r", brp);
-	LOG_D("Ftq %ld\n\r", tq_freq);
-	LOG_D("TQ Periods %d\n\r", tq_count);
+		LOG_D("Fp %ld\n\r", sys_clock_freq);
+		LOG_D("BRP %d\n\r", brp);
+		LOG_D("Ftq %ld\n\r", tq_freq);
+		LOG_D("TQ Periods %d\n\r", tq_count);
 #endif
 	
-	sjw = 1;
-	phseg1 = phseg2 = (tq_count - sjw) / 3;
-	propseg = tq_count - sjw - phseg1 - phseg2;
+		sjw = 1;
+		phseg1 = phseg2 = (tq_count - sjw) / 3;
+		propseg = tq_count - sjw - phseg1 - phseg2;
 
-	/*
-	 * CANCKS: ECAN Module Clock Freg(CAN) Source Select bit
-	 * 1 = Freq(CAN) is equal to 2 * Freq(Peripheral)
-	 * 0 = Freq(CAN) is equal to Freq(Peripheral)
-	 */
-	// WIN Bit 0 | 1
-	//Use peripheral clock N.B. Reverse of documentation, see Errata
-        C1CTRL1bits.CANCKS = 1;
-	// WIN Bit 0 | 1
-        C1CFG1bits.SJW = sjw;
-	// WIN Bit 0 | 1
-        C1CFG1bits.BRP = brp - 1;
+		/*
+	 	 * CANCKS: ECAN Module Clock Freg(CAN) Source Select bit
+	         * 0 = Freq(CAN) is equal to 2 * Freq(Peripheral)
+	         * 1 = Freq(CAN) is equal to Freq(Peripheral)
+	         */
+		// WIN Bit 0 | 1
+		//Use peripheral clock N.B. Reverse of documentation, see Errata
+		C1CTRL1bits.CANCKS = 1;
+		// WIN Bit 0 | 1
+		C1CFG1bits.SJW = sjw;
+		// WIN Bit 0 | 1
+		C1CFG1bits.BRP = brp - 1;
 
-	// WIN Bit 0 | 1
-        C1CFG2bits.PRSEG = propseg - 1;
-	// WIN Bit 0 | 1
-        C1CFG2bits.SEG1PH = phseg1 - 1;
-	// WIN Bit 0 | 1
-        C1CFG2bits.SEG2PH = phseg2 - 1;
+		// WIN Bit 0 | 1
+		C1CFG2bits.PRSEG = propseg - 1;
+		// WIN Bit 0 | 1
+		C1CFG2bits.SEG1PH = phseg1 - 1;
+		// WIN Bit 0 | 1
+		C1CFG2bits.SEG2PH = phseg2 - 1;
         
-	// WIN Bit 0 | 1
-	C1CFG2bits.SAM = 0; //One sampe point
+		// WIN Bit 0 | 1
+		C1CFG2bits.SAM = 0; //One sampe point
 
 #if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_INFO))
-	LOG_I("propseg-%d, phseg1-%d, phseg2-%d\n\r", propseg, phseg1, phseg2);
+		LOG_I("propseg-%d, phseg1-%d, phseg2-%d\n\r", propseg, phseg1, phseg2);
 #endif
-	
-	return(SUCCESS);
+	}
+
+	/*
+	 * Drop out of the configuration mode
+	 */
+#ifdef SYS_CAN_LOOPBACK
+	set_mode(loopback);
+#else
+	set_mode(normal);
+#endif
+	return(rc);
 }
 
 /*
