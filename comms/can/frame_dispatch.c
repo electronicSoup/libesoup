@@ -38,7 +38,8 @@
 
 
 #ifdef SYS_SERIAL_LOGGING
-#define DEBUG_FILE
+//#define DEBUG_FILE
+#undef DEBUG_FILE
 #include "libesoup/logger/serial_log.h"
 
 static const char *TAG = "CAN_DISPATCH";
