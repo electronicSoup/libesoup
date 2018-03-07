@@ -19,6 +19,8 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  *
  */
+//#define TX_NODE
+
 #include "libesoup_config.h"
 
 #include <stdlib.h>
@@ -78,10 +80,11 @@ int main(void)
 	 * can load the serial logging buffer and the other can check
 	 * that it's emptied
 	 */
+#ifdef TX_NODE
 #ifdef SYS_SW_TIMERS
 	TIMER_INIT(timer);
 	request.units = Seconds;
-	request.duration = 30;
+	request.duration = 10;
 	request.type = repeat;
 	request.exp_fn = expiry;
 	request.data.sival_int = 0x00;
@@ -93,7 +96,7 @@ int main(void)
 #endif		
 	}
 #endif	// SYS_SW_TIMERS
-	
+#endif
 	/*
 	 * Register a frame handler
 	 */
@@ -108,7 +111,6 @@ int main(void)
 		LOG_E("Failed to register frame handler\n\r");
 #endif		
 	}
-
 	/*
 	 * Enter the main loop
 	 */
@@ -118,7 +120,6 @@ int main(void)
 #ifdef SYS_SW_TIMERS
 		CHECK_TIMERS();
 #endif
-
 		can_tasks();
 	}
 }
