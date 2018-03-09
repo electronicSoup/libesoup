@@ -50,9 +50,10 @@ void delay(ty_time_units units, uint16_t duration)
 	struct timer_req timer_request;
 	
 	TIMER_INIT(hw_timer);
-	timer_request.units = units;
-	timer_request.duration = duration;
-	timer_request.exp_fn = hw_expiry_function;
+	timer_request.units          = units;
+	timer_request.duration       = duration;
+	timer_request.type           = single_shot;
+	timer_request.exp_fn         = hw_expiry_function;
 	timer_request.data.sival_int = 0;
 
         delay_over = FALSE;
