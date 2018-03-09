@@ -31,22 +31,17 @@ int main(void)
 {
         result_t         rc;
 	struct timer_req request;
-        union sigval     data;
 	timer_id         timer;
 
 	rc = libesoup_init();
 
-        /*
-         * Microchip platforms depend on a Hardware timer for the regular
-         * tick so Hardware timers have to be initialised, and Serial logging
-	 * if required.
-         */
+	TIMER_INIT(timer);
 
-	request.units = Seconds;
-	request.duration = 30;
-	request.type = single_shot;
-	request.exp_fn = expiry;
-	request.data = data;
+	request.units          = Seconds;
+	request.duration       = 30;
+	request.type           = single_shot;
+	request.exp_fn         = expiry;
+	request.data.sival_int = 0;
 	
         rc = sw_timer_start(&timer, &request);
         
