@@ -7,7 +7,7 @@
  *
  * Core definitions required by electronicSoup Code Library
  *
- * Copyright 2017 2018 electronicSoup Limited
+ * Copyright 2017-2018 electronicSoup Limited
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 2 of the GNU Lesser General Public License
@@ -25,6 +25,7 @@
 #include "libesoup_config.h"
 
 #include "libesoup/timers/hw_timers.h"
+#include "libesoup/timers/delay.h"
 
 /*
  * Forward declaration of our Hardware timer expiry function, which will be
@@ -45,46 +46,17 @@ int main(void)
 	rc = libesoup_init();
 
         /*
-         * set pin RE0 as an Input pin
+         * 
          */
 #if defined(__dsPIC33EP256MU806__)
-        ANSELEbits.ANSE0 = 0;
-        TRISEbits.TRISE0 = 1;
+	TRISDbits.TRISD3 = OUTPUT_PIN;
+	LATDbits.LATD3 = 0;
 #elif defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__)
-        TRISEbits.TRISE0 = 1;
-#endif
-
-        /*
-         * Set Pin RE1 as an Output Pin
-         */
-#if defined(__dsPIC33EP256MU806__)
-        ANSELEbits.ANSE1 = 0;
-        TRISEbits.TRISE1 = 0;
-#elif defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__)
-        TRISEbits.TRISE1 = 0;
-#endif
-
-        /*
-         * Set Pin RE2 as an Output Pin
-         */
-#if defined(__dsPIC33EP256MU806__)
-        ANSELEbits.ANSE2 = 0;
-        TRISEbits.TRISE2 = 0;
-#elif defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__)
-        TRISEbits.TRISE2 = 0;
-#endif
-
-        /*
-         * Set Pin RE2 as an Output Pin
-         */
-#if defined(__dsPIC33EP256MU806__)
-        ANSELEbits.ANSE3 = 0;
-        TRISEbits.TRISE3 = 0;
-#elif defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__)
-        TRISEbits.TRISE3 = 0;
-#endif
-
-#if defined(__18F4585)
+        TRISEbits.TRISE0 = INPUT_PIN;
+        TRISEbits.TRISE1 = OUTPUT_PIN;
+        TRISEbits.TRISE2 = OUTPUT_PIN;
+        TRISEbits.TRISE3 = OUTPUT_PIN;
+#elif defined(__18F4585)
 	/*
 	 * All AD pins configured as Digital
 	 */
@@ -101,9 +73,19 @@ int main(void)
 	INTCONbits.GIE = 1;    // Enable Interrupts
 	INTCONbits.PEIE = 1;   // Enable Periphal Interrupts
 #endif // (__18F4585)
+
+	delay(Seconds, 10);
         
-	request.units    = Seconds;
-	request.duration = 5;
+	/*
+	 * Documentation:
+	 * 
+	 * dsPIC33 @ 60M 500uS gives 488uS  Delta 12uS
+	 * dsPIC33 @ 30M 500uS gives 492uS  Delta  8uS
+	 * dsPIC33 @  8M 500uS gives 496uS  Delta  4uS
+	 * 
+	 */
+	request.units    = uSeconds;
+	request.duration = 500;
 	request.type     = single_shot;
 	request.exp_fn   = exp_func;
 	request.data     = data;
@@ -115,7 +97,9 @@ int main(void)
 		 */
         }
 	
-#if defined(__dsPIC33EP256MU806__) || defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__)
+#if defined(__dsPIC33EP256MU806__)
+	LATDbits.LATD3 = 1;
+#elif defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__)
         LATEbits.LATE3 = 1;
 #endif
         	        
@@ -126,7 +110,9 @@ int main(void)
 
 void exp_func(timer_id timer, union sigval data)
 {
-#if defined(__dsPIC33EP256MU806__) || defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__)
+#if defined(__dsPIC33EP256MU806__)
+	LATDbits.LATD3 = 0;
+#elif defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__)
         LATEbits.LATE3 = ~LATEbits.LATE3;
 #endif
 }
