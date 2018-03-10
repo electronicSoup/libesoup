@@ -52,20 +52,6 @@ static uint32_t d;
  * Pins used
  */
 
-#define READ_ROM                 0x33
-#define MATCH_ROM                0x55
-#define SKIP_ROM                 0xCC
-#define SEARCH_ROM               0xF0
-
-#define READ_DATA                0xF0 // Followed by 2 Byte Address
-#define READ_STATUS              0xAA // Followed by 2 Byte Address
-#define READ_DATA_GENERATE_CRC   0xC3 // Followed by 2 Byte Address
-#define WRITE_DATA               0x0F // Followed by 2 Byte Address
-#define WRITE_STATUS             0x55 // Followed by 2 Byte Address
-
-#define MAX_ADDRESS              0x7F
-
-#define DS2502_FAMILY_CODE       0x09
 #if 0
 static uint8_t read_bit;
 static uint8_t read_count;
@@ -77,6 +63,7 @@ static          uint8_t bus_busy = FALSE;
 static          uint8_t bus_level;
 static void (*callback)(void) = NULL;
 #endif
+
 static volatile uint8_t timer_expired = TRUE;
 
 
@@ -135,6 +122,11 @@ void __attribute__((__interrupt__, __no_auto_psv__)) _CNInterrupt(void)
         }
 }
 #endif
+
+result_t one_wire_reserve(struct one_wire_bus *bus)
+{
+	
+}
 
 result_t one_wire_init(enum pin_t p)
 {
