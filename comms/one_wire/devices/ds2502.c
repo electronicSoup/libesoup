@@ -42,3 +42,59 @@ static const char *TAG = "DS2502";
 #define MAX_ADDRESS              0x7F
 
 #define DS2502_FAMILY_CODE       0x09
+
+
+
+
+//extern result_t one_wire_init(enum pin_t pin);
+//extern result_t one_wire_get_device_count(enum pin_t pin, uint8_t *count);
+extern result_t one_wire_ds2502_read_rom(enum pin_t pin);
+
+#if 0
+#define DS2502_DDR                      TRISFbits.TRISF3
+#define DS2502_OPEN_DRAIN_BIT           ODCFbits.ODCF3
+#define DS2502_DATA_W                   LATFbits.LATF3
+#define DS2502_DATA_R                   PORTFbits.RF3
+#define DS2502_CHANGE_NOTIFICATION_ISR  CNENFbits.CNIEF3
+#endif
+
+
+
+result_t one_wire_ds2502_read_rom(enum pin_t pin)
+{
+        uint8_t  i;
+        uint8_t  byte;
+        result_t rc;
+        
+        /*
+         * Start with a reset pulse
+         */
+        rc = reset_pulse(pin);
+
+        rc = program_pulse(pin);
+        return;
+//        if(rc != SUCCESS) return(rc);
+        
+        /*
+         * Now we want to send the read rom command
+         */
+        rc =  tx_byte(pin, READ_ROM);
+        
+        /*
+         * Read the response from the Slave
+         */
+  //      for (i = 0; i < 8; i++)
+        rc =  rx_byte(pin, &byte);
+        
+        if (byte != DS2502_FAMILY_CODE) {
+#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL != NO_LOGGING))
+                LOG_E("Unexpected Family Code\n\r");
+#endif                
+        } else {
+#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+                LOG_D("DS2502 Present on OneWire Bus\n\r");
+#endif                
+        }
+        
+        return(SUCCESS);
+}
