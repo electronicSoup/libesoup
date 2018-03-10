@@ -35,13 +35,17 @@ static const char *TAG = "OneWire";
 //#include "libesoup/timers/sw_timers.h"
 
 
+#ifndef SYS_CHANGE_NOTIFICATION
+#error SYS_CHANGE_NOTIFICATION Not defined required by OneWire
+#endif
+
 //#if defined(__dsPIC33EP256MU806__)
 //#if (SYS_CLOCK_FREQ == 60000000)
 //#define NOP_DURATION 4.6
 //#elif (SYS_CLOCK_FREQ == 8000000)
 //#define NOP_DURATION 28.6
 //#else
-#error SYS_CLOCK_FREQ Not coded in hw_timers.c
+//#error SYS_CLOCK_FREQ Not coded in hw_timers.c
 //#endif
 //#endif
 
