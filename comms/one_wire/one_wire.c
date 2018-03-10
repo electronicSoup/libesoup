@@ -123,22 +123,6 @@ static void bit_read(uint8_t read_bit);
 #endif
 
 #if 0
-#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__) || defined(__dsPIC33EP256MU806__)
-void __attribute__((__interrupt__, __no_auto_psv__)) _CNInterrupt(void)
-{
-        IFS1bits.CNIF = 0;
-
-        switch(pin) {
-        case (RF3):
-                if (bus_level && ~PORTFbits.RF3)
-                        device_present = TRUE;
-                break;
-                
-        default:
-                break;
-        }
-}
-#endif
 
 result_t one_wire_init(enum pin_t p)
 {
