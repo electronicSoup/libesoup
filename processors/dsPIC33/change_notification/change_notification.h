@@ -18,9 +18,9 @@
  *
  */
 #ifdef SYS_CHANGE_NOTIFICATION
-typedef void (*change_notifier)(enum pin_t pin);
+typedef void (*change_notifier)(uint8_t *port, uint8_t bit);
 
 extern result_t change_notifier_init(void);
-extern result_t change_notifier_register(enum pin_t pin, change_notifier);
-extern result_t change_notifier_deregister(enum pin_t pin);
+extern result_t change_notifier_register(uint8_t *port, uint8_t bit, change_notifier notifier);
+extern result_t change_notifier_deregister(uint8_t *port, uint8_t bit);
 #endif  // SYS_CHANGE_NOTIFICATION
