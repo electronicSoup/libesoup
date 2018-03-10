@@ -153,4 +153,23 @@ static result_t program_pulse(enum pin_t pin)
         LATDbits.LATD1= 1;        
 }
 
+void rom_command(void)
+{
+#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+        LOG_D("rom_command()\n\r");
+#endif
+        callback = read_rom;
+        write_byte_fn(READ_ROM);
+}
+
+void read_rom(void)
+{
+#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+        LOG_D("read_rom()\n\r");
+#endif
+        read_count = 8;       
+        read();
+}
+
+
 #endif // SYS_ONE_WIRE_DS2502

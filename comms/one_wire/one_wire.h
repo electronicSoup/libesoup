@@ -19,5 +19,6 @@
  */
 
 
+extern result_t one_wire_init(void);
 extern result_t one_wire_reserve(enum pin_t);
 

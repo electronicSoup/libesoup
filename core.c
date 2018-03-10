@@ -74,6 +74,10 @@ static const char  *TAG = "CORE";
 #include "libesoup/processors/dsPIC33/change_notification/change_notification.h"
 #endif // SYS_CHANGE_NOTIFICATION
 
+#ifdef SYS_ONE_WIRE
+#include "libesoup/comms/one_wire/one_wire.h"
+#endif
+
 /*
  * The Instruction Clock Frequency being used by the system.
  * 
@@ -157,5 +161,8 @@ result_t libesoup_init(void)
 	rc = change_notifier_init();
 #endif // SYS_CHANGE_NOTIFICATION
 
+#ifdef SYS_ONE_WIRE
+	one_wire_init();
+#endif
 	return(SUCCESS);
 }
