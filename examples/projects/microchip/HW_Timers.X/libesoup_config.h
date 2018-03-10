@@ -38,8 +38,9 @@
  * initialise the device to this clock frequency.
  */
 #if defined(__dsPIC33EP256MU806__)
-//#define SYS_CLOCK_FREQ 8000000     // 8MHz
-#define SYS_CLOCK_FREQ 60000000    // 60MHz
+#define SYS_CLOCK_FREQ 8000000     // 8MHz
+//#define SYS_CLOCK_FREQ 30000000    // 60MHz
+//#define SYS_CLOCK_FREQ 60000000    // 60MHz
 #elif defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__)
 #define SYS_CLOCK_FREQ 16000000     // 8MHz
 #elif defined(__18F4585)

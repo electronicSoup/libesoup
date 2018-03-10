@@ -70,6 +70,10 @@ static const char  *TAG = "CORE";
 #include "libesoup/utils/rand.h"
 #endif
 
+#ifdef SYS_CHANGE_NOTIFICATION
+#include "libesoup/processors/dsPIC33/change_notification/change_notification.h"
+#endif // SYS_CHANGE_NOTIFICATION
+
 /*
  * The Instruction Clock Frequency being used by the system.
  * 
@@ -148,6 +152,10 @@ result_t libesoup_init(void)
 #ifdef SYS_RAND
 	random_init();
 #endif
+
+#ifdef SYS_CHANGE_NOTIFICATION
+	rc = change_notifier_init();
+#endif // SYS_CHANGE_NOTIFICATION
 
 	return(SUCCESS);
 }

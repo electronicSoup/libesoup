@@ -35,13 +35,17 @@ static const char *TAG = "OneWire";
 //#include "libesoup/timers/sw_timers.h"
 
 
+#ifndef SYS_CHANGE_NOTIFICATION
+#error SYS_CHANGE_NOTIFICATION Not defined required by OneWire
+#endif
+
 //#if defined(__dsPIC33EP256MU806__)
 //#if (SYS_CLOCK_FREQ == 60000000)
 //#define NOP_DURATION 4.6
 //#elif (SYS_CLOCK_FREQ == 8000000)
 //#define NOP_DURATION 28.6
 //#else
-#error SYS_CLOCK_FREQ Not coded in hw_timers.c
+//#error SYS_CLOCK_FREQ Not coded in hw_timers.c
 //#endif
 //#endif
 
@@ -106,22 +110,6 @@ static void bit_read(uint8_t read_bit);
 #endif
 
 #if 0
-#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__) || defined(__dsPIC33EP256MU806__)
-void __attribute__((__interrupt__, __no_auto_psv__)) _CNInterrupt(void)
-{
-        IFS1bits.CNIF = 0;
-
-        switch(pin) {
-        case (RF3):
-                if (bus_level && ~PORTFbits.RF3)
-                        device_present = TRUE;
-                break;
-                
-        default:
-                break;
-        }
-}
-#endif
 
 result_t one_wire_reserve(struct one_wire_bus *bus)
 {
