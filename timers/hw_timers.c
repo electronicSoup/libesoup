@@ -441,29 +441,11 @@ static result_t start_timer(timer_id timer, struct timer_req *request)
                  * 1uS = 1 Sec/1,000,000
                  * Ticks in a uS = sys_clock_freq/1,000,000
                  * 
-                 * dsPIC33EP256MU806 @ 60,000,000 :
-                 * Minimum time is 13uS if ticks is set to 1 the overhead of 
-                 * functions calls to here and back to the expiry function are
-                 * that long.
+	         * dsPIC33 @ 60M 500uS timer gives 504uS  Delta  4uS
+	         * dsPIC33 @ 30M 500uS timer gives 504uS  Delta  4uS
+	         * dsPIC33 @  8M 500uS timer gives 508uS  Delta  8uS
                  */
-		ticks = (uint32_t) ((uint32_t) (((uint32_t) sys_clock_freq) / 1000000) * (request->duration - 13));
-#if 0
-#if (SYS_CLOCK_FREQ == 60000000)
-		if(request->duration > 13) {
-			ticks = (uint32_t) ((uint32_t) (((uint32_t) SYS_CLOCK_FREQ) / 1000000) * (request->duration - 13));
-		} else {
-			ticks = 0;
-		}
-#elif (SYS_CLOCK_FREQ == 8000000)
-		if(request->duration > 88) {
-			ticks = (uint32_t) ((uint32_t) (((uint32_t) SYS_CLOCK_FREQ) / 1000000) * (request->duration - 88));
-		} else {
-			ticks = 0;
-		}
-#else
-#error SYS_CLOCK_FREQ Not coded in hw_timers.c
-#endif // SYS_CLOCK_FREQ
-#endif // 0
+		ticks = (uint32_t) ((uint32_t) (((uint32_t) sys_clock_freq) / 1000000) * (request->duration));
 #endif // Target uC
                 break;
 

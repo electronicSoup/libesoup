@@ -79,10 +79,9 @@ int main(void)
 	/*
 	 * Documentation:
 	 * 
-	 * dsPIC33 @ 60M 500uS gives 488uS  Delta 12uS
-	 * dsPIC33 @ 30M 500uS gives 492uS  Delta  8uS
-	 * dsPIC33 @  8M 500uS gives 496uS  Delta  4uS
-	 * 
+	 * dsPIC33 @ 60M 500uS timer gives 504uS  Delta  4uS
+	 * dsPIC33 @ 30M 500uS timer gives 504uS  Delta  4uS
+	 * dsPIC33 @  8M 500uS timer gives 508uS  Delta  8uS
 	 */
 	request.units    = uSeconds;
 	request.duration = 500;
