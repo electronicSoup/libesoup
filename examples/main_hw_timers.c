@@ -27,8 +27,9 @@
 #include "libesoup/timers/hw_timers.h"
 #include "libesoup/timers/delay.h"
 
-#define DELAY_TEST
-//#define HW_TIMER_TEST
+//#define DELAY_TEST
+#define HW_TIMER_TEST
+#define HW_TIMER_REPEAT
 
 /*
  * Forward declaration of our Hardware timer expiry function, which will be
@@ -79,9 +80,9 @@ int main(void)
 	INTCONbits.PEIE = 1;   // Enable Periphal Interrupts
 #endif // (__18F4585)
 
-//	delay(Seconds, 10);
-        
 #ifdef HW_TIMER_TEST
+	delay(Seconds, 10);
+
 	/*
 	 * Documentation:
 	 * 
@@ -90,21 +91,28 @@ int main(void)
 	 * dsPIC33 @  8M 500uS timer gives 508uS  Delta  8uS
 	 */
 	request.units    = uSeconds;
-	request.duration = 500;
+	request.duration = 20;
+#ifdef HW_TIMER_REPEAT
+	request.type     = repeat;
+#else
 	request.type     = single_shot;
+#endif
 	request.exp_fn   = exp_func;
 	request.data     = data;
+
+	LATDbits.LATD3 = 1;
 
         rc = hw_timer_start(&timer, &request);
         if(rc != SUCCESS) {
 	        /*
 		 * Handle the error condition.
 		 */
+		LATDbits.LATD0 = 1;
         }
 #endif
 	
 #if defined(__dsPIC33EP256MU806__)
-	LATDbits.LATD3 = 1;
+//	LATDbits.LATD3 = 1;
 #elif defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__)
         LATEbits.LATE3 = 1;
 #endif
@@ -135,7 +143,11 @@ int main(void)
 void exp_func(timer_id timer, union sigval data)
 {
 #if defined(__dsPIC33EP256MU806__)
+#ifdef HW_TIMER_REPEAT
+	LATDbits.LATD3 = ~PORTDbits.RD3;
+#else
 	LATDbits.LATD3 = 0;
+#endif
 #elif defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__)
         LATEbits.LATE3 = ~LATEbits.LATE3;
 #endif

@@ -7,7 +7,7 @@
  * SYS_HW_TIMERS must be included in the libesoup_config.h file.
  * 
  *
- * Copyright 2017 electronicSoup Limited
+ * Copyright 2017-2018 electronicSoup Limited
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 2 of the GNU Lesser General Public License
@@ -42,6 +42,16 @@
 #ifdef SYS_HW_TIMERS
 
 #include "libesoup/timers/time.h"
+
+#if (SYS_CLOCK_FREQ == 8000000)
+#define HW_TIMER_OVERHEAD (123)
+#elif (SYS_CLOCK_FREQ == 30000000)
+#define HW_TIMER_OVERHEAD (33)
+#elif (SYS_CLOCK_FREQ == 60000000)
+#define HW_TIMER_OVERHEAD (16)
+#else
+#error Unprogrammed System Clock Frequency!
+#endif
 
 /**
  * \name Hardware Timers 

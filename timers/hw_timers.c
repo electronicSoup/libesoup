@@ -422,6 +422,7 @@ void hw_timer_cancel_all()
 static result_t start_timer(timer_id timer, struct timer_req *request)
 {
 	uint32_t ticks = 0;
+	uint16_t duration;
 
 	if(timer >= NUMBER_HW_TIMERS) {
 #if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
@@ -432,20 +433,30 @@ static result_t start_timer(timer_id timer, struct timer_req *request)
 
 	switch(request->units) {
 	case uSeconds:
+		/*
+	         * If the duration is uSeconds compensate for the Instruction overhead of
+	         * starting a HW Timer.
+	         */
+		duration = request->duration;
+		
+#if defined(__dsPIC33EP256MU806__)
+		if(request->duration > HW_TIMER_OVERHEAD) {
+			duration -= HW_TIMER_OVERHEAD;
+		} else {
+			/*
+			 * The delay passed in is too small to accurately calculate
+			 * The calculations depend on sys_clock_freq and multiply and
+			 * divide calculations will cost more then the timer.
+			 * Roll it by hand!
+			 */
+			return(ERR_RANGE_ERROR);
+		}
+#endif // defined(__dsPIC33EP256MU806__)
 		set_clock_divide(timer, 1);
 #if defined(__18F4585) || defined(__18F2680)
 		ticks = (uint32_t) ((uint32_t) (((uint32_t) sys_clock_freq / 4) / 1000000) * request->duration);
 #elif defined(__dsPIC33EP256MU806__)
-		/*
-		 * sys_clock_freq ticks in a Second 
-                 * 1uS = 1 Sec/1,000,000
-                 * Ticks in a uS = sys_clock_freq/1,000,000
-                 * 
-	         * dsPIC33 @ 60M 500uS timer gives 504uS  Delta  4uS
-	         * dsPIC33 @ 30M 500uS timer gives 504uS  Delta  4uS
-	         * dsPIC33 @  8M 500uS timer gives 508uS  Delta  8uS
-                 */
-		ticks = (uint32_t) ((uint32_t) (((uint32_t) sys_clock_freq) / 1000000) * (request->duration));
+		ticks = (uint32_t) ((uint32_t) (((uint32_t) sys_clock_freq) / 1000000) * (duration));
 #endif // Target uC
                 break;
 
