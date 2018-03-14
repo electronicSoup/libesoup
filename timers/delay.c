@@ -4,7 +4,7 @@
  *
  * Functionality for delaying the uC
  *
- * Copyright 2017 electronicSoup Limited
+ * Copyright 2017-2018 electronicSoup Limited
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 2 of the GNU Lesser General Public License
@@ -60,29 +60,10 @@ void hw_expiry_function(timer_id timer, union sigval data)
  */
 result_t delay(ty_time_units units, uint16_t duration)
 {
+	result_t           rc = SUCCESS;
 	timer_id           hw_timer;
 	struct timer_req   timer_request;
 
-	/*
-	 * If the delay is uSeconds compensate for the Instruction overhead of
-	 * starting a HW Timer. If the timer is less then the overhead there is
-	 * no point in creating a HW Timer so spin in a Nop loop.
-	 */
-#if defined(__dsPIC33EP256MU806__)
-	if(units == uSeconds) {	
-		if(duration > HW_TIMER_OVERHEAD) {
-			duration -= HW_TIMER_OVERHEAD;
-		} else {
-			/*
-			 * The delay passed in is too small to accurately calculate
-			 * The calculations depend on sys_clock_freq and multiply and
-			 * divide calculations will cost more then the timer.
-			 * Roll it by hand!
-			 */
-			return(ERR_RANGE_ERROR);
-		}
-	}
-#endif // defined(__dsPIC33EP256MU806__)
 	TIMER_INIT(hw_timer);
 	timer_request.units          = units;
 	timer_request.duration       = duration;
@@ -91,7 +72,7 @@ result_t delay(ty_time_units units, uint16_t duration)
 	timer_request.data.sival_int = 0;
 
         delay_over = FALSE;
-        hw_timer = hw_timer_start(&hw_timer, &timer_request);
+        rc = hw_timer_start(&hw_timer, &timer_request);
 
         while(!delay_over) {
 #if defined(XC16)
@@ -102,7 +83,7 @@ result_t delay(ty_time_units units, uint16_t duration)
 #error "Need a nop of watchdog macro for compiler"
 #endif
         }
-	return(SUCCESS);
+	return(rc);
 }
 
 #endif // #ifdef SYS_HW_TIMERS
