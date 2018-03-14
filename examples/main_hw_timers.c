@@ -27,6 +27,9 @@
 #include "libesoup/timers/hw_timers.h"
 #include "libesoup/timers/delay.h"
 
+#define DELAY_TEST
+//#define HW_TIMER_TEST
+
 /*
  * Forward declaration of our Hardware timer expiry function, which will be
  * called when the timer expires.
@@ -49,6 +52,8 @@ int main(void)
          * 
          */
 #if defined(__dsPIC33EP256MU806__)
+	TRISDbits.TRISD0 = OUTPUT_PIN;
+	TRISDbits.TRISD1 = OUTPUT_PIN;
 	TRISDbits.TRISD3 = OUTPUT_PIN;
 	LATDbits.LATD3 = 0;
 #elif defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__)
@@ -74,8 +79,9 @@ int main(void)
 	INTCONbits.PEIE = 1;   // Enable Periphal Interrupts
 #endif // (__18F4585)
 
-	delay(Seconds, 10);
+//	delay(Seconds, 10);
         
+#ifdef HW_TIMER_TEST
 	/*
 	 * Documentation:
 	 * 
@@ -95,6 +101,7 @@ int main(void)
 		 * Handle the error condition.
 		 */
         }
+#endif
 	
 #if defined(__dsPIC33EP256MU806__)
 	LATDbits.LATD3 = 1;
@@ -103,6 +110,24 @@ int main(void)
 #endif
         	        
         while(1) {
+#ifdef DELAY_TEST
+		/*
+	         * Documentation:
+	         * 
+		 * The delay routine will return ERR_RANGE_ERROR if the duration
+		 * passed in is shorter then it can safely obtain.
+	         */
+		LATDbits.LATD3 = 0;
+		rc = delay(uSeconds, 10);
+		if(rc != SUCCESS) {
+			LATDbits.LATD0 = 1;
+		}
+		LATDbits.LATD3 = 1;
+		rc = delay(uSeconds, 10);
+		if(rc != SUCCESS) {
+			LATDbits.LATD0 = 1;
+		}
+#endif
         }
         return 0;
 }

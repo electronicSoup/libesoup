@@ -5,7 +5,7 @@
  * \brief Functionality for delaying similar to a loop.
  * Microcotroller will spin
  *
- * Copyright 2017 electronicSoup Limited
+ * Copyright 2017-2018 electronicSoup Limited
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 2 of the GNU Lesser General Public License
@@ -33,7 +33,10 @@
  * \brief  Delay the uC for a duration
  * @param units  Time units of the duration parameter \ref ty_time_units
  * @param duration Duration fo the delay 
- */
-extern void delay(ty_time_units units, uint16_t duration);
+ * 
+ * The delay routine will return ERR_RANGE_ERROR if the duration
+ * passed in is shorter then it can safely obtain.
+*/
+extern result_t delay(ty_time_units units, uint16_t duration);
 
 /**}@*/ 
