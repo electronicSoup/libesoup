@@ -131,7 +131,7 @@
  * Include CAN BUS Functionality in this project
  */
 #define SYS_CAN_BUS
-#define SYS_CAN_LOOPBACK
+//#define SYS_CAN_LOOPBACK
 #define SYS_CAN_FRAME_HANDLER_ARRAY_SIZE  10
 #define SYS_CAN_L2_HANDLER_ARRAY_SIZE      5
 #define SYS_CAN_RX_CIR_BUFFER_SIZE         5        
