@@ -43,9 +43,9 @@ int main(void)
 	request.exp_fn         = expiry;
 	request.data.sival_int = 0;
 	
-        rc = sw_timer_start(&timer, &request);
+        timer = sw_timer_start(&request);
         
-        if(rc != SUCCESS) {
+        if(timer < 0) {
 		// Error Condition
         }
         

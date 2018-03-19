@@ -44,6 +44,7 @@ static const char *TAG = "UART";
 #endif
 #endif
 
+#include "libesoup/errno.h"
 #include "libesoup/utils/rand.h"
 #include "libesoup/comms/uart/uart.h"
 
@@ -402,7 +403,7 @@ result_t uart_calculate_mode(uint16_t *mode, uint8_t databits, uint8_t parity, u
 #if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
                 LOG_E("Bad byte length\n\r");
 #endif
-		return(ERR_BAD_INPUT_PARAMETER);
+		return(-ERR_BAD_INPUT_PARAMETER);
 	}
 
 	if (stopbits == UART_TWO_STOP_BITS) {
@@ -439,14 +440,14 @@ result_t uart_calculate_mode(uint16_t *mode, uint8_t databits, uint8_t parity, u
 #if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
                 LOG_E("Bad byte length\n\r");
 #endif
-		return(ERR_BAD_INPUT_PARAMETER);
+		return(-ERR_BAD_INPUT_PARAMETER);
 	}
 
 	if (stopbits == UART_TWO_STOP_BITS) {
                 /*
                  * PIC18 only supports One Stop bit.
                  */
-		return(ERR_BAD_INPUT_PARAMETER);
+		return(-ERR_BAD_INPUT_PARAMETER);
 	}
 
 	if (rx_idle_level == UART_IDLE_HIGH) {
@@ -454,7 +455,7 @@ result_t uart_calculate_mode(uint16_t *mode, uint8_t databits, uint8_t parity, u
 	}
 #endif // MicroController Selection
 
-	return(SUCCESS);
+	return(0);
 }
 
 /*
@@ -522,11 +523,11 @@ result_t uart_reserve(struct uart_data *data)
 
 			uart_set_uart_config(data);
 
-			return(SUCCESS);
+			return(0);
 		}
 	}
 
-	return(ERR_NO_RESOURCES);
+	return(-ERR_NO_RESOURCES);
 }
 
 result_t uart_release(struct uart_data *data)
@@ -542,7 +543,7 @@ result_t uart_release(struct uart_data *data)
 #if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
 		LOG_E("uart_tx called with bad data pointer\n\r");
 #endif
-		return(ERR_BAD_INPUT_PARAMETER);
+		return(-ERR_BAD_INPUT_PARAMETER);
 	}
 
 	uarts[uart_index].data = NULL;
@@ -581,30 +582,30 @@ result_t uart_release(struct uart_data *data)
 #if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
 		LOG_E("Unrecognised UART\n\r");
 #endif
-		return(ERR_BAD_INPUT_PARAMETER);
+		return(-ERR_BAD_INPUT_PARAMETER);
 //                break;
 	}
 
 	data->uart = UART_BAD;
 
-	return(SUCCESS);
+	return(0);
 }
 
 result_t uart_tx_buffer(struct uart_data *data, uint8_t *buffer, uint16_t len)
 {
 	uint8_t   uart_index;
 	uint8_t  *ptr;
-	result_t  rc = SUCCESS;
+	result_t  rc = 0;
 
 	uart_index = data->uart;
 
 	if(uarts[uart_index].data != data) {
-		return(ERR_BAD_INPUT_PARAMETER);
+		return(-ERR_BAD_INPUT_PARAMETER);
 	}
 
 	ptr = buffer;
 
-	while(len-- && (rc == SUCCESS)) {
+	while(len-- && (rc == 0)) {
 		rc = uart_putchar(uart_index, *ptr++);
 	}
 	return(rc);
@@ -617,7 +618,7 @@ result_t uart_tx_char(struct uart_data *data, char ch)
 	uart_index = data->uart;
 
 	if(uarts[uart_index].data != data) {
-		return(ERR_BAD_INPUT_PARAMETER);
+		return(-ERR_BAD_INPUT_PARAMETER);
 	}
 
         return(uart_putchar(uart_index, ch));
@@ -736,7 +737,7 @@ static result_t uart_putchar(uint8_t uart_index, uint8_t ch)
 		break;
 	}
 	
-	return(SUCCESS);
+	return(0);
 }
 
 static result_t buffer_write(int8_t uart_index, char ch)
@@ -758,10 +759,10 @@ static result_t buffer_write(int8_t uart_index, char ch)
 		uarts[uart_index].tx_write_index = tmp;
 		uarts[uart_index].tx_count++;
 		INTERRUPTS_ENABLED
-		return(SUCCESS);
+		return(0);
 	}
 
-	return(ERR_BUFFER_OVERFLOW);
+	return(-ERR_BUFFER_OVERFLOW);
 }
 
 static char buffer_read(uint8_t uart_index)

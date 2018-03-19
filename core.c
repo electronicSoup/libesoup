@@ -4,7 +4,7 @@
  *
  * File containing the function to initialise the libesoup library
  *
- * Copyright 2017 electronicSoup Limited
+ * Copyright 2017-2018 electronicSoup Limited
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 2 of the GNU Lesser General Public License
@@ -85,16 +85,16 @@ uint32_t sys_clock_freq;
 result_t libesoup_init(void)
 {
 #ifdef XC16
-	result_t rc  __attribute__((unused)) = SUCCESS;
+	result_t rc  __attribute__((unused)) = 0;
 #else
-	result_t rc = SUCCESS;
+	result_t rc = 0;
 #endif
 
 #if __XC8
 #ifdef SYS_SERIAL_LOGGING
 	TAG = TAG;
 #endif // SYS_SERIAL_LOGGING
-	rc = SUCCESS;
+	rc = 0;
 #endif
 	
 	cpu_init();
@@ -105,7 +105,7 @@ result_t libesoup_init(void)
 
 #ifdef SYS_SERIAL_LOGGING
         rc = serial_logging_init();
-        if (rc != SUCCESS) {
+        if (rc < 0) {
                 /*
                  * What to do?
                  */
@@ -123,7 +123,7 @@ result_t libesoup_init(void)
 
 #ifdef SYS_HW_RTC
 	rc = rtc_init();
-        if (rc != SUCCESS) {
+        if (rc < 0) {
 #if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
 		LOG_E("Failed in initialise RTC Module\n\r");
 #endif
@@ -137,7 +137,7 @@ result_t libesoup_init(void)
 
 #ifdef SYS_EEPROM
 	rc = eprom_init();
-        if (rc != SUCCESS) {
+        if (rc < 0) {
 #if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
 		LOG_E("Failed in initialise RTC Module\n\r");
 #endif
@@ -157,5 +157,5 @@ result_t libesoup_init(void)
 	rc = change_notifier_init();
 #endif // SYS_CHANGE_NOTIFICATION
 
-	return(SUCCESS);
+	return(0);
 }

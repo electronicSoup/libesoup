@@ -57,7 +57,7 @@ void delay(ty_time_units units, uint16_t duration)
 	timer_request.data.sival_int = 0;
 
         delay_over = FALSE;
-        hw_timer = hw_timer_start(&hw_timer, &timer_request);
+        hw_timer = hw_timer_start(&timer_request);
 
         while(!delay_over) {
 #if defined(XC16)

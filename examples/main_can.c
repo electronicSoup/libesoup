@@ -4,7 +4,7 @@
  *
  * \brief main entry point for the CAN Node
  *
- * Copyright 2014 - 2018 electronicSoup
+ * Copyright 2017-2018 electronicSoup
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 3 of the GNU General Public License
@@ -46,14 +46,20 @@ static void frame_handler(can_frame *);
 
 int main(void)
 {
-	result_t         rc = SUCCESS;
+	result_t         rc = 0;
 	can_l2_target_t  target;
 #ifdef SYS_SW_TIMERS
 	timer_id         timer;
 	struct timer_req request;
 #endif
 
-	libesoup_init();
+	rc = libesoup_init();
+	if(rc < 0) {
+		// Error Condition
+#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
+		LOG_E("Failed to init libesoup\n\r");
+#endif
+	}
 
 	/*
 	 * Allow the clock to settle
@@ -69,7 +75,7 @@ int main(void)
 
 	delay(mSeconds, 500);
  	rc = can_init(baud_250K, system_status_handler);
-	if(rc != SUCCESS) {
+	if(rc < 0) {
 #if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
 		LOG_E("Failed to initialise CAN Bus\n\r");
 #endif
@@ -81,16 +87,18 @@ int main(void)
 	 * that it's emptied
 	 */
 #ifdef TX_NODE
+#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+	LOG_D("Tx Node\n\r");
+#endif
 #ifdef SYS_SW_TIMERS
-	TIMER_INIT(timer);
 	request.units = Seconds;
 	request.duration = 10;
 	request.type = repeat;
 	request.exp_fn = expiry;
 	request.data.sival_int = 0x00;
 	
-	rc = sw_timer_start(&timer, &request);
-	if(rc != SUCCESS) {
+	timer = sw_timer_start(&request);
+	if(timer < 0) {
 #if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
 		LOG_E("Failed to start SW Timer\n\r");
 #endif		
@@ -106,7 +114,7 @@ int main(void)
 
 	delay(mSeconds, 500);
 	rc = frame_dispatch_reg_handler(&target);
-	if(rc != SUCCESS) {
+	if(rc < 0) {
 #if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
 		LOG_E("Failed to register frame handler\n\r");
 #endif		
@@ -140,11 +148,14 @@ static void expiry(timer_id timer, union sigval data)
 	result_t  rc;
 	can_frame frame;
 
+#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+	LOG_D("Tx Frame\n\r");
+#endif
 	frame.can_id = 0x555;
 	frame.can_dlc = 0x00;
 
 	rc = can_l2_tx_frame(&frame);
-	if(rc != SUCCESS) {
+	if(rc < 0) {
 #if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
 		LOG_E("Failed to send CAN Frame\n\r");
 #endif		

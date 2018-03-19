@@ -7,7 +7,7 @@
  * This file contains an example libesoup_config.h configuration file for 
  * working with uarts. 
  *
- * Copyright 2017 electronicSoup Limited
+ * Copyright 2017-2018 electronicSoup Limited
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by

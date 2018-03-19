@@ -54,7 +54,7 @@ typedef enum {
  * \brief timer identifier
  */
 #if defined(XC16) || defined(__XC8)
-typedef uint8_t timer_id;
+typedef int16_t timer_id;
 #endif // Microchip Compiler
 
 /**

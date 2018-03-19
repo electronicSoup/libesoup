@@ -24,7 +24,7 @@
 
 #ifdef SYS_SERIAL_LOGGING
 #define DEBUG_FILE
-static const char *TAG = "OneWire";
+__attribute__((unused)) static const char *TAG = "CHANGE"; 
 #include "libesoup/logger/serial_log.h"
 #ifndef SYS_LOG_LEVEL
 #error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
@@ -35,6 +35,7 @@ static const char *TAG = "OneWire";
 #error SYS_CHANGE_NOTIFICATION_MAX_PINS Not defined required by SYS_CHANGE_NOTIFICATION
 #endif
 
+#include "libesoup/errno.h"
 #include "libesoup/processors/dsPIC33/change_notification/change_notification.h"
 
 static result_t enable_change(uint8_t *port, uint8_t bit);
@@ -79,7 +80,7 @@ result_t change_notifier_init()
 	}
 	
 	IEC1bits.CNIE = ENABLED;
-	return(SUCCESS);
+	return(0);
 }
 
 result_t change_notifier_register(uint8_t *port, uint8_t bit, change_notifier notifier)
@@ -91,7 +92,7 @@ result_t change_notifier_register(uint8_t *port, uint8_t bit, change_notifier no
 	 */
 	for(loop = 0; loop < SYS_CHANGE_NOTIFICATION_MAX_PINS; loop++) {
 		if(pins[loop].monitored && (pins[loop].port == port) && (pins[loop].bit == bit)) {
-			return(ERR_BAD_INPUT_PARAMETER);
+			return(-ERR_BAD_INPUT_PARAMETER);
 		}
 	}
 
@@ -109,7 +110,7 @@ result_t change_notifier_register(uint8_t *port, uint8_t bit, change_notifier no
 		}
 	}
 
-	return(ERR_NO_RESOURCES);
+	return(-ERR_NO_RESOURCES);
 }
 
 static result_t enable_change(uint8_t *port, uint8_t bit)
@@ -117,9 +118,9 @@ static result_t enable_change(uint8_t *port, uint8_t bit)
 	if(port == (uint8_t *)&LATD) {
 		CNEND |= (0b1 << bit);
 		
-		return(SUCCESS);
+		return(0);
 	}
-	return(ERR_BAD_INPUT_PARAMETER);
+	return(-ERR_BAD_INPUT_PARAMETER);
 }
 
 result_t change_notifier_deregister(uint8_t *port, uint8_t bit)
@@ -134,16 +135,16 @@ result_t change_notifier_deregister(uint8_t *port, uint8_t bit)
 		}
 	}
 	
-	return(SUCCESS);
+	return(0);
 }
 
 static result_t disable_change(uint8_t *port, uint8_t bit)
 {
 	if(port == (uint8_t *)&LATD) {
 		CNEND &= ~(0b1 << bit);
-		return(SUCCESS);
+		return(0);
 	}
-	return(ERR_BAD_INPUT_PARAMETER);
+	return(-ERR_BAD_INPUT_PARAMETER);
 }
 
 #endif // __dsPIC33EP256MU806__

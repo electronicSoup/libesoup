@@ -37,6 +37,7 @@ static const char *TAG = "dsPIC33_CAN";
 #error "CAN Module relies on System Status module libesoup.h must define SYS_SYSTEM_STATUS"
 #endif
 
+#include "libesoup/errno.h"
 #include "libesoup/status/status.h"
 #include "libesoup/comms/can/l2_dsPIC33EP256MU806.h"
 #include "libesoup/comms/can/can.h"
@@ -228,7 +229,7 @@ result_t can_l2_init(can_baud_rate_t arg_baud_rate, status_handler_t arg_status_
 #if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
 		LOG_E("L2_CanInit() ToDo!!! No Baud Rate Specified\n\r");
 #endif
-		return (ERR_BAD_INPUT_PARAMETER);
+		return (-ERR_BAD_INPUT_PARAMETER);
 	}
 
 	status_handler = arg_status_handler;
@@ -249,7 +250,7 @@ result_t can_l2_init(can_baud_rate_t arg_baud_rate, status_handler_t arg_status_
 	set_mode(config);
 
 	rc = set_bitrate(baud_125K);
-	if(rc != SUCCESS) return(rc);
+	if(rc < 0) return(rc);
 
 	MEMORY_MAP_WIN_CONFIG_STATUS
 		
@@ -400,7 +401,7 @@ result_t can_l2_init(can_baud_rate_t arg_baud_rate, status_handler_t arg_status_
 	set_mode(normal);
 #endif
 	
-        return(SUCCESS);
+        return(0);
 }
 
 result_t can_l2_tx_frame(can_frame *frame)
@@ -430,10 +431,10 @@ result_t can_l2_tx_frame(can_frame *frame)
 			 */
 			tx_control[loop].tx_request = 0b1;
 			
-			return(SUCCESS);
+			return(0);
 		}
 	}
-	return(ERR_NO_RESOURCES);
+	return(-ERR_NO_RESOURCES);
 }
 
 void can_l2_tasks(void)
@@ -551,8 +552,8 @@ static result_t set_bitrate(can_baud_rate_t baud)
 		bit_freq = 1000000;
 		break;
 	default:
-		return(ERR_BAD_INPUT_PARAMETER);
-		break;		
+		return(-ERR_BAD_INPUT_PARAMETER);
+		break;
 	}
 
 	for(brp = 1; brp <= 64 && !found; brp++) {
@@ -585,7 +586,7 @@ static result_t set_bitrate(can_baud_rate_t baud)
 		}
 	}	
 
-	if(!found) return(ERR_CAN_INVALID_BAUDRATE);
+	if(!found) return(-ERR_CAN_INVALID_BAUDRATE);
 
 	brp--;       // End of the found loop will have incremented
 	tq_count++;  // ^^^
@@ -628,7 +629,7 @@ static result_t set_bitrate(can_baud_rate_t baud)
 	LOG_I("propseg-%d, phseg1-%d, phseg2-%d\n\r", propseg, phseg1, phseg2);
 #endif
 	
-	return(SUCCESS);
+	return(0);
 }
 
 /*
@@ -651,11 +652,10 @@ result_t can_l2_dispatch_reg_handler(can_l2_target_t *target)
 #if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
         LOG_D("can_l2_dispatch_reg_handler()\n\r");
 #endif
-        return(SUCCESS);
+        return(0);
 }
 #endif // defined(__dsPIC33EP256MU806__)
 
 #endif // #ifdef SYS_CAN_BUS
 
 #endif //  defined(__dsPIC33EP256MU806__)
-

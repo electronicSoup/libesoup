@@ -44,6 +44,11 @@ int main(void)
 	 * Initialise the libesoup library
 	 */
 	rc = libesoup_init();
+	if(rc < 0) {
+		/*
+		 * Error condition
+		 */
+	}
 
         /*
          * 
@@ -90,8 +95,8 @@ int main(void)
 	request.exp_fn   = exp_func;
 	request.data     = data;
 
-        rc = hw_timer_start(&timer, &request);
-        if(rc != SUCCESS) {
+        timer = hw_timer_start(&request);
+        if(timer < 0) {
 	        /*
 		 * Handle the error condition.
 		 */

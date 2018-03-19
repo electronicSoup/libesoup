@@ -4,7 +4,7 @@
  *
  * eeprom functions of the electronicSoup Cinnamon Bun
  *
- * Copyright 2017 - 2018 electronicSoup Limited
+ * Copyright 2017-2018 electronicSoup Limited
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 2 of the GNU Lesser General Public License
@@ -52,6 +52,7 @@
  * The EEPROM chip is connected to the first SPI bus of the PIC24FJ256GB106
  * so spi code is required.
  */
+#include "libesoup/errno.h"
 #include "libesoup/comms/spi/spi.h"
 
 #ifdef SYS_SERIAL_LOGGING
@@ -106,7 +107,7 @@ result_t eprom_init(void)
 	EEPROM_CS_PIN_DIRECTION = OUTPUT_PIN;
 	EEPROM_DeSelect
 		
-	return(SUCCESS);
+	return(0);
 }
 
 /*
@@ -131,9 +132,9 @@ result_t eeprom_read(uint16_t address, uint8_t *data)
 		spi_write_byte(address);
 		*data = spi_write_byte(0x00);
 		EEPROM_DeSelect
-		return(SUCCESS);
+		return(0);
 	}
-	return (ERR_ADDRESS_RANGE);
+	return (-ERR_ADDRESS_RANGE);
 }
 
 /*
@@ -167,9 +168,9 @@ result_t eeprom_write(uint16_t address, uint8_t data)
 		EEPROM_Select
 		spi_write_byte(SPI_EEPROM_WRITE_DISABLE);
 		EEPROM_DeSelect
-		return(SUCCESS);
+		return(0);
         }
-	return (ERR_ADDRESS_RANGE);
+	return (-ERR_ADDRESS_RANGE);
 }
 
 /*
@@ -196,12 +197,12 @@ result_t eeprom_erase(uint16_t start_address)
 			eeprom_write(loop, 0x00);
 		}
 
-		return (SUCCESS);
+		return (0);
 	}
 #if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
         LOG_E("eeprom_erase Address Range Error!\n\r");
 #endif
-	return (ERR_ADDRESS_RANGE);
+	return (-ERR_ADDRESS_RANGE);
 }
 
 /*
@@ -237,7 +238,7 @@ result_t eeprom_str_read(uint16_t address, uint8_t *buffer, uint16_t *length)
 
 	rc = eeprom_read(address++, &character);
 
-	while(  (rc == SUCCESS)
+	while(  (rc >= 0)
 	      &&(character != 0)
 	      &&(character != 0xff)
 	      &&(num_read < (*length - 1))) {
@@ -266,21 +267,21 @@ result_t eeprom_str_read(uint16_t address, uint8_t *buffer, uint16_t *length)
  * Output : UINT16 *length - The number of characters written to EEPROM
  *
  * Return : ERR_ADDRESS_RANGE if the input address exceeds EEPROM_MAX_ADDRESS
- *          otherwise SUCCESS
+ *          otherwise 0
  *
  */
 result_t  eeprom_str_write(uint16_t address, uint8_t *buffer, uint16_t *length)
 {
 	uint8_t      *ptr;
 	uint16_t      copied = 0;
-	result_t rc = SUCCESS;
+	result_t rc = 0;
 
 #if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	LOG_D("eeprom_str_write()\n\r");
 #endif
 	ptr = buffer;
 
-	while ( (*ptr) && (rc == SUCCESS) && (copied < (*length - 1))) {
+	while ( (*ptr) && (rc >= 0) && (copied < (*length - 1))) {
 #if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 		LOG_D("Write to location %d value 0x%x\n\r", address, *ptr);
 #endif
@@ -288,7 +289,7 @@ result_t  eeprom_str_write(uint16_t address, uint8_t *buffer, uint16_t *length)
 		copied++;
 	}
 
-	if(rc == SUCCESS) {
+	if(rc >= 0) {
 #if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 		LOG_D("Write loop finished\n\r");
 #endif
