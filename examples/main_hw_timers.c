@@ -24,6 +24,7 @@
  */
 #include "libesoup_config.h"
 
+#include "libesoup/gpio/gpio.h"
 #include "libesoup/timers/hw_timers.h"
 #include "libesoup/timers/delay.h"
 
@@ -54,8 +55,8 @@ int main(void)
          * 
          */
 #if defined(__dsPIC33EP256MU806__)
-	TRISDbits.TRISD3 = OUTPUT_PIN;
-	LATDbits.LATD3 = 0;
+	
+	rc = gpio_set(RD3, GPIO_MODE_DIGITAL_OUTPUT, 0);
 #elif defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__)
         TRISEbits.TRISE0 = INPUT_PIN;
         TRISEbits.TRISE1 = OUTPUT_PIN;
