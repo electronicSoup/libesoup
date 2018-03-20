@@ -18,6 +18,10 @@
             <itemPath>../../../../comms/uart/uart.c</itemPath>
           </logicalFolder>
         </logicalFolder>
+        <logicalFolder name="gpio" displayName="gpio" projectFiles="true">
+          <itemPath>../../../../gpio/peripheral.c</itemPath>
+          <itemPath>../../../../gpio/gpio.c</itemPath>
+        </logicalFolder>
         <logicalFolder name="processors" displayName="processors" projectFiles="true">
           <itemPath>../../../../processors/pic18f4585.c</itemPath>
           <itemPath>../../../../processors/pic18f2680.c</itemPath>

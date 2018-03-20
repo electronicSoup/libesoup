@@ -1,10 +1,8 @@
 /**
  *
- * \file libesoup/utils/eeprom.h
+ * \file libesoup/gpio/gpio.c
  *
- * Cinnamon Bun EEPROM functions of the electronicSoup code Library
- *
- * Copyright 2017 - 2018 electronicSoup Limited
+ * Copyright 2018 electronicSoup Limited
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 2 of the GNU Lesser General Public License
@@ -19,14 +17,20 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  *
  */
-#ifndef EEPROM_H
-#define EEPROM_H
 
-extern result_t eprom_init(uint8_t spi_chan);
-extern result_t eeprom_read(uint16_t address, uint8_t *data);
-extern result_t eeprom_write(uint16_t address, uint8_t data);
-extern result_t eeprom_erase(uint16_t start_address);
-extern result_t eeprom_str_read(uint16_t address, uint8_t *buffer, uint16_t *length);
-extern result_t eeprom_str_write(uint16_t address, uint8_t *buffer, uint16_t *length);
+#define OUTPUT_PIN  0
+#define INPUT_PIN   1
 
-#endif // EEPROM_H
+#define DIGITAL_PIN 0
+#define ANALOG_PIN  1
+
+#define GPIO_MODE_DIGITAL_INPUT     0x01
+#define GPIO_MODE_DIGITAL_OUTPUT    0x02
+#define GPIO_MODE_ANALOG_INPUT      0x04
+#define GPIO_MODE_ANALOG_OUTPUT     0x08
+#define GPIO_MODE_OPENDRAIN_INPUT   0x10
+#define GPIO_MODE_OPENDRAIN_OUTPUT  0x20
+#define GPIO_MODE_PULLUP            0x40
+#define GPIO_MODE_PULLDOWN          0x80
+
+extern uint16_t gpio_set(enum pin_t pin, uint16_t mode, uint8_t value);

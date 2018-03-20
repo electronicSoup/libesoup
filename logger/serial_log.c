@@ -132,7 +132,7 @@ result_t serial_logging_init(void)
 #ifdef SERIAL_LOGGING_RX_ENABLE
         serial_uart.rx_pin = SERIAL_LOGGING_RX_PIN;
 #else
-        serial_uart.rx_pin = NO_PIN;
+        serial_uart.rx_pin = INVALID_PIN;
 #endif
 	/*
 	 * Get the UART Module to calculate the mode of operation required for

@@ -31,7 +31,7 @@ int main(void)
 	rc = libesoup_init();
 
 #if defined(__dsPIC33EP256MU806__)	
-	uart.tx_pin = RP64;
+	uart.tx_pin = RD0;
 #elif defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__)
 	uart.tx_pin = RP0;
 #elif defined(__18F4585)

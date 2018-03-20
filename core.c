@@ -84,6 +84,11 @@ uint32_t sys_clock_freq;
 
 result_t libesoup_init(void)
 {
+#if (defined(SYS_SPI_BUS) && defined(__dsPIC33EP256MU806__))
+	uint8_t                spi_channel;	
+	struct spi_io_channel  spi_io;
+#endif
+	
 #ifdef XC16
 	result_t rc  __attribute__((unused)) = 0;
 #else
@@ -135,26 +140,33 @@ result_t libesoup_init(void)
 	jobs_init();
 #endif
 
-#ifdef SYS_EEPROM
-	rc = eprom_init();
-        if (rc < 0) {
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
-		LOG_E("Failed in initialise RTC Module\n\r");
-#endif
-                return(rc);
-	}
-#endif
-	
 #ifdef SYS_SPI_BUS
         spi_init();
+	
+#if defined(__dsPIC33EP256MU806__)
+	spi_io.miso = BRD_SPI_MISO;
+	spi_io.mosi = BRD_SPI_MOSI;
+	spi_io.sck  = BRD_SPI_SCK;
+		
+	rc = spi_channel_init(SPI_ANY_CHANNEL, &spi_io);
+	RC_CHECK
+	spi_channel = (uint8_t)rc;
+#endif // dsPIC33EP256MU806
+	
 #endif
 
+#ifdef SYS_EEPROM
+	rc = eprom_init(spi_channel);
+	RC_CHECK
+#endif
+	
 #ifdef SYS_RAND
 	random_init();
 #endif
 
 #ifdef SYS_CHANGE_NOTIFICATION
 	rc = change_notifier_init();
+	RC_CHECK
 #endif // SYS_CHANGE_NOTIFICATION
 
 	return(0);

@@ -122,7 +122,10 @@
 /*
  * Enable the SPI Code
  */
-#define SYS_SPI
+#define SYS_SPI_BUS
+#define SYS_SPI_NUM_CHANNELS    2
+#define SYS_SPI_NUM_DEVICES    2
+        
 /*
  * Include a board file
  */

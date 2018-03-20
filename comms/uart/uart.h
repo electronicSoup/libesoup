@@ -29,6 +29,9 @@
 
 #ifdef SYS_UART
 
+#include "libesoup/gpio/gpio.h"
+#include "libesoup/gpio/peripheral.h"
+
 #define UART_8_DATABITS       8 /**< 8 Databits on serial connection */
 #define UART_9_DATABITS       9 /**< 9 Databits on serial connection */
 
@@ -54,8 +57,8 @@
  * \var tx_pin Peripheral pin to use for transmission
  */
 struct uart_data {
-     ty_peripheral_pin tx_pin; /**< GPIO Pin to be used for the transmit pin of connection \ref */
-     ty_peripheral_pin rx_pin; /**< GPIO Pin to be used for the transmit pin of connection \ref */
+    enum pin_t         tx_pin; /**< GPIO Pin to be used for the transmit pin of connection \ref */
+    enum pin_t         rx_pin; /**< GPIO Pin to be used for the transmit pin of connection \ref */
     uint8_t            uart;        /**< Uart identifier */
     uint16_t           uart_mode;   /**< Mode bits for the connection */
     uint32_t           baud;        /**< Baud rate for the connection */

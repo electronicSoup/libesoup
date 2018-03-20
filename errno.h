@@ -23,6 +23,8 @@
 #ifndef _ERRNO_H
 #define _ERRNO_H
 
+#define RC_CHECK if(rc < 0) return(rc);
+
 #define ERR_GENERAL_ERROR          1    /* Unspecified error occured in libesoup API Function execution.*/
 #define ERR_BAD_INPUT_PARAMETER    2    /* Bad parameter passed to libesoup API funtion. */
 #define ERR_BUFFER_OVERFLOW        3
