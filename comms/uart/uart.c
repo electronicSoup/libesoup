@@ -919,7 +919,7 @@ static result_t uart_set_tx_pin(uint8_t uart, enum pin_t pin)
 		break;
 	}
 
-	rc = gpio_set(pin, GPIO_MODE_DIGITAL_OUTPUT, 0);
+	rc = gpio_set(pin, GPIO_MODE_DIGITAL_OUTPUT, 1);
 	RC_CHECK;
 
 	rc = set_peripheral_output(pin, tx_function);

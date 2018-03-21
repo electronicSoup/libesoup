@@ -285,6 +285,10 @@
           </logicalFolder>
           <itemPath>../../../main_change_notification.c</itemPath>
         </logicalFolder>
+        <logicalFolder name="gpio" displayName="gpio" projectFiles="true">
+          <itemPath>../../../../gpio/peripheral.c</itemPath>
+          <itemPath>../../../../gpio/gpio.c</itemPath>
+        </logicalFolder>
         <logicalFolder name="logger" displayName="logger" projectFiles="true">
           <itemPath>../../../../logger/iso15765_log.c</itemPath>
           <itemPath>../../../../logger/serial_log.c</itemPath>

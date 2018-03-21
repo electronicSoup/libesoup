@@ -39,7 +39,7 @@ int main(void)
 #endif		
 	}
 
-	rc = change_notifier_register((uint8_t *)&LATD , 2, change_notification);
+	rc = change_notifier_register((uint8_t *)&PORTD , 2, change_notification);
 	if(rc < 0) {
 #if ((defined SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
 		LOG_E("change_notifier_register()\n\r");

@@ -29,6 +29,13 @@
           <itemPath>../../../../processors/dsPIC33EP256MU806.c</itemPath>
           <itemPath>../../../../processors/pic24FJ256GB106.c</itemPath>
         </logicalFolder>
+        <logicalFolder name="timers" displayName="timers" projectFiles="true">
+          <itemPath>../../../../timers/hw_rtc.c</itemPath>
+          <itemPath>../../../../timers/delay.c</itemPath>
+          <itemPath>../../../../timers/hw_timers.c</itemPath>
+          <itemPath>../../../../timers/sw_timers.c</itemPath>
+          <itemPath>../../../../timers/sw_rtc.c</itemPath>
+        </logicalFolder>
         <itemPath>../../../../core.c</itemPath>
       </logicalFolder>
       <itemPath>../../../main_uart_tx.c</itemPath>
@@ -249,6 +256,7 @@
         <property key="UART 3" value="true"/>
         <property key="UART 4" value="true"/>
         <property key="USB" value="true"/>
+        <property key="firmware.download.all" value="false"/>
         <property key="hwtoolclock.frcindebug" value="false"/>
         <property key="memories.aux" value="false"/>
         <property key="memories.bootflash" value="true"/>

@@ -41,36 +41,8 @@ static const char *TAG = "SPI";
 #include "libesoup/comms/spi/spi.h"
 
 /*
- * Board file definitions for the SPI Interface being used
+ * Check the system configuraiton
  */
-//#ifndef SPI_RW_FINISHED
-//#error Board file should define SPI Interface (SPI_RW_FINISHED)
-//#endif
-
-//#ifndef SPI_SCK_DIRECTION
-//#error Board file should define SPI Interface (SPI_SCK_DIRECTION)
-//#endif
-
-//#ifndef SPI_MISO_DIRECTION
-//#error Board file should define SPI Interface (SPI_MISO_DIRECTION)
-//#endif
-
-//#ifndef SPI_MOSI_DIRECTION
-//#error Board file should define SPI Interface (SPI_MOSI_DIRECTION)
-//#endif
-
-//#ifndef SPI_MISO_PIN
-//#error Board file should define SPI Interface (SPI_MISO_PIN)
-//#endif
-
-//#ifndef SPI_MOSI_PIN
-//#error Board file should define SPI Interface (SPI_MOSI_PIN)
-//#endif
-
-//#ifndef SPI_SCK_PIN
-//#error Board file should define SPI Interface (SPI_SCK_PIN)
-//#endif
-
 #ifndef SYS_SPI_NUM_CHANNELS
 #error libesoup config file should define SYS_SPI_NUM_CHANNELS
 #endif
@@ -81,6 +53,7 @@ static const char *TAG = "SPI";
 
 struct spi_chan {
 	boolean                active;
+	uint8_t                locking_device;
 	struct spi_io_channel  io;
 };
 
@@ -88,7 +61,6 @@ struct spi_chan channel[SYS_SPI_NUM_CHANNELS];
 
 struct spi_device {
 	uint8_t              channel;
-	enum pin_t           cs;
 };
 
 struct spi_device device[SYS_SPI_NUM_DEVICES];
@@ -99,11 +71,9 @@ void spi_init(void)
 {
 	uint8_t loop;
 
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_INFO))
-	LOG_I("spi_init()\n\r");
-#endif
 	for(loop = 0; loop < SYS_SPI_NUM_CHANNELS; loop++) {
 		channel[loop].active = FALSE;
+		channel[loop].locking_device = 0xFF;
 	}
 
 	for(loop = 0; loop < SYS_SPI_NUM_DEVICES; loop++) {
@@ -146,21 +116,17 @@ int16_t spi_channel_init(uint8_t ch, struct spi_io_channel *io)
 	return(-ERR_NO_RESOURCES);
 }
 
-int16_t spi_device_init(uint8_t ch, enum pin_t cs)
+int16_t spi_device_init(uint8_t spi_ch)
 {
-	result_t  rc;
 	int16_t   loop;
 	
 	for(loop = 0; loop < SYS_SPI_NUM_DEVICES; loop++) {
 		if(device[loop].channel == 0xFF) {
-			device[loop].channel = ch;
-			device[loop].cs = cs;
-			
-			rc = gpio_set(cs, GPIO_MODE_DIGITAL_OUTPUT, 1);
-			RC_CHECK
+			device[loop].channel = spi_ch;
+			return(loop);
 		}
 	}
-	return(0);
+	return(-ERR_NO_RESOURCES);
 }
 
 /*
@@ -169,7 +135,6 @@ int16_t spi_device_init(uint8_t ch, enum pin_t cs)
 static int16_t	channel_init(uint16_t ch)
 {
 	int16_t rc;
-	
 	switch(ch) {
 	case 0:
 		rc = set_peripheral_input(channel[ch].io.miso);
@@ -226,13 +191,33 @@ static int16_t	channel_init(uint16_t ch)
 	return(ch);
 }
 
+result_t spi_lock(uint8_t device_id)
+{
+	if(channel[device[device_id].channel].locking_device == 0xff) {
+		channel[device[device_id].channel].locking_device = device_id;
+		return(0);
+	}
+	return(-ERR_BUSY);
+}
+
+result_t spi_unlock(uint8_t device_id)
+{
+	if(channel[device[device_id].channel].locking_device == device_id) {
+		channel[device[device_id].channel].locking_device = 0xff;
+		return(0);
+	}
+	return(-ERR_BAD_INPUT_PARAMETER);
+}
+
 int16_t spi_write_byte(uint8_t device_id, uint8_t write)
 {
-	switch(device[device_id].channel) {
-	case 0:
-		SPI1BUF = write;
-		while (!SPI1STATbits.SPIRBF);
-		return(SPI1BUF);
+	if(channel[device[device_id].channel].locking_device == device_id) {
+		switch(device[device_id].channel) {
+		case 0:
+			SPI1BUF = write;
+			while (!SPI1STATbits.SPIRBF);
+			return(SPI1BUF);
+		}
 	}
 	return(-ERR_GENERAL_ERROR);
 }

@@ -43,6 +43,8 @@
 #define SYS_CLOCK_FREQ 16000000     // 8MHz
 #endif
 
+#define SYS_HW_TIMERS
+
 /*
  * Enable the uart functionality in libesoup
  */

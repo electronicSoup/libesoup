@@ -116,6 +116,8 @@
  * EEPROM Chip is connected via the SPI Interface so enable
  */
 #define SYS_SPI_BUS
+#define SYS_SPI_NUM_CHANNELS      1
+#define SYS_SPI_NUM_DEVICES       1
 
 /*
  * Include access to the EEPROM Chip in the project

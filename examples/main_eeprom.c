@@ -58,20 +58,23 @@ int main(void)
 
 	rc = libesoup_init();
 	if(rc < 0) {
+		rc = (~rc) + 1;
+		LOG_E("libesoup Failed -%d\n\r", rc);
 		while(1){}
 	}
 
 	eeprom_address = 0;
 	eeprom_test_rd = 0;
 	
-	TIMER_INIT(timer)
 	timer_request.units = Seconds;
 	timer_request.duration = 1;
 	timer_request.type = repeat;
 	timer_request.data.sival_int = 0;
 	timer_request.exp_fn = exp_func;
 	
-	timer = sw_timer_start(&timer_request);
+	rc = sw_timer_start(&timer_request);
+	RC_CHECK
+	timer = (uint8_t)rc;
 	
 	LOG_D("Entering main loop\n\r");
 
@@ -83,7 +86,6 @@ int main(void)
 
 void exp_func(timer_id timer, union sigval data)
 {
-	uint8_t  read;
 	result_t rc = 0;
 
 	if(!eeprom_test_rd) {
@@ -99,11 +101,11 @@ void exp_func(timer_id timer, union sigval data)
 #if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 		LOG_D("read from address %d\n\r", eeprom_address);
 #endif
-                rc = eeprom_read((uint16_t)eeprom_address, &read);
+                rc = eeprom_read((uint16_t)eeprom_address);
 		if(rc < 0) {
 			LOG_E("Failed to Read\n\r");
 		} else {
-			LOG_D("Read back a value of %d\n\r", read)
+			LOG_D("Read back a value of %d\n\r", (uint8_t)rc);
 		}
 		eeprom_address++;
 		if(eeprom_address == EEPROM_MAX_ADDRESS) eeprom_address = 0;

@@ -38,6 +38,8 @@ static const char *TAG = "dsPIC33_CAN";
 #endif
 
 #include "libesoup/errno.h"
+#include "libesoup/gpio/gpio.h"
+#include "libesoup/gpio/peripheral.h"
 #include "libesoup/status/status.h"
 #include "libesoup/comms/can/l2_dsPIC33EP256MU806.h"
 #include "libesoup/comms/can/can.h"
@@ -237,12 +239,15 @@ result_t can_l2_init(can_baud_rate_t arg_baud_rate, status_handler_t arg_status_
         /*
          * Initialise the I/O Pins and pipheral functions
          */
-	CAN_RX_PIN_ANSEL = DIGITAL_PIN;
-        CAN_RX_PIN_DIRECTION = INPUT_PIN;
-	PPS_CAN1_RX = CAN_RX_INPUT_PERIPHERAL_PIN;
+	rc = gpio_set(CAN_RX_PIN, GPIO_MODE_DIGITAL_INPUT, 0);
+	RC_CHECK
+	rc = PPS_I_CAN1_RX = set_peripheral_input(CAN_RX_PIN);
+	RC_CHECK
 	
-        CAN_TX_PIN_DIRECTION = OUTPUT_PIN;
-	CAN_TX_OUTPUT_PERIPHERAL_PIN = PPS_CAN1_TX;
+	rc = gpio_set(CAN_TX_PIN, GPIO_MODE_DIGITAL_OUTPUT, 0);
+	RC_CHECK
+	rc = set_peripheral_output(CAN_TX_PIN, PPS_O_CAN1_TX);
+	RC_CHECK
 
         /*
          * Enter configuration mode

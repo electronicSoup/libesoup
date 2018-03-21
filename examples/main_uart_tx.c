@@ -18,6 +18,7 @@
  */
 #include "libesoup_config.h"
 
+#include "libesoup/timers/delay.h"
 #include "libesoup/comms/uart/uart.h"
 
 static void tx_finished(void *);
@@ -31,7 +32,8 @@ int main(void)
 	rc = libesoup_init();
 
 #if defined(__dsPIC33EP256MU806__)	
-	uart.tx_pin = RD0;
+	uart.tx_pin = RD3;
+	uart.rx_pin = INVALID_PIN;
 #elif defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__)
 	uart.tx_pin = RP0;
 #elif defined(__18F4585)
@@ -55,6 +57,8 @@ int main(void)
 		// Todo - Error condition
 	}
 
+	delay(Seconds, 10);
+
 	/*
 	 * Attempt transmission of a string
 	 */
@@ -72,6 +76,7 @@ int main(void)
 	}
 
         while(1) {
+		Nop();
         }
         return 0;
 }

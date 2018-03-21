@@ -115,9 +115,8 @@ result_t change_notifier_register(uint8_t *port, uint8_t bit, change_notifier no
 
 static result_t enable_change(uint8_t *port, uint8_t bit)
 {
-	if(port == (uint8_t *)&LATD) {
-		CNEND |= (0b1 << bit);
-		
+	if(port == (uint8_t *)&PORTD) {
+		CNEND |= (0b1 << bit);		
 		return(0);
 	}
 	return(-ERR_BAD_INPUT_PARAMETER);
@@ -140,7 +139,7 @@ result_t change_notifier_deregister(uint8_t *port, uint8_t bit)
 
 static result_t disable_change(uint8_t *port, uint8_t bit)
 {
-	if(port == (uint8_t *)&LATD) {
+	if(port == (uint8_t *)&PORTD) {
 		CNEND &= ~(0b1 << bit);
 		return(0);
 	}
