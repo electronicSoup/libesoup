@@ -33,14 +33,14 @@ int main(void)
 	result_t         rc;
         
 	rc = libesoup_init();
-	if(rc != SUCCESS) {
+	if(rc < 0) {
 #if ((defined SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
 		LOG_E("libesoup_init()\n\r");
 #endif		
 	}
 
-	rc = change_notifier_register((uint8_t *)&LATD , 2, change_notification);
-	if(rc != SUCCESS) {
+	rc = change_notifier_register((uint8_t *)&PORTD , 2, change_notification);
+	if(rc < 0) {
 #if ((defined SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
 		LOG_E("change_notifier_register()\n\r");
 #endif

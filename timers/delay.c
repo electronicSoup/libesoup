@@ -72,7 +72,7 @@ result_t delay(ty_time_units units, uint16_t duration)
 	timer_request.data.sival_int = 0;
 
         delay_over = FALSE;
-        rc = hw_timer_start(&hw_timer, &timer_request);
+        hw_timer = hw_timer_start(&timer_request);
 
         while(!delay_over) {
 #if defined(XC16)
@@ -83,7 +83,7 @@ result_t delay(ty_time_units units, uint16_t duration)
 #error "Need a nop of watchdog macro for compiler"
 #endif
         }
-	return(rc);
+	return(hw_timer);
 }
 
 #endif // #ifdef SYS_HW_TIMERS

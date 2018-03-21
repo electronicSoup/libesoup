@@ -7,7 +7,7 @@
  * This file contains an example libesoup_config.h configuration file for 
  * working with uarts. 
  *
- * Copyright 2017 electronicSoup Limited
+ * Copyright 2017-2018 electronicSoup Limited
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -42,6 +42,8 @@
 #elif defined(__18F4585)
 #define SYS_CLOCK_FREQ 16000000     // 8MHz
 #endif
+
+#define SYS_HW_TIMERS
 
 /*
  * Enable the uart functionality in libesoup

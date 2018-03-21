@@ -1,11 +1,8 @@
 /**
- * @file libesoup/examples/main_job.c
  *
- * @author John Whitmore
- * 
- * Example main.c file to demonstrate jobs. 
+ * \file libesoup/gpio/gpio.c
  *
- * Copyright 2017-2018 electronicSoup Limited
+ * Copyright 2018 electronicSoup Limited
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 2 of the GNU Lesser General Public License
@@ -20,22 +17,20 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  *
  */
-#include "libesoup_config.h"
 
-#include "libesoup/jobs/jobs.h"
+#define OUTPUT_PIN  0
+#define INPUT_PIN   1
 
-int main(void)
-{
-	result_t rc;
-	/*
-	 * Initialise the libesoup library
-	 */
-	rc = libesoup_init();
-	if(rc < 0) {
-		// Error Condition?
-	}
+#define DIGITAL_PIN 0
+#define ANALOG_PIN  1
 
-        while(1) {
-        }
-        return 0;
-}
+#define GPIO_MODE_DIGITAL_INPUT     0x01
+#define GPIO_MODE_DIGITAL_OUTPUT    0x02
+#define GPIO_MODE_ANALOG_INPUT      0x04
+#define GPIO_MODE_ANALOG_OUTPUT     0x08
+#define GPIO_MODE_OPENDRAIN_INPUT   0x10
+#define GPIO_MODE_OPENDRAIN_OUTPUT  0x20
+#define GPIO_MODE_PULLUP            0x40
+#define GPIO_MODE_PULLDOWN          0x80
+
+extern uint16_t gpio_set(enum pin_t pin, uint16_t mode, uint8_t value);

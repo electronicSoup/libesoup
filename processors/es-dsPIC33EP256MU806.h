@@ -10,7 +10,7 @@
  * in your include path. The file contains the various switches and definitions
  * which configure the various features of the library.
  *
- * Copyright 2017 electronicSoup Limited
+ * Copyright 2017-2018 electronicSoup Limited
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU Lesser General Public License as published by
@@ -30,12 +30,6 @@
 #define _ES_dsPIC33EP256MU806_H
 
 #include <xc.h>
-
-#define OUTPUT_PIN  0
-#define INPUT_PIN   1
-
-#define DIGITAL_PIN 0
-#define ANALOG_PIN  1
 
 #define DISABLED    0
 #define ENABLED     1
@@ -250,52 +244,6 @@ enum pin_t {
     INVALID_PIN = 0xff,
 };
 
-/**
- * \ingroup Core
- * \bried Microchip Peripheral Input Pins
- */
-typedef enum { 
-    RP0    = 0,
-    RP1    = 1,
-    RP13   = 13,
-    RP20   = 20,
-    RP23   = 23,
-    RP25   = 25,
-    RP28   = 28,
-    RP64   = 64,
-    RPI74  = 74,
-    RP118  = 118,
-    RPI119 = 119,
-    RP120  = 120,
-    NO_PIN = 0xff
-} ty_peripheral_pin;
-
-/*
- * Peripheral Input functions
- */
-#define PPS_UART_1_RX                   RPINR18bits.U1RXR
-#define PPS_UART_2_RX                   RPINR19bits.U2RXR
-#define PPS_SPI_1_DI                    RPINR20bits.SDI1R 
-#define PPS_CAN1_RX                     RPINR26bits.C1RXR
-#define PPS_UART_3_RX                   RPINR27bits.U3RXR
-#define PPS_UART_4_RX                   RPINR28bits.U4RXR
-
-/*
- * Peripheral Output functions
- */
-#define PPS_UART_1_TX                   0x01
-#define PPS_UART_2_TX                   0x03
-#define SPI_1_DATA_OUTPUT               0x05
-#define SPI_1_CLOCK_OUTPUT              0x06
-#define PPS_CAN1_TX                     0x0E
-#define PPS_UART_3_TX                   0x1B
-#define PPS_UART_4_TX                   0x1D
- 
-#define PPS_RP64                        RPOR0bits.RP64R
-#define PPS_RP100                       RPOR9bits.RP100R
-#define PPS_RP118                       RPOR13bits.RP118R
-#define PPS_RP120                       RPOR14bits.RP120R
-    
 /*
  * Clock Sources:
  * 

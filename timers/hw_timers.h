@@ -98,7 +98,7 @@ extern uint8_t hw_timer_active_count(void);
  * greater, is required you'll need to use a Software based timer.
  * 
  */
-extern result_t hw_timer_start(timer_id *timer, struct timer_req *request);
+extern timer_id hw_timer_start(struct timer_req *request);
 
 /**
  * \brief Function to pause a started hardware timer
@@ -108,7 +108,7 @@ extern result_t hw_timer_start(timer_id *timer, struct timer_req *request);
  *             - SUCCESS
  *             - ERR_BAD_INPUT_PARAMETER
  */
-extern result_t hw_timer_pause(timer_id timer);
+extern timer_id hw_timer_pause(timer_id timer);
 
 /**
  * \ingroup Timers
@@ -123,7 +123,7 @@ extern result_t hw_timer_pause(timer_id timer);
  *             - SUCCESS
  *             - ERR_BAD_INPUT_PARAMETER
  */
-extern result_t hw_timer_restart(timer_id *timer, struct timer_req *request);
+extern timer_id hw_timer_restart(timer_id timer, struct timer_req *request);
 
 /**
  * \ingroup Timers
@@ -132,7 +132,7 @@ extern result_t hw_timer_restart(timer_id *timer, struct timer_req *request);
  * 
  * \param timer Identifier of the timer, previously started, to be cancelled \ref timer_id
  */
-extern void     hw_timer_cancel(timer_id timer);
+extern timer_id     hw_timer_cancel(timer_id timer);
 
 /**
  * \ingroup Timers

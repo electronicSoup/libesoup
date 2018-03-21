@@ -21,6 +21,10 @@
             <itemPath>../../../../comms/uart/uart.c</itemPath>
           </logicalFolder>
         </logicalFolder>
+        <logicalFolder name="gpio" displayName="gpio" projectFiles="true">
+          <itemPath>../../../../gpio/peripheral.c</itemPath>
+          <itemPath>../../../../gpio/gpio.c</itemPath>
+        </logicalFolder>
         <logicalFolder name="hardware" displayName="hardware" projectFiles="true">
           <itemPath>../../../../hardware/eeprom.c</itemPath>
         </logicalFolder>

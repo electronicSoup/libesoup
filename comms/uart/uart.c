@@ -4,7 +4,7 @@
  *
  * UART functionalty for the electronicSoup Cinnamon Bun
  *
- * Copyright 2017 - 2018 electronicSoup Limited
+ * Copyright 2017-2018 electronicSoup Limited
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 2 of the GNU Lesser General Public License
@@ -44,6 +44,8 @@ static const char *TAG = "UART";
 #endif
 #endif
 
+#include "libesoup/errno.h"
+#include "libesoup/gpio/gpio.h"
 #include "libesoup/utils/rand.h"
 #include "libesoup/comms/uart/uart.h"
 
@@ -76,8 +78,8 @@ struct uart uarts[NUM_UARTS];
  */
 static void uart_tx_isr(uint8_t);
 
-static void     uart_set_rx_pin(uint8_t uart, uint8_t pin);
-static void     uart_set_tx_pin(uint8_t uart, uint8_t pin);
+static result_t uart_set_rx_pin(uint8_t uart, enum pin_t pin);
+static result_t uart_set_tx_pin(uint8_t uart, enum pin_t pin);
 static void     uart_set_uart_config(struct uart_data *uart);
 static result_t uart_putchar(uint8_t uart, uint8_t ch);
 
@@ -402,7 +404,7 @@ result_t uart_calculate_mode(uint16_t *mode, uint8_t databits, uint8_t parity, u
 #if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
                 LOG_E("Bad byte length\n\r");
 #endif
-		return(ERR_BAD_INPUT_PARAMETER);
+		return(-ERR_BAD_INPUT_PARAMETER);
 	}
 
 	if (stopbits == UART_TWO_STOP_BITS) {
@@ -439,14 +441,14 @@ result_t uart_calculate_mode(uint16_t *mode, uint8_t databits, uint8_t parity, u
 #if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
                 LOG_E("Bad byte length\n\r");
 #endif
-		return(ERR_BAD_INPUT_PARAMETER);
+		return(-ERR_BAD_INPUT_PARAMETER);
 	}
 
 	if (stopbits == UART_TWO_STOP_BITS) {
                 /*
                  * PIC18 only supports One Stop bit.
                  */
-		return(ERR_BAD_INPUT_PARAMETER);
+		return(-ERR_BAD_INPUT_PARAMETER);
 	}
 
 	if (rx_idle_level == UART_IDLE_HIGH) {
@@ -454,7 +456,7 @@ result_t uart_calculate_mode(uint16_t *mode, uint8_t databits, uint8_t parity, u
 	}
 #endif // MicroController Selection
 
-	return(SUCCESS);
+	return(0);
 }
 
 /*
@@ -495,7 +497,8 @@ result_t uart_reserve(struct uart_data *data)
 	/*
 	 * Find a free uart to use
 	 */
-	uint8_t  loop;
+	result_t  rc;
+	uint8_t   loop;
 
 	for(loop = UART_1; loop < NUM_UARTS; loop++) {
 		if(uarts[loop].status == UART_FREE) {
@@ -512,21 +515,23 @@ result_t uart_reserve(struct uart_data *data)
 			/*
 			 * Set up the Rx & Tx pins
 			 */
-			if (data->rx_pin != NO_PIN) {
-				uart_set_rx_pin((uint8_t) data->uart, data->rx_pin);
+			if (data->rx_pin != INVALID_PIN) {
+				rc = uart_set_rx_pin((uint8_t) data->uart, data->rx_pin);
+				RC_CHECK
 			}
 
-			if (data->tx_pin != NO_PIN) {
-				uart_set_tx_pin((uint8_t) data->uart, data->tx_pin);
+			if (data->tx_pin != INVALID_PIN) {
+				rc = uart_set_tx_pin((uint8_t) data->uart, data->tx_pin);
+				RC_CHECK
 			}
 
 			uart_set_uart_config(data);
 
-			return(SUCCESS);
+			return(0);
 		}
 	}
 
-	return(ERR_NO_RESOURCES);
+	return(-ERR_NO_RESOURCES);
 }
 
 result_t uart_release(struct uart_data *data)
@@ -542,7 +547,7 @@ result_t uart_release(struct uart_data *data)
 #if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
 		LOG_E("uart_tx called with bad data pointer\n\r");
 #endif
-		return(ERR_BAD_INPUT_PARAMETER);
+		return(-ERR_BAD_INPUT_PARAMETER);
 	}
 
 	uarts[uart_index].data = NULL;
@@ -581,30 +586,30 @@ result_t uart_release(struct uart_data *data)
 #if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
 		LOG_E("Unrecognised UART\n\r");
 #endif
-		return(ERR_BAD_INPUT_PARAMETER);
+		return(-ERR_BAD_INPUT_PARAMETER);
 //                break;
 	}
 
 	data->uart = UART_BAD;
 
-	return(SUCCESS);
+	return(0);
 }
 
 result_t uart_tx_buffer(struct uart_data *data, uint8_t *buffer, uint16_t len)
 {
 	uint8_t   uart_index;
 	uint8_t  *ptr;
-	result_t  rc = SUCCESS;
+	result_t  rc = 0;
 
 	uart_index = data->uart;
 
 	if(uarts[uart_index].data != data) {
-		return(ERR_BAD_INPUT_PARAMETER);
+		return(-ERR_BAD_INPUT_PARAMETER);
 	}
 
 	ptr = buffer;
 
-	while(len-- && (rc == SUCCESS)) {
+	while(len-- && (rc == 0)) {
 		rc = uart_putchar(uart_index, *ptr++);
 	}
 	return(rc);
@@ -617,7 +622,7 @@ result_t uart_tx_char(struct uart_data *data, char ch)
 	uart_index = data->uart;
 
 	if(uarts[uart_index].data != data) {
-		return(ERR_BAD_INPUT_PARAMETER);
+		return(-ERR_BAD_INPUT_PARAMETER);
 	}
 
         return(uart_putchar(uart_index, ch));
@@ -736,7 +741,7 @@ static result_t uart_putchar(uint8_t uart_index, uint8_t ch)
 		break;
 	}
 	
-	return(SUCCESS);
+	return(0);
 }
 
 static result_t buffer_write(int8_t uart_index, char ch)
@@ -758,10 +763,10 @@ static result_t buffer_write(int8_t uart_index, char ch)
 		uarts[uart_index].tx_write_index = tmp;
 		uarts[uart_index].tx_count++;
 		INTERRUPTS_ENABLED
-		return(SUCCESS);
+		return(0);
 	}
 
-	return(ERR_BUFFER_OVERFLOW);
+	return(-ERR_BUFFER_OVERFLOW);
 }
 
 static char buffer_read(uint8_t uart_index)
@@ -784,14 +789,15 @@ static char buffer_read(uint8_t uart_index)
 }
 
 #if defined(__dsPIC33EP256MU806__)
-static void uart_set_rx_pin(uint8_t uart, uint8_t pin)
+static int16_t uart_set_rx_pin(uint8_t uart, enum pin_t pin)
 {
+	int16_t rc;
+	
 	switch (pin) {
-	case RP120:
-		ANSELGbits.ANSG8 = DIGITAL_PIN;
-		TRISGbits.TRISG8 = INPUT_PIN;
-		break;
-
+	case RG8:
+		rc = gpio_set(pin, GPIO_MODE_DIGITAL_INPUT, 0);
+		RC_CHECK
+			
 	default:
 #if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
 		LOG_E("Unknow Peripheral Rx Pin\n\r");
@@ -801,21 +807,30 @@ static void uart_set_rx_pin(uint8_t uart, uint8_t pin)
 
 	switch (uart) {
 	case UART_1:
-		PPS_UART_1_RX = pin;
+		rc = set_peripheral_input(pin);
+		RC_CHECK
+		PPS_I_UART_1_RX = rc;
 		break;
 
 	case UART_2:
-		PPS_UART_2_RX = pin;
+		rc = set_peripheral_input(pin);
+		RC_CHECK
+		PPS_I_UART_2_RX = rc;
 		break;
 
 	case UART_3:
-		PPS_UART_3_RX = pin;
+		rc = set_peripheral_input(pin);
+		RC_CHECK
+		PPS_I_UART_3_RX = rc;
 		break;
 
 	case UART_4:
-		PPS_UART_4_RX = pin;
+		rc = set_peripheral_input(pin);
+		RC_CHECK
+		PPS_I_UART_4_RX = rc;
 		break;
 	}
+	return(0);
 }
 #elif defined (__PIC24FJ256GB106__)
 static void uart_set_rx_pin(uint8_t uart, uint8_t pin)
@@ -878,46 +893,39 @@ static void uart_set_rx_pin(uint8_t uart, uint8_t pin)
 #endif // MicroContoller Selection
 
 #if defined(__dsPIC33EP256MU806__)
-static void uart_set_tx_pin(uint8_t uart, uint8_t pin)
+static result_t uart_set_tx_pin(uint8_t uart, enum pin_t pin)
 {
-	uint8_t tx_function;
+	result_t rc;
+	uint16_t tx_function;
 
 	switch (uart) {
 	case UART_1:
-		tx_function = PPS_UART_1_TX;
+		tx_function = PPS_O_UART_1_TX;
 		break;
 
 	case UART_2:
-		tx_function = PPS_UART_2_TX;
+		tx_function = PPS_O_UART_2_TX;
 		break;
 
 	case UART_3:
-		tx_function = PPS_UART_3_TX;
+		tx_function = PPS_O_UART_3_TX;
 		break;
 
 	case UART_4:
-		tx_function = PPS_UART_4_TX;
+		tx_function = PPS_O_UART_4_TX;
 		break;
-	}
-
-	switch (pin) {
-	case RP64:
-		TRISDbits.TRISD0 = OUTPUT_PIN;
-		PPS_RP64 = tx_function;
-		break;
-
-	case RP118:
-		ANSELGbits.ANSG6 = DIGITAL_PIN;
-		TRISGbits.TRISG6 = OUTPUT_PIN;
-		PPS_RP118 = tx_function;
-		break;
-
 	default:
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
-		LOG_E("Unknow Peripheral Tx Pin\n\r");
-#endif
+		return(-ERR_BAD_INPUT_PARAMETER);
 		break;
 	}
+
+	rc = gpio_set(pin, GPIO_MODE_DIGITAL_OUTPUT, 1);
+	RC_CHECK;
+
+	rc = set_peripheral_output(pin, tx_function);
+	RC_CHECK;
+
+	return(0);
 }
 #elif defined (__PIC24FJ256GB106__)
 static void uart_set_tx_pin(uint8_t uart, uint8_t pin)
@@ -1043,13 +1051,13 @@ static void uart_set_uart_config(struct uart_data *uart)
 		U1_RX_ISR_FLAG = 0;
 		U1_TX_ISR_FLAG = 0;
 
-		if (uart->rx_pin != NO_PIN) {
+		if (uart->rx_pin != INVALID_PIN) {
 			U1_RX_ISR_ENABLE = ENABLED;
 		} else {
 			U1_RX_ISR_ENABLE = DISABLED;
 		}
 		
-		if (uart->tx_pin != NO_PIN) {
+		if (uart->tx_pin != INVALID_PIN) {
 			U1_TX_ISR_PRIOTITY = 0x07;
 			U1_TX_ISR_ENABLE = ENABLED;
 			U1STAbits.UTXEN = ENABLED;
@@ -1103,13 +1111,13 @@ static void uart_set_uart_config(struct uart_data *uart)
 		}
 
 
-		if (uart->rx_pin != NO_PIN) {
+		if (uart->rx_pin != INVALID_PIN) {
 			U2_RX_ISR_ENABLE = ENABLED;
 		} else {
 			U2_RX_ISR_ENABLE = DISABLED;
 		}
 		
-		if (uart->tx_pin != NO_PIN) {
+		if (uart->tx_pin != INVALID_PIN) {
 			U2_TX_ISR_PRIOTITY = 0x07;
 			U2_TX_ISR_ENABLE = ENABLED;
 			U2STAbits.UTXEN = ENABLED;
@@ -1162,13 +1170,13 @@ static void uart_set_uart_config(struct uart_data *uart)
 		}
 
 
-		if (uart->rx_pin != NO_PIN) {
+		if (uart->rx_pin != INVALID_PIN) {
 			U3_RX_ISR_ENABLE = ENABLED;
 		} else {
 			U3_RX_ISR_ENABLE = DISABLED;
 		}
 		
-		if (uart->tx_pin != NO_PIN) {
+		if (uart->tx_pin != INVALID_PIN) {
 			U3_TX_ISR_PRIOTITY = 0x07;
 			U3_TX_ISR_ENABLE = ENABLED;
 			U3STAbits.UTXEN = ENABLED;
@@ -1221,13 +1229,13 @@ static void uart_set_uart_config(struct uart_data *uart)
 		}
 
 
-		if (uart->rx_pin != NO_PIN) {
+		if (uart->rx_pin != INVALID_PIN) {
 			U4_RX_ISR_ENABLE = ENABLED;
 		} else {
 			U4_RX_ISR_ENABLE = DISABLED;
 		}
 		
-		if (uart->tx_pin != NO_PIN) {
+		if (uart->tx_pin != INVALID_PIN) {
 			U4_TX_ISR_PRIOTITY = 0x07;
 			U4_TX_ISR_ENABLE = ENABLED;
 			U3STAbits.UTXEN = ENABLED;

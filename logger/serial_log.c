@@ -4,7 +4,7 @@
  *
  * Functions for initialisation of the Serial Port.
  *
- * Copyright 2017 - 2018 electronicSoup Limited
+ * Copyright 2017-2018 electronicSoup Limited
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 2 of the GNU Lesser General Public License
@@ -132,7 +132,7 @@ result_t serial_logging_init(void)
 #ifdef SERIAL_LOGGING_RX_ENABLE
         serial_uart.rx_pin = SERIAL_LOGGING_RX_PIN;
 #else
-        serial_uart.rx_pin = NO_PIN;
+        serial_uart.rx_pin = INVALID_PIN;
 #endif
 	/*
 	 * Get the UART Module to calculate the mode of operation required for
@@ -140,12 +140,12 @@ result_t serial_logging_init(void)
 	 * data structure.
 	 */
 	rc = uart_calculate_mode(&serial_uart.uart_mode, UART_8_DATABITS, UART_PARITY_NONE, UART_ONE_STOP_BIT, UART_IDLE_HIGH);
-        if(rc != SUCCESS) {
+        if(rc < 0) {
                 return(rc);
         }                
 
         rc =  uart_reserve(&serial_uart);
-        if(rc != SUCCESS) {
+        if(rc < 0) {
                 return(rc);
         }
 #endif // ifdef XC16 || __XC8
@@ -157,7 +157,7 @@ result_t serial_logging_init(void)
 	for (delay = 0; delay < 0x100; delay++) Nop();
 
 	serial_printf("\n\r\n\r");
-        return(SUCCESS);
+        return(0);
 }
 
 #ifdef SYS_DEBUG_BUILD

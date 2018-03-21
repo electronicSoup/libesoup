@@ -27,6 +27,7 @@
  */
 #ifdef SYS_SW_TIMERS
 
+#include "libesoup/errno.h"
 #include "libesoup/timers/time.h"
 #include "libesoup/timers/hw_timers.h"
 
@@ -124,7 +125,7 @@ extern void sw_timer_init(void);
  *             - SUCCESS
  *             - ERR_BAD_INPUT_PARAMETER
  */
-extern result_t sw_timer_start(timer_id *timer, struct timer_req *request);
+extern timer_id sw_timer_start(struct timer_req *request);
 
 /**
  * \ingroup Timers
@@ -133,14 +134,14 @@ extern result_t sw_timer_start(timer_id *timer, struct timer_req *request);
  * 
  * \param timer Identifier of the timer, previously started, to be cancelled \ref timer_id
  */
-extern result_t sw_timer_cancel(timer_id timer);
+extern timer_id sw_timer_cancel(timer_id timer);
 
 /**
  * \ingroup Timers
  * \function sw_timer_cancel_all()
  * \brief Function to cancel all running software timers running in the system.
  */
-extern result_t sw_timer_cancel_all(void);
+extern timer_id sw_timer_cancel_all(void);
 
 /**}@*/
 
