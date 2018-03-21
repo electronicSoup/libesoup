@@ -84,6 +84,7 @@ typedef union {
 typedef enum {
     SUCCESS = 0x00,           /**< API function executed without error. */
     ERR_GENERAL_ERROR,        /**< Unspecified error occured in libesoup API Function execution.*/
+    ERR_NOT_CODED,
     ERR_BAD_INPUT_PARAMETER,  /**< Bad parameter passed to libesoup API funtion. */
     ERR_BUFFER_OVERFLOW,
     ERR_RANGE_ERROR,          /**< Error in the range of a parameter.*/

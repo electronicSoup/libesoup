@@ -38,6 +38,7 @@ static const char *TAG = "OneWire";
 #include "libesoup/timers/delay.h"
 //#include "libesoup/timers/sw_timers.h"
 #include "libesoup/comms/one_wire/one_wire.h"
+#include "libesoup/processors/dsPIC33/change_notification/change_notification.h"
 
 #ifndef SYS_CHANGE_NOTIFICATION
 #error SYS_CHANGE_NOTIFICATION Not defined required by OneWire
@@ -47,19 +48,9 @@ static const char *TAG = "OneWire";
 #error SYS_ONE_WIRE_MAX_BUS should be defined
 #endif
 
-#ifndef SYS_ONE_WIRE_MAX_BUS_DEVICES
-#error SYS_ONE_WIRE_MAX_BUS_DEVICES should be defined
+#ifndef SYS_ONE_WIRE_MAX_DEVICES
+#error SYS_ONE_WIRE_MAX_DEVICES should be defined
 #endif
-
-//#if defined(__dsPIC33EP256MU806__)
-//#if (SYS_CLOCK_FREQ == 60000000)
-//#define NOP_DURATION 4.6
-//#elif (SYS_CLOCK_FREQ == 8000000)
-//#define NOP_DURATION 28.6
-//#else
-//#error SYS_CLOCK_FREQ Not coded in hw_timers.c
-//#endif
-//#endif
 
 //static uint32_t d;
 //#define DELAY(x) for(d = 0; d < (uint32_t)(((float)x )/NOP_DURATION); d++) Nop();
@@ -76,10 +67,30 @@ static const char *TAG = "OneWire";
 
 static volatile uint8_t timer_expired = TRUE;
 
+struct one_wire_bus {
+	uint8_t                 active:1;
+	uint8_t                 semaphore:1;
+	enum pin_t              pin;
+} one_wire_bus;
+
+struct one_wire_device {
+	uint8_t                 active:1;
+	uint16_t                id;
+	struct one_wire_bus    *bus;
+} one_wire_device;
+
+
+static struct one_wire_bus    bus[SYS_ONE_WIRE_MAX_BUS];
+static struct one_wire_device device[SYS_ONE_WIRE_MAX_DEVICES];
 
 /*
  * Function Prototypes.
  */
+static result_t census(struct one_wire_bus *bus);
+static void     bus_change(uint8_t *port, uint8_t bit);
+static result_t reset_pulse(struct one_wire_bus *bus);
+static result_t set_pin(enum pin_t pin, uint8_t direction, uint8_t value);
+
 //static result_t set_pin(enum pin_t pin, uint8_t direction, uint8_t value);
 //static result_t get_pin(enum pin_t pin, uint8_t *value);
 //static void     expiry_fn(void *data);
@@ -112,99 +123,101 @@ static volatile uint8_t timer_expired = TRUE;
 //static void read_rom(void);
 //static void bit_read(uint8_t read_bit);
 
-struct one_wire_device {
-	uint16_t                id;
-} one_wire_device;
-
-struct one_wire_bus {
-	enum pin_t              pin;
-	uint8_t                 semaphore;
-	struct one_wire_device  device[SYS_ONE_WIRE_MAX_BUS_DEVICES];
-} one_wire_bus;
-
 result_t one_wire_init(void)
 {
+	uint8_t loop;
+
+	for(loop = 0; loop < SYS_ONE_WIRE_MAX_BUS; loop++) {
+		bus[loop].active    = 0b0;
+		bus[loop].semaphore = 0b0;
+	}
+
+	for(loop = 0; loop < SYS_ONE_WIRE_MAX_DEVICES; loop++) {
+		device[loop].active = 0b0;
+	}
 }
 
 result_t one_wire_reserve(enum pin_t pin)
 {
+	result_t rc;
+	uint8_t  b_loop;
+	uint8_t  d_loop;
 	
+	LOG_D("one_wire_reserve()\n\r");
+	/*
+	 * check for existing bus on the given pin
+	 */
+	for(b_loop = 0; b_loop < SYS_ONE_WIRE_MAX_BUS; b_loop++) {
+		if(bus[b_loop].active && (bus[b_loop].pin == pin)) {
+			return(ERR_BAD_INPUT_PARAMETER);
+		}
+	}
+	
+	/*
+	 * Find a free slot
+	 */
+	for(b_loop = 0; b_loop < SYS_ONE_WIRE_MAX_BUS; b_loop++) {
+		if(!bus[b_loop].active) {
+			bus[b_loop].active    = 0b1;
+			bus[b_loop].semaphore = 0b1;
+			bus[b_loop].pin       = pin;
+
+			return(set_pin(pin, OUTPUT_PIN, 1));
+
+			//return(census(&bus[b_loop]));
+		}
+	}
+	
+	return(ERR_NO_RESOURCES);
 }
 
+static result_t census(struct one_wire_bus *bus)
+{
+	result_t  rc;
+	uint8_t  *port;
+	uint8_t   bit;
 
-//result_t one_wire_get_device_count(enum pin_t pin, uint8_t *count)
-//{
-//        if(bus_busy) {
-//                return(ERR_NOT_READY);
-//        }
-//        
-//        *count = 0;
-//        return(SUCCESS);
-//}
+	LOG_D("Census\n\r");
+	
+	/*
+	 * Reset pulse
+	 */
+        delay(mSeconds, 500);
+        rc = set_pin(bus->pin, OUTPUT_PIN, 0);
+        delay(mSeconds, 500);
+        rc = set_pin(bus->pin, OUTPUT_PIN, 1);
+	
+	/*
+	 * Want to receive a presence pulse from the devices on the bus
+	 * so request change notification on the bus I/O Pin
+	 */
+	rc = pin_to_port_bit(bus->pin, &port, &bit);
+	if(rc != SUCCESS) {
+#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL != NO_LOGGING))
+                LOG_E("Failed pin to port bit\n\r");
+#endif
+	}
 
-//static result_t set_pin(enum pin_t pin, uint8_t direction, uint8_t value)
-//{
-//        switch(pin) {
-//        case (RF3):
-//                ODCFbits.ODCF3 = 1;            // Open Drive Pin
-//                TRISFbits.TRISF3 = direction;
-//                LATFbits.LATF3= value;
-//                break;
-//                
-//        case (RD0):
-//                ODCDbits.ODCD0 = 1;            // Open Drive Pin
-//                TRISDbits.TRISD0 = direction;
-//                LATDbits.LATD0= value;
-//                break;
-//                
-//        default:
-//                pin = INVALID_PIN;
-//#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
-//                LOG_E("Pin has not been coded yet!\n\r");
-//#endif
-//                return(ERR_BAD_INPUT_PARAMETER);
-//              break;
-//        }
-//        return(SUCCESS);
-//}
+	rc = change_notifier_register(port, bit, bus_change);
+	if(rc != SUCCESS) {
+#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL != NO_LOGGING))
+                LOG_E("Failed notify request\n\r");
+#endif
+	}
+	
+	return(rc);
+}
 
-//static result_t get_pin(enum pin_t pin, uint8_t *value)
-//{
-//        switch(pin) {
-//        case (RF3):
-//                ODCFbits.ODCF3 = 1;            // Open Drive Pin
-//                TRISFbits.TRISF3 = INPUT_PIN;
-//                *value = PORTFbits.RF3;
-//                break;
-//                
-//        case (RD0):
-//                ODCDbits.ODCD0 = 1;            // Open Drive Pin
-//                TRISDbits.TRISD0 = INPUT_PIN;
-//                *value = PORTDbits.RD0;
-//                break;
-//                
-//        default:
-//                pin = INVALID_PIN;
-//#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
-//                LOG_E("Pin has not been coded yet!\n\r");
-//#endif
-//                return(ERR_BAD_INPUT_PARAMETER);
-//              break;
-//        }
-//        
-//        return(SUCCESS);
-//}
-
-//static void expiry_fn(void *data)
-//{
-//        timer_expired = TRUE;
-//}
+static void bus_change(uint8_t *port, uint8_t bit)
+{
+	LOG_D("Change\n\r");	
+}
 
 /*
  * Synchronous Function it will spin
  */
 #if 0
-static result_t reset_pulse(enum pin_t pin)
+static result_t reset_pulse(struct one_wire_bus *bus)
 {
         uint8_t  i;
         uint8_t  value;
@@ -214,11 +227,11 @@ static result_t reset_pulse(enum pin_t pin)
         /*
          * First reset pulse at least 480uS 
          */
-        rc = set_pin(pin, OUTPUT_PIN, 0);
+        rc = set_pin(bus->pin, OUTPUT_PIN, 0);
 
-        delay(uSeconds, 600);
+        delay(uSeconds, 500);
 
-        rc = set_pin(pin, OUTPUT_PIN, 1);
+        rc = set_pin(bus->pin, OUTPUT_PIN, 1);
 
         /*
          * DS2502 should reply with 60-240uS pulse after a 15-60uS Delay
@@ -290,8 +303,77 @@ static result_t reset_pulse(enum pin_t pin)
         while(!timer_expired) Nop();
         
         return(SUCCESS);
-}        
+}
 #endif
+
+static result_t set_pin(enum pin_t pin, uint8_t direction, uint8_t value)
+{
+        switch(pin) {
+        case (RF3):
+                ODCFbits.ODCF3 = 1;            // Open Drive Pin
+                TRISFbits.TRISF3 = direction;
+                LATFbits.LATF3= value;
+                break;
+                
+        case (RD0):
+                ODCDbits.ODCD0 = 1;            // Open Drive Pin
+                TRISDbits.TRISD0 = direction;
+                LATDbits.LATD0= value;
+                break;
+                
+        default:
+#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
+                LOG_E("Pin has not been coded yet!\n\r");
+#endif
+                return(ERR_NOT_CODED);
+              break;
+        }
+        return(SUCCESS);
+}
+
+//static result_t get_pin(enum pin_t pin, uint8_t *value)
+//{
+//        switch(pin) {
+//        case (RF3):
+//                ODCFbits.ODCF3 = 1;            // Open Drive Pin
+//                TRISFbits.TRISF3 = INPUT_PIN;
+//                *value = PORTFbits.RF3;
+//                break;
+//                
+//        case (RD0):
+//                ODCDbits.ODCD0 = 1;            // Open Drive Pin
+//                TRISDbits.TRISD0 = INPUT_PIN;
+//                *value = PORTDbits.RD0;
+//                break;
+//                
+//        default:
+//                pin = INVALID_PIN;
+//#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
+//                LOG_E("Pin has not been coded yet!\n\r");
+//#endif
+//                return(ERR_BAD_INPUT_PARAMETER);
+//              break;
+//        }
+//        
+//        return(SUCCESS);
+//}
+
+//result_t one_wire_get_device_count(enum pin_t pin, uint8_t *count)
+//{
+//        if(bus_busy) {
+//                return(ERR_NOT_READY);
+//        }
+//        
+//        *count = 0;
+//        return(SUCCESS);
+//}
+
+
+//static void expiry_fn(void *data)
+//{
+//        timer_expired = TRUE;
+//}
+
 //static result_t tx_byte(enum pin_t pin, uint8_t byte)
 //{
 //        uint8_t  bit = 0;

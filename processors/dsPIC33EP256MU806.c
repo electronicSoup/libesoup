@@ -103,8 +103,9 @@ static void clock_init(void)
          * Crystal Frequency then we can simple use Primary Clock.
 	 * NO PLL
          */
+	sys_clock_freq = SYS_CLOCK_FREQ;
+
         if(sys_clock_freq != (CRYSTAL_FREQ/2)) {
-		sys_clock_freq = SYS_CLOCK_FREQ;
 		fosc = sys_clock_freq * 2;
 	
 		if((fosc < 15000000) || (fosc > 120000000)) {
@@ -186,6 +187,29 @@ static void clock_init(void)
                 // Wait for PLL to lock
                 while (OSCCONbits.LOCK!= 1);
         }
+}
+
+result_t pin_to_port_bit(enum pin_t pin, uint8_t **port, uint8_t *bit)
+{
+        switch(pin) {
+        case (RF3):
+		*port = (uint8_t *)&PORTF;
+		*bit  = 3;
+                break;
+                
+        case (RD0):
+		*port = (uint8_t *)&PORTD;
+		*bit  = 0;
+                break;
+                
+        default:
+#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
+                LOG_E("Not coded!\n\r");
+#endif
+                return(ERR_NOT_CODED);
+              break;
+        }
+        return(SUCCESS);	
 }
 
 #endif // defined(__dsPIC33EP256MU806__)

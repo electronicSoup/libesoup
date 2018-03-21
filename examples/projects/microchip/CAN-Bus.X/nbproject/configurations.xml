@@ -75,6 +75,10 @@
         <logicalFolder name="examples" displayName="examples" projectFiles="true">
           <itemPath>../../../main_can.c</itemPath>
         </logicalFolder>
+        <logicalFolder name="gpio" displayName="gpio" projectFiles="true">
+          <itemPath>../../../../gpio/peripheral.c</itemPath>
+          <itemPath>../../../../gpio/gpio.c</itemPath>
+        </logicalFolder>
         <logicalFolder name="hardware" displayName="hardware" projectFiles="true">
           <itemPath>../../../../hardware/eeprom.c</itemPath>
           <itemPath>../../../../hardware/flash.c</itemPath>
@@ -322,6 +326,7 @@
         <property key="UART 3" value="true"/>
         <property key="UART 4" value="true"/>
         <property key="USB" value="true"/>
+        <property key="firmware.download.all" value="false"/>
         <property key="hwtoolclock.frcindebug" value="false"/>
         <property key="memories.aux" value="false"/>
         <property key="memories.bootflash" value="true"/>
