@@ -26,6 +26,9 @@
 static const char *TAG = "dsPIC33";
 #include "libesoup/logger/serial_log.h"
 #endif // SYS_SERIAL_LOGGING
+
+#include "libesoup/errno.h"
+
 /*
  * Check required libesoup_config.h defines are found
  */
@@ -187,29 +190,6 @@ static void clock_init(void)
                 // Wait for PLL to lock
                 while (OSCCONbits.LOCK!= 1);
         }
-}
-
-result_t pin_to_port_bit(enum pin_t pin, uint8_t **port, uint8_t *bit)
-{
-        switch(pin) {
-        case (RF3):
-		*port = (uint8_t *)&PORTF;
-		*bit  = 3;
-                break;
-                
-        case (RD0):
-		*port = (uint8_t *)&PORTD;
-		*bit  = 0;
-                break;
-                
-        default:
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
-                LOG_E("Not coded!\n\r");
-#endif
-                return(ERR_NOT_CODED);
-              break;
-        }
-        return(SUCCESS);	
 }
 
 #endif // defined(__dsPIC33EP256MU806__)
