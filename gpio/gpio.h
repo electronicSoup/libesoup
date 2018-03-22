@@ -33,4 +33,6 @@
 #define GPIO_MODE_PULLUP            0x40
 #define GPIO_MODE_PULLDOWN          0x80
 
-extern uint16_t gpio_set(enum pin_t pin, uint16_t mode, uint8_t value);
+extern result_t gpio_set(enum pin_t pin, uint16_t mode, uint8_t value);
+extern result_t gpio_get(enum pin_t pin);
+extern result_t pin_to_port_bit(enum pin_t pin, uint8_t **port, uint8_t *bit);
