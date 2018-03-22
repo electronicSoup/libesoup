@@ -35,6 +35,7 @@ static const char  *TAG = "CORE";
 #endif  // SYS_SERIAL_LOGGING
 
 #include "libesoup/errno.h"
+#include "libesoup/boards/board.h"
 
 #ifdef SYS_HW_TIMERS
 #include "libesoup/timers/hw_timers.h"
@@ -46,10 +47,6 @@ static const char  *TAG = "CORE";
 
 #ifdef SYS_UART
 #include "libesoup/comms/uart/uart.h"
-#endif
-
-#ifdef SYS_SERIAL_LOGGING
-#include "libesoup/logger/serial_log.h"
 #endif
 
 #ifdef SYS_JOBS
@@ -64,10 +61,6 @@ static const char  *TAG = "CORE";
 #include "libesoup/comms/spi/spi.h"
 #endif
 
-#ifdef SYS_EEPROM
-#include "libesoup/hardware/eeprom.h"
-#endif
-
 #ifdef SYS_RAND
 #include "libesoup/utils/rand.h"
 #endif
@@ -75,10 +68,6 @@ static const char  *TAG = "CORE";
 #ifdef SYS_CHANGE_NOTIFICATION
 #include "libesoup/processors/dsPIC33/change_notification/change_notification.h"
 #endif // SYS_CHANGE_NOTIFICATION
-
-#ifdef SYS_ONE_WIRE
-#include "libesoup/comms/one_wire/one_wire.h"
-#endif
 
 /*
  * The Instruction Clock Frequency being used by the system.
@@ -90,10 +79,6 @@ uint32_t sys_clock_freq;
 
 result_t libesoup_init(void)
 {
-#if (defined(SYS_SPI_BUS) && defined(__dsPIC33EP256MU806__))
-	uint8_t                spi_channel;	
-	struct spi_io_channel  spi_io;
-#endif
 	
 #ifdef XC16
 	result_t rc  __attribute__((unused)) = 0;
@@ -138,24 +123,8 @@ result_t libesoup_init(void)
 
 #ifdef SYS_SPI_BUS
         spi_init();
-	
-#if defined(__dsPIC33EP256MU806__)
-	spi_io.miso = BRD_SPI_MISO;
-	spi_io.mosi = BRD_SPI_MOSI;
-	spi_io.sck  = BRD_SPI_SCK;
-		
-	rc = spi_channel_init(SPI_ANY_CHANNEL, &spi_io);
-	RC_CHECK
-	spi_channel = (uint8_t)rc;
-#endif // dsPIC33EP256MU806
-	
 #endif
 
-#ifdef SYS_EEPROM
-	rc = eprom_init(spi_channel);
-	RC_CHECK
-#endif
-	
 #ifdef SYS_RAND
 	random_init();
 #endif
@@ -165,8 +134,5 @@ result_t libesoup_init(void)
 	RC_CHECK
 #endif // SYS_CHANGE_NOTIFICATION
 
-#ifdef SYS_ONE_WIRE
-	one_wire_init();
-#endif
-	return(0);
+	return(board_init());
 }
