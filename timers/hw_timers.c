@@ -453,7 +453,7 @@ static timer_id start_timer(timer_id timer, struct timer_req *request)
 			 * divide calculations will cost more then the timer.
 			 * Roll it by hand!
 			 */
-			return(ERR_RANGE_ERROR);
+			return(-ERR_RANGE_ERROR);
 		}
 #endif // defined(__dsPIC33EP256MU806__)
 		set_clock_divide(timer, 1);
