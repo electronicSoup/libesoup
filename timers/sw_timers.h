@@ -37,8 +37,6 @@
  */
 /**@{*/
 
-#define TIMER_INIT(timer) timer = BAD_TIMER_ID;
-
 #if defined(XC16) || defined(__XC8)
 
 #if defined (__18F2680) || defined(__18F4585)
