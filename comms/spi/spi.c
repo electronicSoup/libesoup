@@ -25,7 +25,7 @@
 
 #ifdef SYS_SERIAL_LOGGING
 #define DEBUG_FILE
-static const char *TAG = "SPI";
+__attribute__ ((unused)) static const char *TAG = "SPI";
 #include "libesoup/logger/serial_log.h"
 /*
  * Check required libesoup_config.h defines are found
