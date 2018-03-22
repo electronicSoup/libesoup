@@ -21,13 +21,11 @@
  */
 #define DEBUG_FILE
 
-#include <p33EP256MU806.h>
-
 #include "libesoup_config.h"
 
 #ifdef SYS_SERIAL_LOGGING
 #define DEBUG_FILE
-static const char *TAG = "DELAY";
+__attribute__ ((unused)) static const char *TAG = "DELAY";
 #include "libesoup/logger/serial_log.h"
 /*
  * Check required libesoup_config.h defines are found
