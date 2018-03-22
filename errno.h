@@ -24,6 +24,9 @@
 #define _ERRNO_H
 
 #define RC_CHECK if(rc < 0) return(rc);
+#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
+#define RC_CHECK_PRINT(x) if(rc < 0) LOG_E("x");
+#endif
 
 #define ERR_GENERAL_ERROR          1    /* Unspecified error occured in libesoup API Function execution.*/
 #define ERR_BAD_INPUT_PARAMETER    2    /* Bad parameter passed to libesoup API funtion. */
@@ -36,11 +39,13 @@
 #define ERR_NOT_READY              9    /* API function no ready to execute request.*/
 #define ERR_CAN_ERROR             10    /* Error in CAN libesoup API function.*/
 #define ERR_CAN_NOT_CONNECTED     11    /* Attempt to perform action on CAN Bus prior to its connection.*/
-#define ERR_CAN_INVALID_BAUDRATE  12    /* Invalid Baudrate specified in libesoup API funciton call.*/
-#define ERR_CAN_NO_FREE_BUFFER    13    /* No free CAN buffer to complete request.*/
-#define ERR_UNINITIALISED         14    /* Attempt to call libesoup API function prior to initialisation.*/
-#define ERR_BUSY                  15    /* I'm busy call back later.*/
-#define ERR_NOTHING_TO_DO         16    /* Call results in no action being taken.*/
-#define ERR_NO_RESPONSE           17    /* No response from the attempted API call.*/
+#define ERR_CAN_BITRATE_LOW       12
+#define ERR_CAN_BITRATE_HIGH      13
+#define ERR_CAN_INVALID_BAUDRATE  14    /* Invalid Baudrate specified in libesoup API funciton call.*/
+#define ERR_CAN_NO_FREE_BUFFER    15    /* No free CAN buffer to complete request.*/
+#define ERR_UNINITIALISED         16    /* Attempt to call libesoup API function prior to initialisation.*/
+#define ERR_BUSY                  17    /* I'm busy call back later.*/
+#define ERR_NOTHING_TO_DO         18    /* Call results in no action being taken.*/
+#define ERR_NO_RESPONSE           19    /* No response from the attempted API call.*/
 
 #endif // _ERRNO_H
