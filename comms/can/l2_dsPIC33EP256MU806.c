@@ -618,7 +618,7 @@ result_t can_l2_bitrate(can_baud_rate_t baud, boolean change)
 	}	
 
 	if(change && (rc == SUCCESS)) {
-		brp--;       // End of the found loop will have incremented
+		brp--;       // End of the finding loop will have incremented
 		tq_count++;  // ^^^
 	
 #if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
