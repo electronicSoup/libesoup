@@ -44,12 +44,23 @@ static const char *TAG = "RAND";
 void random_init(void)
 {
 	uint16_t  loop;
-	uint32_t  seed;
+	uint16_t  seed;
+
+#if defined(__dsPIC33EP256MU806__)
+	uint16_t  *data;
+
+	data = (uint16_t *)&TMR1;
+
+	seed = 0;
+
+	for(loop = 0; loop < (&OC16TMR - &TMR1); loop++) {
+		asm("CLRWDT");
+		seed = seed + *data;
+		data++;
+	}
+#elif defined (__PIC24FJ256GB106__)
 	uint8_t  *data;
 
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_INFO))
-	LOG_I("random_init()\n\r");
-#endif
 	data = (uint8_t *)&IC1TMR;
 
 	seed = 0;
@@ -59,7 +70,8 @@ void random_init(void)
 		seed = seed + *data;
 		data++;
 	}
-
+#endif
+	
 #if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	LOG_D("Seed 0x%lx\n\r", seed);
 #endif
