@@ -4,7 +4,7 @@
  *
  * Core SYS_CAN_BUS Functionality of electronicSoup CAN code
  *
- * Copyright 2017 - 2018 electronicSoup Limited
+ * Copyright 2017-2018 electronicSoup Limited
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 2 of the GNU Lesser General Public License
@@ -104,7 +104,7 @@ result_t can_init(can_baud_rate_t baudrate, status_handler_t status_handler)
 #ifdef SYS_CAN_PING_PROTOCOL
 	can_ping_init();
 #endif
-	return(SUCCESS);
+	return(0);
 }
 
 static void can_status_handler(union ty_status status)

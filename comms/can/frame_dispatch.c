@@ -45,6 +45,7 @@
 static const char *TAG = "CAN_DISPATCH";
 #endif // SYS_SERIAL_LOGGING
 
+#include "libesoup/errno.h"
 #include "libesoup/comms/can/can.h"
 
 typedef struct
@@ -101,10 +102,10 @@ result_t frame_dispatch_reg_handler(can_l2_target_t *target)
 			registered_handlers[loop].target.filter = target->filter;
 			registered_handlers[loop].target.handler = target->handler;
 			target->handler_id = loop;
-			return(SUCCESS);
+			return(0);
 		}
 	}
-	return(ERR_NO_RESOURCES);
+	return(-ERR_NO_RESOURCES);
 }
 
 result_t frame_dispatch_unreg_handler(uint8_t id)
@@ -115,16 +116,16 @@ result_t frame_dispatch_unreg_handler(uint8_t id)
 			registered_handlers[id].target.mask = 0x00;
 			registered_handlers[id].target.filter = 0x00;
 			registered_handlers[id].target.handler = (void (*)(can_frame *))NULL;
-			return (SUCCESS);
+			return (0);
 		}
 	}
-	return(ERR_CAN_ERROR);
+	return(-ERR_CAN_ERROR);
 }
 
 result_t frame_dispatch_set_unhandled_handler(can_l2_frame_handler_t handler)
 {
 	unhandled_handler = (can_l2_frame_handler_t)handler;
-	return(SUCCESS);
+	return(0);
 }
 
 void frame_dispatch_handle_frame(can_frame *frame)

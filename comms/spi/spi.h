@@ -24,8 +24,21 @@
 
 #ifdef SYS_SPI_BUS
 
-extern void spi_init(void);
-extern unsigned char spi_write_byte(unsigned char write);
+#define SPI_ANY_CHANNEL  0xFF
+
+
+struct spi_io_channel {
+	enum pin_t sck;
+	enum pin_t mosi;
+	enum pin_t miso;
+};
+
+extern void          spi_init(void);
+extern int16_t       spi_channel_init(uint8_t ch, struct spi_io_channel *);
+extern int16_t       spi_write_byte(uint8_t device_id, uint8_t write);
+extern int16_t       spi_device_init(uint8_t ch);
+extern result_t      spi_lock(uint8_t device_id);
+extern result_t      spi_unlock(uint8_t device_id);
 
 #endif // #ifdef SYS_SPI_BUS
 

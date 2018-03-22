@@ -13,6 +13,10 @@
                    displayName="Source Files"
                    projectFiles="true">
       <logicalFolder name="libesoup" displayName="libesoup" projectFiles="true">
+        <logicalFolder name="gpio" displayName="gpio" projectFiles="true">
+          <itemPath>../../../../gpio/peripheral.c</itemPath>
+          <itemPath>../../../../gpio/gpio.c</itemPath>
+        </logicalFolder>
         <logicalFolder name="logger" displayName="logger" projectFiles="true">
         </logicalFolder>
         <logicalFolder name="processors" displayName="processors" projectFiles="true">
@@ -23,6 +27,7 @@
         </logicalFolder>
         <logicalFolder name="timers" displayName="timers" projectFiles="true">
           <itemPath>../../../../timers/hw_timers.c</itemPath>
+          <itemPath>../../../../timers/delay.c</itemPath>
         </logicalFolder>
         <itemPath>../../../../core.c</itemPath>
       </logicalFolder>
@@ -47,7 +52,7 @@
         <targetPluginBoard></targetPluginBoard>
         <platformTool>PICkit3PlatformTool</platformTool>
         <languageToolchain>XC16</languageToolchain>
-        <languageToolchainVersion>1.31</languageToolchainVersion>
+        <languageToolchainVersion>1.33</languageToolchainVersion>
         <platform>2</platform>
       </toolsSet>
       <compileType>
@@ -463,7 +468,6 @@
         <property key="UART 3" value="true"/>
         <property key="UART 4" value="true"/>
         <property key="UCNFG1" value="true"/>
-        <property key="firmware.download.all" value="false"/>
         <property key="hwtoolclock.frcindebug" value="false"/>
         <property key="memories.aux" value="false"/>
         <property key="memories.bootflash" value="true"/>

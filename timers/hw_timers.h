@@ -7,7 +7,7 @@
  * SYS_HW_TIMERS must be included in the libesoup_config.h file.
  * 
  *
- * Copyright 2017 electronicSoup Limited
+ * Copyright 2017-2018 electronicSoup Limited
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 2 of the GNU Lesser General Public License
@@ -42,6 +42,16 @@
 #ifdef SYS_HW_TIMERS
 
 #include "libesoup/timers/time.h"
+
+#if (SYS_CLOCK_FREQ == 8000000)
+#define HW_TIMER_OVERHEAD (123)
+#elif (SYS_CLOCK_FREQ == 30000000)
+#define HW_TIMER_OVERHEAD (33)
+#elif (SYS_CLOCK_FREQ == 60000000)
+#define HW_TIMER_OVERHEAD (16)
+#else
+#error Unprogrammed System Clock Frequency!
+#endif
 
 /**
  * \name Hardware Timers 
@@ -88,7 +98,7 @@ extern uint8_t hw_timer_active_count(void);
  * greater, is required you'll need to use a Software based timer.
  * 
  */
-extern result_t hw_timer_start(timer_id *timer, struct timer_req *request);
+extern timer_id hw_timer_start(struct timer_req *request);
 
 /**
  * \brief Function to pause a started hardware timer
@@ -98,7 +108,7 @@ extern result_t hw_timer_start(timer_id *timer, struct timer_req *request);
  *             - SUCCESS
  *             - ERR_BAD_INPUT_PARAMETER
  */
-extern result_t hw_timer_pause(timer_id timer);
+extern timer_id hw_timer_pause(timer_id timer);
 
 /**
  * \ingroup Timers
@@ -113,7 +123,7 @@ extern result_t hw_timer_pause(timer_id timer);
  *             - SUCCESS
  *             - ERR_BAD_INPUT_PARAMETER
  */
-extern result_t hw_timer_restart(timer_id *timer, struct timer_req *request);
+extern timer_id hw_timer_restart(timer_id timer, struct timer_req *request);
 
 /**
  * \ingroup Timers
@@ -122,7 +132,7 @@ extern result_t hw_timer_restart(timer_id *timer, struct timer_req *request);
  * 
  * \param timer Identifier of the timer, previously started, to be cancelled \ref timer_id
  */
-extern void     hw_timer_cancel(timer_id timer);
+extern timer_id     hw_timer_cancel(timer_id timer);
 
 /**
  * \ingroup Timers

@@ -7,7 +7,7 @@
  *
  * Core definitions required by electronicSoup Code Library
  *
- * Copyright 2017 2018 electronicSoup Limited
+ * Copyright 2017-2018 electronicSoup Limited
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 2 of the GNU Lesser General Public License
@@ -24,7 +24,13 @@
  */
 #include "libesoup_config.h"
 
+#include "libesoup/gpio/gpio.h"
 #include "libesoup/timers/hw_timers.h"
+#include "libesoup/timers/delay.h"
+
+//#define DELAY_TEST
+#define HW_TIMER_TEST
+#define HW_TIMER_REPEAT
 
 /*
  * Forward declaration of our Hardware timer expiry function, which will be
@@ -43,48 +49,23 @@ int main(void)
 	 * Initialise the libesoup library
 	 */
 	rc = libesoup_init();
+	if(rc < 0) {
+		/*
+		 * Error condition
+		 */
+	}
 
         /*
-         * set pin RE0 as an Input pin
+         * 
          */
 #if defined(__dsPIC33EP256MU806__)
-        ANSELEbits.ANSE0 = 0;
-        TRISEbits.TRISE0 = 1;
+	rc = gpio_set(RD3, GPIO_MODE_DIGITAL_OUTPUT, 0);
 #elif defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__)
-        TRISEbits.TRISE0 = 1;
-#endif
-
-        /*
-         * Set Pin RE1 as an Output Pin
-         */
-#if defined(__dsPIC33EP256MU806__)
-        ANSELEbits.ANSE1 = 0;
-        TRISEbits.TRISE1 = 0;
-#elif defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__)
-        TRISEbits.TRISE1 = 0;
-#endif
-
-        /*
-         * Set Pin RE2 as an Output Pin
-         */
-#if defined(__dsPIC33EP256MU806__)
-        ANSELEbits.ANSE2 = 0;
-        TRISEbits.TRISE2 = 0;
-#elif defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__)
-        TRISEbits.TRISE2 = 0;
-#endif
-
-        /*
-         * Set Pin RE2 as an Output Pin
-         */
-#if defined(__dsPIC33EP256MU806__)
-        ANSELEbits.ANSE3 = 0;
-        TRISEbits.TRISE3 = 0;
-#elif defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__)
-        TRISEbits.TRISE3 = 0;
-#endif
-
-#if defined(__18F4585)
+        TRISEbits.TRISE0 = INPUT_PIN;
+        TRISEbits.TRISE1 = OUTPUT_PIN;
+        TRISEbits.TRISE2 = OUTPUT_PIN;
+        TRISEbits.TRISE3 = OUTPUT_PIN;
+#elif defined(__18F4585)
 	/*
 	 * All AD pins configured as Digital
 	 */
@@ -101,32 +82,75 @@ int main(void)
 	INTCONbits.GIE = 1;    // Enable Interrupts
 	INTCONbits.PEIE = 1;   // Enable Periphal Interrupts
 #endif // (__18F4585)
-        
-	request.units    = Seconds;
-	request.duration = 5;
+
+#ifdef HW_TIMER_TEST
+	delay(Seconds, 10);
+
+	/*
+	 * Documentation:
+	 * 
+	 * dsPIC33 @ 60M 500uS timer gives 504uS  Delta  4uS
+	 * dsPIC33 @ 30M 500uS timer gives 504uS  Delta  4uS
+	 * dsPIC33 @  8M 500uS timer gives 508uS  Delta  8uS
+	 */
+	request.units    = uSeconds;
+	request.duration = 20;
+#ifdef HW_TIMER_REPEAT
+	request.type     = repeat;
+#else
 	request.type     = single_shot;
+#endif
 	request.exp_fn   = exp_func;
 	request.data     = data;
 
-        rc = hw_timer_start(&timer, &request);
-        if(rc != SUCCESS) {
+	LATDbits.LATD3 = 1;
+
+        timer = hw_timer_start(&request);
+        if(timer < 0) {
 	        /*
 		 * Handle the error condition.
 		 */
         }
+#endif
 	
-#if defined(__dsPIC33EP256MU806__) || defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__)
+#if defined(__dsPIC33EP256MU806__)
+//	LATDbits.LATD3 = 1;
+#elif defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__)
         LATEbits.LATE3 = 1;
 #endif
         	        
         while(1) {
+#ifdef DELAY_TEST
+		/*
+	         * Documentation:
+	         * 
+		 * The delay routine will return ERR_RANGE_ERROR if the duration
+		 * passed in is shorter then it can safely obtain.
+	         */
+		LATDbits.LATD3 = 0;
+		rc = delay(uSeconds, 10);
+		if(rc != SUCCESS) {
+			LATDbits.LATD0 = 1;
+		}
+		LATDbits.LATD3 = 1;
+		rc = delay(uSeconds, 10);
+		if(rc != SUCCESS) {
+			LATDbits.LATD0 = 1;
+		}
+#endif
         }
         return 0;
 }
 
 void exp_func(timer_id timer, union sigval data)
 {
-#if defined(__dsPIC33EP256MU806__) || defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__)
+#if defined(__dsPIC33EP256MU806__)
+#ifdef HW_TIMER_REPEAT
+	LATDbits.LATD3 = ~PORTDbits.RD3;
+#else
+	LATDbits.LATD3 = 0;
+#endif
+#elif defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__)
         LATEbits.LATE3 = ~LATEbits.LATE3;
 #endif
 }

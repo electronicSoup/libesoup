@@ -116,6 +116,8 @@
  * EEPROM Chip is connected via the SPI Interface so enable
  */
 #define SYS_SPI_BUS
+#define SYS_SPI_NUM_CHANNELS      1
+#define SYS_SPI_NUM_DEVICES       1
 
 /*
  * Include access to the EEPROM Chip in the project
@@ -131,7 +133,7 @@
  * Include CAN BUS Functionality in this project
  */
 #define SYS_CAN_BUS
-#define SYS_CAN_LOOPBACK
+//#define SYS_CAN_LOOPBACK
 #define SYS_CAN_FRAME_HANDLER_ARRAY_SIZE  10
 #define SYS_CAN_L2_HANDLER_ARRAY_SIZE      5
 #define SYS_CAN_RX_CIR_BUFFER_SIZE         5        

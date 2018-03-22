@@ -26,6 +26,9 @@
 static const char *TAG = "dsPIC33";
 #include "libesoup/logger/serial_log.h"
 #endif // SYS_SERIAL_LOGGING
+
+#include "libesoup/errno.h"
+
 /*
  * Check required libesoup_config.h defines are found
  */
@@ -103,8 +106,9 @@ static void clock_init(void)
          * Crystal Frequency then we can simple use Primary Clock.
 	 * NO PLL
          */
+	sys_clock_freq = SYS_CLOCK_FREQ;
+
         if(sys_clock_freq != (CRYSTAL_FREQ/2)) {
-		sys_clock_freq = SYS_CLOCK_FREQ;
 		fosc = sys_clock_freq * 2;
 	
 		if((fosc < 15000000) || (fosc > 120000000)) {

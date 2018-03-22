@@ -57,7 +57,7 @@ int main()
 	 */
 	delay(mSeconds, 500);
 
-	if (rc != SUCCESS) {
+	if (rc < 0) {
 #if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
 		LOG_E("ERROR Oops\n\r");
 #endif
@@ -93,8 +93,8 @@ int main()
 	request.exp_fn = expiry;
 	request.data.sival_int = 0x00;
 	
-	rc = sw_timer_start(&timer, &request);
-	if(rc != SUCCESS) {
+	timer = sw_timer_start(&request);
+	if(timer < 0) {
 #if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
 		LOG_E("Failed to start SW Timer\n\r");
 #endif		

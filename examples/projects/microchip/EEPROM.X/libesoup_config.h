@@ -10,7 +10,7 @@
  * in your include path. The file contains the various switches and definitions
  * which configure the various features of the library.
  *
- * Copyright 2017 electronicSoup Limited
+ * Copyright 2017-2018 electronicSoup Limited
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU Lesser General Public License as published by
@@ -122,7 +122,9 @@
  * EEPROM Chip is connected via the SPI Interface so enable
  */
 #define SYS_SPI_BUS
-
+#define SYS_SPI_NUM_CHANNELS   1
+#define SYS_SPI_NUM_DEVICES    1
+        
 /*
  * Include access to the EEPROM Chip in the project
  */

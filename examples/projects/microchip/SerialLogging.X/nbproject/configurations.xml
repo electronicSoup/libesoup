@@ -22,6 +22,10 @@
           <logicalFolder name="examples" displayName="examples" projectFiles="true">
             <itemPath>../../../main_serial_logging.c</itemPath>
           </logicalFolder>
+          <logicalFolder name="gpio" displayName="gpio" projectFiles="true">
+            <itemPath>../../../../gpio/peripheral.c</itemPath>
+            <itemPath>../../../../gpio/gpio.c</itemPath>
+          </logicalFolder>
           <logicalFolder name="logger" displayName="logger" projectFiles="true">
             <itemPath>../../../../logger/serial_log.c</itemPath>
           </logicalFolder>

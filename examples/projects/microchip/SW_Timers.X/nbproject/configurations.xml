@@ -13,6 +13,10 @@
                    displayName="Source Files"
                    projectFiles="true">
       <logicalFolder name="libesoup" displayName="libesoup" projectFiles="true">
+        <logicalFolder name="gpio" displayName="gpio" projectFiles="true">
+          <itemPath>../../../../gpio/peripheral.c</itemPath>
+          <itemPath>../../../../gpio/gpio.c</itemPath>
+        </logicalFolder>
         <logicalFolder name="processors" displayName="processors" projectFiles="true">
           <itemPath>../../../../processors/pic18f4585.c</itemPath>
           <itemPath>../../../../processors/pic18f2680.c</itemPath>
@@ -23,6 +27,7 @@
         <logicalFolder name="timers" displayName="timers" projectFiles="true">
           <itemPath>../../../../timers/hw_timers.c</itemPath>
           <itemPath>../../../../timers/sw_timers.c</itemPath>
+          <itemPath>../../../../timers/delay.c</itemPath>
         </logicalFolder>
         <itemPath>../../../../core.c</itemPath>
       </logicalFolder>

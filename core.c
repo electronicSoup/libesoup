@@ -4,7 +4,7 @@
  *
  * File containing the function to initialise the libesoup library
  *
- * Copyright 2017 electronicSoup Limited
+ * Copyright 2017-2018 electronicSoup Limited
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 2 of the GNU Lesser General Public License
@@ -34,6 +34,9 @@ static const char  *TAG = "CORE";
 #include "libesoup/logger/serial_log.h"
 #endif  // SYS_SERIAL_LOGGING
 
+#include "libesoup/errno.h"
+#include "libesoup/boards/board.h"
+
 #ifdef SYS_HW_TIMERS
 #include "libesoup/timers/hw_timers.h"
 #endif
@@ -44,10 +47,6 @@ static const char  *TAG = "CORE";
 
 #ifdef SYS_UART
 #include "libesoup/comms/uart/uart.h"
-#endif
-
-#ifdef SYS_SERIAL_LOGGING
-#include "libesoup/logger/serial_log.h"
 #endif
 
 #ifdef SYS_JOBS
@@ -62,13 +61,13 @@ static const char  *TAG = "CORE";
 #include "libesoup/comms/spi/spi.h"
 #endif
 
-#ifdef SYS_EEPROM
-#include "libesoup/hardware/eeprom.h"
-#endif
-
 #ifdef SYS_RAND
 #include "libesoup/utils/rand.h"
 #endif
+
+#ifdef SYS_CHANGE_NOTIFICATION
+#include "libesoup/processors/dsPIC33/change_notification/change_notification.h"
+#endif // SYS_CHANGE_NOTIFICATION
 
 /*
  * The Instruction Clock Frequency being used by the system.
@@ -82,16 +81,16 @@ result_t libesoup_init(void)
 {
 	uint32_t loop;
 #ifdef XC16
-	result_t rc  __attribute__((unused)) = SUCCESS;
+	result_t rc  __attribute__((unused)) = 0;
 #else
-	result_t rc = SUCCESS;
+	result_t rc = 0;
 #endif
 
 #if __XC8
 #ifdef SYS_SERIAL_LOGGING
 	TAG = TAG;
 #endif // SYS_SERIAL_LOGGING
-	rc = SUCCESS;
+	rc = 0;
 #endif
 	
 	cpu_init();
@@ -110,12 +109,7 @@ result_t libesoup_init(void)
 
 #ifdef SYS_SERIAL_LOGGING
         rc = serial_logging_init();
-        if (rc != SUCCESS) {
-                /*
-                 * What to do?
-                 */
-                return(rc);
-        }
+	RC_CHECK
 #endif
 
 #ifdef SYS_HW_TIMERS
@@ -128,28 +122,13 @@ result_t libesoup_init(void)
 
 #ifdef SYS_HW_RTC
 	rc = rtc_init();
-        if (rc != SUCCESS) {
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
-		LOG_E("Failed in initialise RTC Module\n\r");
-#endif
-                return(rc);
-	}
+	RC_CHECK
 #endif
 		
 #ifdef SYS_JOBS
 	jobs_init();
 #endif
 
-#ifdef SYS_EEPROM
-	rc = eprom_init();
-        if (rc != SUCCESS) {
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
-		LOG_E("Failed in initialise RTC Module\n\r");
-#endif
-                return(rc);
-	}
-#endif
-	
 #ifdef SYS_SPI_BUS
         spi_init();
 #endif
@@ -158,5 +137,10 @@ result_t libesoup_init(void)
 	random_init();
 #endif
 
-	return(SUCCESS);
+#ifdef SYS_CHANGE_NOTIFICATION
+	rc = change_notifier_init();
+	RC_CHECK
+#endif // SYS_CHANGE_NOTIFICATION
+
+	return(board_init());
 }

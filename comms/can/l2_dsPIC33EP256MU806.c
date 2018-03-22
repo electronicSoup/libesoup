@@ -37,6 +37,9 @@ static const char *TAG = "dsPIC33_CAN";
 #error "CAN Module relies on System Status module libesoup.h must define SYS_SYSTEM_STATUS"
 #endif
 
+#include "libesoup/errno.h"
+#include "libesoup/gpio/gpio.h"
+#include "libesoup/gpio/peripheral.h"
 #include "libesoup/status/status.h"
 #include "libesoup/comms/can/l2_dsPIC33EP256MU806.h"
 #include "libesoup/comms/can/can.h"
@@ -230,7 +233,7 @@ result_t can_l2_init(can_baud_rate_t arg_baud_rate, status_handler_t arg_status_
 #if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
 		LOG_E("L2_CanInit() ToDo!!! No Baud Rate Specified\n\r");
 #endif
-		return (ERR_BAD_INPUT_PARAMETER);
+		return (-ERR_BAD_INPUT_PARAMETER);
 	}
 
 	status_handler = arg_status_handler;
@@ -238,12 +241,15 @@ result_t can_l2_init(can_baud_rate_t arg_baud_rate, status_handler_t arg_status_
         /*
          * Initialise the I/O Pins and pipheral functions
          */
-	CAN_RX_PIN_ANSEL = DIGITAL_PIN;
-        CAN_RX_PIN_DIRECTION = INPUT_PIN;
-	PPS_CAN1_RX = CAN_RX_INPUT_PERIPHERAL_PIN;
+	rc = gpio_set(CAN_RX_PIN, GPIO_MODE_DIGITAL_INPUT, 0);
+	RC_CHECK
+	rc = PPS_I_CAN1_RX = set_peripheral_input(CAN_RX_PIN);
+	RC_CHECK
 	
-        CAN_TX_PIN_DIRECTION = OUTPUT_PIN;
-	CAN_TX_OUTPUT_PERIPHERAL_PIN = PPS_CAN1_TX;
+	rc = gpio_set(CAN_TX_PIN, GPIO_MODE_DIGITAL_OUTPUT, 0);
+	RC_CHECK
+	rc = set_peripheral_output(CAN_TX_PIN, PPS_O_CAN1_TX);
+	RC_CHECK
 
 	rc = can_l2_bitrate(baud_125K, TRUE);
 	if(rc != SUCCESS) return(rc);
@@ -252,6 +258,9 @@ result_t can_l2_init(can_baud_rate_t arg_baud_rate, status_handler_t arg_status_
          * Enter configuration mode
          */
 	set_mode(config);
+
+	rc = set_bitrate(baud_125K);
+	if(rc < 0) return(rc);
 
 	MEMORY_MAP_WIN_CONFIG_STATUS
 		
@@ -402,7 +411,7 @@ result_t can_l2_init(can_baud_rate_t arg_baud_rate, status_handler_t arg_status_
 	set_mode(normal);
 #endif
 	
-        return(SUCCESS);
+        return(0);
 }
 
 result_t can_l2_tx_frame(can_frame *frame)
@@ -436,10 +445,10 @@ result_t can_l2_tx_frame(can_frame *frame)
 			restart_ping_timer();
 #endif // SYS_CAN_PING_PROTOCOL
 			
-			return(SUCCESS);
+			return(0);
 		}
 	}
-	return(ERR_NO_RESOURCES);
+	return(-ERR_NO_RESOURCES);
 }
 
 void can_l2_tasks(void)
@@ -566,8 +575,8 @@ result_t can_l2_bitrate(can_baud_rate_t baud, boolean change)
 		bit_freq = 1000000;
 		break;
 	default:
-		return(ERR_BAD_INPUT_PARAMETER);
-		break;		
+		return(-ERR_BAD_INPUT_PARAMETER);
+		break;
 	}
 
 	/*
@@ -617,9 +626,10 @@ result_t can_l2_bitrate(can_baud_rate_t baud, boolean change)
 		}
 	}	
 
-	if(change && (rc == SUCCESS)) {
-		brp--;       // End of the finding loop will have incremented
-		tq_count++;  // ^^^
+	if(!found) return(-ERR_CAN_INVALID_BAUDRATE);
+
+	brp--;       // End of the found loop will have incremented
+	tq_count++;  // ^^^
 	
 #if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 		LOG_D("Fp %ld\n\r", sys_clock_freq);
@@ -692,11 +702,10 @@ result_t can_l2_dispatch_reg_handler(can_l2_target_t *target)
 #if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
         LOG_D("can_l2_dispatch_reg_handler()\n\r");
 #endif
-        return(SUCCESS);
+        return(0);
 }
 #endif // defined(__dsPIC33EP256MU806__)
 
 #endif // #ifdef SYS_CAN_BUS
 
 #endif //  defined(__dsPIC33EP256MU806__)
-

@@ -10,7 +10,7 @@
  * in your include path. The file contains the various switches and definitions
  * which configure the various features of the library.
  *
- * Copyright 2017 electronicSoup Limited
+ * Copyright 2017-2018 electronicSoup Limited
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU Lesser General Public License as published by
@@ -53,11 +53,11 @@
  * Serial Logging
  */
 #if defined(SYS_SERIAL_PORT_GndTxRx)
-        #define SERIAL_LOGGING_TX_PIN  RP120;
-        #define SERIAL_LOGGING_RX_PIN  RP118;
+        #define SERIAL_LOGGING_TX_PIN  RG8
+        #define SERIAL_LOGGING_RX_PIN  RG6
 #elif defined(SYS_SERIAL_PORT_GndRxTx)
-        #define SERIAL_LOGGING_TX_PIN  RP118;
-        #define SERIAL_LOGGING_RX_PIN  RP120;
+        #define SERIAL_LOGGING_TX_PIN  RG6
+        #define SERIAL_LOGGING_RX_PIN  RG8
 #endif
 
 /*
@@ -86,7 +86,7 @@
  * @def   EEPROM_DeSelect
  * @brief Macro to deselect the EEPROM Chip
  */
-#define EEPROM_CS_PIN_DIRECTION        TRISDbits.TRISD11
+#define EEPROM_CS_PIN                  RD11
 #define EEPROM_CS                      LATDbits.LATD11
 #define EEPROM_Select                  EEPROM_CS = 0;
 #define EEPROM_DeSelect                EEPROM_CS = 1;
@@ -95,13 +95,14 @@
 /*
  * CAN Bus definitions
  */
-#define CAN_RX_PIN_ANSEL               ANSELGbits.ANSG7
-#define CAN_RX_PIN_DIRECTION           TRISGbits.TRISG7
-#define CAN_RX_INPUT_PERIPHERAL_PIN    RPI119
+#define CAN_RX_PIN                     RG7
+#define CAN_TX_PIN                     RF4
 
-#define CAN_TX_PIN_DIRECTION           TRISFbits.TRISF4
-#define CAN_TX_OUTPUT_PERIPHERAL_PIN   PPS_RP100
- 
+/*
+ * One Wire bus
+ */
+#define ONE_WIRE_PIN                   RF3
+
 /**
  * SPI (Serial Peripheral Interface Definitions.
  *
@@ -121,15 +122,9 @@
  * @brief Data Direction Register pin for the SPI Master Out Slave In line. 
  *
  */
-#define SPI_RW_FINISHED     SPI1STATbits.SPIRBF
-#define SPI_SCK_DIRECTION   TRISFbits.TRISF1   // RP97
-#define SPI_MOSI_DIRECTION  TRISFbits.TRISF0   // RP96
-#define SPI_MISO_DIRECTION  TRISDbits.TRISD10  // RPI74
-
-#define SPI_MISO_PIN        RPI74
-
-#define SPI_MOSI_PIN        RPOR7bits.RP96R  // RP96
-#define SPI_SCK_PIN         RPOR7bits.RP97R  // RP97
+#define BRD_SPI_SCK          RF1
+#define BRD_SPI_MOSI         RF0
+#define BRD_SPI_MISO        RD10
 
 /*
  * Flash parameters
