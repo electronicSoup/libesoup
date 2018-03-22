@@ -18,7 +18,8 @@
  *
  */
 
+#define OW_ANY_CHANNEL  0xFF
 
 extern result_t one_wire_init(void);
-extern result_t one_wire_reserve(enum pin_t);
+extern result_t one_wire_reserve(int16_t chan, enum pin_t pin);
 
