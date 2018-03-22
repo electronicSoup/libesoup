@@ -97,7 +97,12 @@
  */
 #define CAN_RX_PIN                     RG7
 #define CAN_TX_PIN                     RF4
- 
+
+/*
+ * One Wire bus
+ */
+#define ONE_WIRE_PIN                   RF3
+
 /**
  * SPI (Serial Peripheral Interface Definitions.
  *
@@ -182,6 +187,5 @@
 #define USB_DEVICE  TRISDbits.TRISD9 = OUTPUT_PIN; LATDbits.LATD9 = 0;
 
 #include "libesoup/core.h"
-extern result_t pin_to_port_bit(enum pin_t pin, uint8_t **port, uint8_t *bit);
 
 #endif // _CB_dsPIC33EP256MU806_H
