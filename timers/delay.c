@@ -42,6 +42,7 @@ static const char *TAG = "DELAY";
  */
 #ifdef SYS_HW_TIMERS
 
+#include "libesoup/errno.h"
 #include "libesoup/timers/hw_timers.h"
 
 
@@ -60,7 +61,7 @@ void hw_expiry_function(timer_id timer, union sigval data)
  */
 result_t delay(ty_time_units units, uint16_t duration)
 {
-	result_t           rc = SUCCESS;
+	result_t           rc;
 	timer_id           hw_timer;
 	struct timer_req   timer_request;
 
@@ -72,7 +73,8 @@ result_t delay(ty_time_units units, uint16_t duration)
 	timer_request.data.sival_int = 0;
 
         delay_over = FALSE;
-        hw_timer = hw_timer_start(&timer_request);
+        rc = hw_timer_start(&timer_request);
+	RC_CHECK
 
         while(!delay_over) {
 #if defined(XC16)
