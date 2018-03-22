@@ -99,7 +99,8 @@ result_t libesoup_init(void)
 	/*
 	 * Allow the clock to settle
 	 */
-	for(loop = 0; loop < 0x1000; loop++) {
+	for(loop = 0; loop < 0x80000000; loop++) {
+		Nop();
 		Nop();
 	}
 
