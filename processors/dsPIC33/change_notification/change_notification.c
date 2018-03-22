@@ -36,6 +36,7 @@ __attribute__((unused)) static const char *TAG = "CHANGE";
 #endif
 
 #include "libesoup/errno.h"
+#include "libesoup/gpio/gpio.h"
 #include "libesoup/processors/dsPIC33/change_notification/change_notification.h"
 
 static result_t enable_change(uint8_t *port, uint8_t bit);
@@ -62,7 +63,7 @@ void __attribute__((__interrupt__, __no_auto_psv__)) _CNInterrupt(void)
 		if(pins[loop].monitored) {
 			
 			current_value = *pins[loop].port & (0b1 << pins[loop].bit);
-			if(pins[loop].previous_value == current_value) {
+			if(pins[loop].previous_value != current_value) {
 				pins[loop].previous_value = current_value;
 				pins[loop].notify(pins[loop].port, pins[loop].bit);
 			}
@@ -83,9 +84,15 @@ result_t change_notifier_init()
 	return(0);
 }
 
-result_t change_notifier_register(uint8_t *port, uint8_t bit, change_notifier notifier)
+result_t change_notifier_register(enum pin_t pin, change_notifier notifier)
 {
-	uint16_t loop;
+	result_t   rc;
+	uint16_t   loop;
+	uint8_t   *port;
+	uint8_t    bit;
+
+	rc = pin_to_port_bit(pin, &port, &bit);
+	RC_CHECK
 
 	/*
 	 * See is the pin already being monitored by someone
@@ -120,16 +127,21 @@ static result_t enable_change(uint8_t *port, uint8_t bit)
 	} else if(port == (uint8_t *)&PORTF) {
 		CNENF |= (0b1 << bit);
 	} else {
-		LOG_E("enable_change\n\r");
 		return(ERR_NOT_CODED);
 	}
 	return(0);
 }
 
-result_t change_notifier_deregister(uint8_t *port, uint8_t bit)
+result_t change_notifier_deregister(enum pin_t pin)
 {
-	uint16_t loop;
+	result_t  rc;
+	uint8_t  *port;
+	uint8_t   bit;
+	uint16_t  loop;
 	
+	rc = pin_to_port_bit(pin, &port, &bit);
+	RC_CHECK
+
 	for(loop = 0; loop < SYS_CHANGE_NOTIFICATION_MAX_PINS; loop++) {
 		if(pins[loop].monitored && (pins[loop].port == port) && (pins[loop].bit == bit)) {
 			pins[loop].monitored = FALSE;
@@ -145,9 +157,12 @@ static result_t disable_change(uint8_t *port, uint8_t bit)
 {
 	if(port == (uint8_t *)&PORTD) {
 		CNEND &= ~(0b1 << bit);
-		return(0);
+	} else if(port == (uint8_t *)&PORTF) {
+		CNENF &= ~(0b1 << bit);
+	} else {
+		return(-ERR_BAD_INPUT_PARAMETER);
 	}
-	return(-ERR_BAD_INPUT_PARAMETER);
+	return(0);
 }
 
 #endif // __dsPIC33EP256MU806__
