@@ -13,6 +13,15 @@
                    displayName="Source Files"
                    projectFiles="true">
       <logicalFolder name="libesoup" displayName="libesoup" projectFiles="true">
+        <logicalFolder name="boards" displayName="boards" projectFiles="true">
+          <logicalFolder name="cb-PIC24FJ256GB106"
+                         displayName="cb-PIC24FJ256GB106"
+                         projectFiles="true">
+          </logicalFolder>
+          <logicalFolder name="cinnamonBun" displayName="cinnamonBun" projectFiles="true">
+            <itemPath>../../../../boards/cinnamonBun/board.c</itemPath>
+          </logicalFolder>
+        </logicalFolder>
         <logicalFolder name="gpio" displayName="gpio" projectFiles="true">
           <itemPath>../../../../gpio/peripheral.c</itemPath>
           <itemPath>../../../../gpio/gpio.c</itemPath>

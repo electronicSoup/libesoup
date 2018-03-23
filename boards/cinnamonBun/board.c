@@ -41,7 +41,9 @@
 
 result_t board_init(void)
 {
+#if (defined(SYS_ONE_WIRE) || defined(SYS_SPI_BUS) || defined(SYS_EEPROM))
 	result_t               rc;
+#endif
 #ifdef SYS_ONE_WIRE
 	int16_t                ow_channel;
 #endif

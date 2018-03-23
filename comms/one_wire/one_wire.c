@@ -38,7 +38,6 @@ static const char *TAG = "OneWire";
 #include "libesoup/gpio/gpio.h"
 #include "libesoup/timers/hw_timers.h"
 #include "libesoup/timers/delay.h"
-//#include "libesoup/timers/sw_timers.h"
 #include "libesoup/comms/one_wire/one_wire.h"
 #include "libesoup/processors/dsPIC33/change_notification/change_notification.h"
 
@@ -60,7 +59,13 @@ static const char *TAG = "OneWire";
 #define NO_CHANNEL 0xFF
 #define NO_DEVICE  0xFF
 
-#define READ_ROM   0x33
+/*
+ * One Wire Commands
+ */
+#define READ_ROM      0x33
+#define MATCH_ROM     0x55
+#define ALARM_SEARCH  0xEC
+#define SEARCH        0xF0
 
 /*
  * Local variables
@@ -75,7 +80,10 @@ struct one_wire_bus {
 } one_wire_bus;
 
 struct one_wire_device {
-	uint8_t                 channel;
+	uint8_t                 ow_channel;
+	uint8_t                 family;
+	uint8_t                 serial_number[6];
+	uint8_t                 crc;
 } one_wire_device;
 
 
@@ -161,18 +169,36 @@ static result_t census(struct one_wire_bus *bus)
 {
 	result_t  rc;
 	uint8_t   family_code = 0x00;
+	boolean   first_read;
+	boolean   second_read;
 
 	delay(mSeconds, 100);	
 	
 	rc = reset_pulse(bus);
-//	LOG_D("reset pulse returned %d\n\r", rc);
 	RC_CHECK
-	
-	if(rc == 0) return(0);
+	if(rc == 0) return(-ERR_NO_RESPONSE);
 
-	rc = write_byte(bus, READ_ROM);
+	rc = write_byte(bus, SEARCH);
+//	rc = write_byte(bus, READ_ROM);
 //	LOG_D("write_byte returned %d\n\r", rc);
 	RC_CHECK
+
+	rc = read_bit(bus);
+	RC_CHECK
+	first_read = (boolean)(rc == 1);
+	rc = read_bit(bus);
+	RC_CHECK
+	second_read = (boolean)(rc == 1);
+	
+	if( (first_read == 0) && (second_read == 0) ) {
+		// Discrepancy at this bit
+	} else if( (first_read == 1) && (second_read == 1) ) {
+		// No devices, must be finished
+	} else if(first_read) {
+		// bit is one
+	} else {
+		// bit is zero
+	}
 
 	rc = read_byte(bus);
 	RC_CHECK
