@@ -123,9 +123,9 @@
  * Include a board file
  */
 #if defined(__dsPIC33EP256MU806__)
-#include "libesoup/boards/cb-dsPIC33EP256MU806.h"
+#include "libesoup/boards/cinnamonBun/dsPIC33/cb-dsPIC33EP256MU806.h"
 #elif defined (__PIC24FJ256GB106__)
-#include "libesoup/boards/cb-PIC24FJ256GB106/cb-PIC24FJ256GB106.h"
+#include "libesoup/boards/cinnamonBun/pic24FJ/cb-PIC24FJ256GB106.h"
 #elif defined(__18F4585)
 #include "libesoup/boards/gauge-PIC18F4585.h"
 #elif defined(__RPI)

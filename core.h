@@ -27,7 +27,7 @@
  * include stdint.h to get access to uint8_t style types
  */
 #if defined(XC16) || defined(__XC8)
-    #include <stdint.h>     // For uintx_t types
+    #include <stdint.h>
 
 /*
  * The actual Instruction/Peripheral Clock frequency being used by the system

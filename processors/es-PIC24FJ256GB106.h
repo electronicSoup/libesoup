@@ -35,6 +35,15 @@
 #define DISABLED    0
 #define ENABLED     1
 
+
+/*
+ * Enabling & Disabling Interrupts
+ * 
+ * Not sure about this method but it seems all that's available.
+ */
+#define INTERRUPTS_DISABLED    SRbits.IPL = 0b111;
+#define INTERRUPTS_ENABLED     SRbits.IPL = 0b000;
+
 /**
  * \brief Identifers for the hardware timers in the pic24FG256GB106
  * 

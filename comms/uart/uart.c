@@ -84,7 +84,7 @@ static void     uart_set_uart_config(struct uart_data *uart);
 static result_t uart_putchar(uint8_t uart, uint8_t ch);
 
 static result_t buffer_write(int8_t uart_index, char ch);
-static char     buffer_read(uint8_t uart_index);
+static char     buffer_read (uint8_t uart_index);
 
 /*
  * Returns the number of bytes still waiting to be loaded in HW TX Buffer.
@@ -661,10 +661,13 @@ static result_t uart_putchar(uint8_t uart_index, uint8_t ch)
 			return;
 		}
 
-		return(buffer_write(uart_index, ch));
 		PIE1bits.TXIE = ENABLED;
+
+		return(buffer_write(uart_index, ch));
 #endif // #if defined(__18F2680) || defined(__18F4585)
+#if !defined(__XC8)
 		break;
+#endif
 #endif // UART_1
 #ifdef UART_2
 	case UART_2:
@@ -789,104 +792,68 @@ static char buffer_read(uint8_t uart_index)
 }
 
 #if defined(__dsPIC33EP256MU806__)
-static int16_t uart_set_rx_pin(uint8_t uart, enum pin_t pin)
+static result_t uart_set_rx_pin(uint8_t uart, enum pin_t pin)
 {
 	int16_t rc;
 	
-	switch (pin) {
-	case RG8:
-		rc = gpio_set(pin, GPIO_MODE_DIGITAL_INPUT, 0);
-		RC_CHECK
-			
-	default:
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
-		LOG_E("Unknow Peripheral Rx Pin\n\r");
-#endif
-		break;
-        }
+	rc = gpio_set(pin, GPIO_MODE_DIGITAL_INPUT, 0);
+	RC_CHECK
+
+	rc = set_peripheral_input(pin);
+	RC_CHECK
 
 	switch (uart) {
 	case UART_1:
-		rc = set_peripheral_input(pin);
-		RC_CHECK
 		PPS_I_UART_1_RX = rc;
 		break;
 
 	case UART_2:
-		rc = set_peripheral_input(pin);
-		RC_CHECK
 		PPS_I_UART_2_RX = rc;
 		break;
 
 	case UART_3:
-		rc = set_peripheral_input(pin);
-		RC_CHECK
 		PPS_I_UART_3_RX = rc;
 		break;
 
 	case UART_4:
-		rc = set_peripheral_input(pin);
-		RC_CHECK
 		PPS_I_UART_4_RX = rc;
 		break;
 	}
 	return(0);
 }
 #elif defined (__PIC24FJ256GB106__)
-static void uart_set_rx_pin(uint8_t uart, uint8_t pin)
+static result_t uart_set_rx_pin(uint8_t uart, enum pin_t pin)
 {
-	switch (pin) {
-	case RP0:
-		AD1PCFGLbits.PCFG0 = DIGITAL_PIN;
-		TRISBbits.TRISB0 = INPUT_PIN;
-		break;
+	result_t rc;
+	
+	rc = gpio_set(pin, GPIO_MODE_DIGITAL_INPUT, 0);
+	RC_CHECK
 
-	case RP1:
-		AD1PCFGLbits.PCFG1 = DIGITAL_PIN;
-		TRISBbits.TRISB1 = INPUT_PIN;
-		break;
-
-	case RP13:
-		AD1PCFGLbits.PCFG2 = DIGITAL_PIN;
-		TRISBbits.TRISB2 = INPUT_PIN;
-		break;
-
-	case RP25:
-		TRISDbits.TRISD4 = INPUT_PIN;
-		break;
-
-	case RP28:
-		AD1PCFGLbits.PCFG4 = DIGITAL_PIN;
-		TRISBbits.TRISB4 = INPUT_PIN;
-		break;
-
-	default:
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
-		LOG_E("Unknow Peripheral Rx Pin\n\r");
-#endif
-		break;
-	}
+	rc = set_peripheral_input(pin);
+	RC_CHECK
 
 	switch (uart) {
 	case UART_1:
-		PPS_UART_1_RX = pin;
+		PPS_UART_1_RX = rc;
 		break;
 
 	case UART_2:
-		PPS_UART_2_RX = pin;
+		PPS_UART_2_RX = rc;
 		break;
 
 	case UART_3:
-		PPS_UART_3_RX = pin;
+		PPS_UART_3_RX = rc;
 		break;
 
 	case UART_4:
-		PPS_UART_4_RX = pin;
+		PPS_UART_4_RX = rc;
 		break;
 	}
+	
+	return(0);
 }
 #elif defined(__18F2680) || defined(__18F4585)
-static void uart_set_rx_pin(uint8_t uart, uint8_t pin)
+static result_t uart_set_rx_pin(uint8_t uart, enum pin_t pin)
 {
 //        TRISCbits.TRISC7 = INPUT_PIN;
 }
@@ -928,79 +895,48 @@ static result_t uart_set_tx_pin(uint8_t uart, enum pin_t pin)
 	return(0);
 }
 #elif defined (__PIC24FJ256GB106__)
-static void uart_set_tx_pin(uint8_t uart, uint8_t pin)
+static result_t uart_set_tx_pin(uint8_t uart, enum pin_t pin)
 {
-	uint8_t tx_function = 0x00;
+	result_t   rc;
+	uint8_t    tx_function = 0x00;
 
 	switch (uart) {
 	case UART_1:
-		tx_function = PPS_UART_1_TX;
+		tx_function = PPS_O_UART_1_TX;
 		break;
 
 	case UART_2:
-		tx_function = PPS_UART_2_TX;
+		tx_function = PPS_O_UART_2_TX;
 		break;
 
 	case UART_3:
-		tx_function = PPS_UART_3_TX;
+		tx_function = PPS_O_UART_3_TX;
 		break;
 
 	case UART_4:
-		tx_function = PPS_UART_4_TX;
+		tx_function = PPS_O_UART_4_TX;
 		break;
 		
 	default:
 #if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
 		LOG_E("Bad input parameters\n\r");
 #endif
-	}
-
-	switch (pin) {
-	case RP0:
-		AD1PCFGLbits.PCFG0 = DIGITAL_PIN;
-		TRISBbits.TRISB0 = OUTPUT_PIN;
-		RPOR0bits.RP0R = tx_function;
-		break;
-
-	case RP1:
-		AD1PCFGLbits.PCFG1 = DIGITAL_PIN;
-		TRISBbits.TRISB1 = OUTPUT_PIN;
-		RPOR0bits.RP1R = tx_function;
-		break;
-
-	case RP13:
-		AD1PCFGLbits.PCFG2 = DIGITAL_PIN;
-		TRISBbits.TRISB2 = OUTPUT_PIN;
-		RPOR6bits.RP13R = tx_function;
-		break;
-
-	case RP20:
-		TRISDbits.TRISD5 = OUTPUT_PIN;
-		RPOR10bits.RP20R = tx_function;
-		break;
-
-	case RP25:
-		TRISDbits.TRISD4 = OUTPUT_PIN;
-		RPOR12bits.RP25R = tx_function;
-		break;
-
-	case RP28:
-		AD1PCFGLbits.PCFG4 = DIGITAL_PIN;
-		TRISBbits.TRISB4 = OUTPUT_PIN;
-		RPOR14bits.RP28R = tx_function;
-		break;
-			
-	default:
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
-		LOG_E("Unknow Peripheral Tx Pin\n\r");
-#endif
 		break;
 	}
+
+	rc = gpio_set(pin, GPIO_MODE_DIGITAL_OUTPUT, 1);
+	RC_CHECK;
+
+	rc = set_peripheral_output(pin, tx_function);
+	RC_CHECK;
+	
+	return(0);
 }
 #elif defined(__18F2680) || defined(__18F4585)
-static void uart_set_tx_pin(uint8_t uart, uint8_t pin)
+static result_t uart_set_tx_pin(uint8_t uart, enum pin_t pin)
 {
         TRISCbits.TRISC6 = OUTPUT_PIN;
+	return(0);
 }
 #endif // MicroContoller Selection
 

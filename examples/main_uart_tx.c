@@ -35,7 +35,7 @@ int main(void)
 	uart.tx_pin = RD3;
 	uart.rx_pin = INVALID_PIN;
 #elif defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__)
-	uart.tx_pin = RP0;
+	uart.tx_pin = RB0;
 #elif defined(__18F4585)
 	/*
 	 * There is only one option for the uart tx pin on this uC

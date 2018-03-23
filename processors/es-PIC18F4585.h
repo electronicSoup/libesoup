@@ -38,6 +38,13 @@
 #define DISABLED                0
 #define ENABLED                 1
 
+
+/*
+ * Enabling & Disabling Interrupts
+ */
+#define INTERRUPTS_ENABLED      INTCONbits.GIE = 1;
+#define INTERRUPTS_DISABLED     INTCONbits.GIE = 0;
+
 #define TIMER_0                 0
 #define TIMER_1                 1
 
