@@ -3,7 +3,7 @@
  *
  * @author John Whitmore
  *
- * Copyright 2017 - 2018 electronicSoup Limited
+ * Copyright 2017-2018 electronicSoup Limited
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 2 of the GNU Lesser General Public License
@@ -22,7 +22,6 @@
 
 #include "libesoup_config.h"
 
-extern void check_timer(uint8_t timer);
 
 #pragma config WDT = OFF
 #pragma config MCLRE = OFF
@@ -47,6 +46,10 @@ extern void check_timer(uint8_t timer);
 #pragma config EBTR0 = OFF
 #pragma config EBTR1 = OFF
 #pragma config EBTR2 = OFF
+
+#include "libesoup/timers/time.h"
+
+extern void check_timer(timer_id timer);
 
 extern void pic18f_timer_isr(uint8_t timer);
 extern void pic18f_uart_isr(void);

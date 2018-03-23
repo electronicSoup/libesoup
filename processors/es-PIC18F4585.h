@@ -10,7 +10,7 @@
  * in your include path. The file contains the various switches and definitions
  * which configure the various features of the library.
  *
- * Copyright 2017 electronicSoup Limited
+ * Copyright 2017-2018 electronicSoup Limited
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU Lesser General Public License as published by
@@ -32,40 +32,75 @@
 //#include <p18cxxx.h>
 #include <xc.h>
 
-#define OUTPUT_PIN      0
-#define INPUT_PIN       1
+#define OUTPUT_PIN              0
+#define INPUT_PIN               1
 
-#define DISABLED        0
-#define ENABLED         1
+#define DISABLED                0
+#define ENABLED                 1
+
+#define TIMER_0                 0
+#define TIMER_1                 1
+
+#define NUM_UARTS               1
+#define UART_1                  0x00
+
+#define U1_ENABLE               RCSTAbits.SPEN
+#define U1_RX_ISR_ENABLE        RCSTAbits.CREN
+#define U1_TX_ISR_ENABLE        TXSTAbits.TXEN
+
+#define NUMBER_HW_TIMERS        2
+
 
 /*
- * I/O Pin Definitions
+ * 
  */
-#define RC6            25
-#define RC7            26
+enum pin_t {
+    PRA0,
+    PRA1,
+    PRA2,
+    PRA3,
+    PRA4,
+    PRA5,
+    PRA6,
+    PRA7,
+    
+    PRB0,
+    PRB1,
+    PRB2,
+    PRB3,
+    PRB4,
+    PRB5,
+    PRB6,
+    PRB7,
 
-/*
- * PIC18 doesn't have Peripheral pins so dummy definition
- */
-typedef enum {
-    RP0 = 0,
-    NO_PIN = 0xff
-} ty_peripheral_pin;
+    PRC0,
+    PRC1,
+    PRC2,
+    PRC3,
+    PRC4,
+    PRC5,
+    PRC6,
+    PRC7,
+    
+    PRD0,
+    PRD1,
+    PRD2,
+    PRD3,
+    PRD4,
+    PRD5,
+    PRD6,
+    PRD7,
+    
+    PRE0,
+    PRE1,
+    PRE2,
+    PRE3,
+    
+    INVALID_PIN = 0xff,
+};
 
-#define TIMER_0         0
-#define TIMER_1         1
-
-#define NUM_UARTS       1
-#define UART_1       0x00
-
-#define U1_ENABLE          RCSTAbits.SPEN
-#define U1_RX_ISR_ENABLE   RCSTAbits.CREN
-#define U1_TX_ISR_ENABLE   TXSTAbits.TXEN
-
-#define SERIAL_LOGGING_TX_PIN RC6
-#define SERIAL_LOGGING_RX_PIN RC7
-
-#define NUMBER_HW_TIMERS  2
+#define SERIAL_LOGGING_TX_PIN   RC6
+#define SERIAL_LOGGING_RX_PIN   RC7
 
 extern void cpu_init(void);
 

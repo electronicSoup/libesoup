@@ -1,6 +1,6 @@
 /**
  *
- * \file libesoup/gpio/gpio.c
+ * \file libesoup/boards/cinnamonBun/board.c
  *
  * Copyright 2018 electronicSoup Limited
  *
@@ -17,22 +17,14 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  *
  */
+#include "libesoup_config.h"
 
-#define OUTPUT_PIN  0
-#define INPUT_PIN   1
+#if defined(__18F4585)
 
-#define DIGITAL_PIN 0
-#define ANALOG_PIN  1
+#include "libesoup/errno.h"
 
-#define GPIO_MODE_DIGITAL_INPUT     0x01
-#define GPIO_MODE_DIGITAL_OUTPUT    0x02
-#define GPIO_MODE_ANALOG_INPUT      0x04
-#define GPIO_MODE_ANALOG_OUTPUT     0x08
-#define GPIO_MODE_OPENDRAIN_INPUT   0x10
-#define GPIO_MODE_OPENDRAIN_OUTPUT  0x20
-#define GPIO_MODE_PULLUP            0x40
-#define GPIO_MODE_PULLDOWN          0x80
-
-extern result_t gpio_set(enum pin_t pin, uint16_t mode, uint8_t value);
-extern result_t gpio_get(enum pin_t pin);
-//extern result_t pin_to_port_bit(enum pin_t pin, uint8_t **port, uint8_t *bit);
+result_t board_init(void)
+{
+	return(0);
+}
+#endif //  defined(__18F4585)

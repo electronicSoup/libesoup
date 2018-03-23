@@ -11,7 +11,7 @@
  * in your include path. The file contains the various switches and definitions
  * which configure the various features of the library.
  *
- * Copyright 2017 electronicSoup Limited
+ * Copyright 2017-2018 electronicSoup Limited
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU Lesser General Public License as published by
@@ -31,12 +31,6 @@
 #define _ES_PIC24FJ256GB106_H
 
 #define RCON_WDTO   (1 << 4)
-
-#define OUTPUT_PIN  0
-#define INPUT_PIN   1
-
-#define ANALOG_PIN  0
-#define DIGITAL_PIN 1
 
 #define DISABLED    0
 #define ENABLED     1
@@ -136,21 +130,69 @@
 #define UART_4           0x03
 
 
-
-/**
- * \ingroup Core
- * \bried Microchip Peripheral Input Pins
+/*
+ * 
  */
-typedef enum { 
-        RP0  = 0,
-        RP1  = 1,
-        RP13 = 13,
-        RP20 = 20,
-        RP23 = 23,
-        RP25 = 25,
-        RP28 = 28,
-        NO_PIN = 0xff
-} ty_peripheral_pin;
+enum pin_t {
+    RB0,
+    RB1,
+    RB2,
+    RB3,
+    RB4,
+    RB5,
+    RB6,
+    RB7,
+    RB8,
+    RB9,
+    RB10,
+    RB11,
+    RB12,
+    RB13,
+    RB14,
+    RB15,
+
+    RC12,
+    RC13,
+    RC14,
+    RC15,
+
+    RD0,
+    RD1,
+    RD2,
+    RD3,
+    RD4,
+    RD5,
+    RD6,
+    RD7,
+    RD8,
+    RD9,
+    RD10,
+    RD11,
+
+    RE0,
+    RE1,
+    RE2,
+    RE3,
+    RE4,
+    RE5,
+    RE6,
+    RE7,
+
+    RF0,
+    RF1,
+    RF3,
+    RF4,
+    RF5,
+    
+    RG2,
+    RG3,
+    RG6,
+    RG7,
+    RG8,
+    RG9,
+
+    INVALID_PIN = 0xff,
+};
 
 /*
  * Peripheral Input functions

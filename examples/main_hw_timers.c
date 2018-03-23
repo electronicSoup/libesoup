@@ -25,6 +25,7 @@
 #include "libesoup_config.h"
 
 #include "libesoup/gpio/gpio.h"
+#include "libesoup/gpio/peripheral.h"
 #include "libesoup/timers/hw_timers.h"
 #include "libesoup/timers/delay.h"
 
@@ -43,7 +44,6 @@ int main(void)
 	result_t         rc;
         timer_id         timer;
 	struct timer_req request;
-	union sigval     data;
 
 	/*
 	 * Initialise the libesoup library
@@ -93,15 +93,15 @@ int main(void)
 	 * dsPIC33 @ 30M 500uS timer gives 504uS  Delta  4uS
 	 * dsPIC33 @  8M 500uS timer gives 508uS  Delta  8uS
 	 */
-	request.units    = uSeconds;
-	request.duration = 20;
+	request.units          = uSeconds;
+	request.duration       = 20;
 #ifdef HW_TIMER_REPEAT
-	request.type     = repeat;
+	request.type           = repeat;
 #else
-	request.type     = single_shot;
+	request.type           = single_shot;
 #endif
-	request.exp_fn   = exp_func;
-	request.data     = data;
+	request.exp_fn         = exp_func;
+	request.data.sival_int = 0;
 
 	LATDbits.LATD3 = 1;
 

@@ -100,7 +100,7 @@ static void     set_clock_divide(timer_id timer, uint16_t clock_divide);
 /*
  * Called from external scope by pic18f4585.c
  */
-void      check_timer(timer_id timer);
+void check_timer(timer_id timer);
 
 /*
  * The Code:

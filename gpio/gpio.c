@@ -34,18 +34,20 @@ __attribute__((unused)) static const char *TAG = "SPI";
 #include "libesoup/errno.h"
 #include "libesoup/gpio/gpio.h"
 
+#if defined(__dsPIC33EP256MU806__)
 result_t gpio_set(enum pin_t pin, uint16_t mode, uint8_t value)
 {
 	uint8_t  direction;
 	uint8_t  analog;
 	uint8_t  opendrain;
+
+	analog = 0b0;
+	if((mode & GPIO_MODE_ANALOG_INPUT) || (mode & GPIO_MODE_ANALOG_OUTPUT)) analog = 0b1;
 	
 	direction = 0b0;
-	analog = 0b0;
-	opendrain = 0b0;
-	
-	if((mode & GPIO_MODE_ANALOG_INPUT) || (mode & GPIO_MODE_ANALOG_OUTPUT)) analog = 0b1;
 	if(mode & GPIO_MODE_DIGITAL_INPUT) direction = 0b1;
+	
+	opendrain = 0b0;
 	if((mode & GPIO_MODE_OPENDRAIN_INPUT) || (mode & GPIO_MODE_OPENDRAIN_OUTPUT)) opendrain = 0b1;
 	
 	switch(pin) {
@@ -198,12 +200,12 @@ result_t gpio_set(enum pin_t pin, uint16_t mode, uint8_t value)
 		LATDbits.LATD9   = value;
 		break;
 	case RD10:
-		ODCDbits.ODCD10   = opendrain;
+		ODCDbits.ODCD10  = opendrain;
 		TRISDbits.TRISD10 = direction;
 		LATDbits.LATD10   = value;
 		break;
 	case RD11:
-		ODCDbits.ODCD11   = opendrain;
+		ODCDbits.ODCD11  = opendrain;
 		TRISDbits.TRISD11 = direction;
 		LATDbits.LATD11   = value;
 		break;
@@ -299,7 +301,307 @@ result_t gpio_set(enum pin_t pin, uint16_t mode, uint8_t value)
 	
 	return(0);
 }
+#endif  // #if defined(__dsPIC33EP256MU806__)
 
+
+#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__)
+result_t gpio_set(enum pin_t pin, uint16_t mode, uint8_t value)
+{
+	uint8_t  direction;
+	uint8_t  analog;
+	uint8_t  opendrain;
+	
+	direction = 0b0;
+	opendrain = 0b0;
+	analog = 0b1;
+	if((mode & GPIO_MODE_ANALOG_INPUT) || (mode & GPIO_MODE_ANALOG_OUTPUT)) analog = 0b0;
+	
+	if(mode & GPIO_MODE_DIGITAL_INPUT) direction = 0b1;
+	if((mode & GPIO_MODE_OPENDRAIN_INPUT) || (mode & GPIO_MODE_OPENDRAIN_OUTPUT)) opendrain = 0b1;
+	
+	switch(pin) {
+	case RB0:
+		AD1PCFGLbits.PCFG0 = analog;
+		ODCBbits.ODB0    = opendrain;
+		TRISBbits.TRISB0 = direction;
+		LATBbits.LATB0   = value;
+		break;
+	case RB1:
+		AD1PCFGLbits.PCFG1 = analog;
+		ODCBbits.ODB1    = opendrain;
+		TRISBbits.TRISB1 = direction;
+		LATBbits.LATB1   = value;
+		break;
+	case RB2:
+		AD1PCFGLbits.PCFG2 = analog;
+		ODCBbits.ODB2    = opendrain;
+		TRISBbits.TRISB2 = direction;
+		LATBbits.LATB2   = value;
+		break;
+	case RB3:
+		AD1PCFGLbits.PCFG3 = analog;
+		ODCBbits.ODB3    = opendrain;
+		TRISBbits.TRISB3 = direction;
+		LATBbits.LATB3   = value;
+		break;
+	case RB4:
+		AD1PCFGLbits.PCFG4 = analog;
+		ODCBbits.ODB4    = opendrain;
+		TRISBbits.TRISB4 = direction;
+		LATBbits.LATB4   = value;
+		break;
+	case RB5:
+		AD1PCFGLbits.PCFG5 = analog;
+		ODCBbits.ODB5    = opendrain;
+		TRISBbits.TRISB5 = direction;
+		LATBbits.LATB5   = value;
+		break;
+	case RB6:
+		AD1PCFGLbits.PCFG6 = analog;
+		ODCBbits.ODB6    = opendrain;
+		TRISBbits.TRISB6 = direction;
+		LATBbits.LATB6   = value;
+		break;
+	case RB7:
+		AD1PCFGLbits.PCFG7 = analog;
+		ODCBbits.ODB7    = opendrain;
+		TRISBbits.TRISB7 = direction;
+		LATBbits.LATB7   = value;
+		break;
+	case RB8:
+		AD1PCFGLbits.PCFG8 = analog;
+		ODCBbits.ODB8    = opendrain;
+		TRISBbits.TRISB8 = direction;
+		LATBbits.LATB8   = value;
+		break;
+	case RB9:
+		AD1PCFGLbits.PCFG9 = analog;
+		ODCBbits.ODB9    = opendrain;
+		TRISBbits.TRISB9 = direction;
+		LATBbits.LATB9   = value;
+		break;
+	case RB10:
+		AD1PCFGLbits.PCFG10 = analog;
+		ODCBbits.ODB10    = opendrain;
+		TRISBbits.TRISB10 = direction;
+		LATBbits.LATB10   = value;
+		break;
+	case RB11:
+		AD1PCFGLbits.PCFG11 = analog;
+		ODCBbits.ODB11    = opendrain;
+		TRISBbits.TRISB11 = direction;
+		LATBbits.LATB11   = value;
+		break;
+	case RB12:
+		AD1PCFGLbits.PCFG12 = analog;
+		ODCBbits.ODB12    = opendrain;
+		TRISBbits.TRISB12 = direction;
+		LATBbits.LATB12   = value;
+		break;
+	case RB13:
+		AD1PCFGLbits.PCFG13 = analog;
+		ODCBbits.ODB13    = opendrain;
+		TRISBbits.TRISB13 = direction;
+		LATBbits.LATB13   = value;
+		break;
+	case RB14:
+		AD1PCFGLbits.PCFG14 = analog;
+		ODCBbits.ODB14    = opendrain;
+		TRISBbits.TRISB14 = direction;
+		LATBbits.LATB14   = value;
+		break;
+	case RB15:
+		AD1PCFGLbits.PCFG15 = analog;
+		ODCBbits.ODB15    = opendrain;
+		TRISBbits.TRISB15 = direction;
+		LATBbits.LATB15   = value;
+		break;
+	case RC12:
+		ODCCbits.ODC12    = opendrain;
+		TRISCbits.TRISC12 = direction;
+		LATCbits.LATC12   = value;
+		break;
+	case RC13:
+		ODCCbits.ODC13    = opendrain;
+		TRISCbits.TRISC13 = direction;
+		LATCbits.LATC13   = value;
+		break;
+	case RC14:
+		ODCCbits.ODC14    = opendrain;
+		TRISCbits.TRISC14 = direction;
+		LATCbits.LATC14   = value;
+		break;
+	case RC15:
+		ODCCbits.ODC15    = opendrain;
+		TRISCbits.TRISC15 = direction;
+		LATCbits.LATC15   = value;
+		break;
+	case RD0:
+		ODCDbits.ODD0    = opendrain;
+		TRISDbits.TRISD0 = direction;
+		LATDbits.LATD0   = value;
+		break;
+	case RD1:
+		ODCDbits.ODD1    = opendrain;
+		TRISDbits.TRISD1 = direction;
+		LATDbits.LATD1   = value;
+		break;
+	case RD2:
+		ODCDbits.ODD2    = opendrain;
+		TRISDbits.TRISD2 = direction;
+		LATDbits.LATD2   = value;
+		break;
+	case RD3:
+		ODCDbits.ODD3    = opendrain;
+		TRISDbits.TRISD3 = direction;
+		LATDbits.LATD3   = value;
+		break;
+	case RD4:
+		ODCDbits.ODD4    = opendrain;
+		TRISDbits.TRISD4 = direction;
+		LATDbits.LATD4   = value;
+		break;
+	case RD5:
+		ODCDbits.ODD5    = opendrain;
+		TRISDbits.TRISD5 = direction;
+		LATDbits.LATD5   = value;
+		break;
+	case RD6:
+		ODCDbits.ODD6    = opendrain;
+		TRISDbits.TRISD6 = direction;
+		LATDbits.LATD6   = value;
+		break;
+	case RD7:
+		ODCDbits.ODD7    = opendrain;
+		TRISDbits.TRISD7 = direction;
+		LATDbits.LATD7   = value;
+		break;
+	case RD8:
+		ODCDbits.ODD8    = opendrain;
+		TRISDbits.TRISD8 = direction;
+		LATDbits.LATD8   = value;
+		break;
+	case RD9:
+		ODCDbits.ODD9    = opendrain;
+		TRISDbits.TRISD9 = direction;
+		LATDbits.LATD9   = value;
+		break;
+	case RD10:
+		ODCDbits.ODD11   = opendrain;
+		TRISDbits.TRISD10 = direction;
+		LATDbits.LATD10   = value;
+		break;
+	case RD11:
+		ODCDbits.ODD11   = opendrain;
+		TRISDbits.TRISD11 = direction;
+		LATDbits.LATD11   = value;
+		break;
+	case RE0:
+		ODCEbits.ODE0    = opendrain;
+		TRISEbits.TRISE0 = direction;
+		LATEbits.LATE0   = value;
+		break;
+	case RE1:
+		ODCEbits.ODE1    = opendrain;
+		TRISEbits.TRISE1 = direction;
+		LATEbits.LATE1   = value;
+		break;
+	case RE2:
+		ODCEbits.ODE2    = opendrain;
+		TRISEbits.TRISE2 = direction;
+		LATEbits.LATE2   = value;
+		break;
+	case RE3:
+		ODCEbits.ODE3    = opendrain;
+		TRISEbits.TRISE3 = direction;
+		LATEbits.LATE3   = value;
+		break;
+	case RE4:
+		ODCEbits.ODE4    = opendrain;
+		TRISEbits.TRISE4 = direction;
+		LATEbits.LATE4   = value;
+		break;
+	case RE5:
+		ODCEbits.ODE5    = opendrain;
+		TRISEbits.TRISE5 = direction;
+		LATEbits.LATE5   = value;
+		break;
+	case RE6:
+		ODCEbits.ODE6    = opendrain;
+		TRISEbits.TRISE6 = direction;
+		LATEbits.LATE6   = value;
+		break;
+	case RE7:
+		ODCEbits.ODE7    = opendrain;
+		TRISEbits.TRISE7 = direction;
+		LATEbits.LATE7   = value;
+		break;
+	case RF0:
+		ODCFbits.ODF0    = opendrain;
+		TRISFbits.TRISF0 = direction;
+		LATFbits.LATF0   = value;
+		break;
+	case RF1:
+		ODCFbits.ODF1    = opendrain;
+		TRISFbits.TRISF1 = direction;
+		LATFbits.LATF1   = value;
+		break;
+	case RF3:
+		ODCFbits.ODF3    = opendrain;
+		TRISFbits.TRISF3 = direction;
+		LATFbits.LATF3   = value;
+		break;
+	case RF4:
+		ODCFbits.ODF3    = opendrain;
+		TRISFbits.TRISF4 = direction;
+		LATFbits.LATF4   = value;
+		break;
+	case RF5:
+		ODCFbits.ODF3    = opendrain;
+		TRISFbits.TRISF5 = direction;
+		LATFbits.LATF5   = value;
+		break;
+	case RG2:
+		ODCGbits.ODG2    = opendrain;
+		TRISGbits.TRISG2 = direction;
+		LATGbits.LATG2   = value;
+		break;
+	case RG3:
+		ODCGbits.ODG3    = opendrain;
+		TRISGbits.TRISG3 = direction;
+		LATGbits.LATG3   = value;
+		break;
+	case RG6:
+		ODCGbits.ODG6    = opendrain;
+		TRISGbits.TRISG6 = direction;
+		LATGbits.LATG6   = value;
+		break;
+	case RG7:
+		ODCGbits.ODG7    = opendrain;
+		TRISGbits.TRISG7 = direction;
+		LATGbits.LATG7   = value;
+		break;
+	case RG8:
+		ODCGbits.ODG8    = opendrain;
+		TRISGbits.TRISG8 = direction;
+		LATGbits.LATG8   = value;
+		break;
+	case RG9:
+		ODCGbits.ODG9    = opendrain;
+		TRISGbits.TRISG9 = direction;
+		LATGbits.LATG9   = value;
+		break;
+	default:
+		return(-ERR_BAD_INPUT_PARAMETER);
+		break;
+	}
+	
+	return(0);
+}
+#endif // #if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__)
+
+
+#if defined(__dsPIC33EP256MU806__) || defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__)
 result_t gpio_get(enum pin_t pin)
 {
 	switch(pin) {
@@ -457,7 +759,10 @@ result_t gpio_get(enum pin_t pin)
 	
 	return(0);
 }
+#endif // #if defined(__dsPIC33EP256MU806__) || defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__)
 
+
+#if defined(__dsPIC33EP256MU806__) || defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__)
 result_t pin_to_port_bit(enum pin_t pin, uint8_t **port, uint8_t *bit)
 {
         switch(pin) {
@@ -480,4 +785,4 @@ result_t pin_to_port_bit(enum pin_t pin, uint8_t **port, uint8_t *bit)
         }
         return(0);	
 }
-
+#endif // #if defined(__dsPIC33EP256MU806__) || defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__)
