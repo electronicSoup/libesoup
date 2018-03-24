@@ -168,7 +168,7 @@ typedef struct
     uint32_t                     mask;
     uint32_t                     filter;
     can_l2_frame_handler_t       handler;
-    uint8_t                      handler_id;
+//    uint8_t                      handler_id;
 } can_l2_target_t;
 
 /**
@@ -344,8 +344,11 @@ extern result_t can_l2_bitrate(can_baud_rate_t baud, boolean change);
 extern void can_l2_tasks(void);
 
 extern result_t can_l2_tx_frame(can_frame *frame);
-extern result_t frame_dispatch_reg_handler(can_l2_target_t *target);
-extern result_t frame_dispatch_unreg_handler(uint8_t id);
+/*
+ * Returns the ID of handler which can be canceled
+ */
+extern int16_t  frame_dispatch_reg_handler(can_l2_target_t *target);
+extern result_t frame_dispatch_unreg_handler(int16_t id);
 extern result_t frame_dispatch_set_unhandled_handler(can_l2_frame_handler_t handler);
 
 //extern void can_l2_ISR(void);

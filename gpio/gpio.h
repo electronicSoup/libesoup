@@ -35,4 +35,4 @@
 
 extern result_t gpio_set(enum pin_t pin, uint16_t mode, uint8_t value);
 extern result_t gpio_get(enum pin_t pin);
-extern result_t pin_to_port_bit(enum pin_t pin, uint8_t **, uint8_t *);
+extern result_t pin_to_port_bit(enum pin_t pin, uint8_t **prt, uint8_t *bt);
