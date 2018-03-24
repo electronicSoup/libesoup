@@ -600,6 +600,198 @@ result_t gpio_set(enum pin_t pin, uint16_t mode, uint8_t value)
 }
 #endif // #if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__)
 
+#if defined(__18F4585)
+result_t gpio_set(enum pin_t pin, uint16_t mode, uint8_t value)
+{
+	uint8_t  direction;
+	uint8_t  analog;
+	
+	direction = 0b0;
+	
+	/*
+	 * Analog pin selection differs from PIC24 and dsPIC33. When a pin 
+	 * is set as analog ALL analog pins below it are set analog. So if 
+	 * AN4 is set to being an analog ping then AN3, AN2, AN1 & AN0 will
+	 * all be analog.
+	 */
+	analog = 0b0;
+	if((mode & GPIO_MODE_ANALOG_INPUT) || (mode & GPIO_MODE_ANALOG_OUTPUT)) analog = 0b1;
+	
+	if(mode & GPIO_MODE_DIGITAL_INPUT) direction = 0b1;
+	
+	/*
+	 * Chip doesn't have OpenDrain pins. Only the I2C pins
+	 */
+	if((mode & GPIO_MODE_OPENDRAIN_INPUT) || (mode & GPIO_MODE_OPENDRAIN_OUTPUT)) return(-ERR_BAD_INPUT_PARAMETER);
+	
+	switch(pin) {
+	case PRA0:   // AN0
+		if(analog) ADCON1bits.PCFG = 0b1110;
+		TRISAbits.TRISA0 = direction;
+		LATAbits.LATA0   = value;
+		break;
+	case PRA1:   // AN1
+		if(analog) ADCON1bits.PCFG = 0b1101;
+		TRISAbits.TRISA1 = direction;
+		LATAbits.LATA1   = value;
+		break;
+	case PRA2:   // AN2
+		if(analog) ADCON1bits.PCFG = 0b1100;
+		TRISAbits.TRISA2 = direction;
+		LATAbits.LATA2   = value;
+		break;
+	case PRA3:   // AN3
+		if(analog) ADCON1bits.PCFG = 0b1011;
+		TRISAbits.TRISA3 = direction;
+		LATAbits.LATA3   = value;
+		break;
+	case PRA4:
+		TRISAbits.TRISA4 = direction;
+		LATAbits.LATA4   = value;
+		break;
+	case PRA5:   // AN4
+		if(analog) ADCON1bits.PCFG = 0b1010;
+		TRISAbits.TRISA5 = direction;
+		LATAbits.LATA5   = value;
+		break;
+	case PRA6:
+		TRISAbits.TRISA6 = direction;
+		LATAbits.LATA6   = value;
+		break;
+	case PRA7:
+		TRISAbits.TRISA7 = direction;
+		LATAbits.LATA7   = value;
+		break;
+    
+	case PRB0:   // AN10
+		if(analog) ADCON1bits.PCFG = 0b0100;
+		TRISBbits.TRISB0 = direction;
+		LATBbits.LATB0   = value;
+		break;
+	case PRB1:   // AN8
+		if(analog) ADCON1bits.PCFG = 0b0110;
+		TRISBbits.TRISB1 = direction;
+		LATBbits.LATB1   = value;
+		break;
+	case PRB2:
+		TRISBbits.TRISB2 = direction;
+		LATBbits.LATB2   = value;
+		break;
+	case PRB3:
+		TRISBbits.TRISB3 = direction;
+		LATBbits.LATB3   = value;
+		break;
+	case PRB4:   // AN9
+		if(analog) ADCON1bits.PCFG = 0b0101;
+		TRISBbits.TRISB4 = direction;
+		LATBbits.LATB4   = value;
+		break;
+	case PRB5:
+		TRISBbits.TRISB5 = direction;
+		LATBbits.LATB5   = value;
+		break;
+	case PRB6:
+		TRISBbits.TRISB6 = direction;
+		LATBbits.LATB6   = value;
+		break;
+	case PRB7:
+		TRISBbits.TRISB7 = direction;
+		LATBbits.LATB7   = value;
+		break;
+
+	case PRC0:
+		TRISCbits.TRISC0 = direction;
+		LATCbits.LATC0   = value;
+		break;
+	case PRC1:
+		TRISCbits.TRISC1 = direction;
+		LATCbits.LATC1   = value;
+		break;
+	case PRC2:
+		TRISCbits.TRISC2 = direction;
+		LATCbits.LATC2   = value;
+		break;
+	case PRC3:
+		TRISCbits.TRISC3 = direction;
+		LATCbits.LATC3   = value;
+		break;
+	case PRC4:
+		TRISCbits.TRISC4 = direction;
+		LATCbits.LATC4   = value;
+		break;
+	case PRC5:
+		TRISCbits.TRISC5 = direction;
+		LATCbits.LATC5   = value;
+		break;
+	case PRC6:
+		TRISCbits.TRISC6 = direction;
+		LATCbits.LATC6   = value;
+		break;
+	case PRC7:
+		TRISCbits.TRISC7 = direction;
+		LATCbits.LATC7   = value;
+		break;
+    
+	case PRD0:
+		TRISDbits.TRISD0 = direction;
+		LATDbits.LATD0   = value;
+		break;
+	case PRD1:
+		TRISDbits.TRISD1 = direction;
+		LATDbits.LATD1   = value;
+		break;
+	case PRD2:
+		TRISDbits.TRISD2 = direction;
+		LATDbits.LATD2   = value;
+		break;
+	case PRD3:
+		TRISDbits.TRISD3 = direction;
+		LATDbits.LATD3   = value;
+		break;
+	case PRD4:
+		TRISDbits.TRISD4 = direction;
+		LATDbits.LATD4   = value;
+		break;
+	case PRD5:
+		TRISDbits.TRISD5 = direction;
+		LATDbits.LATD5   = value;
+		break;
+	case PRD6:
+		TRISDbits.TRISD6 = direction;
+		LATDbits.LATD6   = value;
+		break;
+	case PRD7:
+		TRISDbits.TRISD7 = direction;
+		LATDbits.LATD7   = value;
+		break;
+    
+	case PRE0:   // AN5
+		if(analog) ADCON1bits.PCFG = 0b1001;
+		TRISEbits.TRISE0 = direction;
+		LATEbits.LATE0   = value;
+		break;
+	case PRE1:   // AN6
+		if(analog) ADCON1bits.PCFG = 0b1000;
+		TRISEbits.TRISE1 = direction;
+		LATEbits.LATE1   = value;
+		break;
+	case PRE2:   // AN7
+		if(analog) ADCON1bits.PCFG = 0b0111;
+		TRISEbits.TRISE2 = direction;
+		LATEbits.LATE2   = value;
+		break;
+	case PRE3:
+//		TRISEbits.TRISE3 = direction;
+//		LATEbits.LATE3   = value;
+		return(-ERR_BAD_INPUT_PARAMETER);
+
+	default:
+		return(-ERR_BAD_INPUT_PARAMETER);
+	}
+	
+	return(0);
+}
+#endif // #if defined(__18F4585)
 
 #if defined(__dsPIC33EP256MU806__) || defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__)
 result_t gpio_get(enum pin_t pin)
@@ -653,6 +845,7 @@ result_t gpio_get(enum pin_t pin)
 	case RB15:
 		return(PORTBbits.RB15);
 		break;
+
 	case RC12:
 		return(PORTCbits.RC12);
 		break;
@@ -665,6 +858,7 @@ result_t gpio_get(enum pin_t pin)
 	case RC15:
 		return(PORTCbits.RC15);
 		break;
+
 	case RD0:
 		return(PORTDbits.RD0);
 		break;
@@ -701,6 +895,7 @@ result_t gpio_get(enum pin_t pin)
 	case RD11:
 		return(PORTDbits.RD11);
 		break;
+
 	case RE0:
 		return(PORTEbits.RE0);
 		break;
@@ -725,6 +920,7 @@ result_t gpio_get(enum pin_t pin)
 	case RE7:
 		return(PORTEbits.RE7);
 		break;
+
 	case RF0:
 		return(PORTFbits.RF0);
 		break;
@@ -740,6 +936,7 @@ result_t gpio_get(enum pin_t pin)
 	case RF5:
 		return(PORTFbits.RF5);
 		break;
+
 	case RG6:
 		return(PORTGbits.RG6);
 		break;
@@ -752,6 +949,7 @@ result_t gpio_get(enum pin_t pin)
 	case RG9:
 		return(PORTGbits.RG9);
 		break;
+
 	default:
 		return(-ERR_BAD_INPUT_PARAMETER);
 		break;
@@ -761,28 +959,277 @@ result_t gpio_get(enum pin_t pin)
 }
 #endif // #if defined(__dsPIC33EP256MU806__) || defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__)
 
+#if defined(__18F4585)
+result_t gpio_get(enum pin_t pin)
+{
+	switch(pin) {
+	case PRA0:   // AN0
+		return(PORTAbits.RA0);
+	case PRA1:   // AN1
+		return(PORTAbits.RA1);
+	case PRA2:   // AN2
+		return(PORTAbits.RA2);
+	case PRA3:   // AN3
+		return(PORTAbits.RA3);
+	case PRA4:
+		return(PORTAbits.RA4);
+	case PRA5:   // AN4
+		return(PORTAbits.RA5);
+	case PRA6:
+		return(PORTAbits.RA6);
+	case PRA7:
+		return(PORTAbits.RA7);
+    
+	case PRB0:   // AN10
+		return(PORTBbits.RB0);
+	case PRB1:   // AN8
+		return(PORTBbits.RB1);
+	case PRB2:
+		return(PORTBbits.RB2);
+	case PRB3:
+		return(PORTBbits.RB3);
+	case PRB4:   // AN9
+		return(PORTBbits.RB4);
+	case PRB5:
+		return(PORTBbits.RB5);
+	case PRB6:
+		return(PORTBbits.RB6);
+	case PRB7:
+		return(PORTBbits.RB7);
+
+	case PRC0:
+		return(PORTCbits.RC0);
+	case PRC1:
+		return(PORTCbits.RC1);
+	case PRC2:
+		return(PORTCbits.RC2);
+	case PRC3:
+		return(PORTCbits.RC3);
+	case PRC4:
+		return(PORTCbits.RC4);
+	case PRC5:
+		return(PORTCbits.RC5);
+	case PRC6:
+		return(PORTCbits.RC6);
+	case PRC7:
+		return(PORTCbits.RC7);
+    
+	case PRD0:
+		return(PORTDbits.RD0);
+	case PRD1:
+		return(PORTDbits.RD1);
+	case PRD2:
+		return(PORTDbits.RD2);
+	case PRD3:
+		return(PORTDbits.RD3);
+	case PRD4:
+		return(PORTDbits.RD4);
+	case PRD5:
+		return(PORTDbits.RD5);
+	case PRD6:
+		return(PORTDbits.RD6);
+	case PRD7:
+		return(PORTDbits.RD7);
+    
+	case PRE0:   // AN5
+		return(PORTEbits.RE0);
+	case PRE1:   // AN6
+		return(PORTEbits.RE1);
+	case PRE2:   // AN7
+		return(PORTEbits.RE2);
+	case PRE3:
+//		TRISEbits.TRISE3 = direction;
+//		LATEbits.LATE3   = value;
+		return(-ERR_BAD_INPUT_PARAMETER);
+	default:
+		return(-ERR_BAD_INPUT_PARAMETER);
+	}
+}
+#endif // #if defined(__18F4585)
 
 #if defined(__dsPIC33EP256MU806__) || defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__)
-result_t pin_to_port_bit(enum pin_t pin, uint8_t **port, uint8_t *bit)
+result_t pin_to_port_bit(enum pin_t pin, uint8_t **prt, uint8_t *bt)
 {
-        switch(pin) {
-        case (RF3):
-		*port = (uint8_t *)&PORTF;
-		*bit  = 3;
-                break;
-                
-        case (RD0):
-		*port = (uint8_t *)&PORTD;
-		*bit  = 0;
-                break;
-                
-        default:
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
-                LOG_E("Not coded!\n\r");
-#endif
-                return(ERR_NOT_CODED);
+	if(pin >= RB0 && pin <= RB15) *prt = (uint8_t *)PORTB;
+	else if(pin >= RC12 && pin <= RC15) *prt = (uint8_t *)PORTC;
+	else if(pin >= RD0 && pin <= RD11) *prt = (uint8_t *)PORTD;
+	else if(pin >= RE0 && pin <= RE7) *prt = (uint8_t *)PORTE;
+	else if(pin >= RF0 && pin <= RF5) *prt = (uint8_t *)PORTF;
+	else if(pin >= RG6 && pin <= RG9) *prt = (uint8_t *)PORTG;
+	else return(ERR_BAD_INPUT_PARAMETER);
+
+	switch(pin) {
+	case RB0:
+	case RD0:
+	case RE0:
+	case RF0:
+		*bt = 0;
 		break;
-        }
-        return(0);	
+
+	case RB1:
+	case RD1:
+	case RE1:
+	case RF1:
+		*bt = 1;
+		break;
+
+	case RB2:
+	case RD2:
+	case RE2:
+	case RG2:
+		*bt = 2;
+		break;
+		
+	case RB3:
+	case RD3:
+	case RE3:
+	case RF3:
+	case RG3:
+		*bt = 3;
+		break;
+
+	case RB4:
+	case RD4:
+	case RE4:
+	case RF4:
+		*bt = 4;
+		break;
+
+	case RB5:
+	case RD5:
+	case RE5:
+	case RF5:
+		*bt = 5;
+		break;
+
+	case RB6:
+	case RD6:
+	case RE6:
+	case RG6:
+		*bt = 6;
+		break;
+
+	case RB7:
+	case RD7:
+	case RE7:
+	case RG7:
+		*bt = 7;
+		break;
+
+	case RB8:
+	case RD8:
+	case RG8:
+		*bt = 8;
+		break;
+
+	case RB9:
+	case RD9:
+	case RG9:
+		*bt = 9;
+		break;
+
+	case RB10:
+	case RD10:
+		*bt = 10;
+		break;
+
+	case RB11:
+	case RD11:
+		*bt = 11;
+		break;
+
+	case RB12:
+	case RC12:
+		*bt = 12;
+		break;
+
+	case RB13:
+	case RC13:
+		*bt = 13;
+		break;
+
+	case RB14:
+	case RC14:
+		*bt = 14;
+		break;
+
+	case RB15:
+	case RC15:
+		*bt = 15;
+		break;
+
+	default:
+		return(-ERR_BAD_INPUT_PARAMETER);
+		break;
+	}
+	return(0);	
 }
 #endif // #if defined(__dsPIC33EP256MU806__) || defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__)
+
+#if defined(__18F4585)
+result_t pin_to_port_bit(enum pin_t pin, uint8_t **prt, uint8_t *bt)
+{
+	if(pin >= PRA0 && pin <= PRA7) *prt = (uint8_t *)PORTA;
+	else if(pin >= PRB0 && pin <= PRB7) *prt = (uint8_t *)PORTB;
+	else if(pin >= PRC0 && pin <= PRC7) *prt = (uint8_t *)PORTC;
+	else if(pin >= PRD0 && pin <= PRD7) *prt = (uint8_t *)PORTD;
+	else if(pin >= PRE0 && pin <= PRE2) *prt = (uint8_t *)PORTE;
+
+	switch(pin) {
+	case PRA0:   // AN0
+	case PRB0:   // AN10
+	case PRC0:
+	case PRD0:
+	case PRE0:   // AN5
+		*bt = 0;
+		break;
+	case PRA1:   // AN1
+	case PRB1:   // AN8
+	case PRC1:
+	case PRD1:
+	case PRE1:   // AN5
+		*bt = 1;
+		break;
+	case PRA2:   // AN2
+	case PRB2:
+	case PRC2:
+	case PRD2:
+	case PRE2:   // AN5
+		*bt = 2;
+		break;
+	case PRA3:   // AN3
+	case PRB3:
+	case PRC3:
+	case PRD3:
+		*bt = 3;
+		break;
+	case PRA4:
+	case PRB4:   // AN9
+	case PRC4:
+	case PRD4:
+		*bt = 4;
+		break;
+	case PRA5:   // AN4
+	case PRB5:
+	case PRC5:
+	case PRD5:
+		*bt = 5;
+		break;
+	case PRA6:
+	case PRB6:
+	case PRC6:
+	case PRD6:
+		*bt = 6;
+		break;
+	case PRA7:
+	case PRB7:
+	case PRC7:
+	case PRD7:
+		*bt = 7;
+		break;
+	default:
+		return(-ERR_BAD_INPUT_PARAMETER);
+	}
+        return(0);	
+}
+#endif // #if defined(__18F4585)
