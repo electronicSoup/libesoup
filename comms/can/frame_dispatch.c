@@ -100,14 +100,13 @@ result_t frame_dispatch_reg_handler(can_l2_target_t *target)
 			registered_handlers[loop].target.mask = target->mask;
 			registered_handlers[loop].target.filter = target->filter;
 			registered_handlers[loop].target.handler = target->handler;
-			target->handler_id = loop;
-			return(0);
+			return(loop);
 		}
 	}
 	return(-ERR_NO_RESOURCES);
 }
 
-result_t frame_dispatch_unreg_handler(uint8_t id)
+result_t frame_dispatch_unreg_handler(int16_t id)
 {
 	if(id < SYS_CAN_L2_HANDLER_ARRAY_SIZE) {
 		if (registered_handlers[id].used) {
