@@ -59,6 +59,8 @@ void cpu_init(void)
         RCONbits.IPEN   = 0;  // No Interrupt priority level
 	INTCONbits.GIE  = 1;  // Enable Interrupts
 	INTCONbits.PEIE = 1;  // Enable Peripheral Interrupts
+
+	sys_clock_freq = CRYSTAL_FREQ;
 }
 
 void interrupt tc_int(void)

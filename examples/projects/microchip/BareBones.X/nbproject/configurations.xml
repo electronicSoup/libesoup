@@ -14,12 +14,18 @@
                    projectFiles="true">
       <logicalFolder name="libesoup" displayName="libesoup" projectFiles="true">
         <logicalFolder name="boards" displayName="boards" projectFiles="true">
-          <logicalFolder name="cb-PIC24FJ256GB106"
-                         displayName="cb-PIC24FJ256GB106"
-                         projectFiles="true">
-          </logicalFolder>
           <logicalFolder name="cinnamonBun" displayName="cinnamonBun" projectFiles="true">
-            <itemPath>../../../../boards/cinnamonBun/board.c</itemPath>
+            <logicalFolder name="dsPIC33" displayName="dsPIC33" projectFiles="true">
+              <itemPath>../../../../boards/cinnamonBun/dsPIC33/board.c</itemPath>
+            </logicalFolder>
+            <logicalFolder name="pic24FJ" displayName="pic24FJ" projectFiles="true">
+              <itemPath>../../../../boards/cinnamonBun/pic24FJ/board.c</itemPath>
+            </logicalFolder>
+          </logicalFolder>
+          <logicalFolder name="gauge" displayName="gauge" projectFiles="true">
+            <itemPath>../../../../boards/gauge/board.c</itemPath>
+          </logicalFolder>
+          <logicalFolder name="rpi" displayName="rpi" projectFiles="true">
           </logicalFolder>
         </logicalFolder>
         <logicalFolder name="examples" displayName="examples" projectFiles="true">

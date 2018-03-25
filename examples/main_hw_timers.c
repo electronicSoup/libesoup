@@ -71,7 +71,7 @@ int main(void)
 #endif // (__18F4585)
 
 #ifdef HW_TIMER_TEST
-	delay(Seconds, 10);
+	delay(Seconds, 5);
 
 	/*
 	 * Documentation:
@@ -82,7 +82,14 @@ int main(void)
 	 */
 	request.units          = mSeconds;
 	request.duration       = 20;
-#ifdef HW_TIMER_REPEAT
+	
+	/*
+	 * pic18F4585 or more specifically XC8 compiler doesn't do 
+	 * recursion so not repeating timers, single_shot only
+	 */
+#if defined(__18F4585)
+	request.type           = single_shot;	
+#elif defined(HW_TIMER_REPEAT)
 	request.type           = repeat;
 #else
 	request.type           = single_shot;
@@ -94,12 +101,14 @@ int main(void)
 	LATDbits.LATD3 = 1;
 #elif defined(__18F4585)
 	LATCbits.LATC6 = 1;
+	LATCbits.LATC7 = 1;
 #endif
         timer = hw_timer_start(&request);
         if(timer < 0) {
 	        /*
 		 * Handle the error condition.
 		 */
+		Nop();
         }
 #endif
 	
@@ -139,5 +148,6 @@ void exp_func(timer_id timer, union sigval data)
         LATEbits.LATE3 = ~LATEbits.LATE3;
 #elif defined(__18F4585)
 	LATCbits.LATC6 = 0;
+	LATCbits.LATC7 = 0;
 #endif
 }
