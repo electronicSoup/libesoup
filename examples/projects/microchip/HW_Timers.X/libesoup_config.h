@@ -42,7 +42,7 @@
 //#define SYS_CLOCK_FREQ 30000000    // 30MHz
 //#define SYS_CLOCK_FREQ 60000000    // 60MHz
 #elif defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__)
-#define SYS_CLOCK_FREQ 16000000     // 8MHz
+//#define SYS_CLOCK_FREQ 16000000     // 8MHz
 #endif
 
 /**

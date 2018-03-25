@@ -31,7 +31,7 @@
 
 //#define DELAY_TEST
 #define HW_TIMER_TEST
-#define HW_TIMER_REPEAT
+//#define HW_TIMER_REPEAT
 
 /*
  * Forward declaration of our Hardware timer expiry function, which will be
@@ -61,10 +61,8 @@ int main(void)
 #if defined(__dsPIC33EP256MU806__)
 	rc = gpio_set(RD3, GPIO_MODE_DIGITAL_OUTPUT, 0);
 #elif defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__)
-        TRISEbits.TRISE0 = INPUT_PIN;
-        TRISEbits.TRISE1 = OUTPUT_PIN;
-        TRISEbits.TRISE2 = OUTPUT_PIN;
-        TRISEbits.TRISE3 = OUTPUT_PIN;
+	rc = gpio_set(RD4, GPIO_MODE_DIGITAL_OUTPUT, 0);
+	rc = gpio_set(RD5, GPIO_MODE_DIGITAL_OUTPUT, 0);
 #elif defined(__18F4585)
 	rc = gpio_set(PRC6, GPIO_MODE_DIGITAL_OUTPUT, 0);
 	rc = gpio_set(PRC7, GPIO_MODE_DIGITAL_OUTPUT, 0);
@@ -99,6 +97,9 @@ int main(void)
 
 #if defined(__dsPIC33EP256MU806__)
 	LATDbits.LATD3 = 1;
+#elif defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__)
+	LATDbits.LATD4 = 1;
+	LATDbits.LATD5 = 1;
 #elif defined(__18F4585)
 	LATCbits.LATC6 = 1;
 	LATCbits.LATC7 = 1;
@@ -145,7 +146,8 @@ void exp_func(timer_id timer, union sigval data)
 	LATDbits.LATD3 = 0;
 #endif
 #elif defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__)
-        LATEbits.LATE3 = ~LATEbits.LATE3;
+	LATDbits.LATD4 = 0;
+	LATDbits.LATD5 = 0;
 #elif defined(__18F4585)
 	LATCbits.LATC6 = 0;
 	LATCbits.LATC7 = 0;
