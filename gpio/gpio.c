@@ -1048,14 +1048,14 @@ result_t gpio_get(enum pin_t pin)
 #endif // #if defined(__18F4585)
 
 #if defined(__dsPIC33EP256MU806__) || defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__)
-result_t pin_to_port_bit(enum pin_t pin, uint8_t **prt, uint8_t *bt)
+result_t pin_to_port_bit(enum pin_t pin, uint16_t **prt, uint8_t *bt)
 {
-	if(pin >= RB0 && pin <= RB15) *prt = (uint8_t *)PORTB;
-	else if(pin >= RC12 && pin <= RC15) *prt = (uint8_t *)PORTC;
-	else if(pin >= RD0 && pin <= RD11) *prt = (uint8_t *)PORTD;
-	else if(pin >= RE0 && pin <= RE7) *prt = (uint8_t *)PORTE;
-	else if(pin >= RF0 && pin <= RF5) *prt = (uint8_t *)PORTF;
-	else if(pin >= RG6 && pin <= RG9) *prt = (uint8_t *)PORTG;
+	if(pin >= RB0 && pin <= RB15) *prt = (uint16_t *)&PORTB;
+	else if(pin >= RC12 && pin <= RC15) *prt = (uint16_t *)&PORTC;
+	else if(pin >= RD0 && pin <= RD11) *prt = (uint16_t *)&PORTD;
+	else if(pin >= RE0 && pin <= RE7) *prt = (uint16_t *)&PORTE;
+	else if(pin >= RF0 && pin <= RF5) *prt = (uint16_t *)&PORTF;
+	else if(pin >= RG6 && pin <= RG9) *prt = (uint16_t *)&PORTG;
 	else return(ERR_BAD_INPUT_PARAMETER);
 
 	switch(pin) {
@@ -1169,11 +1169,11 @@ result_t pin_to_port_bit(enum pin_t pin, uint8_t **prt, uint8_t *bt)
 #if defined(__18F4585)
 result_t pin_to_port_bit(enum pin_t pin, uint8_t **prt, uint8_t *bt)
 {
-	if(pin >= PRA0 && pin <= PRA7) *prt = (uint8_t *)PORTA;
-	else if(pin >= PRB0 && pin <= PRB7) *prt = (uint8_t *)PORTB;
-	else if(pin >= PRC0 && pin <= PRC7) *prt = (uint8_t *)PORTC;
-	else if(pin >= PRD0 && pin <= PRD7) *prt = (uint8_t *)PORTD;
-	else if(pin >= PRE0 && pin <= PRE2) *prt = (uint8_t *)PORTE;
+	if(pin >= PRA0 && pin <= PRA7) *prt = (uint8_t *)&PORTA;
+	else if(pin >= PRB0 && pin <= PRB7) *prt = (uint8_t *)&PORTB;
+	else if(pin >= PRC0 && pin <= PRC7) *prt = (uint8_t *)&PORTC;
+	else if(pin >= PRD0 && pin <= PRD7) *prt = (uint8_t *)&PORTD;
+	else if(pin >= PRE0 && pin <= PRE2) *prt = (uint8_t *)&PORTE;
 
 	switch(pin) {
 	case PRA0:   // AN0

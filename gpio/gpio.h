@@ -35,4 +35,8 @@
 
 extern result_t gpio_set(enum pin_t pin, uint16_t mode, uint8_t value);
 extern result_t gpio_get(enum pin_t pin);
+#if defined(__dsPIC33EP256MU806__) || defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__)
+extern result_t pin_to_port_bit(enum pin_t pin, uint16_t **prt, uint8_t *bt);
+#elif defined(__18F4585)
 extern result_t pin_to_port_bit(enum pin_t pin, uint8_t **prt, uint8_t *bt);
+#endif

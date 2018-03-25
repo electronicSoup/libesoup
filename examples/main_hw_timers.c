@@ -66,21 +66,8 @@ int main(void)
         TRISEbits.TRISE2 = OUTPUT_PIN;
         TRISEbits.TRISE3 = OUTPUT_PIN;
 #elif defined(__18F4585)
-	/*
-	 * All AD pins configured as Digital
-	 */
-	ADCON1 = 0x0f;
-
-	LATA = 0x00;
-	TRISA = 0x00;
-
-	TRISDbits.TRISD5 = 0;
-	LATDbits.LATD5 = 1;
-
-	TRISDbits.TRISD6 = 1;
-
-	INTCONbits.GIE = 1;    // Enable Interrupts
-	INTCONbits.PEIE = 1;   // Enable Periphal Interrupts
+	rc = gpio_set(PRC6, GPIO_MODE_DIGITAL_OUTPUT, 0);
+	rc = gpio_set(PRC7, GPIO_MODE_DIGITAL_OUTPUT, 0);
 #endif // (__18F4585)
 
 #ifdef HW_TIMER_TEST
@@ -93,7 +80,7 @@ int main(void)
 	 * dsPIC33 @ 30M 500uS timer gives 504uS  Delta  4uS
 	 * dsPIC33 @  8M 500uS timer gives 508uS  Delta  8uS
 	 */
-	request.units          = uSeconds;
+	request.units          = mSeconds;
 	request.duration       = 20;
 #ifdef HW_TIMER_REPEAT
 	request.type           = repeat;
@@ -103,8 +90,11 @@ int main(void)
 	request.exp_fn         = exp_func;
 	request.data.sival_int = 0;
 
+#if defined(__dsPIC33EP256MU806__)
 	LATDbits.LATD3 = 1;
-
+#elif defined(__18F4585)
+	LATCbits.LATC6 = 1;
+#endif
         timer = hw_timer_start(&request);
         if(timer < 0) {
 	        /*
@@ -113,12 +103,6 @@ int main(void)
         }
 #endif
 	
-#if defined(__dsPIC33EP256MU806__)
-//	LATDbits.LATD3 = 1;
-#elif defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__)
-        LATEbits.LATE3 = 1;
-#endif
-        	        
         while(1) {
 #ifdef DELAY_TEST
 		/*
@@ -138,6 +122,7 @@ int main(void)
 			LATDbits.LATD0 = 1;
 		}
 #endif
+		Nop();
         }
         return 0;
 }
@@ -152,5 +137,7 @@ void exp_func(timer_id timer, union sigval data)
 #endif
 #elif defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__)
         LATEbits.LATE3 = ~LATEbits.LATE3;
+#elif defined(__18F4585)
+	LATCbits.LATC6 = 0;
 #endif
 }
