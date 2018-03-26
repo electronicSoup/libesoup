@@ -10,7 +10,7 @@
  * in your include path. The file contains the various switches and definitions
  * which configure the various features of the library.
  *
- * Copyright 2017 2018 electronicSoup Limited
+ * Copyright 2017-2018 electronicSoup Limited
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -31,28 +31,12 @@
 
 #include <xc.h>
 
-/**
- * @brief The required clock frequency of the device. 
- * 
- * The function clock_init() has to be called on entry to main() to 
- * initialise the device to this clock frequency.
- */
 #if defined(__dsPIC33EP256MU806__)
 //#define SYS_CLOCK_FREQ 8000000     // 8MHz
 //#define SYS_CLOCK_FREQ 30000000    // 30MHz
 //#define SYS_CLOCK_FREQ 60000000    // 60MHz
-#elif defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__)
-#define SYS_CLOCK_FREQ 16000000     // 8MHz
 #endif
 
-/**
- * \ingroup Timers
- * \brief Switch to enable the Hardware Timers module of libesoup. 
- * 
- * Must be defined in the system configuration file libesoup_config.h for
- * code to be included in build.
- * 
- */
 #define SYS_HW_TIMERS
 
 /*
