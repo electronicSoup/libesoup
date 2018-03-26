@@ -225,21 +225,21 @@ result_t can_l2_init(can_baud_rate_t arg_baud_rate, status_handler_t arg_status_
 	uint32_t address;
 	uint8_t  loop;
 	
-	if (arg_baud_rate <= no_baud) {
+	status_handler = arg_status_handler;
+	
+	if (arg_baud_rate < no_baud) {
 #if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 		LOG_D("L2_CanInit() Baud Rate %s\n\r", can_baud_rate_strings[arg_baud_rate]);
 #endif
 	} else {
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
-		LOG_E("L2_CanInit() ToDo!!! No Baud Rate Specified\n\r");
-#endif
+#ifndef SYS_CAN_BAUD_AUTO_DETECT
 		return (-ERR_BAD_INPUT_PARAMETER);
+#endif
+		// Todo
 	}
 
-	status_handler = arg_status_handler;
-	
         /*
-         * Initialise the I/O Pins and pipheral functions
+         * Initialise the I/O Pins and peripheral functions
          */
 	rc = gpio_set(CAN_RX_PIN, GPIO_MODE_DIGITAL_INPUT, 0);
 	RC_CHECK
@@ -251,9 +251,11 @@ result_t can_l2_init(can_baud_rate_t arg_baud_rate, status_handler_t arg_status_
 	rc = set_peripheral_output(CAN_TX_PIN, PPS_O_CAN1_TX);
 	RC_CHECK
 
+	/*
+	 * Set the baud rate
+	 */
 	rc = can_l2_bitrate(arg_baud_rate, TRUE);
 	RC_CHECK
-
 
         /*
          * Enter configuration mode
@@ -336,12 +338,6 @@ result_t can_l2_init(can_baud_rate_t arg_baud_rate, status_handler_t arg_status_
 	// WIN Bit 0 | 1
         C1FEN1 = 0xffff;
 
-	/*
-	 * Filter on the Standard Indentifier we're sending
-	 */
-	// Todo get rid of this it's a quick test
-	C1RXF0SIDbits.SID = 0x555;
-        
 	MEMORY_MAP_WIN_CONFIG_STATUS
 	/*
          * Setup DMA Channel 0 for CAN 1 TX
@@ -530,6 +526,8 @@ void can_l2_tasks(void)
 	}
 }
 
+/*
+ */
 result_t can_l2_bitrate(can_baud_rate_t baud, boolean change)
 {
 	result_t rc = 0;
