@@ -165,13 +165,25 @@ result_t one_wire_reserve(enum pin_t pin)
 	return(ERR_NO_RESOURCES);
 }
 
-void store_bit(int8_t index, uint8_t bit, boolean value)
+void set_bit(int8_t index, uint8_t bit)
 {
-	if(value) {
-		if(bit < 8) {
-			device[index].family |= 0b1 << bit;
-		}
-	}	
+	if(bit < 8) {
+		device[index].family |= (0b1 << bit);
+	} else if (bit < 16) {
+		device[index].serial_number[0] |= (0b1 << (bit - 8));			
+	} else if (bit < 24) {
+		device[index].serial_number[1] |= (0b1 << (bit - 16));			
+	} else if (bit < 32) {
+		device[index].serial_number[2] |= (0b1 << (bit - 24));			
+	} else if (bit < 40) {
+		device[index].serial_number[3] |= (0b1 << (bit - 32));			
+	} else if (bit < 48) {
+		device[index].serial_number[4] |= (0b1 << (bit - 40));			
+	} else if (bit < 56) {
+		device[index].serial_number[5] |= (0b1 << (bit - 48));			
+	} else if (bit < 64) {
+		device[index].crc |= (0b1 << (bit - 56));			
+	}
 }
 
 static result_t census(int16_t chan)
@@ -205,6 +217,7 @@ static result_t census(int16_t chan)
 		for(loop = 0; loop < 6; loop++) device[device_index].serial_number[loop] = 0x00;
 
 		for(loop = 0; loop < 64; loop++) {
+			if(loop % 8 == 0) serial_printf(" ");
 			rc = read_bit(chan);
 			RC_CHECK
 			first_read = (boolean)(rc == 1);
@@ -222,12 +235,12 @@ static result_t census(int16_t chan)
 				LOG_D("*\n\r");
 				break;
 			} else if(first_read) {
-				LOG_D("1\n\r");
-				store_bit(device_index, loop, first_read);
+//				serial_printf("1");
+				set_bit(device_index, loop);
 				rc = write_one(chan);
 				RC_CHECK
 			} else {
-				LOG_D("0\n\r");
+//				serial_printf("0");
 				rc = write_zero(chan);
 				RC_CHECK
 			}
@@ -238,7 +251,11 @@ static result_t census(int16_t chan)
 	//	RC_CHECK
 	//	family_code = rc;
 #ifdef SYS_SERIAL_LOGGING
-//	LOG_D("Family Code 0x%x\n\r", family_code);
+	LOG_D("Family Code 0x%x\n\r", device[0].family);
+	for(loop = 0; loop < 6; loop++) {
+		LOG_D("serial[%d] 0x%x\n\r", loop, device[0].serial_number[loop]);		
+	}
+	LOG_D("CRC 0x%x\n\r", device[0].crc);	
 #endif
 	return(0);
 }
