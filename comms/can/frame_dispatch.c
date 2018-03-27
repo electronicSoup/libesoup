@@ -41,7 +41,11 @@
 //#define DEBUG_FILE
 #undef DEBUG_FILE
 #include "libesoup/logger/serial_log.h"
+#if defined(__XC16)
 __attribute__ ((unused)) static const char *TAG = "CAN_DISPATCH";
+#elif defined(__XC8)
+static const char *TAG = "CAN_DISPATCH";
+#endif
 #endif // SYS_SERIAL_LOGGING
 
 #include "libesoup/errno.h"

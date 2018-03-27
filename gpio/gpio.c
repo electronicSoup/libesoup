@@ -21,7 +21,11 @@
 
 #ifdef SYS_SERIAL_LOGGING
 #define DEBUG_FILE
+#if defined(__XC16)
 __attribute__((unused)) static const char *TAG = "SPI";
+#elif defined(__XC8)
+static const char *TAG = "SPI";
+#endif
 #include "libesoup/logger/serial_log.h"
 /*
  * Check required libesoup_config.h defines are found
