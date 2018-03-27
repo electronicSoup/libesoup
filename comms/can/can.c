@@ -109,14 +109,14 @@ result_t can_init(can_baud_rate_t baudrate, status_handler_t status_handler)
 
 static void can_status_handler(union ty_status status)
 {
-	can_status_t        can_status;
+	can_status_t        l_can_status;
 
 #if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	LOG_D("status_handler(mask-0x%x, status-0x%x\n\r", status.sword);
 #endif
 	if (status.sstruct.source == can_bus_status) {
-		can_status.byte = status.sstruct.status;
-		switch(can_status.bit_field.l2_status) {
+		l_can_status.byte = status.sstruct.status;
+		switch(l_can_status.bit_field.l2_status) {
 			case L2_Uninitialised:
 #if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 				LOG_D("L2_Uninitialised\n\r");
@@ -155,7 +155,7 @@ static void can_status_handler(union ty_status status)
 		}
 
 #ifdef SYS_CAN_BUS_DCNCP
-		if ((status.bit_field.l2_status == L2_Connected) && (can_status.bit_field.l2_status != L2_Connected)) {
+		if ((status.bit_field.l2_status == L2_Connected) && (l_can_status.bit_field.l2_status != L2_Connected)) {
 #if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 			LOG_D("Layer 2 Connected so start DCNCP\n\r");
 #endif
@@ -178,19 +178,19 @@ static void can_status_handler(union ty_status status)
 #endif
 		}
 
-		can_status.bit_field.dcncp_initialised = status.bit_field.dcncp_initialised;
+		l_can_status.bit_field.dcncp_initialised = status.bit_field.dcncp_initialised;
 		if (app_status_handler)
-			app_status_handler(can_status, baud_status);
+			app_status_handler(l_can_status, baud_status);
 	}
 #if defined(ISO15765) || defined(ISO11783)
 	else if (mask == DCNCP_NODE_ADDRESS_STATUS_MASK) {
 #if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 		LOG_D("L3 Status update\n\r");
 #endif
-		if (status.bit_field.dcncp_node_address_valid && !can_status.bit_field.dcncp_node_address_valid) {
-			can_status.bit_field.dcncp_node_address_valid = status.bit_field.dcncp_node_address_valid;
+		if (status.bit_field.dcncp_node_address_valid && !l_can_status.bit_field.dcncp_node_address_valid) {
+			l_can_status.bit_field.dcncp_node_address_valid = status.bit_field.dcncp_node_address_valid;
 			if (app_status_handler)
-				app_status_handler(can_status, baud_status);
+				app_status_handler(l_can_status, baud_status);
 
 #if defined(ISO15765)
 			iso15765_init(dcncp_get_node_address());
