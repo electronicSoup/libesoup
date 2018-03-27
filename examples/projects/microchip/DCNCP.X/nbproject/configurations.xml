@@ -61,6 +61,9 @@
             <itemPath>../../../../comms/morse/morse.c</itemPath>
           </logicalFolder>
           <logicalFolder name="one_wire" displayName="one_wire" projectFiles="true">
+            <logicalFolder name="devices" displayName="devices" projectFiles="true">
+              <itemPath>../../../../comms/one_wire/devices/ds2502.c</itemPath>
+            </logicalFolder>
             <itemPath>../../../../comms/one_wire/one_wire.c</itemPath>
           </logicalFolder>
           <logicalFolder name="spi" displayName="spi" projectFiles="true">
@@ -84,6 +87,8 @@
         <logicalFolder name="examples" displayName="examples" projectFiles="true">
           <itemPath>../../../main_can.c</itemPath>
         </logicalFolder>
+        <logicalFolder name="firmware" displayName="firmware" projectFiles="true">
+        </logicalFolder>
         <logicalFolder name="gpio" displayName="gpio" projectFiles="true">
           <itemPath>../../../../gpio/peripheral.c</itemPath>
           <itemPath>../../../../gpio/gpio.c</itemPath>
@@ -100,11 +105,21 @@
           <itemPath>../../../../logger/serial_log.c</itemPath>
         </logicalFolder>
         <logicalFolder name="processors" displayName="processors" projectFiles="true">
+          <logicalFolder name="dsPIC33" displayName="dsPIC33" projectFiles="true">
+            <logicalFolder name="change_notification"
+                           displayName="change_notification"
+                           projectFiles="true">
+              <itemPath>../../../../processors/dsPIC33/change_notification/change_notification.c</itemPath>
+            </logicalFolder>
+          </logicalFolder>
           <itemPath>../../../../processors/pic18f4585.c</itemPath>
           <itemPath>../../../../processors/pic18f2680.c</itemPath>
           <itemPath>../../../../processors/rpi.c</itemPath>
           <itemPath>../../../../processors/dsPIC33EP256MU806.c</itemPath>
           <itemPath>../../../../processors/pic24FJ256GB106.c</itemPath>
+        </logicalFolder>
+        <logicalFolder name="status" displayName="status" projectFiles="true">
+          <itemPath>../../../../status/status.c</itemPath>
         </logicalFolder>
         <logicalFolder name="timers" displayName="timers" projectFiles="true">
           <itemPath>../../../../timers/hw_rtc.c</itemPath>
@@ -130,7 +145,7 @@
   </sourceRootList>
   <projectmakefile>Makefile</projectmakefile>
   <confs>
-    <conf name="dsPIC33EP256MU806" type="2">
+    <conf name="default" type="2">
       <toolsSet>
         <developmentServer>localhost</developmentServer>
         <targetDevice>dsPIC33EP256MU806</targetDevice>
@@ -138,7 +153,7 @@
         <targetPluginBoard></targetPluginBoard>
         <platformTool>PICkit3PlatformTool</platformTool>
         <languageToolchain>XC16</languageToolchain>
-        <languageToolchainVersion>1.31</languageToolchainVersion>
+        <languageToolchainVersion>1.33</languageToolchainVersion>
         <platform>2</platform>
       </toolsSet>
       <compileType>
@@ -335,7 +350,6 @@
         <property key="UART 3" value="true"/>
         <property key="UART 4" value="true"/>
         <property key="USB" value="true"/>
-        <property key="firmware.download.all" value="false"/>
         <property key="hwtoolclock.frcindebug" value="false"/>
         <property key="memories.aux" value="false"/>
         <property key="memories.bootflash" value="true"/>

@@ -221,9 +221,10 @@ void __attribute__((__interrupt__, __no_auto_psv__)) _DMA1Interrupt(void)
  */
 result_t can_l2_init(can_baud_rate_t arg_baud_rate, status_handler_t arg_status_handler)
 {
-	result_t rc;
-	uint32_t address;
-	uint8_t  loop;
+	result_t          rc;
+	uint32_t          address;
+	uint8_t           loop;
+	union ty_status   status;
 	
 	status_handler = arg_status_handler;
 	
@@ -399,11 +400,13 @@ result_t can_l2_init(can_baud_rate_t arg_baud_rate, status_handler_t arg_status_
 	/*
 	 * Drop out of the configuration mode
 	 */
-#ifdef SYS_CAN_LOOPBACK
-	set_mode(loopback);
-#else
 	set_mode(normal);
-#endif
+
+	if(status_handler) {
+		status.sstruct.source = can_bus_l2_status;
+		status.sstruct.status = can_l2_connecting;
+		status_handler(status);
+	}
 	
         return(0);
 }
@@ -666,11 +669,7 @@ result_t can_l2_bitrate(can_baud_rate_t baud, boolean change)
 	/*
 	 * Drop out of the configuration mode
 	 */
-#ifdef SYS_CAN_LOOPBACK
-	set_mode(loopback);
-#else
 	set_mode(normal);
-#endif
 	return(0);
 }
 

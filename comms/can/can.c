@@ -34,7 +34,7 @@
 #endif
 
 #ifdef SYS_CAN_DCNCP
-#include "libesoup/can/dcncp/dcncp_can.h"
+#include "libesoup/comms/can/dcncp/dcncp_can.h"
 #endif
 #ifdef SYS_ISO15765_DCNCP
 #include "libesoup/can/dcncp/dcncp_iso15765.h"
@@ -112,7 +112,7 @@ static void can_status_handler(union ty_status status)
 	can_status_t        can_status;
 
 #if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-	LOG_D("status_handler(mask-0x%x, status-0x%x\n\r", status.sword);
+	LOG_D("status_handler(mask-0x%x, status-0x%x\n\r", status.word);
 #endif
 	if (status.sstruct.source == can_bus_status) {
 		can_status.byte = status.sstruct.status;

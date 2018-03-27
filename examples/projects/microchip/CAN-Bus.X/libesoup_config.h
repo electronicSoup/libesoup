@@ -133,7 +133,6 @@
  * Include CAN BUS Functionality in this project
  */
 #define SYS_CAN_BUS
-//#define SYS_CAN_LOOPBACK
 #define SYS_CAN_FRAME_HANDLER_ARRAY_SIZE  10
 #define SYS_CAN_L2_HANDLER_ARRAY_SIZE      5
 #define SYS_CAN_RX_CIR_BUFFER_SIZE         5        
@@ -142,7 +141,7 @@
  * Include a board file
  */
 #if defined(__dsPIC33EP256MU806__)
-#include "libesoup/boards/cb-dsPIC33EP256MU806.h"
+#include "libesoup/boards/cinnamonBun/dsPIC33/cb-dsPIC33EP256MU806.h"
 #elif defined (__PIC24FJ256GB106__)
 #include "libesoup/boards/cb-PIC24FJ256GB106/cb-PIC24FJ256GB106.h"
 #elif defined(__18F4585)
