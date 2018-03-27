@@ -71,8 +71,8 @@ result_t board_init(void)
 	RC_CHECK
 	ow_channel = rc;
 
-	rc = one_wire_reserve(OW_ANY_CHANNEL, ONE_WIRE_PIN);
-//	rc = one_wire_reserve(OW_ANY_CHANNEL, RD0);
+	rc = one_wire_reserve(ONE_WIRE_PIN);
+//	rc = one_wire_reserve(RD0);
 	RC_CHECK
 #endif
 	return(0);

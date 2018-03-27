@@ -60,10 +60,8 @@ void hw_expiry_function(timer_id timer, union sigval data)
 result_t delay(ty_time_units units, uint16_t duration)
 {
 	result_t           rc;
-	timer_id           hw_timer;
 	struct timer_req   timer_request;
 
-	TIMER_INIT(hw_timer);
 	timer_request.units          = units;
 	timer_request.duration       = duration;
 	timer_request.type           = single_shot;
@@ -83,7 +81,7 @@ result_t delay(ty_time_units units, uint16_t duration)
 #error "Need a nop of watchdog macro for compiler"
 #endif
         }
-	return(hw_timer);
+	return(0);
 }
 
 #endif // #ifdef SYS_HW_TIMERS

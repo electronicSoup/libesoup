@@ -39,15 +39,15 @@ __attribute__((unused)) static const char *TAG = "CHANGE";
 #include "libesoup/gpio/gpio.h"
 #include "libesoup/processors/dsPIC33/change_notification/change_notification.h"
 
-static result_t enable_change(uint8_t *port, uint8_t bit);
-static result_t disable_change(uint8_t *port, uint8_t bit);
+static result_t enable_change(uint16_t *port, uint8_t bit);
+static result_t disable_change(uint16_t *port, uint8_t bit);
 
 struct change_entry {
-	uint8_t         monitored:1;
-	uint8_t         previous_value:1;
-	uint8_t         bit:4;
-	uint8_t        *port;
-	change_notifier notify;
+	uint8_t          monitored:1;
+	uint8_t          previous_value:1;
+	uint8_t          bit:4;
+	uint16_t        *port;
+	change_notifier  notify;
 };
 
 struct change_entry pins[SYS_CHANGE_NOTIFICATION_MAX_PINS];
@@ -86,10 +86,10 @@ result_t change_notifier_init()
 
 result_t change_notifier_register(enum pin_t pin, change_notifier notifier)
 {
-	result_t   rc;
-	uint16_t   loop;
-	uint8_t   *port;
-	uint8_t    bit;
+	result_t    rc;
+	uint16_t    loop;
+	uint16_t   *port;
+	uint8_t     bit;
 
 	rc = pin_to_port_bit(pin, &port, &bit);
 	RC_CHECK
@@ -120,11 +120,11 @@ result_t change_notifier_register(enum pin_t pin, change_notifier notifier)
 	return(-ERR_NO_RESOURCES);
 }
 
-static result_t enable_change(uint8_t *port, uint8_t bit)
+static result_t enable_change(uint16_t *port, uint8_t bit)
 {
-	if(port == (uint8_t *)&PORTD) {
+	if(port == (uint16_t *)&PORTD) {
 		CNEND |= (0b1 << bit);
-	} else if(port == (uint8_t *)&PORTF) {
+	} else if(port == (uint16_t *)&PORTF) {
 		CNENF |= (0b1 << bit);
 	} else {
 		return(ERR_NOT_CODED);
@@ -134,10 +134,10 @@ static result_t enable_change(uint8_t *port, uint8_t bit)
 
 result_t change_notifier_deregister(enum pin_t pin)
 {
-	result_t  rc;
-	uint8_t  *port;
-	uint8_t   bit;
-	uint16_t  loop;
+	result_t   rc;
+	uint16_t  *port;
+	uint8_t    bit;
+	uint16_t   loop;
 	
 	rc = pin_to_port_bit(pin, &port, &bit);
 	RC_CHECK
@@ -153,11 +153,11 @@ result_t change_notifier_deregister(enum pin_t pin)
 	return(0);
 }
 
-static result_t disable_change(uint8_t *port, uint8_t bit)
+static result_t disable_change(uint16_t *port, uint8_t bit)
 {
-	if(port == (uint8_t *)&PORTD) {
+	if(port == (uint16_t *)&PORTD) {
 		CNEND &= ~(0b1 << bit);
-	} else if(port == (uint8_t *)&PORTF) {
+	} else if(port == (uint16_t *)&PORTF) {
 		CNENF &= ~(0b1 << bit);
 	} else {
 		return(-ERR_BAD_INPUT_PARAMETER);

@@ -25,7 +25,10 @@
 
 #define RC_CHECK if(rc < 0) return(rc);
 #if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
-#define RC_CHECK_PRINT(x) if(rc < 0) LOG_E("x");
+#define RC_CHECK_PRINT_CONT(x) if(rc < 0) LOG_E("x");
+#endif
+#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
+#define RC_CHECK_PRINT_VOID(x) if(rc < 0) { LOG_E("x"); return; }
 #endif
 
 #define ERR_GENERAL_ERROR          1    /* Unspecified error occured in libesoup API Function execution.*/

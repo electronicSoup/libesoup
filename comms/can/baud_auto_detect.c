@@ -4,7 +4,7 @@
  *
  * Protocol for auto detecting CAN Bus baud rate
  *
- * Copyright 2017 - 2018 electronicSoup Limited
+ * Copyright 2017-2018 electronicSoup Limited
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 2 of the GNU Lesser General Public License
@@ -22,6 +22,14 @@
 #include "libesoup_config.h"
 
 #ifdef SYS_CAN_BAUD_AUTO_DETECT
+
+#ifdef SYS_SERIAL_LOGGING
+#define DEBUG_FILE
+static const char *TAG = "CAN_AD";
+#include "libesoup/logger/serial_log.h"
+#endif  // SYS_SERIAL_LOGGING
+
+#include "libesoup/comms/can/can.h"
 
 void L2_SetCanNodeBuadRate(can_baud_rate_t baudRate)
 {
@@ -51,7 +59,7 @@ void L2_SetCanNodeBuadRate(can_baud_rate_t baudRate)
 #endif //0
 }
 
-static void finaliseBaudRateChange(u8 *data)
+static void finaliseBaudRateChange(uint8_t *data)
 {
 	LOG_D("finaliseBaudRateChange()\n\r");
 #if 0

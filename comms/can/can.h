@@ -329,6 +329,14 @@ typedef enum {
 extern char can_baud_rate_strings[8][10];
 #endif
 
+/*
+ * CAN Bus Layer 2 Status numbers
+ */
+enum can_l2_status {
+    can_l2_connecting,
+    
+};
+
 //#define BAUD_MAX baud_1M
 
 #if (defined(SYS_ISO15765) || defined(SYS_ISO11783))

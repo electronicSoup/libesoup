@@ -18,9 +18,18 @@
  *
  */
 #ifdef SYS_CHANGE_NOTIFICATION
-typedef void (*change_notifier)(uint8_t *port, uint8_t bit);
+
+/*
+ * Only tested on the dsPIC33 so far
+ */
+#if defined(__dsPIC33EP256MU806__)
+
+typedef void (*change_notifier)(uint16_t *port, uint8_t bit);
 
 extern result_t change_notifier_init(void);
 extern result_t change_notifier_register(enum pin_t pin, change_notifier notifier);
 extern result_t change_notifier_deregister(enum pin_t pin);
+
+#endif // #if defined(__dsPIC33EP256MU806__)
+
 #endif  // SYS_CHANGE_NOTIFICATION

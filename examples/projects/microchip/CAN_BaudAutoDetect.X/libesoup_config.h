@@ -25,23 +25,9 @@
 
 #include <xc.h>
 
-/**
- * @brief The required Instruction clock frequency of the device. 
- * 
- * The actual Hardware clock frequency is defined by the MACRO CRYSTAL_FREQ in
- * core.h. That constant is used in conjunction with this required SYS_CLOCK_FREQ 
- * in the function clock_init() to set the desired frequency with the PLL.
- *  
- * The function clock_init() has to be called on entry to main() to 
- * initialise the device to this clock frequency.
- */
-#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__)
-#define SYS_CLOCK_FREQ 4000000     // 4MHz
-#elif defined(__dsPIC33EP256MU806__)
+#if defined(__dsPIC33EP256MU806__)
 //#define SYS_CLOCK_FREQ 8000000     // 8MHz
 #define SYS_CLOCK_FREQ 60000000    // 60MHz
-#elif defined(__18F4585)
-#define SYS_CLOCK_FREQ 16000000     // 8MHz
 #endif
 
 #define SYS_SERIAL_LOGGING
@@ -136,6 +122,7 @@
 #define SYS_CAN_FRAME_HANDLER_ARRAY_SIZE  10
 #define SYS_CAN_L2_HANDLER_ARRAY_SIZE      5
 #define SYS_CAN_RX_CIR_BUFFER_SIZE         5        
+#define SYS_CAN_BAUD_AUTO_DETECT
 
 /*
  * Include a board file

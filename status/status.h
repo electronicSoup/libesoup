@@ -29,6 +29,7 @@
 typedef enum {
 #if defined(SYS_CAN_BUS)
 	can_bus_status,
+	can_bus_l2_status,
 #endif
 #if defined(SYS_CAN_DCNCP)
     can_bus_dcncp_status,
@@ -46,7 +47,7 @@ union ty_status {
         status_source_t source;
         uint8_t         status;
     } sstruct;
-    uint16_t sword;
+    uint16_t word;
 };
 
 typedef void (*status_handler_t)(union ty_status);

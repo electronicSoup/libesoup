@@ -47,7 +47,15 @@
 #define CAN_DCNCP_RegisterNetLogger             0x706
 #define CAN_DCNCP_UnRegisterNetLogger           0x707
 
-extern void dcncp_init(void (*arg_status_handler)(uint8_t mask, can_status_t status, can_baud_rate_t baud));
+/*
+ * CAN Bus DCNCP Protocol Status numbers
+ */
+enum can_dcncp_status {
+    can_dcncp_l3_address_registered,
+    
+};
+
+extern result_t dcncp_init(status_handler_t arg_status_handler);
 extern void dcncp_request_network_baud_change(can_baud_rate_t baud);
 extern void dcncp_send_ping(void);
 #if defined(ISO15765) || defined(ISO11783)
