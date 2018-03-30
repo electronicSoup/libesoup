@@ -75,7 +75,7 @@ static void can_status_handler(union ty_status status);
 
 status_handler_t app_status_handler = (status_handler_t)NULL;
 
-#if (defined(SYS_ISO15765) || defined(SYS_ISO11783))
+#if (defined(SYS_ISO15765) || defined(SYS_ISO11783)) || defined(SYS_TEST_L3_ADDRESS)
 result_t can_init(can_baud_rate_t baudrate, uint8_t address, status_handler_t status_handler)
 #else
 result_t can_init(can_baud_rate_t baudrate, status_handler_t status_handler)

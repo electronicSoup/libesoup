@@ -339,7 +339,7 @@ enum can_l2_status {
 
 //#define BAUD_MAX baud_1M
 
-#if (defined(SYS_ISO15765) || defined(SYS_ISO11783))
+#if (defined(SYS_ISO15765) || defined(SYS_ISO11783)) || defined(SYS_TEST_L3_ADDRESS)
 extern result_t can_init(can_baud_rate_t baudrate, uint8_t address, status_handler_t status_handler);
 #else
 extern result_t can_init(can_baud_rate_t baudrate, status_handler_t status_handler);

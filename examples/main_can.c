@@ -74,7 +74,11 @@ int main(void)
 #endif
 
 	delay(mSeconds, 500);
+#if (defined(SYS_ISO15765) || defined(SYS_ISO11783)) || defined(SYS_TEST_L3_ADDRESS)
+	rc = can_init(baud_250K, 0xff, system_status_handler);  // Includes L3 Address
+#else
  	rc = can_init(baud_250K, system_status_handler);
+#endif
 	if(rc < 0) {
 #if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
 		LOG_E("Failed to initialise CAN Bus\n\r");
