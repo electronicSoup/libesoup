@@ -96,15 +96,15 @@ static result_t clear_write_in_progress(void)
 	uint8_t  status;
 	
 	do {
-		EEPROM_Select
+		BRD_EEPROM_Select
 		Nop();
 		rc = spi_write_byte(device_id, SPI_EEPROM_STATUS_READ);
 		if(rc < 0) {
-			EEPROM_DeSelect
+			BRD_EEPROM_DeSelect
 			return(rc);
 		}
 		rc = spi_write_byte(device_id, 0x00);
-		EEPROM_DeSelect
+		BRD_EEPROM_DeSelect
 		RC_CHECK
 			
 		status = (uint8_t)rc;
@@ -127,8 +127,8 @@ result_t eprom_init(uint8_t spi_chan)
 	RC_CHECK;
 	device_id = (uint8_t)rc;
 	
-	rc = gpio_set(EEPROM_CS_PIN, GPIO_MODE_DIGITAL_OUTPUT, 1);
-	EEPROM_DeSelect
+	rc = gpio_set(BRD_EEPROM_CS_PIN, GPIO_MODE_DIGITAL_OUTPUT, 1);
+	BRD_EEPROM_DeSelect
 		
 	return(0);
 }
@@ -151,18 +151,18 @@ result_t eeprom_read(uint16_t address)
 	result_t rc;
 	uint8_t  byte;
 	
-	if(address <= EEPROM_MAX_ADDRESS) {
+	if(address <= BRD_EEPROM_MAX_ADDRESS) {
 		rc = spi_lock(device_id);
 		RC_CHECK
 		
 		rc = clear_write_in_progress();
 		RC_CHECK
 			
-		EEPROM_Select
+		BRD_EEPROM_Select
 		rc = spi_write_byte(device_id, SPI_EEPROM_READ);
 		rc = spi_write_byte(device_id, address);
 		rc = spi_write_byte(device_id, 0x00);
-		EEPROM_DeSelect
+		BRD_EEPROM_DeSelect
 		RC_CHECK
 			
 		byte = (uint8_t)rc;
@@ -191,18 +191,18 @@ result_t eeprom_write(uint16_t address, uint8_t data)
 {
 	result_t rc;
 	
-	if(address <= EEPROM_MAX_ADDRESS) {
+	if(address <= BRD_EEPROM_MAX_ADDRESS) {
 		rc = spi_lock(device_id);
 		RC_CHECK
 		rc = clear_write_in_progress();
 		RC_CHECK
 			
-		EEPROM_Select
+		BRD_EEPROM_Select
 		rc = spi_write_byte(device_id, SPI_EEPROM_WRITE_ENABLE);
-		EEPROM_DeSelect
+		BRD_EEPROM_DeSelect
 		RC_CHECK
 		Nop();
-		EEPROM_Select
+		BRD_EEPROM_Select
 
 		rc = spi_write_byte(device_id, SPI_EEPROM_WRITE);
 		RC_CHECK
@@ -210,12 +210,12 @@ result_t eeprom_write(uint16_t address, uint8_t data)
 		RC_CHECK
 		rc = spi_write_byte(device_id, data);
 		RC_CHECK
-		EEPROM_DeSelect
+		BRD_EEPROM_DeSelect
 		Nop();
-		EEPROM_Select
+		BRD_EEPROM_Select
 		rc = spi_write_byte(device_id, SPI_EEPROM_WRITE_DISABLE);
 		RC_CHECK
-		EEPROM_DeSelect
+		BRD_EEPROM_DeSelect
 
 		rc = spi_unlock(device_id);
 		RC_CHECK
@@ -243,8 +243,8 @@ result_t eeprom_erase(uint16_t start_address)
 #if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_INFO))
         LOG_I("eeprom_erase(0x%x)\n\r", start_address);
 #endif
-	if(start_address <= EEPROM_MAX_ADDRESS) {
-		for (loop = start_address; loop <= EEPROM_MAX_ADDRESS ; loop++) {
+	if(start_address <= BRD_EEPROM_MAX_ADDRESS) {
+		for (loop = start_address; loop <= BRD_EEPROM_MAX_ADDRESS ; loop++) {
 			asm ("CLRWDT");
 			rc = eeprom_write(loop, 0x00);
 			RC_CHECK

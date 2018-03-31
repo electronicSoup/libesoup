@@ -1,14 +1,13 @@
 /**
  *
- * @file libesoup/processors/cb-PIC24FJ256GB106.h
+ * @file libesoup/boards/cinnamonBun/dsPIC33/cb-dsPIC33EP256MU806.h
  *
  * @author John Whitmore
  *
- * This file contains an example libesoup libesoup_config.h configuration file. 
- *
- * The libesoup library of source code expects a libesoup_config.h header file to exist
- * in your include path. The file contains the various switches and definitions
- * which configure the various features of the library.
+ * This file contains board specific definitions for the dsPIC33EP256MU806 based
+ * cinnamonBun device. The board contains an SPI based EEPROM device and OneWire
+ * devices whose definitions are included in this board header file, as well as
+ * CRYSTAL_FREQ for the device.
  *
  * Copyright 2017-2018 electronicSoup Limited
  *
@@ -33,52 +32,53 @@
 
 /**
  * @brief Crystal Frequency of the Hardware Device.
+ *
+ * The dsPIC33 contains a Phase Locked Loop so this crystal frequency is not
+ * necessarily the instruction clock used by the device. The libesoup_config.h
+ * file defines the requested instruction clock frequency, which will be 
+ * configured, as part of libesoup_init() on startup.
  */
-#define CRYSTAL_FREQ 16000000
+#define BRD_CRYSTAL_FREQ 16000000
 
 /**
- * @brief Bootloader pause on powerup, and listen for new Firmware?
+ * @brief Serial Logging pin configuration
  *
- * The cinnamonBun Hardware has a "Boot" Jumper. If the jumper is not connected
- * the bootloader does NOT attempt to connect to an Android device and allow
- * firmware update.
- *
- * NOTE: This definition might look incorrect with the '=' but it IS 
- * Correct! The switch is expected to be used in an 'if' statement. The 
- * first part will be false but it's the second part of the or statement
- * that will dictate the action of the if!
+ * The cinnamonBun has three pins for the debug interface, which will be used
+ * if SYS_SERIAL_LOGGING is defined in libesoup_config.h. One pin is hardwired 
+ * to ground but the other two can be configured as either the recieve pin or the
+ * transmit pin, using the peripheral pin select mechanism of the dsPIC33.
+ * If libesoup_config.h defines SYS_SERIAL_LOGGING then it should specify the pin
+ * orientaiton fo the serial logging port
  */
-
-/*
- * Serial Logging
- */
+#ifdef SYS_SERIAL_LOGGING
 #if defined(SYS_SERIAL_PORT_GndTxRx)
-        #define SERIAL_LOGGING_TX_PIN  RG8
-        #define SERIAL_LOGGING_RX_PIN  RG6
+        #define BRD_SERIAL_LOGGING_TX_PIN  RG8
+        #define BRD_SERIAL_LOGGING_RX_PIN  RG6
 #elif defined(SYS_SERIAL_PORT_GndRxTx)
-        #define SERIAL_LOGGING_TX_PIN  RG6
-        #define SERIAL_LOGGING_RX_PIN  RG8
+        #define BRD_SERIAL_LOGGING_TX_PIN  RG6
+        #define BRD_SERIAL_LOGGING_RX_PIN  RG8
+#else
+#error Serial Logging pin orientation not defined!
 #endif
+#endif // SYS_SERIAL_LOGGING
 
-/*
- * EEPROM Definitions
+/**
+ * @brief EEPROM Definitions
  *
- * @brief Maximum address of the EEPROM Memory
- *
- * This constant defines the size of the EEPROM memory on the hardware this
- * may change depending on future electronicSoup versions or on your own 
- * particular hardware. Any attempt to read or write from addresses above this 
- * limit will raise an error.
+ * Definitions used for the EEPROM device
  */
-#define EEPROM_MAX_ADDRESS      0x7F
-
 /**
  * @def   EEPROM_CS_PIN_DIRECTION
- * @brief EEPROM Chip Select Direction Pin of the connected EEPROM chip
- * 
- * @def   EEPROM_CS
- * @brief Chip Select Pin of the connected EEPROM chip
+ * @brief Maximum address of the EEPROM Memory
  *
+ * Definition for the size of the EEPROM memory on the hardware.
+ * Any attempt to read or write from addresses above this limit will raise an error.
+ */
+#define BRD_EEPROM_MAX_ADDRESS      0x7F
+
+/**
+ * @def   EEPROM_CS_PIN
+ * @brief EEPROM Chip Select Pin
  *
  * @def   EEPROM_Select
  * @brief Macro to select the EEPROM Chip
@@ -86,95 +86,42 @@
  * @def   EEPROM_DeSelect
  * @brief Macro to deselect the EEPROM Chip
  */
-#define EEPROM_CS_PIN                  RD11
-#define EEPROM_CS                      LATDbits.LATD11
-#define EEPROM_Select                  EEPROM_CS = 0;
-#define EEPROM_DeSelect                EEPROM_CS = 1;
+#define BRD_EEPROM_CS_PIN                  RD11
+#define BRD_EEPROM_Select                  LATDbits.LATD11 = 0;
+#define BRD_EEPROM_DeSelect                LATDbits.LATD11 = 1;
 
-
-/*
- * CAN Bus definitions
- */
-#define CAN_RX_PIN                     RG7
-#define CAN_TX_PIN                     RF4
-
-/*
- * One Wire bus
- */
-#define ONE_WIRE_PIN                   RF3
 
 /**
- * SPI (Serial Peripheral Interface Definitions.
+ * @brief CAN Bus definitions
  *
- * @def   SPI_RW_FINISHED
- * @brief Macro to check if current SPI Read/Write operation is complete
+ * Pins used by the CAN Bus interface on the board
+ */
+#define BRD_CAN_RX_PIN                     RG7
+#define BRD_CAN_TX_PIN                     RF4
+
+/**
+ * @brief One Wire bus definition
  *
- * An SPI read or write operation shouldn't be started till the previous one 
- * has completed. The Processor sets this bit when operation complete.
+ * The pin being used by the board's One Wire bus
+ */
+#define BRD_ONE_WIRE_PIN                   RF3
+
+/**
+ * @brief SPI (Serial Peripheral Interface Definitions)
  *
- * @def   SPI_SCK_DIRECTION
- * @brief Data Direction Register pin for SPI Clock line.
+ * @def   BRD_SPI_SCK
+ * @brief Pin for SPI Clock line.
  *
- * @def   SPI_MISO_DIRECTION
- * @brief Data Direction Register pin for the SPI Master In Slave Out line.
+ * @def   BRD_SPI_MOSI
+ * @brief Pin for the SPI Master Out Slave In line. 
  *
- * @def   SPI_MOSI_DIRECTION
- * @brief Data Direction Register pin for the SPI Master Out Slave In line. 
+ * @def   BRD_SPI_MISO
+ * @brief Pin for the SPI Master In Slave Out line.
  *
  */
 #define BRD_SPI_SCK          RF1
 #define BRD_SPI_MOSI         RF0
 #define BRD_SPI_MISO        RD10
-
-/*
- * Flash parameters
- */
-/**
- * @def   FLASH_PAGE_SIZE
- * @brief The size of Flash memory Pages.
- *
- * The Flash page size is 1024 Instructions, which is 3072 as each instruction
- * is 3 Bytes. But the Flash is addressed in Words so the length given here is
- * 0x800 (1024 * 2).
- *
- * Flash memory is erased on a Page by page basis.
- *
- * @def   FLASH_LAST_ADDRESS
- * @brief The last Address of Flash memory.
- *
- * @def   FLASH_NUM_INSTRUCTION_PER_ROW
- * @brief Flash is written row by row. This is the Row size of Flash Memory
- */
-#define FLASH_PAGE_SIZE                0x800
-#define FLASH_LAST_ADDRESS             0x2ABF9
-#define FLASH_NUM_INSTRUCTION_PER_ROW  128
-
-/**
- * @def   FLASH_FIRMWARE_START_ADDRESS
- * @brief Start of Firmware code in Flash Memory.
- *
- * The bootloader code occupies the lower portion of Flash memory. Firmware
- * starts at this address.
- *
- * @def   FLASH_APP_START_ADDRESS
- * @brief Start of the Application code in Flash Memory.
- *
- * If you use the electronicSoup SYS_CAN Node Operating System then the application 
- * Code starts at this address in Flash Memory.
- */
-#define FLASH_FIRMWARE_START_ADDRESS   0x08800
-#define FLASH_APP_START_ADDRESS        0x18000
-
-/**
- * @def   FLASH_APP_HANDLE_PAGE
- * @brief Address of the Applications Handle page in Flash.
- *
- * Because of limitations in the PIC Architecture, specifically in how far in
- * Flash Memory a branching instruction can jump a page of Flash is reserved in
- * low memory for the handlers to be able to jump up to high memory of the 
- * Application's code.
- */
-#define FLASH_APP_HANDLE_PAGE        0x400
 
 /**
  * @def   USB_HOST

@@ -93,13 +93,18 @@ static timer_id  hw_timer = BAD_TIMER_ID;
 static	struct timer_req hw_timer_req;
 
 /*
- * Data structure for a Timer
+ * \cond
+ * Local data structure for a Software Timer
+ * Only used in this file to manage the created timers.
  */
 typedef struct {
 	boolean           active;
 	uint16_t          expiry_count;
 	struct timer_req *request;
-} sys_timer_t;
+} sw_timer_t;
+/*
+ * \endcond
+ */
 
 /*
  * The Cinnamon Bun maintains a table of timers which can be activated
@@ -114,7 +119,7 @@ typedef struct {
 #pragma udata
 #endif //__PIC24FJ256GB106__
 #endif // XC16 || __XC8
-sys_timer_t timers[SYS_NUMBER_OF_SW_TIMERS];
+sw_timer_t timers[SYS_NUMBER_OF_SW_TIMERS];
 
 /*
  * Local static functions

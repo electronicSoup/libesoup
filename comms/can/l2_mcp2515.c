@@ -24,7 +24,7 @@
 #include <stdio.h>
 #include "libesoup_config.h"
 
-#ifdef SYS_CAN_BUS_MCP2515
+#ifdef BRD_CAN_BUS_MCP2515
 
 #ifdef SYS_SERIAL_LOGGING
 #define DEBUG_FILE
@@ -33,6 +33,8 @@ static const char *TAG = "MCP2515";
 #include "libesoup/logger/serial_log.h"
 #endif // SYS_SERIAL_LOGGING
 
+#include "libesoup/errno.h"
+#include "libesoup/gpio/gpio.h"
 #include "libesoup/comms/can/can.h"
 #include "libesoup/comms/can/l2_mcp2515.h"
 
@@ -116,6 +118,7 @@ static status_handler_t    status_handler = NULL;
 
 result_t can_l2_init(can_baud_rate_t arg_baud_rate, status_handler_t handler)
 {
+	result_t       rc;
 	uint8_t        exit_mode = NORMAL_MODE;
 
 #if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
@@ -131,7 +134,7 @@ result_t can_l2_init(can_baud_rate_t arg_baud_rate, status_handler_t handler)
 #if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
 		LOG_E("Bad Baud rate!!!\n\r");
 #endif
-		return (ERR_BAD_INPUT_PARAMETER);
+		return (-ERR_BAD_INPUT_PARAMETER);
 	}
 #endif // SYS_CAN_BAUD_AUTO_DETECT
 	mcp2515_isr = FALSE;
@@ -146,9 +149,11 @@ result_t can_l2_init(can_baud_rate_t arg_baud_rate, status_handler_t handler)
 
 	status_handler = handler;
 
-	CAN_INTERRUPT_PIN_DIRECTION = INPUT_PIN;
-	CAN_CS_PIN_DIRECTION = OUTPUT_PIN;
-	CAN_DESELECT
+	rc = gpio_set(BRD_CAN_INTERRUPT_PIN, GPIO_MODE_DIGITAL_INPUT, 0);
+	RC_CHECK
+	rc = gpio_set(BRD_CAN_CS_PIN, GPIO_MODE_DIGITAL_OUTPUT, 1);
+	RC_CHECK
+	BRD_CAN_DESELECT
 
 	reset();
 
@@ -203,7 +208,7 @@ result_t can_l2_init(can_baud_rate_t arg_baud_rate, status_handler_t handler)
 #if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	LOG_D("CAN Layer 2 Initialised\n\r");
 #endif
-	return(SUCCESS);
+	return(0);
 }
 
 /*
@@ -509,7 +514,7 @@ void deactivate(void)
 
 result_t can_l2_tx_frame(can_frame  *frame)
 {
-	result_t     result = SUCCESS;
+	result_t     result = 0;
 	canBuffer_t  tx_buffer;
 	uint8_t          *buff;
 	uint8_t           loop = 0x00;
@@ -527,7 +532,7 @@ result_t can_l2_tx_frame(can_frame  *frame)
 #if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
 		LOG_E("Can't Transmit network not connected!\n\r");
 #endif
-		return(ERR_CAN_ERROR);
+		return(-ERR_CAN_ERROR);
 	}
 
 	if(frame->can_id & CAN_EFF_FLAG) {
@@ -562,7 +567,7 @@ result_t can_l2_tx_frame(can_frame  *frame)
 #if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
 		LOG_E("ERROR No free Tx Buffers\n\r");
 #endif
-		return(ERR_CAN_NO_FREE_BUFFER);
+		return(-ERR_CAN_NO_FREE_BUFFER);
 	} else if (ctrl == TXB0CTRL) {
 		can_buffer = TXB0SIDH;
 	} else if (ctrl == TXB1CTRL) {
@@ -574,7 +579,7 @@ result_t can_l2_tx_frame(can_frame  *frame)
 	/*
 	 * Load up the transmit buffer
 	 */
-	CAN_SELECT
+	BRD_CAN_SELECT
 	spi_write_byte(CAN_WRITE_REG);
 	spi_write_byte(can_buffer);
 
@@ -589,7 +594,7 @@ result_t can_l2_tx_frame(can_frame  *frame)
 	for(loop = 0; loop < frame->can_dlc; loop++, buff++) {
 		spi_write_byte(*buff);
 	}
-	CAN_DESELECT
+	BRD_CAN_DESELECT
 
 	/*
 	 * Right all set for Transmission but check the current network status
@@ -817,9 +822,9 @@ static void checkSubErrors(void)
 static void reset(void)
 {
 	/* Reset the Can Chip */
-	CAN_SELECT
+	BRD_CAN_SELECT
 	spi_write_byte(CAN_RESET);
-	CAN_DESELECT
+	BRD_CAN_DESELECT
 }
 
 static void set_reg_mask_value(uint8_t reg, uint8_t mask, uint8_t value)
@@ -827,12 +832,12 @@ static void set_reg_mask_value(uint8_t reg, uint8_t mask, uint8_t value)
 	uint8_t fail;
 
         //    do {
-        CAN_SELECT
+        BRD_CAN_SELECT
         spi_write_byte(CAN_BIT_MODIFY);
         spi_write_byte(reg);
         spi_write_byte(mask);
         spi_write_byte(value);
-        CAN_DESELECT
+        BRD_CAN_DESELECT
 
         fail = (read_reg(reg) & mask) != value;
         if(fail) {
@@ -1010,22 +1015,22 @@ static void disable_rx_interrupts(void)
 static uint8_t read_reg(uint8_t reg)
 {
 	uint8_t value;
-	CAN_SELECT
+	BRD_CAN_SELECT
 	spi_write_byte(CAN_READ_REG);
 	spi_write_byte(reg);
 	value = spi_write_byte(0x00);
-	CAN_DESELECT
+	BRD_CAN_DESELECT
 
 	return(value);
 }
 
 static void write_reg(uint8_t reg, uint8_t value)
 {
-	CAN_SELECT
+	BRD_CAN_SELECT
 	spi_write_byte(CAN_WRITE_REG);
 	spi_write_byte(reg);
 	spi_write_byte(value);
-	CAN_DESELECT
+	BRD_CAN_DESELECT
 }
 
 static void read_rx_buffer(uint8_t reg, uint8_t *buffer)
@@ -1035,7 +1040,7 @@ static void read_rx_buffer(uint8_t reg, uint8_t *buffer)
 	uint8_t dataLength = 0x00;
 
 	ptr = buffer;
-	CAN_SELECT
+	BRD_CAN_SELECT
 	spi_write_byte(CAN_READ_REG);
 	spi_write_byte(reg);
 
@@ -1057,7 +1062,7 @@ static void read_rx_buffer(uint8_t reg, uint8_t *buffer)
 		}
         }
 
-	CAN_DESELECT
+	BRD_CAN_DESELECT
 }
 
 uint8_t find_free_tx_buffer(void)
@@ -1118,9 +1123,9 @@ void test_can()
 {
 	uint8_t byte;
 
-	CAN_SELECT
+	BRD_CAN_SELECT
 	byte = read_reg(CANCTRL);
-	CAN_DESELECT
+	BRD_CAN_DESELECT
 
 #if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	LOG_D("Test read of SYS_CANCTRL - 0x%x\n\r", byte);

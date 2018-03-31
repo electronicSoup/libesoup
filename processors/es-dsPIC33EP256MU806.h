@@ -260,6 +260,57 @@ enum pin_t {
 
 #define SECONDARY_OSCILLATOR            OSCCONbits.LPOSCEN
 
+/*
+ * Flash parameters
+ */
+/**
+ * @def   FLASH_PAGE_SIZE
+ * @brief The size of Flash memory Pages.
+ *
+ * The Flash page size is 1024 Instructions, which is 3072 as each instruction
+ * is 3 Bytes. But the Flash is addressed in Words so the length given here is
+ * 0x800 (1024 * 2).
+ *
+ * Flash memory is erased on a Page by page basis.
+ *
+ * @def   FLASH_LAST_ADDRESS
+ * @brief The last Address of Flash memory.
+ *
+ * @def   FLASH_NUM_INSTRUCTION_PER_ROW
+ * @brief Flash is written row by row. This is the Row size of Flash Memory
+ */
+#define FLASH_PAGE_SIZE                0x800
+#define FLASH_LAST_ADDRESS             0x2ABF9
+#define FLASH_NUM_INSTRUCTION_PER_ROW  128
+
+/**
+ * @def   FLASH_FIRMWARE_START_ADDRESS
+ * @brief Start of Firmware code in Flash Memory.
+ *
+ * The bootloader code occupies the lower portion of Flash memory. Firmware
+ * starts at this address.
+ *
+ * @def   FLASH_APP_START_ADDRESS
+ * @brief Start of the Application code in Flash Memory.
+ *
+ * If you use the electronicSoup SYS_CAN Node Operating System then the application 
+ * Code starts at this address in Flash Memory.
+ */
+#define FLASH_FIRMWARE_START_ADDRESS   0x08800
+#define FLASH_APP_START_ADDRESS        0x18000
+
+/**
+ * @def   FLASH_APP_HANDLE_PAGE
+ * @brief Address of the Applications Handle page in Flash.
+ *
+ * Because of limitations in the PIC Architecture, specifically in how far in
+ * Flash Memory a branching instruction can jump a page of Flash is reserved in
+ * low memory for the handlers to be able to jump up to high memory of the 
+ * Application's code.
+ */
+#define FLASH_APP_HANDLE_PAGE        0x400
+
+
 extern void cpu_init(void);
 
 #endif // _ES_dsPIC33EP256MU806_H

@@ -37,7 +37,7 @@ int main(void)
 
 	rc = libesoup_init();
 
-#if defined(__dsPIC33EP256MU806__)	
+#if defined(__dsPIC33EP256MU806__)
 	rc = gpio_set(RD3, GPIO_MODE_DIGITAL_OUTPUT, 0);
 #elif defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__)
         TRISEbits.TRISE0 = INPUT_PIN;
@@ -48,8 +48,6 @@ int main(void)
 
 	delay(Seconds, 5);
 	
-	TIMER_INIT(timer);
-
 	request.units          = Seconds;
 	request.duration       = 30;
 	request.type           = single_shot;

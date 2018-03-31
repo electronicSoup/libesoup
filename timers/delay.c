@@ -25,7 +25,11 @@
 
 #ifdef SYS_SERIAL_LOGGING
 #define DEBUG_FILE
+#if defined(XC16)
 __attribute__ ((unused)) static const char *TAG = "DELAY";
+#elif defined(__XC8)
+static const char *TAG = "DELAY";
+#endif // XC16 XC8
 #include "libesoup/logger/serial_log.h"
 /*
  * Check required libesoup_config.h defines are found

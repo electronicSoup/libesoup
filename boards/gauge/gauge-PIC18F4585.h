@@ -4,7 +4,7 @@
  *
  * @author John Whitmore
  *
- * This file contains an example libesoup libesoup_config.h configuration file. 
+ * This file contains definitions for the pic18f4585 based gauge board  
  *
  * The libesoup library of source code expects a libesoup_config.h header file to exist
  * in your include path. The file contains the various switches and definitions
@@ -34,10 +34,7 @@
 /**
  * @brief Crystal Frequency of the Hardware Device.
  */
-#define CRYSTAL_FREQ 16000000
-
-//#define HEARTBEAT_LED_DIRECTION    TRISBbits.RB4
-//#define HEARTBEAT_LED              LATBbits.LATB4
+#define BRD_CRYSTAL_FREQ 16000000
 
 #include "libesoup/core.h"
 

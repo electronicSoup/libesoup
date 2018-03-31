@@ -112,7 +112,7 @@
 #elif defined(__PIC24FJ256GB106__)
 #include "libesoup/boards/cb-PIC24FJ256GB106.h"
 #elif defined(__dsPIC33EP256MU806__)
-#include "libesoup/boards/cb-dsPIC33EP256MU806.h"
+#include "libesoup/boards/cinnamonBun/dsPIC33/cb-dsPIC33EP256MU806.h"
 #endif
 
 /*

@@ -106,10 +106,12 @@
 #define PPS_I_EX_INT_2                    RPINR1bits.INT2
 #define PPS_I_EX_INT_3                    RPINR1bits.INT3
 #define PPS_I_EX_INT_4                    RPINR2bits.INT4
+
 #define PPS_I_T2CK                        RPINR3bits.T2CK
 #define PPS_I_T3CK                        RPINR3bits.T3CK
 #define PPS_I_T4CK                        RPINR4bits.T4CK
 #define PPS_I_T5CK                        RPINR4bits.T5CK
+
 #define PPS_I_IC1                         RPINR7bits.IC1
 #define PPS_I_IC2                         RPINR7bits.IC2
 #define PPS_I_IC3                         RPINR8bits.IC3
@@ -118,12 +120,20 @@
 #define PPS_I_IC6                         RPINR9bits.IC6
 #define PPS_I_IC7                         RPINR10bits.IC7
 #define PPS_I_IC8                         RPINR10bits.IC8
+
+#define PPS_I_OCFA                        RPINR11bits.OCFAR
+#define PPS_I_OCFB                        RPINR11bits.OCFBR
+
 #define PPS_I_IC9                         RPINR15bits.IC9
 #define PPS_I_UART_1_RX                   RPINR18bits.U1RXR
 #define PPS_I_U1CTS                       RPINR18bits.U1CTS
 #define PPS_I_UART_2_RX                   RPINR19bits.U2RXR
 #define PPS_I_U2CTS                       RPINR19bits.U2CTS
-#define PPS_I_U3CTS                       RPINR21bits.U3CTSR
+
+#define PPS_I_SPI_1_CLK                   RPINR20bits.SCK1R
+#define PPS_I_SPI_1_DI                    RPINR20bits.SDI1R
+#define PPS_I_SPI_1_SS                    RPINR21bits.SS1R
+
 #define PPS_I_SPI_2_DI                    RPINR22bits.SDI2R 
 #define PPS_I_SPI_2_CLK                   RPINR22bits.SCK2R
 #define PPS_I_SPI_2_SS                    RPINR23bits.SS2R

@@ -26,7 +26,7 @@ static const char *TAG = "Main";
 #include "libesoup/logger/serial_log.h"
 #include "libesoup/processors/dsPIC33/change_notification/change_notification.h"
 
-void change_notification(uint8_t *port, uint8_t bit);
+void change_notification(enum pin_t pin);
 
 int main(void)
 {
@@ -39,7 +39,7 @@ int main(void)
 #endif		
 	}
 
-	rc = change_notifier_register((uint8_t *)&PORTD , 2, change_notification);
+	rc = change_notifier_register(RD2, change_notification);
 	if(rc < 0) {
 #if ((defined SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
 		LOG_E("change_notifier_register()\n\r");
@@ -56,7 +56,7 @@ int main(void)
         return 0;
 }
 
-void change_notification(uint8_t *port, uint8_t bit)
+void change_notification(enum pin_t pin)
 {
 #if ((defined SYS_SERIAL_LOGGING) && (defined DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
         LOG_D("Change\n\r");

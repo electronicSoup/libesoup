@@ -1,6 +1,13 @@
 /**
  *
- * \file libesoup/boards/cinnamonBun/board.c
+ * @file libesoup/boards/cinnamonBun/dsPIC33/board.c
+ *
+ * @author John Whitmore
+ *
+ * Board specific code for the dsPIC33EP256MU806 based cinnamonBun.
+ *
+ * The file contains the implementation of the board_init() function which 
+ * will be called as part of the library initialisation via libesoup_init()
  *
  * Copyright 2018 electronicSoup Limited
  *
@@ -17,9 +24,9 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  *
  */
-#include "libesoup_config.h"
+#if defined(__dsPIC33EP256MU806__)  // Platform specific code so only used for the dsPIC33EP256MU806
 
-#if defined(__dsPIC33EP256MU806__)
+#include "libesoup_config.h"
 
 #include "libesoup/errno.h"
 
@@ -28,6 +35,10 @@
 #endif
 
 #ifdef SYS_EEPROM
+/*
+ * The EEPROM Chip is the single chip on an SPI Bus. If SYS_EEPROM is being used
+ * then the SPI functionality must be included in the build.
+ */
 #ifndef SYS_SPI_BUS
 #error libesoup_config.h should define SYS_SPI_BUS upon which SYS_EEPROM depends
 #endif

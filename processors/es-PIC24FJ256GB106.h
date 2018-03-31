@@ -30,6 +30,8 @@
 #ifndef _ES_PIC24FJ256GB106_H
 #define _ES_PIC24FJ256GB106_H
 
+#include <xc.h>
+
 #define RCON_WDTO   (1 << 4)
 
 #define DISABLED    0

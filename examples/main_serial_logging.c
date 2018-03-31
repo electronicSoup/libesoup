@@ -86,7 +86,6 @@ int main()
 	 * that it's emptied
 	 */
 #ifdef SYS_SW_TIMERS
-	TIMER_INIT(timer);
 	request.units = Seconds;
 	request.duration = 10;
 	request.type = repeat;
@@ -126,12 +125,15 @@ static void expiry(timer_id timer, union sigval data)
         LOG_D("Expiry - 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,\n\r");
 #endif	
 	}
-	
+
+#ifdef XC16	
 #ifdef SYS_DEBUG_BUILD
 #if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
         serial_printf("%d\n\r", serial_buffer_count());
 #endif	
 #endif
+#endif  // XC16
+	
 	count++;
 }
 #endif // SYS_SW_TIMERS

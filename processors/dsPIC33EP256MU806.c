@@ -108,11 +108,11 @@ static void clock_init(void)
          */
 	sys_clock_freq = SYS_CLOCK_FREQ;
 
-        if(sys_clock_freq != (CRYSTAL_FREQ/2)) {
+        if(sys_clock_freq != (BRD_CRYSTAL_FREQ/2)) {
 		fosc = sys_clock_freq * 2;
 	
 		if((fosc < 15000000) || (fosc > 120000000)) {
-			sys_clock_freq = CRYSTAL_FREQ/2;
+			sys_clock_freq = BRD_CRYSTAL_FREQ/2;
 			fosc = sys_clock_freq * 2;
 		}
 
@@ -120,7 +120,7 @@ static void clock_init(void)
 	         * Assuming that we're only interested in Whole MHz frequencies choose
 	         * N1 so that Fplli is 1MHz 
 	         */
-		n1 = CRYSTAL_FREQ / 1000000;
+		n1 = BRD_CRYSTAL_FREQ / 1000000;
 
 		/*
 	         * Now want a value for N2 which satisfies Fsys / N2 = requested Freq
@@ -137,7 +137,7 @@ static void clock_init(void)
 		}
 
 		if(!found) {
-			sys_clock_freq = CRYSTAL_FREQ/2;
+			sys_clock_freq = BRD_CRYSTAL_FREQ/2;
 		} else {
 			/*
 	                 * Finally we want a value for m which is fsys/fplli we've set N1
@@ -152,7 +152,7 @@ static void clock_init(void)
          * Crystal Frequency then we can simple use Primary Clock.
 	 * NO PLL
          */
-        if(sys_clock_freq == (CRYSTAL_FREQ/2)) {
+        if(sys_clock_freq == (BRD_CRYSTAL_FREQ/2)) {
                 // Initiate Clock Switch to Primary Oscillator
                 clock = dsPIC33_PRIMARY_OSCILLATOR;
                 __builtin_write_OSCCONH(clock);
@@ -186,7 +186,7 @@ static void clock_init(void)
         // Wait for Clock switch to occur
         while (OSCCONbits.COSC!= clock);
 
-        if(sys_clock_freq != (CRYSTAL_FREQ/2)) {
+        if(sys_clock_freq != (BRD_CRYSTAL_FREQ/2)) {
                 // Wait for PLL to lock
                 while (OSCCONbits.LOCK!= 1);
         }

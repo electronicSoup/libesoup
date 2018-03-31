@@ -41,13 +41,9 @@
  * The function clock_init() has to be called on entry to main() to 
  * initialise the device to this clock frequency.
  */
-#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__)
-#define SYS_CLOCK_FREQ 16000000     // 16MHz
-#elif defined(__dsPIC33EP256MU806__)
+#if defined(__dsPIC33EP256MU806__)
 #define SYS_CLOCK_FREQ 8000000     // 8MHz
 //#define SYS_CLOCK_FREQ 60000000    // 60MHz
-#elif defined(__18F4585)
-#define SYS_CLOCK_FREQ 16000000     // 8MHz
 #endif
 
 #define SYS_DEBUG_BUILD
@@ -127,7 +123,7 @@
 #elif defined (__PIC24FJ256GB106__)
 #include "libesoup/boards/cinnamonBun/pic24FJ/cb-PIC24FJ256GB106.h"
 #elif defined(__18F4585)
-#include "libesoup/boards/gauge-PIC18F4585.h"
+#include "libesoup/boards/gauge/gauge-PIC18F4585.h"
 #elif defined(__RPI)
 #include "libesoup/boards/rpi.h"
 #endif

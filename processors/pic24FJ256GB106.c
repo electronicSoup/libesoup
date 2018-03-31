@@ -51,7 +51,7 @@ void _ISR __attribute__((__no_auto_psv__)) _StackError(void)
 
 void cpu_init(void)
 {
-	sys_clock_freq = CRYSTAL_FREQ/2;
+	sys_clock_freq = BRD_CRYSTAL_FREQ/2;
 }
 
 #endif // defined(__PIC24FJ256GB106__)

@@ -58,7 +58,12 @@
 #define NUMBER_HW_TIMERS        2
 
 
-/*
+/**
+ * @brief GPIO pins on the pic18f4585
+ *
+ * Unfortunately Microchip's header files already define RB0 etc. which is used
+ * by other libesoup target micro-controllers so in this case have to prepend a
+ * 'P' to make PRB0 etc, so that there's not a namespace clash.
  * 
  */
 enum pin_t {
@@ -106,8 +111,16 @@ enum pin_t {
     INVALID_PIN = 0xff,
 };
 
-#define SERIAL_LOGGING_TX_PIN   RC6
-#define SERIAL_LOGGING_RX_PIN   RC7
+/**
+ * @brief Serial logging interface Pin defintions
+ *
+ * In other micro-controllers these definitions are in the board file
+ * as the Peripheral pin select functionality can be used to configure the
+ * required pin. In the PIC18 however the UART pins are hard wired and cannot
+ * be configured at all.
+ */
+#define BRD_SERIAL_LOGGING_TX_PIN   PRC6
+#define BRD_SERIAL_LOGGING_RX_PIN   PRC7
 
 extern void cpu_init(void);
 

@@ -108,7 +108,7 @@ void exp_func(timer_id timer, union sigval data)
 			LOG_D("Read back a value of %d\n\r", (uint8_t)rc);
 		}
 		eeprom_address++;
-		if(eeprom_address == EEPROM_MAX_ADDRESS) eeprom_address = 0;
+		if(eeprom_address == BRD_EEPROM_MAX_ADDRESS) eeprom_address = 0;
 		eeprom_test_rd = 0;
 	}
 }	

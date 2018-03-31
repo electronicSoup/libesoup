@@ -242,14 +242,14 @@ result_t can_l2_init(can_baud_rate_t arg_baud_rate, status_handler_t arg_status_
         /*
          * Initialise the I/O Pins and peripheral functions
          */
-	rc = gpio_set(CAN_RX_PIN, GPIO_MODE_DIGITAL_INPUT, 0);
+	rc = gpio_set(BRD_CAN_RX_PIN, GPIO_MODE_DIGITAL_INPUT, 0);
 	RC_CHECK
-	rc = PPS_I_CAN1_RX = set_peripheral_input(CAN_RX_PIN);
+	rc = PPS_I_CAN1_RX = set_peripheral_input(BRD_CAN_RX_PIN);
 	RC_CHECK
 	
-	rc = gpio_set(CAN_TX_PIN, GPIO_MODE_DIGITAL_OUTPUT, 0);
+	rc = gpio_set(BRD_CAN_TX_PIN, GPIO_MODE_DIGITAL_OUTPUT, 0);
 	RC_CHECK
-	rc = set_peripheral_output(CAN_TX_PIN, PPS_O_CAN1_TX);
+	rc = set_peripheral_output(BRD_CAN_TX_PIN, PPS_O_CAN1_TX);
 	RC_CHECK
 
 	/*

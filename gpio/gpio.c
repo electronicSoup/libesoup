@@ -1051,6 +1051,7 @@ result_t gpio_get(enum pin_t pin)
 }
 #endif // #if defined(__18F4585)
 
+#if 0
 #if defined(__dsPIC33EP256MU806__) || defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__)
 result_t pin_to_port_bit(enum pin_t pin, uint16_t **prt, uint8_t *bt)
 {
@@ -1169,7 +1170,9 @@ result_t pin_to_port_bit(enum pin_t pin, uint16_t **prt, uint8_t *bt)
 	return(0);	
 }
 #endif // #if defined(__dsPIC33EP256MU806__) || defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__)
+#endif // 0
 
+#if 0
 #if defined(__18F4585)
 result_t pin_to_port_bit(enum pin_t pin, uint8_t **prt, uint8_t *bt)
 {
@@ -1237,3 +1240,4 @@ result_t pin_to_port_bit(enum pin_t pin, uint8_t **prt, uint8_t *bt)
         return(0);	
 }
 #endif // #if defined(__18F4585)
+#endif

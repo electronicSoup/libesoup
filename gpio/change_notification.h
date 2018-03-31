@@ -24,7 +24,7 @@
  */
 #if defined(__dsPIC33EP256MU806__)
 
-typedef void (*change_notifier)(uint16_t *port, uint8_t bit);
+typedef void (*change_notifier)(enum pin_t pin);
 
 extern result_t change_notifier_init(void);
 extern result_t change_notifier_register(enum pin_t pin, change_notifier notifier);

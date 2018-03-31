@@ -31,4 +31,10 @@
 //#define SYS_CLOCK_FREQ  8000000
 #define SYS_CLOCK_FREQ 60000000
 
+#if defined(__18F4585)
+#include "libesoup/boards/gauge/gauge-PIC18F4585.h"
+#elif defined(__PIC24FJ256GB106__)
+#include "libesoup/boards/cinnamonBun/pic24FJ/cb-PIC24FJ256GB106.h"
+#elif defined(__dsPIC33EP256MU806__)
 #include "libesoup/boards/cinnamonBun/dsPIC33/cb-dsPIC33EP256MU806.h"
+#endif

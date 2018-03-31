@@ -26,7 +26,11 @@
 /**
  * \defgroup Timers Timers
  * @{
- * 
+ * This is the timers group. Text not going where I want.
+ */
+
+/**
+ * \ingroup Timers
  * @enum ty_time_units
  * @brief Enumeration for units of time. Used to specify durations for timers.
  * 

@@ -68,6 +68,7 @@ static const char *TAG = "HW_TIMERS";
  * Data structures:
  */
 /*
+ * \cond
  * Private structure to manage the hardware timers of the micro controller
  * should not be used outside this file.
  */
@@ -77,6 +78,9 @@ struct hw_timer_data {
 	uint16_t         repeats;
 	uint16_t         remainder;
 };
+/*
+ * \endcond
+ */
 
 /*
  * Private array managing the hardware timers in the micro-controller. The size
