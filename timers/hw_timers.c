@@ -1,10 +1,12 @@
 /*
  *
- * libesoup/timers/hw_timers.c
+ * file libesoup/timers/hw_timers.c
+ *
+ * author John Whitmore
  *
  * Hardware Timer functionality for the electronicSoup Cinnamon Bun
  *
- * Copyright 2017 - 2018 electronicSoup Limited
+ * Copyright 2017-2018 electronicSoup Limited
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 2 of the GNU Lesser General Public License
@@ -68,7 +70,6 @@ static const char *TAG = "HW_TIMERS";
  * Data structures:
  */
 /*
- * \cond
  * Private structure to manage the hardware timers of the micro controller
  * should not be used outside this file.
  */
@@ -78,9 +79,6 @@ struct hw_timer_data {
 	uint16_t         repeats;
 	uint16_t         remainder;
 };
-/*
- * \endcond
- */
 
 /*
  * Private array managing the hardware timers in the micro-controller. The size

@@ -1,8 +1,10 @@
 /**
  *
- * \file libesoup/utils/rand.c
+ * @file libesoup/utils/rand.c
  *
- * Random initialisation function for the electronicSoup Cinnamon Bun
+ * @author John Whitmore
+ *
+ * @brief Random initialisation function for the electronicSoup Cinnamon Bun
  *
  * Copyright 2017-2018 electronicSoup Limited
  *

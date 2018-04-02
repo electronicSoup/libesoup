@@ -41,9 +41,9 @@ static const char *TAG = "dsPIC33_CAN";
 #include "libesoup/gpio/gpio.h"
 #include "libesoup/gpio/peripheral.h"
 #include "libesoup/status/status.h"
-#include "libesoup/comms/can/l2_dsPIC33EP256MU806.h"
+//#include "libesoup/comms/can/l2_dsPIC33EP256MU806.h"
 #include "libesoup/comms/can/can.h"
-#include "libesoup/comms/can/frame_dispatch.h"
+//#include "libesoup/comms/can/frame_dispatch.h"
 #ifdef SYS_CAN_PING_PROTOCOL
 #include "libesoup/comms/can/ping.h"
 #endif // SYS_CAN_PING_PROTOCOL
@@ -54,6 +54,21 @@ static const char *TAG = "dsPIC33_CAN";
 #ifndef SYS_SYSTEM_STATUS
 #error "CAN Module relies on System Status module libesoup.h must define SYS_SYSTEM_STATUS"
 #endif
+
+#define NORMAL_MODE       0b000
+#define DISABLE_MODE      0b001
+#define LOOPBACK_MODE     0b010
+#define LISTEN_ONLYMODE   0b011
+#define CONFIG_MODE       0b100
+#define LISTEN_ALL_MODE   0b111
+
+typedef struct can_mask
+{
+    uint8_t   *sidh;
+    uint8_t   *sidl;
+    uint8_t   *eidh;
+    uint8_t   *eidl;
+} can_mask;
 
 #define MASK_0    0b00
 #define MASK_1    0b01

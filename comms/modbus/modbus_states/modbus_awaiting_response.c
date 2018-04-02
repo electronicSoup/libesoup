@@ -1,10 +1,11 @@
 /**
+ * @file libesoup/comms/modbus/modbus_states/modbus_awaiting_response.c
  *
- * \file libesoup/modbus/modbus_awaiting_response.c
+ * @author John Whitmore
  *
  * This file contains code for Modbus awaiting response state
  *
- * Copyright 2017 2018 electronicSoup Limited
+ * Copyright 2017-2018 electronicSoup Limited
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 2 of the GNU Lesser General Public License

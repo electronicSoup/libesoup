@@ -1,6 +1,8 @@
 /**
  *
- * \file libesoup/can/dcncp/dcncp.c
+ * @file libesoup/comms/can/dcncp/dcncp_can.c
+ *
+ * @author John Whitmore
  *
  * Dynamic SYS_CAN Node Configuration Protocol 
  *

@@ -1,10 +1,11 @@
 /**
+ * @file libesoup/hardware/flash.c
  *
- * \file libesoup/utils/flash.c
+ * @author John Whitmore
  *
  * Flash functions of the electronicSoup Cinnamon Bun code Library
  *
- * Copyright 2017 2018 electronicSoup Limited
+ * Copyright 2017-2018 electronicSoup Limited
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 2 of the GNU Lesser General Public License

@@ -1,6 +1,6 @@
 /**
  *
- * @file libesoup_config.h
+ * @file libesoup/examples/projects/microchip/uart_tx.X/libesoup_config.h
  *
  * @author John Whitmore
  *
@@ -25,8 +25,6 @@
  */
 #ifndef _LIBESOUP_CONFIG_H
 #define _LIBESOUP_CONFIG_H
-
-#include <xc.h>
 
 /**
  * @brief The required clock frequency of the device. 

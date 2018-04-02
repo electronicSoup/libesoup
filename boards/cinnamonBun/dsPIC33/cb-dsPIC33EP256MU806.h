@@ -68,7 +68,7 @@
  * Definitions used for the EEPROM device
  */
 /**
- * @def   EEPROM_CS_PIN_DIRECTION
+ * @def   BRD_EEPROM_MAX_ADDRESS
  * @brief Maximum address of the EEPROM Memory
  *
  * Definition for the size of the EEPROM memory on the hardware.
@@ -77,13 +77,13 @@
 #define BRD_EEPROM_MAX_ADDRESS      0x7F
 
 /**
- * @def   EEPROM_CS_PIN
+ * @def   BRD_EEPROM_CS_PIN
  * @brief EEPROM Chip Select Pin
  *
- * @def   EEPROM_Select
+ * @def   BRD_EEPROM_Select
  * @brief Macro to select the EEPROM Chip
  *
- * @def   EEPROM_DeSelect
+ * @def   BRD_EEPROM_DeSelect
  * @brief Macro to deselect the EEPROM Chip
  */
 #define BRD_EEPROM_CS_PIN                  RD11
@@ -95,19 +95,24 @@
  * @brief CAN Bus definitions
  *
  * Pins used by the CAN Bus interface on the board
+ *
+ * @def   BRD_CAN_RX_PIN
+ * @brief GPIO Pin being used for CAN Rx
+ *
+ * @def   BRD_CAN_TX_PIN
+ * @brief GPIO Pin being used for CAN Tx
  */
 #define BRD_CAN_RX_PIN                     RG7
 #define BRD_CAN_TX_PIN                     RF4
 
 /**
- * @brief One Wire bus definition
- *
- * The pin being used by the board's One Wire bus
+ * @def   BRD_ONE_WIRE_PIN
+ * @brief Pin being used by the board's One Wire bus
  */
 #define BRD_ONE_WIRE_PIN                   RF3
 
 /**
- * @brief SPI (Serial Peripheral Interface Definitions)
+ * SPI (Serial Peripheral Interface Definitions)
  *
  * @def   BRD_SPI_SCK
  * @brief Pin for SPI Clock line.
@@ -130,8 +135,8 @@
  * @def   USB_DEVICE
  * @brief Turn off the 5 Volt power to the USB Bus.
  */
-#define USB_HOST    TRISDbits.TRISD9 = OUTPUT_PIN; LATDbits.LATD9 = 1; USBInitialize(0);
-#define USB_DEVICE  TRISDbits.TRISD9 = OUTPUT_PIN; LATDbits.LATD9 = 0;
+#define USB_HOST    TRISDbits.TRISD9 = GPIO_OUTPUT_PIN; LATDbits.LATD9 = 1; USBInitialize(0);
+#define USB_DEVICE  TRISDbits.TRISD9 = GPIO_OUTPUT_PIN; LATDbits.LATD9 = 0;
 
 #include "libesoup/core.h"
 

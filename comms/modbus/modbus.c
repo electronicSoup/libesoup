@@ -1,10 +1,10 @@
 /**
  *
- * \file libesoup/utils/modbus.c
+ * @file libesoup/comms/modbus/modbus.c
+ *
+ * @author John Whitmore
  *
  * Functions for using a MODBUS Comms.
- *
- * The first uart port is used by the logger. See libesoup/logger
  *
  * Copyright 2017 - 2018 electronicSoup Limited
  *

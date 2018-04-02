@@ -1,10 +1,12 @@
 /**
  *
- * \file libesoup/logger/iso15765_log.c
+ * @file libesoup/logger/iso15765_log.c
  *
- * ISO15765 Logger Protocol Functionality
+ * @author John Whitmore
  *
- * Copyright 2017 - 2018 electronicSoup Limited
+ * @brief ISO15765 Logger Protocol Functionality
+ *
+ * Copyright 2017-2018 electronicSoup Limited
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 2 of the GNU Lesser General Public License
@@ -23,7 +25,7 @@
 #include <string.h>
 #include "libesoup_config.h"
 
-#ifdef SYS_CAN_ISO15765_LOG
+#if defined(SYS_CAN_ISO15765_LOG)
 
 #include "libesoup/comms/can/dcncp/dcncp_can.h"
 #include "libesoup/comms/can/can.h"

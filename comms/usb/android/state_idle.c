@@ -1,13 +1,10 @@
 /**
  *
- * \file libesoup/usb/android/states/idle.c
+ * @file libesoup/comms/usb/android/state_idle.c
  *
- * The Bootloader Idle state for the Android Communications.
+ * @author John Whitmore
  *
- * Basically the state waits for an Android device to connect and moves
- * to the Connected state.
- * 
- * Copyright 2017 - 2018 electronicSoup Limited
+ * Copyright 2017-2018 electronicSoup Limited
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 2 of the GNU Lesser General Public License

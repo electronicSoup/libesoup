@@ -58,6 +58,68 @@ static const char *TAG = "18F_CAN";
 
 #undef L2_CAN_INTERRUPT_DRIVEN
 
+/*
+ * Interrupt Flags
+ */
+#define MERRE 0x80
+#define WAKIE 0x40
+#define ERRIE 0x20
+#define TX2IE 0x10
+#define TX1IE 0x08
+#define TX0IE 0x04
+#define RX1IE 0x02
+#define RX0IE 0x01
+
+#define CNTL_RXFUL 0x80
+#define TXREQ 0x08
+#define DCL_RNR 0x40
+#define SIDL_EXIDE 0x08
+
+#define TX_CON_TXPRI0   0x01
+#define TX_CON_TXPRI1   0x02
+#define TX_CON_TXREQ    0x08
+#define TX_CON_TXERR    0x10
+#define TX_CON_TXLARB   0x20
+#define TX_CON_TXABT    0x40
+#define TX_CON_TXBIF    0x80
+
+/*
+ * CAN Modes of Opperation
+ */
+#define MODE_MASK     0xe0
+
+#define NORMAL_MODE   0x00
+#define SLEEP_MODE    0x20
+#define LOOPBACK_MODE 0x40
+#define LISTEN_MODE   0x60
+#define CONFIG_MODE   0x80
+
+
+#define SIDL_SRTR   0x10
+#define SIDL_EXIDE  0x08
+
+#define DCL_ERTR    0x40
+
+
+typedef struct
+{
+    uint8_t ctrl;
+    uint8_t sidh;
+    uint8_t sidl;
+    uint8_t eid8;
+    uint8_t eid0;
+    uint8_t dcl;
+    uint8_t data[8];
+} canBuffer_t;
+
+typedef struct can_mask
+{
+    uint8_t   *sidh;
+    uint8_t   *sidl;
+    uint8_t   *eidh;
+    uint8_t   *eidl;
+} can_mask;
+
 /**
  * \brief Network Idle functionality
  *

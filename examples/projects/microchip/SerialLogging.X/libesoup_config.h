@@ -1,14 +1,8 @@
 /**
  *
- * @file es_lib/example/system.h
+ * @file libesoup/examples/projects/microchip/SerialLogging.X/libesoup_config.h
  *
  * @author John Whitmore
- *
- * This file contains an example es_lib system.h configuration file. 
- *
- * The es_lib library of source code expects a system.h header file to exist
- * in your include path. The file contains the various switches and definitions
- * which configure the various features of the library.
  *
  * Copyright 2017-2018 electronicSoup Limited
  *
@@ -28,8 +22,6 @@
  */
 #ifndef _LIBESOUP_CONFIG_H
 #define _LIBESOUP_CONFIG_H
-
-#include <xc.h>
 
 /**
  * @brief The required Instruction clock frequency of the device. 

@@ -1,6 +1,8 @@
 /**
  *
- * \file libesoup/utils/eeprom.c
+ * @file libesoup/hardware/eeprom.c
+ *
+ * @author John Whitmore
  *
  * eeprom functions of the electronicSoup Cinnamon Bun
  *

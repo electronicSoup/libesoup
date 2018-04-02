@@ -1,8 +1,10 @@
 /**
  *
- * @file libesoup/examples/projects/microchip/CAN-Bus.x/libesoup_config.h
+ * @file libesoup/examples/projects/microchip/CAN-Bus.X/libesoup_config.h
  *
  * @author John Whitmore
+ *
+ * Example configuration file for basic CAN Bus project build of library.
  *
  * Copyright 2017-2018 electronicSoup Limited
  *
@@ -26,12 +28,14 @@
 /**
  * @brief The required Instruction clock frequency of the device. 
  * 
- * The actual Hardware clock frequency is defined by the MACRO CRYSTAL_FREQ in
- * core.h. That constant is used in conjunction with this required SYS_CLOCK_FREQ 
- * in the function clock_init() to set the desired frequency with the PLL.
+ * The actual Hardware clock frequency is defined by BRD_CRYSTAL_FREQ in
+ * the included board file for the target device. The crystal frequenscy and
+ * this definition of SYS_CLOCK_FREQ are used to set the desired Instruction
+ * clock frequency, using the PLL.
+ *
+ * The initialisation of clock frequency is performed automatically when the
+ * library is initialised with a call to libesoup_init()
  *  
- * The function clock_init() has to be called on entry to main() to 
- * initialise the device to this clock frequency.
  */
 #if defined(__dsPIC33EP256MU806__)
 //#define SYS_CLOCK_FREQ 8000000     // 8MHz
@@ -51,7 +55,6 @@
  *
  * There are two valid settings SYS_SERIAL_PORT_GndTxRx or SERIAL_PORT_GndRXTx 
  * 
- * Default : SYS_SERIAL_PORT_GndRxTx
  */
 //#define SYS_SERIAL_PORT_GndTxRx
 #define SYS_SERIAL_PORT_GndRxTx
@@ -59,11 +62,9 @@
 /**
  * @brief Serial logging level
  *
- * The valid log levels are defined in es_lib/core.h.
- * Default set to Debug logging level. This switch is used in conjunction
- * with es_lib/logging/serial_log.h. That file defines Logging macros which 
- * expect a logging level to be defined and a #define of "DEBUG_FILE" at the 
- * top of the file for logging to be enabled.
+ * This switch is used in conjunction with serial_log.h. That file defines
+ * Logging macros which expect a logging level to be defined and a #define of
+ * "DEBUG_FILE" at the top of the file for logging to be enabled.
  */
 #define SYS_LOG_LEVEL LOG_DEBUG
 
@@ -72,12 +73,6 @@
 /**
  * @brief Baud rate of the serial logging port
  *
- * This is Baud rate is set by the function serial_init(). This call to 
- * initialise the baud rate has to be preceeded by a call to clock_init() so
- * that the device's instruction clock speed is know, and the correct scaling
- * can be preformed for the required baud rate.
- * 
- * Default set to 19k2
  */
 #define SYS_SERIAL_LOGGING_BAUD           19200
 //#define SYS_SERIAL_LOGGING_BAUD           38400
@@ -87,7 +82,6 @@
 /**
  * @brief The size of the Transmit buffer to be used by the UARTs.
  *
- * Default set to 300 Bytes as the serial port
  */
 #define SYS_UART_TX_BUFFER_SIZE 300
 

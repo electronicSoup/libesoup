@@ -60,7 +60,7 @@ typedef struct
 static can_register_t registered_handlers[SYS_CAN_FRAME_HANDLER_ARRAY_SIZE];
 static can_l2_frame_handler_t unhandled_handler;
 
-void frame_dispatch_init(void)
+result_t frame_dispatch_init(void)
 {
 	uint16_t loop;
 	

@@ -1,10 +1,12 @@
 /**
  *
- * \file libesoup/can/l3_can.c
+ * @file libesoup/comms/can/l3_iso11783-3.c
+ *
+ * @author John Whitmore
  *
  * Implementation of ISO 11783-3
  *
- * Copyright 2017 - 2018 electronicSoup Limited
+ * Copyright 2017-2018 electronicSoup Limited
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 2 of the GNU Lesser General Public License

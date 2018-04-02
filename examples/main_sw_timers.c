@@ -1,5 +1,7 @@
 /**
- * \file   main.c
+ * @file libesoup/examples/main_sw_timers.c
+ *
+ * @author John Whitmore
  *
  * Copyright 2017-2018 electronicSoup Limited
  *
@@ -40,10 +42,10 @@ int main(void)
 #if defined(__dsPIC33EP256MU806__)
 	rc = gpio_set(RD3, GPIO_MODE_DIGITAL_OUTPUT, 0);
 #elif defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__)
-        TRISEbits.TRISE0 = INPUT_PIN;
-        TRISEbits.TRISE1 = OUTPUT_PIN;
-        TRISEbits.TRISE2 = OUTPUT_PIN;
-        TRISEbits.TRISE3 = OUTPUT_PIN;
+        TRISEbits.TRISE0 = GPIO_INPUT_PIN;
+        TRISEbits.TRISE1 = GPIO_OUTPUT_PIN;
+        TRISEbits.TRISE2 = GPIO_OUTPUT_PIN;
+        TRISEbits.TRISE3 = GPIO_OUTPUT_PIN;
 #endif
 
 	delay(Seconds, 5);

@@ -1,10 +1,12 @@
 /**
  *
- * \file libesoup/firmware/firmware.h
+ * @file libesoup/firmware/firmware.h
  *
- * Definitions for creating firmware for the CinnamonBun Bootloader
+ * @brief Definitions for creating firmware for the CinnamonBun Bootloader
  *
- * Copyright 2017 electronicSoup Limited
+ * @author John Whitmore
+ *
+ * Copyright 2017-2018 electronicSoup Limited
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 2 of the GNU Lesser General Public License
@@ -19,8 +21,10 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  *
  */
-#ifndef FIRMWARE_H
-#define FIRMWARE_H
+#ifndef _FIRMWARE_H
+#define _FIRMWARE_H
+
+#ifdef SYS_FIRMWARE
 
 /*******************************************************************************
  *
@@ -72,5 +76,5 @@ DEF_FIRMWARE_URL_50("www.test.com")
 #define DEF_FIRMWARE_VERSION_10(x)     __prog__ char firmware_version[10]      __attribute__ ((space(prog),address(FIRMWARE_VERSION_10_ADDRESS))) = x;
 #define DEF_FIRMWARE_URL_50(x)         __prog__ char firmware_uri[50]          __attribute__ ((space(prog),address(FIRMWARE_URL_50_ADDRESS))) = x;
 
-
-#endif // FIRMWARE_H
+#endif // SYS_FIRMWARE
+#endif // _FIRMWARE_H

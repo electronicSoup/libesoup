@@ -23,7 +23,7 @@
 #ifdef SYS_CAN_BUS
 
 #include "libesoup/comms/can/can.h"
-#include "libesoup/comms/can/frame_dispatch.h"
+//#include "libesoup/comms/can/frame_dispatch.h"
 
 #ifndef SYS_SYSTEM_STATUS
 #error "CAN Module relies on System Status module libesoup_config.h must define SYS_SYSTEM_STATUS"
@@ -69,7 +69,7 @@ char can_baud_rate_strings[8][10] = {
 };
 #endif  // SYS_SERIAL_LOGGING
 
-static can_status_t     can_status;
+//static can_status_t     can_status;
 
 static void can_status_handler(union ty_status status);
 
@@ -88,7 +88,7 @@ result_t can_init(can_baud_rate_t baudrate, status_handler_t status_handler)
         /*
          * Clear the stored SYS_CAN Status as nothing is done.
          */
-	can_status.byte = 0x00;
+//	can_status.byte = 0x00;
 	app_status_handler = status_handler;
 
 	/*
@@ -107,6 +107,7 @@ result_t can_init(can_baud_rate_t baudrate, status_handler_t status_handler)
 	return(0);
 }
 
+#if 0
 static void can_status_handler(union ty_status status)
 {
 	can_status_t        l_can_status;
@@ -211,6 +212,7 @@ static void can_status_handler(union ty_status status)
 #endif
 #endif  // SYS_ISO11783
 }
+#endif // 0
 
 #if defined(XC16) || defined(__XC8)
 void can_tasks(void)

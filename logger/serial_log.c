@@ -1,6 +1,8 @@
 /**
  *
- * \file libesoup/logger/serial_port.c
+ * @file libesoup/logger/serial_log.c
+ *
+ * @author John Whitmore
  *
  * Functions for initialisation of the Serial Port.
  *

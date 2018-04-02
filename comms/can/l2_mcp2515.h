@@ -1,10 +1,12 @@
 /**
  *
- * \file libesoup/can/l2_mcp2515.h
+ * @file libesoup/comms/can/l2_mcp2515.h
+ *
+ * @author John Whitmore
  *
  * CAN L2 Definitions for MCP2515 Chip
  *
- * Copyright 2017 electronicSoup Limited
+ * Copyright 2017-2018 electronicSoup Limited
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 2 of the GNU Lesser General Public License
@@ -19,8 +21,12 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  *
  */
-#ifndef L2_MCP2515_H
-#define L2_MCP2515_H
+#ifndef _L2_MCP2515_H
+#define _L2_MCP2515_H
+
+#include "libesoup_config.h"
+
+#if defined(BRD_CAN_BUS_MCP2515)
 
 /*
  *  CAN Chip Registers
@@ -54,7 +60,6 @@
 #define SIDL_EXIDE  0x08
 
 #define DCL_ERTR    0x40
-
 
 #define IOCD        0x0e
 #define ERR         0x02
@@ -174,4 +179,6 @@
 #define CAN_RX_STATUS       0xb0
 #define CAN_BIT_MODIFY      0x05
 
-#endif // L2_MCP2515_H
+#endif // BRD_CAN_BUS_MCP2515
+
+#endif // _L2_MCP2515_H

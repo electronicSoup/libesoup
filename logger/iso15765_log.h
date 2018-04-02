@@ -1,8 +1,10 @@
 /**
  *
- * \file libesoup/logger/iso15765_log.h
+ * @file libesoup/logger/iso15765_log.h
  *
- * Definitions for the SYS_ISO15765 Network Logger
+ * @author John Whitmore
+ *
+ * @brief Definitions for the SYS_ISO15765 Network Logger
  *
  * Copyright 2017 electronicSoup Limited
  *
@@ -19,8 +21,10 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  *
  */
-#ifndef ISO15765_LOG_H
-#define ISO15765_LOG_H
+#ifndef _ISO15765_LOG_H
+#define _ISO15765_LOG_H
+
+#if defined(SYS_CAN_ISO15765_LOG)
 
 typedef enum {
         Error,
@@ -49,4 +53,5 @@ extern result_t iso15765_logger_register_as_logger(void (*handler)(uint8_t, log_
 extern void iso15765_logger_register_remote(uint8_t address, log_level_t level);
 extern void iso15765_logger_unregister_remote(uint8_t address);
 
-#endif // ISO15765_LOG_H
+#endif // defined(SYS_CAN_ISO15765_LOG)
+#endif // _ISO15765_LOG_H

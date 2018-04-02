@@ -1,6 +1,6 @@
 /**
  *
- * @file libesoup_config.h
+ * @file libesoup/examples/projects/microchip/SW_Timers.X/libesoup_config.h
  *
  * @author John Whitmore
  *

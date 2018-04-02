@@ -1,8 +1,10 @@
 /**
  *
- * \file libesoup/timerss/delay.h
+ * @file libesoup/timers/delay.h
  *
- * \brief Functionality for delaying similar to a loop.
+ * @author John Whitmore
+ *
+ * @brief Functionality for delaying similar to a loop.
  * Microcotroller will spin
  *
  * Copyright 2017-2018 electronicSoup Limited
@@ -28,12 +30,12 @@
 /**@{*/
 
 /**
- * \ingroup Timers
- * \function delay
- * \brief  Delay the uC for a duration
+ * @ingroup Timers
+ * @brief  Delay the uC for a duration
  * @param units  Time units of the duration parameter \ref ty_time_units
  * @param duration Duration fo the delay 
- * 
+ * @return result (negative on error)
+ *
  * The delay routine will return ERR_RANGE_ERROR if the duration
  * passed in is shorter then it can safely obtain.
 */

@@ -1,8 +1,8 @@
 /**
  *
- * \file main.c
+ * @file libesoup/examples/main_can.c
  *
- * \brief main entry point for the CAN Node
+ * @author John Whitmore
  *
  * Copyright 2017-2018 electronicSoup
  *

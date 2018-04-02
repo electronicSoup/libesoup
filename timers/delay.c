@@ -1,6 +1,8 @@
 /**
  *
- * \file libesoup/utils/sleep.c
+ * @file libesoup/timers/delay.c
+ *
+ * @author John Whitmore
  *
  * Functionality for delaying the uC
  *

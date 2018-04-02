@@ -29,20 +29,47 @@
 #if defined(XC16) || defined(__XC8)
     #include <stdint.h>
 
-/*
- * The actual Instruction/Peripheral Clock frequency being used by the system
- * as opposed to the requested Clock Frequence SYS_CLOCK_FREQ
+/**
+ * @var   sys_clock_freq
+ * @brief Instruction/Peripheral Clock frequency being used by the system
+ *
+ * The system has a crystal frequency defined in the board file by
+ * BRD_CRYSTAL_FREQ and the libesoup_config.h file requests a frequency with
+ * SYS_CLOCK_FREQ, but the frequency being used by the system is given by
+ * this variable.
  */
 extern uint32_t sys_clock_freq;
 
 
 #ifndef	NULL
+/**
+ * @def    NULL
+ * @brief  Definition for 'NULL' if it is not already included in the build system
+ */
 #define NULL (0)
-#endif	/* NULL */
+#endif	// #ifndef NULL
 
-    typedef uint8_t    boolean;
+/**
+ * @typedef boolean
+ * @brief   definition of a boolean type
+ */
+typedef uint8_t    boolean;
+
+#ifndef FLASE
+/**
+ * @def    FALSE
+ * @brief  Definition of FALSE if not already defined by build system
+ */
 #define FALSE 0x00
+#endif  // #ifndef FALSE
+
+#ifndef TRUE
+/**
+ * @def   TRUE
+ * @brief Definition of TRUE if not already defined by the build system
+ */
 #define TRUE (!FALSE)
+#endif // #ifndef TRUE
 
 #elif defined(ES_LINUX)
     #include <stdint.h>
@@ -59,30 +86,23 @@ extern uint32_t sys_clock_freq;
 //    #define can_frame struct can_frame
 #endif
 
-#if 0  // Tidy up 20171117 - don't think this is used.
-/*
- * Union for converting byte stream to floats
- */
-typedef union {
-	uint8_t bytes[4];
-	float value;
-} f32;
-#endif // 0
-
 /** @}*/
 
-/*
- * Result of an API Function call.
+/**
+ * @typedef  result_t
+ * @brief    Return type from API function call. Negative on error condition
  */
 typedef int16_t result_t;
 
 /**
- * \ingroup Core
- * \function libesoup_init()
- * \brief Function to initialise the libesoup library. The configuraiton required 
- * should be defined using switches in the configuraiton file libesoup_config.h. An
- * example of that configuration file is included in libesoup/examples directory.
- * 
+ * @ingroup Core
+ * @fn      libesoup_init()
+ * @brief   Function to initialise the libesoup library.
+ *
+ * The configuraiton required should be defined using switches in the
+ * configuraiton file libesoup_config.h. An example of that configuration file
+ * is included in libesoup/examples directory.
+ *
  * In addition example projects are included in libesoup/examples/projects. 
  * Each example project contains the necessary configuration file for the project.
  *

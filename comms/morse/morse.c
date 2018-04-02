@@ -1,10 +1,13 @@
 /**
  *
- * \file libesoup/morse.morse.c
+ * @file libesoup/comms/morse/morse.c
  *
- * This file contains code for dealing Morse code
+ * @author John Whitmore
  *
- * Copyright 2017 - 2018 electronicSoup Limited
+ * Morse code functionality which is not complete or fully tested. Was used for
+ * demonstration purposes.
+ *
+ * Copyright 2017-2018 electronicSoup Limited
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 2 of the GNU Lesser General Public License

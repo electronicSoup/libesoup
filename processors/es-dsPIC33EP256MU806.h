@@ -4,11 +4,7 @@
  *
  * @author John Whitmore
  *
- * This file contains an example libesoup libesoup_config.h configuration file. 
- *
- * The libesoup library of source code expects a libesoup_config.h header file to exist
- * in your include path. The file contains the various switches and definitions
- * which configure the various features of the library.
+ * @brief Definitions for the dsPIC33EP256MU806 micro-controller
  *
  * Copyright 2017-2018 electronicSoup Limited
  *
@@ -31,30 +27,27 @@
 
 #include <xc.h>
 
-#define DISABLED    0
-#define ENABLED     1
+#define DISABLED    0   ///< Disable a uC Feature 
+#define ENABLED     1   ///< Enable a uC Feature
 
-#define OFF         0
-#define ON          1
+#define OFF         0   ///< Turn off a uC Feature
+#define ON          1   ///< Turn on a uC Feature
 
+#define INTERRUPTS_DISABLED    INTCON2bits.GIE = 0; ///< Disable uC Interrupts
+#define INTERRUPTS_ENABLED     INTCON2bits.GIE = 1; ///< Enable uC Interrups
 
-#define INTERRUPTS_DISABLED    INTCON2bits.GIE = 0;
-#define INTERRUPTS_ENABLED     INTCON2bits.GIE = 1;
-
-/*
- * DMA 
+/**
+ * @brief Hardware timers in the dsPIC33EP256MU806 uC
  */
+#define TIMER_1                0     ///< Index for HW Timer 1 in the system
+#define TIMER_2                1     ///< Index for HW Timer 2 in the system
+#define TIMER_3                2     ///< Index for HW Timer 3 in the system
+#define TIMER_4                3     ///< Index for HW Timer 4 in the system
+#define TIMER_5                4     ///< Index for HW Timer 5 in the system
 
-#define ECAN1_TX    0b01000110
+#define NUMBER_HW_TIMERS       5     ///< Number of HW Timers in the system
 
-#define TIMER_1                           0
-#define TIMER_2                           1
-#define TIMER_3                           2
-#define TIMER_4                           3
-#define TIMER_5                           4
-
-#define NUMBER_HW_TIMERS                  5
-
+#ifdef SYS_RTC
 /*
  * Real Time Clock / Calendar Module
  */
@@ -96,84 +89,94 @@
 #define RTCC_ISR_ENABLE   IEC3bits.RTCIE
 
 #define RTCC_PIN          RCFGCALbits.RTCOE
+#endif // SYS_RTC
 
-/*
- * UART Settings.
+/**
+ * @brief UART Settings.
  */
-/*
- * UART_1
+#define NUM_UARTS          4                   ///< Number of UARTS in the uC
+#define UART_1             0x00                ///< Index/Identifier used for UART 1
+#define UART_2             0x01                ///< Index/Identifier used for UART 2
+#define UART_3             0x02                ///< Index/Identifier used for UART 3
+#define UART_4             0x03                ///< Index/Identifier used for UART 4
+
+#define U1_ENABLE          U1MODEbits.UARTEN   ///< UART 1 Enable SFR bit
+
+#define U1_RX_ISR_FLAG     IFS0bits.U1RXIF     ///< UART 1 Recieve Interrupt Flag SFR Bit
+#define U1_RX_ISR_PRIOTITY IPC2bits.U1RXIP     ///< UART 1 Recieve Interrupt Priority SFR
+#define U1_RX_ISR_ENABLE   IEC0bits.U1RXIE     ///< UART 1 Recieve Interrupt Enable SFR Bit
+
+#define U1_TX_ISR_FLAG     IFS0bits.U1TXIF     ///< UART 1 Transmit Interrupt FLAG SFR Bit
+#define U1_TX_ISR_PRIOTITY IPC3bits.U1TXIP     ///< UART 1 Transmit Interrupt Priority SFR
+#define U1_TX_ISR_ENABLE   IEC0bits.U1TXIE     ///< UART 1 Transmit Interrupt Enable SFR Bit
+
+#define U2_ENABLE          U2MODEbits.UARTEN   ///< UART 2 Enable SFR bit
+
+#define U2_RX_ISR_FLAG     IFS1bits.U2RXIF     ///< UART 2 Recieve Interrupt Flag SFR Bit
+#define U2_RX_ISR_PRIOTITY IPC7bits.U2RXIP     ///< UART 2 Recieve Interrupt Priority SFR
+#define U2_RX_ISR_ENABLE   IEC1bits.U2RXIE     ///< UART 2 Recieve Interrupt Enable SFR Bit
+
+#define U2_TX_ISR_FLAG     IFS1bits.U2TXIF     ///< UART 2 Transmit Interrupt FLAG SFR Bit
+#define U2_TX_ISR_PRIOTITY IPC7bits.U2TXIP     ///< UART 2 Transmit Interrupt Priority SFR
+#define U2_TX_ISR_ENABLE   IEC1bits.U2TXIE     ///< UART 2 Transmit Interrupt Enable SFR Bit
+
+#define U3_ENABLE          U3MODEbits.UARTEN   ///< UART 3 Enable SFR bit
+
+#define U3_RX_ISR_FLAG     IFS5bits.U3RXIF     ///< UART 3 Recieve Interrupt Flag SFR Bit
+#define U3_RX_ISR_PRIOTITY IPC20bits.U3RXIP    ///< UART 3 Recieve Interrupt Priority SFR
+#define U3_RX_ISR_ENABLE   IEC5bits.U3RXIE     ///< UART 3 Recieve Interrupt Enable SFR Bit
+
+#define U3_TX_ISR_FLAG     IFS5bits.U3TXIF     ///< UART 3 Transmit Interrupt FLAG SFR Bit
+#define U3_TX_ISR_PRIOTITY IPC20bits.U3TXIP    ///< UART 3 Transmit Interrupt Priority SFR
+#define U3_TX_ISR_ENABLE   IEC5bits.U3TXIE     ///< UART 3 Transmit Interrupt Enable SFR Bit
+
+#define U4_ENABLE          U4MODEbits.UARTEN   ///< UART 4 Enable SFR bit
+
+#define U4_RX_ISR_FLAG     IFS5bits.U4RXIF     ///< UART 4 Recieve Interrupt Flag SFR Bit
+#define U4_RX_ISR_PRIOTITY IPC22bits.U4RXIP    ///< UART 4 Recieve Interrupt Priority SFR
+#define U4_RX_ISR_ENABLE   IEC5bits.U4RXIE     ///< UART 4 Recieve Interrupt Enable SFR Bit
+
+#define U4_TX_ISR_FLAG     IFS5bits.U4TXIF     ///< UART 4 Transmit Interrupt FLAG SFR Bit
+#define U4_TX_ISR_PRIOTITY IPC22bits.U4TXIP    ///< UART 4 Transmit Interrupt Priority SFR
+#define U4_TX_ISR_ENABLE   IEC5bits.U4TXIE     ///< UART 4 Transmit Interrupt Enable SFR Bit
+
+/**
+ * @brief UART Modes of operation bit field for the UxMODE SFR
  */
-#define U1_ENABLE          U1MODEbits.UARTEN
-
-#define U1_RX_ISR_FLAG     IFS0bits.U1RXIF
-#define U1_RX_ISR_PRIOTITY IPC2bits.U1RXIP
-#define U1_RX_ISR_ENABLE   IEC0bits.U1RXIE
-
-#define U1_TX_ISR_FLAG     IFS0bits.U1TXIF
-#define U1_TX_ISR_PRIOTITY IPC3bits.U1TXIP
-#define U1_TX_ISR_ENABLE   IEC0bits.U1TXIE
-
-/*
- * UART_2
+/**
+ * @def UEN1_MASK
+ * @def UEN0_MASK
+ * @brief UEN1:UEN0: UARTx Enable bits
+ *  11 = UxTX, UxRX and BCLKx pins are enabled and used; UxCTS pin controlled by port latches
+ *  10 = UxTX, UxRX, UxCTS and UxRTS pins are enabled and used
+ *  01 = UxTX, UxRX and UxRTS pins are enabled and used; UxCTS pin controlled by port latches
+ *  00 = UxTX and UxRX pins are enabled and used; UxCTS and UxRTS/BCLKx pins controlled by port latches
  */
-#define U2_ENABLE          U2MODEbits.UARTEN
-
-#define U2_RX_ISR_FLAG     IFS1bits.U2RXIF
-#define U2_RX_ISR_PRIOTITY IPC7bits.U2RXIP
-#define U2_RX_ISR_ENABLE   IEC1bits.U2RXIE
-
-#define U2_TX_ISR_FLAG     IFS1bits.U2TXIF
-#define U2_TX_ISR_PRIOTITY IPC7bits.U2TXIP
-#define U2_TX_ISR_ENABLE   IEC1bits.U2TXIE
-
-/*
- * UART_3
+/**
+ * @def PDSEL1_MASK
+ * @def PDSEL0_MASK
+ * @brief PDSEL<1:0>: Parity and Data Selection bits
+ *  11 = 9-bit data, no parity
+ *  10 = 8-bit data, odd parity
+ *  01 = 8-bit data, even parity
+ *  00 = 8-bit data, no parity
  */
-#define U3_ENABLE          U3MODEbits.UARTEN
-
-#define U3_RX_ISR_FLAG     IFS5bits.U3RXIF
-#define U3_RX_ISR_PRIOTITY IPC20bits.U3RXIP
-#define U3_RX_ISR_ENABLE   IEC5bits.U3RXIE
-
-#define U3_TX_ISR_FLAG     IFS5bits.U3TXIF
-#define U3_TX_ISR_PRIOTITY IPC20bits.U3TXIP
-#define U3_TX_ISR_ENABLE   IEC5bits.U3TXIE
-
-/*
- * UART_4
- */
-#define U4_ENABLE          U4MODEbits.UARTEN
-
-#define U4_RX_ISR_FLAG     IFS5bits.U4RXIF
-#define U4_RX_ISR_PRIOTITY IPC22bits.U4RXIP
-#define U4_RX_ISR_ENABLE   IEC5bits.U4RXIE
-
-#define U4_TX_ISR_FLAG     IFS5bits.U4TXIF
-#define U4_TX_ISR_PRIOTITY IPC22bits.U4TXIP
-#define U4_TX_ISR_ENABLE   IEC5bits.U4TXIE
-
-#define UARTEN_MASK      0x8000
-#define USIDL_MASK       0x2000
-#define IREN_MASK        0x1000
-#define RTSMD_MASK       0x0800
+#define UARTEN_MASK      0x8000   ///< UART Enable BIT
+#define USIDL_MASK       0x2000   ///< Stop in Idle Mode bit
+#define IREN_MASK        0x1000   ///< IrDA Encoder and Decoder Enable bit
+#define RTSMD_MASK       0x0800   ///< Mode Selection for UxRTS Pin bit
 #define UEN1_MASK        0x0200
 #define UEN0_MASK        0x0100
-#define WAKE_MASK        0x0080
-#define LPBACK_MASK      0x0040
-#define ABAUD_MASK       0x0020
-#define RXINV_MASK       0x0010
-#define BRGH_MASK        0x0008
-#define PDSEL1_MASK      0x0004
+#define WAKE_MASK        0x0080   ///< Wake-up on Start Bit Detect During Sleep Mode Enable bit
+#define LPBACK_MASK      0x0040   ///< UARTx Loopback Mode Select bit
+#define ABAUD_MASK       0x0020   ///< Auto-Baud Enable bit
+#define RXINV_MASK       0x0010   ///< Receive Polarity Inversion bit
+#define BRGH_MASK        0x0008   ///< High Baud Rate Enable bit
+#define PDSEL1_MASK      0x0004 
 #define PDSEL0_MASK      0x0002
-#define STSEL_MASK       0x0001
+#define STSEL_MASK       0x0001   ///< Stop Bit Selection bit
 
-#define NUM_UARTS        4
-#define UART_1           0x00
-#define UART_2           0x01
-#define UART_3           0x02
-#define UART_4           0x03
-
-
+#if defined(SYS_CAN_BUS)
 /*
  * CAN Bus Modes
  */
@@ -185,80 +188,81 @@ typedef enum {
     config      = 0b100,
     listen_all  = 0b111,
 } ty_can_mode;
+#endif // defined(SYS_CAN_BUS)
 
-/*
- * 
+/**
+ * @brief GPIO Pins available in the uC
  */
 enum pin_t {
-    RB0,
-    RB1,
-    RB2,
-    RB3,
-    RB4,
-    RB5,
-    RB6,
-    RB7,
-    RB8,
-    RB9,
-    RB10,
-    RB11,
-    RB12,
-    RB13,
-    RB14,
-    RB15,
+	RB0,     ///< Port B Bit 0
+	RB1,     ///< Port B Bit 1
+	RB2,     ///< Port B Bit 2
+	RB3,     ///< Port B Bit 3
+	RB4,     ///< Port B Bit 4
+	RB5,     ///< Port B Bit 5
+	RB6,     ///< Port B Bit 6
+	RB7,     ///< Port B Bit 7
+	RB8,     ///< Port B Bit 8
+	RB9,     ///< Port B Bit 9
+	RB10,    ///< Port B Bit 10
+	RB11,    ///< Port B Bit 11
+	RB12,    ///< Port B Bit 12
+	RB13,    ///< Port B Bit 13
+	RB14,    ///< Port B Bit 14
+	RB15,    ///< Port B Bit 15
 
-    RC12,
-    RC13,
-    RC14,
-    RC15,
+	RC12,    ///< Port C Bit 12
+	RC13,    ///< Port C Bit 13
+	RC14,    ///< Port C Bit 14
+	RC15,    ///< Port C Bit 15
 
-    RD0,
-    RD1,
-    RD2,
-    RD3,
-    RD4,
-    RD5,
-    RD6,
-    RD7,
-    RD8,
-    RD9,
-    RD10,
-    RD11,
+	RD0,     ///< Port D Bit 0
+	RD1,     ///< Port D Bit 1
+	RD2,     ///< Port D Bit 2
+	RD3,     ///< Port D Bit 3
+	RD4,     ///< Port D Bit 4
+	RD5,     ///< Port D Bit 5
+	RD6,     ///< Port D Bit 6
+	RD7,     ///< Port D Bit 7
+	RD8,     ///< Port D Bit 8
+	RD9,     ///< Port D Bit 9
+	RD10,    ///< Port D Bit 10
+	RD11,    ///< Port D Bit 11
 
-    RE0,
-    RE1,
-    RE2,
-    RE3,
-    RE4,
-    RE5,
-    RE6,
-    RE7,
+	RE0,     ///< Port E Bit 0
+	RE1,     ///< Port E Bit 1
+	RE2,     ///< Port E Bit 2
+	RE3,     ///< Port E Bit 3
+	RE4,     ///< Port E Bit 4
+	RE5,     ///< Port E Bit 5
+	RE6,     ///< Port E Bit 6
+	RE7,     ///< Port E Bit 7
 
-    RF0,
-    RF1,
-    RF3,
-    RF4,
-    RF5,
+	RF0,     ///< Port F Bit 0
+	RF1,     ///< Port F Bit 1
+	RF3,     ///< Port F Bit 3
+	RF4,     ///< Port F Bit 4
+	RF5,     ///< Port F Bit 5
     
-    RG2,
-    RG3,
-    RG6,
-    RG7,
-    RG8,
-    RG9,
+	RG2,     ///< Port G Bit 2
+	RG3,     ///< Port G Bit 3
+	RG6,     ///< Port G Bit 6
+	RG7,     ///< Port G Bit 7
+	RG8,     ///< Port G Bit 8
+	RG9,     ///< Port G Bit 9
 
-    INVALID_PIN = 0xff,
+	INVALID_PIN = 0xff,     ///< Dummy Value used to represent no GPIO Pin
 };
 
-/*
- * Clock Sources:
+/**
+ * @brief uC Clock Sources:
  * 
  * See Microchip document DS70005131
  */
-#define dsPIC33_PRIMARY_OSCILLATOR      0b010
-#define dsPIC33_PRIMARY_OSCILLATOR_PLL  0b011
+#define dsPIC33_PRIMARY_OSCILLATOR      0b010    ///< Primary Oscillator without PLL
+#define dsPIC33_PRIMARY_OSCILLATOR_PLL  0b011    ///< Primary Oscillator with PLL
 
-#define SECONDARY_OSCILLATOR            OSCCONbits.LPOSCEN
+#define SECONDARY_OSCILLATOR            OSCCONbits.LPOSCEN   ///< Secondary Oscillator enable SFR Bit
 
 /*
  * Flash parameters
@@ -310,7 +314,9 @@ enum pin_t {
  */
 #define FLASH_APP_HANDLE_PAGE        0x400
 
-
+/**
+ * @brief micro-controller specific initialisation code
+ */
 extern void cpu_init(void);
 
 #endif // _ES_dsPIC33EP256MU806_H

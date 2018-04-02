@@ -1,6 +1,8 @@
 /**
  *
- * \file libesoup/processors/dsPIC33/change_notification/change_notification.c
+ * @file libesoup/gpio/change_notification.c
+ *
+ * @author John Whitmore
  *
  * Copyright 2018 electronicSoup Limited
  *

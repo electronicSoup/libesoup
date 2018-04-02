@@ -1,10 +1,13 @@
 /**
  *
- * \file libesoup/can/dcncp/dcncp.h
+ * @file libesoup/comms/can/dcncp/dcncp_can.h
  *
- * Dynamic CAN Node Configuration Protocol  definitions
+ * @author John Whitmore
  *
- * Copyright 2017 electronicSoup Limited
+ * Dynamic CAN Node Configuration Protocol definitions.
+ * Included in the build with SYS_CAN_DCNCP
+ *
+ * Copyright 2017-2018 electronicSoup Limited
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 2 of the GNU Lesser General Public License
@@ -19,8 +22,12 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  *
  */
-#ifndef NODE_ADDRESS_H
-#define NODE_ADDRESS_H
+#ifndef _NODE_ADDRESS_H
+#define _NODE_ADDRESS_H
+
+#include "libesoup_config.h"
+
+#ifdef SYS_CAN_DCNCP
 
 #include "libesoup/comms/can/can.h"
 
@@ -70,4 +77,6 @@ extern result_t dcncp_unregister_this_node_net_logger(void);
 #endif // SYS_ISO15765_LOGGER
 #endif
 
-#endif //NODE_H
+#endif // #ifdef SYS_CAN_DCNCP
+
+#endif // _NODE_ADDRESS_H

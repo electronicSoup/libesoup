@@ -1,6 +1,8 @@
 /**
  *
- * \file libesoup/can/es_can.h
+ * @file libesoup/comms/can/can.h
+ *
+ * @author John Whitmore
  *
  * Core CAN Bus definitions
  *
@@ -127,7 +129,6 @@
  */
 typedef uint32_t canid_t;
 
-
 /**
  * @type  can_frame
  * @brief Can Frame Type
@@ -171,6 +172,7 @@ typedef struct
 //    uint8_t                      handler_id;
 } can_l2_target_t;
 
+#ifdef SYS_ISO15765
 /**
  * @type  iso15765_msg_t
  * @brief typedef of the ISO15765 Message
@@ -204,6 +206,15 @@ typedef struct
     uint8_t                       handler_id;
 } iso15765_target_t;
 
+/*
+ * ISO15765 Protocols
+ */
+#define ISO15765_LOGGER_PROTOCOL_ID    0x01
+#define ISO15765_DCNCP_PROTOCOL_ID     0x02
+
+#endif // SYS_ISO15765
+
+#ifdef SYS_ISO11783
 /**
  * @type  iso11783_msg_t
  * @brief ISO11783 Message structure
@@ -239,13 +250,14 @@ typedef struct
     uint8_t                       handler_id;
 } iso11783_target_t;
 
-/*
- * ISO15765 Protocols
- */
-#if defined(SYS_ISO15765)
-#define ISO15765_LOGGER_PROTOCOL_ID    0x01
-#define ISO15765_DCNCP_PROTOCOL_ID     0x02
-#endif
+typedef enum {
+    ack            = 0x00,
+    nack           = 0x01,
+    denied         = 0x02,
+    cannot_respond = 0x03
+} iso11783_ack_t;
+
+#endif // SYS_ISO11783
 
 /*
  * A Node address of 0xff is a Broadcast Network node address in ISO11783 so
@@ -253,6 +265,7 @@ typedef struct
  */
 #define BROADCAST_NODE_ADDRESS         0xff
 
+#if 0  // Status handling is in a state of flux, this code is going to be deprecated
 /*
  * Have to change this status to cater for L2, DCNCP and L3
  *
@@ -312,6 +325,7 @@ typedef struct {
         uint8_t byte;
     };
 } can_status_t;
+#endif // 0
 
 typedef enum {
 	baud_10K   = 0x00,
@@ -337,24 +351,26 @@ enum can_l2_status {
     
 };
 
-//#define BAUD_MAX baud_1M
-
+/**
+ * @brief Function to initialise the overall CAN Module. Prototypes depends on
+ *        L3 inclusion.
+ *
+ */
 #if (defined(SYS_ISO15765) || defined(SYS_ISO11783)) || defined(SYS_TEST_L3_ADDRESS)
 extern result_t can_init(can_baud_rate_t baudrate, uint8_t address, status_handler_t status_handler);
 #else
 extern result_t can_init(can_baud_rate_t baudrate, status_handler_t status_handler);
 #endif
 
-//extern bool can_initialised(void);
-
 extern result_t can_l2_init(can_baud_rate_t arg_baud_rate, status_handler_t status_handler);
 extern result_t can_l2_bitrate(can_baud_rate_t baud, boolean change);
 extern void can_l2_tasks(void);
 
 extern result_t can_l2_tx_frame(can_frame *frame);
-/*
- * Returns the ID of handler which can be canceled
- */
+
+extern result_t frame_dispatch_init(void);
+extern void     frame_dispatch_handle_frame(can_frame *frame);
+
 extern int16_t  frame_dispatch_reg_handler(can_l2_target_t *target);
 extern result_t frame_dispatch_unreg_handler(int16_t id);
 extern result_t frame_dispatch_set_unhandled_handler(can_l2_frame_handler_t handler);
@@ -365,7 +381,7 @@ extern result_t frame_dispatch_set_unhandled_handler(can_l2_frame_handler_t hand
 
 extern can_baud_rate_t can_l2_get_baudrate(void);
 extern void can_l2_set_node_baudrate(can_baud_rate_t baudrate);
-extern void can_l2_get_status(can_status_t *, can_baud_rate_t *);
+//extern void can_l2_get_status(can_status_t *, can_baud_rate_t *);
 
 #if defined(XC16) || defined(__XC8)
 extern void can_tasks(void);
@@ -384,18 +400,13 @@ extern result_t iso15765_dispatch_reg_handler(iso15765_target_t *target);
 extern result_t iso15765_dispatch_unreg_handler(uint8_t id);
 extern result_t iso15765_dispatch_set_unhandled_handler(iso15765_msg_handler_t handler);
 
-#endif
+#ifdef SYS_DCNCP_ISO15765
+extern void dcncp_iso15765_init(void);
+#endif // SYS_DCNCP_ISO15765
+
+#endif // ISO15765
 
 #if defined(ISO11783)
-
-
-typedef enum {
-    ack            = 0x00,
-    nack           = 0x01,
-    denied         = 0x02,
-    cannot_respond = 0x03
-} iso11783_ack_t;
-
 
 extern result_t  iso11783_init(uint8_t);
 

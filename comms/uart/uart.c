@@ -935,7 +935,7 @@ static result_t uart_set_tx_pin(uint8_t uart, enum pin_t pin)
 #elif defined(__18F2680) || defined(__18F4585)
 static result_t uart_set_tx_pin(uint8_t uart, enum pin_t pin)
 {
-        TRISCbits.TRISC6 = OUTPUT_PIN;
+        TRISCbits.TRISC6 = GPIO_OUTPUT_PIN;
 	return(0);
 }
 #endif // MicroContoller Selection

@@ -1,6 +1,8 @@
 /**
  *
- * \file libesoup/boards/board.h
+ * @file libesoup/boards/board.h
+ *
+ * @author John Whitmore
  *
  * Copyright 2018 electronicSoup Limited
  *
@@ -16,5 +18,10 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  *
+ */
+/**
+ * @fn     board_init()
+ * @brief  Initialise the board specific Hardware.
+ * @return result  (Negative on error)
  */
 extern result_t	board_init(void);
