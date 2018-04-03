@@ -4,7 +4,7 @@
  *
  * @author John Whitmore
  *
- * Core CAN Bus definitions
+ * @brief Core CAN Bus definitions
  *
  * Copyright 2017-2018 electronicSoup Limited
  *
@@ -128,6 +128,15 @@
  * bit 31	: frame format flag (0 = standard 11 bit, 1 = extended 29 bit)
  */
 typedef uint32_t canid_t;
+
+/**
+ * @brief CAN Layer 2 Modes of operation
+ */
+typedef enum { 
+    normal,       ///< Normal mode of operation
+    loopback,     ///< Loopback all trasmitted messages
+    listen_only,  ///< Listen on the BUS but no interaction, no ACK
+} ty_can_l2_mode;
 
 /**
  * @type  can_frame
@@ -265,78 +274,19 @@ typedef enum {
  */
 #define BROADCAST_NODE_ADDRESS         0xff
 
-#if 0  // Status handling is in a state of flux, this code is going to be deprecated
-/*
- * Have to change this status to cater for L2, DCNCP and L3
- *
- * Layer 2 - 5 values so 3 bits L2_STATUS_MASK 0x07
- *
- *	L2_Uninitialised 0x00,
- *	L2_Listening     0x01,
- *	L2_Connecting    0x02,
- *	L2_Connected     0x03,
- *	L2_ChangingBaud  0x04
- *
- * DCNCP - 3 Values for status so 2 bits
- *         Actually use a bit filed for this
- *
- *         DCNCP_STATUS_INITIALISED_MASK 0x08
- *
- *             DCNCP_Uninitilised 0x00,
- *             DCNCP_Initialised  0x08,
- *
- *         DCNCP_L3_ADDRESS_STATUS_MASK 0x10
- *
- *             DCNCP_NODE_Address_Not_Final 0x00,
- *             DCNCP_NODE_Address_Finalised 0x10,
- *
- * Layer 3 - 2 values Initialised or not. 1 bit
- *
- *         L3_STATUS_INITIALISED_MASK 0x20
- *
- *             L3_Uninitialised 0x00
- *             L3_Inititialised 0x20
+/**
+ * @brief valid CAN Bus Bit Rates used in the system
  */
-
-#define L2_STATUS_MASK                 0x07
-
-#define L2_Uninitialised               0x00
-#define L2_Listening                   0x01
-#define L2_Connecting                  0x02
-#define L2_Connected                   0x03
-#define L2_ChangingBaud                0x04
-
-#if SYS_LOG_LEVEL < NO_LOGGING
-extern char can_l2_status_strings[5][17];
-#endif
-
-#ifdef SYS_CAN_DCNCP
-#define DCNCP_INIT_STATUS_MASK         0x08
-#define DCNCP_NODE_ADDRESS_STATUS_MASK 0x10
-#endif // SYS_CAN_DCNCP
-
-typedef struct {
-    union {
-        struct {
-            uint8_t l2_status : 3;
-            uint8_t dcncp_initialised : 1;
-            uint8_t dcncp_node_address_valid :1;
-        } bit_field;
-        uint8_t byte;
-    };
-} can_status_t;
-#endif // 0
-
 typedef enum {
-	baud_10K   = 0x00,
-	baud_20K   = 0x01,
-	baud_50K   = 0x02,
-	baud_125K  = 0x03,
-	baud_250K  = 0x04,
-	baud_500K  = 0x05,
-	baud_800K  = 0x06,
-	baud_1M    = 0x07,
-	no_baud    = 0x08
+	baud_10K   = 0x00,   ///< 10Kbps
+	baud_20K   = 0x01,   ///< 20Kbps
+	baud_50K   = 0x02,   ///< 50Kbps
+	baud_125K  = 0x03,   ///< 125Kbps
+	baud_250K  = 0x04,   ///< 250Kbps
+	baud_500K  = 0x05,   ///< 500Kbps
+	baud_800K  = 0x06,   ///< 800Kbps
+	baud_1M    = 0x07,   ///< 1Mbps
+	no_baud    = 0x08    ///< Invalid Bit Rate specified
 } can_baud_rate_t;
 
 #if SYS_LOG_LEVEL < NO_LOGGING
@@ -348,6 +298,7 @@ extern char can_baud_rate_strings[8][10];
  */
 enum can_l2_status {
     can_l2_connecting,
+    can_l2_connected,
     
 };
 
@@ -357,12 +308,12 @@ enum can_l2_status {
  *
  */
 #if (defined(SYS_ISO15765) || defined(SYS_ISO11783)) || defined(SYS_TEST_L3_ADDRESS)
-extern result_t can_init(can_baud_rate_t baudrate, uint8_t address, status_handler_t status_handler);
+extern result_t can_init(can_baud_rate_t baudrate, uint8_t address, status_handler_t status_handler, ty_can_l2_mode mode);
 #else
-extern result_t can_init(can_baud_rate_t baudrate, status_handler_t status_handler);
+extern result_t can_init(can_baud_rate_t baudrate, status_handler_t status_handler, ty_can_l2_mode mode);
 #endif
 
-extern result_t can_l2_init(can_baud_rate_t arg_baud_rate, status_handler_t status_handler);
+extern result_t can_l2_init(can_baud_rate_t arg_baud_rate, status_handler_t status_handler, ty_can_l2_mode mode);
 extern result_t can_l2_bitrate(can_baud_rate_t baud, boolean change);
 extern void can_l2_tasks(void);
 

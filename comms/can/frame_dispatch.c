@@ -75,6 +75,7 @@ result_t frame_dispatch_init(void)
 		registered_handlers[loop].target.filter = 0x00;
 		registered_handlers[loop].target.handler = (can_l2_frame_handler_t)NULL;
 	}
+	return(0);
 }
 
 result_t frame_dispatch_reg_handler(can_l2_target_t *target)

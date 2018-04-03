@@ -77,7 +77,8 @@ typedef struct can_mask
 #define MEMORY_MAP_WIN_CONFIG_STATUS  C1CTRL1bits.WIN = 0;
 #define MEMORY_MAP_WIN_MASK_FILTERS   C1CTRL1bits.WIN = 1;
 
- static status_handler_t status_handler = NULL;
+static status_handler_t status_handler = NULL;
+static enum can_l2_status current_status;
  
 struct  __attribute__ ((packed)) can_buffer
 {
@@ -123,24 +124,25 @@ struct __attribute__ ((packed)) TR_Control
 // WIN Bit = 0
 struct TR_Control *tx_control = (struct TR_Control *)&C1TR01CON;
 
-static void set_mode(ty_can_mode mode);
+static ty_can_l2_mode requested_mode;
+static result_t set_requested_mode();
 
-void __attribute__((__interrupt__, __no_auto_psv__)) _C1RxRdyInterrupt(void)
-{
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-        LOG_D("C1RxRdy Isr\n\r");
-#endif
-        IEC2bits.C1IE = 0x00;
-        IEC2bits.C1RXIE = 0x00;
-}
+static void set_mode(uint8_t mode);
+
+//void __attribute__((__interrupt__, __no_auto_psv__)) _C1RxRdyInterrupt(void)
+//{
+//#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+//        LOG_D("C1RxRdy Isr\n\r");
+//#endif
+//        IEC2bits.C1IE = 0x00;
+//        IEC2bits.C1RXIE = 0x00;
+//}
 
 void __attribute__((__interrupt__, __no_auto_psv__)) _C1Interrupt(void)
 {
 #if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-        LOG_D("C1 Isr Flag 0x%x - 0x%x ICODE 0x%x\n\r", C1INTF, C1INTF, C1VECbits.ICODE);
+        LOG_D("C1 Isr Flag 0x%x  ICODE 0x%x\n\r", C1INTF, C1VECbits.ICODE);
 #endif
-        IEC2bits.C1IE = 0x00;
-        IEC2bits.C1RXIE = 0x00;
 
 	// WIN Bit 0 | 1
         if(C1INTFbits.TBIF) {
@@ -148,6 +150,13 @@ void __attribute__((__interrupt__, __no_auto_psv__)) _C1Interrupt(void)
 #if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
                 LOG_D("TBIF\n\r");
 #endif
+		if(current_status == can_l2_connecting) {
+			current_status = can_l2_connected;
+			if(status_handler) {
+				status_handler(can_bus_l2_status, current_status, 0);
+			}
+		}
+		C1INTEbits.TBIE   = 0b00;  // Disable this interrupt no longer interested once connected
         } else if(C1INTFbits.RBIF) {
                 C1INTFbits.RBIF = 0;
 #if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
@@ -215,33 +224,30 @@ void __attribute__((__interrupt__, __no_auto_psv__)) _C1Interrupt(void)
         }
 }
 
-void __attribute__((__interrupt__, __no_auto_psv__)) _DMA0Interrupt(void)
-{
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-        LOG_D("DMA-0 ISR");
-#endif
-        IFS0bits.DMA0IF = 0;
-        IEC0bits.DMA0IE = DISABLED;
-}
+//void __attribute__((__interrupt__, __no_auto_psv__)) _DMA0Interrupt(void)
+//{
+//#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+//        LOG_D("DMA-0 ISR");
+//#endif
+//        IFS0bits.DMA0IF = 0;
+//        IEC0bits.DMA0IE = DISABLED;
+//}
 
-void __attribute__((__interrupt__, __no_auto_psv__)) _DMA1Interrupt(void)
-{
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-        LOG_D("DMA-1 ISR");
-#endif
-        IEC0bits.DMA1IE = DISABLED;
-}
+//void __attribute__((__interrupt__, __no_auto_psv__)) _DMA1Interrupt(void)
+//{
+//#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+//        LOG_D("DMA-1 ISR");
+//#endif
+//        IEC0bits.DMA1IE = DISABLED;
+//}
 
 /*
  */
-result_t can_l2_init(can_baud_rate_t arg_baud_rate, status_handler_t arg_status_handler)
+result_t can_l2_init(can_baud_rate_t arg_baud_rate, status_handler_t arg_status_handler, ty_can_l2_mode mode)
 {
 	result_t          rc;
 	uint32_t          address;
 	uint8_t           loop;
-	union ty_status   status;
-	
-	status_handler = arg_status_handler;
 	
 	if (arg_baud_rate < no_baud) {
 #if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
@@ -254,6 +260,16 @@ result_t can_l2_init(can_baud_rate_t arg_baud_rate, status_handler_t arg_status_
 		// Todo
 	}
 
+	current_status = can_l2_connecting;
+	status_handler = arg_status_handler;
+	requested_mode = mode;
+
+	/*
+	 * Do a quick check of the requested mode to check that it's valid
+	 */
+	rc = set_requested_mode();
+	RC_CHECK
+	
         /*
          * Initialise the I/O Pins and peripheral functions
          */
@@ -276,7 +292,7 @@ result_t can_l2_init(can_baud_rate_t arg_baud_rate, status_handler_t arg_status_
         /*
          * Enter configuration mode
          */
-	set_mode(config);
+	set_mode(CONFIG_MODE);
 
 	MEMORY_MAP_WIN_CONFIG_STATUS
 		
@@ -406,24 +422,44 @@ result_t can_l2_init(can_baud_rate_t arg_baud_rate, status_handler_t arg_status_
         C1INTEbits.ERRIE  = 0b01;
         C1INTEbits.IVRIE  = 0b01;
         C1INTEbits.FIFOIE = 0b01;
+        C1INTEbits.TBIE   = 0b01;
 
         IFS2bits.C1IF   = 0x00;
-        IFS2bits.C1RXIF = 0x00;
         IEC2bits.C1IE   = 0x01;
-        IEC2bits.C1RXIE = 0x00;
 
 	/*
 	 * Drop out of the configuration mode
 	 */
-	set_mode(normal);
+	rc = set_requested_mode();
+	RC_CHECK
 
+	current_status = can_l2_connecting;
 	if(status_handler) {
-		status.sstruct.source = can_bus_l2_status;
-		status.sstruct.status = can_l2_connecting;
-		status_handler(status);
+		status_handler(can_bus_l2_status, current_status, 0);
 	}
 	
         return(0);
+}
+
+/*
+ * Simple helper function to set the requested mode of operation
+ */
+static result_t set_requested_mode()
+{
+	switch(requested_mode) {
+	case normal:
+		set_mode(NORMAL_MODE);
+		break;
+	case loopback:
+		set_mode(LOOPBACK_MODE);
+		break;
+	case listen_only:
+		set_mode(LISTEN_ONLYMODE);
+		break;
+	default:
+		return(-ERR_BAD_INPUT_PARAMETER);
+	}
+	return(0);
 }
 
 result_t can_l2_tx_frame(can_frame *frame)
@@ -478,6 +514,13 @@ void can_l2_tasks(void)
 		buffer_full = (C1RXFUL1 & (0x01 << fifo_rd_index)) != 0;
 	} else {
 		buffer_full = (C1RXFUL2 & (0x01 << (fifo_rd_index - 16))) != 0;
+	}
+
+	if(buffer_full && (current_status == can_l2_connecting)) {
+		current_status = can_l2_connected;
+		if(status_handler) {
+			status_handler(can_bus_l2_status, current_status, 0);
+		}
 	}
 
 	while(buffer_full) {
@@ -638,12 +681,12 @@ result_t can_l2_bitrate(can_baud_rate_t baud, boolean change)
 	brp--;       // End of the found loop will have incremented
 	tq_count++;  // ^^^
 	
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-	LOG_D("Fp %ld\n\r", sys_clock_freq);
-	LOG_D("BRP %d\n\r", brp);
-	LOG_D("Ftq %ld\n\r", tq_freq);
-	LOG_D("TQ Periods %d\n\r", tq_count);
-#endif
+//#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+//	LOG_D("Fp %ld\n\r", sys_clock_freq);
+//	LOG_D("BRP %d\n\r", brp);
+//	LOG_D("Ftq %ld\n\r", tq_freq);
+//	LOG_D("TQ Periods %d\n\r", tq_count);
+//#endif
 	
 	sjw = 1;
 	phseg1 = phseg2 = (tq_count - sjw) / 3;
@@ -652,7 +695,7 @@ result_t can_l2_bitrate(can_baud_rate_t baud, boolean change)
         /*
          * Enter configuration mode
          */
-	set_mode(config);
+	set_mode(CONFIG_MODE);
 	
 	/*
 	 * CANCKS: ECAN Module Clock Freg(CAN) Source Select bit
@@ -678,20 +721,19 @@ result_t can_l2_bitrate(can_baud_rate_t baud, boolean change)
 	C1CFG2bits.SAM = 0; //One sampe point
 
 #if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_INFO))
-	LOG_I("propseg-%d, phseg1-%d, phseg2-%d\n\r", propseg, phseg1, phseg2);
+//	LOG_I("propseg-%d, phseg1-%d, phseg2-%d\n\r", propseg, phseg1, phseg2);
 #endif
 
 	/*
 	 * Drop out of the configuration mode
 	 */
-	set_mode(normal);
-	return(0);
+	return(set_requested_mode());
 }
 
 /*
  * Function Header
  */
-static void set_mode(ty_can_mode mode)
+static void set_mode(uint8_t mode)
 {
 	// WIN Bit 0/1
 	C1CTRL1bits.REQOP = mode;
@@ -701,16 +743,6 @@ static void set_mode(ty_can_mode mode)
 	 */
 	while (C1CTRL1bits.OPMODE != mode) Nop();
 }
-
-#if 0
-result_t can_l2_dispatch_reg_handler(can_l2_target_t *target)
-{
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-        LOG_D("can_l2_dispatch_reg_handler()\n\r");
-#endif
-        return(0);
-}
-#endif // defined(__dsPIC33EP256MU806__)
 
 #endif // #ifdef SYS_CAN_BUS
 

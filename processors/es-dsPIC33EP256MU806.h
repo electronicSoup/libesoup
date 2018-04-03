@@ -176,20 +176,6 @@
 #define PDSEL0_MASK      0x0002
 #define STSEL_MASK       0x0001   ///< Stop Bit Selection bit
 
-#if defined(SYS_CAN_BUS)
-/*
- * CAN Bus Modes
- */
-typedef enum { 
-    normal      = 0b000,
-    disabled    = 0b001,
-    loopback    = 0b010,
-    listen_only = 0b011,
-    config      = 0b100,
-    listen_all  = 0b111,
-} ty_can_mode;
-#endif // defined(SYS_CAN_BUS)
-
 /**
  * @brief GPIO Pins available in the uC
  */

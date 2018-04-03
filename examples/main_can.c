@@ -37,7 +37,7 @@ static const char *TAG = "Main";
 #include "libesoup/hardware/eeprom.h"
 #include "libesoup/status/status.h"
 
-void system_status_handler(union ty_status status);
+void system_status_handler(status_source_t source, int16_t status, int16_t data);
 
 #ifdef SYS_SW_TIMERS
 static void expiry(timer_id timer, union sigval);
@@ -75,9 +75,9 @@ int main(void)
 
 	delay(mSeconds, 500);
 #if (defined(SYS_ISO15765) || defined(SYS_ISO11783)) || defined(SYS_TEST_L3_ADDRESS)
-	rc = can_init(baud_250K, 0xff, system_status_handler);  // Includes L3 Address
+	rc = can_init(baud_250K, 0xff, system_status_handler, normal);  // Includes L3 Address
 #else
- 	rc = can_init(baud_250K, system_status_handler);
+ 	rc = can_init(baud_250K, system_status_handler, normal);
 #endif
 	if(rc < 0) {
 #if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
@@ -112,11 +112,11 @@ int main(void)
 	/*
 	 * Register a frame handler
 	 */
-	target.filter = 0x555;
+	target.filter = 0x777;
 	target.mask   = CAN_SFF_MASK;
 	target.handler = frame_handler;
 
-	delay(mSeconds, 500);
+//	delay(mSeconds, 500);
 	rc = frame_dispatch_reg_handler(&target);
 	if(rc < 0) {
 #if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
@@ -136,11 +136,48 @@ int main(void)
 	}
 }
 
-void system_status_handler(union ty_status status)
+void system_status_handler(status_source_t source, int16_t status, int16_t data)
 {
 #if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	LOG_D("status_handler()\n\r");
 #endif
+	switch(source) {
+	case can_bus_l2_status:
+		switch(status) {
+		case(can_l2_connecting):
+#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+			LOG_D("Connecting\n\r");
+#endif
+			break;
+		case can_l2_connected:
+#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+			LOG_D("Connected\n\r");
+#endif
+			break;
+		default:
+#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
+			LOG_E("Status? %d\n\r", status);
+#endif		
+			break;
+		}
+		break;
+#if defined(SYS_CAN_DCNCP)
+	case can_bus_dcncp_status:
+		break;
+#endif
+#if defined(ISO15765)
+	case iso15765_status:
+		break;
+#endif
+#if defined(ISO11783)
+	case iso11783_status:
+		break;
+#endif
+	default:
+#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
+		LOG_E("Status Src? %d\n\r", source);
+#endif		
+	}
 }
 
 /*
@@ -155,7 +192,7 @@ static void expiry(timer_id timer, union sigval data)
 #if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	LOG_D("Tx Frame\n\r");
 #endif
-	frame.can_id = 0x555;
+	frame.can_id = 0x777;
 	frame.can_dlc = 0x00;
 
 	rc = can_l2_tx_frame(&frame);
