@@ -55,6 +55,19 @@ static const char *TAG = "HW_TIMERS";
 /*
  * Local definitions
  */
+#if defined(__dsPIC33EP256MU806__)
+#if (SYS_CLOCK_FREQ == 8000000)
+#define HW_TIMER_OVERHEAD (123)
+#elif (SYS_CLOCK_FREQ == 30000000)
+#define HW_TIMER_OVERHEAD (33)
+#elif (SYS_CLOCK_FREQ == 60000000)
+#define HW_TIMER_OVERHEAD (16)
+#else
+#error Unprogrammed System Clock Frequency!
+#endif
+#elif defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__)
+#elif defined(__18F4585)
+#endif
 
 /*
  * constants:

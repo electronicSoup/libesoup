@@ -1,5 +1,4 @@
 /*
- *
  * file libesoup/timers/sw_timers.c
  *
  * Timer functionalty for the electronicSoup Cinnamon Bun
@@ -80,6 +79,15 @@ static const char *TAG = "SW_TIMERS";
 #ifndef SYS_SW_TIMER_TICK_ms
 #error libesoup_config.h file should define SYS_SW_TIMER_TICK_ms (see libesoup/examples/libesoup_config.h)
 #endif
+
+#if defined (__18F2680) || defined(__18F4585)
+/*
+ * Calculate the 16 bit value that will give us an ISR for the system tick
+ * duration.
+ */
+#define TMR0H_VAL ((0xFFFF - ((SYS_SW_TIMER_TICK_ms * SYS_CLOCK_FREQ) / 4000)) >> 8) & 0xFF
+#define TMR0L_VAL (0xFFFF - ((SYS_SW_TIMER_TICK_ms * SYS_CLOCK_FREQ) / 4000)) & 0xFF
+#endif // (__18F2680) || __18F4585)
 
 #if defined(XC16) || defined(__XC8)
 static uint16_t  timer_counter = 0;

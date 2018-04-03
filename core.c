@@ -38,11 +38,11 @@ static const char  *TAG = "CORE";
 #include "libesoup/boards/board.h"
 
 #ifdef SYS_HW_TIMERS
-#include "libesoup/timers/hw_timers.h"
+extern void     hw_timer_init(void);
 #endif
 
 #ifdef SYS_SW_TIMERS
-#include "libesoup/timers/sw_timers.h"
+extern void     sw_timer_init(void);
 #endif
 
 #ifdef SYS_UART

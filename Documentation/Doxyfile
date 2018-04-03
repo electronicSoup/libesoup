@@ -825,7 +825,7 @@ RECURSIVE              = YES
 # Note that relative paths are relative to the directory from which doxygen is
 # run.
 
-EXCLUDE                = ../Documentation/ \
+EXCLUDE                = ../Documentation/html \
                          */tmp/* \
 			 ../examples/projects/
 
@@ -2038,14 +2038,19 @@ INCLUDE_FILE_PATTERNS  =
 PREDEFINED             = "DOXYGEN" \
 		         "XC16" \
 			 "__XC8" \
+			 "__18F2680" \
+			 "__18F4585" \
                          "__PIC24FJ256GB106__" \
                          "__PIC24FJ64GB106__" \
                          "__dsPIC33EP256MU806__" \
-			 "SYS_HW_TIMERS"
-#			 "SYS_SW_TIMERS" \
+			 "SYS_HW_TIMERS" \
+			 "SYS_SW_TIMERS" \
+			 "SYS_NUMBER_OF_SW_TIMERS 5" \
+			 "SYS_SW_TIMER_TICK_ms    5" \
 #			 "SYS_LOG_LEVEL" \
 #			 "SYS_UART" \
 #			 "SYS_SERIAL_LOGGING" \
+#                        "SYS_SYSTEM_STATUS" \
 #			 "SYS_CAN" \
 #			 "SYS_ONE_WIRE" \
 #			 "SYS_SPI_BUS" \

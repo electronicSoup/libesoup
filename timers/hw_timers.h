@@ -44,38 +44,10 @@
 
 #include "libesoup/timers/time.h"
 
-#if defined(__dsPIC33EP256MU806__)
-#if (SYS_CLOCK_FREQ == 8000000)
-#define HW_TIMER_OVERHEAD (123)
-#elif (SYS_CLOCK_FREQ == 30000000)
-#define HW_TIMER_OVERHEAD (33)
-#elif (SYS_CLOCK_FREQ == 60000000)
-#define HW_TIMER_OVERHEAD (16)
-#else
-#error Unprogrammed System Clock Frequency!
-#endif
-#elif defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__)
-#elif defined(__18F4585)
-#endif
-
-
-
 /**
  * @name Hardware Timers 
  */
 /**@{*/
-/*
- * @ingroup Timers
- * @brief Function to initialisation the data structures used to manage the 
- *        micro-controller's hardware timers. Auto called by @ref libesoup_init()
- * 
- * Warning: NO runtime checks are performed to ensure that this initialisation 
- * function has been called before a timer is started! In other words you can
- * call a function to start Hardware timer whilst the management data structures
- * are in an undefined/uninitialised state. Make sure that your project calls
- * @ref libesoup_init() prior to any API Calls
- */
-extern void     hw_timer_init(void);
 
 #if (SYS_LOG_LEVEL != NO_LOGGING)
 /**
