@@ -82,7 +82,7 @@ result_t board_init(void)
 	RC_CHECK
 	ow_channel = rc;
 
-	rc = one_wire_reserve(ONE_WIRE_PIN);
+	rc = one_wire_reserve(BRD_ONE_WIRE_PIN);
 //	rc = one_wire_reserve(RD0);
 	RC_CHECK
 #endif

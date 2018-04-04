@@ -2047,8 +2047,9 @@ PREDEFINED             = "DOXYGEN" \
 			 "SYS_SW_TIMERS" \
 			 "SYS_NUMBER_OF_SW_TIMERS 5" \
 			 "SYS_SW_TIMER_TICK_ms    5" \
+			 "SYS_UART" \
+			 "SYS_UART_TX_BUFFER_SIZE   200" \
 #			 "SYS_LOG_LEVEL" \
-#			 "SYS_UART" \
 #			 "SYS_SERIAL_LOGGING" \
 #                        "SYS_SYSTEM_STATUS" \
 #			 "SYS_CAN" \

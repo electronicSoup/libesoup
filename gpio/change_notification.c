@@ -39,7 +39,7 @@ __attribute__((unused)) static const char *TAG = "CHANGE";
 
 #include "libesoup/errno.h"
 #include "libesoup/gpio/gpio.h"
-#include "libesoup/processors/dsPIC33/change_notification/change_notification.h"
+#include "libesoup/gpio/change_notification.h"
 
 static result_t enable_change(enum pin_t);
 static result_t disable_change(enum pin_t);

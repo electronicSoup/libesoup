@@ -1,5 +1,4 @@
-/**
- *
+/*
  * libesoup/core.c
  *
  * File containing the function to initialise the libesoup library
@@ -46,7 +45,7 @@ extern void     sw_timer_init(void);
 #endif
 
 #ifdef SYS_UART
-#include "libesoup/comms/uart/uart.h"
+extern void     uart_init(void);
 #endif
 
 #ifdef SYS_JOBS
@@ -66,7 +65,7 @@ extern void     sw_timer_init(void);
 #endif
 
 #ifdef SYS_CHANGE_NOTIFICATION
-#include "libesoup/processors/dsPIC33/change_notification/change_notification.h"
+#include "libesoup/gpio/change_notification.h"
 #endif // SYS_CHANGE_NOTIFICATION
 
 /*

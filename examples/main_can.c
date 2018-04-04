@@ -1,5 +1,4 @@
 /**
- *
  * @file libesoup/examples/main_can.c
  *
  * @author John Whitmore

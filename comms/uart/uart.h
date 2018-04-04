@@ -26,8 +26,10 @@
  * @{
  * 
  */
-#ifndef ES_LIB_UART_H
-#define ES_LIB_UART_H
+#ifndef _ES_LIB_UART_H
+#define _ES_LIB_UART_H
+
+#include "libesoup_config.h"
 
 #ifdef SYS_UART
 
@@ -57,18 +59,15 @@
  * @ingroup Uart
  * @struct  uart_data
  * @brief   Structure defining a uart configuration
- *
- * @var     uart_data::tx_pin
- * member   Peripheral pin to use for transmission
  */
 struct uart_data {
-    enum pin_t         tx_pin; /**< GPIO Pin to be used for the transmit pin of connection \ref */
-    enum pin_t         rx_pin; /**< GPIO Pin to be used for the transmit pin of connection \ref */
-    uint8_t            uart;        /**< Uart identifier */
-    uint16_t           uart_mode;   /**< Mode bits for the connection */
-    uint32_t           baud;        /**< Baud rate for the connection */
-    void               (*tx_finished)(void *);  /**< Function to be called when a requested transmission has finished */
-    void               (*process_rx_char)(uint8_t, uint8_t); /**< Function to be called when a character is received */
+	enum pin_t         tx_pin;                               ///< GPIO Pin for transmit
+	enum pin_t         rx_pin;                               ///< GPIO Pin for receive
+	uint8_t            uart;                                 ///< Uart identifier
+	uint16_t           uart_mode;                            ///< Mode bits for the connection
+	uint32_t           baud;                                 ///< Baud rate for the connection
+	void               (*tx_finished)(void *);               ///< Callback - transmission has finished
+	void               (*process_rx_char)(uint8_t, uint8_t); ///< Callback - Character received
 };
 
 /**
@@ -76,22 +75,13 @@ struct uart_data {
  * @brief Calculate the bit field for the mode of operation for connection
  * 
  * @param mode  The calculated bitfield for the required mode of operation. 
- * @param databits Number of databits required. Either UART_8_DATABITS or 
- * UART_9_DATABITS
- * @param parity Either #define UART_PARITY_NONE, UART_PARITY_ODD or 
- * UART_PARITY_EVEN
+ * @param databits - Number of databits required. Either UART_8_DATABITS or UART_9_DATABITS
+ * @param parity Either UART_PARITY_NONE, UART_PARITY_ODD or UART_PARITY_EVEN
  * @param stopbits Either UART_ONE_STOP_BIT or UART_TWO_STOP_BITS
  * @param rx_idle_level Either UART_IDLE_LOW or UART_IDLE_HIGH
  * @return Either ERR_BAD_INPUT_PARAMETER or SUCCESS 
  */
 extern result_t uart_calculate_mode(uint16_t *mode, uint8_t databits, uint8_t parity, uint8_t stopbits, uint8_t rx_idle_level);
-
-/**
- * @ingroup Uart
- * @brief Initialise the UART module, auto called by \ref libesoup_init() if SYS_UART is defined
- * 
- */
-extern void     uart_init(void);
 
 #ifdef SYS_DEBUG_BUILD
 extern uint16_t uart_buffer_count(struct uart_data *data);
@@ -138,7 +128,7 @@ extern result_t uart_tx_char(struct uart_data *data, char ch);
 
 #endif // SYS_UART
 
-#endif // ES_LIB_UART_H
+#endif // _ES_LIB_UART_H
 
 /**
  * @}

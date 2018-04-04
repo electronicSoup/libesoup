@@ -1,7 +1,9 @@
 /**
  *
- * \file libesoup/comms/one_wire/one_wire.c
+ * file libesoup/comms/one_wire/one_wire.c
  *
+ * author John Whitmore
+ * 
  * Copyright 2017-2018 electronicSoup Limited
  *
  * This program is free software; you can redistribute it and/or modify
@@ -39,7 +41,7 @@ static const char *TAG = "OneWire";
 #include "libesoup/timers/hw_timers.h"
 #include "libesoup/timers/delay.h"
 #include "libesoup/comms/one_wire/one_wire.h"
-#include "libesoup/processors/dsPIC33/change_notification/change_notification.h"
+#include "libesoup/gpio/change_notification.h"
 
 #ifndef SYS_CHANGE_NOTIFICATION
 #error SYS_CHANGE_NOTIFICATION Not defined required by OneWire
@@ -94,7 +96,7 @@ static struct one_wire_device device[SYS_ONE_WIRE_MAX_DEVICES];
  * Function Prototypes.
  */
 static result_t census(int16_t chan);
-static void     bus_change(uint16_t *port, uint8_t bit);
+static void     bus_change(enum pin_t pin);
 static result_t reset_pulse(int16_t chan);
 static result_t write_byte(int16_t chan, uint8_t byte);
 static result_t write_one(int16_t chan);
@@ -260,7 +262,7 @@ static result_t census(int16_t chan)
 	return(0);
 }
 
-static void bus_change(uint16_t *port, uint8_t bit)
+static void bus_change(enum pin_t pin)
 {
 	bus_changes++;
 }
