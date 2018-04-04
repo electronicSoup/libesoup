@@ -18,7 +18,7 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  *
  */
-#define TX_NODE
+//#define TX_NODE
 
 #include "libesoup_config.h"
 
@@ -89,7 +89,7 @@ int main(void)
 	 * can load the serial logging buffer and the other can check
 	 * that it's emptied
 	 */
-#ifdef TX_NODE
+#if (defined(TX_NODE) && !defined(SYS_CAN_PING_FRAME_ID))
 #if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	LOG_D("Tx Node\n\r");
 #endif
@@ -106,16 +106,20 @@ int main(void)
 		LOG_E("Failed to start SW Timer\n\r");
 #endif		
 	}
-#endif	// SYS_SW_TIMERS
-#endif
+#endif	//  SYS_SW_TIMERS
+#endif  //  (defined(TX_NODE) && !defined(SYS_CAN_PING_FRAME_ID))
+
 	/*
 	 * Register a frame handler
 	 */
+#if defined(SYS_CAN_PING_FRAME_ID)
+	target.filter = SYS_CAN_PING_FRAME_ID;
+#else
 	target.filter = 0x777;
+#endif
 	target.mask   = CAN_SFF_MASK;
 	target.handler = frame_handler;
 
-//	delay(mSeconds, 500);
 	rc = frame_dispatch_reg_handler(&target);
 	if(rc < 0) {
 #if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
@@ -182,7 +186,7 @@ void system_status_handler(status_source_t source, int16_t status, int16_t data)
 /*
  * Expiry Function if SYS_SW_TIMERS defined
  */
-#ifdef SYS_SW_TIMERS
+#if (defined(TX_NODE) && !defined(SYS_CAN_PING_FRAME_ID) && defined (SYS_SW_TIMERS))
 static void expiry(timer_id timer, union sigval data)
 {
 	result_t  rc;
@@ -201,7 +205,7 @@ static void expiry(timer_id timer, union sigval data)
 #endif		
 	}
 }
-#endif // SYS_SW_TIMERS
+#endif // (defined(TX_NODE) && !defined(SYS_CAN_PING_FRAME_ID) && defined (SYS_SW_TIMERS))
 
 static void frame_handler(can_frame *frame)
 {

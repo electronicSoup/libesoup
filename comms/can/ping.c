@@ -41,6 +41,18 @@ const char *TAG = "CAN_PING";
 #error libesoup_config.h should define the SYS_CAN_PING_FRAME_ID
 #endif
 
+#ifndef SYS_CAN_PING_IDLE_SPREAD
+#error libesoup_config.h should define the SYS_CAN_PING_IDLE_SPREAD
+#endif
+
+#ifndef SYS_CAN_PING_IDLE_INTERVAL
+#error libesoup_config.h should define the SYS_CAN_PING_IDLE_INTERVAL
+#endif
+
+#ifndef SYS_RAND
+#error libesoup_config.h should define the SYS_RAND
+#endif
+
 /**
  * \brief Network Idle functionality
  *
@@ -60,8 +72,10 @@ static void ping_network(timer_id timer, union sigval data);
 void can_ping_init(void)
 {
 	uint16_t duration;
+	int16_t  tmp;
 	
-	duration = (uint16_t) ((rand() % 500) + 1000);
+	tmp = (rand() % SYS_CAN_PING_IDLE_SPREAD) - (SYS_CAN_PING_IDLE_SPREAD/2);
+	duration = (uint16_t) SYS_CAN_PING_IDLE_INTERVAL + tmp;
 	
 	ping_timer = 0xFF;
 	
