@@ -1,8 +1,10 @@
 /**
  *
- * \file libesoup/comms/can/l2_dsPIC33EP256MU806.c
+ * @file libesoup/comms/can/l2_dsPIC33EP256MU806.c
  *
- * Core SYS_CAN Functionality of electronicSoup CAN code
+ * @author John Whitmore
+ * 
+ * @brief Core SYS_CAN Functionality of electronicSoup CAN code
  *
  * Copyright 2017-2018 electronicSoup Limited
  *
@@ -20,8 +22,6 @@
  *
  */
 #if defined(__dsPIC33EP256MU806__)
-
-#include <p33EP256MU806.h>
 
 #include "libesoup_config.h"
 
@@ -41,9 +41,7 @@ static const char *TAG = "dsPIC33_CAN";
 #include "libesoup/gpio/gpio.h"
 #include "libesoup/gpio/peripheral.h"
 #include "libesoup/status/status.h"
-//#include "libesoup/comms/can/l2_dsPIC33EP256MU806.h"
 #include "libesoup/comms/can/can.h"
-//#include "libesoup/comms/can/frame_dispatch.h"
 #ifdef SYS_CAN_PING_PROTOCOL
 #include "libesoup/comms/can/ping.h"
 #endif // SYS_CAN_PING_PROTOCOL
@@ -140,88 +138,107 @@ static void set_mode(uint8_t mode);
 
 void __attribute__((__interrupt__, __no_auto_psv__)) _C1Interrupt(void)
 {
+	while(C1INTF) {
+		// WIN Bit 0 | 1
+		if(C1INTFbits.TBIF) {
+			C1INTFbits.TBIF = 0;
 #if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-        LOG_D("C1 Isr Flag 0x%x  ICODE 0x%x\n\r", C1INTF, C1VECbits.ICODE);
+			LOG_D("TBIF\n\r");
 #endif
-
-	// WIN Bit 0 | 1
-        if(C1INTFbits.TBIF) {
-                C1INTFbits.TBIF = 0;
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-                LOG_D("TBIF\n\r");
-#endif
-		if(current_status == can_l2_connecting) {
-			current_status = can_l2_connected;
-			if(status_handler) {
-				status_handler(can_bus_l2_status, current_status, 0);
+			if(current_status == can_l2_connecting) {
+				current_status = can_l2_connected;
+				if(status_handler) {
+					status_handler(can_bus_l2_status, current_status, 0);
+				}
 			}
+			C1INTEbits.TBIE   = 0b00;  // Disable this interrupt no longer interested once connected
 		}
-		C1INTEbits.TBIE   = 0b00;  // Disable this interrupt no longer interested once connected
-        } else if(C1INTFbits.RBIF) {
-                C1INTFbits.RBIF = 0;
+	
+		if(C1INTFbits.RBIF) {
+			C1INTFbits.RBIF = 0;
 #if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-                LOG_D("RBIF\n\r");
+			LOG_D("RBIF\n\r");
 #endif
-        } else if(C1INTFbits.RBOVIF) {
-                C1INTFbits.RBOVIF = 0;
+		}
+	
+		if(C1INTFbits.RBOVIF) {
+			C1INTFbits.RBOVIF = 0;
 #if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-                LOG_D("RBOVIF\n\r");
+			LOG_D("RBOVIF\n\r");
 #endif
-        } else if(C1INTFbits.FIFOIF) {
-                C1INTFbits.FIFOIF = 0;
+		}
+	
+		if(C1INTFbits.FIFOIF) {
+			C1INTFbits.FIFOIF = 0;
 #if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-                LOG_D("FIFOIF\n\r");
+			LOG_D("FIFOIF\n\r");
 #endif
-        } else if(C1INTFbits.ERRIF) {
-                C1INTFbits.ERRIF = 0;
+		}
+	
+		if(C1INTFbits.ERRIF) {
+			C1INTFbits.ERRIF = 0;
 #if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-                LOG_D("ERRIF\n\r");
+			LOG_D("ERRIF\n\r");
 #endif
-        } else if(C1INTFbits.WAKIF) {
-                C1INTFbits.WAKIF = 0;
+		}
+	
+		if(C1INTFbits.WAKIF) {
+			C1INTFbits.WAKIF = 0;
 #if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-                LOG_D("WAKIF\n\r");
+			LOG_D("WAKIF\n\r");
 #endif
-        } else if(C1INTFbits.IVRIF) {
-                C1INTFbits.IVRIF = 0;
+		}
+	
+		if(C1INTFbits.IVRIF) {
+			C1INTFbits.IVRIF = 0;
 #if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-                LOG_D("IVRIF\n\r");
+			LOG_D("IVRIF\n\r");
 #endif
-        } else if(C1INTFbits.EWARN) {
-                C1INTFbits.EWARN = 0;
+		}
+	
+		if(C1INTFbits.EWARN) {
+			C1INTFbits.EWARN = 0;
 #if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-                LOG_D("EWARN\n\r");
+			LOG_D("EWARN\n\r");
 #endif
-        } else if(C1INTFbits.RXWAR) {
-                C1INTFbits.RXWAR = 0;
+		}
+	
+		if(C1INTFbits.RXWAR) {
+			C1INTFbits.RXWAR = 0;
 #if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-                LOG_D("RXWAR\n\r");
+			LOG_D("RXWAR\n\r");
 #endif
-        } else if(C1INTFbits.TXWAR) {
-                C1INTFbits.TXWAR = 0;
+		}
+	
+		if(C1INTFbits.TXWAR) {
+			C1INTFbits.TXWAR = 0;
 #if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-                LOG_D("TXWAR\n\r");
+			LOG_D("TXWAR\n\r");
 #endif
-        } else if(C1INTFbits.RXBP) {
-                C1INTFbits.RXBP = 0;
+		}
+	
+		if(C1INTFbits.RXBP) {
+			C1INTFbits.RXBP = 0;
 #if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-                LOG_D("RXBP\n\r");
+			LOG_D("RXBP\n\r");
 #endif
-        } else if(C1INTFbits.TXBP) {
-                C1INTFbits.TXBP = 0;
+		}
+	
+		if(C1INTFbits.TXBP) {
+			C1INTFbits.TXBP = 0;
 #if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-                LOG_D("TXBP\n\r");
+			LOG_D("TXBP\n\r");
 #endif
-        } else if(C1INTFbits.TXBO) {
-                C1INTFbits.TXBO = 0;
+		}
+	
+		if(C1INTFbits.TXBO) {
+			C1INTFbits.TXBO = 0;
 #if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-                LOG_D("TXBO\n\r");
+			LOG_D("TXBO\n\r");
 #endif
-        } else {
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-                LOG_D("Unprocessed ISR\n\r");
-#endif
-        }
+		}
+	}
+        IFS2bits.C1IF   = 0x00;
 }
 
 //void __attribute__((__interrupt__, __no_auto_psv__)) _DMA0Interrupt(void)
@@ -267,8 +284,8 @@ result_t can_l2_init(can_baud_rate_t arg_baud_rate, status_handler_t arg_status_
 	/*
 	 * Do a quick check of the requested mode to check that it's valid
 	 */
-	rc = set_requested_mode();
-	RC_CHECK
+//	rc = set_requested_mode();
+//	RC_CHECK
 	
         /*
          * Initialise the I/O Pins and peripheral functions
@@ -419,8 +436,8 @@ result_t can_l2_init(can_baud_rate_t arg_baud_rate, status_handler_t arg_status_
          */
 	MEMORY_MAP_WIN_CONFIG_STATUS
         C1INTF = 0x00;
-        C1INTEbits.ERRIE  = 0b01;
-        C1INTEbits.IVRIE  = 0b01;
+//        C1INTEbits.ERRIE  = 0b01;
+//        C1INTEbits.IVRIE  = 0b01;
         C1INTEbits.FIFOIE = 0b01;
         C1INTEbits.TBIE   = 0b01;
 
