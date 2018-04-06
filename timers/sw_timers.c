@@ -1,7 +1,9 @@
-/*
- * file libesoup/timers/sw_timers.c
+/**
+ * @file libesoup/timers/sw_timers.c
  *
- * Timer functionalty for the electronicSoup Cinnamon Bun
+ * @author John Whitmore
+ * 
+ * @brief Timer functionalty for the electronicSoup Cinnamon Bun
  *
  * Copyright 2017-2018 electronicSoup Limited
  *
@@ -240,9 +242,7 @@ void timer_tick(void)
 				/*
 				 * timer expired so call expiry function.
 				 */
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
                                 LOG_D("Expiry timer %d\n\r", loop);
-#endif
 				function = timers[loop].request->exp_fn;
 				data = timers[loop].request->data;
 				function(loop, data);
@@ -317,9 +317,7 @@ timer_id sw_timer_start(struct timer_req *request)
 	 */
 	for(loop=0; loop < SYS_NUMBER_OF_SW_TIMERS; loop++) {
 		if (!timers[loop].active) {
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 //                        LOG_D("Using SW timer %d\n\r", loop);
-#endif
 			/*
 			 * Found an inactive timer so assign to this expiry
 			 */
@@ -332,18 +330,14 @@ timer_id sw_timer_start(struct timer_req *request)
 			 */
 			if(hw_timer_paused) {
 				if((hw_timer = hw_timer_restart(hw_timer, &hw_timer_req)) < 0) {
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
 					LOG_E("Failed to restart HW timer\n\r");
-#endif
 				}
 				hw_timer_paused = FALSE;
 			}
 			return(loop);
 		}
 	}
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
 	LOG_E("start_timer() ERR_NO_RESOURCES\n\r");
-#endif
 	return(-ERR_NO_RESOURCES);
 
 #elif defined(ES_LINUX)
@@ -359,23 +353,17 @@ timer_id sw_timer_start(struct timer_req *request)
 	ret = timer_create(CLOCK_REALTIME, &action, timer);
 
 	if(ret) {
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
 		LOG_E("Error can't create timer\n\r");
-#endif
 		return(-ERR_GENERAL_ERROR);
 	}
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 //	LOG_D("Setting time to %d Seconds %d nano Seonds\n\r", 
-#endif
 	its.it_value.tv_sec = (ticks * SYS_SW_TIMER_TICK_ms) / 1000;
 	its.it_value.tv_nsec = (ticks * SYS_SW_TIMER_TICK_ms) % 1000 * 1000000;
 	its.it_interval.tv_sec = 0;
 	its.it_interval.tv_nsec = 0;
 
 	if (timer_settime(timer, 0, &its, NULL) == -1) {
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
 		LOG_E("Error can't set time\n\r");
-#endif
 		return(-ERR_GENERAL_ERROR);
 	}
 
@@ -398,18 +386,14 @@ timer_id sw_timer_cancel(timer_id timer)
 {
 #if defined(XC16) || defined(__XC8)
 	if ((timer == BAD_TIMER_ID) || (timer >= SYS_NUMBER_OF_SW_TIMERS)) {
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
                 LOG_E("sw_timer_cancel() Bad timer identifier passed in!\n\r");
-#endif
                 return(-ERR_BAD_INPUT_PARAMETER);
 	} else if (timers[timer].active) {
                 timers[timer].active = FALSE;
                 timers[timer].expiry_count = 0;
                 timers[timer].request = (struct timer_req *) NULL;
         } else {
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_INFO))
                 LOG_I("sw_timer_cancel() timer not active!\n\r");
-#endif
         }
         
 #elif defined(ES_LINUX)
@@ -421,9 +405,7 @@ timer_id sw_timer_cancel(timer_id timer)
         its.it_interval.tv_nsec = 0;
 
         if (timer_settime(timer, 0, &its, NULL) == -1) {
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
                 LOG_E("Error can't create timer\n\r");
-#endif
                 return(-ERR_GENERAL_ERROR);
         }
 #endif
@@ -437,9 +419,7 @@ timer_id sw_timer_cancel(timer_id timer)
 result_t sw_timer_cancel_all(void)
 {
 	uint8_t    loop;
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	LOG_D("sw_timer_cancel_all()\n\r");
-#endif
 	for (loop = 0; loop < SYS_NUMBER_OF_SW_TIMERS; loop++) {
 		if (timers[loop].active) {
 			sw_timer_cancel(loop);

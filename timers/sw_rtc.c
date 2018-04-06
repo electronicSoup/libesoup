@@ -1,10 +1,9 @@
 /**
- *
  * @file libesoup/timers/sw_rtc.c
  *
  * @author John Whitmore
  *
- * Code for dealing with Real Date Time values
+ * @brief Code for dealing with Real Date Time values
  *
  * Copyright 2017-2018 electronicSoup Limited
  *
@@ -108,14 +107,10 @@ static void increment_current_time(uint16_t secs)
 
 result_t rtc_update_current_datetime(uint8_t *data, uint16_t len)
 {
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	LOG_D("rtc_update_current_datetime()\n\r");
-#endif
 
 	if(len != 17) {
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
 		LOG_E("Bad input datetime\n\r");
-#endif
 		return(ERR_BAD_INPUT_PARAMETER);
 	}
 
@@ -128,9 +123,7 @@ result_t rtc_update_current_datetime(uint8_t *data, uint16_t len)
 
 	current_datetime_valid = TRUE;
 
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	LOG_D("Current datetime set to %d%d%d-%d:%d:%d\n\r",
-#endif
 		current_datetime.year,
 		current_datetime.month,
 		current_datetime.day,
@@ -178,9 +171,7 @@ void *rtc_set_alarm_offset(ty_time_units units, uint16_t time, uint8_t nice, voi
 		tmp_datetime.day     = current_datetime.day + tmp_datetime.hours / 24;
 		tmp_datetime.hours   = tmp_datetime.hours % 24;
 	} else if (units == Minutes) {
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 		LOG_D("rtc_set_alarm_offset(Minutes, %d)\n\r", time);
-#endif
 		tmp_datetime.seconds = 0;
 
 		if(nice) {
@@ -209,9 +200,7 @@ void *rtc_set_alarm_offset(ty_time_units units, uint16_t time, uint8_t nice, voi
 		tmp_datetime.day     = current_datetime.day + tmp_datetime.hours / HOURS_PER_DAY;
 		tmp_datetime.hours   = tmp_datetime.hours % HOURS_PER_DAY;
 	} else {
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
 		LOG_E("Unrecognised Alarm offset units\n\r");
-#endif
 		return(NULL);
 	}
 
@@ -244,9 +233,7 @@ static void add_alarm_to_list(struct alarm_data *alarm)
 	struct alarm_data *next = NULL;
 	struct alarm_data *prev = NULL;
 
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	LOG_D("add_alarm_to_list(%2d:%2d)\n\r", alarm->datetime.hours, alarm->datetime.minutes);
-#endif
 	if (alarm_list == NULL) {
 		alarm_list = alarm;
 	} else {
@@ -348,12 +335,10 @@ static void check_alarm()
 	 */
 	while (alarm_list && !finished) {
 		if(datetime_cmp(&current_datetime, &alarm_list->datetime) >= 0) {
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 			LOG_D("Alarm Expired - %d:%d:%d\n\r",
 				alarm_list->datetime.hours,
 				alarm_list->datetime.minutes,
 				alarm_list->datetime.seconds);
-#endif
 			/*
 			 * Remove the alarm from the Queue
 			 */

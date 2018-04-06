@@ -1,8 +1,9 @@
 /**
+ * @file libesoup/comms/can/l2_mcp2515.c
  *
- * \file libesoup/comms/can/l2_mcp2515.c
- *
- * CAN L2 Functionality for MCP2515 Chip
+ * @author John Whitmore
+ * 
+ * @brief CAN L2 Functionality for MCP2515 Chip
  *
  * Copyright 2017-2018 electronicSoup Limited
  *
@@ -121,9 +122,7 @@ result_t can_l2_init(can_baud_rate_t arg_baud_rate, status_handler_t handler)
 	result_t       rc;
 	uint8_t        exit_mode = NORMAL_MODE;
 
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	LOG_D("can_l2_init()\n\r");
-#endif
 
 #ifdef SYS_CAN_PING_PROTOCOL
 	ping_init();
@@ -131,9 +130,7 @@ result_t can_l2_init(can_baud_rate_t arg_baud_rate, status_handler_t handler)
 	
 #ifndef SYS_CAN_BAUD_AUTO_DETECT
 	if(arg_baud_rate >= no_baud) {
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
 		LOG_E("Bad Baud rate!!!\n\r");
-#endif
 		return (-ERR_BAD_INPUT_PARAMETER);
 	}
 #endif // SYS_CAN_BAUD_AUTO_DETECT
@@ -170,9 +167,7 @@ result_t can_l2_init(can_baud_rate_t arg_baud_rate, status_handler_t handler)
 	 * Have to set the baud rate if one has been passed into the function
 	 */
 	if(arg_baud_rate < no_baud) {
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 		LOG_D("Valid Baud Rate specified - %s\n\r", can_baud_rate_strings[arg_baud_rate]);
-#endif
 		connected_baudrate = arg_baud_rate;
 		set_baudrate(arg_baud_rate);
 		exit_mode = NORMAL_MODE;
@@ -191,23 +186,18 @@ result_t can_l2_init(can_baud_rate_t arg_baud_rate, status_handler_t handler)
 	}
 	asm ("CLRWDT");
 
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	LOG_D("Set Exit Mode 0x%x\n\r", exit_mode);
-#endif
 	set_can_mode(exit_mode);
 
         /*
 	 * Turn on Interrupts
 	 */
-//	write_reg(CANINTE, MERRE | RX1IE | RX0IE);
 	write_reg(CANINTE, MERRE | ERRIE | TX2IE | TX1IE | TX0IE | RX1IE | RX0IE);
         INTCON2bits.INT0EP = 1; //Interrupt on Negative edge
         IFS0bits.INT0IF = 0;    // Clear the flag
         IEC0bits.INT0IE = 1;    //Interrupt Enabled
 
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	LOG_D("CAN Layer 2 Initialised\n\r");
-#endif
 	return(0);
 }
 
@@ -217,9 +207,7 @@ result_t can_l2_init(can_baud_rate_t arg_baud_rate, status_handler_t handler)
 void _ISR __attribute__((__no_auto_psv__)) _INT0Interrupt(void)
 {
     if(mcp2515_isr) {
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
         LOG_E("Overlapping MCP2515 ISR\n\r");
-#endif
     }
     mcp2515_isr = TRUE;
     IFS0bits.INT0IF = 0;
@@ -247,33 +235,23 @@ static void service_device(void)
 		canstat = read_reg(CANSTAT);
 		write_reg(CANINTF, 0x00);
 
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_WARNING))
 		LOG_W("*** ISR with zero flags! IOCD %x\n\r", canstat & IOCD);
-#endif
 	} else {
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 		LOG_D("service_device() flags 0x%x\n\r", flags);
-#endif
         }
 
 	while(flags != 0x00) {
 		canstat = read_reg(CANSTAT);
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 		LOG_D("service() Flag-%x, IOCD-%x\n\r", flags, (canstat & IOCD));
-#endif
 		if (flags & ERRIE) {
 			eflg = read_reg(EFLG);
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
 			LOG_E("*** SYS_CAN ERRIR Flag!!!\n\r");
 			LOG_E("*** SYS_CAN EFLG %x\n\r", eflg);
-#endif
 			if(can_status.bit_field.l2_status == L2_Listening) {
 				connecting_errors++;
                         } else if(can_status.bit_field.l2_status == L2_Connecting) {
                                 tec = read_reg(TEC);
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_WARNING))
                                 LOG_W("Tx Error Count = %d\n\r", tec);
-#endif
                                 if(eflg & TXWAR) {
 					set_can_mode(CONFIG_MODE);
 					set_can_mode(NORMAL_MODE);
@@ -290,16 +268,12 @@ static void service_device(void)
 		}
 
 		if (flags & MERRE) {
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_WARNING))
 			LOG_W("CAN MERRE Flag\n\r");
-#endif
 			if(can_status.bit_field.l2_status == L2_Listening) {
 				connecting_errors++;
                         } else if(can_status.bit_field.l2_status == L2_Connecting) {
                                 tec = read_reg(TEC);
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_WARNING))
                                 LOG_W("Tx Error Count = %d\n\r", tec);
-#endif
                         }
 			/*
 			 * We've got an error condition so dump all received messages
@@ -314,9 +288,7 @@ static void service_device(void)
 			tx_flags = read_reg(ctrl);
 
 			if((tx_flags & TXREQ) && (tx_flags & TXERR)) {
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
 				LOG_E("Transmit Buffer Failed to send\n\r");
-#endif
 				set_reg_mask_value(ctrl, TXREQ, 0x00);
 				if (can_status.bit_field.l2_status == L2_ChangingBaud)
 					changing_baud_tx_error++;
@@ -325,9 +297,7 @@ static void service_device(void)
 		}
 
 		if (flags & RX0IE) {
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 			LOG_D("RX0IE\n\r");
-#endif
 #if defined(SYS_CAN_PING_PROTOCOL)
 			restart_ping_timer();
 #endif
@@ -343,9 +313,7 @@ static void service_device(void)
 					buffer_next_write = (buffer_next_write + 1) % SYS_CAN_RX_CIR_BUFFER_SIZE;
 					buffer_count++;
 				} else {
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
 					LOG_E("Circular Buffer overflow!\n\r");
-#endif
 				}
 			}
 
@@ -353,9 +321,7 @@ static void service_device(void)
 		}
 
 		if (flags & RX1IE) {
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 			LOG_D("RX1IE\n\r");
-#endif
 #if defined(SYS_CAN_PING_PROTOCOL)
 			restart_ping_timer();
 #endif
@@ -372,9 +338,7 @@ static void service_device(void)
 					buffer_next_write = (buffer_next_write + 1) % SYS_CAN_RX_CIR_BUFFER_SIZE;
 					buffer_count++;
 				} else {
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
 					LOG_E("Circular Buffer overflow!\n\r");
-#endif
 				}
 			}
 
@@ -382,9 +346,7 @@ static void service_device(void)
 		}
 
 		if (flags & TX2IE) {
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 			LOG_D("TX2IE\n\r");
-#endif
 			if (can_status.bit_field.l2_status == L2_Connecting) {
 				can_status.bit_field.l2_status = L2_Connected;
 				status.sstruct.status = can_status.byte;
@@ -397,9 +359,7 @@ static void service_device(void)
 		}
 
 		if (flags & TX1IE) {
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 			LOG_D("TX1IE\n\r");
-#endif
 			if (can_status.bit_field.l2_status == L2_Connecting) {
 				can_status.bit_field.l2_status = L2_Connected;
 				status.sstruct.status = can_status.byte;
@@ -411,9 +371,7 @@ static void service_device(void)
 		}
 
 		if (flags & TX0IE) {
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 			LOG_D("TX0IE\n\r");
-#endif
 			if (can_status.bit_field.l2_status == L2_Connecting) {
 				can_status.bit_field.l2_status = L2_Connected;
 				status.sstruct.status = can_status.byte;
@@ -426,9 +384,7 @@ static void service_device(void)
 		}
 		flags = read_reg(CANINTF);
 	}
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	LOG_D("service_device() finished\n\r");
-#endif
 }
 
 void can_l2_tasks(void)
@@ -521,17 +477,13 @@ result_t can_l2_tx_frame(can_frame  *frame)
 	uint8_t           ctrl;
 	uint8_t           can_buffer = 0x00;
 
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	LOG_D("L2 => Id %lx\n\r", frame->can_id);
-#endif
 
 #if defined(SYS_CAN_PING_PROTOCOL)
         restart_ping_timer();
 #endif
 	if(connected_baudrate == no_baud) {
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
 		LOG_E("Can't Transmit network not connected!\n\r");
-#endif
 		return(-ERR_CAN_ERROR);
 	}
 
@@ -564,9 +516,7 @@ result_t can_l2_tx_frame(can_frame  *frame)
 
 	if(ctrl == 0xff) {
 		// Shipment of fail has arrived
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
 		LOG_E("ERROR No free Tx Buffers\n\r");
-#endif
 		return(-ERR_CAN_NO_FREE_BUFFER);
 	} else if (ctrl == TXB0CTRL) {
 		can_buffer = TXB0SIDH;
@@ -601,9 +551,7 @@ result_t can_l2_tx_frame(can_frame  *frame)
 	 * and send in One Shot Mode if we're unsure of the Network.
 	 */
 	if (can_status.bit_field.l2_status == L2_Connecting) {
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 		LOG_D("Network not good so sending OSM\n\r");
-#endif
 		set_reg_mask_value(CANCTRL, OSM, OSM);
 	} else {
 		// Clear One Shot Mode
@@ -612,18 +560,6 @@ result_t can_l2_tx_frame(can_frame  *frame)
 
 	// Set the buffer for Transmission
 	set_reg_mask_value(ctrl, TXREQ, TXREQ);
-#if 0
-	if (status.bit_field.l2_status == L2_Connecting) {
-		while (read_reg(ctrl) & 0x08) {
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
-			LOG_E("Wait for transmission to complete\n\r");
-#endif
-		}
-		status.bit_field.l2_status = L2_Connected;
-		if (status_handler)
-			status_handler(L2_STATUS_MASK, status, status_baud);
-        }
-#endif
 	return(result);
 }
 
@@ -635,9 +571,7 @@ uint8_t CheckErrors(void)
 	flags = SYS_CANReadReg(CANINTF);
 
 	if(flags != 0x00) {
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 		LOG_D("CheckErrors() Flag set 0x%x\n\r", flags);
-#endif
 	}
 
 	if (flags & TX0IE) {
@@ -657,17 +591,13 @@ uint8_t CheckErrors(void)
 
 	if (flags & MERRE) {
 		CANSetRegMaskValue(CANINTF, MERRE, 0x00);
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
 		LOG_E("Message Error Flag set! Flasg now 0x%x\n\r", SYS_CANReadReg(CANINTF));
-#endif
 	}
 
 	if (flags & WAKIE) {
 		CANSetRegMaskValue(CANINTF, WAKIE, 0x00);
 		wakeUpCount++;
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 		LOG_D("Wake Up Count - now %ld\n\r", wakeUpCount);
-#endif
 	}
 
 	if (flags & ERRIE) {
@@ -697,9 +627,7 @@ static void checkSubErrors(void)
 	error = SYS_CANReadReg(EFLG);
 
 	if(error != 0x00) {
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
 		LOG_E("checkSubErrors() errors - %x\n\r", error);
-#endif
 	}
 
 	/*
@@ -707,9 +635,7 @@ static void checkSubErrors(void)
 	 */
 	if (error & RX1OVR) {
 		g_missedMessageCount++;
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 		LOG_D("Missed Message Count - %ld\n\r", g_missedMessageCount);
-#endif
 		/*
 		 * Clear this flag
 		 */
@@ -718,9 +644,7 @@ static void checkSubErrors(void)
 
 	if (error & RX0OVR) {
 		g_missedMessageCount++;
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 		LOG_D("Missed Message Count - %ld\n\r", g_missedMessageCount);
-#endif
 		/*
 		 * Clear this flag
 		 */
@@ -748,9 +672,7 @@ static void checkSubErrors(void)
 		 * Work out what's changed
 		 */
 		difference = error ^ g_CanErrors;
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
 		LOG_E("ERRORS Have changed! Difference is %x\n\r", difference);
-#endif
 
 		/*
 		 * Loop through the lower 6 bits we're interested in
@@ -812,9 +734,7 @@ static void checkSubErrors(void)
 		}
 		g_CanErrors = error;
 	} else {
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 		LOG_D("Errors Have not changed\n\r");
-#endif
 	}
 }
 #endif
@@ -841,9 +761,7 @@ static void set_reg_mask_value(uint8_t reg, uint8_t mask, uint8_t value)
 
         fail = (read_reg(reg) & mask) != value;
         if(fail) {
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
 		LOG_E("Bit Modify Failed!\n\r");
-#endif
         }
 //    } while (fail);
 }
@@ -858,9 +776,7 @@ static void set_can_mode(uint8_t mode)
 #endif // TEST
 
 #ifdef TEST
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	LOG_D("set_can_mode(0x%x)\n\r", mode);
-#endif // LOGGING
 #endif // TEST
 
 	set_reg_mask_value(CANCTRL, MODE_MASK, mode);
@@ -868,9 +784,7 @@ static void set_can_mode(uint8_t mode)
 	result = read_reg(CANCTRL);
 #endif // TEST
 	while((result & MODE_MASK) != mode) {
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 		LOG_D("Before write SYS_CANCTRL 0x%x\n\r", result & MODE_MASK);
-#endif // LOGGING
 		set_reg_mask_value(CANCTRL, MODE_MASK, mode);
 		result = read_reg(CANCTRL);
 #ifdef TEST
@@ -963,9 +877,7 @@ static void set_baudrate(can_baud_rate_t baudrate)
 		break;
 
         default:
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
 		LOG_E("Invalid Baud Rate Specified\n\r");
-#endif
 		break;
 	}
 
@@ -996,18 +908,14 @@ can_baud_rate_t can_l2_get_baudrate(void)
 
 static void enable_rx_interrupts(void)
 {
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	LOG_D("CANEnableRXInterrupts\n\r");
-#endif
 	set_reg_mask_value(CANINTE, RX1IE, RX1IE);
 	set_reg_mask_value(CANINTE, RX0IE, RX0IE);
 }
 
 static void disable_rx_interrupts(void)
 {
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	LOG_D("CANDisableRXInterrupts\n\r");
-#endif
 	set_reg_mask_value(CANINTE, RX1IE, 0x00);
 	set_reg_mask_value(CANINTE, RX0IE, 0x00);
 }
@@ -1053,9 +961,7 @@ static void read_rx_buffer(uint8_t reg, uint8_t *buffer)
 
 	dataLength = buffer[4] & 0x0f;
 	if(dataLength > CAN_DATA_LENGTH) {
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
 		LOG_E("Invalid Data Length %x & 0x0f = %x\n\r", buffer[4], buffer[4] & 0x0f);
-#endif
 	} else {
 		for (loop = 0; loop < dataLength; loop++, ptr++) {
 			*ptr = spi_write_byte(0x00);
@@ -1095,25 +1001,19 @@ void print_error_counts(void)
 	byte = read_reg(TEC);
 	if(byte != tec) {
 		tec = byte;
-#if (SYS_LOG_LEVEL <= LOG_ERROR)
 		LOG_E("Tx Error (TEC) Count Change - 0x%x\n\r", tec);
-#endif
 	}
 
 	byte = read_reg(REC);
 	if(byte != rec) {
 		rec = byte;
-#if (SYS_LOG_LEVEL <= LOG_ERROR)
 		LOG_E("Rx Error (REC) Count Change - 0x%x\n\r", rec);
-#endif
 	}
 
 	byte = read_reg(EFLG);
 	if(byte != eflg) {
 		eflg = byte;
-#if (SYS_LOG_LEVEL <= LOG_ERROR)
 		LOG_E("EFLG Changed - 0x%x\n\r", eflg);
-#endif
 	}
 }
 #endif
@@ -1127,9 +1027,7 @@ void test_can()
 	byte = read_reg(CANCTRL);
 	BRD_CAN_DESELECT
 
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	LOG_D("Test read of SYS_CANCTRL - 0x%x\n\r", byte);
-#endif
 }
 #endif
 

@@ -1,5 +1,4 @@
 /**
- *
  * @file libesoup/gpio/change_notification.c
  *
  * @author John Whitmore

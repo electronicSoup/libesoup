@@ -1,10 +1,9 @@
 /**
- *
  * @file libesoup/hardware/eeprom.c
  *
  * @author John Whitmore
  *
- * eeprom functions of the electronicSoup Cinnamon Bun
+ * @brief eeprom functions of the electronicSoup Cinnamon Bun
  *
  * Copyright 2017-2018 electronicSoup Limited
  *
@@ -242,9 +241,7 @@ result_t eeprom_erase(uint16_t start_address)
 	result_t rc;
 	uint16_t loop;
 
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_INFO))
         LOG_I("eeprom_erase(0x%x)\n\r", start_address);
-#endif
 	if(start_address <= BRD_EEPROM_MAX_ADDRESS) {
 		for (loop = start_address; loop <= BRD_EEPROM_MAX_ADDRESS ; loop++) {
 			asm ("CLRWDT");
@@ -254,9 +251,7 @@ result_t eeprom_erase(uint16_t start_address)
 
 		return (0);
 	}
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
         LOG_E("eeprom_erase Address Range Error!\n\r");
-#endif
 	return (-ERR_ADDRESS_RANGE);
 }
 
@@ -286,9 +281,7 @@ result_t eeprom_str_read(uint16_t address, uint8_t *buffer, uint16_t length)
 	uint8_t       num_read = 0;
 	result_t      rc;
 
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	LOG_D("eeprom_str_read()\n\r");
-#endif
 	ptr = buffer;
 
 	rc = eeprom_read(address++);
@@ -307,9 +300,7 @@ result_t eeprom_str_read(uint16_t address, uint8_t *buffer, uint16_t length)
 		character = (uint8_t)rc;
 	}
 	*ptr = 0x00;
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	LOG_D("eeprom_str_read() read %s\n\r", buffer);
-#endif
 	return (num_read);
 }
 
@@ -334,23 +325,17 @@ result_t  eeprom_str_write(uint16_t address, uint8_t *buffer, uint16_t length)
 	uint16_t      wrote = 0;
 	result_t      rc = 0;
 
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	LOG_D("eeprom_str_write()\n\r");
-#endif
 	ptr = buffer;
 
 	while ( (*ptr) && (rc >= 0) && (wrote < (length - 1))) {
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 		LOG_D("Write to location %d value 0x%x\n\r", address, *ptr);
-#endif
 		rc = eeprom_write(address++, *ptr++);
 		RC_CHECK
 		wrote++;
 	}
 
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	LOG_D("Write loop finished\n\r");
-#endif
 	rc = eeprom_write(address, 0x00);
 	RC_CHECK
 

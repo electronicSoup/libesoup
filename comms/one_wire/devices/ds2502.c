@@ -1,7 +1,9 @@
 /**
  *
- * \file libesoup/comms/one_wire/devices/ds2502.c
+ * @file libesoup/comms/one_wire/devices/ds2502.c
  *
+ * @author John Whitmore
+ * 
  * Copyright 2018 electronicSoup Limited
  *
  * This program is free software; you can redistribute it and/or modify
@@ -88,13 +90,9 @@ result_t one_wire_ds2502_read_rom(enum pin_t pin)
         rc =  rx_byte(pin, &byte);
         
         if (byte != DS2502_FAMILY_CODE) {
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL != NO_LOGGING))
                 LOG_E("Unexpected Family Code\n\r");
-#endif                
         } else {
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
                 LOG_D("DS2502 Present on OneWire Bus\n\r");
-#endif                
         }
         
         return(SUCCESS);
@@ -127,13 +125,9 @@ result_t one_wire_ds2502_read_rom(enum pin_t pin)
         rc =  rx_byte(pin, &byte);
         
         if (byte != DS2502_FAMILY_CODE) {
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL != NO_LOGGING))
                 LOG_E("Unexpected Family Code\n\r");
-#endif                
         } else {
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
                 LOG_D("DS2502 Present on OneWire Bus\n\r");
-#endif                
         }
         
         return(SUCCESS);
@@ -155,18 +149,14 @@ static result_t program_pulse(enum pin_t pin)
 
 void rom_command(void)
 {
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
         LOG_D("rom_command()\n\r");
-#endif
         callback = read_rom;
         write_byte_fn(READ_ROM);
 }
 
 void read_rom(void)
 {
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
         LOG_D("read_rom()\n\r");
-#endif
         read_count = 8;       
         read();
 }

@@ -3,7 +3,7 @@
  *
  * @author John Whitmore
  *
- * Flash functions of the electronicSoup Cinnamon Bun code Library
+ * @brief Flash functions of the electronicSoup Cinnamon Bun code Library
  *
  * Copyright 2017-2018 electronicSoup Limited
  *
@@ -92,16 +92,12 @@ result_t flash_erase_page(uint32_t address)
 {
 	unsigned int offset;
 
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	LOG_D("flash_erase_page(0x%lx)\n\r", address);
-#endif
 	/*
 	 * Check that the given address is on a page boundary.
 	 */
         if((address & (FLASH_PAGE_SIZE - 1)) != 0x00) {
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
 		LOG_E("ERR_ADDRESS_RANGE(0x%lx)\n\r", address);
-#endif
 		return (ERR_ADDRESS_RANGE);
 	}
 
@@ -109,9 +105,7 @@ result_t flash_erase_page(uint32_t address)
 	 * Check that the given address is in an area of Firmware Address space which we can erase.
 	 */
         if((address < FLASH_FIRMWARE_START_ADDRESS) && (address != FLASH_APP_HANDLE_PAGE)) {
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
 		LOG_E("ERR_ADDRESS_RANGE(0x%lx)\n\r", address);
-#endif
 		return (ERR_ADDRESS_RANGE);
         }
 
@@ -147,9 +141,7 @@ result_t flash_write_row(uint32_t address, uint8_t *data)
 	uint32_t offset;
 	uint32_t i;
 
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	LOG_D("flash_write(0x%lx)\n\r", address);
-#endif
 	/*
 	 * Check that the given address is on a Flash Row boundary.
 	 */
@@ -160,9 +152,7 @@ result_t flash_write_row(uint32_t address, uint8_t *data)
 	 * Check that the given address is in an area of Firmware Address space which we can erase.
 	 */
         if((address < FLASH_FIRMWARE_START_ADDRESS) && (address != FLASH_APP_HANDLE_PAGE)) {
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
 		LOG_E("flash_write ERR_ADDRESS_RANGE 0x%lx\n\r", address);
-#endif
 		return (ERR_ADDRESS_RANGE);
         }
 

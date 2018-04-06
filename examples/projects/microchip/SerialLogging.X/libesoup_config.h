@@ -23,16 +23,6 @@
 #ifndef _LIBESOUP_CONFIG_H
 #define _LIBESOUP_CONFIG_H
 
-/**
- * @brief The required Instruction clock frequency of the device. 
- * 
- * The actual Hardware clock frequency is defined by the MACRO CRYSTAL_FREQ in
- * core.h. That constant is used in conjunction with this required SYS_CLOCK_FREQ 
- * in the function clock_init() to set the desired frequency with the PLL.
- *  
- * The function clock_init() has to be called on entry to main() to 
- * initialise the device to this clock frequency.
- */
 #if defined(__dsPIC33EP256MU806__)
 #define SYS_CLOCK_FREQ 8000000     // 8MHz
 //#define SYS_CLOCK_FREQ 60000000    // 60MHz
@@ -51,60 +41,13 @@
 
 #if defined(SYS_SERIAL_LOGGING)
 
-/**
- * @brief Physical Pin configuration of the Serial Logging port.
- *
- * On the cinnamonBun the the Gnd pin is physically fixed but the remaining two
- * pins use Microchip peripheral select functionality to configure which pin is
- * the Receive pin and which is the Transmit.
- *
- * There are two valid settings SYS_SERIAL_PORT_GndTxRx or SERIAL_PORT_GndRXTx 
- * 
- * Default : SYS_SERIAL_PORT_GndRxTx
- */
 //#define SYS_SERIAL_PORT_GndTxRx
 #define SYS_SERIAL_PORT_GndRxTx
-
-/**
- * @brief Serial logging level
- *
- * The valid log levels are defined in es_lib/core.h.
- * Default set to Debug logging level. This switch is used in conjunction
- * with es_lib/logging/serial_log.h. That file defines Logging macros which 
- * expect a logging level to be defined and a #define of "DEBUG_FILE" at the 
- * top of the file for logging to be enabled.
- */
 #define SYS_LOG_LEVEL LOG_DEBUG
-
 #define SYS_UART
-        
-/**
- * @brief Baud rate of the serial logging port
- *
- * This is Baud rate is set by the function serial_init(). This call to 
- * initialise the baud rate has to be preceeded by a call to clock_init() so
- * that the device's instruction clock speed is know, and the correct scaling
- * can be preformed for the required baud rate.
- * 
- * Default set to 19k2
- */
 #define SYS_SERIAL_LOGGING_BAUD           19200
-
-/**
- * @brief The size of the Transmit buffer to be used by the UARTs.
- *
- * Default set to 300 Bytes as the serial port
- */
 #define SYS_UART_TX_BUFFER_SIZE 300
 
-#else  // defined(SYS_SERIAL_LOGGING)
-#define SYS_UART
-/**
- * @brief The size of the Transmit buffer to be used by the UARTs.
- *
- * Default set to 300 Bytes as the serial port
- */
-#define SYS_UART_TX_BUFFER_SIZE 300
 #endif // defined(SYS_SERIAL_LOGGING)
 
 /*

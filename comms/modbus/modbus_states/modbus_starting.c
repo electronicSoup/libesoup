@@ -4,7 +4,7 @@
  *
  * @author John Whitmore
  *
- * This file contains code for Modbus starting state
+ * @brief Code for Modbus starting state
  *
  * Copyright 2017-2018 electronicSoup Limited
  *
@@ -39,9 +39,7 @@ static void process_timer_35_expiry(void *);
 
 void set_modbus_starting_state(struct modbus_channel *channel)
 {
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_INFO))
 	LOG_I("set_modbus_starting_state(channel %d)\n\r", channel->uart->uart);
-#endif
 	channel->process_timer_15_expiry = NULL;
 	channel->process_timer_35_expiry = process_timer_35_expiry;
 	channel->transmit = NULL;
@@ -57,14 +55,10 @@ static void process_timer_35_expiry(void *data)
         struct modbus_channel *channel = (struct modbus_channel *)data;
         
         if(channel->uart) {
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
                 LOG_D("process_timer_35_expiry(channel %d)\n\r", channel->uart->uart);
-#endif
                 set_modbus_idle_state(channel);
         } else {
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
                 LOG_D("process_timer_35_expiry() No Uart\n\r");
-#endif
         }
 }
 

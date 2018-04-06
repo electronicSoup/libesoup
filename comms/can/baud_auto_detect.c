@@ -1,5 +1,4 @@
 /**
- *
  * @file libesoup/comms/can/baud_auto_detect.c
  *
  * @author John Whitmore

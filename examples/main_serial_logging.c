@@ -58,9 +58,7 @@ int main()
 	delay(mSeconds, 500);
 
 	if (rc < 0) {
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
 		LOG_E("ERROR Oops\n\r");
-#endif
 	}
 
 #if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))

@@ -4,7 +4,7 @@
  *
  * @author John Whitmore
  *
- * Code for Modbus transmission
+ * @brief Code for Modbus transmission
  *
  * Copyright 2017-2018 electronicSoup Limited
  *
@@ -39,11 +39,7 @@ static void tx_finished(void *);
 
 void set_modbus_transmitting_state(struct modbus_channel *channel)
 {
-#ifdef SYS_SERIAL_LOGGING
-#if (SYS_SERIAL_LOGGING) && define(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	LOG_D("set_modbus_transmitting_state()\n\r");
-#endif
-#endif // SYS_SERIAL_LOGGING
 	channel->process_timer_15_expiry = NULL;
 	channel->process_timer_35_expiry = NULL;
 	channel->transmit = NULL;
@@ -56,11 +52,7 @@ void tx_finished(void *data)
 {
         struct modbus_channel *channel = (struct modbus_channel *)data;
 
-#ifdef SYS_SERIAL_LOGGING
-#if (defined(SYS_SERIAL_LOGGING && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
         LOG_D("tx_finished()\n\r");
-#endif
-#endif // SYS_SERIAL_LOGGING
 	set_modbus_awaiting_response_state(channel);
 }
 

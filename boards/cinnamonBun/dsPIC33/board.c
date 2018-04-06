@@ -1,5 +1,4 @@
 /**
- *
  * @file libesoup/boards/cinnamonBun/dsPIC33/board.c
  *
  * @author John Whitmore

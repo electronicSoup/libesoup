@@ -1,7 +1,8 @@
 /**
+ * @file libesoup/examples/projects/microchip/BareBones.X/libesoup_config.h
  *
- * libesoup/examples/projects/microchip/BareBones.X/libesoup_config.h
- *
+ * @author John Whitmore
+ * 
  * Example minimum configuration file for using the libesoup library of code.
  * Simply specifies the desired clock speed and includes the board file for the
  * target cinnamonBun board.
@@ -26,7 +27,6 @@
  *******************************************************************************
  *
  */
-#include <xc.h>
 
 //#define SYS_CLOCK_FREQ  8000000
 #define SYS_CLOCK_FREQ 60000000

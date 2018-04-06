@@ -1,10 +1,9 @@
 /**
- *
  * @file libesoup/comms/can/dcncp/dcncp_can.c
  *
  * @author John Whitmore
  *
- * Dynamic SYS_CAN Node Configuration Protocol 
+ * @brief Dynamic SYS_CAN Node Configuration Protocol 
  *
  * Copyright 2017-2018 electronicSoup Limited
  *
@@ -106,12 +105,10 @@ result_t dcncp_init(status_handler_t arg_status_handler)
 	target.mask    = (uint32_t)CAN_DCNCP_MASK;
 	target.filter  = (uint32_t)CAN_DCNCP_FILTER;
 	target.handler = can_l2_msg_handler;
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 #if defined(XC16) || defined(__XC8)
 	LOG_D("Node Address Register handler Mask 0x%lx, Filter 0x%lx\n\r", target.mask, target.filter);
 #elif defined(ES_LINUX)
 	LOG_D("Node Address Register handler Mask 0x%x, Filter 0x%x\n\r", target.mask, target.filter);
-#endif
 #endif
 	rc = frame_dispatch_reg_handler(&target);
 	RC_CHECK
@@ -144,21 +141,15 @@ void dcncp_request_network_baud_change(can_baud_rate_t baud)
 	can_frame    msg;
 	union sigval data;
 
-#if (defined(SYS_SERIAL_LOGGING) defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	LOG_D("dcncp_request_network_baud_change()\n\r");
-#endif
 
         if(!status.bit_field.dcncp_initialised) {
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_WARNING))
 		LOG_W("Ignoring DCNCP not ready!\n\r");
-#endif
 		return;
 	}
 
 	if(baud == can_l2_get_baudrate()) {
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_WARNING))
 		LOG_W("Ignoring spurious request!\n\r");
-#endif
 		return;
 	}
 	
@@ -178,15 +169,11 @@ void dcncp_request_network_baud_change(can_baud_rate_t baud)
 			 data,
 			 &dcncp_network_baudrate_req_timer);
 	if (rc != SUCCESS) {
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
 		LOG_E("Failed to start BaudRate change Request Timer\n\r");
-#endif
 		return;
 	}
 
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	LOG_D("send network baudrate change request\n\r");
-#endif
 
 	msg.can_id = CAN_DCNCP_NetworkChangeBaudRateReq;
 	msg.can_dlc = 2;
@@ -205,9 +192,8 @@ static void exp_resend_network_baud_chage_req(timer_t timer_id, union sigval dat
 	uint8_t time_left;
 	can_baud_rate_t baud;
 
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	LOG_D("exp_resend_network_baud_chage_req()\n\r");
-#endif
+
 	/*
 	 * Resend a Layer 2 message to inform network of impending change!
 	 */
@@ -216,9 +202,7 @@ static void exp_resend_network_baud_chage_req(timer_t timer_id, union sigval dat
 	time_left = data.sival_int & 0xff;
 	baud = (data.sival_int >> 8) & 0xff;
 
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	LOG_D("Time left %d\n\r", time_left);
-#endif
 
 	if(time_left > 0) {
 		data.sival_int--;
@@ -231,15 +215,11 @@ static void exp_resend_network_baud_chage_req(timer_t timer_id, union sigval dat
 				 data,
 				 &dcncp_network_baudrate_req_timer);
 		if (rc != SUCCESS) {
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
 			LOG_E("Failed to start BaudRate change Request Timer\n\r");
-#endif
 			return;
 		}
 
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 		LOG_D("send network baudrate change request\n\r");
-#endif
 
 		msg.can_id = CAN_DCNCP_NetworkChangeBaudRateReq;
 		msg.can_dlc = 2;
@@ -248,9 +228,7 @@ static void exp_resend_network_baud_chage_req(timer_t timer_id, union sigval dat
 
 		can_l2_tx_frame(&msg);
 	} else {
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 		LOG_D("TIME UP Change Baud Rate\n\r");
-#endif
 		can_l2_set_node_baudrate(baud);
 	}
 }
@@ -259,9 +237,7 @@ static void exp_resend_network_baud_chage_req(timer_t timer_id, union sigval dat
 #ifdef SYS_CAN_DCNCP_BAUDRATE
 static void exp_network_baud_chage_req(timer_t timer_id, union sigval data)
 {
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	LOG_D("!!! exp_network_baud_chage_req() !!!\n\r");
-#endif
 	can_l2_set_node_baudrate((can_baud_rate_t)(data.sival_int & 0xff));
 }
 #endif // SYS_CAN_DCNCP_BAUDRATE
@@ -290,15 +266,11 @@ void exp_send_address_register_request(timer_id timer, union sigval data)
 	timer = timer;
 	data = data;
 
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	LOG_D("exp_send_address_register_request() Send Initial Register Req\n\r");
-#endif
 
 	dcncp_node_address = node_get_address();
 
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	LOG_D("sendRegisterReq(%x)\n\r", (uint16_t) dcncp_node_address);
-#endif
 
 	frame.can_id   = CAN_DCNCP_AddressRegisterReq;
 	frame.can_dlc  = 1;
@@ -334,9 +306,7 @@ void exp_node_address_registered(timer_id timer __attribute__((unused)), union s
 	 */
 	data = data;
 
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	LOG_D("nodeRegistered()\n\r");
-#endif
 	dcncp_node_address_valid = TRUE;
 
         if(status_handler) {
@@ -363,9 +333,7 @@ void can_l2_msg_handler(can_frame *frame)
 #if defined(ISO15765) || defined(ISO11783) || defined(SYS_TEST_L3_ADDRESS)
 		if(frame->data[0] == dcncp_node_address) {
 			if(dcncp_node_address_valid) {
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 				LOG_D("reject Register Request\n\r");
-#endif
 				tx_frame.can_id = CAN_DCNCP_AddressRegisterReject;
 				tx_frame.can_dlc = 1;
 				tx_frame.data[0] = dcncp_node_address;
@@ -373,9 +341,7 @@ void can_l2_msg_handler(can_frame *frame)
 				rc = can_l2_tx_frame(&tx_frame);
 				RC_CHECK_PRINT_VOID("CAN_L2_TX\n\r");
 			} else {
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 				LOG_D("Register Node Address clash. Get New Node Address!\n\r");
-#endif
 				/*
 				 *Have to create a new node address for this node
 				 *cancel the timers
@@ -395,18 +361,14 @@ void can_l2_msg_handler(can_frame *frame)
 #if defined(ISO15765) || defined(ISO11783) || defined(SYS_TEST_L3_ADDRESS)
 		if(frame->data[0] == dcncp_node_address) {
 			if(dcncp_node_address_valid) {
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
 				LOG_E("Sending Can Error Message\n\r");
-#endif
 				tx_frame.can_id = CAN_DCNCP_NodeAddressError;
 				tx_frame.can_dlc = 1;
 				tx_frame.data[0] = dcncp_node_address;
 
 				can_l2_tx_frame(&tx_frame);
 			} else {
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 				LOG_D("Address Regected so get a new one!\n\r");
-#endif
 				/*
 				 *Have to create a new node address for this node
 				 *cancel the timers
@@ -423,9 +385,7 @@ void can_l2_msg_handler(can_frame *frame)
 		}
 #endif // SYS_ISO15765 || SYS_ISO11783 || defined(SYS_TEST_L3_ADDRESS)
 	} else if (frame->can_id == CAN_DCNCP_NodeAddressReportReq) {
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 		LOG_D("DCNCP_CAN_NodeAddressReportReq:\n\r");
-#endif
 #if defined(ISO15765) || defined(ISO11783) || defined(SYS_TEST_L3_ADDRESS)
 		// Create a random timer between 100 and  1000 miliSeconds for firing node report message
 
@@ -441,19 +401,13 @@ void can_l2_msg_handler(can_frame *frame)
 #endif // SYS_ISO15765 || SYS_ISO11783 || defined(SYS_TEST_L3_ADDRESS)
 	} else if (frame->can_id == CAN_DCNCP_NodeAddressReporting) {
 		if(frame->data[0]) {
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 			LOG_D("Foreign Node Rep Registered Node Address 0x%x\n\r", frame->data[1]);
-#endif
 		} else {
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 			LOG_D("Foreign Node Rep UN-Registered Node Address 0x%x\n\r", frame->data[1]);
-#endif
 		}
 	} else if (frame->can_id == CAN_DCNCP_NetworkChangeBaudRateReq) {
 #ifdef SYS_CAN_DCNCP_BAUDRATE
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 		LOG_D("***Baud Rate Change Request New Baud Rate %s Time left %dS\n\r", can_baud_rate_strings[frame->data[0]], frame->data[1]);
-#endif
 
 		timer_cancel(&dcncp_network_baudrate_req_timer);
 		TIMER_INIT(dcncp_network_baudrate_req_timer);
@@ -465,38 +419,28 @@ void can_l2_msg_handler(can_frame *frame)
 		 */
 		rc = timer_start(SECONDS_TO_TICKS(frame->data[1]), exp_network_baud_chage_req, data, &dcncp_network_baudrate_req_timer);
 		if (rc != SUCCESS) {
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
 			LOG_E("Failed to start BaudRate change Request Timer\n\r");
-#endif
 			return;
 		}
 #else
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
 		LOG_E("CAN Baudrate change! NO code in place to process request!\n\r");
-#endif
 #endif // SYS_CAN_DCNCP_BAUDRATE
 	} else if (frame->can_id == CAN_DCNCP_NodePingMessage) {
 	} else if (frame->can_id == CAN_DCNCP_RegisterNetLogger) {
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 		LOG_D("Received NetLogger Registration Message\n\r");
-#endif
 #ifdef SYS_ISO15765_LOGGING
 		iso15765_logger_register_remote(frame->data[0], frame->data[1]);
 #endif // SYS_ISO15765_LOGGING
 	} else if (frame->can_id == CAN_DCNCP_UnRegisterNetLogger) {
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 		LOG_D("Received NetLogger UnRegistration Message\n\r");
-#endif
 #ifdef SYS_ISO15765_LOGGING
 		iso15765_logger_unregister_remote(frame->data[0]);
 #endif // SYS_ISO15765_LOGGING
 	} else {
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_WARNING))
 #if defined(XC16) || defined(__XC8)
 		LOG_W("Node Unrecognised Request %lx \n\r", frame->can_id);
 #elif defined(ES_LINUX)
 		LOG_W("Node Unrecognised Request %x \n\r", frame->can_id);
-#endif
 #endif
 	}
 }
@@ -511,9 +455,7 @@ void exp_send_node_addr_report(timer_id timer __attribute__((unused)), union sig
 	 */
 	data = data;
 
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	LOG_D("exp_send_node_addr_report(Address %x)\n\r", dcncp_node_address);
-#endif
 
 	frame.can_id = CAN_DCNCP_NodeAddressReporting;
 	frame.can_dlc = 2;
@@ -534,9 +476,7 @@ void exp_send_node_addr_report(timer_id timer __attribute__((unused)), union sig
 #if defined(ISO15765_LOGGER)
 result_t dcncp_register_this_node_net_logger(log_level_t level)
 {
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	LOG_D("register_this_node_net_logger()\n\r");
-#endif
 
 	if(!iso15765_initialised())
 		return(ERR_NOT_READY);
@@ -547,9 +487,7 @@ result_t dcncp_register_this_node_net_logger(log_level_t level)
 	local_iso15765_logger_frame.data[1] = level;
 
 	can_l2_tx_frame(&local_iso15765_logger_frame);
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	LOG_D("NetLogger message sent\n\r");
-#endif
 	TIMER_INIT(local_iso15765_logger_timer);
 	timer_start(SECONDS_TO_TICKS(SYS_ISO15765_LOGGER_PING_PERIOD), 
                     exp_iso15765_logger_ping, 
@@ -566,9 +504,7 @@ void exp_iso15765_logger_ping(timer_t timer_id __attribute__((unused)), union si
 	data = data;
 
 	can_l2_tx_frame(&local_iso15765_logger_frame);
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	LOG_D("NetLogger message sent\n\r");
-#endif
 	TIMER_INIT(local_iso15765_logger_timer);
 	timer_start(SECONDS_TO_TICKS(SYS_ISO15765_LOGGER_PING_PERIOD),
                     exp_iso15765_logger_ping, 
@@ -582,18 +518,14 @@ result_t dcncp_unregister_this_node_net_logger()
 {
 	can_frame frame;
 
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	LOG_D("DeRegAsNetLogger()\n\r");
-#endif
 
 	frame.can_id = CAN_DCNCP_UnRegisterNetLogger;
 	frame.can_dlc = 1;
 	frame.data[0] = dcncp_node_address;
 
 	can_l2_tx_frame(&frame);
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	LOG_D("CancelNetLogger message sent\n\r");
-#endif
 
 	if(local_iso15765_logger_timer.status == ACTIVE)
 		timer_cancel(&local_iso15765_logger_timer);
@@ -612,9 +544,7 @@ void dcncp_send_ping(void)
 	can_l2_tx_frame(&frame);
 
 #ifdef SYS_CAN_L2_PING_LOGGING
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	LOG_D("Ping message sent\n\r");
-#endif
 #endif // SYS_CAN_L2_PING_LOGGING
 }
 

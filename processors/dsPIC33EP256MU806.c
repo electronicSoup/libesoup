@@ -3,7 +3,7 @@
  *
  * @author John Whitmore
  *
- * Copyright 2017 electronicSoup Limited
+ * Copyright 2017-2018 electronicSoup Limited
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 2 of the GNU Lesser General Public License
@@ -24,8 +24,8 @@
 #ifdef SYS_SERIAL_LOGGING
 #define DEBUG_FILE
 static const char *TAG = "dsPIC33";
-#include "libesoup/logger/serial_log.h"
 #endif // SYS_SERIAL_LOGGING
+#include "libesoup/logger/serial_log.h"
 
 #include "libesoup/errno.h"
 
@@ -63,18 +63,14 @@ static void clock_init(void);
  */
 void _ISR __attribute__((__no_auto_psv__)) _AddressError(void)
 {
-#ifdef SYS_SERIAL_LOGGING
 	LOG_E("Address error");
-#endif
 	while (1) {
 	}
 }
 
 void _ISR __attribute__((__no_auto_psv__)) _StackError(void)
 {
-#ifdef SYS_SERIAL_LOGGING
 	LOG_E("Stack error");
-#endif
 	while (1)  {
 	}
 }

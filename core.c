@@ -1,7 +1,9 @@
-/*
- * libesoup/core.c
+/**
+ * @file libesoup/core.c
  *
- * File containing the function to initialise the libesoup library
+ * @author John Whitmore
+ * 
+ * @brief File containing the function to initialise the libesoup library
  *
  * Copyright 2017-2018 electronicSoup Limited
  *

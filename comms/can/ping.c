@@ -1,8 +1,9 @@
-/*
+/**
+ * @file libesoup/comms/can/ping.c
  *
- * libesoup/comms/can/ping.c
- *
- * CAN Bus Ping Protocol functionality
+ * @author John Whitmore
+ * 
+ * @brief CAN Bus Ping Protocol functionality
  *
  * Copyright 2017-2018 electronicSoup Limited
  *
@@ -79,9 +80,7 @@ void can_ping_init(void)
 	
 	ping_timer = 0xFF;
 	
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	LOG_D("CAN ping duration - %d mSeconds\n\r", duration);
-#endif
 
 	timer_request.units          = mSeconds;
 	timer_request.duration       = duration;
@@ -98,9 +97,7 @@ static void ping_network(timer_id timer, union sigval data)
 
 	ping_timer = 0xFF;
 		
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	LOG_D("CAN Ping\n\r");
-#endif
 	frame.can_id = SYS_CAN_PING_FRAME_ID;
 	frame.can_dlc = 0;
 

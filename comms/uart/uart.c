@@ -1,8 +1,9 @@
 /**
+ * @file libesoup/comms/uart/uart.c
  *
- * \file libesoup/comms/uart/uart.c
- *
- * UART functionalty for the electronicSoup Cinnamon Bun
+ * @author John Whitmore
+ * 
+ * @brief UART functionalty for the electronicSoup Cinnamon Bun
  *
  * Copyright 2017-2018 electronicSoup Limited
  *
@@ -137,9 +138,7 @@ void _ISR __attribute__((__no_auto_psv__)) _U4TXInterrupt(void)
 static void uart_tx_isr(uint8_t uart)
 {
 	if ((uarts[uart].data == NULL) || (uarts[uart].status != UART_RESERVED)) {
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
 		LOG_E("UART Null in ISR!\n\r");
-#endif
 		return;
 	}
 
@@ -281,9 +280,7 @@ static void uart_tx_isr(uint8_t uart)
 			break;
 #endif // UART_4
 		default:
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
 			LOG_E("Bad comm port given!\n\r");
-#endif
 			break;
 		}
 	}
@@ -302,9 +299,7 @@ void _ISR __attribute__((__no_auto_psv__)) _U1RXInterrupt(void)
 	asm ("CLRWDT");
 
 	if (U1STAbits.OERR) {
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
 		LOG_E("RX Buffer overrun\n\r");
-#endif
 		U1STAbits.OERR = 0;   /* Clear the error flag */
 	}
 
@@ -325,9 +320,7 @@ void _ISR __attribute__((__no_auto_psv__)) _U2RXInterrupt(void)
 	asm ("CLRWDT");
 
 	if (U2STAbits.OERR) {
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
 		LOG_E("RX Buffer overrun\n\r");
-#endif
 		U2STAbits.OERR = 0;   /* Clear the error flag */
 	}
 
@@ -348,9 +341,7 @@ void _ISR __attribute__((__no_auto_psv__)) _U3RXInterrupt(void)
 	asm ("CLRWDT");
 
 	if (U3STAbits.OERR) {
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
 		LOG_E("RX Buffer overrun\n\r");
-#endif
 		U3STAbits.OERR = 0;   /* Clear the error flag */
 	}
 
@@ -371,9 +362,7 @@ void _ISR __attribute__((__no_auto_psv__)) _U4RXInterrupt(void)
 	asm ("CLRWDT");
 
 	if (U4STAbits.OERR) {
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
 		LOG_E("RX Buffer overrun\n\r");
-#endif
 		U4STAbits.OERR = 0;   /* Clear the error flag */
 	}
 
@@ -401,9 +390,7 @@ result_t uart_calculate_mode(uint16_t *mode, uint8_t databits, uint8_t parity, u
 		*mode |= PDSEL1_MASK;
 		*mode |= PDSEL0_MASK;
 	} else {
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
                 LOG_E("Bad byte length\n\r");
-#endif
 		return(-ERR_BAD_INPUT_PARAMETER);
 	}
 
@@ -438,9 +425,7 @@ result_t uart_calculate_mode(uint16_t *mode, uint8_t databits, uint8_t parity, u
 //		*mode |= PDSEL1_MASK;
 //		*mode |= PDSEL0_MASK;
 	} else {
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
                 LOG_E("Bad byte length\n\r");
-#endif
 		return(-ERR_BAD_INPUT_PARAMETER);
 	}
 
@@ -480,9 +465,7 @@ uint16_t uart_buffer_count(struct uart_data *data)
 	uart_index = data->uart;
 
 	if(uarts[uart_index].data != data) {
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
 		LOG_E("Bad UART passed into uart_buffer_count()\n\r");
-#endif
 		return(0);
 	}
 	return(uarts[uart_index].tx_count);
@@ -540,13 +523,9 @@ result_t uart_release(struct uart_data *data)
 
 	uart_index = data->uart;
 
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	LOG_D("uart_release()  %d\n\r", uart_index);
-#endif
 	if(uarts[uart_index].data != data) {
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
 		LOG_E("uart_tx called with bad data pointer\n\r");
-#endif
 		return(-ERR_BAD_INPUT_PARAMETER);
 	}
 
@@ -583,9 +562,7 @@ result_t uart_release(struct uart_data *data)
                 break;
 #endif // UART_4
         default:
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
 		LOG_E("Unrecognised UART\n\r");
-#endif
 		return(-ERR_BAD_INPUT_PARAMETER);
 //                break;
 	}
@@ -737,9 +714,7 @@ static result_t uart_putchar(uint8_t uart_index, uint8_t ch)
 #endif // UART_4
 	default:
 #ifndef __XC8 // XC8 compiler don't like recursion
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
 			LOG_E("Unrecognised UART in putchar()\n\r");
-#endif
 #endif // __XC8
 		break;
 	}
@@ -834,19 +809,19 @@ static result_t uart_set_rx_pin(uint8_t uart, enum pin_t pin)
 
 	switch (uart) {
 	case UART_1:
-		PPS_UART_1_RX = rc;
+		PPS_I_UART_1_RX = rc;
 		break;
 
 	case UART_2:
-		PPS_UART_2_RX = rc;
+		PPS_I_UART_2_RX = rc;
 		break;
 
 	case UART_3:
-		PPS_UART_3_RX = rc;
+		PPS_I_UART_3_RX = rc;
 		break;
 
 	case UART_4:
-		PPS_UART_4_RX = rc;
+		PPS_I_UART_4_RX = rc;
 		break;
 	}
 	
@@ -918,9 +893,7 @@ static result_t uart_set_tx_pin(uint8_t uart, enum pin_t pin)
 		break;
 		
 	default:
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
 		LOG_E("Bad input parameters\n\r");
-#endif
 		break;
 	}
 
@@ -1185,9 +1158,7 @@ static void uart_set_uart_config(struct uart_data *uart)
 		break;
 #endif // UART_4
 	default:
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
 		LOG_E("Bad UART passed\n\r");
-#endif
 		break;
 	}
 }
@@ -1222,9 +1193,7 @@ static void uart_set_uart_config(struct uart_data *uart)
 #endif // UART_1
 
 	default:
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
 		LOG_E("Bad UART passed\n\r");
-#endif
 		break;
 	}
 }
@@ -1301,9 +1270,7 @@ static uint16_t load_tx_buffer(uint8_t uart)
 #endif // UART_4
 	}
 
-#if (defined(SYS_SERIAL_LOGGING) &&(SYS_LOG_LEVEL <= LOG_ERROR))
 	LOG_E("load_tx_buffer() Bad UART\n\r");
-#endif
 	return(0);
 }
 

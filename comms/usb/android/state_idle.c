@@ -1,5 +1,4 @@
 /**
- *
  * @file libesoup/comms/usb/android/state_idle.c
  *
  * @author John Whitmore
@@ -63,9 +62,7 @@ void idle_process_usb_event(USB_EVENT event);
  */
 void set_idle_state(void)
 {
-#if (defined(SYS_SERIAL_LOGGING_BAUD) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_INFO))
 	LOG_I("Android state -> Idle\n\r");
-#endif
 	android_state.process_msg = idle_process_msg;
 	android_state.main = idle_main;
 	android_state.process_usb_event = idle_process_usb_event;
@@ -80,9 +77,7 @@ void idle_process_msg(uint8_t cmd, void *data, uint16_t data_len)
 	if (cmd == APP_MSG_APP_CONNECT) {
 		SYS_ANDROID_SET_APPLICATION_CONNECTED_STATE
 	} else {
-#if (defined(SYS_SERIAL_LOGGING_BAUD) && (SYS_LOG_LEVEL <= LOG_ERROR))
 		LOG_E("Android Connected State received Android message other then App connected 0x%x\n\r", cmd);
-#endif
 	}
 }
 

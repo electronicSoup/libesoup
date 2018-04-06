@@ -1,8 +1,9 @@
 /**
+ * @file libesoup/comms/can/can.c
+ * 
+ * @author John Whitmore
  *
- * \file libesoup/comms/can/can.c
- *
- * Core SYS_CAN_BUS Functionality of electronicSoup CAN code
+ * @brief Core SYS_CAN_BUS Functionality of electronicSoup CAN code
  *
  * Copyright 2017-2018 electronicSoup Limited
  *
@@ -21,28 +22,6 @@
  */
 #include "libesoup_config.h"
 #ifdef SYS_CAN_BUS
-
-#include "libesoup/errno.h"
-#include "libesoup/comms/can/can.h"
-
-#ifndef SYS_SYSTEM_STATUS
-#error "CAN Module relies on System Status module libesoup_config.h must define SYS_SYSTEM_STATUS"
-#endif
-
-//#ifndef SYS_SW_TIMERS
-//#error "CAN Module relies on Software Timers and must be enabled in libesoup_config.h"
-//#endif
-
-#ifdef SYS_CAN_DCNCP
-#include "libesoup/comms/can/dcncp/dcncp_can.h"
-#endif
-#ifdef SYS_ISO15765_DCNCP
-#include "libesoup/can/dcncp/dcncp_iso15765.h"
-#endif // SYS_ISO15765_DCNCP
-
-#ifdef SYS_CAN_PING_PROTOCOL
-#include "libesoup/comms/can/ping.h"
-#endif // SYS_CAN_PING_PROTOCOL
 
 #ifdef SYS_SERIAL_LOGGING
 #define DEBUG_FILE
@@ -69,7 +48,23 @@ char can_baud_rate_strings[8][10] = {
 };
 #endif  // SYS_SERIAL_LOGGING
 
-//static can_status_t     can_status;
+#include "libesoup/errno.h"
+#include "libesoup/comms/can/can.h"
+
+#ifndef SYS_SYSTEM_STATUS
+#error "CAN Module relies on System Status module libesoup_config.h must define SYS_SYSTEM_STATUS"
+#endif
+
+#ifdef SYS_CAN_DCNCP
+#include "libesoup/comms/can/dcncp/dcncp_can.h"
+#endif
+#ifdef SYS_ISO15765_DCNCP
+#include "libesoup/can/dcncp/dcncp_iso15765.h"
+#endif // SYS_ISO15765_DCNCP
+
+#ifdef SYS_CAN_PING_PROTOCOL
+#include "libesoup/comms/can/ping.h"
+#endif // SYS_CAN_PING_PROTOCOL
 
 static void can_status_handler(status_source_t source, int16_t status, int16_t data);
 
@@ -83,12 +78,9 @@ result_t can_init(can_baud_rate_t baudrate, status_handler_t status_handler,  ty
 {
 	result_t rc;
 
-	LOG_D("can_init\n\r");
-
         /*
          * Clear the stored SYS_CAN Status as nothing is done.
          */
-//	can_status.byte = 0x00;
 	app_status_handler = status_handler;
 
 	/*
@@ -110,34 +102,25 @@ result_t can_init(can_baud_rate_t baudrate, status_handler_t status_handler,  ty
 
 static void can_status_handler(status_source_t source, int16_t status, int16_t data)
 {
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	LOG_D("can_status_handler(src %d)\n\r", source);
-#endif
+
 	switch(source) {
 	case can_bus_l2_status:
 		switch(status) {
 		case can_l2_detecting_baud:
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 			LOG_D("Bit Rate Auto Detect\n\r");
-#endif
 			if(app_status_handler) app_status_handler(source, status, data);
 			break;
 		case can_l2_connecting:
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 			LOG_D("Connecting\n\r");
-#endif
 			if(app_status_handler) app_status_handler(source, status, data);
 			break;
 		case can_l2_connected:
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 			LOG_D("Connected - %s\n\r", can_baud_rate_strings[data]);
-#endif
 			if(app_status_handler) app_status_handler(source, status, data);
 			break;
 		default:
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
 			LOG_E("Status? %d\n\r", status);
-#endif		
 			break;
 		}
 		break;
@@ -154,9 +137,7 @@ static void can_status_handler(status_source_t source, int16_t status, int16_t d
 		break;
 #endif
 	default:
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
 		LOG_E("Status Src? %d\n\r", source);
-#endif		
 	}
 }
 

@@ -1,5 +1,4 @@
 /**
- *
  * @file libesoup/utils/rand.c
  *
  * @author John Whitmore
@@ -74,9 +73,7 @@ void random_init(void)
 	}
 #endif
 	
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	LOG_D("Seed 0x%lx\n\r", seed);
-#endif
 	srand(seed);
 }
 

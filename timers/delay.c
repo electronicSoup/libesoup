@@ -1,10 +1,9 @@
 /**
- *
  * @file libesoup/timers/delay.c
  *
  * @author John Whitmore
  *
- * Functionality for delaying the uC
+ * @brief Functionality for delaying the uC
  *
  * Copyright 2017-2018 electronicSoup Limited
  *

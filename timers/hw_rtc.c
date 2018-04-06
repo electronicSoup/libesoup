@@ -1,5 +1,4 @@
 /**
- *
  * @file libesoup/timers/hw_rtc.c
  *
  * @author John Whitmore

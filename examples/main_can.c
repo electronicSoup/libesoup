@@ -59,9 +59,7 @@ int main(void)
 	rc = libesoup_init();
 	if(rc < 0) {
 		// Error Condition
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
 		LOG_E("Failed to init libesoup\n\r");
-#endif
 	}
 
 	/*
@@ -69,12 +67,10 @@ int main(void)
 	 */
 	delay(mSeconds, 500);
 	
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	LOG_D("************************\n\r");
 	LOG_D("***   CAN Bus Node   ***\n\r");
 	LOG_D("***   %ldMHz         ***\n\r", sys_clock_freq);
 	LOG_D("************************\n\r");
-#endif
 
 	delay(mSeconds, 500);
 #ifdef SYS_CAN_BAUD_AUTO_DETECT
@@ -91,9 +87,7 @@ int main(void)
 #endif //  SYS_ISO15765 || SYS_ISO11783 || SYS_TEST_L3_ADDRESS
 #endif //  SYS_CAN_BAUD_AUTO_DETECT
 	if(rc < 0) {
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
 		LOG_E("Failed to initialise CAN Bus\n\r");
-#endif
 	}
 
 	/*
@@ -102,9 +96,7 @@ int main(void)
 	 * that it's emptied
 	 */
 #if (defined(TX_NODE) && !defined(SYS_CAN_PING_FRAME_ID))
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	LOG_D("Tx Node\n\r");
-#endif
 #ifdef SYS_SW_TIMERS
 	request.units = Seconds;
 	request.duration = 10;
@@ -114,9 +106,7 @@ int main(void)
 	
 	timer = sw_timer_start(&request);
 	if(timer < 0) {
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
 		LOG_E("Failed to start SW Timer\n\r");
-#endif		
 	}
 #endif	//  SYS_SW_TIMERS
 #endif  //  (defined(TX_NODE) && !defined(SYS_CAN_PING_FRAME_ID))
@@ -134,9 +124,7 @@ int main(void)
 
 	rc = frame_dispatch_reg_handler(&target);
 	if(rc < 0) {
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
 		LOG_E("Failed to register frame handler\n\r");
-#endif		
 	}
 	/*
 	 * Enter the main loop
@@ -153,31 +141,21 @@ int main(void)
 
 void system_status_handler(status_source_t source, int16_t status, int16_t data)
 {
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	LOG_D("status_handler()\n\r");
-#endif
 	switch(source) {
 	case can_bus_l2_status:
 		switch(status) {
 		case can_l2_detecting_baud:
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 			LOG_D("Bit Rate Auto Detect\n\r");
-#endif
 			break;
 		case can_l2_connecting:
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 			LOG_D("Connecting\n\r");
-#endif
 			break;
 		case can_l2_connected:
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 			LOG_D("Connected - %s\n\r", can_baud_rate_strings[data]);
-#endif
 			break;
 		default:
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
 			LOG_E("Status? %d\n\r", status);
-#endif		
 			break;
 		}
 		break;
@@ -194,9 +172,7 @@ void system_status_handler(status_source_t source, int16_t status, int16_t data)
 		break;
 #endif
 	default:
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
 		LOG_E("Status Src? %d\n\r", source);
-#endif		
 	}
 }
 
@@ -209,24 +185,18 @@ static void expiry(timer_id timer, union sigval data)
 	result_t  rc;
 	can_frame frame;
 
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	LOG_D("Tx Frame\n\r");
-#endif
 	frame.can_id = 0x777;
 	frame.can_dlc = 0x00;
 
 	rc = can_l2_tx_frame(&frame);
 	if(rc < 0) {
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
 		LOG_E("Failed to send CAN Frame\n\r");
-#endif		
 	}
 }
 #endif // (defined(TX_NODE) && !defined(SYS_CAN_PING_FRAME_ID) && defined (SYS_SW_TIMERS))
 
 static void frame_handler(can_frame *frame)
 {
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	LOG_D("handle(0x%lx)\n\r", frame->can_id);
-#endif
 }

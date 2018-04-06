@@ -1,5 +1,4 @@
 /**
- *
  * @file libesoup/boards/cinnamonBun/pic24FJ/board.c
  *
  * @author John Whitmore

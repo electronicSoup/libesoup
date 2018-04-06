@@ -129,6 +129,7 @@
   #define PPS_I_OCFA          RPINR11bits.OCFAR    ///< Output Compare Fault A
   #define PPS_I_OCFB          RPINR11bits.OCFBR    ///< Output Compare Fault B
   #define PPS_I_IC9           RPINR15bits.IC9      ///< Input Capture 9
+  #define PPS_I_UART_3_RX     RPINR17bits.U3RXR    ///< UART 3 Recieve
   #define PPS_I_UART_1_RX     RPINR18bits.U1RXR    ///< UART 1 Recieve
   #define PPS_I_U1CTS         RPINR18bits.U1CTS    ///< UART 1 Clear To Send
   #define PPS_I_UART_2_RX     RPINR19bits.U2RXR    ///< UART 1 Recieve
@@ -140,8 +141,8 @@
   #define PPS_I_SPI_2_CLK     RPINR22bits.SCK2R    ///< SPI 2 Clock Input
   #define PPS_I_SPI_2_SS      RPINR23bits.SS2R     ///< SPI 2 Slave Select Input
   #define PPS_I_SPI_3_CLK     RPINR23bits.SCK3R    ///< SPI 3 Clock Input
-  #define PPS_I_UART_3_RX     RPINR27bits.U3RXR    ///< UART 3 Recieve
-  #define PPS_I_UART_3_CTS    RPINR27bits.U3CTSR   ///< UART 3 Clear To Send
+  #define PPS_I_UART_4_RX     RPINR27bits.U4RXR    ///< UART 3 Recieve
+  #define PPS_I_UART_4_CTS    RPINR27bits.U4CTS    ///< UART 3 Clear To Send
   #define PPS_I_SPI_3_DI      RPINR28bits.SDI3R    ///< SPI 3 Data Input
   #define PPS_I_SPI_3_SS      RPINR29bits.SS3R     ///< SPI 3 Slave Select Input
 #endif

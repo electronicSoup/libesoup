@@ -1,8 +1,7 @@
 /**
+ * @file libesoup/comms/one_wire/one_wire.c
  *
- * file libesoup/comms/one_wire/one_wire.c
- *
- * author John Whitmore
+ * @author John Whitmore
  * 
  * Copyright 2017-2018 electronicSoup Limited
  *
@@ -130,9 +129,7 @@ result_t one_wire_reserve(enum pin_t pin)
 	result_t rc;
 	uint8_t  loop;
 	int16_t  chan;
-#ifdef SERIAL_LOGGING	
 	LOG_D("one_wire_reserve()\n\r");
-#endif
 	/*
 	 * check for existing bus on the given pin
 	 */

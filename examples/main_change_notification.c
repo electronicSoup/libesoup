@@ -24,7 +24,7 @@
 static const char *TAG = "Main";
 
 #include "libesoup/logger/serial_log.h"
-#include "libesoup/processors/dsPIC33/change_notification/change_notification.h"
+#include "libesoup/gpio/change_notification.h"
 
 void change_notification(enum pin_t pin);
 

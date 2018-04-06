@@ -23,6 +23,20 @@
 #ifndef _CORE_H
 #define _CORE_H
 
+#ifndef SYS_SERIAL_LOGGING
+#ifdef XC16
+#define LOG_D(...)
+#define LOG_I(...)
+#define LOG_W(...)
+#define LOG_E(...)
+#elif defined(__XC8)
+#define LOG_D()
+#define LOG_I()
+#define LOG_W()
+#define LOG_E()
+#endif  // Compiler
+#endif  // SYS_SERIAL_LOGGING
+
 /*
  * include stdint.h to get access to uint8_t style types
  */

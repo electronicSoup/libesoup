@@ -4,7 +4,7 @@
  *
  * @author John Whitmore
  *
- * This file contains code for Modbus idle state
+ * @brief Code for Modbus idle state
  *
  * Copyright 2017-2018 electronicSoup Limited
  *
@@ -45,9 +45,7 @@ static void process_rx_character(struct modbus_channel *channel, uint8_t ch);
 
 void set_modbus_idle_state(struct modbus_channel *channel)
 {
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	LOG_D("set_modbus_idle_state(channel %d)\n\r", channel->uart->uart);
-#endif
 	channel->process_timer_15_expiry = NULL;
 	channel->process_timer_35_expiry = process_timer_35_expiry;
 	channel->transmit = transmit;
@@ -63,9 +61,7 @@ void set_modbus_idle_state(struct modbus_channel *channel)
 
 void transmit(struct modbus_channel *channel, uint8_t *data, uint16_t len, modbus_response_function fn, void *callback_data)
 {
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	LOG_D("Modbus Idle state Transmit(%d)\n\r", channel->uart->uart);
-#endif
 	/*
 	 * The response timeout timer is started when the transmission is
 	 * completed in the modbus_awaiting_response state.
@@ -86,18 +82,14 @@ void process_timer_35_expiry(void *data)
 	uint16_t loop;
 #endif
 
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	LOG_D("process_timer_35_expiry() channel %d msg length %d\n\r", channel->uart->uart, channel->rx_write_index);
-#endif
         start_index = 0;
         if (crc_check(&(channel->rx_buffer[start_index]), channel->rx_write_index - start_index)) {
                 /*
                  * Response Good
                  * Subtract 2 for the CRC
                  */
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
                 LOG_D("Message Good! Start at 0\n\r");
-#endif
                 if(channel->process_unsolicited_msg) {
                         channel->process_unsolicited_msg(&(channel->rx_buffer[start_index]), channel->rx_write_index - (start_index + 2), channel->response_callback_data);
                 }
@@ -111,9 +103,7 @@ void process_timer_35_expiry(void *data)
                  * Response Good
                  * Subtract 2 for the CRC
                  */
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
                 LOG_D("Message Good! Start at 1\n\r");
-#endif
                 if(channel->process_unsolicited_msg) {
                         channel->process_unsolicited_msg(&(channel->rx_buffer[start_index]), channel->rx_write_index - (start_index + 2), channel->response_callback_data);
                 }
@@ -144,9 +134,7 @@ void process_rx_character(struct modbus_channel *channel, uint8_t ch)
 	channel->rx_buffer[channel->rx_write_index++] = ch;
 
 	if (channel->rx_write_index == SYS_MODBUS_RX_BUFFER_SIZE) {
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
 		LOG_E("UART 2 Overflow: Line too long\n\r");
-#endif
 	}
 }
 

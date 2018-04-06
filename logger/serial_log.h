@@ -84,6 +84,7 @@ extern void     serial_printf(const char * f, ...);
 extern void     serial_log(const char* fmt, ...);
 #endif
 extern result_t serial_logging_exit(void);
+#endif // defined(XC16) || defined(__XC8)
 
 /*
  * The PIC18 Processors process the serial Interrupt loading up the TXREG
@@ -94,35 +95,31 @@ extern result_t serial_logging_exit(void);
 //extern void putch(char);
 #endif // (__18F2680) || (__18F4585)
 
-#endif // XC16 || __XC8
-
 #ifdef XC16
 /*
  * XC16 Compiler does support Variadic Macros see:
  * https://gcc.gnu.org/onlinedocs/cpp/Variadic-Macros.html
  */
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+#if defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG)
 #define LOG_D(...)  serial_log(LOG_DEBUG, TAG, __VA_ARGS__);
 #else
 #define LOG_D(...)
 #endif
 
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_INFO))
+#if defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_INFO)
 #define LOG_I(...)  serial_log(LOG_INFO, TAG, __VA_ARGS__);
 #else
 #define LOG_I(...)
 #endif
 
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_WARNING))
+#if defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_WARNING)
 #define LOG_W(...)  serial_log(LOG_WARNING, TAG, __VA_ARGS__);
 #else
 #define LOG_W(...)
 #endif
 
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
+#if (SYS_LOG_LEVEL <= LOG_ERROR)
 #define LOG_E(...)  serial_log(LOG_ERROR, TAG, __VA_ARGS__);
-#else
-#define LOG_E(...)
 #endif
 
 #elif defined(__XC8)
@@ -130,22 +127,28 @@ extern result_t serial_logging_exit(void);
  * XC8 Compiler does NOT support Variadic Macros see:
  * https://gcc.gnu.org/onlinedocs/cpp/Variadic-Macros.html
  */
-#if (SYS_LOG_LEVEL <= LOG_DEBUG)
+#if defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG)
 #define LOG_D     serial_log("D-");  \
                   serial_log("%s:", TAG);   \
                   serial_log
+#else
+#define LOG_D()
 #endif
 
-#if (SYS_LOG_LEVEL <= LOG_INFO)
+#if defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_INFO)
 #define LOG_I     serial_log("I-");  \
                   serial_log("%s:", TAG);   \
                   serial_log
+#else
+#define LOG_I()
 #endif
 
-#if (SYS_LOG_LEVEL <= LOG_WARNING)
+#if defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_WARNING)
 #define LOG_W     serial_log("W-");  \
                   serial_log("%s:", TAG);   \
                   serial_log
+#else
+#define LOG_W()
 #endif
 
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
@@ -156,9 +159,11 @@ extern result_t serial_logging_exit(void);
 
 #endif // __XC8
 
-#endif // SERIAL_LOG_H
 
 #endif // SYS_SERIAL_LOGGING
+
+#endif // _SERIAL_LOG_H
+
 /**
  * @}
  */

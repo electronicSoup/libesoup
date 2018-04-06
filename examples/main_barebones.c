@@ -1,8 +1,9 @@
 /**
+ * @file libesoup/examples/main_barebones.c
  *
- * libesoup/examples/main_barebones.c
- *
- * An example main.c file for the bare bones minimum required to use the
+ * @author John Whitmore
+ * 
+ * @brief An example main.c file for the bare bones minimum required to use the
  * libesoup library of code.
  * 
  * The code is used in the example MPLAB-X project:

@@ -135,24 +135,13 @@ static void set_mode(uint8_t mode);
 
 result_t can_l2_bitrate(can_baud_rate_t baud);
 
-//void __attribute__((__interrupt__, __no_auto_psv__)) _C1RxRdyInterrupt(void)
-//{
-//#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-//        LOG_D("C1RxRdy Isr\n\r");
-//#endif
-//        IEC2bits.C1IE = 0x00;
-//        IEC2bits.C1RXIE = 0x00;
-//}
-
 void __attribute__((__interrupt__, __no_auto_psv__)) _C1Interrupt(void)
 {
 	while(C1INTF) {
 		// WIN Bit 0 | 1
 		if(C1INTFbits.TBIF) {
 			C1INTFbits.TBIF = 0;
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 			LOG_D("TBIF\n\r");
-#endif
 			if(current_status == can_l2_connecting) {
 				current_status = can_l2_connected;
 				if(status_handler) {
@@ -164,9 +153,7 @@ void __attribute__((__interrupt__, __no_auto_psv__)) _C1Interrupt(void)
 	
 		if(C1INTFbits.RBIF) {
 			C1INTFbits.RBIF = 0;
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 			LOG_D("RBIF\n\r");
-#endif
 #ifdef SYS_CAN_BAUD_AUTO_DETECT
 			rx_frame_count++;
 #endif
@@ -174,100 +161,61 @@ void __attribute__((__interrupt__, __no_auto_psv__)) _C1Interrupt(void)
 	
 		if(C1INTFbits.RBOVIF) {
 			C1INTFbits.RBOVIF = 0;
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 			LOG_D("RBOVIF\n\r");
-#endif
 		}
 	
 		if(C1INTFbits.FIFOIF) {
 			C1INTFbits.FIFOIF = 0;
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 			LOG_D("FIFOIF\n\r");
-#endif
 		}
 	
 		if(C1INTFbits.ERRIF) {
 			C1INTFbits.ERRIF = 0;
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 			LOG_D("ERRIF\n\r");
-#endif
 		}
 	
 		if(C1INTFbits.WAKIF) {
 			C1INTFbits.WAKIF = 0;
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 			LOG_D("WAKIF\n\r");
-#endif
 		}
 	
 		if(C1INTFbits.IVRIF) {
 			C1INTFbits.IVRIF = 0;
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 			LOG_D("IVRIF\n\r");
-#endif
 		}
 	
 		if(C1INTFbits.EWARN) {
 			C1INTFbits.EWARN = 0;
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 			LOG_D("EWARN\n\r");
-#endif
 		}
 	
 		if(C1INTFbits.RXWAR) {
 			C1INTFbits.RXWAR = 0;
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 			LOG_D("RXWAR\n\r");
-#endif
 		}
 	
 		if(C1INTFbits.TXWAR) {
 			C1INTFbits.TXWAR = 0;
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 			LOG_D("TXWAR\n\r");
-#endif
 		}
 	
 		if(C1INTFbits.RXBP) {
 			C1INTFbits.RXBP = 0;
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 			LOG_D("RXBP\n\r");
-#endif
 		}
 	
 		if(C1INTFbits.TXBP) {
 			C1INTFbits.TXBP = 0;
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 			LOG_D("TXBP\n\r");
-#endif
 		}
 	
 		if(C1INTFbits.TXBO) {
 			C1INTFbits.TXBO = 0;
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 			LOG_D("TXBO\n\r");
-#endif
 		}
 	}
         IFS2bits.C1IF   = 0x00;
 }
-
-//void __attribute__((__interrupt__, __no_auto_psv__)) _DMA0Interrupt(void)
-//{
-//#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-//        LOG_D("DMA-0 ISR");
-//#endif
-//        IFS0bits.DMA0IF = 0;
-//        IEC0bits.DMA0IE = DISABLED;
-//}
-
-//void __attribute__((__interrupt__, __no_auto_psv__)) _DMA1Interrupt(void)
-//{
-//#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-//        LOG_D("DMA-1 ISR");
-//#endif
-//        IEC0bits.DMA1IE = DISABLED;
-//}
 
 /*
  */
@@ -462,6 +410,7 @@ result_t can_l2_init(can_baud_rate_t arg_baud_rate, status_handler_t arg_status_
 			status_handler(can_bus_l2_status, current_status, 0);
 		}
 	} else if (current_status == can_l2_detecting_baud) {
+#ifdef SYS_CAN_BAUD_AUTO_DETECT
 		/*
 		 * Enable the Rx Interrupt
 		 */
@@ -476,6 +425,7 @@ result_t can_l2_init(can_baud_rate_t arg_baud_rate, status_handler_t arg_status_
 		if(status_handler) {
 			status_handler(can_bus_l2_status, current_status, 0);
 		}
+#endif
 	}
         return(0);
 }
@@ -571,9 +521,7 @@ void can_l2_tasks(void)
 			/*
 			 * Todo - notify the system status handler
 			 */
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
 			LOG_E("CAN Overflow\n\r");
-#endif	
 		}
 		/*
 		 * Process the Rx'd buffer
@@ -718,12 +666,6 @@ result_t can_l2_bitrate(can_baud_rate_t baud)
 	for(brp = 1; brp <= 64 && (rc != 0); brp++) {
 		/*
 		 * Calculate the potential TQ Frequency (Fp/brp/2) 
-		 */
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-//		LOG_D("Testing BRP %d\n\r", brp);
-//		LOG_D("remainder %ld\n\r", sys_clock_freq % brp);
-#endif
-		/*
 		 * We're only looking for integer values of bit rate so ignore
 		 * fractional results of division by BRP.
 		 */
@@ -759,13 +701,6 @@ result_t can_l2_bitrate(can_baud_rate_t baud)
 
 	brp--;       // End of the found loop will have incremented
 	tq_count++;  // ^^^
-	
-//#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-//	LOG_D("Fp %ld\n\r", sys_clock_freq);
-//	LOG_D("BRP %d\n\r", brp);
-//	LOG_D("Ftq %ld\n\r", tq_freq);
-//	LOG_D("TQ Periods %d\n\r", tq_count);
-//#endif
 	
 	sjw = 1;
 	phseg1 = phseg2 = (tq_count - sjw) / 3;
@@ -809,9 +744,7 @@ result_t can_l2_bitrate(can_baud_rate_t baud)
 	// WIN Bit 0 | 1
 	C1CFG2bits.SAM = 0; //One sampe point
 
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_INFO))
 //	LOG_I("propseg-%d, phseg1-%d, phseg2-%d\n\r", propseg, phseg1, phseg2);
-#endif
 
 	/*
 	 * Drop out of the configuration mode

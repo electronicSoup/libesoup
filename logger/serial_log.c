@@ -4,7 +4,7 @@
  *
  * @author John Whitmore
  *
- * Functions for initialisation of the Serial Port.
+ * @brief Functions for initialisation of the Logging Serial Port.
  *
  * Copyright 2017-2018 electronicSoup Limited
  *
