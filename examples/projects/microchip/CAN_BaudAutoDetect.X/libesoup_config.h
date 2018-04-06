@@ -66,6 +66,7 @@
 #define SYS_CAN_L2_HANDLER_ARRAY_SIZE      5
 #define SYS_CAN_RX_CIR_BUFFER_SIZE         5        
 #define SYS_CAN_BAUD_AUTO_DETECT
+#define SYS_CAN_BAUD_AUTO_DETECT_PERIOD   20
 
 /*
  * Include a board file

@@ -297,6 +297,7 @@ extern char can_baud_rate_strings[8][10];
  * CAN Bus Layer 2 Status numbers
  */
 enum can_l2_status {
+    can_l2_detecting_baud,
     can_l2_connecting,
     can_l2_connected,
     
@@ -314,7 +315,6 @@ extern result_t can_init(can_baud_rate_t baudrate, status_handler_t status_handl
 #endif
 
 extern result_t can_l2_init(can_baud_rate_t arg_baud_rate, status_handler_t status_handler, ty_can_l2_mode mode);
-extern result_t can_l2_bitrate(can_baud_rate_t baud, boolean change);
 extern void can_l2_tasks(void);
 
 extern result_t can_l2_tx_frame(can_frame *frame);

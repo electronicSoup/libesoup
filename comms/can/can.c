@@ -22,6 +22,7 @@
 #include "libesoup_config.h"
 #ifdef SYS_CAN_BUS
 
+#include "libesoup/errno.h"
 #include "libesoup/comms/can/can.h"
 
 #ifndef SYS_SYSTEM_STATUS
@@ -80,9 +81,9 @@ result_t can_init(can_baud_rate_t baudrate, uint8_t address, status_handler_t st
 result_t can_init(can_baud_rate_t baudrate, status_handler_t status_handler,  ty_can_l2_mode mode)
 #endif
 {
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+	result_t rc;
+
 	LOG_D("can_init\n\r");
-#endif
 
         /*
          * Clear the stored SYS_CAN Status as nothing is done.
@@ -98,7 +99,8 @@ result_t can_init(can_baud_rate_t baudrate, status_handler_t status_handler,  ty
 	/*
 	 * Initialise layer 2
 	 */
-	can_l2_init(baudrate, can_status_handler, mode);
+	rc = can_l2_init(baudrate, can_status_handler, mode);
+	RC_CHECK_PRINT_CONT("Failed to initialise Layer \n\r");
 
 #ifdef SYS_CAN_PING_PROTOCOL
 	can_ping_init();
@@ -114,7 +116,13 @@ static void can_status_handler(status_source_t source, int16_t status, int16_t d
 	switch(source) {
 	case can_bus_l2_status:
 		switch(status) {
-		case(can_l2_connecting):
+		case can_l2_detecting_baud:
+#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+			LOG_D("Bit Rate Auto Detect\n\r");
+#endif
+			if(app_status_handler) app_status_handler(source, status, data);
+			break;
+		case can_l2_connecting:
 #if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 			LOG_D("Connecting\n\r");
 #endif
@@ -122,7 +130,7 @@ static void can_status_handler(status_source_t source, int16_t status, int16_t d
 			break;
 		case can_l2_connected:
 #if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-			LOG_D("Connected\n\r");
+			LOG_D("Connected - %s\n\r", can_baud_rate_strings[data]);
 #endif
 			if(app_status_handler) app_status_handler(source, status, data);
 			break;

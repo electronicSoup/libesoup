@@ -1,5 +1,4 @@
 /**
- *
  * @file libesoup/comms/can/l2_dsPIC33EP256MU806.c
  *
  * @author John Whitmore
@@ -53,6 +52,12 @@ static const char *TAG = "dsPIC33_CAN";
 #error "CAN Module relies on System Status module libesoup.h must define SYS_SYSTEM_STATUS"
 #endif
 
+#ifdef SYS_CAN_BAUD_AUTO_DETECT
+uint16_t rx_frame_count = 0;
+
+extern result_t can_bad_start_baud_scan();
+#endif  // SYS_CAN_BAUD_AUTO_DETECT
+
 #define NORMAL_MODE       0b000
 #define DISABLE_MODE      0b001
 #define LOOPBACK_MODE     0b010
@@ -75,9 +80,10 @@ typedef struct can_mask
 #define MEMORY_MAP_WIN_CONFIG_STATUS  C1CTRL1bits.WIN = 0;
 #define MEMORY_MAP_WIN_MASK_FILTERS   C1CTRL1bits.WIN = 1;
 
-static status_handler_t status_handler = NULL;
+static status_handler_t   status_handler = NULL;
 static enum can_l2_status current_status;
- 
+static can_baud_rate_t    baud_rate;
+
 struct  __attribute__ ((packed)) can_buffer
 {
         uint16_t ide   :1;
@@ -127,6 +133,8 @@ static result_t set_requested_mode();
 
 static void set_mode(uint8_t mode);
 
+result_t can_l2_bitrate(can_baud_rate_t baud);
+
 //void __attribute__((__interrupt__, __no_auto_psv__)) _C1RxRdyInterrupt(void)
 //{
 //#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
@@ -148,7 +156,7 @@ void __attribute__((__interrupt__, __no_auto_psv__)) _C1Interrupt(void)
 			if(current_status == can_l2_connecting) {
 				current_status = can_l2_connected;
 				if(status_handler) {
-					status_handler(can_bus_l2_status, current_status, 0);
+					status_handler(can_bus_l2_status, current_status, baud_rate);
 				}
 			}
 			C1INTEbits.TBIE   = 0b00;  // Disable this interrupt no longer interested once connected
@@ -158,6 +166,9 @@ void __attribute__((__interrupt__, __no_auto_psv__)) _C1Interrupt(void)
 			C1INTFbits.RBIF = 0;
 #if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 			LOG_D("RBIF\n\r");
+#endif
+#ifdef SYS_CAN_BAUD_AUTO_DETECT
+			rx_frame_count++;
 #endif
 		}
 	
@@ -267,26 +278,21 @@ result_t can_l2_init(can_baud_rate_t arg_baud_rate, status_handler_t arg_status_
 	uint8_t           loop;
 	
 	if (arg_baud_rate < no_baud) {
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 		LOG_D("L2_CanInit() Baud Rate %s\n\r", can_baud_rate_strings[arg_baud_rate]);
-#endif
+		baud_rate = arg_baud_rate;
+		current_status = can_l2_connecting;
 	} else {
 #ifndef SYS_CAN_BAUD_AUTO_DETECT
 		return (-ERR_BAD_INPUT_PARAMETER);
+#else
+		LOG_D("L2_CanInit() Auto Detect Baud Rate\n\r");
+		current_status = can_l2_detecting_baud;
 #endif
-		// Todo
 	}
 
-	current_status = can_l2_connecting;
 	status_handler = arg_status_handler;
 	requested_mode = mode;
 
-	/*
-	 * Do a quick check of the requested mode to check that it's valid
-	 */
-//	rc = set_requested_mode();
-//	RC_CHECK
-	
         /*
          * Initialise the I/O Pins and peripheral functions
          */
@@ -298,12 +304,6 @@ result_t can_l2_init(can_baud_rate_t arg_baud_rate, status_handler_t arg_status_
 	rc = gpio_set(BRD_CAN_TX_PIN, GPIO_MODE_DIGITAL_OUTPUT, 0);
 	RC_CHECK
 	rc = set_peripheral_output(BRD_CAN_TX_PIN, PPS_O_CAN1_TX);
-	RC_CHECK
-
-	/*
-	 * Set the baud rate
-	 */
-	rc = can_l2_bitrate(arg_baud_rate, TRUE);
 	RC_CHECK
 
         /*
@@ -444,17 +444,39 @@ result_t can_l2_init(can_baud_rate_t arg_baud_rate, status_handler_t arg_status_
         IFS2bits.C1IF   = 0x00;
         IEC2bits.C1IE   = 0x01;
 
-	/*
-	 * Drop out of the configuration mode
-	 */
-	rc = set_requested_mode();
-	RC_CHECK
+	if (arg_baud_rate < no_baud) {
+		current_status = can_l2_connecting;
+		/*
+	         * Set the baud rate
+	         */
+		rc = can_l2_bitrate(arg_baud_rate);
+		RC_CHECK
 
-	current_status = can_l2_connecting;
-	if(status_handler) {
-		status_handler(can_bus_l2_status, current_status, 0);
+		/*
+	         * Drop out of the configuration mode
+	         */
+		rc = set_requested_mode();
+		RC_CHECK
+
+		if(status_handler) {
+			status_handler(can_bus_l2_status, current_status, 0);
+		}
+	} else if (current_status == can_l2_detecting_baud) {
+		/*
+		 * Enable the Rx Interrupt
+		 */
+		C1INTEbits.RBIE   = 0b01;
+		set_mode(LISTEN_ONLYMODE);
+		
+		/*
+		 */
+		rc = can_bad_start_baud_scan();
+		RC_CHECK
+
+		if(status_handler) {
+			status_handler(can_bus_l2_status, current_status, 0);
+		}
 	}
-	
         return(0);
 }
 
@@ -536,7 +558,7 @@ void can_l2_tasks(void)
 	if(buffer_full && (current_status == can_l2_connecting)) {
 		current_status = can_l2_connected;
 		if(status_handler) {
-			status_handler(can_bus_l2_status, current_status, 0);
+			status_handler(can_bus_l2_status, current_status, baud_rate);
 		}
 	}
 
@@ -604,9 +626,48 @@ void can_l2_tasks(void)
 	}
 }
 
+#ifdef SYS_CAN_BAUD_AUTO_DETECT
+result_t can_l2_get_rx_count(void)
+{
+	return(rx_frame_count);
+}
+#endif
+
+#ifdef SYS_CAN_BAUD_AUTO_DETECT
+result_t can_l2_baud_found(can_baud_rate_t rate)
+{
+	result_t rc;
+
+	/*
+	 * Finished with the Rx Interrupt
+	 */
+	C1INTEbits.RBIE   = 0b00;
+	
+	baud_rate = rate;
+	current_status = can_l2_connecting;
+
+	/*
+	 * Set the baud rate
+	 */
+	rc = can_l2_bitrate(baud_rate);
+	RC_CHECK
+
+	/*
+         * Drop out of the configuration mode
+         */
+	rc = set_requested_mode();
+	RC_CHECK
+
+	if(status_handler) {
+		status_handler(can_bus_l2_status, current_status, 0);
+	}
+	return(0);
+}
+#endif
+
 /*
  */
-result_t can_l2_bitrate(can_baud_rate_t baud, boolean change)
+result_t can_l2_bitrate(can_baud_rate_t baud)
 {
 	result_t rc = 0;
 	uint32_t bit_freq;
@@ -617,6 +678,7 @@ result_t can_l2_bitrate(can_baud_rate_t baud, boolean change)
 	uint8_t  phseg1 = 0;
 	uint8_t  phseg2 = 0;
 	uint8_t  propseg = 0;
+	uint8_t  current_mode;
 
 	switch (baud) {
 	case baud_10K:
@@ -709,11 +771,21 @@ result_t can_l2_bitrate(can_baud_rate_t baud, boolean change)
 	phseg1 = phseg2 = (tq_count - sjw) / 3;
 	propseg = tq_count - sjw - phseg1 - phseg2;
 
+	/*
+	 * store the current mode to return to it on exit
+	 */
+	current_mode = C1CTRL1bits.OPMODE;
+	
         /*
          * Enter configuration mode
          */
 	set_mode(CONFIG_MODE);
-	
+
+#ifdef SYS_CAN_BAUD_AUTO_DETECT
+	if (current_status == can_l2_detecting_baud) {
+		rx_frame_count = 0;
+	}
+#endif
 	/*
 	 * CANCKS: ECAN Module Clock Freg(CAN) Source Select bit
 	 * 0 = Freq(CAN) is equal to 2 * Freq(Peripheral)
@@ -744,7 +816,8 @@ result_t can_l2_bitrate(can_baud_rate_t baud, boolean change)
 	/*
 	 * Drop out of the configuration mode
 	 */
-	return(set_requested_mode());
+	set_mode(current_mode);
+	return(0);
 }
 
 /*

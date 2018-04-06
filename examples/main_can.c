@@ -39,7 +39,9 @@ static const char *TAG = "Main";
 void system_status_handler(status_source_t source, int16_t status, int16_t data);
 
 #ifdef SYS_SW_TIMERS
+#if (defined(TX_NODE) && !defined(SYS_CAN_PING_FRAME_ID))
 static void expiry(timer_id timer, union sigval);
+#endif
 #endif
 static void frame_handler(can_frame *);
 
@@ -48,8 +50,10 @@ int main(void)
 	result_t         rc = 0;
 	can_l2_target_t  target;
 #ifdef SYS_SW_TIMERS
+#if (defined(TX_NODE) && !defined(SYS_CAN_PING_FRAME_ID))
 	timer_id         timer;
 	struct timer_req request;
+#endif
 #endif
 
 	rc = libesoup_init();
@@ -73,11 +77,19 @@ int main(void)
 #endif
 
 	delay(mSeconds, 500);
+#ifdef SYS_CAN_BAUD_AUTO_DETECT
+#if (defined(SYS_ISO15765) || defined(SYS_ISO11783)) || defined(SYS_TEST_L3_ADDRESS)
+	rc = can_init(no_baud, 0xff, system_status_handler, normal);  // Includes L3 Address
+#else
+ 	rc = can_init(no_baud, system_status_handler, normal);
+#endif //  SYS_ISO15765 || SYS_ISO11783 || SYS_TEST_L3_ADDRESS
+#else
 #if (defined(SYS_ISO15765) || defined(SYS_ISO11783)) || defined(SYS_TEST_L3_ADDRESS)
 	rc = can_init(baud_250K, 0xff, system_status_handler, normal);  // Includes L3 Address
 #else
  	rc = can_init(baud_250K, system_status_handler, normal);
-#endif
+#endif //  SYS_ISO15765 || SYS_ISO11783 || SYS_TEST_L3_ADDRESS
+#endif //  SYS_CAN_BAUD_AUTO_DETECT
 	if(rc < 0) {
 #if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
 		LOG_E("Failed to initialise CAN Bus\n\r");
@@ -147,14 +159,19 @@ void system_status_handler(status_source_t source, int16_t status, int16_t data)
 	switch(source) {
 	case can_bus_l2_status:
 		switch(status) {
-		case(can_l2_connecting):
+		case can_l2_detecting_baud:
+#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+			LOG_D("Bit Rate Auto Detect\n\r");
+#endif
+			break;
+		case can_l2_connecting:
 #if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 			LOG_D("Connecting\n\r");
 #endif
 			break;
 		case can_l2_connected:
 #if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-			LOG_D("Connected\n\r");
+			LOG_D("Connected - %s\n\r", can_baud_rate_strings[data]);
 #endif
 			break;
 		default:
