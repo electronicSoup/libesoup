@@ -64,7 +64,12 @@
 #define SYS_CAN_BUS
 #define SYS_CAN_FRAME_HANDLER_ARRAY_SIZE  10
 #define SYS_CAN_L2_HANDLER_ARRAY_SIZE      5
-#define SYS_CAN_RX_CIR_BUFFER_SIZE         5        
+#define SYS_CAN_RX_CIR_BUFFER_SIZE         5   
+#define SYS_CAN_PING_PROTOCOL
+#define SYS_RAND
+#define SYS_CAN_PING_FRAME_ID            (0x3ff)
+#define SYS_CAN_PING_IDLE_SPREAD         (1000)    // 1,000m Second Spread around
+#define SYS_CAN_PING_IDLE_INTERVAL       (5000)    // A 5,000 mSecond Idle time
 #define SYS_CAN_DCNCP
 #define SYS_TEST_L3_ADDRESS
         

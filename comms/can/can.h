@@ -1,5 +1,4 @@
 /**
- *
  * @file libesoup/comms/can/can.h
  *
  * @author John Whitmore
@@ -299,8 +298,7 @@ extern char can_baud_rate_strings[8][10];
 enum can_l2_status {
     can_l2_detecting_baud,
     can_l2_connecting,
-    can_l2_connected,
-    
+    can_l2_connected,    
 };
 
 /**
@@ -308,8 +306,8 @@ enum can_l2_status {
  *        L3 inclusion.
  *
  */
-#if (defined(SYS_ISO15765) || defined(SYS_ISO11783)) || defined(SYS_TEST_L3_ADDRESS)
-extern result_t can_init(can_baud_rate_t baudrate, uint8_t address, status_handler_t status_handler, ty_can_l2_mode mode);
+#if (defined(SYS_ISO15765) || defined(SYS_ISO11783) || defined(SYS_TEST_L3_ADDRESS))
+extern result_t can_init(can_baud_rate_t baudrate, uint8_t l3_address, status_handler_t status_handler, ty_can_l2_mode mode);
 #else
 extern result_t can_init(can_baud_rate_t baudrate, status_handler_t status_handler, ty_can_l2_mode mode);
 #endif

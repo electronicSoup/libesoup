@@ -92,6 +92,7 @@
         <logicalFolder name="gpio" displayName="gpio" projectFiles="true">
           <itemPath>../../../../gpio/peripheral.c</itemPath>
           <itemPath>../../../../gpio/gpio.c</itemPath>
+          <itemPath>../../../../gpio/change_notification.c</itemPath>
         </logicalFolder>
         <logicalFolder name="hardware" displayName="hardware" projectFiles="true">
           <itemPath>../../../../hardware/eeprom.c</itemPath>
@@ -105,13 +106,6 @@
           <itemPath>../../../../logger/serial_log.c</itemPath>
         </logicalFolder>
         <logicalFolder name="processors" displayName="processors" projectFiles="true">
-          <logicalFolder name="dsPIC33" displayName="dsPIC33" projectFiles="true">
-            <logicalFolder name="change_notification"
-                           displayName="change_notification"
-                           projectFiles="true">
-              <itemPath>../../../../processors/dsPIC33/change_notification/change_notification.c</itemPath>
-            </logicalFolder>
-          </logicalFolder>
           <itemPath>../../../../processors/pic18f4585.c</itemPath>
           <itemPath>../../../../processors/pic18f2680.c</itemPath>
           <itemPath>../../../../processors/rpi.c</itemPath>
@@ -350,6 +344,7 @@
         <property key="UART 3" value="true"/>
         <property key="UART 4" value="true"/>
         <property key="USB" value="true"/>
+        <property key="firmware.download.all" value="false"/>
         <property key="hwtoolclock.frcindebug" value="false"/>
         <property key="memories.aux" value="false"/>
         <property key="memories.bootflash" value="true"/>

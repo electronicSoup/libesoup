@@ -35,6 +35,9 @@ static const char *TAG = "Main";
 #include "libesoup/comms/can/can.h"
 #include "libesoup/hardware/eeprom.h"
 #include "libesoup/status/status.h"
+#ifdef SYS_CAN_DCNCP
+#include "libesoup/comms/can/dcncp/dcncp_can.h"
+#endif
 
 void system_status_handler(status_source_t source, int16_t status, int16_t data);
 
@@ -55,7 +58,6 @@ int main(void)
 	struct timer_req request;
 #endif
 #endif
-
 	rc = libesoup_init();
 	if(rc < 0) {
 		// Error Condition
@@ -81,7 +83,14 @@ int main(void)
 #endif //  SYS_ISO15765 || SYS_ISO11783 || SYS_TEST_L3_ADDRESS
 #else
 #if (defined(SYS_ISO15765) || defined(SYS_ISO11783)) || defined(SYS_TEST_L3_ADDRESS)
-	rc = can_init(baud_250K, 0xff, system_status_handler, normal);  // Includes L3 Address
+	/*
+	 * A Layer 3 noded address of 0xff is the ISO11783 Broadcast address so
+	 * it should not be used as a Layer 3 address. If the can_init() function
+	 * is passed this L3 address it will randomly select an address and 
+	 * attempt to register that address on the network
+	 */
+//	rc = can_init(baud_250K, BROADCAST_NODE_ADDRESS, system_status_handler, normal);  // Includes L3 Address
+	rc = can_init(baud_250K, 0x12, system_status_handler, normal);  // Includes L3 Address
 #else
  	rc = can_init(baud_250K, system_status_handler, normal);
 #endif //  SYS_ISO15765 || SYS_ISO11783 || SYS_TEST_L3_ADDRESS
@@ -161,6 +170,11 @@ void system_status_handler(status_source_t source, int16_t status, int16_t data)
 		break;
 #if defined(SYS_CAN_DCNCP)
 	case can_bus_dcncp_status:
+		switch(status) {
+		case can_dcncp_l3_address_registered:
+			LOG_D("CAN L3 Address registered 0x%x\n\r", (uint8_t)data);
+			break;
+		}
 		break;
 #endif
 #if defined(ISO15765)

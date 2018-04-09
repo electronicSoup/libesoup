@@ -80,10 +80,13 @@
  * CAN PING PROTOCOL
  */
 #define SYS_CAN_PING_PROTOCOL
+#ifdef  SYS_CAN_PING_PROTOCOL
 #define SYS_RAND
 #define SYS_CAN_PING_FRAME_ID            (0x3ff)
 #define SYS_CAN_PING_IDLE_SPREAD         (1000)    // 1,000m Second Spread around
 #define SYS_CAN_PING_IDLE_INTERVAL       (5000)    // A 5,000 mSecond Idle time
+#endif // SYS_CAN_PING_PROTOCOL
+
 /*
  * Include a board file
  */
