@@ -1,5 +1,4 @@
 /**
- *
  * @file libesoup/examples/projects/microchip/ISO15765.X/libesoup_config.h
  *
  * @author John Whitmore
@@ -70,11 +69,19 @@
  * Include CAN BUS Functionality in this project
  */
 #define SYS_CAN_BUS
-#define SYS_CAN_FRAME_HANDLER_ARRAY_SIZE  10
-#define SYS_CAN_L2_HANDLER_ARRAY_SIZE      5
-#define SYS_CAN_RX_CIR_BUFFER_SIZE         5        
+#define SYS_CAN_FRAME_HANDLER_ARRAY_SIZE        10
+#define SYS_CAN_L2_HANDLER_ARRAY_SIZE            5
+#define SYS_CAN_RX_CIR_BUFFER_SIZE               5        
+#define SYS_CAN_PING_PROTOCOL
+#define SYS_RAND
+#define SYS_CAN_PING_FRAME_ID               (0x3ff)
+#define SYS_CAN_PING_IDLE_SPREAD             (1000)    // 1,000m Second Spread around
+#define SYS_CAN_PING_IDLE_INTERVAL           (5000)    // A 5,000 mSecond Idle time
+#define SYS_CAN_DCNCP
 
-#define SYS_ISO15765
+#define SYS_CAN_ISO15765
+#define SYS_CAN_ISO15765_REGISTER_ARRAY_SIZE   (10)
+#define SYS_CAN_ISO15765_MAX_MSG              (256)
 
 /*
  * Include a board file

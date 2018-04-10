@@ -454,15 +454,13 @@ static result_t set_requested_mode()
 result_t can_l2_tx_frame(can_frame *frame)
 {
 	uint8_t  loop;
+	uint8_t  data_loop;
 	
 	/*
 	 * Find a free TX Buffer
 	 */
 	for(loop = 0; loop < NUM_TX_CONTROL; loop++) {
-		if(tx_control[loop].tx_buffer && !tx_control[loop].tx_request) {
-			can_buffers[loop].sid = 0x00;
-			can_buffers[loop].sid = frame->can_id & CAN_SFF_MASK;
-			
+		if(tx_control[loop].tx_buffer && !tx_control[loop].tx_request) {			
 			if(frame->can_id & CAN_EFF_FLAG) {
 				can_buffers[loop].ide = 0b1;
 				can_buffers[loop].ssr = 0b1;
@@ -470,9 +468,14 @@ result_t can_l2_tx_frame(can_frame *frame)
 				can_buffers[loop].eid_l = (frame->can_id >> 11) & 0b111111; 
 				can_buffers[loop].eid_h = (frame->can_id >> 17) & 0x0fff;
 			} else {
+				can_buffers[loop].sid = frame->can_id & CAN_SFF_MASK;
 				can_buffers[loop].ssr = frame->can_id & CAN_RTR_FLAG;
 			}
-			
+
+			can_buffers[loop].dlc = frame->can_dlc;			
+			for(data_loop = 0; data_loop < frame->can_dlc; data_loop++) {
+				can_buffers[loop].data[data_loop] = frame->data[data_loop];
+			}
 			/*
 			 * Mark the buffer for transmission
 			 */

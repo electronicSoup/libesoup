@@ -185,6 +185,9 @@ void set_bit(int8_t index, uint8_t bit)
 	}
 }
 
+/*
+ * Returns the number of devices on the OneWire bus
+ */
 static result_t census(int16_t chan)
 {
 	result_t  rc;
@@ -216,7 +219,7 @@ static result_t census(int16_t chan)
 		for(loop = 0; loop < 6; loop++) device[device_index].serial_number[loop] = 0x00;
 
 		for(loop = 0; loop < 64; loop++) {
-			if(loop % 8 == 0) serial_printf(" ");
+//			if(loop % 8 == 0) serial_printf(" ");
 			rc = read_bit(chan);
 			RC_CHECK
 			first_read = (boolean)(rc == 1);
@@ -231,7 +234,8 @@ static result_t census(int16_t chan)
 				LOG_D("D\n\r");
 			} else if( (first_read == 1) && (second_read == 1) ) {
 				// No devices, must be finished
-				LOG_D("*\n\r");
+				LOG_D("No Devices\n\r");
+				return(0);
 				break;
 			} else if(first_read) {
 //				serial_printf("1");

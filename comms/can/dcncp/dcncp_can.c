@@ -42,7 +42,8 @@ static const char *TAG = "DCNCP_CAN";
 #include "libesoup/comms/can/can.h"
 #include "libesoup/comms/can/dcncp/dcncp_can.h"
 #include "libesoup/timers/sw_timers.h"
-#if defined(ISO15765_LOGGER) || defined(SYS_ISO15765_LOGGING)
+#include "libesoup/status/status.h"
+#if defined(ISO15765_LOGGER) || defined(SYS_CAN_ISO15765_LOGGING)
 #include "libesoup/logger/iso15765_log.h"
 #endif
 
@@ -52,29 +53,23 @@ static void exp_resend_network_baud_chage_req(timer_t timer_id, union sigval dat
 static void exp_network_baud_chage_req(timer_t timer_id, union sigval data);
 #endif // SYS_CAN_DCNCP_BAUDRATE
 
-#if defined(ISO15765) || defined(ISO11783) || defined(SYS_TEST_L3_ADDRESS)
-
+#if defined(SYS_CAN_ISO15765) || defined(SYS_ISO11783) || defined(SYS_TEST_L3_ADDRESS)
 static boolean dcncp_node_address_valid = FALSE;
 
-/*
- * This function must be defined by your Firmware!
- */
-extern uint8_t node_get_address(void);
+//static timer_id node_send_reg_req_timer;
+static timer_id node_reg_timer = BAD_TIMER_ID;
 
-static timer_id node_send_reg_req_timer;
-static timer_id node_reg_timer;
-
-#ifdef SYS_ISO15765_LOGGER
+#ifdef SYS_CAN_ISO15765_LOGGER
 static can_frame local_iso15765_logger_frame;
 static es_timer  local_iso15765_logger_timer;
-#endif // SYS_ISO15765_LOGGER
+#endif // SYS_CAN_ISO15765_LOGGER
 
 static uint8_t dcncp_node_address;
 uint8_t dcncp_get_node_address(void);
 
-#ifdef SYS_ISO15765_LOGGER
+#ifdef SYS_CAN_ISO15765_LOGGER
 static void exp_iso15765_logger_ping(timer_t timer_id __attribute__((unused)), union sigval);
-#endif // SYS_ISO15765_LOGGER
+#endif // SYS_CAN_ISO15765_LOGGER
 
 static void exp_send_address_register_request(timer_id timer, union sigval data);
 static void exp_node_address_registered(timer_id timer __attribute__((unused)), union sigval data);
@@ -84,36 +79,31 @@ static void exp_send_node_addr_report(timer_id timer, union sigval data);
 
 static void can_l2_msg_handler(can_frame *msg);
 
-static union ty_status  status;
-
 static status_handler_t  status_handler;
 
-result_t dcncp_init(status_handler_t arg_status_handler)
+result_t dcncp_init(status_handler_t arg_status_handler, uint8_t arg_l3_address)
 {
 	result_t          rc;
 	can_l2_target_t   target;
 	struct timer_req  request;
 
 	dcncp_node_address_valid = FALSE;
+	status_handler = arg_status_handler;
 	
-        status_handler = arg_status_handler;
-	status.sstruct.source = can_bus_dcncp_status;
-
+	while(arg_l3_address == BROADCAST_NODE_ADDRESS) {
+		arg_l3_address = (uint8_t)(rand() % 255);
+	}
+	dcncp_node_address = arg_l3_address;
 	/*
 	 * Add the Layer 2 frame Handler
 	 */
 	target.mask    = (uint32_t)CAN_DCNCP_MASK;
 	target.filter  = (uint32_t)CAN_DCNCP_FILTER;
 	target.handler = can_l2_msg_handler;
-#if defined(XC16) || defined(__XC8)
-	LOG_D("Node Address Register handler Mask 0x%lx, Filter 0x%lx\n\r", target.mask, target.filter);
-#elif defined(ES_LINUX)
-	LOG_D("Node Address Register handler Mask 0x%x, Filter 0x%x\n\r", target.mask, target.filter);
-#endif
 	rc = frame_dispatch_reg_handler(&target);
 	RC_CHECK
 
-#if defined(ISO15765) || defined(ISO11783) || defined(SYS_TEST_L3_ADDRESS)
+#if defined(SYS_CAN_ISO15765) || defined(SYS_ISO11783) || defined(SYS_TEST_L3_ADDRESS)
 	/*
 	 * If we're going to use layer 3 we need to initialise a Layer 3 address to use
 	 * Create a random timer for firing node register message. If all network nodes
@@ -129,7 +119,7 @@ result_t dcncp_init(status_handler_t arg_status_handler)
 
 	rc = sw_timer_start(&request);
 	RC_CHECK;
-#endif // SYS_ISO15765 || SYS_ISO11783 || defined(SYS_TEST_L3_ADDRESS)
+#endif // SYS_CAN_ISO15765 || SYS_ISO11783 || defined(SYS_TEST_L3_ADDRESS)
 
 	return(0);
 }
@@ -242,18 +232,7 @@ static void exp_network_baud_chage_req(timer_t timer_id, union sigval data)
 }
 #endif // SYS_CAN_DCNCP_BAUDRATE
 
-#if defined(ISO15765) || defined(ISO11783) || defined(SYS_TEST_L3_ADDRESS)
-uint8_t dcncp_get_node_address(void)
-{
-	if(dcncp_node_address_valid) {
-		return (dcncp_node_address);
-	} else {
-		return(BROADCAST_NODE_ADDRESS);
-	}
-}
-#endif // SYS_ISO15765 || SYS_ISO11783 || defined(SYS_TEST_L3_ADDRESS)
-
-#if defined(ISO15765) || defined(ISO11783) || defined(SYS_TEST_L3_ADDRESS)
+#if defined(SYS_CAN_ISO15765) || defined(SYS_ISO11783) || defined(SYS_TEST_L3_ADDRESS)
 void exp_send_address_register_request(timer_id timer, union sigval data)
 {
 	struct timer_req  request;
@@ -266,11 +245,7 @@ void exp_send_address_register_request(timer_id timer, union sigval data)
 	timer = timer;
 	data = data;
 
-	LOG_D("exp_send_address_register_request() Send Initial Register Req\n\r");
-
-	dcncp_node_address = node_get_address();
-
-	LOG_D("sendRegisterReq(%x)\n\r", (uint16_t) dcncp_node_address);
+	LOG_D("sendRegisterReq(%x)\n\r", (uint8_t) dcncp_node_address);
 
 	frame.can_id   = CAN_DCNCP_AddressRegisterReq;
 	frame.can_dlc  = 1;
@@ -294,43 +269,47 @@ void exp_send_address_register_request(timer_id timer, union sigval data)
 	RC_CHECK_PRINT_VOID("SW Timer Start\n\r");
 	node_reg_timer = rc;
 }
-#endif // SYS_ISO15765 || SYS_ISO11783 || defined(SYS_TEST_L3_ADDRESS)
+#endif // SYS_CAN_ISO15765 || SYS_ISO11783 || defined(SYS_TEST_L3_ADDRESS)
 
-#if defined(ISO15765) || defined(ISO11783) || defined(SYS_TEST_L3_ADDRESS)
+#if defined(SYS_CAN_ISO15765) || defined(SYS_ISO11783) || defined(SYS_TEST_L3_ADDRESS)
 void exp_node_address_registered(timer_id timer __attribute__((unused)), union sigval data)
 {
 //	uint8_t   address;
+
+	/*
+	 * Clear our record of the started timer, it's expired!
+	 */
+	node_reg_timer = BAD_TIMER_ID;
 
 	/*
 	 * Clear the compiler warning
 	 */
 	data = data;
 
-	LOG_D("nodeRegistered()\n\r");
 	dcncp_node_address_valid = TRUE;
 
         if(status_handler) {
-		status.sstruct.source = can_bus_dcncp_status;
-		status.sstruct.status = can_dcncp_l3_address_registered;
-		status_handler(status);
+		status_handler(can_bus_dcncp_status, can_dcncp_l3_address_registered, dcncp_node_address);
 	}
 }
-#endif // SYS_ISO15765 || SYS_ISO11783 || defined(SYS_TEST_L3_ADDRESS)
+#endif // SYS_CAN_ISO15765 || SYS_ISO11783 || defined(SYS_TEST_L3_ADDRESS)
 
 void can_l2_msg_handler(can_frame *frame)
 {
-	result_t rc;
-	struct timer_req  request;
+	result_t           rc;
+	struct timer_req   request;
 
+//	LOG_D("frame 0x%lx\n\r", frame->can_id);
 #ifdef SYS_CAN_DCNCP_BAUDRATE
 	union sigval data;
 #endif 
-#if defined(ISO15765) || defined(ISO11783) || defined(SYS_TEST_L3_ADDRESS)
+#if defined(SYS_CAN_ISO15765) || defined(SYS_ISO11783) || defined(SYS_TEST_L3_ADDRESS)
 	can_frame tx_frame;
-#endif // SYS_ISO15765 || SYS_ISO11783  || defined(SYS_TEST_L3_ADDRESS)
+#endif // SYS_CAN_ISO15765 || SYS_ISO11783  || defined(SYS_TEST_L3_ADDRESS)
 
 	if (frame->can_id == CAN_DCNCP_AddressRegisterReq) {
-#if defined(ISO15765) || defined(ISO11783) || defined(SYS_TEST_L3_ADDRESS)
+#if defined(SYS_CAN_ISO15765) || defined(SYS_ISO11783) || defined(SYS_TEST_L3_ADDRESS)
+		LOG_D("L3_addr reg req 0x%x\n\r", frame->data[0]);
 		if(frame->data[0] == dcncp_node_address) {
 			if(dcncp_node_address_valid) {
 				LOG_D("reject Register Request\n\r");
@@ -346,19 +325,25 @@ void can_l2_msg_handler(can_frame *frame)
 				 *Have to create a new node address for this node
 				 *cancel the timers
 				 */
-				rc = sw_timer_cancel(node_send_reg_req_timer);
-				RC_CHECK_PRINT_VOID("SW_Tm_CANCEL\n\r");
-				rc = sw_timer_cancel(node_reg_timer);
-				RC_CHECK_PRINT_VOID("SW_Tm_CANCEL\n\r");
+//				rc = sw_timer_cancel(node_send_reg_req_timer);
+//				RC_CHECK_PRINT_VOID("SW_Tm_CANCEL\n\r");
+				if(node_reg_timer != BAD_TIMER_ID) {
+					rc = sw_timer_cancel(node_reg_timer);
+					RC_CHECK_PRINT_VOID("SW_Tm_CANCEL\n\r");
+				}
 
-				dcncp_node_address = node_get_address();
+				dcncp_node_address = (uint8_t)(rand() % 255);
+				while(dcncp_node_address == BROADCAST_NODE_ADDRESS)
+					dcncp_node_address = (uint8_t)(rand() % 255);		
 
 				exp_send_address_register_request((timer_id)0xff, (union sigval)(void *)NULL);
 			}
 		}
-#endif  // SYS_ISO15765 || SYS_ISO11783 || defined(SYS_TEST_L3_ADDRESS)
+#endif  // SYS_CAN_ISO15765 || SYS_ISO11783 || defined(SYS_TEST_L3_ADDRESS)
 	} else if(frame->can_id == CAN_DCNCP_AddressRegisterReject) {
-#if defined(ISO15765) || defined(ISO11783) || defined(SYS_TEST_L3_ADDRESS)
+#if defined(SYS_CAN_ISO15765) || defined(SYS_ISO11783) || defined(SYS_TEST_L3_ADDRESS)
+		if(frame->can_dlc != 1) LOG_E("RegRej Unexpected DLC %d\n\r", frame->can_dlc);
+		LOG_I("L3 Address rejected 0x%x\n\r", frame->data[0]);
 		if(frame->data[0] == dcncp_node_address) {
 			if(dcncp_node_address_valid) {
 				LOG_E("Sending Can Error Message\n\r");
@@ -368,25 +353,31 @@ void can_l2_msg_handler(can_frame *frame)
 
 				can_l2_tx_frame(&tx_frame);
 			} else {
-				LOG_D("Address Regected so get a new one!\n\r");
+				LOG_D("Address Rejected so get a new one!\n\r");
 				/*
 				 *Have to create a new node address for this node
 				 *cancel the timers
 				 */
-				rc = sw_timer_cancel(node_send_reg_req_timer);
-				RC_CHECK_PRINT_VOID("Timer Cancel\n\r");
-				rc = sw_timer_cancel(node_reg_timer);
-				RC_CHECK_PRINT_VOID("Timer Cancel\n\r");
+//				rc = sw_timer_cancel(node_send_reg_req_timer);
+//				RC_CHECK_PRINT_VOID("Timer Cancel\n\r");
+				if(node_reg_timer != BAD_TIMER_ID) {
+					rc = sw_timer_cancel(node_reg_timer);
+					RC_CHECK_PRINT_VOID("Timer Cancel\n\r");
+				}
 
-				dcncp_node_address = node_get_address();
-
+				dcncp_node_address = (uint8_t)(rand() % 255);
+				while(dcncp_node_address == BROADCAST_NODE_ADDRESS)
+					dcncp_node_address = (uint8_t)(rand() % 255);		
+				
 				exp_send_address_register_request((timer_id)0xff, (union sigval)(void *)NULL);
 			}
+		} else {
+			LOG_D("Not for this address\n\r");
 		}
-#endif // SYS_ISO15765 || SYS_ISO11783 || defined(SYS_TEST_L3_ADDRESS)
+#endif // SYS_CAN_ISO15765 || SYS_ISO11783 || defined(SYS_TEST_L3_ADDRESS)
 	} else if (frame->can_id == CAN_DCNCP_NodeAddressReportReq) {
 		LOG_D("DCNCP_CAN_NodeAddressReportReq:\n\r");
-#if defined(ISO15765) || defined(ISO11783) || defined(SYS_TEST_L3_ADDRESS)
+#if defined(SYS_CAN_ISO15765) || defined(SYS_ISO11783) || defined(SYS_TEST_L3_ADDRESS)
 		// Create a random timer between 100 and  1000 miliSeconds for firing node report message
 
 //		rc = timer_start(MILLI_SECONDS_TO_TICKS((uint16_t) ((rand() % 900) + 100)), exp_send_node_addr_report, (union sigval)(void *)NULL, &timer);
@@ -398,7 +389,7 @@ void can_l2_msg_handler(can_frame *frame)
 		request.exp_fn         = exp_send_node_addr_report;
 		rc = sw_timer_start(&request);
 		RC_CHECK_PRINT_VOID("SW Timer Start\n\r");
-#endif // SYS_ISO15765 || SYS_ISO11783 || defined(SYS_TEST_L3_ADDRESS)
+#endif // SYS_CAN_ISO15765 || SYS_ISO11783 || defined(SYS_TEST_L3_ADDRESS)
 	} else if (frame->can_id == CAN_DCNCP_NodeAddressReporting) {
 		if(frame->data[0]) {
 			LOG_D("Foreign Node Rep Registered Node Address 0x%x\n\r", frame->data[1]);
@@ -425,17 +416,16 @@ void can_l2_msg_handler(can_frame *frame)
 #else
 		LOG_E("CAN Baudrate change! NO code in place to process request!\n\r");
 #endif // SYS_CAN_DCNCP_BAUDRATE
-	} else if (frame->can_id == CAN_DCNCP_NodePingMessage) {
 	} else if (frame->can_id == CAN_DCNCP_RegisterNetLogger) {
 		LOG_D("Received NetLogger Registration Message\n\r");
-#ifdef SYS_ISO15765_LOGGING
+#ifdef SYS_CAN_ISO15765_LOGGING
 		iso15765_logger_register_remote(frame->data[0], frame->data[1]);
-#endif // SYS_ISO15765_LOGGING
+#endif // SYS_CAN_ISO15765_LOGGING
 	} else if (frame->can_id == CAN_DCNCP_UnRegisterNetLogger) {
 		LOG_D("Received NetLogger UnRegistration Message\n\r");
-#ifdef SYS_ISO15765_LOGGING
+#ifdef SYS_CAN_ISO15765_LOGGING
 		iso15765_logger_unregister_remote(frame->data[0]);
-#endif // SYS_ISO15765_LOGGING
+#endif // SYS_CAN_ISO15765_LOGGING
 	} else {
 #if defined(XC16) || defined(__XC8)
 		LOG_W("Node Unrecognised Request %lx \n\r", frame->can_id);
@@ -445,7 +435,7 @@ void can_l2_msg_handler(can_frame *frame)
 	}
 }
 
-#if defined(ISO15765) || defined(ISO11783) || defined(SYS_TEST_L3_ADDRESS)
+#if defined(SYS_CAN_ISO15765) || defined(SYS_ISO11783) || defined(SYS_TEST_L3_ADDRESS)
 void exp_send_node_addr_report(timer_id timer __attribute__((unused)), union sigval data)
 {
 	can_frame frame;
@@ -468,7 +458,7 @@ void exp_send_node_addr_report(timer_id timer __attribute__((unused)), union sig
 
 	can_l2_tx_frame(&frame);
 }
-#endif // SYS_ISO15765 || SYS_ISO11783 || defined(SYS_TEST_L3_ADDRESS)
+#endif // SYS_CAN_ISO15765 || SYS_ISO11783 || defined(SYS_TEST_L3_ADDRESS)
 
 /*
  * Net Logger Stuff
@@ -489,14 +479,14 @@ result_t dcncp_register_this_node_net_logger(log_level_t level)
 	can_l2_tx_frame(&local_iso15765_logger_frame);
 	LOG_D("NetLogger message sent\n\r");
 	TIMER_INIT(local_iso15765_logger_timer);
-	timer_start(SECONDS_TO_TICKS(SYS_ISO15765_LOGGER_PING_PERIOD), 
+	timer_start(SECONDS_TO_TICKS(SYS_CAN_ISO15765_LOGGER_PING_PERIOD), 
                     exp_iso15765_logger_ping, 
                     (union sigval)(void *) NULL, 
                     &local_iso15765_logger_timer);
 
 	return (SUCCESS);
 }
-#endif // SYS_ISO15765_LOGGER
+#endif // SYS_CAN_ISO15765_LOGGER
 
 #if defined(ISO15765_LOGGER)
 void exp_iso15765_logger_ping(timer_t timer_id __attribute__((unused)), union sigval data)
@@ -506,12 +496,12 @@ void exp_iso15765_logger_ping(timer_t timer_id __attribute__((unused)), union si
 	can_l2_tx_frame(&local_iso15765_logger_frame);
 	LOG_D("NetLogger message sent\n\r");
 	TIMER_INIT(local_iso15765_logger_timer);
-	timer_start(SECONDS_TO_TICKS(SYS_ISO15765_LOGGER_PING_PERIOD),
+	timer_start(SECONDS_TO_TICKS(SYS_CAN_ISO15765_LOGGER_PING_PERIOD),
                     exp_iso15765_logger_ping, 
                     (union sigval)(void *)NULL, 
                     &local_iso15765_logger_timer);
 }
-#endif // SYS_ISO15765_LOGGER
+#endif // SYS_CAN_ISO15765_LOGGER
 
 #if defined(ISO15765_LOGGER)
 result_t dcncp_unregister_this_node_net_logger()
@@ -532,20 +522,6 @@ result_t dcncp_unregister_this_node_net_logger()
 
 	return (SUCCESS);
 }
-#endif // SYS_ISO15765_LOGGER
-
-void dcncp_send_ping(void)
-{
-	can_frame frame;
-
-	frame.can_id = CAN_DCNCP_NodePingMessage;
-	frame.can_dlc = 0;
-
-	can_l2_tx_frame(&frame);
-
-#ifdef SYS_CAN_L2_PING_LOGGING
-	LOG_D("Ping message sent\n\r");
-#endif // SYS_CAN_L2_PING_LOGGING
-}
+#endif // SYS_CAN_ISO15765_LOGGER
 
 #endif // SYS_CAN_DCNCP

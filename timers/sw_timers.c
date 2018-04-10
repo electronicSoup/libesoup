@@ -110,7 +110,7 @@ static	struct timer_req hw_timer_req;
 typedef struct {
 	boolean           active;
 	uint16_t          expiry_count;
-	struct timer_req *request;
+	struct timer_req  request;
 } sw_timer_t;
 /*
  * \endcond
@@ -168,7 +168,7 @@ void sw_timer_init(void)
 	for(loop=0; loop < SYS_NUMBER_OF_SW_TIMERS; loop++) {
 		timers[loop].active = FALSE;
 		timers[loop].expiry_count = 0;
-		timers[loop].request = (struct timer_req *)NULL;
+		timers[loop].request.exp_fn = NULL;
 	}
 
 //#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__) || defined(__dsPIC33EP256MU806__)
@@ -243,16 +243,16 @@ void timer_tick(void)
 				 * timer expired so call expiry function.
 				 */
                                 LOG_D("Expiry timer %d\n\r", loop);
-				function = timers[loop].request->exp_fn;
-				data = timers[loop].request->data;
+				function = timers[loop].request.exp_fn;
+				data = timers[loop].request.data;
 				function(loop, data);
 
-				if(timers[loop].request->type == single_shot) {
+				if(timers[loop].request.type == single_shot) {
 					timers[loop].active = FALSE;
 					timers[loop].expiry_count = 0;
-					timers[loop].request = (struct timer_req *) NULL;
-				} else if(timers[loop].request->type == repeat) {
-					ticks = calculate_ticks(timers[loop].request);
+					timers[loop].request.exp_fn = NULL;
+				} else if(timers[loop].request.type == repeat) {
+					ticks = calculate_ticks(&timers[loop].request);
 					calculate_expiry_count(loop, ticks);
 				}				
 			}
@@ -323,7 +323,11 @@ timer_id sw_timer_start(struct timer_req *request)
 			 */
 			timers[loop].active = TRUE;
 			calculate_expiry_count(loop, ticks);
-			timers[loop].request = request;
+			timers[loop].request.data     = request->data;
+			timers[loop].request.duration = request->duration;
+			timers[loop].request.exp_fn   = request->exp_fn;
+			timers[loop].request.type     = request->type;
+			timers[loop].request.units    = request->units;
 
 			/*
 			 * If our hw_timer isn't running restart it:
@@ -389,9 +393,10 @@ timer_id sw_timer_cancel(timer_id timer)
                 LOG_E("sw_timer_cancel() Bad timer identifier passed in!\n\r");
                 return(-ERR_BAD_INPUT_PARAMETER);
 	} else if (timers[timer].active) {
+		LOG_D("Cancel timer %d\n\r", timer);
                 timers[timer].active = FALSE;
                 timers[timer].expiry_count = 0;
-                timers[timer].request = (struct timer_req *) NULL;
+                timers[timer].request.exp_fn = NULL;
         } else {
                 LOG_I("sw_timer_cancel() timer not active!\n\r");
         }

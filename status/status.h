@@ -1,5 +1,4 @@
 /**
- *
  * @file libesoup/status/status.h
  *
  * @author John Whitmore
@@ -38,7 +37,7 @@ typedef enum {
 #if defined(SYS_CAN_DCNCP)
     can_bus_dcncp_status,  ///< Status update from DCNCP Module
 #endif
-#if defined(ISO15765)
+#if defined(SYS_CAN_ISO15765)
     iso15765_status,       ///< Status update from ISO15765 Module
 #endif
 #if defined(ISO11783)

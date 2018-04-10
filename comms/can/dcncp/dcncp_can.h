@@ -40,7 +40,7 @@
 #define CAN_DCNCP_MASK                          0x7f0
 #define CAN_DCNCP_FILTER                        0x700
 
-#define CAN_DCNCP_NodePingMessage               0x6ff
+//#define CAN_DCNCP_NodePingMessage               0x6ff
 
 #define CAN_DCNCP_AddressRegisterReq            0x700
 
@@ -59,10 +59,9 @@
  */
 enum can_dcncp_status {
     can_dcncp_l3_address_registered,
-    
 };
 
-extern result_t dcncp_init(status_handler_t arg_status_handler);
+extern result_t dcncp_init(status_handler_t arg_status_handler, uint8_t l3_address);
 extern void dcncp_request_network_baud_change(can_baud_rate_t baud);
 extern void dcncp_send_ping(void);
 #if defined(ISO15765) || defined(ISO11783)

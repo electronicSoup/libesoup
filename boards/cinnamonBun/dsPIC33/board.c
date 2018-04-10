@@ -3,7 +3,7 @@
  *
  * @author John Whitmore
  *
- * Board specific code for the dsPIC33EP256MU806 based cinnamonBun.
+ * @brief Board specific code for the dsPIC33EP256MU806 based cinnamonBun.
  *
  * The file contains the implementation of the board_init() function which 
  * will be called as part of the library initialisation via libesoup_init()
