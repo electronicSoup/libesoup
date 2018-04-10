@@ -23,6 +23,8 @@
 #ifndef _CORE_H
 #define _CORE_H
 
+#include "libesoup_config.h"
+
 #ifndef SYS_SERIAL_LOGGING
 #ifdef XC16
 #define LOG_D(...)
