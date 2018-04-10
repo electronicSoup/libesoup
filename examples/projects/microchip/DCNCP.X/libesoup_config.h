@@ -1,5 +1,4 @@
 /**
- *
  * @file libesoup/examples/projects/microchip/DCNCP.X/libesoup_config.h
  *
  * @author John Whitmore

@@ -1,5 +1,4 @@
 /**
- *
  * @file libesoup/examples/projects/microchip/CAN-Bus.X/libesoup_config.h
  *
  * @author John Whitmore

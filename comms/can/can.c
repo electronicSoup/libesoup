@@ -59,9 +59,9 @@ char can_baud_rate_strings[8][10] = {
 #ifdef SYS_CAN_DCNCP
 #include "libesoup/comms/can/dcncp/dcncp_can.h"
 #endif
-#ifdef SYS_ISO15765_DCNCP
+#ifdef SYS_CAN_ISO15765_DCNCP
 #include "libesoup/can/dcncp/dcncp_iso15765.h"
-#endif // SYS_ISO15765_DCNCP
+#endif // SYS_CAN_ISO15765_DCNCP
 
 #ifdef SYS_CAN_PING_PROTOCOL
 #include "libesoup/comms/can/ping.h"
@@ -69,13 +69,13 @@ char can_baud_rate_strings[8][10] = {
 
 static void can_status_handler(status_source_t source, int16_t status, int16_t data);
 
-#if (defined(SYS_ISO15765) || defined(SYS_ISO11783) || defined(SYS_TEST_L3_ADDRESS))
+#if (defined(SYS_CAN_ISO15765) || defined(SYS_ISO11783) || defined(SYS_TEST_L3_ADDRESS))
 static uint8_t l3_address;
 #endif
 
 status_handler_t app_status_handler = (status_handler_t)NULL;
 
-#if (defined(SYS_ISO15765) || defined(SYS_ISO11783) || defined(SYS_TEST_L3_ADDRESS))
+#if (defined(SYS_CAN_ISO15765) || defined(SYS_ISO11783) || defined(SYS_TEST_L3_ADDRESS))
 result_t can_init(can_baud_rate_t baudrate, uint8_t arg_l3_address, status_handler_t status_handler, ty_can_l2_mode mode)
 #else
 result_t can_init(can_baud_rate_t baudrate, status_handler_t status_handler,  ty_can_l2_mode mode)
@@ -141,12 +141,16 @@ static void can_status_handler(status_source_t source, int16_t status, int16_t d
 		switch(status) {
 		case can_dcncp_l3_address_registered:
 			l3_address = data;
+#if defined(SYS_CAN_ISO15765)
+			rc = iso15765_init(l3_address);
+			RC_CHECK_PRINT_VOID("ISO15765 Fail\n\r");
+#endif
 			if(app_status_handler) app_status_handler(source, status, data);
 			break;
 		}
 		break;
 #endif
-#if defined(ISO15765)
+#if defined(SYS_CAN_ISO15765)
 	case iso15765_status:
 		break;
 #endif
