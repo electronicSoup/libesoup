@@ -327,10 +327,8 @@ void can_l2_msg_handler(can_frame *frame)
 				 */
 //				rc = sw_timer_cancel(node_send_reg_req_timer);
 //				RC_CHECK_PRINT_VOID("SW_Tm_CANCEL\n\r");
-				if(node_reg_timer != BAD_TIMER_ID) {
-					rc = sw_timer_cancel(node_reg_timer);
-					RC_CHECK_PRINT_VOID("SW_Tm_CANCEL\n\r");
-				}
+				rc = sw_timer_cancel(&node_reg_timer);
+				RC_CHECK_PRINT_VOID("SW_Tm_CANCEL\n\r");
 
 				dcncp_node_address = (uint8_t)(rand() % 255);
 				while(dcncp_node_address == BROADCAST_NODE_ADDRESS)
@@ -360,10 +358,8 @@ void can_l2_msg_handler(can_frame *frame)
 				 */
 //				rc = sw_timer_cancel(node_send_reg_req_timer);
 //				RC_CHECK_PRINT_VOID("Timer Cancel\n\r");
-				if(node_reg_timer != BAD_TIMER_ID) {
-					rc = sw_timer_cancel(node_reg_timer);
-					RC_CHECK_PRINT_VOID("Timer Cancel\n\r");
-				}
+				rc = sw_timer_cancel(&node_reg_timer);
+				RC_CHECK_PRINT_VOID("Timer Cancel\n\r");
 
 				dcncp_node_address = (uint8_t)(rand() % 255);
 				while(dcncp_node_address == BROADCAST_NODE_ADDRESS)

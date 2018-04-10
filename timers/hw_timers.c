@@ -381,13 +381,14 @@ timer_id hw_timer_pause(timer_id timer)
 timer_id hw_timer_cancel(timer_id timer)
 {
         if(timer < NUMBER_HW_TIMERS) {
+		INTERRUPTS_DISABLED
                 hw_timer_pause(timer);
 
                 timers[timer].status = TIMER_UNUSED;
                 timers[timer].request.exp_fn = NULL;
                 timers[timer].repeats = (uint16_t)0;
                 timers[timer].remainder = (uint16_t)0;
-		
+		INTERRUPTS_ENABLED
 		return(timer);
         } else {
                 LOG_E("Bad timer passed to hw_timer_cancel(0x%x)\n\r", timer);

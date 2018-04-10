@@ -108,10 +108,8 @@ result_t restart_ping_timer(void)
 {
 	result_t  rc;
 
-	if(ping_timer != 0xff) {
-		rc = sw_timer_cancel(ping_timer);
-		RC_CHECK
-	}
+	rc = sw_timer_cancel(&ping_timer);
+	RC_CHECK
 	
 	rc = sw_timer_start(&timer_request);
 	RC_CHECK

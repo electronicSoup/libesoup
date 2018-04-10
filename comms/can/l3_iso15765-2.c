@@ -177,11 +177,9 @@ static void sendFlowControlFrame(rx_buffer_t *rx_buffer, uint8_t flowStatus);
 static void startConsecutiveFrameTimer(struct tx_buffer_t *tx_buffer) ;
 
 static void startTimer_N_Cr(rx_buffer_t *);
-static void stopTimer_N_Cr(rx_buffer_t *);
 static void exp_timer_N_Cr_Expired(timer_id timer, union sigval);
 
 static void startTimer_N_Bs(struct tx_buffer_t *);
-static void stopTimer_N_Bs(struct tx_buffer_t *);
 static void exp_timer_N_Bs_Expired(timer_id timer, union sigval);
 
 void init_tx_buffer(struct tx_buffer_t *tx_buf)
@@ -464,11 +462,12 @@ void sendFlowControlFrame(rx_buffer_t *rx_buffer, uint8_t flowStatus)
 
 void iso15765_frame_handler(can_frame *frame)
 {
-	uint8_t type;
-	uint8_t loop;
-	uint8_t source;
-	iso15765_id rx_msg_id;
-	rx_buffer_t *rx_buffer;
+	result_t            rc;
+	uint8_t             type;
+	uint8_t             loop;
+	uint8_t             source;
+	iso15765_id         rx_msg_id;
+	rx_buffer_t        *rx_buffer;
 	struct tx_buffer_t *tx_buffer;
 
 	rx_msg_id.can_id = frame->can_id;
@@ -622,7 +621,8 @@ void iso15765_frame_handler(can_frame *frame)
 
 		rx_buffer = node_buffers[source].rx_buffer;
 #endif // XC16 || __XC8 - ES_LINUX
-		stopTimer_N_Cr(rx_buffer);
+		rc = sw_timer_cancel(&rx_buffer->timer_N_Cr);
+		RC_CHECK_PRINT_CONT("SW TIM CANCEL")
 
 		if (rx_buffer->sequence == (frame->data[0] & 0x0f)) {
 			for (loop = 1; loop < frame->can_dlc; loop++) {
@@ -700,7 +700,8 @@ void iso15765_frame_handler(can_frame *frame)
 		tx_buffer = node_buffers[source].tx_buffer;
 #endif // XC16 || __XC8 - ES_LINUX
 
-		stopTimer_N_Bs(tx_buffer);
+		rc = sw_timer_cancel(&tx_buffer->timer_N_Bs);
+		RC_CHECK_PRINT_CONT("SW TIM_Cancel")
 		flowStatus = frame->data[0] & 0x0f;
 
 		tx_buffer->block_size = frame->data[1];
@@ -726,10 +727,8 @@ void iso15765_frame_handler(can_frame *frame)
 			tx_buffer = node_buffers[source].tx_buffer;
 #endif // XC16 || __XC8 - ES_LINUX
 
-			if (tx_buffer->consecutive_frame_timer != BAD_TIMER_ID) {
-				sw_timer_cancel(tx_buffer->consecutive_frame_timer);
-				tx_buffer->consecutive_frame_timer = BAD_TIMER_ID;
-			}
+			rc = sw_timer_cancel(&tx_buffer->consecutive_frame_timer);
+			RC_CHECK_PRINT_CONT("SW TIM_Cancel")			
 #if defined(XC16) || defined(__XC8)
 			init_tx_buffer(tx_buffer);
 			mcp_transmitter_busy = FALSE;
@@ -775,22 +774,12 @@ void startTimer_N_Cr(rx_buffer_t *rx_buffer)
 	request.exp_fn         = exp_timer_N_Cr_Expired;
 	request.data.sival_ptr = (void *)rx_buffer;
 
-	if(rx_buffer->timer_N_Cr != BAD_TIMER_ID) {
-		sw_timer_cancel(rx_buffer->timer_N_Cr);
-		rx_buffer->timer_N_Cr = BAD_TIMER_ID;
-	}
+	rc = sw_timer_cancel(&rx_buffer->timer_N_Cr);
+	RC_CHECK_PRINT_VOID("SW TIM_Cancel")
 	
 	rc = sw_timer_start(&request);
 	RC_CHECK_PRINT_VOID("Failed to start N_Cr Timer\n\r");
 	rx_buffer->timer_N_Cr = rc;
-}
-
-void stopTimer_N_Cr(rx_buffer_t *rx_buffer)
-{
-	if(rx_buffer->timer_N_Cr != BAD_TIMER_ID) {
-		sw_timer_cancel(rx_buffer->timer_N_Cr);
-		rx_buffer->timer_N_Cr = BAD_TIMER_ID;
-	}
 }
 
 void exp_timer_N_Cr_Expired(timer_id timer __attribute__((unused)), union sigval data)
@@ -816,10 +805,8 @@ void startTimer_N_Bs(struct tx_buffer_t *tx_buffer)
 	result_t          rc;
 	struct timer_req  request;
 
-	if(tx_buffer->timer_N_Bs != BAD_TIMER_ID) {
-		sw_timer_cancel(tx_buffer->timer_N_Bs);
-		tx_buffer->timer_N_Bs = BAD_TIMER_ID;
-	}
+	rc = sw_timer_cancel(&tx_buffer->timer_N_Bs);
+	RC_CHECK_PRINT_CONT("SW TIM_Cancel")
 
 	request.units          = mSeconds;
 	request.duration       = 1000;
@@ -832,16 +819,9 @@ void startTimer_N_Bs(struct tx_buffer_t *tx_buffer)
 	tx_buffer->timer_N_Bs = rc;
 }
 
-void stopTimer_N_Bs(struct tx_buffer_t *tx_buffer)
-{
-	if(tx_buffer->timer_N_Bs != BAD_TIMER_ID) {
-		sw_timer_cancel(tx_buffer->timer_N_Bs);
-		tx_buffer->timer_N_Bs = BAD_TIMER_ID;
-	}
-}
-
 void exp_timer_N_Bs_Expired(timer_id timer __attribute__((unused)), union sigval data)
 {
+	result_t            rc;
 	struct tx_buffer_t *tx_buffer;
 
 	LOG_D("timer_N_Bs_Expired\n\r");
@@ -853,10 +833,9 @@ void exp_timer_N_Bs_Expired(timer_id timer __attribute__((unused)), union sigval
 	tx_buffer->sequence = 0x00;
 	tx_buffer->index = 0x00;
 
-	if (tx_buffer->consecutive_frame_timer != BAD_TIMER_ID) {
-		sw_timer_cancel(tx_buffer->consecutive_frame_timer);
-		tx_buffer->consecutive_frame_timer = BAD_TIMER_ID;
-	}
+	rc = sw_timer_cancel(&tx_buffer->consecutive_frame_timer);
+	RC_CHECK_PRINT_CONT("SW TIM_Cancel")
+
 #if defined(XC16) || defined(__XC8)
 	mcp_transmitter_busy = FALSE;
 #endif

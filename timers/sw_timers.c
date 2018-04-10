@@ -386,21 +386,30 @@ timer_id sw_timer_start(struct timer_req *request)
  * Return : SUCCESS
  *
  */
-timer_id sw_timer_cancel(timer_id timer)
+result_t sw_timer_cancel(timer_id *timer)
 {
 #if defined(XC16) || defined(__XC8)
-	if ((timer == BAD_TIMER_ID) || (timer >= SYS_NUMBER_OF_SW_TIMERS)) {
-                LOG_E("sw_timer_cancel() Bad timer identifier passed in!\n\r");
+	INTERRUPTS_DISABLED
+	if (*timer == BAD_TIMER_ID) {
+		INTERRUPTS_ENABLED
+		return(0);
+	} else if (*timer >= SYS_NUMBER_OF_SW_TIMERS) {
+		INTERRUPTS_ENABLED
                 return(-ERR_BAD_INPUT_PARAMETER);
-	} else if (timers[timer].active) {
-		LOG_D("Cancel timer %d\n\r", timer);
-                timers[timer].active = FALSE;
-                timers[timer].expiry_count = 0;
-                timers[timer].request.exp_fn = NULL;
+	} else if (timers[*timer].active) {
+		LOG_D("Cancel timer %d\n\r", *timer);
+                timers[*timer].active = FALSE;
+                timers[*timer].expiry_count = 0;
+                timers[*timer].request.exp_fn = NULL;
+		*timer = BAD_TIMER_ID;
+		INTERRUPTS_ENABLED
+		return(0);
         } else {
-                LOG_I("sw_timer_cancel() timer not active!\n\r");
+		*timer = BAD_TIMER_ID;
+		INTERRUPTS_ENABLED
+                return(-ERR_BAD_INPUT_PARAMETER);
         }
-        
+	INTERRUPTS_ENABLED
 #elif defined(ES_LINUX)
 	struct itimerspec its;
 
@@ -414,7 +423,7 @@ timer_id sw_timer_cancel(timer_id timer)
                 return(-ERR_GENERAL_ERROR);
         }
 #endif
-	return(timer);
+	return(0);
 }
 
 /*
@@ -425,11 +434,11 @@ result_t sw_timer_cancel_all(void)
 {
 	uint8_t    loop;
 	LOG_D("sw_timer_cancel_all()\n\r");
+	INTERRUPTS_DISABLED
 	for (loop = 0; loop < SYS_NUMBER_OF_SW_TIMERS; loop++) {
-		if (timers[loop].active) {
-			sw_timer_cancel(loop);
-		}
+		timers[loop].active = FALSE;
 	}
+	INTERRUPTS_ENABLED
 	return (0);
 }
 #endif // XC16 || __XC8
