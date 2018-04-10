@@ -28,6 +28,8 @@
 #ifndef _SERIAL_LOG_H
 #define _SERIAL_LOG_H
 
+#include "libesoup_config.h"
+
 #ifdef SYS_SERIAL_LOGGING
 
 /**
