@@ -69,11 +69,13 @@ result_t board_init(void)
 	rc = spi_channel_init(SPI_ANY_CHANNEL, &spi_io);
 	RC_CHECK
 	spi_channel = (uint8_t)rc;
+	__asm__ ("CLRWDT");
 #endif
 
 #ifdef SYS_EEPROM
 	rc = eprom_init(spi_channel);
 	RC_CHECK
+	__asm__ ("CLRWDT");
 #endif
 
 #ifdef SYS_ONE_WIRE
@@ -84,6 +86,7 @@ result_t board_init(void)
 	rc = one_wire_reserve(BRD_ONE_WIRE_PIN);
 //	rc = one_wire_reserve(RD0);
 	RC_CHECK
+	__asm__ ("CLRWDT");
 #endif
 	return(0);
 }
