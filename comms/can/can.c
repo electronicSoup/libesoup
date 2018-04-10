@@ -87,8 +87,9 @@ result_t can_init(can_baud_rate_t baudrate, status_handler_t status_handler,  ty
          * Clear the stored SYS_CAN Status as nothing is done.
          */
 	app_status_handler = status_handler;
+#if (defined(SYS_CAN_ISO15765) || defined(SYS_ISO11783) || defined(SYS_TEST_L3_ADDRESS))
 	l3_address = arg_l3_address;
-
+#endif
 	/*
 	 * Initialise the frame dispatcher
 	 */
