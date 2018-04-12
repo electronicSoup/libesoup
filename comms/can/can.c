@@ -110,6 +110,8 @@ result_t can_init(can_baud_rate_t baudrate, status_handler_t status_handler,  ty
 static void can_status_handler(status_source_t source, int16_t status, int16_t data)
 {
 	result_t rc;
+
+	rc = 0;
 	
 	LOG_D("can_status_handler(src %d)\n\r", source);
 
