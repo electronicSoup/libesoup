@@ -39,6 +39,7 @@ static const char *TAG = "dsPIC33_CAN";
 #include "libesoup/errno.h"
 #include "libesoup/gpio/gpio.h"
 #include "libesoup/gpio/peripheral.h"
+#include "libesoup/timers/delay.h"
 #include "libesoup/status/status.h"
 #include "libesoup/comms/can/can.h"
 #ifdef SYS_CAN_PING_PROTOCOL
@@ -135,8 +136,20 @@ static void set_mode(uint8_t mode);
 
 result_t can_l2_bitrate(can_baud_rate_t baud);
 
+static void reset(void)
+{
+	uint8_t          current_mode;
+
+	current_mode = C1CTRL1bits.OPMODE;
+	set_mode(CONFIG_MODE);
+	delay(mSeconds, 5);
+	set_mode(current_mode);
+}
+
 void __attribute__((__interrupt__, __no_auto_psv__)) _C1Interrupt(void)
 {
+	static uint16_t  error_count = 0;
+	
 	while(C1INTF) {
 		// WIN Bit 0 | 1
 		if(C1INTFbits.TBIF) {
@@ -186,26 +199,37 @@ void __attribute__((__interrupt__, __no_auto_psv__)) _C1Interrupt(void)
 	
 		if(C1INTFbits.EWARN) {
 			C1INTFbits.EWARN = 0;
+			reset();
 			LOG_D("EWARN\n\r");
 		}
 	
 		if(C1INTFbits.RXWAR) {
 			C1INTFbits.RXWAR = 0;
+			reset();
 			LOG_D("RXWAR\n\r");
 		}
 	
 		if(C1INTFbits.TXWAR) {
 			C1INTFbits.TXWAR = 0;
+			reset();
 			LOG_D("TXWAR\n\r");
 		}
 	
 		if(C1INTFbits.RXBP) {
 			C1INTFbits.RXBP = 0;
+			error_count++;
+			if(error_count >5) {
+				reset();
+			}
 			LOG_D("RXBP\n\r");
 		}
 	
 		if(C1INTFbits.TXBP) {
 			C1INTFbits.TXBP = 0;
+			error_count++;
+			if(error_count >5) {
+				reset();
+			}
 			LOG_D("TXBP\n\r");
 		}
 	
