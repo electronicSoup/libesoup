@@ -45,7 +45,9 @@ static const char *TAG = "dsPIC33_CAN";
 #ifdef SYS_CAN_PING_PROTOCOL
 #include "libesoup/comms/can/ping.h"
 #endif // SYS_CAN_PING_PROTOCOL
-
+#if defined(SYS_SW_TIMERS) && defined(SYS_DEBUG_BUILD)
+#include "libesoup/timers/sw_timers.h"
+#endif
 /*
  * Check for required System Switches
  */
@@ -148,9 +150,11 @@ static void reset(void)
 
 void __attribute__((__interrupt__, __no_auto_psv__)) _C1Interrupt(void)
 {
-	static uint16_t  error_count = 0;
+	if(C1VECbits.ICODE == 0x40) {
+		LOG_E("No ISR C1INTF %x\n\r", C1INTF);
+	}
 	
-	while(C1INTF) {
+	while(C1INTF & 0xff) {
 		// WIN Bit 0 | 1
 		if(C1INTFbits.TBIF) {
 			C1INTFbits.TBIF = 0;
@@ -194,52 +198,42 @@ void __attribute__((__interrupt__, __no_auto_psv__)) _C1Interrupt(void)
 	
 		if(C1INTFbits.IVRIF) {
 			C1INTFbits.IVRIF = 0;
-			LOG_D("IVRIF\n\r");
+			LOG_D("IVRIF EC-RX %d  Tx %d\n\r", C1ECbits.RERRCNT, C1ECbits.TERRCNT);
 		}
 	
 		if(C1INTFbits.EWARN) {
-			C1INTFbits.EWARN = 0;
-			reset();
 			LOG_D("EWARN\n\r");
 		}
 	
 		if(C1INTFbits.RXWAR) {
-			C1INTFbits.RXWAR = 0;
-			reset();
-			LOG_D("RXWAR\n\r");
+			LOG_D("RXWAR EC %d\n\r", C1ECbits.RERRCNT);
 		}
 	
 		if(C1INTFbits.TXWAR) {
-			C1INTFbits.TXWAR = 0;
-			reset();
-			LOG_D("TXWAR\n\r");
+			LOG_D("TXWAR EC %d\n\r", C1ECbits.TERRCNT);
 		}
 	
 		if(C1INTFbits.RXBP) {
-			C1INTFbits.RXBP = 0;
-			error_count++;
-			if(error_count >5) {
-				reset();
-			}
-			LOG_D("RXBP\n\r");
+			LOG_D("RXBP EC %d\n\r", C1ECbits.RERRCNT);
 		}
 	
 		if(C1INTFbits.TXBP) {
-			C1INTFbits.TXBP = 0;
-			error_count++;
-			if(error_count >5) {
-				reset();
-			}
-			LOG_D("TXBP\n\r");
+			LOG_D("TXBP EC %d\n\r", C1ECbits.TERRCNT);
 		}
 	
 		if(C1INTFbits.TXBO) {
-			C1INTFbits.TXBO = 0;
 			LOG_D("TXBO\n\r");
 		}
 	}
         IFS2bits.C1IF   = 0x00;
 }
+
+#if defined(SYS_SW_TIMERS) && defined(SYS_DEBUG_BUILD)
+void exp_fn(timer_id timer, union sigval data)
+{
+	LOG_D("EC-RX %d  Tx %d\n\r", C1ECbits.RERRCNT, C1ECbits.TERRCNT);	
+}
+#endif
 
 /*
  */
@@ -248,6 +242,9 @@ result_t can_l2_init(can_baud_rate_t arg_baud_rate, status_handler_t arg_status_
 	result_t          rc;
 	uint32_t          address;
 	uint8_t           loop;
+#if defined(SYS_SW_TIMERS) && defined(SYS_DEBUG_BUILD)
+	struct timer_req  request;
+#endif
 	
 	if (arg_baud_rate < no_baud) {
 		LOG_D("L2_CanInit() Baud Rate %s\n\r", can_baud_rate_strings[arg_baud_rate]);
@@ -262,6 +259,16 @@ result_t can_l2_init(can_baud_rate_t arg_baud_rate, status_handler_t arg_status_
 #endif
 	}
 
+#if defined(SYS_SW_TIMERS) && defined(SYS_DEBUG_BUILD)
+	request.units          = Seconds;
+	request.duration       = 10;
+	request.type           = repeat;
+	request.exp_fn         = exp_fn;
+	request.data.sival_int = 0;
+	rc = sw_timer_start(&request);
+	RC_CHECK	
+#endif
+	
 	status_handler = arg_status_handler;
 	requested_mode = mode;
 
