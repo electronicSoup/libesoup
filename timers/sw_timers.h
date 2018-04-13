@@ -92,9 +92,13 @@ extern timer_id sw_timer_start(struct timer_req *request);
  * @ingroup Timers
  * @brief Function to cancel a hardware timer running in the system.
  * 
- * @param timer Identifier of the timer, previously started, to be cancelled \ref timer_id
+ * @param timer Pointer to the previously started timer, to be cancelled \ref timer_id
+ * 
+ * This is an atomic operation. Interrupts will be canceled for the duration of
+ * the call. The caller should not test the timer for BAD_TIMER_ID but rather
+ * pass in the value. If the timer is BAD_TIMER_ID then no action is taken.
  */
-extern timer_id sw_timer_cancel(timer_id timer);
+extern timer_id sw_timer_cancel(timer_id *timer);
 
 /**
  * @ingroup Timers
