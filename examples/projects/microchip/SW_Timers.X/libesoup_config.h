@@ -27,55 +27,17 @@
 #define _LIBESOUP_CONFIG_H
 
 #include <xc.h>
-/**
- * @brief The required clock frequency of the device. 
- * 
- * The function clock_init() has to be called on entry to main() to 
- * initialise the device to this clock frequency.
- */
-#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__)
-#define SYS_CLOCK_FREQ 16000000     // 8MHz
-#elif defined(__dsPIC33EP256MU806__)
+
+#if defined(__dsPIC33EP256MU806__)
 //#define CLOCK_FREQ 8000000     // 8MHz
 #define SYS_CLOCK_FREQ 60000000    // 60MHz
-#elif defined(__18F4585)
-#define SYS_CLOCK_FREQ 16000000     // 8MHz
 #endif
 
 #define SYS_HW_TIMERS
 
-/**
- * @brief Software based timers
- *
- * If your project includes libesoup Software Timer code then you must use this 
- * definition to define number of timers actually avalible in the system. 
- *
- * In addition to adding this Switch your code must initialise the timer
- * functionality and regularly check the timers with the "CHECK_TIMERS()" MACRO
- * defined in libesoup/timers/sw_timers.h
- *
- * For an example of using the Software timers take a look at:
- * libesoup/examples/main_sw_timers.c
- * 
- * Default : Switch is commented out assuming timer functionality not included
- * in project.
- */
 #define SYS_SW_TIMERS
-
-#ifdef SYS_SW_TIMERS
-/*
- * On the Microchip PIC platform Software timers are based on a single Hardware
- * timer, so Hardware timers have to be enabled in the system.
- */
-#ifndef SYS_HW_TIMERS  
-#if defined(XC16) || defined(__XC8)
-#define SYS_HW_TIMERS
-#endif
-#endif
-
 #define SYS_NUMBER_OF_SW_TIMERS        5
 #define SYS_SW_TIMER_TICK_ms           5        // mSeconds
-#endif // SYS_SW_TIMERS
 
 #if defined(__dsPIC33EP256MU806__)
 #include "libesoup/boards/cinnamonBun/dsPIC33/cb-dsPIC33EP256MU806.h"
