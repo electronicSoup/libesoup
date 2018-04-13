@@ -97,7 +97,7 @@ static void ping_network(timer_id timer, union sigval data)
 
 	ping_timer = 0xFF;
 		
-	LOG_D("CAN Ping\n\r");
+//	LOG_D("CAN Ping\n\r");
 	frame.can_id = SYS_CAN_PING_FRAME_ID;
 	frame.can_dlc = 0;
 
