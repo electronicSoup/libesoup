@@ -41,8 +41,9 @@ typedef enum {
     iso15765_status,       ///< Status update from ISO15765 Module
 #endif
 #if defined(ISO11783)
-    iso11783_status        ///< Status update from ISO11783 Module
+    iso11783_status,       ///< Status update from ISO11783 Module
 #endif
+    app_status             ///< Status of the Application code
 } status_source_t;
 
 /**
