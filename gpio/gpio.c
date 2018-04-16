@@ -50,7 +50,7 @@ result_t gpio_set(enum pin_t pin, uint16_t mode, uint8_t value)
 	if((mode & GPIO_MODE_ANALOG_INPUT) || (mode & GPIO_MODE_ANALOG_OUTPUT)) analog = 0b1;
 	
 	direction = 0b0;
-	if(mode & GPIO_MODE_DIGITAL_INPUT) direction = 0b1;
+	if((mode & GPIO_MODE_DIGITAL_INPUT) || (mode & GPIO_MODE_ANALOG_INPUT)) direction = 0b1;
 	
 	opendrain = 0b0;
 	if((mode & GPIO_MODE_OPENDRAIN_INPUT) || (mode & GPIO_MODE_OPENDRAIN_OUTPUT)) opendrain = 0b1;

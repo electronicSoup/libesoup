@@ -1,5 +1,4 @@
 /**
- *
  * @file libesoup/gpio/gpio.h
  *
  * @author John Whitmore

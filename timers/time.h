@@ -101,7 +101,7 @@ union sigval {
  * Any timer expiry function should be short and sweet and return control as
  * soon as possible to the libesoup timer functionality.
  */
-typedef void (*expiry_function)(timer_id timer, union sigval);
+typedef void (*expiry_function)(timer_id timer, union sigval data);
 
 /**
  * @ingroup Timers
