@@ -220,6 +220,37 @@ typedef struct
 #define CAN_ISO15765_LOGGER_PROTOCOL_ID    0x01
 #define CAN_ISO15765_DCNCP_PROTOCOL_ID     0x02
 
+
+#ifdef SYS_CAN_ISO15765_LOG
+extern void iso15765_log(uint8_t level, char *msg);
+
+/*
+ * net_log_reg_as_handler
+ *
+ * This function takes a function pointer which is going to handle the received
+ * debug messages and the minimum level that we're expecting to receive.
+ */
+extern result_t iso15765_logger_register_as_logger(void (*handler)(uint8_t, uint8_t, char *), uint8_t level);
+//extern result_t net_logger_local_register(void (*handler)(uint8_t, uint8_t, char *), uint8_t level);
+//extern result_t net_logger_local_cancel(void);
+
+/*
+ * If another node on the network registers/unregisters as the network logger 
+ * these two functions are used.
+ */
+extern void iso15765_logger_register_remote(uint8_t address, uint8_t level);
+extern void iso15765_logger_unregister_remote(uint8_t address);
+
+
+
+
+
+
+
+
+#define CAN_LOG_D(x)  iso15765_log(LOG_DEBUG, x);
+#endif  // SYS_CAN_ISO15765_LOG
+
 #endif // SYS_CAN_ISO15765
 
 #ifdef SYS_ISO11783

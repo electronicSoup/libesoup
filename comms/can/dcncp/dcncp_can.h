@@ -4,7 +4,8 @@
  *
  * @author John Whitmore
  *
- * Dynamic CAN Node Configuration Protocol definitions.
+ * @brief Dynamic CAN Node Configuration Protocol definitions.
+ * 
  * Included in the build with SYS_CAN_DCNCP
  *
  * Copyright 2017-2018 electronicSoup Limited

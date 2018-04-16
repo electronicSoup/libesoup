@@ -39,6 +39,19 @@
 #endif  // Compiler
 #endif  // SYS_SERIAL_LOGGING
 
+/**
+ * This series of defines are here as they should be included very early. At 
+ * leasy before the serial logging code. These macros are used to conditionally
+ * compile debugging code out of an executable. The actual logging level of the
+ * build should be defined in libesoup_config.h
+ */
+#define LOG_ERROR   0      ///< ERROR logging level
+#define LOG_WARNING 1      ///< Warning logging level
+#define LOG_INFO    2      ///< Info logging level
+#define LOG_DEBUG   3      ///< Debug logging level
+#define NO_LOGGING  4      ///< No logging in System
+
+
 /*
  * include stdint.h to get access to uint8_t style types
  */

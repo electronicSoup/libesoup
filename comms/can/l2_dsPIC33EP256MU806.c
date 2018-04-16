@@ -458,6 +458,7 @@ result_t can_l2_init(can_baud_rate_t arg_baud_rate, status_handler_t arg_status_
 		}
 #endif
 	}
+	LOG_D("init end EC-RX %d  Tx %d\n\r", C1ECbits.RERRCNT, C1ECbits.TERRCNT);	
         return(0);
 }
 

@@ -33,33 +33,6 @@
 #ifdef SYS_SERIAL_LOGGING
 
 /**
- * @def   LOG_DEBUG
- * @brief Debug logging level
- *
- * @def   LOG_INFO
- * @brief Info logging level
- *
- * @def   LOG_WARNING
- * @brief Warning logging level
- *
- * @def   LOG_ERROR
- * @brief ERROR logging level
- *
- * @def   NO_LOGGING
- * @brief No logging in System
- *
- * This series of defines are here as they should be included very early. At 
- * leasy before the serial logging code. These macros are used to conditionally
- * compile debugging code out of an executable. The actual logging level of the
- * build should be defined in libesoup_config.h
- */
-#define LOG_DEBUG   0
-#define LOG_INFO    1
-#define LOG_WARNING 2
-#define LOG_ERROR   3
-#define NO_LOGGING  4
-
-/**
  *  serial_logging_init()
  *
  * This function is only defined for Code compiled for the Microchip
@@ -102,25 +75,25 @@ extern result_t serial_logging_exit(void);
  * XC16 Compiler does support Variadic Macros see:
  * https://gcc.gnu.org/onlinedocs/cpp/Variadic-Macros.html
  */
-#if defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG)
+#if defined(DEBUG_FILE) && (SYS_LOG_LEVEL >= LOG_DEBUG)
 #define LOG_D(...)  serial_log(LOG_DEBUG, TAG, __VA_ARGS__);
 #else
 #define LOG_D(...)
 #endif
 
-#if defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_INFO)
+#if defined(DEBUG_FILE) && (SYS_LOG_LEVEL >= LOG_INFO)
 #define LOG_I(...)  serial_log(LOG_INFO, TAG, __VA_ARGS__);
 #else
 #define LOG_I(...)
 #endif
 
-#if defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_WARNING)
+#if defined(DEBUG_FILE) && (SYS_LOG_LEVEL >= LOG_WARNING)
 #define LOG_W(...)  serial_log(LOG_WARNING, TAG, __VA_ARGS__);
 #else
 #define LOG_W(...)
 #endif
 
-#if (SYS_LOG_LEVEL <= LOG_ERROR)
+#if (SYS_LOG_LEVEL >= LOG_ERROR)
 #define LOG_E(...)  serial_log(LOG_ERROR, TAG, __VA_ARGS__);
 #endif
 
