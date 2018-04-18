@@ -139,7 +139,7 @@
   </sourceRootList>
   <projectmakefile>Makefile</projectmakefile>
   <confs>
-    <conf name="default" type="2">
+    <conf name="dsPIC33EP256MU806" type="2">
       <toolsSet>
         <developmentServer>localhost</developmentServer>
         <targetDevice>dsPIC33EP256MU806</targetDevice>
@@ -344,7 +344,6 @@
         <property key="UART 3" value="true"/>
         <property key="UART 4" value="true"/>
         <property key="USB" value="true"/>
-        <property key="firmware.download.all" value="false"/>
         <property key="hwtoolclock.frcindebug" value="false"/>
         <property key="memories.aux" value="false"/>
         <property key="memories.bootflash" value="true"/>
