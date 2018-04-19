@@ -2043,6 +2043,7 @@ PREDEFINED             = "DOXYGEN" \
                          "__PIC24FJ256GB106__" \
                          "__PIC24FJ64GB106__" \
                          "__dsPIC33EP256MU806__" \
+			 "SYS_DEBUG_BUILD" \
 			 "SYS_HW_TIMERS" \
 			 "SYS_SW_TIMERS" \
 			 "SYS_NUMBER_OF_SW_TIMERS 5" \

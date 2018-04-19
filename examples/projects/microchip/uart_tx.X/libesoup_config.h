@@ -1,11 +1,9 @@
-/*
+/**
+ * @file libesoup/examples/projects/microchip/uart_tx.X/libesoup_config.h
  *
- * file libesoup/examples/projects/microchip/uart_tx.X/libesoup_config.h
+ * @author John Whitmore
  *
- * author John Whitmore
- *
- * This file contains an example libesoup_config.h configuration file for 
- * working with uarts. 
+ * @brief libesoup configuration file for working with uarts. 
  *
  * Copyright 2017-2018 electronicSoup Limited
  *
@@ -19,7 +17,7 @@
  *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *   GNU General Public License for more details.
  *
- *   You should have received a copy of the GNU General Public License
+ *   You should have received a copy of the GNU Lesser General Public License
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
@@ -36,6 +34,8 @@
 //#define SYS_CLOCK_FREQ 8000000     // 8MHz
 #define SYS_CLOCK_FREQ 60000000    // 60MHz
 #endif
+
+#define SYS_DEBUG_BUILD
 
 #define SYS_HW_TIMERS
 

@@ -161,7 +161,7 @@ result_t serial_logging_init(void)
 #ifdef SYS_DEBUG_BUILD
 uint16_t serial_buffer_count(void)
 {
-	return(uart_buffer_count(&serial_uart));	
+	return(uart_tx_buffer_count(&serial_uart));	
 }
 #endif
 
