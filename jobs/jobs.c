@@ -1,10 +1,10 @@
 /**
  *
- * \file libesoup/jobs/jobs.c
+ * @file libesoup/jobs/jobs.c
  *
- * Functions for using system Jobs.
- *
- * The first uart port is used by the logger. See libesoup/logger
+ * @author John Whitmore
+ * 
+ * @brief Functions for using system Jobs.
  *
  * Copyright 2017-2018 electronicSoup Limited
  *
@@ -89,9 +89,7 @@ result_t jobs_execute(void)
 
                         function(data);
                 } else {
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
                         LOG_E("Bad job at %d\n\r", read_index);
-#endif
                         rc = -ERR_GENERAL_ERROR;
                 }
 	}

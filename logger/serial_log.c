@@ -1,8 +1,10 @@
 /**
  *
- * \file libesoup/logger/serial_port.c
+ * @file libesoup/logger/serial_log.c
  *
- * Functions for initialisation of the Serial Port.
+ * @author John Whitmore
+ *
+ * @brief Functions for initialisation of the Logging Serial Port.
  *
  * Copyright 2017-2018 electronicSoup Limited
  *
@@ -48,8 +50,8 @@
 #error libesoup_config.h should define SYS_UART_TX_BUFFER_SIZE (see libesoup/examples/libesoup_config.h)
 #endif
 #else
-#ifndef SERIAL_LOGGING_TX_PIN
-#error libesoup_config.h should include a board file which defines SERIAL_LOGGING_TX_PIN (see libesoup/examples/libesoup_config.h)
+#ifndef BRD_SERIAL_LOGGING_TX_PIN
+#error libesoup_config.h should include a board file which defines BRD_SERIAL_LOGGING_TX_PIN (see libesoup/examples/libesoup_config.h)
 #endif
 #endif
 
@@ -74,9 +76,13 @@ static const char error_string[LEVEL_STRING_LEN + 1]   = "E-";
 /*
  * Local helper functions
  */
+#ifdef XC16
 static void es_printf(const char * fmt, va_list args);
+#endif // #ifdef XC16
 static uint8_t *itoa(uint16_t num, uint8_t *str, uint8_t base);
+#ifdef XC16
 static uint8_t *itoa32bit(uint32_t num, uint8_t *str, uint8_t base);
+#endif
 static uint16_t strlen(char *string);
 static void reverse(uint8_t str[], uint16_t length);
 
@@ -115,19 +121,13 @@ result_t serial_logging_init(void)
 	/*
 	 * Serial Port pin configuration should be defined
 	 * in include file libesoup_config.h
-	 */
-//#ifdef SERIAL_LOGGING_RX_ENABLE
-//        SERIAL_LOGGING_RX_DDR = INPUT_PIN;
-//	UART_1_RX = SERIAL_LOGGING_RX_PIN;
-//	IEC0bits.U1RXIE = 1;
-//#endif // SERIAL_LOGGING_RX_ENABLE
-        /*
+	 *
          * Reserve a uart for the RS232 Comms
          */
         serial_uart.baud = SYS_SERIAL_LOGGING_BAUD;
-        serial_uart.tx_pin = SERIAL_LOGGING_TX_PIN;
-#ifdef SERIAL_LOGGING_RX_ENABLE
-        serial_uart.rx_pin = SERIAL_LOGGING_RX_PIN;
+        serial_uart.tx_pin = BRD_SERIAL_LOGGING_TX_PIN;
+#ifdef SYS_SERIAL_LOGGING_RX_ENABLE
+        serial_uart.rx_pin = BRD_SERIAL_LOGGING_RX_PIN;
 #else
         serial_uart.rx_pin = INVALID_PIN;
 #endif
@@ -152,15 +152,16 @@ result_t serial_logging_init(void)
 	 * first character on the channel
 	 */
 	for (delay = 0; delay < 0x100; delay++) Nop();
-
+#ifdef XC16
 	serial_printf("\n\r\n\r");
+#endif
         return(0);
 }
 
 #ifdef SYS_DEBUG_BUILD
 uint16_t serial_buffer_count(void)
 {
-	return(uart_buffer_count(&serial_uart));	
+	return(uart_tx_buffer_count(&serial_uart));	
 }
 #endif
 
@@ -268,6 +269,7 @@ void serial_log(const char* fmt, ...)
 }
 #endif // defined(XC16) || defined(__XC8)
 
+#if defined(XC16)
 void serial_printf(const char * fmt, ...)
 {
 	result_t  rc;
@@ -336,7 +338,9 @@ void serial_printf(const char * fmt, ...)
 	
 	va_end(args);
 }
+#endif // #if defined(XC16)
 
+#ifdef XC16
 static void es_printf(const char * fmt, va_list args)
 {
 	result_t  rc;
@@ -400,6 +404,7 @@ static void es_printf(const char * fmt, va_list args)
 		ptr++;
 	}
 }
+#endif // #if defined(XC16)
 
 result_t serial_logging_exit(void)
 {
@@ -481,7 +486,7 @@ static uint8_t *itoa32bit(uint32_t num, uint8_t *str, uint8_t base)
 
 	return str;
 }
-#endif
+#endif // XC16
 
 static uint16_t strlen(char *string)
 {
@@ -513,7 +518,7 @@ static void reverse(uint8_t str[], uint16_t length)
  */
 void putch(char character)
 {
-        result_t rc = SUCCESS;
+        result_t rc;
 
         rc = uart_tx_char(&serial_uart, character);
 }

@@ -1,5 +1,5 @@
 /**
- * @file libesoup/examples/main_job.c
+ * @file libesoup/examples/main_jobs.c
  *
  * @author John Whitmore
  * 

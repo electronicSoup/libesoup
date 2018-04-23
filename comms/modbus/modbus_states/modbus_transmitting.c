@@ -1,10 +1,12 @@
 /**
  *
- * \file libesoup/modbus/modbus_transmitting.c
+ * @file libesoup/comms/modbus/modbus_states/modbus_transmitting.c
  *
- * This file contains code for Modbus transmission
+ * @author John Whitmore
  *
- * Copyright 2017 electronicSoup Limited
+ * @brief Code for Modbus transmission
+ *
+ * Copyright 2017-2018 electronicSoup Limited
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 2 of the GNU Lesser General Public License
@@ -37,11 +39,7 @@ static void tx_finished(void *);
 
 void set_modbus_transmitting_state(struct modbus_channel *channel)
 {
-#ifdef SYS_SERIAL_LOGGING
-#if (SYS_SERIAL_LOGGING) && define(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	LOG_D("set_modbus_transmitting_state()\n\r");
-#endif
-#endif // SYS_SERIAL_LOGGING
 	channel->process_timer_15_expiry = NULL;
 	channel->process_timer_35_expiry = NULL;
 	channel->transmit = NULL;
@@ -54,11 +52,7 @@ void tx_finished(void *data)
 {
         struct modbus_channel *channel = (struct modbus_channel *)data;
 
-#ifdef SYS_SERIAL_LOGGING
-#if (defined(SYS_SERIAL_LOGGING && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
         LOG_D("tx_finished()\n\r");
-#endif
-#endif // SYS_SERIAL_LOGGING
 	set_modbus_awaiting_response_state(channel);
 }
 

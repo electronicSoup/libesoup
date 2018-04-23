@@ -1,9 +1,10 @@
 /**
+ * @file libesoup/gpio/adc.c
  *
- * \file libesoup/comms/can/frame_dispatch.h
- *
- * Core SYS_CAN_BUS Functionality of electronicSoup CAN code
- *
+ * @author John Whitmore
+ * 
+ * @brief API for ADC functions
+ * 
  * Copyright 2018 electronicSoup Limited
  *
  * This program is free software; you can redistribute it and/or modify
@@ -19,7 +20,8 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  *
  */
-extern void frame_dispatch_init(void);
-extern void frame_dispatch_handle_frame(can_frame *message);
+#include "libesoup_config.h"
 
+typedef void (*adc_handler_t)(enum pin_t, uint16_t);
 
+extern result_t adc_sample(enum pin_t pin, adc_handler_t);

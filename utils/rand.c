@@ -1,8 +1,9 @@
 /**
+ * @file libesoup/utils/rand.c
  *
- * \file libesoup/utils/rand.c
+ * @author John Whitmore
  *
- * Random initialisation function for the electronicSoup Cinnamon Bun
+ * @brief Random initialisation function for the electronicSoup Cinnamon Bun
  *
  * Copyright 2017-2018 electronicSoup Limited
  *
@@ -72,9 +73,7 @@ void random_init(void)
 	}
 #endif
 	
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	LOG_D("Seed 0x%lx\n\r", seed);
-#endif
 	srand(seed);
 }
 

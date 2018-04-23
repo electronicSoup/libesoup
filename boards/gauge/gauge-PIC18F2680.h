@@ -1,16 +1,12 @@
 /**
  *
- * @file libesoup/processors/guage-PIC18F2680.h
+ * @file libesoup/boards/gauge/gauge-PIC18F2680.h
  *
  * @author John Whitmore
  *
- * This file contains an example libesoup libesoup_config.h configuration file. 
+ * Board file for the prototype PIC18F2680 based Gauge board.
  *
- * The libesoup library of source code expects a libesoup_config.h header file to exist
- * in your include path. The file contains the various switches and definitions
- * which configure the various features of the library.
- *
- * Copyright 2017 electronicSoup Limited
+ * Copyright 2017-2018 electronicSoup Limited
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU Lesser General Public License as published by
@@ -34,6 +30,6 @@
 /**
  * @brief Crystal Frequency of the Hardware Device.
  */
-#define CRYSTAL_FREQ 16000000
+#define BRD_CRYSTAL_FREQ 16000000
 
 #endif // _GUAGE-PIC18F2680_H

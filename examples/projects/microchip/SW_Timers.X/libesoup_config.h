@@ -1,13 +1,12 @@
 /**
- *
- * @file libesoup_config.h
+ * @file libesoup/examples/projects/microchip/SW_Timers.X/libesoup_config.h
  *
  * @author John Whitmore
  *
- * This file contains an example libesoup_config configuration file for
+ * @brief This file contains an example libesoup_config configuration file for
  * working with Software Based timers. 
  *
- * Copyright 2017 electronicSoup Limited
+ * Copyright 2017-2018 electronicSoup Limited
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -25,8 +24,6 @@
  */
 #ifndef _LIBESOUP_CONFIG_H
 #define _LIBESOUP_CONFIG_H
-
-#include <xc.h>
 
 #if defined(__dsPIC33EP256MU806__)
 //#define CLOCK_FREQ 8000000     // 8MHz
@@ -56,6 +53,5 @@
  *
  *******************************************************************************
  */
-
 
 #endif //_LIBESOUP_CONFIG_H

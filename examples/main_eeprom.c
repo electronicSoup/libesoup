@@ -1,9 +1,9 @@
 /*
  *
- * \file libesoup/utils/eeprom.c
+ * @file libesoup/utils/eeprom.c
  *
- * eeprom functions of the electronicSoup Cinnamon Bun
- *
+ * @author John Whitmore
+ * 
  * Copyright 2017-2018 electronicSoup Limited
  *
  * This program is free software; you can redistribute it and/or modify
@@ -31,9 +31,9 @@ static const char *TAG = "Main";
  * Check required system.h defines are found
  */
 #ifndef SYS_LOG_LEVEL
-#error system.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
+#error libesoup_config.h file should define SYS_LOG_LEVEL (see es_lib/examples/system.h)
 #endif
-#endif
+#endif // SYS_SERIAL_LOGGING
 
 #include "libesoup/hardware/eeprom.h"
 #include "libesoup/timers/sw_timers.h"
@@ -108,7 +108,7 @@ void exp_func(timer_id timer, union sigval data)
 			LOG_D("Read back a value of %d\n\r", (uint8_t)rc);
 		}
 		eeprom_address++;
-		if(eeprom_address == EEPROM_MAX_ADDRESS) eeprom_address = 0;
+		if(eeprom_address == BRD_EEPROM_MAX_ADDRESS) eeprom_address = 0;
 		eeprom_test_rd = 0;
 	}
 }	

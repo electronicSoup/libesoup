@@ -1,8 +1,10 @@
 /**
  *
- * \file libesoup/comms/can/frame_dispatch.c
+ * @file libesoup/comms/can/frame_dispatch.c
  *
- * CAN L2 Functionality for dispatching received frames
+ * @author John Whitmore
+ * 
+ * @brief CAN L2 Functionality for dispatching received frames
  *
  * Copyright 2017-2018 electronicSoup Limited
  *
@@ -60,7 +62,7 @@ typedef struct
 static can_register_t registered_handlers[SYS_CAN_FRAME_HANDLER_ARRAY_SIZE];
 static can_l2_frame_handler_t unhandled_handler;
 
-void frame_dispatch_init(void)
+result_t frame_dispatch_init(void)
 {
 	uint16_t loop;
 	
@@ -75,16 +77,15 @@ void frame_dispatch_init(void)
 		registered_handlers[loop].target.filter = 0x00;
 		registered_handlers[loop].target.handler = (can_l2_frame_handler_t)NULL;
 	}
+	return(0);
 }
 
 result_t frame_dispatch_reg_handler(can_l2_target_t *target)
 {
 	uint8_t loop;
 
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_INFO))
 	LOG_I("sys_l2_can_dispatch_reg_handler mask 0x%lx, filter 0x%lx\n\r",
 		target->mask, target->filter);
-#endif
 	/*
 	 * clean up the target in case the caller has included spurious bits
 	 */
@@ -97,9 +98,7 @@ result_t frame_dispatch_reg_handler(can_l2_target_t *target)
 	// Find a free slot
 	for(loop = 0; loop < SYS_CAN_L2_HANDLER_ARRAY_SIZE; loop++) {
 		if(registered_handlers[loop].used == FALSE) {
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_INFO))
 			LOG_I("Target stored at target %d\n\r", loop);
-#endif
 			registered_handlers[loop].used = TRUE;
 			registered_handlers[loop].target.mask = target->mask;
 			registered_handlers[loop].target.filter = target->filter;
@@ -135,14 +134,7 @@ void frame_dispatch_handle_frame(can_frame *frame)
 	uint8_t loop;
 	boolean found = FALSE;
 
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	LOG_D("frame_dispatch_handle_frame(%lx)\n\r", frame->can_id);
-#endif
-//	printf("L2_CanDispatcherL2MsgHandler 0x%lx [", frame->can_id);
-//	for(loop = 0; loop < frame->can_dlc; loop++) {
-//		printf("0x%2x,", frame->data[loop]);
-//	}
-//	printf("]\n\r");
 
 	for (loop = 0; loop < SYS_CAN_L2_HANDLER_ARRAY_SIZE; loop++) {
 		if(registered_handlers[loop].used) {
@@ -157,9 +149,7 @@ void frame_dispatch_handle_frame(can_frame *frame)
 		/*
 		 * No handler found so pass the received message to the Application
 		 */
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 		LOG_D("No Handler for 0x%lx\n\r", frame->can_id);
-#endif
 	}
 }
 

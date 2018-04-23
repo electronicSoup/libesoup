@@ -1,8 +1,10 @@
 /**
  *
- * \file libesoup/comms/spi/spi.c
+ * @file libesoup/comms/spi/spi.c
  *
- * SPI Interface functions for the electronicSoup Cinnamon Bun
+ * @author John Whitmore
+ * 
+ * @brief SPI Interface functionality 
  *
  * Copyright 2017-2018 electronicSoup Limited
  *
@@ -67,7 +69,7 @@ struct spi_device device[SYS_SPI_NUM_DEVICES];
 
 static int16_t	channel_init(uint16_t channel);
 
-void spi_init(void)
+result_t spi_init(void)
 {
 	uint8_t loop;
 
@@ -79,6 +81,8 @@ void spi_init(void)
 	for(loop = 0; loop < SYS_SPI_NUM_DEVICES; loop++) {
 		device[loop].channel = 0xFF;
 	}
+	
+	return(0);
 }
 
 /*
@@ -107,9 +111,9 @@ int16_t spi_channel_init(uint8_t ch, struct spi_io_channel *io)
 		/*
 		 * Setup pins
 		 */
-		gpio_set(channel[ch].io.miso, INPUT_PIN, 0);
-		gpio_set(channel[ch].io.mosi, OUTPUT_PIN, 0);
-		gpio_set(channel[ch].io.sck,  OUTPUT_PIN, 0);
+		gpio_set(channel[ch].io.miso, GPIO_MODE_DIGITAL_INPUT, 0);
+		gpio_set(channel[ch].io.mosi, GPIO_MODE_DIGITAL_OUTPUT, 0);
+		gpio_set(channel[ch].io.sck,  GPIO_MODE_DIGITAL_OUTPUT, 0);
 			
 		return(channel_init(ch));
 	}
@@ -163,7 +167,7 @@ static int16_t	channel_init(uint16_t ch)
 	case 1:
 		rc = set_peripheral_input(channel[ch].io.miso);
 		RC_CHECK;
-		PPS_I_SPI3DI = rc;
+		PPS_I_SPI_3_DI = rc;
 		rc = set_peripheral_output(channel[ch].io.mosi, PPS_O_SPI3DO);
 		RC_CHECK
 		rc = set_peripheral_output(channel[ch].io.sck,  PPS_O_SPI3CLK);

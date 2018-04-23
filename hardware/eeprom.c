@@ -1,8 +1,9 @@
 /**
+ * @file libesoup/hardware/eeprom.c
  *
- * \file libesoup/utils/eeprom.c
+ * @author John Whitmore
  *
- * eeprom functions of the electronicSoup Cinnamon Bun
+ * @brief eeprom functions of the electronicSoup Cinnamon Bun
  *
  * Copyright 2017-2018 electronicSoup Limited
  *
@@ -96,15 +97,15 @@ static result_t clear_write_in_progress(void)
 	uint8_t  status;
 	
 	do {
-		EEPROM_Select
+		BRD_EEPROM_Select
 		Nop();
 		rc = spi_write_byte(device_id, SPI_EEPROM_STATUS_READ);
 		if(rc < 0) {
-			EEPROM_DeSelect
+			BRD_EEPROM_DeSelect
 			return(rc);
 		}
 		rc = spi_write_byte(device_id, 0x00);
-		EEPROM_DeSelect
+		BRD_EEPROM_DeSelect
 		RC_CHECK
 			
 		status = (uint8_t)rc;
@@ -127,8 +128,8 @@ result_t eprom_init(uint8_t spi_chan)
 	RC_CHECK;
 	device_id = (uint8_t)rc;
 	
-	rc = gpio_set(EEPROM_CS_PIN, GPIO_MODE_DIGITAL_OUTPUT, 1);
-	EEPROM_DeSelect
+	rc = gpio_set(BRD_EEPROM_CS_PIN, GPIO_MODE_DIGITAL_OUTPUT, 1);
+	BRD_EEPROM_DeSelect
 		
 	return(0);
 }
@@ -151,18 +152,18 @@ result_t eeprom_read(uint16_t address)
 	result_t rc;
 	uint8_t  byte;
 	
-	if(address <= EEPROM_MAX_ADDRESS) {
+	if(address <= BRD_EEPROM_MAX_ADDRESS) {
 		rc = spi_lock(device_id);
 		RC_CHECK
 		
 		rc = clear_write_in_progress();
 		RC_CHECK
 			
-		EEPROM_Select
+		BRD_EEPROM_Select
 		rc = spi_write_byte(device_id, SPI_EEPROM_READ);
 		rc = spi_write_byte(device_id, address);
 		rc = spi_write_byte(device_id, 0x00);
-		EEPROM_DeSelect
+		BRD_EEPROM_DeSelect
 		RC_CHECK
 			
 		byte = (uint8_t)rc;
@@ -191,18 +192,18 @@ result_t eeprom_write(uint16_t address, uint8_t data)
 {
 	result_t rc;
 	
-	if(address <= EEPROM_MAX_ADDRESS) {
+	if(address <= BRD_EEPROM_MAX_ADDRESS) {
 		rc = spi_lock(device_id);
 		RC_CHECK
 		rc = clear_write_in_progress();
 		RC_CHECK
 			
-		EEPROM_Select
+		BRD_EEPROM_Select
 		rc = spi_write_byte(device_id, SPI_EEPROM_WRITE_ENABLE);
-		EEPROM_DeSelect
+		BRD_EEPROM_DeSelect
 		RC_CHECK
 		Nop();
-		EEPROM_Select
+		BRD_EEPROM_Select
 
 		rc = spi_write_byte(device_id, SPI_EEPROM_WRITE);
 		RC_CHECK
@@ -210,12 +211,12 @@ result_t eeprom_write(uint16_t address, uint8_t data)
 		RC_CHECK
 		rc = spi_write_byte(device_id, data);
 		RC_CHECK
-		EEPROM_DeSelect
+		BRD_EEPROM_DeSelect
 		Nop();
-		EEPROM_Select
+		BRD_EEPROM_Select
 		rc = spi_write_byte(device_id, SPI_EEPROM_WRITE_DISABLE);
 		RC_CHECK
-		EEPROM_DeSelect
+		BRD_EEPROM_DeSelect
 
 		rc = spi_unlock(device_id);
 		RC_CHECK
@@ -240,11 +241,9 @@ result_t eeprom_erase(uint16_t start_address)
 	result_t rc;
 	uint16_t loop;
 
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_INFO))
         LOG_I("eeprom_erase(0x%x)\n\r", start_address);
-#endif
-	if(start_address <= EEPROM_MAX_ADDRESS) {
-		for (loop = start_address; loop <= EEPROM_MAX_ADDRESS ; loop++) {
+	if(start_address <= BRD_EEPROM_MAX_ADDRESS) {
+		for (loop = start_address; loop <= BRD_EEPROM_MAX_ADDRESS ; loop++) {
 			asm ("CLRWDT");
 			rc = eeprom_write(loop, 0x00);
 			RC_CHECK
@@ -252,9 +251,7 @@ result_t eeprom_erase(uint16_t start_address)
 
 		return (0);
 	}
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
         LOG_E("eeprom_erase Address Range Error!\n\r");
-#endif
 	return (-ERR_ADDRESS_RANGE);
 }
 
@@ -284,9 +281,7 @@ result_t eeprom_str_read(uint16_t address, uint8_t *buffer, uint16_t length)
 	uint8_t       num_read = 0;
 	result_t      rc;
 
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	LOG_D("eeprom_str_read()\n\r");
-#endif
 	ptr = buffer;
 
 	rc = eeprom_read(address++);
@@ -305,9 +300,7 @@ result_t eeprom_str_read(uint16_t address, uint8_t *buffer, uint16_t length)
 		character = (uint8_t)rc;
 	}
 	*ptr = 0x00;
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	LOG_D("eeprom_str_read() read %s\n\r", buffer);
-#endif
 	return (num_read);
 }
 
@@ -332,23 +325,17 @@ result_t  eeprom_str_write(uint16_t address, uint8_t *buffer, uint16_t length)
 	uint16_t      wrote = 0;
 	result_t      rc = 0;
 
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	LOG_D("eeprom_str_write()\n\r");
-#endif
 	ptr = buffer;
 
 	while ( (*ptr) && (rc >= 0) && (wrote < (length - 1))) {
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 		LOG_D("Write to location %d value 0x%x\n\r", address, *ptr);
-#endif
 		rc = eeprom_write(address++, *ptr++);
 		RC_CHECK
 		wrote++;
 	}
 
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	LOG_D("Write loop finished\n\r");
-#endif
 	rc = eeprom_write(address, 0x00);
 	RC_CHECK
 

@@ -34,7 +34,7 @@
 #if defined(__dsPIC33EP256MU806__)
 //#define SYS_CLOCK_FREQ 8000000     // 8MHz
 //#define SYS_CLOCK_FREQ 30000000    // 30MHz
-//#define SYS_CLOCK_FREQ 60000000    // 60MHz
+#define SYS_CLOCK_FREQ 60000000    // 60MHz
 #endif
 
 #define SYS_HW_TIMERS

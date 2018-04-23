@@ -1,8 +1,9 @@
 /**
+ * @file libesoup/timers/delay.c
  *
- * \file libesoup/utils/sleep.c
+ * @author John Whitmore
  *
- * Functionality for delaying the uC
+ * @brief Functionality for delaying the uC
  *
  * Copyright 2017-2018 electronicSoup Limited
  *
@@ -25,7 +26,11 @@
 
 #ifdef SYS_SERIAL_LOGGING
 #define DEBUG_FILE
+#if defined(XC16)
 __attribute__ ((unused)) static const char *TAG = "DELAY";
+#elif defined(__XC8)
+static const char *TAG = "DELAY";
+#endif // XC16 XC8
 #include "libesoup/logger/serial_log.h"
 /*
  * Check required libesoup_config.h defines are found

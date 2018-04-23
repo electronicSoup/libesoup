@@ -1,12 +1,14 @@
 /**
  *
- * \file libesoup/usb/android/usb_config.c
+ * @file libesoup/comms/usb/android/usb_config.c
+ *
+ * @author John Whitmore
  *
  * File sets up the Target Peripheral List required by the Microchip 
  * USB Host stack. It sets up the deriver functions and the VID/PID
  * numbers supported by this Android Driver.
  *
- * Copyright 2017 - 2018 electronicSoup Limited
+ * Copyright 2017-2018 electronicSoup Limited
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 2 of the GNU Lesser General Public License

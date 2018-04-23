@@ -1,12 +1,13 @@
 /*
- * \file libesoup/timers/hw_timers.h
+ * @file libesoup/timers/hw_timers.h
  *
- * \brief Hardware Timer API definitions
+ * @author John Whitmore
+ *
+ * @brief Hardware Timer API definitions
  * 
  * To include Hardware timer functionality in a build the configuration switch
  * SYS_HW_TIMERS must be included in the libesoup_config.h file.
  * 
- *
  * Copyright 2017-2018 electronicSoup Limited
  *
  * This program is free software; you can redistribute it and/or modify
@@ -22,7 +23,7 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 /**
- * \brief API Functions for using hardware timers.
+ * @brief API Functions for using hardware timers.
  * 
  * These API Functions are enabled in a build by defining SYS_HW_TIMERS in the
  * libesoup_config.h configuration file.
@@ -43,45 +44,15 @@
 
 #include "libesoup/timers/time.h"
 
-#if defined(__dsPIC33EP256MU806__)
-#if (SYS_CLOCK_FREQ == 8000000)
-#define HW_TIMER_OVERHEAD (123)
-#elif (SYS_CLOCK_FREQ == 30000000)
-#define HW_TIMER_OVERHEAD (33)
-#elif (SYS_CLOCK_FREQ == 60000000)
-#define HW_TIMER_OVERHEAD (16)
-#else
-#error Unprogrammed System Clock Frequency!
-#endif
-#elif defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__)
-#elif defined(__18F4585)
-#endif
-
-
-
 /**
- * \name Hardware Timers 
+ * @name Hardware Timers 
  */
 /**@{*/
-/*
- * \ingroup Timers
- * \function hw_timer_init()
- * \brief Function to initialisation the data structures used to manage the 
- *        micro-controller's hardware timers. Auto called by \ref libesoup_init()
- * 
- * Warning: NO runtime checks are performed to ensure that this initialisation 
- * function has been called before a timer is started! In other words you can
- * call a function to start Hardware timer whilst the management data structures
- * are in an undefined/uninitialised state. Make sure that your project calls
- * \ref libesoup_init() prior to any API Calls
- */
-extern void     hw_timer_init(void);
 
 #if (SYS_LOG_LEVEL != NO_LOGGING)
 /**
- * \ingroup Timers
- * \function hw_timer_active_count()
- * \brief This Debugging function is only included in a build if debugging
+ * @ingroup Timers
+ * @brief This Debugging function is only included in a build if debugging
  * is enabled. It simply returns the number of currently active Hardware 
  * timers running in the system.
  */
@@ -89,12 +60,10 @@ extern uint8_t hw_timer_active_count(void);
 #endif
 
 /**
- * \ingroup Timers
- * \function hw_timer_start()
+ * @ingroup Timers
  * @brief Function to start a uC hardware timer.
  * 
- * @param *timer    The timer_id returned to the caller for the started timer \ref timer_id
- * @param *request  Structure containing all details of timer to be created \ref timer_req
+ * @param *request  Structure containing all details of timer to be created @ref timer_req
  * @return Satus of the operation:
  *             - SUCCESS
  *             - ERR_BAD_INPUT_PARAMETER
@@ -107,24 +76,23 @@ extern uint8_t hw_timer_active_count(void);
 extern timer_id hw_timer_start(struct timer_req *request);
 
 /**
- * \brief Function to pause a started hardware timer
+ * @brief Function to pause a started hardware timer
  * 
- * \param timer The timer identifier of the hardware timer to pause.
- * \return Status of the operation:
+ * @param timer The timer identifier of the hardware timer to pause.
+ * @return Status of the operation:
  *             - SUCCESS
  *             - ERR_BAD_INPUT_PARAMETER
  */
 extern timer_id hw_timer_pause(timer_id timer);
 
 /**
- * \ingroup Timers
- * \function hw_timer_restart
- * \brief Function to restart a previously paused hardware timer.
+ * @ingroup Timers
+ * @brief Function to restart a previously paused hardware timer.
  * 
  * @param *timer Identifier of the hardware timer, previously started with a 
- *                 call to \ref hw_timer_start(), to be restart with new
- *                 parameters for duration etc. \req timer_id
- * @param *request  Structure containing all details of timer to be created \ref timer_req
+ *                 call to @ref hw_timer_start(), to be restart with new
+ *                 parameters for duration etc. @ref timer_id
+ * @param *request  Structure containing all details of timer to be created @ref timer_req
  * @return Satus of the operation:
  *             - SUCCESS
  *             - ERR_BAD_INPUT_PARAMETER
@@ -132,18 +100,16 @@ extern timer_id hw_timer_pause(timer_id timer);
 extern timer_id hw_timer_restart(timer_id timer, struct timer_req *request);
 
 /**
- * \ingroup Timers
- * \function hw_timer_cancel()
- * \brief Function to cancel a hardware timer running in the system.
+ * @ingroup Timers
+ * @brief Function to cancel a hardware timer running in the system.
  * 
- * \param timer Identifier of the timer, previously started, to be cancelled \ref timer_id
+ * @param timer Identifier of the timer, previously started, to be cancelled @ref timer_id
  */
 extern timer_id     hw_timer_cancel(timer_id timer);
 
 /**
- * \ingroup Timers
- * \function hw_timer_cancel_all()
- * \brief Function to cancel all running hardware timers running in the system.
+ * @ingroup Timers
+ * @brief Function to cancel all running hardware timers running in the system.
  */
 extern void     hw_timer_cancel_all();
 

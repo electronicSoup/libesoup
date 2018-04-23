@@ -1,8 +1,9 @@
 /**
+ * @file libesoup/comms/can/l2_dsPIC33EP256MU806.c
  *
- * \file libesoup/comms/can/l2_dsPIC33EP256MU806.c
- *
- * Core SYS_CAN Functionality of electronicSoup CAN code
+ * @author John Whitmore
+ * 
+ * @brief Core SYS_CAN Functionality of electronicSoup CAN code
  *
  * Copyright 2017-2018 electronicSoup Limited
  *
@@ -21,8 +22,6 @@
  */
 #if defined(__dsPIC33EP256MU806__)
 
-#include <p33EP256MU806.h>
-
 #include "libesoup_config.h"
 
 #ifdef SYS_CAN_BUS
@@ -40,20 +39,42 @@ static const char *TAG = "dsPIC33_CAN";
 #include "libesoup/errno.h"
 #include "libesoup/gpio/gpio.h"
 #include "libesoup/gpio/peripheral.h"
+#include "libesoup/timers/delay.h"
 #include "libesoup/status/status.h"
-#include "libesoup/comms/can/l2_dsPIC33EP256MU806.h"
 #include "libesoup/comms/can/can.h"
-#include "libesoup/comms/can/frame_dispatch.h"
 #ifdef SYS_CAN_PING_PROTOCOL
 #include "libesoup/comms/can/ping.h"
 #endif // SYS_CAN_PING_PROTOCOL
-
+#if defined(SYS_SW_TIMERS) && defined(SYS_DEBUG_BUILD)
+#include "libesoup/timers/sw_timers.h"
+#endif
 /*
  * Check for required System Switches
  */
 #ifndef SYS_SYSTEM_STATUS
 #error "CAN Module relies on System Status module libesoup.h must define SYS_SYSTEM_STATUS"
 #endif
+
+#ifdef SYS_CAN_BAUD_AUTO_DETECT
+uint16_t rx_frame_count = 0;
+
+extern result_t can_bad_start_baud_scan();
+#endif  // SYS_CAN_BAUD_AUTO_DETECT
+
+#define NORMAL_MODE       0b000
+#define DISABLE_MODE      0b001
+#define LOOPBACK_MODE     0b010
+#define LISTEN_ONLYMODE   0b011
+#define CONFIG_MODE       0b100
+#define LISTEN_ALL_MODE   0b111
+
+typedef struct can_mask
+{
+    uint8_t   *sidh;
+    uint8_t   *sidl;
+    uint8_t   *eidh;
+    uint8_t   *eidl;
+} can_mask;
 
 #define MASK_0    0b00
 #define MASK_1    0b01
@@ -62,8 +83,10 @@ static const char *TAG = "dsPIC33_CAN";
 #define MEMORY_MAP_WIN_CONFIG_STATUS  C1CTRL1bits.WIN = 0;
 #define MEMORY_MAP_WIN_MASK_FILTERS   C1CTRL1bits.WIN = 1;
 
- static status_handler_t status_handler = NULL;
- 
+static status_handler_t   status_handler = NULL;
+static enum can_l2_status current_status;
+static can_baud_rate_t    baud_rate;
+
 struct  __attribute__ ((packed)) can_buffer
 {
         uint16_t ide   :1;
@@ -108,160 +131,164 @@ struct __attribute__ ((packed)) TR_Control
 // WIN Bit = 0
 struct TR_Control *tx_control = (struct TR_Control *)&C1TR01CON;
 
-static void set_mode(ty_can_mode mode);
+static ty_can_l2_mode requested_mode;
+static result_t set_requested_mode();
 
-void __attribute__((__interrupt__, __no_auto_psv__)) _C1RxRdyInterrupt(void)
+static void set_mode(uint8_t mode);
+
+result_t can_l2_bitrate(can_baud_rate_t baud);
+
+static void reset(void)
 {
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-        LOG_D("C1RxRdy Isr\n\r");
-#endif
-        IEC2bits.C1IE = 0x00;
-        IEC2bits.C1RXIE = 0x00;
+	uint8_t          current_mode;
+
+	current_mode = C1CTRL1bits.OPMODE;
+	set_mode(CONFIG_MODE);
+	delay(mSeconds, 5);
+	set_mode(current_mode);
 }
 
 void __attribute__((__interrupt__, __no_auto_psv__)) _C1Interrupt(void)
 {
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-        LOG_D("C1 Isr Flag 0x%x - 0x%x ICODE 0x%x\n\r", C1INTF, C1INTF, C1VECbits.ICODE);
+	if(C1VECbits.ICODE == 0x40) {
+		LOG_E("No ISR C1INTF %x\n\r", C1INTF);
+	}
+	
+	while(C1INTF & 0xff) {
+		// WIN Bit 0 | 1
+		if(C1INTFbits.TBIF) {
+			C1INTFbits.TBIF = 0;
+			LOG_D("TBIF\n\r");
+			if(current_status == can_l2_connecting) {
+				current_status = can_l2_connected;
+				if(status_handler) {
+					status_handler(can_bus_l2_status, current_status, baud_rate);
+				}
+			}
+			C1INTEbits.TBIE   = 0b00;  // Disable this interrupt no longer interested once connected
+		}
+	
+		if(C1INTFbits.RBIF) {
+			C1INTFbits.RBIF = 0;
+			LOG_D("RBIF\n\r");
+#ifdef SYS_CAN_BAUD_AUTO_DETECT
+			rx_frame_count++;
 #endif
-        IEC2bits.C1IE = 0x00;
-        IEC2bits.C1RXIE = 0x00;
-
-	// WIN Bit 0 | 1
-        if(C1INTFbits.TBIF) {
-                C1INTFbits.TBIF = 0;
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-                LOG_D("TBIF\n\r");
-#endif
-        } else if(C1INTFbits.RBIF) {
-                C1INTFbits.RBIF = 0;
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-                LOG_D("RBIF\n\r");
-#endif
-        } else if(C1INTFbits.RBOVIF) {
-                C1INTFbits.RBOVIF = 0;
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-                LOG_D("RBOVIF\n\r");
-#endif
-        } else if(C1INTFbits.FIFOIF) {
-                C1INTFbits.FIFOIF = 0;
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-                LOG_D("FIFOIF\n\r");
-#endif
-        } else if(C1INTFbits.ERRIF) {
-                C1INTFbits.ERRIF = 0;
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-                LOG_D("ERRIF\n\r");
-#endif
-        } else if(C1INTFbits.WAKIF) {
-                C1INTFbits.WAKIF = 0;
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-                LOG_D("WAKIF\n\r");
-#endif
-        } else if(C1INTFbits.IVRIF) {
-                C1INTFbits.IVRIF = 0;
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-                LOG_D("IVRIF\n\r");
-#endif
-        } else if(C1INTFbits.EWARN) {
-                C1INTFbits.EWARN = 0;
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-                LOG_D("EWARN\n\r");
-#endif
-        } else if(C1INTFbits.RXWAR) {
-                C1INTFbits.RXWAR = 0;
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-                LOG_D("RXWAR\n\r");
-#endif
-        } else if(C1INTFbits.TXWAR) {
-                C1INTFbits.TXWAR = 0;
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-                LOG_D("TXWAR\n\r");
-#endif
-        } else if(C1INTFbits.RXBP) {
-                C1INTFbits.RXBP = 0;
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-                LOG_D("RXBP\n\r");
-#endif
-        } else if(C1INTFbits.TXBP) {
-                C1INTFbits.TXBP = 0;
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-                LOG_D("TXBP\n\r");
-#endif
-        } else if(C1INTFbits.TXBO) {
-                C1INTFbits.TXBO = 0;
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-                LOG_D("TXBO\n\r");
-#endif
-        } else {
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-                LOG_D("Unprocessed ISR\n\r");
-#endif
-        }
+		}
+	
+		if(C1INTFbits.RBOVIF) {
+			C1INTFbits.RBOVIF = 0;
+			LOG_D("RBOVIF\n\r");
+		}
+	
+		if(C1INTFbits.FIFOIF) {
+			C1INTFbits.FIFOIF = 0;
+			LOG_D("FIFOIF\n\r");
+		}
+	
+		if(C1INTFbits.ERRIF) {
+			C1INTFbits.ERRIF = 0;
+			LOG_D("ERRIF\n\r");
+		}
+	
+		if(C1INTFbits.WAKIF) {
+			C1INTFbits.WAKIF = 0;
+			LOG_D("WAKIF\n\r");
+		}
+	
+		if(C1INTFbits.IVRIF) {
+			C1INTFbits.IVRIF = 0;
+			LOG_D("IVRIF EC-RX %d  Tx %d\n\r", C1ECbits.RERRCNT, C1ECbits.TERRCNT);
+		}
+	
+		if(C1INTFbits.EWARN) {
+			LOG_D("EWARN\n\r");
+		}
+	
+		if(C1INTFbits.RXWAR) {
+			LOG_D("RXWAR EC %d\n\r", C1ECbits.RERRCNT);
+		}
+	
+		if(C1INTFbits.TXWAR) {
+			LOG_D("TXWAR EC %d\n\r", C1ECbits.TERRCNT);
+		}
+	
+		if(C1INTFbits.RXBP) {
+			LOG_D("RXBP EC %d\n\r", C1ECbits.RERRCNT);
+		}
+	
+		if(C1INTFbits.TXBP) {
+			LOG_D("TXBP EC %d\n\r", C1ECbits.TERRCNT);
+		}
+	
+		if(C1INTFbits.TXBO) {
+			LOG_D("TXBO\n\r");
+		}
+	}
+        IFS2bits.C1IF   = 0x00;
 }
 
-void __attribute__((__interrupt__, __no_auto_psv__)) _DMA0Interrupt(void)
+#if defined(SYS_SW_TIMERS) && defined(SYS_DEBUG_BUILD)
+void exp_fn(timer_id timer, union sigval data)
 {
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-        LOG_D("DMA-0 ISR");
-#endif
-        IFS0bits.DMA0IF = 0;
-        IEC0bits.DMA0IE = DISABLED;
+	LOG_D("EC-RX %d  Tx %d\n\r", C1ECbits.RERRCNT, C1ECbits.TERRCNT);	
 }
-
-void __attribute__((__interrupt__, __no_auto_psv__)) _DMA1Interrupt(void)
-{
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-        LOG_D("DMA-1 ISR");
 #endif
-        IEC0bits.DMA1IE = DISABLED;
-}
 
 /*
  */
-result_t can_l2_init(can_baud_rate_t arg_baud_rate, status_handler_t arg_status_handler)
+result_t can_l2_init(can_baud_rate_t arg_baud_rate, status_handler_t arg_status_handler, ty_can_l2_mode mode)
 {
 	result_t          rc;
 	uint32_t          address;
 	uint8_t           loop;
-	union ty_status   status;
-	
-	status_handler = arg_status_handler;
+#if defined(SYS_SW_TIMERS) && defined(SYS_DEBUG_BUILD)
+	struct timer_req  request;
+#endif
 	
 	if (arg_baud_rate < no_baud) {
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 		LOG_D("L2_CanInit() Baud Rate %s\n\r", can_baud_rate_strings[arg_baud_rate]);
-#endif
+		baud_rate = arg_baud_rate;
+		current_status = can_l2_connecting;
 	} else {
 #ifndef SYS_CAN_BAUD_AUTO_DETECT
 		return (-ERR_BAD_INPUT_PARAMETER);
+#else
+		LOG_D("L2_CanInit() Auto Detect Baud Rate\n\r");
+		current_status = can_l2_detecting_baud;
 #endif
-		// Todo
 	}
+
+#if defined(SYS_SW_TIMERS) && defined(SYS_DEBUG_BUILD)
+	request.units          = Seconds;
+	request.duration       = 10;
+	request.type           = repeat;
+	request.exp_fn         = exp_fn;
+	request.data.sival_int = 0;
+	rc = sw_timer_start(&request);
+	RC_CHECK	
+#endif
+	
+	status_handler = arg_status_handler;
+	requested_mode = mode;
 
         /*
          * Initialise the I/O Pins and peripheral functions
          */
-	rc = gpio_set(CAN_RX_PIN, GPIO_MODE_DIGITAL_INPUT, 0);
+	rc = gpio_set(BRD_CAN_RX_PIN, GPIO_MODE_DIGITAL_INPUT, 0);
 	RC_CHECK
-	rc = PPS_I_CAN1_RX = set_peripheral_input(CAN_RX_PIN);
+	rc = PPS_I_CAN1_RX = set_peripheral_input(BRD_CAN_RX_PIN);
 	RC_CHECK
 	
-	rc = gpio_set(CAN_TX_PIN, GPIO_MODE_DIGITAL_OUTPUT, 0);
+	rc = gpio_set(BRD_CAN_TX_PIN, GPIO_MODE_DIGITAL_OUTPUT, 0);
 	RC_CHECK
-	rc = set_peripheral_output(CAN_TX_PIN, PPS_O_CAN1_TX);
-	RC_CHECK
-
-	/*
-	 * Set the baud rate
-	 */
-	rc = can_l2_bitrate(arg_baud_rate, TRUE);
+	rc = set_peripheral_output(BRD_CAN_TX_PIN, PPS_O_CAN1_TX);
 	RC_CHECK
 
         /*
          * Enter configuration mode
          */
-	set_mode(config);
+	set_mode(CONFIG_MODE);
 
 	MEMORY_MAP_WIN_CONFIG_STATUS
 		
@@ -388,41 +415,84 @@ result_t can_l2_init(can_baud_rate_t arg_baud_rate, status_handler_t arg_status_
          */
 	MEMORY_MAP_WIN_CONFIG_STATUS
         C1INTF = 0x00;
-        C1INTEbits.ERRIE  = 0b01;
-        C1INTEbits.IVRIE  = 0b01;
+//        C1INTEbits.ERRIE  = 0b01;
+//        C1INTEbits.IVRIE  = 0b01;
         C1INTEbits.FIFOIE = 0b01;
+        C1INTEbits.TBIE   = 0b01;
 
         IFS2bits.C1IF   = 0x00;
-        IFS2bits.C1RXIF = 0x00;
         IEC2bits.C1IE   = 0x01;
-        IEC2bits.C1RXIE = 0x00;
 
-	/*
-	 * Drop out of the configuration mode
-	 */
-	set_mode(normal);
+	if (arg_baud_rate < no_baud) {
+		current_status = can_l2_connecting;
+		/*
+	         * Set the baud rate
+	         */
+		rc = can_l2_bitrate(arg_baud_rate);
+		RC_CHECK
 
-	if(status_handler) {
-		status.sstruct.source = can_bus_l2_status;
-		status.sstruct.status = can_l2_connecting;
-		status_handler(status);
+		/*
+	         * Drop out of the configuration mode
+	         */
+		rc = set_requested_mode();
+		RC_CHECK
+
+		if(status_handler) {
+			status_handler(can_bus_l2_status, current_status, 0);
+		}
+	} else if (current_status == can_l2_detecting_baud) {
+#ifdef SYS_CAN_BAUD_AUTO_DETECT
+		/*
+		 * Enable the Rx Interrupt
+		 */
+		C1INTEbits.RBIE   = 0b01;
+		set_mode(LISTEN_ONLYMODE);
+		
+		/*
+		 */
+		rc = can_bad_start_baud_scan();
+		RC_CHECK
+
+		if(status_handler) {
+			status_handler(can_bus_l2_status, current_status, 0);
+		}
+#endif
 	}
-	
+	LOG_D("init end EC-RX %d  Tx %d\n\r", C1ECbits.RERRCNT, C1ECbits.TERRCNT);	
         return(0);
+}
+
+/*
+ * Simple helper function to set the requested mode of operation
+ */
+static result_t set_requested_mode()
+{
+	switch(requested_mode) {
+	case normal:
+		set_mode(NORMAL_MODE);
+		break;
+	case loopback:
+		set_mode(LOOPBACK_MODE);
+		break;
+	case listen_only:
+		set_mode(LISTEN_ONLYMODE);
+		break;
+	default:
+		return(-ERR_BAD_INPUT_PARAMETER);
+	}
+	return(0);
 }
 
 result_t can_l2_tx_frame(can_frame *frame)
 {
 	uint8_t  loop;
+	uint8_t  data_loop;
 	
 	/*
 	 * Find a free TX Buffer
 	 */
 	for(loop = 0; loop < NUM_TX_CONTROL; loop++) {
-		if(tx_control[loop].tx_buffer && !tx_control[loop].tx_request) {
-			can_buffers[loop].sid = 0x00;
-			can_buffers[loop].sid = frame->can_id & CAN_SFF_MASK;
-			
+		if(tx_control[loop].tx_buffer && !tx_control[loop].tx_request) {			
 			if(frame->can_id & CAN_EFF_FLAG) {
 				can_buffers[loop].ide = 0b1;
 				can_buffers[loop].ssr = 0b1;
@@ -430,9 +500,14 @@ result_t can_l2_tx_frame(can_frame *frame)
 				can_buffers[loop].eid_l = (frame->can_id >> 11) & 0b111111; 
 				can_buffers[loop].eid_h = (frame->can_id >> 17) & 0x0fff;
 			} else {
+				can_buffers[loop].sid = frame->can_id & CAN_SFF_MASK;
 				can_buffers[loop].ssr = frame->can_id & CAN_RTR_FLAG;
 			}
-			
+
+			can_buffers[loop].dlc = frame->can_dlc;			
+			for(data_loop = 0; data_loop < frame->can_dlc; data_loop++) {
+				can_buffers[loop].data[data_loop] = frame->data[data_loop];
+			}
 			/*
 			 * Mark the buffer for transmission
 			 */
@@ -465,6 +540,13 @@ void can_l2_tasks(void)
 		buffer_full = (C1RXFUL2 & (0x01 << (fifo_rd_index - 16))) != 0;
 	}
 
+	if(buffer_full && (current_status == can_l2_connecting)) {
+		current_status = can_l2_connected;
+		if(status_handler) {
+			status_handler(can_bus_l2_status, current_status, baud_rate);
+		}
+	}
+
 	while(buffer_full) {
 		/*
 		 * Check for overflow in the buffer
@@ -474,9 +556,7 @@ void can_l2_tasks(void)
 			/*
 			 * Todo - notify the system status handler
 			 */
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
 			LOG_E("CAN Overflow\n\r");
-#endif	
 		}
 		/*
 		 * Process the Rx'd buffer
@@ -529,9 +609,48 @@ void can_l2_tasks(void)
 	}
 }
 
+#ifdef SYS_CAN_BAUD_AUTO_DETECT
+result_t can_l2_get_rx_count(void)
+{
+	return(rx_frame_count);
+}
+#endif
+
+#ifdef SYS_CAN_BAUD_AUTO_DETECT
+result_t can_l2_baud_found(can_baud_rate_t rate)
+{
+	result_t rc;
+
+	/*
+	 * Finished with the Rx Interrupt
+	 */
+	C1INTEbits.RBIE   = 0b00;
+	
+	baud_rate = rate;
+	current_status = can_l2_connecting;
+
+	/*
+	 * Set the baud rate
+	 */
+	rc = can_l2_bitrate(baud_rate);
+	RC_CHECK
+
+	/*
+         * Drop out of the configuration mode
+         */
+	rc = set_requested_mode();
+	RC_CHECK
+
+	if(status_handler) {
+		status_handler(can_bus_l2_status, current_status, 0);
+	}
+	return(0);
+}
+#endif
+
 /*
  */
-result_t can_l2_bitrate(can_baud_rate_t baud, boolean change)
+result_t can_l2_bitrate(can_baud_rate_t baud)
 {
 	result_t rc = 0;
 	uint32_t bit_freq;
@@ -542,6 +661,7 @@ result_t can_l2_bitrate(can_baud_rate_t baud, boolean change)
 	uint8_t  phseg1 = 0;
 	uint8_t  phseg2 = 0;
 	uint8_t  propseg = 0;
+	uint8_t  current_mode;
 
 	switch (baud) {
 	case baud_10K:
@@ -581,12 +701,6 @@ result_t can_l2_bitrate(can_baud_rate_t baud, boolean change)
 	for(brp = 1; brp <= 64 && (rc != 0); brp++) {
 		/*
 		 * Calculate the potential TQ Frequency (Fp/brp/2) 
-		 */
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-//		LOG_D("Testing BRP %d\n\r", brp);
-//		LOG_D("remainder %ld\n\r", sys_clock_freq % brp);
-#endif
-		/*
 		 * We're only looking for integer values of bit rate so ignore
 		 * fractional results of division by BRP.
 		 */
@@ -623,22 +737,25 @@ result_t can_l2_bitrate(can_baud_rate_t baud, boolean change)
 	brp--;       // End of the found loop will have incremented
 	tq_count++;  // ^^^
 	
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-	LOG_D("Fp %ld\n\r", sys_clock_freq);
-	LOG_D("BRP %d\n\r", brp);
-	LOG_D("Ftq %ld\n\r", tq_freq);
-	LOG_D("TQ Periods %d\n\r", tq_count);
-#endif
-	
 	sjw = 1;
 	phseg1 = phseg2 = (tq_count - sjw) / 3;
 	propseg = tq_count - sjw - phseg1 - phseg2;
 
+	/*
+	 * store the current mode to return to it on exit
+	 */
+	current_mode = C1CTRL1bits.OPMODE;
+	
         /*
          * Enter configuration mode
          */
-	set_mode(config);
-	
+	set_mode(CONFIG_MODE);
+
+#ifdef SYS_CAN_BAUD_AUTO_DETECT
+	if (current_status == can_l2_detecting_baud) {
+		rx_frame_count = 0;
+	}
+#endif
 	/*
 	 * CANCKS: ECAN Module Clock Freg(CAN) Source Select bit
 	 * 0 = Freq(CAN) is equal to 2 * Freq(Peripheral)
@@ -662,21 +779,19 @@ result_t can_l2_bitrate(can_baud_rate_t baud, boolean change)
 	// WIN Bit 0 | 1
 	C1CFG2bits.SAM = 0; //One sampe point
 
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_INFO))
-	LOG_I("propseg-%d, phseg1-%d, phseg2-%d\n\r", propseg, phseg1, phseg2);
-#endif
+//	LOG_I("propseg-%d, phseg1-%d, phseg2-%d\n\r", propseg, phseg1, phseg2);
 
 	/*
 	 * Drop out of the configuration mode
 	 */
-	set_mode(normal);
+	set_mode(current_mode);
 	return(0);
 }
 
 /*
  * Function Header
  */
-static void set_mode(ty_can_mode mode)
+static void set_mode(uint8_t mode)
 {
 	// WIN Bit 0/1
 	C1CTRL1bits.REQOP = mode;
@@ -686,16 +801,6 @@ static void set_mode(ty_can_mode mode)
 	 */
 	while (C1CTRL1bits.OPMODE != mode) Nop();
 }
-
-#if 0
-result_t can_l2_dispatch_reg_handler(can_l2_target_t *target)
-{
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-        LOG_D("can_l2_dispatch_reg_handler()\n\r");
-#endif
-        return(0);
-}
-#endif // defined(__dsPIC33EP256MU806__)
 
 #endif // #ifdef SYS_CAN_BUS
 

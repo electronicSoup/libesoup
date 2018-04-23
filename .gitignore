@@ -6,6 +6,7 @@ Documentation/html
 debug
 TAGS
 tmp
+*.tmp
 default
 build
 dist

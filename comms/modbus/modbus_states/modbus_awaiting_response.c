@@ -1,10 +1,11 @@
 /**
+ * @file libesoup/comms/modbus/modbus_states/modbus_awaiting_response.c
  *
- * \file libesoup/modbus/modbus_awaiting_response.c
+ * @author John Whitmore
  *
- * This file contains code for Modbus awaiting response state
+ * @brief Code for Modbus awaiting response state
  *
- * Copyright 2017 2018 electronicSoup Limited
+ * Copyright 2017-2018 electronicSoup Limited
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 2 of the GNU Lesser General Public License
@@ -41,9 +42,7 @@ void set_modbus_awaiting_response_state(struct modbus_channel *channel)
 {
         result_t rc;
         
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	LOG_D("set_modbus_awaiting_response_state()\n\r");
-#endif
 	channel->rx_write_index = 0;
 
 	channel->process_timer_15_expiry = NULL;
@@ -56,9 +55,7 @@ void set_modbus_awaiting_response_state(struct modbus_channel *channel)
 	rc = start_response_timer(channel);
         
         if(rc != SUCCESS) {
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
                 LOG_E("Failed to start response timer\n\r");
-#endif
         }
 }
 
@@ -69,25 +66,19 @@ void process_timer_35_expiry(void *data)
 	uint8_t  start_index;
 //	uint16_t loop;
 
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	LOG_D("process_timer_35_expiry()\n\r");
-#endif
 	set_modbus_idle_state(channel);
 
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	LOG_D("process_timer_35_expiry() channel %d msg length %d\n\r", channel->uart->uart, channel->rx_write_index);
-#endif
 	if(channel->rx_write_index > 2) {
 		if(channel->rx_buffer[0] == channel->address) {
 			start_index = 0;
 		} else if (channel->rx_buffer[1] == channel->address) {
 			start_index = 1;
 		} else {
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 			LOG_D("message from wrong address channel Address 0x%x\n\r", channel->address);
 			LOG_D("channel->rx_buffer[0] = 0x%x\n\r", channel->rx_buffer[0]);
 			LOG_D("channel->rx_buffer[1] = 0x%x\n\r", channel->rx_buffer[1]);
-#endif
 			return;
 		}
 
@@ -98,15 +89,11 @@ void process_timer_35_expiry(void *data)
 			 */
 			channel->process_response(&(channel->rx_buffer[start_index]), channel->rx_write_index - (start_index + 2), channel->response_callback_data);
 		} else {
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 			LOG_D("Message bad!\n\r");
-#endif
 			channel->process_response(NULL, 0, channel->response_callback_data);
 		}
 	} else {
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 		LOG_D("Message too short\n\r");
-#endif
 		channel->process_response(NULL, 0, channel->response_callback_data);
 	}
 }
@@ -122,24 +109,18 @@ void process_rx_character(struct modbus_channel *channel, uint8_t ch)
 	channel->rx_buffer[channel->rx_write_index++] = ch;
 
 	if (channel->rx_write_index == SYS_MODBUS_RX_BUFFER_SIZE) {
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
 		LOG_E("UART 2 Overflow: Line too long\n\r");
-#endif
 	}
 }
 
 static void process_response_timeout(struct modbus_channel *channel)
 {
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	LOG_D("process_response_timeout()\n\r");
-#endif
 	set_modbus_starting_state(channel);
 	if(channel->process_response) {
 		channel->process_response(NULL, 0, channel->response_callback_data);
 	} else {
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
 		LOG_E("No response Function\n\r");
-#endif
 	}
 }
 

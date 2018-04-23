@@ -1,3 +1,26 @@
+/**
+ *
+ * @file libesoup/comms/can/l2_lx_can.c
+ *
+ * @author John Whitmore
+ * 
+ * @brief CAN L2 Functionality for RPi
+ *
+ * Copyright 2017-2018 electronicSoup Limited
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the version 2 of the GNU Lesser General Public License
+ * as published by the Free Software Foundation
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program; if not, see <http://www.gnu.org/licenses/>.
+ *
+ */
 //#include "os_api.h"
 
 #include "libesoup_config.h"
@@ -70,14 +93,10 @@ result_t can_l2_init(can_baud_rate_t arg_baud_rate,
 
 	char *ifname = SYS_CAN_INTERFACE;
 
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	LOG_D("l2_can_init(%s)\n\r", SYS_CAN_INTERFACE);
-#endif
  
 	if((can_socket = socket(PF_CAN, SOCK_RAW, CAN_RAW)) < 0) {
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
 		LOG_E("Error while opening socket\n\r");
-#endif
 		return(ERR_GENERAL_ERROR);
 	}
 
@@ -88,22 +107,16 @@ result_t can_l2_init(can_baud_rate_t arg_baud_rate,
 	addr.can_ifindex = ifr.ifr_ifindex; 
  
 	if(bind(can_socket, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 		LOG_D("Error binding socket\n\r");
-#endif
 		return(ERR_GENERAL_ERROR);
 	}
 
 	result = pthread_create(&thread_id, NULL, create_read_thread, (void *)can_socket);
 	if(result != 0){
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
 		LOG_E("Failed to create read thead\n\r");
-#endif
 		return(ERR_GENERAL_ERROR);
 	}
-#if (defined(SYS_SERIAL_LOGGING) && (DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	LOG_D("New Thread created\n\r");
-#endif
 
 	pthread_detach(thread_id);
 	sched_yield();
@@ -121,9 +134,7 @@ result_t can_l2_tx_frame(can_frame *frame)
 {
 	int nbytes;
 
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILEE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	LOG_D("L2_CanTxMessage(0x%x)\n\r", frame->can_id);
-#endif
 	if(can_status.bit_field.l2_status != L2_Connected)
 		return(ERR_CAN_NOT_CONNECTED);
 
@@ -136,9 +147,7 @@ result_t can_l2_tx_frame(can_frame *frame)
 	}
 
 	if(nbytes != sizeof(can_frame)){
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
 		LOG_E("Wrote %d bytes! Expected %d\n\r", nbytes, sizeof(can_frame));
-#endif
 		return(ERR_GENERAL_ERROR);
 	}
 	
@@ -149,9 +158,7 @@ result_t can_l2_dispatch_reg_handler(can_l2_target_t *target)
 {
 	int loop;
 
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	LOG_D("sys_l2_can_dispatch_reg_handler() Mask 0x%x, Filter 0x%x\n\r", target->mask, target->filter);
-#endif
 
 	/*
 	 * clean up the target in case the caller has included spurious bits
@@ -163,9 +170,7 @@ result_t can_l2_dispatch_reg_handler(can_l2_target_t *target)
 
 	for(loop = 0; loop < REGISTER_ARRAY_SIZE; loop++) {
 		if(registered[loop].bitField.used == FALSE) {
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 			LOG_D("Target stored at target %d\n\r", loop);
-#endif
 			registered[loop].bitField.used = TRUE;
 			registered[loop].bitField.system = FALSE;
 			registered[loop].target.mask = target->mask;
@@ -192,17 +197,13 @@ void *create_read_thread(void *arg)
 		nbytes = read(s, &frame, sizeof(can_frame));
 
 		if (nbytes < 0) {
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
 			LOG_E("thread error in size of read data\n\r");
-#endif
 			return((void *)NULL);
     		}
 
     		/* paranoid check ... */
     		if (nbytes < (int)sizeof(can_frame)) {
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
 			LOG_E("thread error in size of read data\n\r");
-#endif
 			return((void *)NULL);
     		}
 

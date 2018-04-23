@@ -3,7 +3,7 @@
  *
  * @author John Whitmore
  *
- * Copyright 2017 electronicSoup Limited
+ * Copyright 2017-2018 electronicSoup Limited
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 2 of the GNU Lesser General Public License
@@ -24,8 +24,8 @@
 #ifdef SYS_SERIAL_LOGGING
 #define DEBUG_FILE
 static const char *TAG = "dsPIC33";
-#include "libesoup/logger/serial_log.h"
 #endif // SYS_SERIAL_LOGGING
+#include "libesoup/logger/serial_log.h"
 
 #include "libesoup/errno.h"
 
@@ -41,20 +41,22 @@ static const char *TAG = "dsPIC33";
  *
  * file:///opt/microchip/xc16/v1.26/docs/config_docs/33EP256MU806.html
  */
-#pragma config GWRP = OFF
-#pragma config GSS = OFF
-#pragma config GSSK = OFF
+#pragma config GWRP    = OFF
+#pragma config GSS     = OFF
+#pragma config GSSK    = OFF
 //#pragma config FNOSC = FRC
-#pragma config FNOSC = PRI   // Primary oscillator
+#pragma config FNOSC   = PRI   // Primary oscillator
 //#pragma config FNOSC = SOSC  // Secondary oscillator
-#pragma config IESO = OFF
-#pragma config POSCMD = HS
+#pragma config IESO    = OFF
+#pragma config POSCMD  = HS
 #pragma config IOL1WAY = OFF
-#pragma config FCKSM = CSECMD
-#pragma config FWDTEN = OFF
-#pragma config WINDIS   = OFF              // Watchdog Timer Window (Standard Watchdog Timer enabled,(Windowed-mode is disabled))
-#pragma config BOREN = OFF
-#pragma config JTAGEN = OFF
+#pragma config FCKSM   = CSECMD
+#pragma config FWDTEN  = OFF    // Enable the Watch Dog Timer
+#pragma config WDTPRE  = PR128  // 1:128  
+#pragma config WDTPOST = PS128  // 1:128
+#pragma config WINDIS  = ON     // Watchdog Timer Window disabled
+#pragma config BOREN   = OFF
+#pragma config JTAGEN  = OFF
 
 static void clock_init(void);
 
@@ -63,18 +65,14 @@ static void clock_init(void);
  */
 void _ISR __attribute__((__no_auto_psv__)) _AddressError(void)
 {
-#ifdef SYS_SERIAL_LOGGING
 	LOG_E("Address error");
-#endif
 	while (1) {
 	}
 }
 
 void _ISR __attribute__((__no_auto_psv__)) _StackError(void)
 {
-#ifdef SYS_SERIAL_LOGGING
 	LOG_E("Stack error");
-#endif
 	while (1)  {
 	}
 }
@@ -108,11 +106,11 @@ static void clock_init(void)
          */
 	sys_clock_freq = SYS_CLOCK_FREQ;
 
-        if(sys_clock_freq != (CRYSTAL_FREQ/2)) {
+        if(sys_clock_freq != (BRD_CRYSTAL_FREQ/2)) {
 		fosc = sys_clock_freq * 2;
 	
 		if((fosc < 15000000) || (fosc > 120000000)) {
-			sys_clock_freq = CRYSTAL_FREQ/2;
+			sys_clock_freq = BRD_CRYSTAL_FREQ/2;
 			fosc = sys_clock_freq * 2;
 		}
 
@@ -120,7 +118,7 @@ static void clock_init(void)
 	         * Assuming that we're only interested in Whole MHz frequencies choose
 	         * N1 so that Fplli is 1MHz 
 	         */
-		n1 = CRYSTAL_FREQ / 1000000;
+		n1 = BRD_CRYSTAL_FREQ / 1000000;
 
 		/*
 	         * Now want a value for N2 which satisfies Fsys / N2 = requested Freq
@@ -137,7 +135,7 @@ static void clock_init(void)
 		}
 
 		if(!found) {
-			sys_clock_freq = CRYSTAL_FREQ/2;
+			sys_clock_freq = BRD_CRYSTAL_FREQ/2;
 		} else {
 			/*
 	                 * Finally we want a value for m which is fsys/fplli we've set N1
@@ -152,7 +150,7 @@ static void clock_init(void)
          * Crystal Frequency then we can simple use Primary Clock.
 	 * NO PLL
          */
-        if(sys_clock_freq == (CRYSTAL_FREQ/2)) {
+        if(sys_clock_freq == (BRD_CRYSTAL_FREQ/2)) {
                 // Initiate Clock Switch to Primary Oscillator
                 clock = dsPIC33_PRIMARY_OSCILLATOR;
                 __builtin_write_OSCCONH(clock);
@@ -186,7 +184,7 @@ static void clock_init(void)
         // Wait for Clock switch to occur
         while (OSCCONbits.COSC!= clock);
 
-        if(sys_clock_freq != (CRYSTAL_FREQ/2)) {
+        if(sys_clock_freq != (BRD_CRYSTAL_FREQ/2)) {
                 // Wait for PLL to lock
                 while (OSCCONbits.LOCK!= 1);
         }

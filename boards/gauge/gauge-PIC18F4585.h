@@ -1,14 +1,10 @@
 /**
  *
- * @file libesoup/processors/guage-PIC18F4585.h
+ * @file libesoup/boards/gauge/gauge-PIC18F4585.h
  *
  * @author John Whitmore
  *
- * This file contains an example libesoup libesoup_config.h configuration file. 
- *
- * The libesoup library of source code expects a libesoup_config.h header file to exist
- * in your include path. The file contains the various switches and definitions
- * which configure the various features of the library.
+ * Board file for the prototype PIC18F4585 based Gauge board.
  *
  * Copyright 2017-2018 electronicSoup Limited
  *
@@ -34,10 +30,7 @@
 /**
  * @brief Crystal Frequency of the Hardware Device.
  */
-#define CRYSTAL_FREQ 16000000
-
-//#define HEARTBEAT_LED_DIRECTION    TRISBbits.RB4
-//#define HEARTBEAT_LED              LATBbits.LATB4
+#define BRD_CRYSTAL_FREQ 16000000
 
 #include "libesoup/core.h"
 

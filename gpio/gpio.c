@@ -1,7 +1,8 @@
 /**
+ * @file libesoup/gpio/gpio.c
  *
- * \file libesoup/gpio/gpio.c
- *
+ * @author John Whitmore
+ * 
  * Copyright 2018 electronicSoup Limited
  *
  * This program is free software; you can redistribute it and/or modify
@@ -49,7 +50,7 @@ result_t gpio_set(enum pin_t pin, uint16_t mode, uint8_t value)
 	if((mode & GPIO_MODE_ANALOG_INPUT) || (mode & GPIO_MODE_ANALOG_OUTPUT)) analog = 0b1;
 	
 	direction = 0b0;
-	if(mode & GPIO_MODE_DIGITAL_INPUT) direction = 0b1;
+	if((mode & GPIO_MODE_DIGITAL_INPUT) || (mode & GPIO_MODE_ANALOG_INPUT)) direction = 0b1;
 	
 	opendrain = 0b0;
 	if((mode & GPIO_MODE_OPENDRAIN_INPUT) || (mode & GPIO_MODE_OPENDRAIN_OUTPUT)) opendrain = 0b1;
@@ -1048,192 +1049,5 @@ result_t gpio_get(enum pin_t pin)
 	default:
 		return(-ERR_BAD_INPUT_PARAMETER);
 	}
-}
-#endif // #if defined(__18F4585)
-
-#if defined(__dsPIC33EP256MU806__) || defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__)
-result_t pin_to_port_bit(enum pin_t pin, uint16_t **prt, uint8_t *bt)
-{
-	if(pin >= RB0 && pin <= RB15) *prt = (uint16_t *)&PORTB;
-	else if(pin >= RC12 && pin <= RC15) *prt = (uint16_t *)&PORTC;
-	else if(pin >= RD0 && pin <= RD11) *prt = (uint16_t *)&PORTD;
-	else if(pin >= RE0 && pin <= RE7) *prt = (uint16_t *)&PORTE;
-	else if(pin >= RF0 && pin <= RF5) *prt = (uint16_t *)&PORTF;
-	else if(pin >= RG6 && pin <= RG9) *prt = (uint16_t *)&PORTG;
-	else return(ERR_BAD_INPUT_PARAMETER);
-
-	switch(pin) {
-	case RB0:
-	case RD0:
-	case RE0:
-	case RF0:
-		*bt = 0;
-		break;
-
-	case RB1:
-	case RD1:
-	case RE1:
-	case RF1:
-		*bt = 1;
-		break;
-
-	case RB2:
-	case RD2:
-	case RE2:
-	case RG2:
-		*bt = 2;
-		break;
-		
-	case RB3:
-	case RD3:
-	case RE3:
-	case RF3:
-	case RG3:
-		*bt = 3;
-		break;
-
-	case RB4:
-	case RD4:
-	case RE4:
-	case RF4:
-		*bt = 4;
-		break;
-
-	case RB5:
-	case RD5:
-	case RE5:
-	case RF5:
-		*bt = 5;
-		break;
-
-	case RB6:
-	case RD6:
-	case RE6:
-	case RG6:
-		*bt = 6;
-		break;
-
-	case RB7:
-	case RD7:
-	case RE7:
-	case RG7:
-		*bt = 7;
-		break;
-
-	case RB8:
-	case RD8:
-	case RG8:
-		*bt = 8;
-		break;
-
-	case RB9:
-	case RD9:
-	case RG9:
-		*bt = 9;
-		break;
-
-	case RB10:
-	case RD10:
-		*bt = 10;
-		break;
-
-	case RB11:
-	case RD11:
-		*bt = 11;
-		break;
-
-	case RB12:
-	case RC12:
-		*bt = 12;
-		break;
-
-	case RB13:
-	case RC13:
-		*bt = 13;
-		break;
-
-	case RB14:
-	case RC14:
-		*bt = 14;
-		break;
-
-	case RB15:
-	case RC15:
-		*bt = 15;
-		break;
-
-	default:
-		return(-ERR_BAD_INPUT_PARAMETER);
-		break;
-	}
-	return(0);	
-}
-#endif // #if defined(__dsPIC33EP256MU806__) || defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__)
-
-#if defined(__18F4585)
-result_t pin_to_port_bit(enum pin_t pin, uint8_t **prt, uint8_t *bt)
-{
-	if(pin >= PRA0 && pin <= PRA7) *prt = (uint8_t *)&PORTA;
-	else if(pin >= PRB0 && pin <= PRB7) *prt = (uint8_t *)&PORTB;
-	else if(pin >= PRC0 && pin <= PRC7) *prt = (uint8_t *)&PORTC;
-	else if(pin >= PRD0 && pin <= PRD7) *prt = (uint8_t *)&PORTD;
-	else if(pin >= PRE0 && pin <= PRE2) *prt = (uint8_t *)&PORTE;
-
-	switch(pin) {
-	case PRA0:   // AN0
-	case PRB0:   // AN10
-	case PRC0:
-	case PRD0:
-	case PRE0:   // AN5
-		*bt = 0;
-		break;
-	case PRA1:   // AN1
-	case PRB1:   // AN8
-	case PRC1:
-	case PRD1:
-	case PRE1:   // AN5
-		*bt = 1;
-		break;
-	case PRA2:   // AN2
-	case PRB2:
-	case PRC2:
-	case PRD2:
-	case PRE2:   // AN5
-		*bt = 2;
-		break;
-	case PRA3:   // AN3
-	case PRB3:
-	case PRC3:
-	case PRD3:
-		*bt = 3;
-		break;
-	case PRA4:
-	case PRB4:   // AN9
-	case PRC4:
-	case PRD4:
-		*bt = 4;
-		break;
-	case PRA5:   // AN4
-	case PRB5:
-	case PRC5:
-	case PRD5:
-		*bt = 5;
-		break;
-	case PRA6:
-	case PRB6:
-	case PRC6:
-	case PRD6:
-		*bt = 6;
-		break;
-	case PRA7:
-	case PRB7:
-	case PRC7:
-	case PRD7:
-		*bt = 7;
-		break;
-	default:
-		return(-ERR_BAD_INPUT_PARAMETER);
-	}
-        return(0);	
 }
 #endif // #if defined(__18F4585)

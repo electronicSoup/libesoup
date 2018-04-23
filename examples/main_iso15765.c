@@ -3,7 +3,7 @@
  *
  * @author John Whitmore
  *
- * Copyright 2017-2018 electronicSoup
+ * Copyright 2018 electronicSoup
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 3 of the GNU General Public License
@@ -75,26 +75,14 @@ int main(void)
 	LOG_D("************************\n\r");
 
 	delay(mSeconds, 500);
-#ifdef SYS_CAN_BAUD_AUTO_DETECT
-#if (defined(SYS_ISO15765) || defined(SYS_ISO11783)) || defined(SYS_TEST_L3_ADDRESS)
-	rc = can_init(no_baud, 0xff, system_status_handler, normal);  // Includes L3 Address
-#else
- 	rc = can_init(no_baud, system_status_handler, normal);
-#endif //  SYS_ISO15765 || SYS_ISO11783 || SYS_TEST_L3_ADDRESS
-#else
-#if (defined(SYS_ISO15765) || defined(SYS_ISO11783)) || defined(SYS_TEST_L3_ADDRESS)
 	/*
 	 * A Layer 3 noded address of 0xff is the ISO11783 Broadcast address so
 	 * it should not be used as a Layer 3 address. If the can_init() function
 	 * is passed this L3 address it will randomly select an address and 
 	 * attempt to register that address on the network
 	 */
-//	rc = can_init(baud_250K, BROADCAST_NODE_ADDRESS, system_status_handler, normal);  // Includes L3 Address
-	rc = can_init(baud_250K, 0x12, system_status_handler, normal);  // Includes L3 Address
-#else
- 	rc = can_init(baud_250K, system_status_handler, normal);
-#endif //  SYS_ISO15765 || SYS_ISO11783 || SYS_TEST_L3_ADDRESS
-#endif //  SYS_CAN_BAUD_AUTO_DETECT
+	rc = can_init(baud_250K, BROADCAST_NODE_ADDRESS, system_status_handler, normal);  // Includes L3 Address
+//	rc = can_init(baud_250K, 0x12, system_status_handler, normal);  // Includes L3 Address
 	if(rc < 0) {
 		LOG_E("Failed to initialise CAN Bus\n\r");
 	}

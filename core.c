@@ -1,8 +1,9 @@
 /**
+ * @file libesoup/core.c
  *
- * libesoup/core.c
- *
- * File containing the function to initialise the libesoup library
+ * @author John Whitmore
+ * 
+ * @brief File containing the function to initialise the libesoup library
  *
  * Copyright 2017-2018 electronicSoup Limited
  *
@@ -38,15 +39,15 @@ static const char  *TAG = "CORE";
 #include "libesoup/boards/board.h"
 
 #ifdef SYS_HW_TIMERS
-#include "libesoup/timers/hw_timers.h"
+extern void     hw_timer_init(void);
 #endif
 
 #ifdef SYS_SW_TIMERS
-#include "libesoup/timers/sw_timers.h"
+extern void     sw_timer_init(void);
 #endif
 
 #ifdef SYS_UART
-#include "libesoup/comms/uart/uart.h"
+extern void     uart_init(void);
 #endif
 
 #ifdef SYS_JOBS
@@ -66,7 +67,7 @@ static const char  *TAG = "CORE";
 #endif
 
 #ifdef SYS_CHANGE_NOTIFICATION
-#include "libesoup/processors/dsPIC33/change_notification/change_notification.h"
+#include "libesoup/gpio/change_notification.h"
 #endif // SYS_CHANGE_NOTIFICATION
 
 /*
@@ -99,48 +100,57 @@ result_t libesoup_init(void)
 	 * Allow the clock to settle
 	 */
 	for(loop = 0; loop < 0x100000; loop++) {
-		Nop();
-		Nop();
+                __asm__ ("CLRWDT");
 	}
 
 #ifdef SYS_UART
 	uart_init();
+	__asm__ ("CLRWDT");
 #endif
 
 #ifdef SYS_SERIAL_LOGGING
         rc = serial_logging_init();
 	RC_CHECK
+        __asm__ ("CLRWDT");
 #endif
 
 #ifdef SYS_HW_TIMERS
 	hw_timer_init();
+	__asm__ ("CLRWDT");
 #endif
 	
 #ifdef SYS_SW_TIMERS
 	sw_timer_init();
+	__asm__ ("CLRWDT");
 #endif
 
 #ifdef SYS_HW_RTC
 	rc = rtc_init();
 	RC_CHECK
+	__asm__ ("CLRWDT");
 #endif
 		
 #ifdef SYS_JOBS
 	jobs_init();
+	__asm__ ("CLRWDT");
 #endif
 
 #ifdef SYS_SPI_BUS
         spi_init();
+	__asm__ ("CLRWDT");
 #endif
 
 #ifdef SYS_RAND
 	random_init();
+	__asm__ ("CLRWDT");
 #endif
 
 #ifdef SYS_CHANGE_NOTIFICATION
 	rc = change_notifier_init();
 	RC_CHECK
+	__asm__ ("CLRWDT");
 #endif // SYS_CHANGE_NOTIFICATION
 
+	__asm__ ("CLRWDT");
 	return(board_init());
 }

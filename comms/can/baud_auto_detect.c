@@ -1,8 +1,9 @@
 /**
+ * @file libesoup/comms/can/baud_auto_detect.c
  *
- * \file libesoup/comms/can/baud_auto_detect.c
- *
- * Protocol for auto detecting CAN Bus baud rate
+ * @author John Whitmore
+ * 
+ * @brief Protocol for auto detecting CAN Bus baud rate
  *
  * Copyright 2017-2018 electronicSoup Limited
  *
@@ -25,57 +26,92 @@
 
 #ifdef SYS_SERIAL_LOGGING
 #define DEBUG_FILE
-static const char *TAG = "CAN_AD";
+static const char *TAG = "CAN_BAD";
 #include "libesoup/logger/serial_log.h"
 #endif  // SYS_SERIAL_LOGGING
 
+#include "libesoup/errno.h"
 #include "libesoup/comms/can/can.h"
+#include "libesoup/timers/sw_timers.h"
 
-void L2_SetCanNodeBuadRate(can_baud_rate_t baudRate)
+#ifndef SYS_SW_TIMERS
+#error libesoup_config.h should define SYS_SW_TIMERS, required by CAN Bit Rate Detection
+#endif
+
+#ifndef SYS_CAN_BAUD_AUTO_DETECT_PERIOD
+#error libesoup_config.h should define SYS_CAN_BAUD_AUTO_DETECT_PERIOD, the listening period
+#endif
+
+static can_baud_rate_t    current_baud_rate;
+static struct timer_req   request;
+
+extern result_t can_l2_bitrate(can_baud_rate_t baud);
+extern result_t can_l2_get_rx_count(void);
+extern result_t can_l2_baud_found(can_baud_rate_t rate);
+
+result_t can_bad_start_baud_scan();
+
+void expiry(timer_id timer, union sigval data)
 {
-//	baud_rate_t testRate;
-	LOG_D("L2_SetCanNodeBuadRate()\n\r");
-#if 0
-	sys_eeprom_write(NETWORK_BAUD_RATE, (u8) baudRate);
+	result_t rc;
 
-	sys_eeprom_read(NETWORK_BAUD_RATE, (u8 *) & testRate);
-
-	if (testRate != baudRate) {
-		LOG_E("Baud Rate NOT Stored!\n\r");
-	} else {
-		LOG_D("Baud Rate Stored\n\r");
+	rc = can_l2_get_rx_count();
+	LOG_D("End of Period received %d frames\n\r", rc);
+	
+	if(rc == 0) {
+		current_baud_rate++;
+		
+		if(current_baud_rate < no_baud) {
+			rc = can_l2_bitrate(current_baud_rate);
+			LOG_D("Listening on Bit Rate %s\n\r", can_baud_rate_strings[current_baud_rate]);
+			rc = sw_timer_start(&request);
+			RC_CHECK_PRINT_VOID("Failed to start\n\r")
+		} else {
+			can_bad_start_baud_scan();
+		}
+	} else if(rc >0) {
+		can_l2_baud_found(current_baud_rate);
 	}
+}
 
-	canStatus = ChangingBaud;
-	setMode(CONFIG_MODE);
+result_t can_bad_start_baud_scan()
+{
+	result_t rc;
 
-	setBitRate(baudRate);
+	LOG_D("can_bad_start_baud_scan()\n\r");
+	
+	/*
+	 * Initialise the timer request structure
+	 */
+	request.units = Seconds;
+	request.duration = SYS_CAN_BAUD_AUTO_DETECT_PERIOD;
+	request.type = single_shot;
+	request.exp_fn = expiry;
+	request.data.sival_int = 0x00;
+	
+	current_baud_rate =  0;
+	rc = can_l2_bitrate(current_baud_rate);
+	
+	while((rc == -ERR_CAN_BITRATE_LOW) && (current_baud_rate < no_baud)) {
+		current_baud_rate++;
+		rc = can_l2_bitrate(current_baud_rate);
+	}
+	if(rc < 0) { 
+		LOG_E("Set bitrate failed %d\n\r", -rc);
+		return(rc);
+	}
+	
+	if(current_baud_rate == no_baud)
+		return(-ERR_CAN_INVALID_BAUDRATE);
+	
+	LOG_D("Listening on Bit Rate %s\n\r", can_baud_rate_strings[current_baud_rate]);
 
 	/*
-	 * The Baud rate is being changed so going to stay in config mode
-	 * for 10 Seconds and let the Network settle down.
+	 * Start a timer and see if we've received any valid frames.
 	 */
-	start_timer(SECONDS_TO_TICKS(10), finaliseBaudRateChange, NULL);
-#endif //0
-}
-
-static void finaliseBaudRateChange(uint8_t *data)
-{
-	LOG_D("finaliseBaudRateChange()\n\r");
-#if 0
-	canStatus = Connected;
-	setMode(NORMAL_MODE);
-#endif
-}
-
-void L2_SetCanNetworkBuadRate(can_baud_rate_t baudRate)
-{
-	LOG_D("L2_SetCanNetworkBuadRate()\n\r");
-#if 0
-	setMode(CONFIG_MODE);
-	setBitRate(baudRate);
-	setMode(NORMAL_MODE);
-#endif //0
+	rc = sw_timer_start(&request);
+	RC_CHECK
+	return(0);
 }
 
 #endif // SYS_CAN_BAUD_AUTO_DETECT

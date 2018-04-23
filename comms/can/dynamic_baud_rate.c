@@ -1,8 +1,9 @@
 /*
+ * @file libesoup/comms/can/dynamic_baud_rate.c
  *
- * libesoup/comms/can/dynamic_baud_rate.c
- *
- * CAN Bus dynamic Bit Rate protocol
+ * @author John Whitmore
+ * 
+ * @brief CAN Bus dynamic Bit Rate protocol
  * 
  * This protocol allows the nodes on the network switch to antoher Bit Rate
  * during normal operation.
@@ -47,14 +48,7 @@ void can_db_set_baudrate(can_baud_rate_t baudrate)
 	struct timer_req timer_request;
 	
 
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	LOG_D("set_can_node_baudrate()\n\r");
-#endif
-//	status.bit_field.l2_status = L2_ChangingBaud;
-//	status_baud = baudrate;
-
-//	if (status_handler)
-//		status_handler(L2_STATUS_MASK, status, status_baud);
 
 	set_can_mode(CONFIG_MODE);
 
@@ -74,9 +68,7 @@ void can_db_set_baudrate(can_baud_rate_t baudrate)
 
 static void exp_finalise_baudrate_change(timer_id timer __attribute__((unused)), union sigval data __attribute__((unused)))
 {
-#if (defeind(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	LOG_D("exp_finalise_baudrate_change()\n\r");
-#endif
         set_can_mode(NORMAL_MODE);
 
 	status.bit_field.l2_status = L2_Connected;
@@ -95,9 +87,7 @@ void can_l2_initiate_baudrate_change(can_baud_rate_t rate)
 	can_frame        msg;
 	result_t         result = SUCCESS;
 
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	LOG_D("initiate_can_baudrate_change()\n\r");
-#endif
 	msg.can_id = 0x705;
 	msg.can_dlc = 1;
 
@@ -128,13 +118,9 @@ static void exp_resend_baudrate_change(timer_id exp_timer __attribute__((unused)
 	timer_id         timer;
 	struct timer_req timer_request;
 
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	LOG_D("exp_resend_baudrate_change()\n\r");
-#endif
 	if(changing_baud_tx_error < 3) {
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 		LOG_D("resending Baud Rate Change Request %d\n\r", changing_baud_tx_error);
-#endif
 		msg.can_id = 0x705;
 		msg.can_dlc = 1;
 
@@ -148,18 +134,14 @@ static void exp_resend_baudrate_change(timer_id exp_timer __attribute__((unused)
 			timer_request.data.sival_int = 0;
 			sw_timer_start(&timer, &timer_request);
 		} else {
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 			LOG_D("No Free Buffers so change the Baud Rate\n\r");
-#endif
 			set_reg_mask_value(TXB0CTRL, TXREQ, 0x00);
 			set_reg_mask_value(TXB1CTRL, TXREQ, 0x00);
 			set_reg_mask_value(TXB2CTRL, TXREQ, 0x00);
                         can_l2_set_node_baudrate(status_baud);
 		}
 	} else {
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 		LOG_D("3 Errors so NOT Resending Baud Rate Change Request\n\r");
-#endif
                 can_l2_set_node_baudrate(status_baud);
 	}
 }

@@ -228,7 +228,7 @@ SEPARATE_MEMBER_PAGES  = NO
 # uses this value to replace tabs by spaces in code fragments.
 # Minimum value: 1, maximum value: 16, default value: 4.
 
-TAB_SIZE               = 4
+TAB_SIZE               = 8
 
 # This tag can be used to specify a number of aliases that act as commands in
 # the documentation. An alias has the form:
@@ -809,8 +809,7 @@ INPUT_ENCODING         = UTF-8
 # *.m, *.markdown, *.md, *.mm, *.dox, *.py, *.pyw, *.f90, *.f, *.for, *.tcl,
 # *.vhd, *.vhdl, *.ucf, *.qsf, *.as and *.js.
 
-FILE_PATTERNS          = *.c \
-                         *.h \
+FILE_PATTERNS          = *.h \
                          *.txt
 
 # The RECURSIVE tag can be used to specify whether or not subdirectories should
@@ -826,9 +825,9 @@ RECURSIVE              = YES
 # Note that relative paths are relative to the directory from which doxygen is
 # run.
 
-EXCLUDE                = Documentation \
-                         */Documentation/* \
-                         */tmp/*
+EXCLUDE                = ../Documentation/html \
+                         */tmp/* \
+			 ../examples/projects/
 
 # The EXCLUDE_SYMLINKS tag can be used to select whether or not files or
 # directories that are symbolic links (a Unix file system feature) are excluded
@@ -2039,14 +2038,25 @@ INCLUDE_FILE_PATTERNS  =
 PREDEFINED             = "DOXYGEN" \
 		         "XC16" \
 			 "__XC8" \
+			 "__18F2680" \
+			 "__18F4585" \
                          "__PIC24FJ256GB106__" \
                          "__PIC24FJ64GB106__" \
                          "__dsPIC33EP256MU806__" \
+			 "SYS_DEBUG_BUILD" \
 			 "SYS_HW_TIMERS" \
 			 "SYS_SW_TIMERS" \
-			 "SYS_LOG_LEVEL" \
+			 "SYS_NUMBER_OF_SW_TIMERS 5" \
+			 "SYS_SW_TIMER_TICK_ms    5" \
 			 "SYS_UART" \
-			 "SYS_SERIAL_LOGGING"
+			 "SYS_UART_TX_BUFFER_SIZE   200" \
+#			 "SYS_LOG_LEVEL" \
+#			 "SYS_SERIAL_LOGGING" \
+#                        "SYS_SYSTEM_STATUS" \
+#			 "SYS_CAN" \
+#			 "SYS_ONE_WIRE" \
+#			 "SYS_SPI_BUS" \
+#			 "SYS_EEPROM"
 
 # If the MACRO_EXPANSION and EXPAND_ONLY_PREDEF tags are set to YES then this
 # tag can be used to specify a list of macro names that should be expanded. The

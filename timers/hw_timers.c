@@ -1,10 +1,11 @@
-/*
+/**
+ * @file libesoup/timers/hw_timers.c
  *
- * libesoup/timers/hw_timers.c
+ * @author John Whitmore
  *
- * Hardware Timer functionality for the electronicSoup Cinnamon Bun
+ * @brief Hardware Timer functionality for the electronicSoup Cinnamon Bun
  *
- * Copyright 2017 - 2018 electronicSoup Limited
+ * Copyright 2017-2018 electronicSoup Limited
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 2 of the GNU Lesser General Public License
@@ -30,7 +31,6 @@
 #pragma warning disable 520
 #endif
 
-
 #include "libesoup_config.h"
 
 #ifdef SYS_HW_TIMERS
@@ -38,13 +38,13 @@
 #ifdef SYS_SERIAL_LOGGING
 #define DEBUG_FILE
 static const char *TAG = "HW_TIMERS";
-#include "libesoup/logger/serial_log.h"
 /*
  * Check required libesoup_config.h defines are found
  */
 #ifndef SYS_LOG_LEVEL
 #error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
 #endif
+#include "libesoup/logger/serial_log.h"
 #endif // SYS_SERIAL_LOGGING
 
 #include "libesoup/errno.h"
@@ -53,6 +53,19 @@ static const char *TAG = "HW_TIMERS";
 /*
  * Local definitions
  */
+#if defined(__dsPIC33EP256MU806__)
+#if (SYS_CLOCK_FREQ == 8000000)
+#define HW_TIMER_OVERHEAD (123)
+#elif (SYS_CLOCK_FREQ == 30000000)
+#define HW_TIMER_OVERHEAD (33)
+#elif (SYS_CLOCK_FREQ == 60000000)
+#define HW_TIMER_OVERHEAD (16)
+#else
+#error Unprogrammed System Clock Frequency!
+#endif
+#elif defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__)
+#elif defined(__18F4585)
+#endif
 
 /*
  * constants:
@@ -286,9 +299,7 @@ timer_id hw_timer_start(struct timer_req *request)
 		 */
 		timer++;
 	}
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
 	LOG_E("Failed to start the HW Timer\n\r");
-#endif
 	return(-ERR_NO_RESOURCES);
 }
 
@@ -298,9 +309,7 @@ timer_id hw_timer_restart(timer_id timer, struct timer_req *request)
 		return(hw_timer_start(request));
 	}
 	if(timer >= NUMBER_HW_TIMERS) {
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
 		LOG_E("Bad time passed to hw_timer_restart()\n\r!");
-#endif
 		return(-ERR_BAD_INPUT_PARAMETER);
 	}
 
@@ -310,16 +319,12 @@ timer_id hw_timer_restart(timer_id timer, struct timer_req *request)
 timer_id hw_timer_pause(timer_id timer)
 {
 	if(timer >= NUMBER_HW_TIMERS) {
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
 		LOG_E("Bad timer passed to hw_timer_pause(0x%x)\n\r!", timer);
-#endif
 		return(-ERR_BAD_INPUT_PARAMETER);
 	}
 
 	if(timers[timer].status == TIMER_UNUSED) {
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
 		LOG_E("Timer passed to hw_timer_pause() is NOT in use\n\r");
-#endif
 		return(-ERR_BAD_INPUT_PARAMETER);
 	}
 
@@ -365,9 +370,7 @@ timer_id hw_timer_pause(timer_id timer)
 #endif
 
         default:
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
                 LOG_E("Unknown Timer\n\r");
-#endif
                 break;
 	}
 
@@ -378,18 +381,17 @@ timer_id hw_timer_pause(timer_id timer)
 timer_id hw_timer_cancel(timer_id timer)
 {
         if(timer < NUMBER_HW_TIMERS) {
+		INTERRUPTS_DISABLED
                 hw_timer_pause(timer);
 
                 timers[timer].status = TIMER_UNUSED;
                 timers[timer].request.exp_fn = NULL;
                 timers[timer].repeats = (uint16_t)0;
                 timers[timer].remainder = (uint16_t)0;
-		
+		INTERRUPTS_ENABLED
 		return(timer);
         } else {
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
                 LOG_E("Bad timer passed to hw_timer_cancel(0x%x)\n\r", timer);
-#endif
 		return(-ERR_BAD_INPUT_PARAMETER);
         }
 }
@@ -429,9 +431,7 @@ static timer_id start_timer(timer_id timer, struct timer_req *request)
 	uint16_t duration;
 
 	if(timer >= NUMBER_HW_TIMERS) {
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
                 LOG_E("Bad time passed to start_timer(0x%x)\n\r", timer);
-#endif
                 return(-ERR_BAD_INPUT_PARAMETER);
         }
 
@@ -489,9 +489,7 @@ static timer_id start_timer(timer_id timer, struct timer_req *request)
 			set_clock_divide(timer, 8);
 			ticks = (uint32_t) ((uint32_t) (((uint32_t) sys_clock_freq / 4) / 8) * request->duration);
 		} else {
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
 			LOG_E("Unknown Timers\n\r");
-#endif
 		}
 #else
                 /*
@@ -504,9 +502,7 @@ static timer_id start_timer(timer_id timer, struct timer_req *request)
                 break;
 
 	default:
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
 		LOG_E("Bad duration Units for Hardware Timer\n\r");
-#endif
 		return(-ERR_BAD_INPUT_PARAMETER);
 #ifndef __XC8
 		break;
@@ -524,9 +520,7 @@ static timer_id start_timer(timer_id timer, struct timer_req *request)
 		timers[timer].repeats           = (uint16_t)((ticks >> 16) & 0xffff);
 		timers[timer].remainder         = (uint16_t)(ticks & 0xffff);
 
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 //                LOG_D("Ticks 0x%lx, Repeats 0x%x, remainder 0x%x\n\r", ticks, timers[timer].repeats, timers[timer].remainder);
-#endif
 		check_timer(timer);
 
                 return(timer);
@@ -544,9 +538,7 @@ static timer_id start_timer(timer_id timer, struct timer_req *request)
 
 static void set_clock_divide(timer_id timer, uint16_t clock_divide)
 {
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 //	LOG_D("set_clock_divide()\n\r");
-#endif
 
 	switch(timer) {
 #if defined(__18F4585) || defined(__18F2680)
@@ -573,9 +565,7 @@ static void set_clock_divide(timer_id timer, uint16_t clock_divide)
                         } else if(clock_divide == 256) {
                                 T0CONbits.T0PS = 0x07;   // Divide by 256
                         } else {
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
                                 LOG_E("Unknown divide\n\r");
-#endif
                         }
                 }
                 break;
@@ -614,9 +604,7 @@ static void set_clock_divide(timer_id timer, uint16_t clock_divide)
                         T1CONbits.TCKPS1 = 1; // Divide by 256
                         T1CONbits.TCKPS0 = 1;
                 } else {
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
                         LOG_E("Bad clock divider!\n\r");
-#endif
                 }
                 break;
 #endif
@@ -636,9 +624,7 @@ static void set_clock_divide(timer_id timer, uint16_t clock_divide)
                         T2CONbits.TCKPS1 = 1; // Divide by 256
                         T2CONbits.TCKPS0 = 1;
                 } else {
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
                         LOG_E("Bad clock divider!\n\r");
-#endif
                 }
                 break;
 #endif
@@ -658,9 +644,7 @@ static void set_clock_divide(timer_id timer, uint16_t clock_divide)
                         T3CONbits.TCKPS1 = 1; // Divide by 256
                         T3CONbits.TCKPS0 = 1;
                 } else {
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
                         LOG_E("Bad clock divider!\n\r");
-#endif
                 }
                 break;
 #endif
@@ -680,9 +664,7 @@ static void set_clock_divide(timer_id timer, uint16_t clock_divide)
                         T4CONbits.TCKPS1 = 1; // Divide by 256
                         T4CONbits.TCKPS0 = 1;
                 } else {
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
                         LOG_E("Bad clock divider!\n\r");
-#endif
                 }
                 break;
 #endif
@@ -702,17 +684,13 @@ static void set_clock_divide(timer_id timer, uint16_t clock_divide)
                         T5CONbits.TCKPS1 = 1; // Divide by 256
                         T5CONbits.TCKPS0 = 1;
                 } else {
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
                         LOG_E("Bad clock divider!\n\r");
-#endif
                 }
                 break;
 #endif
 
         default:
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
                 LOG_E("Unknown Timer\n\r");
-#endif
                 break;
 
 	}
@@ -771,19 +749,13 @@ void check_timer(timer_id timer)
                         break;
 
                 default:
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
                         LOG_E("Unknown Timer\n\r");
-#endif
                         break;
 		}
 		timers[timer].repeats--;
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
   //              LOG_D("After Repeats %d\n\r", timers[timer].repeats);
-#endif
 	} else if(timers[timer].remainder) {
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 //                LOG_D("Remainder %d\n\r", timers[timer].remainder);
-#endif
 		switch (timer) {
                 case TIMER_1:
                         TMR1 = 0x00;
@@ -826,9 +798,7 @@ void check_timer(timer_id timer)
                         break;
 
                 default:
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
                         LOG_E("Unknown Timer\n\r");
-#endif
                         break;
 		}
 		timers[timer].remainder = 0;
@@ -873,9 +843,7 @@ void check_timer(timer_id timer)
                         break;
 
                 default:
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
                         LOG_E("Unknown Timer\n\r");
-#endif
                         break;
 		}
 		timers[timer].repeats--;
@@ -899,9 +867,7 @@ void check_timer(timer_id timer)
                         break;
 
                 default:
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
                         LOG_E("Unknown Timer\n\r");
-#endif
                         break;
 		}
 		timers[timer].remainder = 0;

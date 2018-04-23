@@ -1,6 +1,10 @@
 /**
  *
- * \file libesoup/boards/cinnamonBun/board.c
+ * @file libesoup/boards/gauge/board.c
+ *
+ * @author John Whitmore
+ *
+ * Board initialisation code for the PIC18 based gauge board.
  *
  * Copyright 2018 electronicSoup Limited
  *

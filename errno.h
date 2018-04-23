@@ -24,10 +24,10 @@
 #define _ERRNO_H
 
 #define RC_CHECK if(rc < 0) return(rc);
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
+#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL >= LOG_ERROR))
 #define RC_CHECK_PRINT_CONT(x) if(rc < 0) LOG_E("x");
 #endif
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
+#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL >= LOG_ERROR))
 #define RC_CHECK_PRINT_VOID(x) if(rc < 0) { LOG_E("x"); return; }
 #endif
 

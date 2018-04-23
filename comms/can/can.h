@@ -1,8 +1,9 @@
 /**
+ * @file libesoup/comms/can/can.h
  *
- * \file libesoup/can/es_can.h
+ * @author John Whitmore
  *
- * Core CAN Bus definitions
+ * @brief Core CAN Bus definitions
  *
  * Copyright 2017-2018 electronicSoup Limited
  *
@@ -127,6 +128,14 @@
  */
 typedef uint32_t canid_t;
 
+/**
+ * @brief CAN Layer 2 Modes of operation
+ */
+typedef enum { 
+    normal,       ///< Normal mode of operation
+    loopback,     ///< Loopback all trasmitted messages
+    listen_only,  ///< Listen on the BUS but no interaction, no ACK
+} ty_can_l2_mode;
 
 /**
  * @type  can_frame
@@ -171,6 +180,7 @@ typedef struct
 //    uint8_t                      handler_id;
 } can_l2_target_t;
 
+#ifdef SYS_CAN_ISO15765
 /**
  * @type  iso15765_msg_t
  * @brief typedef of the ISO15765 Message
@@ -204,6 +214,46 @@ typedef struct
     uint8_t                       handler_id;
 } iso15765_target_t;
 
+/*
+ * ISO15765 Protocols
+ */
+#define CAN_ISO15765_LOGGER_PROTOCOL_ID    0x01
+#define CAN_ISO15765_DCNCP_PROTOCOL_ID     0x02
+
+
+#ifdef SYS_CAN_ISO15765_LOG
+extern void iso15765_log(uint8_t level, char *msg);
+
+/*
+ * net_log_reg_as_handler
+ *
+ * This function takes a function pointer which is going to handle the received
+ * debug messages and the minimum level that we're expecting to receive.
+ */
+extern result_t iso15765_logger_register_as_logger(void (*handler)(uint8_t, uint8_t, char *), uint8_t level);
+//extern result_t net_logger_local_register(void (*handler)(uint8_t, uint8_t, char *), uint8_t level);
+//extern result_t net_logger_local_cancel(void);
+
+/*
+ * If another node on the network registers/unregisters as the network logger 
+ * these two functions are used.
+ */
+extern void iso15765_logger_register_remote(uint8_t address, uint8_t level);
+extern void iso15765_logger_unregister_remote(uint8_t address);
+
+
+
+
+
+
+
+
+#define CAN_LOG_D(x)  iso15765_log(LOG_DEBUG, x);
+#endif  // SYS_CAN_ISO15765_LOG
+
+#endif // SYS_CAN_ISO15765
+
+#ifdef SYS_ISO11783
 /**
  * @type  iso11783_msg_t
  * @brief ISO11783 Message structure
@@ -239,13 +289,14 @@ typedef struct
     uint8_t                       handler_id;
 } iso11783_target_t;
 
-/*
- * ISO15765 Protocols
- */
-#if defined(SYS_ISO15765)
-#define ISO15765_LOGGER_PROTOCOL_ID    0x01
-#define ISO15765_DCNCP_PROTOCOL_ID     0x02
-#endif
+typedef enum {
+    ack            = 0x00,
+    nack           = 0x01,
+    denied         = 0x02,
+    cannot_respond = 0x03
+} iso11783_ack_t;
+
+#endif // SYS_ISO11783
 
 /*
  * A Node address of 0xff is a Broadcast Network node address in ISO11783 so
@@ -253,76 +304,19 @@ typedef struct
  */
 #define BROADCAST_NODE_ADDRESS         0xff
 
-/*
- * Have to change this status to cater for L2, DCNCP and L3
- *
- * Layer 2 - 5 values so 3 bits L2_STATUS_MASK 0x07
- *
- *	L2_Uninitialised 0x00,
- *	L2_Listening     0x01,
- *	L2_Connecting    0x02,
- *	L2_Connected     0x03,
- *	L2_ChangingBaud  0x04
- *
- * DCNCP - 3 Values for status so 2 bits
- *         Actually use a bit filed for this
- *
- *         DCNCP_STATUS_INITIALISED_MASK 0x08
- *
- *             DCNCP_Uninitilised 0x00,
- *             DCNCP_Initialised  0x08,
- *
- *         DCNCP_L3_ADDRESS_STATUS_MASK 0x10
- *
- *             DCNCP_NODE_Address_Not_Final 0x00,
- *             DCNCP_NODE_Address_Finalised 0x10,
- *
- * Layer 3 - 2 values Initialised or not. 1 bit
- *
- *         L3_STATUS_INITIALISED_MASK 0x20
- *
- *             L3_Uninitialised 0x00
- *             L3_Inititialised 0x20
+/**
+ * @brief valid CAN Bus Bit Rates used in the system
  */
-
-#define L2_STATUS_MASK                 0x07
-
-#define L2_Uninitialised               0x00
-#define L2_Listening                   0x01
-#define L2_Connecting                  0x02
-#define L2_Connected                   0x03
-#define L2_ChangingBaud                0x04
-
-#if SYS_LOG_LEVEL < NO_LOGGING
-extern char can_l2_status_strings[5][17];
-#endif
-
-#ifdef SYS_CAN_DCNCP
-#define DCNCP_INIT_STATUS_MASK         0x08
-#define DCNCP_NODE_ADDRESS_STATUS_MASK 0x10
-#endif // SYS_CAN_DCNCP
-
-typedef struct {
-    union {
-        struct {
-            uint8_t l2_status : 3;
-            uint8_t dcncp_initialised : 1;
-            uint8_t dcncp_node_address_valid :1;
-        } bit_field;
-        uint8_t byte;
-    };
-} can_status_t;
-
 typedef enum {
-	baud_10K   = 0x00,
-	baud_20K   = 0x01,
-	baud_50K   = 0x02,
-	baud_125K  = 0x03,
-	baud_250K  = 0x04,
-	baud_500K  = 0x05,
-	baud_800K  = 0x06,
-	baud_1M    = 0x07,
-	no_baud    = 0x08
+	baud_10K   = 0x00,   ///< 10Kbps
+	baud_20K   = 0x01,   ///< 20Kbps
+	baud_50K   = 0x02,   ///< 50Kbps
+	baud_125K  = 0x03,   ///< 125Kbps
+	baud_250K  = 0x04,   ///< 250Kbps
+	baud_500K  = 0x05,   ///< 500Kbps
+	baud_800K  = 0x06,   ///< 800Kbps
+	baud_1M    = 0x07,   ///< 1Mbps
+	no_baud    = 0x08    ///< Invalid Bit Rate specified
 } can_baud_rate_t;
 
 #if SYS_LOG_LEVEL < NO_LOGGING
@@ -333,28 +327,30 @@ extern char can_baud_rate_strings[8][10];
  * CAN Bus Layer 2 Status numbers
  */
 enum can_l2_status {
+    can_l2_detecting_baud,
     can_l2_connecting,
-    
+    can_l2_connected,    
 };
 
-//#define BAUD_MAX baud_1M
-
-#if (defined(SYS_ISO15765) || defined(SYS_ISO11783))
-extern result_t can_init(can_baud_rate_t baudrate, uint8_t address, status_handler_t status_handler);
+/**
+ * @brief Function to initialise the overall CAN Module. Prototypes depends on
+ *        L3 inclusion.
+ *
+ */
+#if (defined(SYS_CAN_ISO15765) || defined(SYS_ISO11783) || defined(SYS_TEST_L3_ADDRESS))
+extern result_t can_init(can_baud_rate_t baudrate, uint8_t l3_address, status_handler_t status_handler, ty_can_l2_mode mode);
 #else
-extern result_t can_init(can_baud_rate_t baudrate, status_handler_t status_handler);
+extern result_t can_init(can_baud_rate_t baudrate, status_handler_t status_handler, ty_can_l2_mode mode);
 #endif
 
-//extern bool can_initialised(void);
-
-extern result_t can_l2_init(can_baud_rate_t arg_baud_rate, status_handler_t status_handler);
-extern result_t can_l2_bitrate(can_baud_rate_t baud, boolean change);
+extern result_t can_l2_init(can_baud_rate_t arg_baud_rate, status_handler_t status_handler, ty_can_l2_mode mode);
 extern void can_l2_tasks(void);
 
 extern result_t can_l2_tx_frame(can_frame *frame);
-/*
- * Returns the ID of handler which can be canceled
- */
+
+extern result_t frame_dispatch_init(void);
+extern void     frame_dispatch_handle_frame(can_frame *frame);
+
 extern int16_t  frame_dispatch_reg_handler(can_l2_target_t *target);
 extern result_t frame_dispatch_unreg_handler(int16_t id);
 extern result_t frame_dispatch_set_unhandled_handler(can_l2_frame_handler_t handler);
@@ -365,14 +361,14 @@ extern result_t frame_dispatch_set_unhandled_handler(can_l2_frame_handler_t hand
 
 extern can_baud_rate_t can_l2_get_baudrate(void);
 extern void can_l2_set_node_baudrate(can_baud_rate_t baudrate);
-extern void can_l2_get_status(can_status_t *, can_baud_rate_t *);
+//extern void can_l2_get_status(can_status_t *, can_baud_rate_t *);
 
 #if defined(XC16) || defined(__XC8)
 extern void can_tasks(void);
 #endif
 
 
-#if defined(ISO15765)
+#if defined(SYS_CAN_ISO15765)
 
 extern uint8_t node_get_address(void);
 
@@ -384,18 +380,13 @@ extern result_t iso15765_dispatch_reg_handler(iso15765_target_t *target);
 extern result_t iso15765_dispatch_unreg_handler(uint8_t id);
 extern result_t iso15765_dispatch_set_unhandled_handler(iso15765_msg_handler_t handler);
 
-#endif
+#ifdef SYS_DCNCP_ISO15765
+extern void dcncp_iso15765_init(void);
+#endif // SYS_DCNCP_ISO15765
+
+#endif // ISO15765
 
 #if defined(ISO11783)
-
-
-typedef enum {
-    ack            = 0x00,
-    nack           = 0x01,
-    denied         = 0x02,
-    cannot_respond = 0x03
-} iso11783_ack_t;
-
 
 extern result_t  iso11783_init(uint8_t);
 

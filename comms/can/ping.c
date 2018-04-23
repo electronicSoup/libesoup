@@ -1,8 +1,9 @@
-/*
+/**
+ * @file libesoup/comms/can/ping.c
  *
- * libesoup/comms/can/ping.c
- *
- * CAN Bus Ping Protocol functionality
+ * @author John Whitmore
+ * 
+ * @brief CAN Bus Ping Protocol functionality
  *
  * Copyright 2017-2018 electronicSoup Limited
  *
@@ -41,6 +42,18 @@ const char *TAG = "CAN_PING";
 #error libesoup_config.h should define the SYS_CAN_PING_FRAME_ID
 #endif
 
+#ifndef SYS_CAN_PING_IDLE_SPREAD
+#error libesoup_config.h should define the SYS_CAN_PING_IDLE_SPREAD
+#endif
+
+#ifndef SYS_CAN_PING_IDLE_INTERVAL
+#error libesoup_config.h should define the SYS_CAN_PING_IDLE_INTERVAL
+#endif
+
+#ifndef SYS_RAND
+#error libesoup_config.h should define the SYS_RAND
+#endif
+
 /**
  * \brief Network Idle functionality
  *
@@ -60,14 +73,14 @@ static void ping_network(timer_id timer, union sigval data);
 void can_ping_init(void)
 {
 	uint16_t duration;
+	int16_t  tmp;
 	
-	duration = (uint16_t) ((rand() % 500) + 1000);
+	tmp = (rand() % SYS_CAN_PING_IDLE_SPREAD) - (SYS_CAN_PING_IDLE_SPREAD/2);
+	duration = (uint16_t) SYS_CAN_PING_IDLE_INTERVAL + tmp;
 	
 	ping_timer = 0xFF;
 	
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	LOG_D("CAN ping duration - %d mSeconds\n\r", duration);
-#endif
 
 	timer_request.units          = mSeconds;
 	timer_request.duration       = duration;
@@ -84,9 +97,7 @@ static void ping_network(timer_id timer, union sigval data)
 
 	ping_timer = 0xFF;
 		
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-	LOG_D("CAN Ping\n\r");
-#endif
+//	LOG_D("CAN Ping\n\r");
 	frame.can_id = SYS_CAN_PING_FRAME_ID;
 	frame.can_dlc = 0;
 
@@ -97,10 +108,8 @@ result_t restart_ping_timer(void)
 {
 	result_t  rc;
 
-	if(ping_timer != 0xff) {
-		rc = sw_timer_cancel(ping_timer);
-		RC_CHECK
-	}
+	rc = sw_timer_cancel(&ping_timer);
+	RC_CHECK
 	
 	rc = sw_timer_start(&timer_request);
 	RC_CHECK

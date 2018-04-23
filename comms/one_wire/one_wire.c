@@ -1,7 +1,8 @@
 /**
+ * @file libesoup/comms/one_wire/one_wire.c
  *
- * \file libesoup/comms/one_wire/one_wire.c
- *
+ * @author John Whitmore
+ * 
  * Copyright 2017-2018 electronicSoup Limited
  *
  * This program is free software; you can redistribute it and/or modify
@@ -39,7 +40,7 @@ static const char *TAG = "OneWire";
 #include "libesoup/timers/hw_timers.h"
 #include "libesoup/timers/delay.h"
 #include "libesoup/comms/one_wire/one_wire.h"
-#include "libesoup/processors/dsPIC33/change_notification/change_notification.h"
+#include "libesoup/gpio/change_notification.h"
 
 #ifndef SYS_CHANGE_NOTIFICATION
 #error SYS_CHANGE_NOTIFICATION Not defined required by OneWire
@@ -94,7 +95,7 @@ static struct one_wire_device device[SYS_ONE_WIRE_MAX_DEVICES];
  * Function Prototypes.
  */
 static result_t census(int16_t chan);
-static void     bus_change(uint16_t *port, uint8_t bit);
+static void     bus_change(enum pin_t pin);
 static result_t reset_pulse(int16_t chan);
 static result_t write_byte(int16_t chan, uint8_t byte);
 static result_t write_one(int16_t chan);
@@ -128,9 +129,7 @@ result_t one_wire_reserve(enum pin_t pin)
 	result_t rc;
 	uint8_t  loop;
 	int16_t  chan;
-#ifdef SERIAL_LOGGING	
 	LOG_D("one_wire_reserve()\n\r");
-#endif
 	/*
 	 * check for existing bus on the given pin
 	 */
@@ -186,6 +185,9 @@ void set_bit(int8_t index, uint8_t bit)
 	}
 }
 
+/*
+ * Returns the number of devices on the OneWire bus
+ */
 static result_t census(int16_t chan)
 {
 	result_t  rc;
@@ -217,7 +219,7 @@ static result_t census(int16_t chan)
 		for(loop = 0; loop < 6; loop++) device[device_index].serial_number[loop] = 0x00;
 
 		for(loop = 0; loop < 64; loop++) {
-			if(loop % 8 == 0) serial_printf(" ");
+//			if(loop % 8 == 0) serial_printf(" ");
 			rc = read_bit(chan);
 			RC_CHECK
 			first_read = (boolean)(rc == 1);
@@ -232,7 +234,8 @@ static result_t census(int16_t chan)
 				LOG_D("D\n\r");
 			} else if( (first_read == 1) && (second_read == 1) ) {
 				// No devices, must be finished
-				LOG_D("*\n\r");
+				LOG_D("No Devices\n\r");
+				return(0);
 				break;
 			} else if(first_read) {
 //				serial_printf("1");
@@ -260,7 +263,7 @@ static result_t census(int16_t chan)
 	return(0);
 }
 
-static void bus_change(uint16_t *port, uint8_t bit)
+static void bus_change(enum pin_t pin)
 {
 	bus_changes++;
 }
