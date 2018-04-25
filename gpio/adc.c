@@ -42,8 +42,11 @@ static const char *TAG = "SPI";
 #include "libesoup/gpio/adc.h"
 #include "libesoup/gpio/gpio.h"
 
+#if defined(__dsPIC33EP256MU806__)
 static  adc_handler_t sample_handler = NULL;
+#endif
 
+#if defined(__dsPIC33EP256MU806__)
 void __attribute__((__interrupt__, __no_auto_psv__)) _AD1Interrupt(void)
 {
 	IFS0bits.AD1IF   = 0;    // Clear the ISR Flag
@@ -54,7 +57,10 @@ void __attribute__((__interrupt__, __no_auto_psv__)) _AD1Interrupt(void)
 	
 	sample_handler = NULL;
 }
+#endif // (__dsPIC33EP256MU806__)
 
+
+#if defined(__dsPIC33EP256MU806__)
 result_t adc_sample(enum pin_t pin, adc_handler_t handler)
 {
 	result_t  rc;
@@ -96,3 +102,4 @@ result_t adc_sample(enum pin_t pin, adc_handler_t handler)
 
 	return(0);
 }
+#endif  // (__dsPIC33EP256MU806__)
