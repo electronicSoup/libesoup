@@ -1,5 +1,4 @@
 /**
- *
  * @file libesoup/boards/cinnamonBun/pic24FJ/cb-PIC24FJ256GB106.h
  *
  * @author John Whitmore

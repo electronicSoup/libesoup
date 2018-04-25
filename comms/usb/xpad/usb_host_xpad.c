@@ -190,6 +190,15 @@ XPAD_DATA xpad_data;
 #define RX_BUFFER_SIZE 32
 uint8_t rx_buffer[RX_BUFFER_SIZE];
 
+/*
+ * Interrupt for the USB Peripheral
+ */
+void _ISR __attribute__((__no_auto_psv__)) _USB1Interrupt(void)
+{
+	LATDbits.LATD4 = ~PORTDbits.RD4;
+	USB_HostInterruptHandler();
+}
+
 /****************************************************************************
  *  Function: xpad_start()
  *
@@ -199,9 +208,7 @@ uint8_t rx_buffer[RX_BUFFER_SIZE];
  ****************************************************************************/
 void xpad_start()
 {
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_INFO))
 	LOG_I("xpad_start()\n\r");
-#endif
 	memset(&xpad_device,0x00,sizeof(xpad_device));
 	memset(&xpad_data,0x00,sizeof(xpad_data));
 }
@@ -337,7 +344,9 @@ bool xpad_initialise ( uint8_t address, uint32_t flags, uint8_t clientDriverID )
 	uint8_t descriptor_length;
 	uint16_t config_total_length;
 	uint8_t i;
+#ifdef SYS_SERIAL_LOGGING
 	uint8_t loop;
+#endif
 	uint16_t tmp_word;
 
 	uint8_t endpoint_address;
@@ -355,11 +364,11 @@ bool xpad_initialise ( uint8_t address, uint32_t flags, uint8_t clientDriverID )
 		LOG_E("Expected the Device Descriptor\n\r");
 		return(false);
 	}
-
+#ifdef SYS_SERIAL_LOGGING
 	for(loop = 0; loop < descriptor[USB_DESC_bLength]; loop++) {
-		printf("-0x%x-", descriptor[loop]);
+		serial_printf("-0x%x-", descriptor[loop]);
 	}
-
+#endif
 	LOG_D("Device Class 0x%x\n\r", descriptor[USB_DEV_DESC_bDeviceClass]);
 	LOG_D("Device Sub Class 0x%x\n\r", descriptor[USB_DEV_DESC_bDeviceSubClass]);
 	LOG_D("Device Protocol 0x%x\n\r", descriptor[USB_DEV_DESC_bDeviceProtocol]);

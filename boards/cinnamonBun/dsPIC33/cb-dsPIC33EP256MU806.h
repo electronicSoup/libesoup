@@ -129,14 +129,14 @@
 #define BRD_SPI_MISO        RD10
 
 /**
- * @def   USB_HOST
+ * @def   BRD_USB_HOST
  * @brief Turn on the 5 Volt power to the USB Bus.
  *
- * @def   USB_DEVICE
+ * @def   BRD_USB_DEVICE
  * @brief Turn off the 5 Volt power to the USB Bus.
  */
-#define USB_HOST    TRISDbits.TRISD9 = GPIO_OUTPUT_PIN; LATDbits.LATD9 = 1; USBInitialize(0);
-#define USB_DEVICE  TRISDbits.TRISD9 = GPIO_OUTPUT_PIN; LATDbits.LATD9 = 0;
+#define BRD_USB_HOST    TRISDbits.TRISD9 = GPIO_OUTPUT_PIN; LATDbits.LATD9 = 1; USBInitialize(0);
+#define BRD_USB_DEVICE  TRISDbits.TRISD9 = GPIO_OUTPUT_PIN; LATDbits.LATD9 = 0;
 
 #include "libesoup/core.h"
 
