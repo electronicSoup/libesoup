@@ -53,8 +53,8 @@ extern result_t serial_logging_init(void);
 extern uint16_t serial_buffer_count(void);
 #endif
 #if defined(XC16)
-extern void     serial_log(uint8_t level, const char * tag, const char * f, ...);
-extern void     serial_printf(const char * f, ...);
+extern result_t serial_log(uint8_t level, const char * tag, const char * f, ...);
+extern result_t serial_printf(const char * f, ...);
 #elif defined(__XC8)
 extern void     serial_log(const char* fmt, ...);
 #endif
