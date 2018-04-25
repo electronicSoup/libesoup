@@ -1,7 +1,9 @@
 /**
- * \file libesoup/examples/main_serial_logging.c
+ * @file libesoup/examples/main_serial_logging.c
  *
- * Example main.c file for using serial logging.
+ * @author John Whitmore
+ * 
+ * @brief Example main.c file for using serial logging.
  *
  * Copyright 2017 - 2018 electronicSoup Limited
  *
