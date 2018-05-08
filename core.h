@@ -27,10 +27,10 @@
 
 #ifndef SYS_SERIAL_LOGGING
 #ifdef XC16
-#define LOG_D(...)
-#define LOG_I(...)
-#define LOG_W(...)
-#define LOG_E(...)
+#define LOG_D(...)      ///< fake entry for the DEBUG logging level
+#define LOG_I(...)      ///< fake entry for the Info logging level
+#define LOG_W(...)      ///< fake entry for the Warning logging level
+#define LOG_E(...)      ///< fake entry for the Error logging level
 #elif defined(__XC8)
 #define LOG_D()
 #define LOG_I()
