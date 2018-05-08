@@ -12,48 +12,118 @@
     <logicalFolder name="SourceFiles"
                    displayName="Source Files"
                    projectFiles="true">
-      <logicalFolder name="libesoup" displayName="libesoup" projectFiles="true">
-        <logicalFolder name="boards" displayName="boards" projectFiles="true">
-          <logicalFolder name="cinnamonBun" displayName="cinnamonBun" projectFiles="true">
-            <logicalFolder name="dsPIC33" displayName="dsPIC33" projectFiles="true">
-              <itemPath>../../../../boards/cinnamonBun/dsPIC33/board.c</itemPath>
+      <logicalFolder name="src" displayName="src" projectFiles="true">
+        <logicalFolder name="libesoup" displayName="libesoup" projectFiles="true">
+          <logicalFolder name="boards" displayName="boards" projectFiles="true">
+            <logicalFolder name="cinnamonBun" displayName="cinnamonBun" projectFiles="true">
+              <logicalFolder name="dsPIC33" displayName="dsPIC33" projectFiles="true">
+                <itemPath>../../../../../boards/cinnamonBun/dsPIC33/board.c</itemPath>
+              </logicalFolder>
+              <logicalFolder name="pic24FJ" displayName="pic24FJ" projectFiles="true">
+                <itemPath>../../../../../boards/cinnamonBun/pic24FJ/board.c</itemPath>
+              </logicalFolder>
             </logicalFolder>
-            <logicalFolder name="pic24FJ" displayName="pic24FJ" projectFiles="true">
-              <itemPath>../../../../boards/cinnamonBun/pic24FJ/board.c</itemPath>
+            <logicalFolder name="gauge" displayName="gauge" projectFiles="true">
+              <itemPath>../../../../../boards/gauge/board.c</itemPath>
+            </logicalFolder>
+            <logicalFolder name="rpi" displayName="rpi" projectFiles="true">
             </logicalFolder>
           </logicalFolder>
-          <logicalFolder name="gauge" displayName="gauge" projectFiles="true">
-            <itemPath>../../../../boards/gauge/board.c</itemPath>
+          <logicalFolder name="comms" displayName="comms" projectFiles="true">
+            <logicalFolder name="can" displayName="can" projectFiles="true">
+              <logicalFolder name="dcncp" displayName="dcncp" projectFiles="true">
+                <itemPath>../../../../../comms/can/dcncp/dcncp_can.c</itemPath>
+                <itemPath>../../../../../comms/can/dcncp/dcncp_iso15765.c</itemPath>
+              </logicalFolder>
+              <itemPath>../../../../../comms/can/l2_dsPIC33EP256MU806.c</itemPath>
+              <itemPath>../../../../../comms/can/l2_lx_can.c</itemPath>
+              <itemPath>../../../../../comms/can/ping.c</itemPath>
+              <itemPath>../../../../../comms/can/can.c</itemPath>
+              <itemPath>../../../../../comms/can/baud_auto_detect.c</itemPath>
+              <itemPath>../../../../../comms/can/l2_mcp2515.c</itemPath>
+              <itemPath>../../../../../comms/can/frame_dispatch.c</itemPath>
+              <itemPath>../../../../../comms/can/dynamic_baud_rate.c</itemPath>
+              <itemPath>../../../../../comms/can/l2_pic18f.c</itemPath>
+              <itemPath>../../../../../comms/can/l3_iso11783-3.c</itemPath>
+              <itemPath>../../../../../comms/can/l3_iso15765-2.c</itemPath>
+            </logicalFolder>
+            <logicalFolder name="modbus" displayName="modbus" projectFiles="true">
+              <logicalFolder name="modbus_states"
+                             displayName="modbus_states"
+                             projectFiles="true">
+                <itemPath>../../../../../comms/modbus/modbus_states/modbus_transmitting.c</itemPath>
+                <itemPath>../../../../../comms/modbus/modbus_states/modbus_starting.c</itemPath>
+                <itemPath>../../../../../comms/modbus/modbus_states/modbus_awaiting_response.c</itemPath>
+                <itemPath>../../../../../comms/modbus/modbus_states/modbus_idle.c</itemPath>
+              </logicalFolder>
+              <itemPath>../../../../../comms/modbus/modbus.c</itemPath>
+            </logicalFolder>
+            <logicalFolder name="morse" displayName="morse" projectFiles="true">
+              <itemPath>../../../../../comms/morse/morse.c</itemPath>
+            </logicalFolder>
+            <logicalFolder name="one_wire" displayName="one_wire" projectFiles="true">
+              <logicalFolder name="devices" displayName="devices" projectFiles="true">
+                <itemPath>../../../../../comms/one_wire/devices/ds2502.c</itemPath>
+              </logicalFolder>
+              <itemPath>../../../../../comms/one_wire/one_wire.c</itemPath>
+            </logicalFolder>
+            <logicalFolder name="spi" displayName="spi" projectFiles="true">
+              <itemPath>../../../../../comms/spi/spi.c</itemPath>
+            </logicalFolder>
+            <logicalFolder name="uart" displayName="uart" projectFiles="true">
+              <itemPath>../../../../../comms/uart/uart.c</itemPath>
+            </logicalFolder>
+            <logicalFolder name="usb" displayName="usb" projectFiles="true">
+              <logicalFolder name="android" displayName="android" projectFiles="true">
+                <itemPath>../../../../../comms/usb/android/android_comms.c</itemPath>
+                <itemPath>../../../../../comms/usb/android/state_idle.c</itemPath>
+                <itemPath>../../../../../comms/usb/android/usb_config.c</itemPath>
+              </logicalFolder>
+              <logicalFolder name="xpad" displayName="xpad" projectFiles="true">
+                <itemPath>../../../../../comms/usb/xpad/usb_host_xpad.c</itemPath>
+                <itemPath>../../../../../comms/usb/xpad/usb_config.c</itemPath>
+              </logicalFolder>
+            </logicalFolder>
           </logicalFolder>
-          <logicalFolder name="rpi" displayName="rpi" projectFiles="true">
+          <logicalFolder name="gpio" displayName="gpio" projectFiles="true">
+            <itemPath>../../../../../gpio/peripheral.c</itemPath>
+            <itemPath>../../../../../gpio/change_notification.c</itemPath>
+            <itemPath>../../../../../gpio/gpio.c</itemPath>
+            <itemPath>../../../../../gpio/adc.c</itemPath>
           </logicalFolder>
-        </logicalFolder>
-        <logicalFolder name="comms" displayName="comms" projectFiles="true">
-          <logicalFolder name="uart" displayName="uart" projectFiles="true">
-            <itemPath>../../../../comms/uart/uart.c</itemPath>
+          <logicalFolder name="hardware" displayName="hardware" projectFiles="true">
+            <itemPath>../../../../../hardware/eeprom.c</itemPath>
+            <itemPath>../../../../../hardware/flash.c</itemPath>
           </logicalFolder>
+          <logicalFolder name="logger" displayName="logger" projectFiles="true">
+            <itemPath>../../../../../logger/iso15765_log.c</itemPath>
+            <itemPath>../../../../../logger/serial_log.c</itemPath>
+          </logicalFolder>
+          <logicalFolder name="processors" displayName="processors" projectFiles="true">
+            <itemPath>../../../../../processors/pic18f4585.c</itemPath>
+            <itemPath>../../../../../processors/pic18f2680.c</itemPath>
+            <itemPath>../../../../../processors/rpi.c</itemPath>
+            <itemPath>../../../../../processors/dsPIC33EP256MU806.c</itemPath>
+            <itemPath>../../../../../processors/pic24FJ256GB106.c</itemPath>
+          </logicalFolder>
+          <logicalFolder name="status" displayName="status" projectFiles="true">
+            <itemPath>../../../../../status/status.c</itemPath>
+          </logicalFolder>
+          <logicalFolder name="timers" displayName="timers" projectFiles="true">
+            <itemPath>../../../../../timers/hw_rtc.c</itemPath>
+            <itemPath>../../../../../timers/delay.c</itemPath>
+            <itemPath>../../../../../timers/hw_timers.c</itemPath>
+            <itemPath>../../../../../timers/sw_timers.c</itemPath>
+            <itemPath>../../../../../timers/sw_rtc.c</itemPath>
+          </logicalFolder>
+          <logicalFolder name="utils" displayName="utils" projectFiles="true">
+            <itemPath>../../../../../utils/rand.c</itemPath>
+          </logicalFolder>
+          <itemPath>../../../../../core.c</itemPath>
         </logicalFolder>
-        <logicalFolder name="gpio" displayName="gpio" projectFiles="true">
-          <itemPath>../../../../gpio/peripheral.c</itemPath>
-          <itemPath>../../../../gpio/gpio.c</itemPath>
-        </logicalFolder>
-        <logicalFolder name="processors" displayName="processors" projectFiles="true">
-          <itemPath>../../../../processors/pic18f4585.c</itemPath>
-          <itemPath>../../../../processors/pic18f2680.c</itemPath>
-          <itemPath>../../../../processors/rpi.c</itemPath>
-          <itemPath>../../../../processors/dsPIC33EP256MU806.c</itemPath>
-          <itemPath>../../../../processors/pic24FJ256GB106.c</itemPath>
-        </logicalFolder>
-        <logicalFolder name="timers" displayName="timers" projectFiles="true">
-          <itemPath>../../../../timers/hw_rtc.c</itemPath>
-          <itemPath>../../../../timers/delay.c</itemPath>
-          <itemPath>../../../../timers/hw_timers.c</itemPath>
-          <itemPath>../../../../timers/sw_timers.c</itemPath>
-          <itemPath>../../../../timers/sw_rtc.c</itemPath>
-        </logicalFolder>
-        <itemPath>../../../../core.c</itemPath>
+        <itemPath>src/usb_host.c</itemPath>
+        <itemPath>src/main.c</itemPath>
       </logicalFolder>
-      <itemPath>../../../main_uart_tx.c</itemPath>
     </logicalFolder>
     <logicalFolder name="ExternalFiles"
                    displayName="Important Files"
@@ -62,7 +132,7 @@
     </logicalFolder>
   </logicalFolder>
   <sourceRootList>
-    <Elem>../../../..</Elem>
+    <Elem>../../../../..</Elem>
   </sourceRootList>
   <projectmakefile>Makefile</projectmakefile>
   <confs>
@@ -116,7 +186,8 @@
         <property key="enable-short-double" value="false"/>
         <property key="enable-symbols" value="true"/>
         <property key="enable-unroll-loops" value="false"/>
-        <property key="extra-include-directories" value=".;../../../../../"/>
+        <property key="extra-include-directories"
+                  value="src;../../../../../comms/usb/xpad;../../../../../../;/opt/microchip/mla/v2017_03_06/framework;/opt/microchip/mla/v2017_03_06/framework/usb/inc;/opt/microchip/mla/v2017_03_06/framework/usb/src"/>
         <property key="isolate-each-function" value="false"/>
         <property key="keep-inline" value="false"/>
         <property key="oXC16gcc-align-arr" value="false"/>
@@ -166,7 +237,7 @@
         <property key="general-code-protect" value="no_code_protect"/>
         <property key="general-write-protect" value="no_write_protect"/>
         <property key="generate-cross-reference-file" value="false"/>
-        <property key="heap-size" value=""/>
+        <property key="heap-size" value="1024"/>
         <property key="input-libraries" value=""/>
         <property key="linker-stack" value="true"/>
         <property key="linker-symbols" value=""/>
@@ -271,7 +342,6 @@
         <property key="UART 3" value="true"/>
         <property key="UART 4" value="true"/>
         <property key="USB" value="true"/>
-        <property key="firmware.download.all" value="false"/>
         <property key="hwtoolclock.frcindebug" value="false"/>
         <property key="memories.aux" value="false"/>
         <property key="memories.bootflash" value="true"/>
@@ -357,7 +427,8 @@
         <property key="enable-short-double" value="false"/>
         <property key="enable-symbols" value="true"/>
         <property key="enable-unroll-loops" value="false"/>
-        <property key="extra-include-directories" value=".;../../../../../"/>
+        <property key="extra-include-directories"
+                  value="src;../../../../../comms/usb/xpad;../../../../../../;/opt/microchip/mla/v2017_03_06/framework;/opt/microchip/mla/v2017_03_06/framework/usb/inc;/opt/microchip/mla/v2017_03_06/framework/usb/src"/>
         <property key="isolate-each-function" value="false"/>
         <property key="keep-inline" value="false"/>
         <property key="oXC16gcc-align-arr" value="false"/>
@@ -504,7 +575,7 @@
         <property key="memories.instruction.ram.ranges"
                   value="${memories.instruction.ram.ranges}"/>
         <property key="memories.programmemory" value="true"/>
-        <property key="memories.programmemory.ranges" value="0-2abf7"/>
+        <property key="memories.programmemory.ranges" value="0-7fffff"/>
         <property key="poweroptions.powerenable" value="false"/>
         <property key="programmertogo.imagename" value=""/>
         <property key="programoptions.donoteraseauxmem" value="false"/>
@@ -525,159 +596,6 @@
         <property key="programoptions.uselvpprogramming" value="false"/>
         <property key="voltagevalue" value="3.25"/>
       </PICkit3PlatformTool>
-    </conf>
-    <conf name="PIC18F4585" type="2">
-      <toolsSet>
-        <developmentServer>localhost</developmentServer>
-        <targetDevice>PIC18F4585</targetDevice>
-        <targetHeader></targetHeader>
-        <targetPluginBoard></targetPluginBoard>
-        <platformTool>PICkit3PlatformTool</platformTool>
-        <languageToolchain>XC8</languageToolchain>
-        <languageToolchainVersion>1.44</languageToolchainVersion>
-        <platform>2</platform>
-      </toolsSet>
-      <compileType>
-        <linkerTool>
-          <linkerLibItems>
-          </linkerLibItems>
-        </linkerTool>
-        <archiverTool>
-        </archiverTool>
-        <loading>
-          <useAlternateLoadableFile>false</useAlternateLoadableFile>
-          <parseOnProdLoad>false</parseOnProdLoad>
-          <alternateLoadableFile></alternateLoadableFile>
-        </loading>
-        <subordinates>
-        </subordinates>
-      </compileType>
-      <makeCustomizationType>
-        <makeCustomizationPreStepEnabled>false</makeCustomizationPreStepEnabled>
-        <makeCustomizationPreStep></makeCustomizationPreStep>
-        <makeCustomizationPostStepEnabled>false</makeCustomizationPostStepEnabled>
-        <makeCustomizationPostStep></makeCustomizationPostStep>
-        <makeCustomizationPutChecksumInUserID>false</makeCustomizationPutChecksumInUserID>
-        <makeCustomizationEnableLongLines>false</makeCustomizationEnableLongLines>
-        <makeCustomizationNormalizeHexFile>false</makeCustomizationNormalizeHexFile>
-      </makeCustomizationType>
-      <HI-TECH-COMP>
-        <property key="asmlist" value="true"/>
-        <property key="define-macros" value=""/>
-        <property key="disable-optimizations" value="false"/>
-        <property key="extra-include-directories" value=".;../../../../../"/>
-        <property key="favor-optimization-for" value="-speed,+space"/>
-        <property key="identifier-length" value="255"/>
-        <property key="local-generation" value="false"/>
-        <property key="operation-mode" value="free"/>
-        <property key="opt-xc8-compiler-strict_ansi" value="false"/>
-        <property key="optimization-assembler" value="true"/>
-        <property key="optimization-assembler-files" value="true"/>
-        <property key="optimization-debug" value="false"/>
-        <property key="optimization-global" value="true"/>
-        <property key="optimization-invariant-enable" value="false"/>
-        <property key="optimization-invariant-value" value="16"/>
-        <property key="optimization-level" value="9"/>
-        <property key="optimization-set" value="default"/>
-        <property key="optimization-speed" value="false"/>
-        <property key="optimization-stable-enable" value="false"/>
-        <property key="preprocess-assembler" value="true"/>
-        <property key="undefine-macros" value=""/>
-        <property key="use-cci" value="false"/>
-        <property key="use-iar" value="false"/>
-        <property key="verbose" value="false"/>
-        <property key="warning-level" value="-3"/>
-        <property key="what-to-do" value="ignore"/>
-      </HI-TECH-COMP>
-      <HI-TECH-LINK>
-        <property key="additional-options-checksum" value=""/>
-        <property key="additional-options-code-offset" value=""/>
-        <property key="additional-options-command-line" value=""/>
-        <property key="additional-options-errata" value=""/>
-        <property key="additional-options-extend-address" value="false"/>
-        <property key="additional-options-trace-type" value=""/>
-        <property key="additional-options-use-response-files" value="false"/>
-        <property key="backup-reset-condition-flags" value="false"/>
-        <property key="calibrate-oscillator" value="false"/>
-        <property key="calibrate-oscillator-value" value="0x3400"/>
-        <property key="clear-bss" value="true"/>
-        <property key="code-model-external" value="wordwrite"/>
-        <property key="code-model-rom" value=""/>
-        <property key="create-html-files" value="false"/>
-        <property key="data-model-ram" value=""/>
-        <property key="data-model-size-of-double" value="24"/>
-        <property key="data-model-size-of-float" value="24"/>
-        <property key="display-class-usage" value="false"/>
-        <property key="display-hex-usage" value="false"/>
-        <property key="display-overall-usage" value="true"/>
-        <property key="display-psect-usage" value="false"/>
-        <property key="fill-flash-options-addr" value=""/>
-        <property key="fill-flash-options-const" value=""/>
-        <property key="fill-flash-options-how" value="0"/>
-        <property key="fill-flash-options-inc-const" value="1"/>
-        <property key="fill-flash-options-increment" value=""/>
-        <property key="fill-flash-options-seq" value=""/>
-        <property key="fill-flash-options-what" value="0"/>
-        <property key="format-hex-file-for-download" value="false"/>
-        <property key="initialize-data" value="true"/>
-        <property key="keep-generated-startup.as" value="false"/>
-        <property key="link-in-c-library" value="true"/>
-        <property key="link-in-peripheral-library" value="false"/>
-        <property key="managed-stack" value="false"/>
-        <property key="opt-xc8-linker-file" value="false"/>
-        <property key="opt-xc8-linker-link_startup" value="false"/>
-        <property key="opt-xc8-linker-serial" value=""/>
-        <property key="program-the-device-with-default-config-words" value="true"/>
-      </HI-TECH-LINK>
-      <PICkit3PlatformTool>
-        <property key="AutoSelectMemRanges" value="auto"/>
-        <property key="Freeze Peripherals" value="true"/>
-        <property key="SecureSegment.SegmentProgramming" value="FullChipProgramming"/>
-        <property key="ToolFirmwareFilePath"
-                  value="Press to browse for a specific firmware version"/>
-        <property key="ToolFirmwareOption.UseLatestFirmware" value="true"/>
-        <property key="hwtoolclock.frcindebug" value="false"/>
-        <property key="memories.aux" value="false"/>
-        <property key="memories.bootflash" value="true"/>
-        <property key="memories.configurationmemory" value="true"/>
-        <property key="memories.configurationmemory2" value="true"/>
-        <property key="memories.dataflash" value="true"/>
-        <property key="memories.eeprom" value="true"/>
-        <property key="memories.flashdata" value="true"/>
-        <property key="memories.id" value="true"/>
-        <property key="memories.instruction.ram" value="true"/>
-        <property key="memories.instruction.ram.ranges"
-                  value="${memories.instruction.ram.ranges}"/>
-        <property key="memories.programmemory" value="true"/>
-        <property key="memories.programmemory.ranges" value="0-bfff"/>
-        <property key="poweroptions.powerenable" value="false"/>
-        <property key="programmertogo.imagename" value=""/>
-        <property key="programoptions.donoteraseauxmem" value="false"/>
-        <property key="programoptions.eraseb4program" value="true"/>
-        <property key="programoptions.pgmspeed" value="2"/>
-        <property key="programoptions.preservedataflash" value="false"/>
-        <property key="programoptions.preservedataflash.ranges"
-                  value="${programoptions.preservedataflash.ranges}"/>
-        <property key="programoptions.preserveeeprom" value="false"/>
-        <property key="programoptions.preserveeeprom.ranges" value=""/>
-        <property key="programoptions.preserveprogram.ranges" value=""/>
-        <property key="programoptions.preserveprogramrange" value="false"/>
-        <property key="programoptions.preserveuserid" value="false"/>
-        <property key="programoptions.programcalmem" value="false"/>
-        <property key="programoptions.programuserotp" value="false"/>
-        <property key="programoptions.testmodeentrymethod" value="VDDFirst"/>
-        <property key="programoptions.usehighvoltageonmclr" value="false"/>
-        <property key="programoptions.uselvpprogramming" value="false"/>
-        <property key="voltagevalue" value="5.0"/>
-      </PICkit3PlatformTool>
-      <XC8-config-global>
-        <property key="advanced-elf" value="true"/>
-        <property key="output-file-format" value="-mcof,+elf"/>
-        <property key="stack-size-high" value="auto"/>
-        <property key="stack-size-low" value="auto"/>
-        <property key="stack-size-main" value="auto"/>
-        <property key="stack-type" value="compiled"/>
-      </XC8-config-global>
     </conf>
   </confs>
 </configurationDescriptor>

@@ -26,6 +26,8 @@
 #ifndef SYSTEM_CONFIG_H
 #define SYSTEM_CONFIG_H
 
+#include <xc.h>
+
 #define _USB_CONFIG_VERSION_MAJOR 0
 #define _USB_CONFIG_VERSION_MINOR 0
 #define _USB_CONFIG_VERSION_DOT   12
@@ -59,6 +61,8 @@
     {                               \
         USBHostTasks();             \
     }
+
+extern void xpad_start();
 
 #define USBInitialize(x)            \
     {                               \

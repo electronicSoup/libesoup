@@ -84,7 +84,7 @@ static result_t uart_set_tx_pin(uint8_t uindex, enum pin_t pin);
 static result_t uart_set_uart_config(struct uart_data *udata);
 static result_t uart_putchar(uint8_t uindex, uint8_t ch);
 
-static result_t tx_buffer_write(int8_t uindex, char ch);
+static result_t tx_buffer_write(uint8_t uindex, char ch);
 static char     tx_buffer_read (uint8_t uindex);
 
 /*
@@ -137,23 +137,23 @@ void _ISR __attribute__((__no_auto_psv__)) _U4TXInterrupt(void)
 
 static void uart_tx_isr(uint8_t uindex)
 {
-	result_t rc;
-	
-	if((uindex >= NUM_UARTS) || (uarts[uindex].status != UART_RESERVED) || (uarts[uindex].udata == NULL)) {
-		// Todo - Possibly call global status handler with error?
+ 	result_t rc;
+ 	
+ 	if((uindex >= NUM_UARTS) || (uarts[uindex].status != UART_RESERVED) || (uarts[uindex].udata == NULL)) {
+ 		// Todo - Possibly call global status handler with error?
 		LOG_E("UART Null in ISR!\n\r");
 		return;
 	}
 
 	/*
-	 * If the uC UART TX buffer is not full load it from the tx buffer
+	 * If the uC TX buffer is not full load it from the SW tx buffer
 	 */
-	rc = load_tx_buffer(uindex);
-	if(rc < 0) {
-		LOG_E("load_tx_buffer()!\n\r");
-		return;
-	}
-	if (rc == 0) {
+ 	rc = load_tx_buffer(uindex);
+ 	if(rc < 0) {
+ 		LOG_E("load_tx_buffer()!\n\r");
+ 		return;
+ 	}
+ 	if (rc == 0) {
 		switch(uindex) {
 #ifdef UART_1
 		case UART_1:
@@ -211,8 +211,8 @@ static void uart_tx_isr(uint8_t uindex)
 				/*
                                  * Inform the higher layer we're finished
                                  */
-				if(uarts[uindex].udata->tx_finished != NULL) 
-					uarts[uindex].udata->tx_finished(uarts[uindex].udata);
+ 				if(uarts[uindex].udata->tx_finished != NULL) 
+                                        uarts[uindex].udata->tx_finished(uarts[uindex].udata);
 			} else {
 				/*
 				 * Interrupt when the last character is shifted out of the Transmit
@@ -244,8 +244,8 @@ static void uart_tx_isr(uint8_t uindex)
 				/*
                                  * Inform the higher layer we're finished
                                  */
-				if(uarts[uindex].udata->tx_finished != NULL)
-					uarts[uindex].udata->tx_finished(uarts[uindex].udata);
+ 				if(uarts[uindex].udata->tx_finished != NULL) 
+                                        uarts[uindex].udata->tx_finished(uarts[uindex].udata);
 			} else {
 				/*
 				 * Interrupt when the last character is shifted out of the Transmit
@@ -277,8 +277,8 @@ static void uart_tx_isr(uint8_t uindex)
 				/*
                                  * Inform the higher layer we're finished
                                  */
-				if(uarts[uindex].udata->tx_finished != NULL)
-					uarts[uindex].udata->tx_finished(uarts[uindex].udata);
+ 				if(uarts[uindex].udata->tx_finished != NULL) 
+                                        uarts[uindex].udata->tx_finished(uarts[uindex].udata);
 			} else {
 				/*
 				 * Interrupt when the last character is shifted out of the Transmit
@@ -290,7 +290,7 @@ static void uart_tx_isr(uint8_t uindex)
 			break;
 #endif // UART_4
 		default:
-			LOG_E("Comm port?\n\r");
+ 			LOG_E("Comm port?\n\r");
 			break;
 		}
 	}
@@ -461,12 +461,12 @@ result_t uart_init(void)
 {
 	uint8_t uindex;
 
-	for(uindex = 0; uindex < NUM_UARTS; uindex++) {
+	for(uindex = UART_1; uindex < NUM_UARTS; uindex++) {
 		uarts[uindex].status = UART_FREE;
-		uarts[uindex].udata  = NULL;
+		uarts[uindex].udata = NULL;
 	}
-	
-	return(0);
+        
+        return(0);
 }
 
 #ifdef SYS_DEBUG_BUILD
@@ -476,15 +476,15 @@ result_t uart_tx_buffer_count(struct uart_data *udata)
 
 	uindex = udata->uindex;
 
-	if(uindex >= NUM_UARTS)
-		return(-ERR_BAD_INPUT_PARAMETER);
-
-	if(uarts[uindex].status != UART_RESERVED)
-		return(-ERR_BAD_INPUT_PARAMETER);
-
-	if(uarts[uindex].udata != udata) 
-		return(-ERR_BAD_INPUT_PARAMETER);
-
+ 	if(uindex >= NUM_UARTS)
+ 		return(-ERR_BAD_INPUT_PARAMETER);
+ 
+ 	if(uarts[uindex].status != UART_RESERVED)
+ 		return(-ERR_BAD_INPUT_PARAMETER);
+ 
+ 	if(uarts[uindex].udata != udata) 
+ 		return(-ERR_BAD_INPUT_PARAMETER);
+        
 	return(uarts[uindex].tx_count);
 }
 #endif // SYS_DEBUG_BUILD
@@ -494,32 +494,30 @@ result_t uart_tx_buffer_count(struct uart_data *udata)
  */
 result_t uart_reserve(struct uart_data *udata)
 {
-	result_t  rc;
-	uint8_t   uindex;
-
 	/*
 	 * Find a free uart to use
 	 */
+	result_t  rc;
+	uint8_t   uindex;
+
 	for(uindex = UART_1; uindex < NUM_UARTS; uindex++) {
 		if(uarts[uindex].status == UART_FREE) {
 
-			uarts[uindex].udata          = udata;           // Keep track of calling structure
-			uarts[uindex].status         = UART_RESERVED;   // Mark the UART as reserved
+ 			uarts[uindex].udata          = udata;           // Keep track of calling structure
+ 			uarts[uindex].status         = UART_RESERVED;   // Mark the UART as reserved
 
-			uarts[uindex].tx_write_index = 0;               // Reset the counters
+ 			uarts[uindex].tx_write_index = 0;               // Reset the counters
 			uarts[uindex].tx_read_index  = 0;
 			uarts[uindex].tx_count       = 0;
 
-			udata->uindex = uindex;                         // Store the uart index for future reference.
-
+ 			udata->uindex = uindex;                         // Store the uart index for future reference.
 
 			/*
 			 * Set up the Rx & Tx pins
-			 * Bit strange to have neither Rx or Tx pin return error
+> 			 * Bit strange to have neither Rx or Tx pin return error
 			 */
-			if ((udata->rx_pin == INVALID_PIN) && (udata->tx_pin == INVALID_PIN))
-				return(-ERR_BAD_INPUT_PARAMETER);
-
+ 			if ((udata->rx_pin == INVALID_PIN) && (udata->tx_pin == INVALID_PIN))
+ 				return(-ERR_BAD_INPUT_PARAMETER);
 			if (udata->rx_pin != INVALID_PIN) {
 				rc = uart_set_rx_pin(uindex, udata->rx_pin);
 				RC_CHECK
@@ -531,7 +529,7 @@ result_t uart_reserve(struct uart_data *udata)
 			}
 
 			rc = uart_set_uart_config(udata);
-			RC_CHECK
+                        RC_CHECK
 
 			return(uindex);
 		}
@@ -540,55 +538,51 @@ result_t uart_reserve(struct uart_data *udata)
 	return(-ERR_NO_RESOURCES);
 }
 
-/*
- * Release a system uart for reuse, we're finished with it
- */
 result_t uart_release(struct uart_data *udata)
 {
 	uint8_t  uindex;
 
 	uindex = udata->uindex;
 
-	LOG_I("uart_release()  %d\n\r", uindex);
-
-	if(uindex >= NUM_UARTS)
+ 	if(uindex >= NUM_UARTS)
+ 		return(-ERR_BAD_INPUT_PARAMETER);
+ 
+ 	if(uarts[uindex].status != UART_RESERVED)
+ 		return(-ERR_BAD_INPUT_PARAMETER);
+ 
+	if(uarts[uindex].udata != udata) {
 		return(-ERR_BAD_INPUT_PARAMETER);
+	}
 
-	if(uarts[uindex].status != UART_RESERVED)
-		return(-ERR_BAD_INPUT_PARAMETER);
-
-	if(uarts[uindex].udata != udata) 
-		return(-ERR_BAD_INPUT_PARAMETER);
-
-	udata->uindex        = UART_BAD; 
-	uarts[uindex].udata  = NULL;
-	uarts[uindex].status = UART_FREE;
+ 	udata->uindex            = UART_BAD; 
+	uarts[uindex].udata      = NULL;
+	uarts[uindex].status     = UART_FREE;
 
 	switch (uindex) {
 #ifdef UART_1
         case UART_1:
-                U1_ENABLE = DISABLED;
+                U1_ENABLE        = DISABLED;
                 U1_RX_ISR_ENABLE = DISABLED;
                 U1_TX_ISR_ENABLE = DISABLED;
                 break;
 #endif // UART_1
 #ifdef UART_2
         case UART_2:
-                U2_ENABLE = DISABLED;
+                U2_ENABLE        = DISABLED;
                 U2_RX_ISR_ENABLE = DISABLED;
                 U2_TX_ISR_ENABLE = DISABLED;
                 break;
 #endif // UART_2
 #ifdef UART_3
         case UART_3:
-                U3_ENABLE = DISABLED;
+                U3_ENABLE        = DISABLED;
                 U3_RX_ISR_ENABLE = DISABLED;
                 U3_TX_ISR_ENABLE = DISABLED;
                 break;
 #endif // UART_3
 #ifdef UART_4
         case UART_4:
-                U4_ENABLE = DISABLED;
+                U4_ENABLE        = DISABLED;
                 U4_RX_ISR_ENABLE = DISABLED;
                 U4_TX_ISR_ENABLE = DISABLED;
                 break;
@@ -602,66 +596,64 @@ result_t uart_release(struct uart_data *udata)
 	return(0);
 }
 
-/*
- */
 result_t uart_tx_buffer(struct uart_data *udata, uint8_t *buffer, uint16_t len)
 {
 	uint8_t   uindex;
 	uint8_t  *ptr;
 	result_t  rc = 0;
-	int16_t   count;
+        int16_t   count = 0;
 
 	uindex = udata->uindex;
 
-	if(uindex >= NUM_UARTS)
-		return(-ERR_BAD_INPUT_PARAMETER);
+ 	if(uindex >= NUM_UARTS)
+ 		return(-ERR_BAD_INPUT_PARAMETER);
+ 
+ 	if(uarts[uindex].status != UART_RESERVED)
+ 		return(-ERR_BAD_INPUT_PARAMETER);
+ 
+ 	if(uarts[uindex].udata != udata) 
+ 		return(-ERR_BAD_INPUT_PARAMETER);
+ 
+ 	if(udata->tx_pin == INVALID_PIN)
+ 		return(-ERR_BAD_INPUT_PARAMETER);
 
-	if(uarts[uindex].status != UART_RESERVED)
+	if(uarts[uindex].udata != udata) {
 		return(-ERR_BAD_INPUT_PARAMETER);
-
-	if(uarts[uindex].udata != udata) 
-		return(-ERR_BAD_INPUT_PARAMETER);
-
-	if(udata->tx_pin == INVALID_PIN)
-		return(-ERR_BAD_INPUT_PARAMETER);
+	}
 
 	ptr = buffer;
-	count = 0;
 
-	while(len-- && (rc == 0)) {
+	while(len--) {
 		rc = uart_putchar(uindex, *ptr++);
-		RC_CHECK
-		count++;
+                RC_CHECK
+                count++;
 	}
 	return(count);
 }
 
-/*
- * 
- */
 result_t uart_tx_char(struct uart_data *udata, char ch)
 {
 	uint8_t  uindex;
 
 	uindex = udata->uindex;
 
-	if(uindex >= NUM_UARTS)
+ 	if(uindex >= NUM_UARTS)
+ 		return(-ERR_BAD_INPUT_PARAMETER);
+        if(uarts[uindex].udata != udata) {
 		return(-ERR_BAD_INPUT_PARAMETER);
+	}
 
-	if(uarts[uindex].status != UART_RESERVED)
-		return(-ERR_BAD_INPUT_PARAMETER);
-
-	if(uarts[uindex].udata != udata) 
-		return(-ERR_BAD_INPUT_PARAMETER);
-
-	if(udata->tx_pin == INVALID_PIN)
-		return(-ERR_BAD_INPUT_PARAMETER);
-		
         return(uart_putchar(uindex, ch));
 }
 
 static result_t uart_putchar(uint8_t uindex, uint8_t ch)
 {
+ 	if(uindex >= NUM_UARTS)
+ 		return(-ERR_BAD_INPUT_PARAMETER);
+ 	if(uarts[uindex].status != UART_RESERVED)
+ 		return(-ERR_BAD_INPUT_PARAMETER); 
+ 	if(uarts[uindex].udata->tx_pin == INVALID_PIN)
+ 		return(-ERR_BAD_INPUT_PARAMETER);
 	/*
 	 * If the Transmitter queue is currently empty turn on chip select.
 	 */
@@ -768,28 +760,19 @@ static result_t uart_putchar(uint8_t uindex, uint8_t ch)
 		break;
 #endif // UART_4
 	default:
-		return(-ERR_BAD_INPUT_PARAMETER);
+#ifndef __XC8 // XC8 compiler don't like recursion
+			LOG_E("Unrecognised UART in putchar()\n\r");
+#endif // __XC8
+		break;
 	}
 	
 	return(0);
 }
 
-/*
- * 
- */
-static result_t tx_buffer_write(int8_t uindex, char ch)
+static result_t tx_buffer_write(uint8_t uindex, char ch)
 {
 	uint16_t tmp;
 
-	if(uindex >= NUM_UARTS)
-		return(-ERR_BAD_INPUT_PARAMETER);
-
-	if(uarts[uindex].status != UART_RESERVED)
-		return(-ERR_BAD_INPUT_PARAMETER);
-
-	if(uarts[uindex].udata->tx_pin == INVALID_PIN)
-		return(-ERR_BAD_INPUT_PARAMETER);
-		
 	/*
 	 * Todo - This potential buffer overflow should be handled
 	 *        Might change the function to return an error code
@@ -814,15 +797,6 @@ static char tx_buffer_read(uint8_t uindex)
 	uint16_t tmp;
 	char     ch = 0x00;
 	
-	if(uindex >= NUM_UARTS)
-		return(-ERR_BAD_INPUT_PARAMETER);
-
-	if(uarts[uindex].status != UART_RESERVED)
-		return(-ERR_BAD_INPUT_PARAMETER);
-
-	if(uarts[uindex].udata->rx_pin == INVALID_PIN)
-		return(-ERR_BAD_INPUT_PARAMETER);
-
 	if(uarts[uindex].tx_count > 0) {
 		ch = uarts[uindex].tx_buffer[uarts[uindex].tx_read_index];
 		/*
@@ -838,7 +812,7 @@ static char tx_buffer_read(uint8_t uindex)
 #if defined(__dsPIC33EP256MU806__)
 static result_t uart_set_rx_pin(uint8_t uindex, enum pin_t pin)
 {
-	result_t rc;
+	int16_t rc;
 	
 	rc = gpio_set(pin, GPIO_MODE_DIGITAL_INPUT, 0);
 	RC_CHECK
@@ -944,7 +918,7 @@ static result_t uart_set_tx_pin(uint8_t uindex, enum pin_t pin)
 	result_t   rc;
 	uint8_t    tx_function = 0x00;
 
-	switch (uart) {
+	switch (uindex) {
 	case UART_1:
 		tx_function = PPS_O_UART_1_TX;
 		break;
@@ -985,22 +959,9 @@ static result_t uart_set_tx_pin(uint8_t uindex, enum pin_t pin)
 #if defined(__dsPIC33EP256MU806__) || defined (__PIC24FJ256GB106__)
 static result_t uart_set_uart_config(struct uart_data *udata)
 {
-	uint8_t uindex;
-	
-	uindex = udata->uindex;
-	
-	if(uindex >= NUM_UARTS)
-		return(-ERR_BAD_INPUT_PARAMETER);
-
-	if(uarts[uindex].status != UART_RESERVED)
-		return(-ERR_BAD_INPUT_PARAMETER);
-
-	if(uarts[uindex].udata != udata)
-		return(-ERR_BAD_INPUT_PARAMETER);
-
-	if(udata->tx_pin == INVALID_PIN)
-		return(-ERR_BAD_INPUT_PARAMETER);
-
+        uint8_t uindex;
+        
+        uindex = udata->uindex; 
 	switch (uindex) {
 #ifdef UART_1
 	case UART_1:
@@ -1042,23 +1003,23 @@ static result_t uart_set_uart_config(struct uart_data *udata)
 			U1BRG = (uint16_t)((uint32_t)((uint32_t)sys_clock_freq / (uint32_t)udata->baud) / 16) - 1;
 		}
 
-		U1_RX_ISR_FLAG = 0;
-		U1_TX_ISR_FLAG = 0;
+		U1_RX_ISR_FLAG             = 0;
+		U1_TX_ISR_FLAG             = 0;
 
 		if (udata->rx_pin != INVALID_PIN) {
-			U1_RX_ISR_ENABLE    = ENABLED;
+			U1_RX_ISR_ENABLE   = ENABLED;
 		} else {
-			U1_RX_ISR_ENABLE    = DISABLED;
+			U1_RX_ISR_ENABLE   = DISABLED;
 		}
 		
 		if (udata->tx_pin != INVALID_PIN) {
-			U1_TX_ISR_PRIOTITY  = 0x07;
-			U1_TX_ISR_ENABLE    = ENABLED;
-			U1STAbits.UTXEN     = ENABLED;
+			U1_TX_ISR_PRIOTITY = 0x07;
+			U1_TX_ISR_ENABLE   = ENABLED;
+			U1STAbits.UTXEN    = ENABLED;
 			
 		} else {
-			U1_TX_ISR_ENABLE    = DISABLED;
-			U1STAbits.UTXEN     = DISABLED;
+			U1_TX_ISR_ENABLE   = DISABLED;
+			U1STAbits.UTXEN    = DISABLED;
 		}
 
 		U1_ENABLE = ENABLED;
@@ -1115,12 +1076,13 @@ static result_t uart_set_uart_config(struct uart_data *udata)
 			U2_TX_ISR_PRIOTITY = 0x07;
 			U2_TX_ISR_ENABLE   = ENABLED;
 			U2STAbits.UTXEN    = ENABLED;
+			
 		} else {
 			U2_TX_ISR_ENABLE   = DISABLED;
 			U2STAbits.UTXEN    = DISABLED;
 		}
 
-		U2_ENABLE = ENABLED;
+		U2_ENABLE                  = ENABLED;
 		break;
 #endif // UART_2
 #ifdef UART_3
@@ -1164,22 +1126,22 @@ static result_t uart_set_uart_config(struct uart_data *udata)
 
 
 		if (udata->rx_pin != INVALID_PIN) {
-			U3_RX_ISR_ENABLE    = ENABLED;
+			U3_RX_ISR_ENABLE   = ENABLED;
 		} else {
-			U3_RX_ISR_ENABLE    = DISABLED;
+			U3_RX_ISR_ENABLE   = DISABLED;
 		}
 		
 		if (udata->tx_pin != INVALID_PIN) {
-			U3_TX_ISR_PRIOTITY  = 0x07;
-			U3_TX_ISR_ENABLE    = ENABLED;
-			U3STAbits.UTXEN     = ENABLED;
+			U3_TX_ISR_PRIOTITY = 0x07;
+			U3_TX_ISR_ENABLE   = ENABLED;
+			U3STAbits.UTXEN    = ENABLED;
 			
 		} else {
-			U3_TX_ISR_ENABLE    = DISABLED;
-			U3STAbits.UTXEN     = DISABLED;
+			U3_TX_ISR_ENABLE   = DISABLED;
+			U3STAbits.UTXEN    = DISABLED;
 		}
 
-		U3_ENABLE                   = ENABLED;
+		U3_ENABLE                  = ENABLED;
 		break;
 #endif // UART_3
 #ifdef UART_4
@@ -1223,46 +1185,46 @@ static result_t uart_set_uart_config(struct uart_data *udata)
 
 
 		if (udata->rx_pin != INVALID_PIN) {
-			U4_RX_ISR_ENABLE    = ENABLED;
+			U4_RX_ISR_ENABLE   = ENABLED;
 		} else {
-			U4_RX_ISR_ENABLE    = DISABLED;
+			U4_RX_ISR_ENABLE   = DISABLED;
 		}
 		
 		if (udata->tx_pin != INVALID_PIN) {
-			U4_TX_ISR_PRIOTITY  = 0x07;
-			U4_TX_ISR_ENABLE    = ENABLED;
-			U3STAbits.UTXEN     = ENABLED;
+			U4_TX_ISR_PRIOTITY = 0x07;
+			U4_TX_ISR_ENABLE   = ENABLED;
+			U3STAbits.UTXEN    = ENABLED;
 			
 		} else {
-			U4_TX_ISR_ENABLE    = DISABLED;
-			U4STAbits.UTXEN     = DISABLED;
+			U4_TX_ISR_ENABLE   = DISABLED;
+			U4STAbits.UTXEN    = DISABLED;
 		}
 
-		U4_ENABLE                   = ENABLED;
+		U4_ENABLE                  = ENABLED;
 		break;
 #endif // UART_4
 	default:
-		return(-ERR_BAD_INPUT_PARAMETER);
-		break;
+		LOG_E("Bad UART passed\n\r");
+ 		return(-ERR_BAD_INPUT_PARAMETER);
 	}
-	return(0);
+        return(0);
 }
 #endif  // defined(__dsPIC33EP256MU806__) || defined (__PIC24FJ256GB106__)
 
 #if defined(__18F2680) || defined(__18F4585)
 static void uart_set_uart_config(struct uart_data *udata)
 {
-	switch (udata->uart) {
+	switch (udata->uindex) {
 #ifdef UART_1
 	case UART_1:
-		TXSTAbits.TXEN    = 1;    // Transmitter enabled
-		TXSTAbits.SYNC    = 0;    // Asynchronous mode
-		TXSTAbits.BRGH    = 0;    // High Baud Rate Select bit
+		TXSTAbits.TXEN = 1;    // Transmitter enabled
+		TXSTAbits.SYNC = 0;    // Asynchronous mode
+		TXSTAbits.BRGH = 0;    // High Baud Rate Select bit
 
 #if defined(SYS_ENABLE_USART_RX)
-		RCSTAbits.CREN    = 1;    // Enable the Receiver
+		RCSTAbits.CREN = 1;    // Enable the Receiver
 #else
-		RCSTAbits.CREN    = 0;    // Disable the Receiver
+		RCSTAbits.CREN = 0;    // Disable the Receiver
 #endif
 		BAUDCONbits.BRG16 = 0; // 16-bit Baud Rate Register Enable bit
 
@@ -1278,7 +1240,8 @@ static void uart_set_uart_config(struct uart_data *udata)
 #endif // UART_1
 
 	default:
-		return(-ERR_BAD_INPUT_PARAMETER);
+		LOG_E("Bad UART passed\n\r");
+		break;
 	}
 }
 #endif // defined(__18F2680) || defined(__18F4585)
@@ -1306,7 +1269,7 @@ static uint16_t load_tx_buffer(uint8_t uindex)
                  * cannot be cleared by SW directly.
                  */
 		if(uarts[uindex].tx_count > 0) {
-			TXREG = tx_buffer_read(uart);
+			TXREG = tx_buffer_read(uindex);
 		} else {
 			PIE1bits.TXIE = DISABLED;
 		}

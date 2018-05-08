@@ -1,13 +1,12 @@
 /**
- *
  * @file libesoup/examples/projects/microchip/SW_Timers.X/libesoup_config.h
  *
  * @author John Whitmore
  *
- * This file contains an example libesoup_config configuration file for
+ * @brief This file contains an example libesoup_config configuration file for
  * working with Software Based timers. 
  *
- * Copyright 2017 electronicSoup Limited
+ * Copyright 2017-2018 electronicSoup Limited
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -32,10 +31,10 @@
 #endif
 
 #define SYS_HW_TIMERS
+
 #define SYS_SW_TIMERS
 #define SYS_NUMBER_OF_SW_TIMERS        5
 #define SYS_SW_TIMER_TICK_ms           5        // mSeconds
-
 
 #if defined(__dsPIC33EP256MU806__)
 #include "libesoup/boards/cinnamonBun/dsPIC33/cb-dsPIC33EP256MU806.h"
@@ -54,6 +53,5 @@
  *
  *******************************************************************************
  */
-
 
 #endif //_LIBESOUP_CONFIG_H

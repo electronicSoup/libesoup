@@ -25,6 +25,7 @@
 #include <stdio.h>
 #include "libesoup_config.h"
 
+#ifdef SYS_CAN_BUS
 #ifdef BRD_CAN_BUS_MCP2515
 
 #ifdef SYS_SERIAL_LOGGING
@@ -1031,4 +1032,5 @@ void test_can()
 }
 #endif
 
-#endif // #ifdef SYS_CAN_MCP2515
+#endif // SYS_CAN_MCP2515
+#endif // SYS_CAN_BUS

@@ -35,8 +35,6 @@
 #define SYS_CLOCK_FREQ 60000000    // 60MHz
 #endif
 
-#define SYS_DEBUG_BUILD
-
 #define SYS_HW_TIMERS
 
 /*
