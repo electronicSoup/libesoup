@@ -259,7 +259,7 @@ void hw_timer_init(void)
 #endif
 }
 
-#if (SYS_LOG_LEVEL != NO_LOGGING)
+#ifdef SYS_DEBUG_BUILD
 uint8_t hw_timer_active_count(void)
 {
         uint8_t  count = 0;
@@ -271,7 +271,7 @@ uint8_t hw_timer_active_count(void)
         }
         return(count);
 }
-#endif
+#endif // SYS_DEBUG_BUILD
 
 /*
  * hw_timer_start returns the id of the started timer.
