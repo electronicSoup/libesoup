@@ -27,12 +27,14 @@
 #define SYS_CLOCK_FREQ 60000000
 
 #define SYS_UART
+#define SYS_UART_TX_BUFFER_SIZE           512
+
 #define SYS_SERIAL_LOGGING
 #define SYS_SERIAL_PORT_GndRxTx
 #define SYS_LOG_LEVEL               LOG_DEBUG
-#define SYS_UART_TX_BUFFER_SIZE           512
 #define SYS_SERIAL_LOGGING_BAUD         19200
 
+#define SYS_USB_HOST
 #define SYS_USB_XPAD
 
 #if defined(__18F4585)

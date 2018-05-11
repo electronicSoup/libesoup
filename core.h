@@ -51,6 +51,11 @@
 #define LOG_DEBUG   3      ///< Debug logging level
 #define NO_LOGGING  4      ///< No logging in System
 
+#if defined(__XC8)
+#define CLEAR_WDT   CLRWDT();
+#elif defined(XC16)
+#define CLEAR_WDT   __asm__ ("CLRWDT");
+#endif
 
 /*
  * include stdint.h to get access to uint8_t style types

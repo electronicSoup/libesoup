@@ -135,7 +135,10 @@
  * @def   BRD_USB_DEVICE
  * @brief Turn off the 5 Volt power to the USB Bus.
  */
+#ifdef SYS_USB_HOST
 #define BRD_USB_HOST    TRISDbits.TRISD9 = GPIO_OUTPUT_PIN; LATDbits.LATD9 = 1; USBInitialize(0);
+#endif
+
 #define BRD_USB_DEVICE  TRISDbits.TRISD9 = GPIO_OUTPUT_PIN; LATDbits.LATD9 = 0;
 
 #include "libesoup/core.h"

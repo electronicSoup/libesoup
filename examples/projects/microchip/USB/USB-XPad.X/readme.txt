@@ -1,10 +1,33 @@
-This project uses the source file 'usb_host.c' from the Microchip MLA (Microchip Libraries for Applications) At the time of writing I'm using the latest available MLA from 2017-03-06. The file is simply linked to from the command line and left insitu in the MLA directory:
+This project uses the source file 'usb_host.c' from the Microchip MLA
+(Microchip Libraries for Applications) At the time of writing I'm using the
+latest available MLA from 2017-03-06. The file is simply linked to from the
+command line and left insitu in the MLA directory: 
 
-$ ln -s /opt/microchip/mla/v2017_03_06/framework/usb/src/usb_host.c
+$ ln -s /opt/microchip/mla/v2017_03_06/framework/usb/src/usb_host.c src/usb_host.c
 
+If you need to enable logging in the usb_host.c file it's probably better to
+copy the file directly into your project and add the libesoup debugging code
+to the top of the local copy of the file.
 
+$ cp /opt/microchip/mla/v2017_03_06/framework/usb/src/usb_host.c src
 
+The additons would be:
+/***********************************************************/
+#include "libesoup_config.h"
 
+#ifdef SYS_SERIAL_LOGGING
+#define DEBUG_FILE
+//#undef DEBUG_FILE
+static const char *TAG = "HOST";
+#include "libesoup/logger/serial_log.h"
+#define DEBUG_ENABLE
+#define DEBUG_PutString LOG_D
+#endif
+/***********************************************************/
+
+The project uses the file libesoup/comms/usb/xpad/usb_config.c to define the
+functions used for the Logitech game pad device and USB Identifiers recognised
+by the Host. In this case Vendor ID  0x046D, Product ID 0xC21D.
 
 Device Descriptor:
 

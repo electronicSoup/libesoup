@@ -94,6 +94,7 @@ bool USB_ApplicationEventHandler( uint8_t address, USB_EVENT event, void *data, 
 			// The data pointer points to a byte that represents the amount of power
 				// requested in mA, divided by two.  If the device wants too much power,
 				// we reject it.
+			LOG_D("EVENT_VBUS_REQUEST_POWER\n\r");
 			if (((USB_VBUS_POWER_EVENT_DATA*) data)->current <= (MAX_ALLOWED_CURRENT / 2)) {
 				return TRUE;
 			} else {
@@ -102,6 +103,7 @@ bool USB_ApplicationEventHandler( uint8_t address, USB_EVENT event, void *data, 
 			break;
 
 		case EVENT_VBUS_RELEASE_POWER:
+			LOG_D("EVENT_VBUS_RELEASE_POWER\n\r");
 			// Turn off Vbus power.
 				// The PIC24F with the Explorer 16 cannot turn off Vbus through software.
 			return TRUE;
@@ -119,8 +121,16 @@ bool USB_ApplicationEventHandler( uint8_t address, USB_EVENT event, void *data, 
 			return(TRUE);
 			break;
 
+                case EVENT_UNSUPPORTED_DEVICE:
+			LOG_D("EVENT_UNSUPPORTED_DEVICE\n\r");
+                        break;
+                        
+                case EVENT_CANNOT_ENUMERATE:
+			LOG_D("EVENT_CANNOT_ENUMERATE\n\r");
+                        break;
+                        
 		default:
-			LOG_E("Default case!\n\r");
+			LOG_E("Default case 0x%x!\n\r", event);
 			break;
 	}
 	return FALSE;

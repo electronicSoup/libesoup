@@ -100,7 +100,7 @@ result_t libesoup_init(void)
 	 * Allow the clock to settle
 	 */
 	for(loop = 0; loop < 0x100000; loop++) {
-                __asm__ ("CLRWDT");
+                CLEAR_WDT
 	}
 
 #ifdef SYS_UART
@@ -151,6 +151,6 @@ result_t libesoup_init(void)
 	__asm__ ("CLRWDT");
 #endif // SYS_CHANGE_NOTIFICATION
 
-	__asm__ ("CLRWDT");
+	CLEAR_WDT
 	return(board_init());
 }

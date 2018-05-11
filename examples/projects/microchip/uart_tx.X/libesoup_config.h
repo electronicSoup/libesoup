@@ -41,7 +41,7 @@
  * Enable the uart functionality in libesoup
  */
 #define SYS_UART
-#define SYS_UART_TX_BUFFER_SIZE   200
+//#define SYS_UART_TX_BUFFER_SIZE   200
 
 /*
  * Include the board definitions now that configuraiton is complete
