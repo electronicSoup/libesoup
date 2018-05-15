@@ -66,7 +66,7 @@ static const char *TAG = "OneWire";
 #define READ_ROM      0x33
 #define MATCH_ROM     0x55
 #define ALARM_SEARCH  0xEC
-#define SEARCH        0xF0
+#define ROM_SEARCH    0xF0
 
 /*
  * Local variables
@@ -103,7 +103,20 @@ static result_t write_zero(int16_t chan);
 static result_t read_byte(int16_t chan);
 static result_t read_bit(int16_t chan);
 
+static result_t get_free_device(void)
+{
+	uint8_t loop;
 
+	for (loop = 0; loop < SYS_ONE_WIRE_MAX_DEVICES; loop++) {
+		if (device[loop].ow_channel == NO_CHANNEL)
+                        return(loop);
+	}
+	return(-ERR_NO_RESOURCES);
+}
+
+/*
+ * Simply initialises the data structures for One Wire buses and devices.
+ */
 result_t one_wire_init()
 {
 	uint8_t loop;
@@ -131,7 +144,7 @@ result_t one_wire_reserve(enum pin_t pin)
 	int16_t  chan;
 	LOG_D("one_wire_reserve()\n\r");
 	/*
-	 * check for existing bus on the given pin
+	 * check for existing OneWire bus on the given pin
 	 */
 	for(loop = 0; loop < SYS_ONE_WIRE_MAX_BUS; loop++) {
 		if(bus[loop].active && (bus[loop].pin == pin)) {
@@ -140,7 +153,7 @@ result_t one_wire_reserve(enum pin_t pin)
 	}
 
 	/*
-	 * Find a free slot
+	 * Find a free slot for the new OneWire bus
 	 */
 	for(loop = 0; loop < SYS_ONE_WIRE_MAX_BUS; loop++) {
 		if(!bus[loop].active) {
@@ -149,6 +162,9 @@ result_t one_wire_reserve(enum pin_t pin)
 		}
 	}
 	
+        /*
+         * If we've found a free slot in data structures populate it.
+         */
 	if(chan < SYS_ONE_WIRE_MAX_BUS) {
 		bus[chan].active     = 0b1;
 		bus[chan].sem_device = NO_DEVICE;
@@ -159,30 +175,54 @@ result_t one_wire_reserve(enum pin_t pin)
 
 		rc = census(chan);
 		RC_CHECK
+
 		return(chan);
 	}
 	return(ERR_NO_RESOURCES);
 }
 
-void set_bit(int8_t index, uint8_t bit)
+void set_bit(struct one_wire_device *dev, uint8_t bit)
 {
 	if(bit < 8) {
-		device[index].family |= (0b1 << bit);
+		dev->family |= (0b1 << bit);
 	} else if (bit < 16) {
-		device[index].serial_number[0] |= (0b1 << (bit - 8));			
+		dev->serial_number[0] |= (0b1 << (bit - 8));			
 	} else if (bit < 24) {
-		device[index].serial_number[1] |= (0b1 << (bit - 16));			
+		dev->serial_number[1] |= (0b1 << (bit - 16));			
 	} else if (bit < 32) {
-		device[index].serial_number[2] |= (0b1 << (bit - 24));			
+		dev->serial_number[2] |= (0b1 << (bit - 24));			
 	} else if (bit < 40) {
-		device[index].serial_number[3] |= (0b1 << (bit - 32));			
+		dev->serial_number[3] |= (0b1 << (bit - 32));			
 	} else if (bit < 48) {
-		device[index].serial_number[4] |= (0b1 << (bit - 40));			
+		dev->serial_number[4] |= (0b1 << (bit - 40));			
 	} else if (bit < 56) {
-		device[index].serial_number[5] |= (0b1 << (bit - 48));			
+		dev->serial_number[5] |= (0b1 << (bit - 48));			
 	} else if (bit < 64) {
-		device[index].crc |= (0b1 << (bit - 56));			
+		dev->crc |= (0b1 << (bit - 56));			
 	}
+}
+
+uint8_t get_bit(struct one_wire_device *dev, uint8_t bit)
+{
+	if(bit < 8) {
+		return(dev->family & (0b1 << bit));
+	} else if (bit < 16) {
+		return(dev->serial_number[0] & (0b1 << (bit - 8)));			
+	} else if (bit < 24) {
+		return(dev->serial_number[1] & (0b1 << (bit - 16)));			
+	} else if (bit < 32) {
+		return(dev->serial_number[2] & (0b1 << (bit - 24)));			
+	} else if (bit < 40) {
+		return(dev->serial_number[3] & (0b1 << (bit - 32)));			
+	} else if (bit < 48) {
+		return(dev->serial_number[4] & (0b1 << (bit - 40)));			
+	} else if (bit < 56) {
+		return(dev->serial_number[5] & (0b1 << (bit - 48)));			
+	} else if (bit < 64) {
+		return(dev->crc & (0b1 << (bit - 56)));			
+	}
+        
+        return(0);
 }
 
 /*
@@ -190,36 +230,47 @@ void set_bit(int8_t index, uint8_t bit)
  */
 static result_t census(int16_t chan)
 {
-	result_t  rc;
-	uint8_t   loop;
-	boolean   first_read;
-	boolean   second_read;
-	uint8_t   last_discrepency;
-	uint8_t   device_index;
+        struct search_dev {
+                boolean                 used;
+                struct one_wire_device  dev;
+                uint8_t                 discrepancy;
+        };
+        
+        struct search_dev  search[SYS_ONE_WIRE_MAX_DEVICES];        
+	result_t           rc;
+	uint8_t            bit_loop;
+        uint8_t            loop;
+        uint8_t            i;
+	boolean            first_read;
+	boolean            second_read;
+        boolean            finished = FALSE;
+        uint8_t            index = 0;
 
-	delay(mSeconds, 100);	
+        for (loop = 0; loop < SYS_ONE_WIRE_MAX_DEVICES; loop++) {
+                search[loop].used         = FALSE;
+                search[loop].discrepancy  = 0xff;  // No Discrepancy as yet
+        }
+
+        search[index].used           = TRUE;
+        search[index].dev.family     = 0x00;
+        search[index].dev.crc        = 0x00;
+        search[index].dev.ow_channel = chan;
+        search[index].discrepancy    = 0xff;  // No Discrepancy as yet
+
+        for (i = 0; i < 6; i++)
+                search[index].dev.serial_number[i] = 0x00;
+
+	while (!finished) {
+                delay(mSeconds, 100);
 	
-	rc = reset_pulse(chan);
-	RC_CHECK
-	if(rc == 0) return(-ERR_NO_RESPONSE);
+                rc = reset_pulse(chan);
+                RC_CHECK
+                if(rc == 0) return(rc);
 
-	rc = write_byte(chan, SEARCH);
-//	rc = write_byte(bus, READ_ROM);
-//	LOG_D("write_byte returned %d\n\r", rc);
-	RC_CHECK
+                rc = write_byte(chan, ROM_SEARCH);
+                RC_CHECK
 
-	last_discrepency = 0x00;
-	device_index = 0;
-
-	while(last_discrepency != 0xff) {
-		last_discrepency = 0xff;  // Assume there will be no discrepency on the pass
-		device[device_index].family     = 0x00;
-		device[device_index].crc        = 0x00;
-		device[device_index].ow_channel = chan;
-		for(loop = 0; loop < 6; loop++) device[device_index].serial_number[loop] = 0x00;
-
-		for(loop = 0; loop < 64; loop++) {
-//			if(loop % 8 == 0) serial_printf(" ");
+		for (bit_loop = 0; bit_loop < 64; bit_loop++) {
 			rc = read_bit(chan);
 			RC_CHECK
 			first_read = (boolean)(rc == 1);
@@ -228,18 +279,50 @@ static result_t census(int16_t chan)
 			RC_CHECK
 			second_read = (boolean)(rc == 1);
 	
-			if( (first_read == 0) && (second_read == 0) ) {
+			if (!first_read && !second_read) {
 				// Discrepancy at this bit
-				last_discrepency = loop;
-				LOG_D("D\n\r");
-			} else if( (first_read == 1) && (second_read == 1) ) {
+                                if ((search[index].discrepancy == 0xff) || (bit_loop > search[index].discrepancy)) {
+                                        /*
+                                         * We have a new device to search so add it to the search list.
+                                         */
+                                        for (loop = 0; (loop < SYS_ONE_WIRE_MAX_DEVICES && search[loop].used); loop++);
+                                        if(loop < SYS_ONE_WIRE_MAX_DEVICES) {
+                                                LOG_D("Added new device at index %d discrepency @ bit %d\n\r", loop, bit_loop);
+                                                search[loop].used           = TRUE;
+                                                search[loop].dev.family     = search[index].dev.family;
+                                                search[loop].dev.crc        = search[index].dev.crc;
+                                                search[loop].dev.ow_channel = chan;
+                                                search[loop].discrepancy    = bit_loop;
+
+                                                for (i = 0; i < 6; i++)
+                                                        search[loop].dev.serial_number[i] = search[index].dev.serial_number[i];
+                                        } else {
+                                                LOG_E("More OneWire devices then mem allocated\n\r");
+                                        }
+
+                                        rc = write_zero(chan);
+                                        RC_CHECK
+                                } else if (bit_loop < search[index].discrepancy) {
+                                        if(get_bit(&search[loop].dev, bit_loop)) {
+                                                rc = write_one(chan);
+                                                RC_CHECK
+                                        } else {
+                                                rc = write_zero(chan);
+                                                RC_CHECK
+                                        }
+                                } else if (bit_loop == search[index].discrepancy) {
+                                        rc = write_one(chan);
+                                        RC_CHECK
+                                        set_bit(&search[index].dev, bit_loop);
+                                } 
+			} else if (first_read && second_read) {
 				// No devices, must be finished
-				LOG_D("No Devices\n\r");
+				LOG_D("No Devices on branch loop %d\n\r", bit_loop);
 				return(0);
 				break;
-			} else if(first_read) {
+			} else if (first_read) {
 //				serial_printf("1");
-				set_bit(device_index, loop);
+				set_bit(&search[index].dev, bit_loop);
 				rc = write_one(chan);
 				RC_CHECK
 			} else {
@@ -248,19 +331,54 @@ static result_t census(int16_t chan)
 				RC_CHECK
 			}
 		}
-		device_index++;
+
+                /*
+                 * Mark this search as done
+                 */
+                search[index].discrepancy = 0xff;
+                
+#ifdef SYS_SERIAL_LOGGING
+                LOG_D("Family Code 0x%x\n\r", search[index].dev.family);
+                for (loop = 0; loop < 6; loop++) {
+                        LOG_D("serial[%d] 0x%x\n\r", loop, search[index].dev.serial_number[loop]);		
+                }
+                LOG_D("CRC 0x%x\n\r", search[index].dev.crc);	
+#endif
+                /*
+                 * Find next path to follow
+                 */
+                for (loop = 0; loop < SYS_ONE_WIRE_MAX_DEVICES; loop++) {
+                        if(search[loop].used && search[loop].discrepancy != 0xff) {
+                                index = loop;
+                                break;
+                        }
+                }
+                
+                finished = loop == SYS_ONE_WIRE_MAX_DEVICES;
+//                rc = get_free_device();
+//                RC_CHECK
+                
+//                device_index = (uint8_t)rc;
+
 	}
+        
+        i = 0;
+        
+        for (loop = 0; loop < SYS_ONE_WIRE_MAX_DEVICES; loop++) {
+                if(search[loop].used) {
+                        i++;
+                }
+        }
+        
+        /*
+         * Check the CRCs fo the devices.
+         */
+
+        LOG_D("Done found %d\n\r", i);
 	//	rc = read_byte(bus);
 	//	RC_CHECK
 	//	family_code = rc;
-#ifdef SYS_SERIAL_LOGGING
-	LOG_D("Family Code 0x%x\n\r", device[0].family);
-	for(loop = 0; loop < 6; loop++) {
-		LOG_D("serial[%d] 0x%x\n\r", loop, device[0].serial_number[loop]);		
-	}
-	LOG_D("CRC 0x%x\n\r", device[0].crc);	
-#endif
-	return(0);
+	return(i);
 }
 
 static void bus_change(enum pin_t pin)
