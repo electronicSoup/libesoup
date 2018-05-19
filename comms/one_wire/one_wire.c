@@ -35,12 +35,17 @@ static const char *TAG = "OneWire";
 #error SYS_ONE_WIRE_BUS Should be defined
 #endif
 
+#ifndef SYS_CRC
+#error ONE_WIRE functionality relies on CRC functionality libesoup_config.h should define SYS_CRC
+#endif
+
 #include "libesoup/errno.h"
 #include "libesoup/gpio/gpio.h"
 #include "libesoup/timers/hw_timers.h"
 #include "libesoup/timers/delay.h"
 #include "libesoup/comms/one_wire/one_wire.h"
 #include "libesoup/gpio/change_notification.h"
+#include "libesoup/processors/dsPIC33/crc.h"
 
 #ifndef SYS_CHANGE_NOTIFICATION
 #error SYS_CHANGE_NOTIFICATION Not defined required by OneWire
@@ -67,6 +72,15 @@ static const char *TAG = "OneWire";
 #define MATCH_ROM     0x55
 #define ALARM_SEARCH  0xEC
 #define ROM_SEARCH    0xF0
+
+/*
+ * CRC details
+ */
+#define ONE_WIRE_CRC_POLYNOMIAL                0x131 // 0b1 0011 0001
+#define ONE_WIRE_CRC_POLYNOMIAL_LENGTH             7
+#define ONE_WIRE_CRC_DATA_WIDTH                    7
+#define ONE_WIRE_CRC_LITTLE_ENDIAN              TRUE
+        
 
 /*
  * Local variables
@@ -175,6 +189,7 @@ result_t one_wire_reserve(enum pin_t pin)
 
 		rc = census(chan);
 		RC_CHECK
+		LOG_D("Found %d devices\n\r", rc);
 
 		return(chan);
 	}
@@ -245,6 +260,12 @@ static result_t census(int16_t chan)
 	boolean            second_read;
         boolean            finished = FALSE;
         uint8_t            index = 0;
+        uint32_t           crc_sum;
+	uint8_t            found_count = 0;
+
+        // polynomial X^8 + X^5 + X^4 + X^0
+        rc = crc_reserve(ONE_WIRE_CRC_POLYNOMIAL, ONE_WIRE_CRC_POLYNOMIAL_LENGTH, ONE_WIRE_CRC_DATA_WIDTH, ONE_WIRE_CRC_LITTLE_ENDIAN);
+        RC_CHECK
 
         for (loop = 0; loop < SYS_ONE_WIRE_MAX_DEVICES; loop++) {
                 search[loop].used         = FALSE;
@@ -287,7 +308,7 @@ static result_t census(int16_t chan)
                                          */
                                         for (loop = 0; (loop < SYS_ONE_WIRE_MAX_DEVICES && search[loop].used); loop++);
                                         if(loop < SYS_ONE_WIRE_MAX_DEVICES) {
-                                                LOG_D("Added new device at index %d discrepency @ bit %d\n\r", loop, bit_loop);
+//                                                LOG_D("Added new device at index %d discrepency @ bit %d\n\r", loop, bit_loop);
                                                 search[loop].used           = TRUE;
                                                 search[loop].dev.family     = search[index].dev.family;
                                                 search[loop].dev.crc        = search[index].dev.crc;
@@ -330,19 +351,74 @@ static result_t census(int16_t chan)
 				rc = write_zero(chan);
 				RC_CHECK
 			}
+                        
+                        /*
+                         * Send the received data to the CRC Engine
+                         */
+                        if (bit_loop == 7) {
+                                rc = crc_sum_byte(search[index].dev.family);
+                                RC_CHECK
+                        } else if (bit_loop == 15) {
+                                rc = crc_sum_byte(search[index].dev.serial_number[0]);
+                                RC_CHECK
+                        } else if (bit_loop == 23) {
+                                rc = crc_sum_byte(search[index].dev.serial_number[1]);
+                                RC_CHECK
+                        } else if (bit_loop == 31) {
+                                rc = crc_sum_byte(search[index].dev.serial_number[2]);
+                                RC_CHECK
+                        } else if (bit_loop == 39) {
+                                rc = crc_sum_byte(search[index].dev.serial_number[3]);
+                                RC_CHECK
+                        } else if (bit_loop == 47) {
+                                rc = crc_sum_byte(search[index].dev.serial_number[4]);
+                                RC_CHECK
+                        } else if (bit_loop == 55) {
+                                rc = crc_sum_byte(search[index].dev.serial_number[5]);
+                                RC_CHECK
+                        } else if (bit_loop == 63) {
+                                rc = crc_sum_byte(search[index].dev.crc);
+                                RC_CHECK
+                        }
+                        delay(mSeconds, 5);
 		}
+                
+                rc = crc_sum_result(&crc_sum);
+                RC_CHECK
+  //              LOG_D("CRC Sum 0x%x\n\r", (uint8_t)crc_sum);
+
+		if ((uint8_t)crc_sum == 0x00) {
+			/*
+			 * Add the device to the list of devices
+			 */
+			for (loop = 0; loop < SYS_ONE_WIRE_MAX_DEVICES; loop++) {
+				if (device[loop].ow_channel == NO_CHANNEL) {
+					device[loop].ow_channel = chan;
+					device[loop].family     = search[index].dev.family;
+					device[loop].crc        = search[index].dev.crc;
+
+					for (i = 0; i < 6; i++)
+						device[loop].serial_number[i] = search[index].dev.serial_number[i];
+
+					found_count++;
+					break;
+				}
+			}
+		}
+		crc_sum_reset();
 
                 /*
                  * Mark this search as done
                  */
                 search[index].discrepancy = 0xff;
-                
+#if 0
 #ifdef SYS_SERIAL_LOGGING
                 LOG_D("Family Code 0x%x\n\r", search[index].dev.family);
                 for (loop = 0; loop < 6; loop++) {
                         LOG_D("serial[%d] 0x%x\n\r", loop, search[index].dev.serial_number[loop]);		
                 }
                 LOG_D("CRC 0x%x\n\r", search[index].dev.crc);	
+#endif
 #endif
                 /*
                  * Find next path to follow
@@ -354,7 +430,7 @@ static result_t census(int16_t chan)
                         }
                 }
                 
-                finished = loop == SYS_ONE_WIRE_MAX_DEVICES;
+                finished = (loop == SYS_ONE_WIRE_MAX_DEVICES);
 //                rc = get_free_device();
 //                RC_CHECK
                 
@@ -362,23 +438,7 @@ static result_t census(int16_t chan)
 
 	}
         
-        i = 0;
-        
-        for (loop = 0; loop < SYS_ONE_WIRE_MAX_DEVICES; loop++) {
-                if(search[loop].used) {
-                        i++;
-                }
-        }
-        
-        /*
-         * Check the CRCs fo the devices.
-         */
-
-        LOG_D("Done found %d\n\r", i);
-	//	rc = read_byte(bus);
-	//	RC_CHECK
-	//	family_code = rc;
-	return(i);
+	return(found_count);
 }
 
 static void bus_change(enum pin_t pin)
