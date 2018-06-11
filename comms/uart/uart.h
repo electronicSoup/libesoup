@@ -71,7 +71,7 @@ struct uart_data {
 	uint16_t           uart_mode;                            ///< Mode bits for the connection (calculated with call to uart_calculate_mode() passing required serial parameters)
 	uint32_t           baud;                                 ///< Baud rate for the connection
 	void               (*tx_finished)(void *);               ///< Callback - transmission has finished (Possibly NULL)
-	void               (*process_rx_char)(uint8_t, uint8_t); ///< Callback - Character received (If an rx_pin is defined function to process received characters)
+	void               (*process_rx_char)(uint8_t);          ///< Callback - Character received (If an rx_pin is defined function to process received characters)
 };
 
 /**

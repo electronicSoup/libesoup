@@ -308,6 +308,7 @@ void _ISR __attribute__((__no_auto_psv__)) _U1RXInterrupt(void)
 
 	asm ("CLRWDT");
 
+        LOG_D("U1RX\n\r");
 	if (U1STAbits.OERR) {
 		LOG_E("RX Buffer overrun\n\r");
 		U1STAbits.OERR = 0;   /* Clear the error flag */
@@ -315,7 +316,7 @@ void _ISR __attribute__((__no_auto_psv__)) _U1RXInterrupt(void)
 
 	while (U1STAbits.URXDA) {
 		ch = U1RXREG;
-		uarts[UART_1].udata->process_rx_char(UART_1, ch);
+		uarts[UART_1].udata->process_rx_char(ch);
 	}
 }
 #endif // #if defined(__dsPIC33EP256MU806__) || defined (__PIC24FJ256GB106__)
@@ -329,6 +330,7 @@ void _ISR __attribute__((__no_auto_psv__)) _U2RXInterrupt(void)
 
 	asm ("CLRWDT");
 
+        LOG_D("U2RX\n\r");
 	if (U2STAbits.OERR) {
 		LOG_E("RX Buffer overrun\n\r");
 		U2STAbits.OERR = 0;   /* Clear the error flag */
@@ -336,7 +338,7 @@ void _ISR __attribute__((__no_auto_psv__)) _U2RXInterrupt(void)
 
 	while (U2STAbits.URXDA) {
 		ch = U2RXREG;
-		uarts[UART_2].udata->process_rx_char(UART_2, ch);
+		uarts[UART_2].udata->process_rx_char(ch);
 	}
 }
 #endif // #if defined(__dsPIC33EP256MU806__) || defined (__PIC24FJ256GB106__)
@@ -350,6 +352,7 @@ void _ISR __attribute__((__no_auto_psv__)) _U3RXInterrupt(void)
 
 	asm ("CLRWDT");
 
+        LOG_D("U3RX\n\r");
 	if (U3STAbits.OERR) {
 		LOG_E("RX Buffer overrun\n\r");
 		U3STAbits.OERR = 0;   /* Clear the error flag */
@@ -357,7 +360,7 @@ void _ISR __attribute__((__no_auto_psv__)) _U3RXInterrupt(void)
 
 	while (U3STAbits.URXDA) {
 		ch = U3RXREG;
-		uarts[UART_3].udata->process_rx_char(UART_3, ch);
+		uarts[UART_3].udata->process_rx_char(ch);
 	}
 }
 #endif // #if defined(__dsPIC33EP256MU806__) || defined (__PIC24FJ256GB106__)
@@ -371,6 +374,7 @@ void _ISR __attribute__((__no_auto_psv__)) _U4RXInterrupt(void)
 
 	asm ("CLRWDT");
 
+        LOG_D("U4RX\n\r");
 	if (U4STAbits.OERR) {
 		LOG_E("RX Buffer overrun\n\r");
 		U4STAbits.OERR = 0;   /* Clear the error flag */
@@ -378,7 +382,7 @@ void _ISR __attribute__((__no_auto_psv__)) _U4RXInterrupt(void)
 
 	while (U4STAbits.URXDA) {
 		ch = U4RXREG;
-		uarts[UART_4].udata->process_rx_char(UART_4, ch);
+		uarts[UART_4].udata->process_rx_char(ch);
 	}
 }
 #endif // #if defined(__dsPIC33EP256MU806__) || defined (__PIC24FJ256GB106__)
@@ -1007,6 +1011,7 @@ static result_t uart_set_uart_config(struct uart_data *udata)
 		U1_TX_ISR_FLAG             = 0;
 
 		if (udata->rx_pin != INVALID_PIN) {
+                        U1STAbits.URXISEL  = 0b00;
 			U1_RX_ISR_ENABLE   = ENABLED;
 		} else {
 			U1_RX_ISR_ENABLE   = DISABLED;
@@ -1067,6 +1072,7 @@ static result_t uart_set_uart_config(struct uart_data *udata)
 
 
 		if (udata->rx_pin != INVALID_PIN) {
+                        U2STAbits.URXISEL  = 0b00;
 			U2_RX_ISR_ENABLE   = ENABLED;
 		} else {
 			U2_RX_ISR_ENABLE   = DISABLED;
@@ -1126,6 +1132,7 @@ static result_t uart_set_uart_config(struct uart_data *udata)
 
 
 		if (udata->rx_pin != INVALID_PIN) {
+                        U3STAbits.URXISEL  = 0b00;
 			U3_RX_ISR_ENABLE   = ENABLED;
 		} else {
 			U3_RX_ISR_ENABLE   = DISABLED;
@@ -1185,6 +1192,7 @@ static result_t uart_set_uart_config(struct uart_data *udata)
 
 
 		if (udata->rx_pin != INVALID_PIN) {
+                        U4STAbits.URXISEL  = 0b00;
 			U4_RX_ISR_ENABLE   = ENABLED;
 		} else {
 			U4_RX_ISR_ENABLE   = DISABLED;
