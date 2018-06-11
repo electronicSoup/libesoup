@@ -389,6 +389,14 @@ static result_t es_printf(const char * fmt, va_list args)
 				RC_CHECK
 				break;
 
+			case 'c':
+				i = va_arg(args, uint8_t);
+				string[0] = i;
+				string[1] = 0;
+				rc = uart_tx_buffer(&serial_uart, string, 1);
+				RC_CHECK
+				break;
+
 			case 'd':
 				i = va_arg(args, uint16_t);
 				string = itoa((uint32_t)i, buf, 10);
