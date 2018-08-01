@@ -1,15 +1,16 @@
 /**
  *
- * @file libesoup/boards/cinnamonBun/dsPIC33/cb-dsPIC33EP256MU806.h
+ * @file libesoup/boards/mower/mower.h
  *
  * @author John Whitmore
  *
- * This file contains board specific definitions for the dsPIC33EP256MU806 based
- * cinnamonBun device. The board contains an SPI based EEPROM device and OneWire
+ * This file contains board specific definitions for the electronicSoup mower
+ * controller, based on the dsPIC33EP256MU806 based cinnamonBun device.
+ * The board contains an SPI based EEPROM device and OneWire
  * devices whose definitions are included in this board header file, as well as
  * CRYSTAL_FREQ for the device.
  *
- * Copyright 2017-2018 electronicSoup Limited
+ * Copyright 2018 electronicSoup Limited
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU Lesser General Public License as published by
@@ -25,8 +26,8 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-#ifndef _CB_dsPIC33EP256MU806_H
-#define _CB_dsPIC33EP256MU806_H
+#ifndef _MOWER_H
+#define _MOWER_H
 
 #include "libesoup/processors/es-dsPIC33EP256MU806.h"
 
@@ -43,7 +44,7 @@
 /**
  * @brief Serial Logging pin configuration
  *
- * The cinnamonBun has three pins for the debug interface, which will be used
+ * The Mower Controller has three pins for the debug interface, which will be used
  * if SYS_SERIAL_LOGGING is defined in libesoup_config.h. One pin is hardwired 
  * to ground but the other two can be configured as either the recieve pin or the
  * transmit pin, using the peripheral pin select mechanism of the dsPIC33.
@@ -128,19 +129,6 @@
 #define BRD_SPI_MOSI         RF0
 #define BRD_SPI_MISO        RD10
 
-/**
- * @def   BRD_USB_HOST
- * @brief Turn on the 5 Volt power to the USB Bus.
- *
- * @def   BRD_USB_DEVICE
- * @brief Turn off the 5 Volt power to the USB Bus.
- */
-#ifdef SYS_USB_HOST
-#define BRD_USB_HOST    TRISDbits.TRISD9 = GPIO_OUTPUT_PIN; LATDbits.LATD9 = 1; USBInitialize(0);
-#endif
-
-#define BRD_USB_DEVICE  TRISDbits.TRISD9 = GPIO_OUTPUT_PIN; LATDbits.LATD9 = 0;
-
 #include "libesoup/core.h"
 
-#endif // _CB_dsPIC33EP256MU806_H
+#endif // _MOWER_H
