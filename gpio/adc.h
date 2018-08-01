@@ -20,8 +20,16 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  *
  */
+#ifndef _ADC_H
+#define _ADC_H
+
 #include "libesoup_config.h"
 
+#ifdef SYS_ADC
 typedef void (*adc_handler_t)(enum pin_t, uint16_t);
 
 extern result_t adc_sample(enum pin_t pin, adc_handler_t);
+
+#endif
+
+#endif // _ADC_H

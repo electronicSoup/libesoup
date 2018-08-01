@@ -22,6 +22,8 @@
  */
 #include "libesoup_config.h"
 
+#ifdef SYS_ADC
+
 #ifdef SYS_SERIAL_LOGGING
 #define DEBUG_FILE
 #if defined(__XC16)
@@ -103,3 +105,5 @@ result_t adc_sample(enum pin_t pin, adc_handler_t handler)
 	return(0);
 }
 #endif  // (__dsPIC33EP256MU806__)
+
+#endif // SYS_ADC
