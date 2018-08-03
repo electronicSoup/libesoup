@@ -61,6 +61,10 @@ void __attribute__((__interrupt__, __no_auto_psv__)) _AD1Interrupt(void)
 }
 #endif // (__dsPIC33EP256MU806__)
 
+result_t adc_init(void)
+{
+	
+}
 
 #if defined(__dsPIC33EP256MU806__)
 result_t adc_sample(enum pin_t pin, adc_handler_t handler)

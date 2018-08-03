@@ -66,6 +66,10 @@ extern void     uart_init(void);
 #include "libesoup/utils/rand.h"
 #endif
 
+#ifdef SYS_ADC
+extern result_t adc_init(void);
+#endif
+
 #ifdef SYS_CHANGE_NOTIFICATION
 #include "libesoup/gpio/change_notification.h"
 #endif // SYS_CHANGE_NOTIFICATION
@@ -150,6 +154,10 @@ result_t libesoup_init(void)
 	RC_CHECK
 	__asm__ ("CLRWDT");
 #endif // SYS_CHANGE_NOTIFICATION
+
+#ifdef SYS_ADC
+	adc_init();
+#endif
 
 	CLEAR_WDT
 	return(board_init());
