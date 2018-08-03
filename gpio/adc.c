@@ -40,9 +40,22 @@ static const char *TAG = "SPI";
 #endif
 #endif // SYS_SERIAL_LOGGING
 
+#ifndef SYS_ADC_CHANNELS
+#error libesoup_config.h file should define number of required ADC Channels in build
+#endif
+
 #include "libesoup/errno.h"
 #include "libesoup/gpio/adc.h"
 #include "libesoup/gpio/gpio.h"
+
+struct adc_channel {
+	enum pin_t pin;
+	uint16_t last_reported;
+	uint16_t required_delta;
+	uint16_t sample;
+};
+
+struct adc_channel channels[SYS_ADC_CHANNELS];
 
 #if defined(__dsPIC33EP256MU806__)
 static  adc_handler_t sample_handler = NULL;
@@ -63,7 +76,6 @@ void __attribute__((__interrupt__, __no_auto_psv__)) _AD1Interrupt(void)
 
 result_t adc_init(void)
 {
-	
 }
 
 #if defined(__dsPIC33EP256MU806__)
