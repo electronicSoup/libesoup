@@ -83,7 +83,35 @@ result_t adc_init(void)
 		channels[loop].last_reported = 0;
 		channels[loop].required_delta = 0;
 		channels[loop].sample = 0;
-	}	
+	}
+
+	return(0);
+}
+
+result_t adc_monitor_channel(enum pin_t pin, uint16_t delta)
+{
+	uint16_t loop;
+
+	/*
+	 * Find a free slot in the channels array
+	 */
+	for(loop = 0; loop < SYS_ADC_CHANNELS; loop++) {
+		if (channels[loop].pin == INVALID_PIN) {
+			channels[loop].pin = pin;
+			channels[loop].last_reported = 0;
+			channels[loop].required_delta = delta;
+			channels[loop].sample = 0;
+		}
+	}
+
+	if (loop >= SYS_ADC_CHANNELS) {
+		return(ERR_NO_RESOURCES);
+	}
+
+	/*
+	 * Enable ADC pin in the list to sample.
+	 */
+	return(0);
 }
 
 #if defined(__dsPIC33EP256MU806__)
