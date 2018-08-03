@@ -76,6 +76,14 @@ void __attribute__((__interrupt__, __no_auto_psv__)) _AD1Interrupt(void)
 
 result_t adc_init(void)
 {
+	uint16_t loop;
+	
+	for(loop = 0; loop < SYS_ADC_CHANNELS; loop++) {
+		channels[loop].pin = INVALID_PIN; 
+		channels[loop].last_reported = 0;
+		channels[loop].required_delta = 0;
+		channels[loop].sample = 0;
+	}	
 }
 
 #if defined(__dsPIC33EP256MU806__)
