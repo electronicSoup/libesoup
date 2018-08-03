@@ -128,6 +128,11 @@ typedef uint8_t    boolean;
  */
 typedef int16_t result_t;
 
+/*
+ * Define a macro to halt the uC on error
+ */
+#define RC_CHECK_STOP        if (rc <0) while (1);
+
 /**
  * @ingroup Core
  * @fn      libesoup_init()
