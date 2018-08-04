@@ -49,16 +49,16 @@ static const char *TAG = "SPI";
 #include "libesoup/gpio/gpio.h"
 
 struct adc_channel {
-	enum pin_t pin;
-	uint16_t last_reported;
-	uint16_t required_delta;
-	uint16_t sample;
+	enum pin_t    pin;
+	uint16_t      last_reported;
+	uint16_t      required_delta;
+	uint16_t      sample;
+	adc_handler_t handler;
 };
 
 struct adc_channel channels[SYS_ADC_CHANNELS];
 
 #if defined(__dsPIC33EP256MU806__)
-static  adc_handler_t sample_handler = NULL;
 #endif
 
 #if defined(__dsPIC33EP256MU806__)
@@ -68,9 +68,9 @@ void __attribute__((__interrupt__, __no_auto_psv__)) _AD1Interrupt(void)
 	IEC0bits.AD1IE   = 0;    // Disable the ISR	
 	AD1CON1bits.ADON = 0;  // Turn off the ADC
 	
-	if(sample_handler) sample_handler(RB0, ADC1BUF0);
+//	if(sample_handler) sample_handler(RB0, ADC1BUF0);
 	
-	sample_handler = NULL;
+//	sample_handler = NULL;
 }
 #endif // (__dsPIC33EP256MU806__)
 
@@ -83,6 +83,7 @@ result_t adc_init(void)
 		channels[loop].last_reported = 0;
 		channels[loop].required_delta = 0;
 		channels[loop].sample = 0;
+		channels[loop].handler = NULL;
 	}
 
 	return(0);
@@ -121,7 +122,7 @@ result_t adc_sample(enum pin_t pin, adc_handler_t handler)
 	
 	if(pin != RB0) return(-ERR_NOT_CODED);
 	
-	sample_handler = handler;
+//	sample_handler = handler;
 	
 	rc = gpio_set(pin, GPIO_MODE_ANALOG_INPUT, 0);
 	RC_CHECK
