@@ -520,14 +520,14 @@ result_t uart_reserve(struct uart_data *udata)
 			 * Set up the Rx & Tx pins
 > 			 * Bit strange to have neither Rx or Tx pin return error
 			 */
- 			if ((udata->rx_pin == INVALID_PIN) && (udata->tx_pin == INVALID_PIN))
+ 			if ((udata->rx_pin == INVALID_GPIO_PIN) && (udata->tx_pin == INVALID_GPIO_PIN))
  				return(-ERR_BAD_INPUT_PARAMETER);
-			if (udata->rx_pin != INVALID_PIN) {
+			if (udata->rx_pin != INVALID_GPIO_PIN) {
 				rc = uart_set_rx_pin(uindex, udata->rx_pin);
 				RC_CHECK
 			}
 
-			if (udata->tx_pin != INVALID_PIN) {
+			if (udata->tx_pin != INVALID_GPIO_PIN) {
 				rc = uart_set_tx_pin(uindex, udata->tx_pin);
 				RC_CHECK
 			}
@@ -618,7 +618,7 @@ result_t uart_tx_buffer(struct uart_data *udata, uint8_t *buffer, uint16_t len)
  	if(uarts[uindex].udata != udata) 
  		return(-ERR_BAD_INPUT_PARAMETER);
  
- 	if(udata->tx_pin == INVALID_PIN)
+ 	if(udata->tx_pin == INVALID_GPIO_PIN)
  		return(-ERR_BAD_INPUT_PARAMETER);
 
 	if(uarts[uindex].udata != udata) {
@@ -656,7 +656,7 @@ static result_t uart_putchar(uint8_t uindex, uint8_t ch)
  		return(-ERR_BAD_INPUT_PARAMETER);
  	if(uarts[uindex].status != UART_RESERVED)
  		return(-ERR_BAD_INPUT_PARAMETER); 
- 	if(uarts[uindex].udata->tx_pin == INVALID_PIN)
+ 	if(uarts[uindex].udata->tx_pin == INVALID_GPIO_PIN)
  		return(-ERR_BAD_INPUT_PARAMETER);
 	/*
 	 * If the Transmitter queue is currently empty turn on chip select.
@@ -1010,14 +1010,14 @@ static result_t uart_set_uart_config(struct uart_data *udata)
 		U1_RX_ISR_FLAG             = 0;
 		U1_TX_ISR_FLAG             = 0;
 
-		if (udata->rx_pin != INVALID_PIN) {
+		if (udata->rx_pin != INVALID_GPIO_PIN) {
                         U1STAbits.URXISEL  = 0b00;
 			U1_RX_ISR_ENABLE   = ENABLED;
 		} else {
 			U1_RX_ISR_ENABLE   = DISABLED;
 		}
 		
-		if (udata->tx_pin != INVALID_PIN) {
+		if (udata->tx_pin != INVALID_GPIO_PIN) {
 			U1_TX_ISR_PRIOTITY = 0x07;
 			U1_TX_ISR_ENABLE   = ENABLED;
 			U1STAbits.UTXEN    = ENABLED;
@@ -1071,14 +1071,14 @@ static result_t uart_set_uart_config(struct uart_data *udata)
 		}
 
 
-		if (udata->rx_pin != INVALID_PIN) {
+		if (udata->rx_pin != INVALID_GPIO_PIN) {
                         U2STAbits.URXISEL  = 0b00;
 			U2_RX_ISR_ENABLE   = ENABLED;
 		} else {
 			U2_RX_ISR_ENABLE   = DISABLED;
 		}
 		
-		if (udata->tx_pin != INVALID_PIN) {
+		if (udata->tx_pin != INVALID_GPIO_PIN) {
 			U2_TX_ISR_PRIOTITY = 0x07;
 			U2_TX_ISR_ENABLE   = ENABLED;
 			U2STAbits.UTXEN    = ENABLED;
@@ -1131,14 +1131,14 @@ static result_t uart_set_uart_config(struct uart_data *udata)
 		}
 
 
-		if (udata->rx_pin != INVALID_PIN) {
+		if (udata->rx_pin != INVALID_GPIO_PIN) {
                         U3STAbits.URXISEL  = 0b00;
 			U3_RX_ISR_ENABLE   = ENABLED;
 		} else {
 			U3_RX_ISR_ENABLE   = DISABLED;
 		}
 		
-		if (udata->tx_pin != INVALID_PIN) {
+		if (udata->tx_pin != INVALID_GPIO_PIN) {
 			U3_TX_ISR_PRIOTITY = 0x07;
 			U3_TX_ISR_ENABLE   = ENABLED;
 			U3STAbits.UTXEN    = ENABLED;
@@ -1191,14 +1191,14 @@ static result_t uart_set_uart_config(struct uart_data *udata)
 		}
 
 
-		if (udata->rx_pin != INVALID_PIN) {
+		if (udata->rx_pin != INVALID_GPIO_PIN) {
                         U4STAbits.URXISEL  = 0b00;
 			U4_RX_ISR_ENABLE   = ENABLED;
 		} else {
 			U4_RX_ISR_ENABLE   = DISABLED;
 		}
 		
-		if (udata->tx_pin != INVALID_PIN) {
+		if (udata->tx_pin != INVALID_GPIO_PIN) {
 			U4_TX_ISR_PRIOTITY = 0x07;
 			U4_TX_ISR_ENABLE   = ENABLED;
 			U3STAbits.UTXEN    = ENABLED;

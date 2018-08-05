@@ -117,7 +117,7 @@ enum gpio_pin {
 	PRE2,    ///< Port E Bit 2
 	PRE3,    ///< Port E Bit 3
     
-	INVALID_PIN = 0xff,   ///< Dummy value to indicate no GPIO Pin
+	INVALID_GPIO_PIN = 0xff,   ///< Dummy value to indicate no GPIO Pin
 };
 
 /**

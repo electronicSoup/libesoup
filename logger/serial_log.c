@@ -130,7 +130,7 @@ result_t serial_logging_init(void)
 #ifdef SYS_SERIAL_LOGGING_RX_ENABLE
         serial_uart.rx_pin = BRD_SERIAL_LOGGING_RX_PIN;
 #else
-        serial_uart.rx_pin = INVALID_PIN;
+        serial_uart.rx_pin = INVALID_GPIO_PIN;
 #endif
 	/*
 	 * Get the UART Module to calculate the mode of operation required for

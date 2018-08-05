@@ -206,7 +206,7 @@ enum gpio_pin {
 	RG8,     ///< Port G Bit 8
 	RG9,     ///< Port G Bit 9
 
-	INVALID_PIN = 0xff,     ///< Dummy Value used to represent no GPIO Pin
+	INVALID_GPIO_PIN = 0xff,     ///< Dummy Value used to represent no GPIO Pin
 };
 
 /*

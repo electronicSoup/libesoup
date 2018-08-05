@@ -79,7 +79,7 @@ result_t adc_init(void)
 	uint16_t loop;
 	
 	for(loop = 0; loop < SYS_ADC_CHANNELS; loop++) {
-		channels[loop].pin = INVALID_PIN; 
+		channels[loop].pin = INVALID_GPIO_PIN; 
 		channels[loop].last_reported = 0;
 		channels[loop].required_delta = 0;
 		channels[loop].sample = 0;
@@ -112,7 +112,7 @@ result_t adc_monitor_channel(enum gpio_pin gpio_pin, uint16_t delta)
 	 * Find a free slot in the channels array
 	 */
 	for(loop = 0; loop < SYS_ADC_CHANNELS; loop++) {
-		if (channels[loop].pin == INVALID_PIN) {
+		if (channels[loop].pin == INVALID_GPIO_PIN) {
 			channels[loop].pin = gpio_pin;
 			channels[loop].last_reported = 0;
 			channels[loop].required_delta = delta;
