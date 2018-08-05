@@ -86,19 +86,34 @@ result_t adc_init(void)
 		channels[loop].handler = NULL;
 	}
 
+	/*
+	 * Clear all ADC Channel from Scan
+	 */
+	AD1CSSL = 0x0000;
+
 	return(0);
 }
 
-result_t adc_monitor_channel(enum gpio_pin pin, uint16_t delta)
+result_t adc_monitor_channel(enum gpio_pin gpio_pin, uint16_t delta)
 {
 	uint16_t loop;
+	enum adc_pin adc_pin;
+
+	/*
+	 * Check the input gpio pin
+	 */
+	adc_pin = get_adc_from_gpio(gpio_pin);
+	
+	if(adc_pin == INVALID_ADC_PIN) {
+		return(ERR_BAD_INPUT_PARAMETER);
+	}
 
 	/*
 	 * Find a free slot in the channels array
 	 */
 	for(loop = 0; loop < SYS_ADC_CHANNELS; loop++) {
 		if (channels[loop].pin == INVALID_PIN) {
-			channels[loop].pin = pin;
+			channels[loop].pin = gpio_pin;
 			channels[loop].last_reported = 0;
 			channels[loop].required_delta = delta;
 			channels[loop].sample = 0;
@@ -112,6 +127,59 @@ result_t adc_monitor_channel(enum gpio_pin pin, uint16_t delta)
 	/*
 	 * Enable ADC pin in the list to sample.
 	 */
+	switch(adc_pin) {
+	case AN0:
+		AD1CSSLbits.CSS0 = 1;
+		break;
+	case AN1:
+		AD1CSSLbits.CSS1 = 1;
+		break;
+	case AN2:
+		AD1CSSLbits.CSS2 = 1;
+		break;
+	case AN3:
+		AD1CSSLbits.CSS3 = 1;
+		break;
+	case AN4:
+		AD1CSSLbits.CSS4 = 1;
+		break;
+	case AN5:
+		AD1CSSLbits.CSS5 = 1;
+		break;
+	case AN6:
+		AD1CSSLbits.CSS6 = 1;
+		break;
+	case AN7:
+		AD1CSSLbits.CSS7 = 1;
+		break;
+	case AN8:
+		AD1CSSLbits.CSS8 = 1;
+		break;
+	case AN9:
+		AD1CSSLbits.CSS9 = 1;
+		break;
+	case AN10:
+		AD1CSSLbits.CSS10 = 1;
+		break;
+	case AN11:
+		AD1CSSLbits.CSS11 = 1;
+		break;
+	case AN12:
+		AD1CSSLbits.CSS12 = 1;
+		break;
+	case AN13:
+		AD1CSSLbits.CSS13 = 1;
+		break;
+	case AN14:
+		AD1CSSLbits.CSS14 = 1;
+		break;
+	case AN15:
+		AD1CSSLbits.CSS15 = 1;
+		break;
+	default:
+		return(ERR_GENERAL_ERROR);
+	}
+	
 	return(0);
 }
 
