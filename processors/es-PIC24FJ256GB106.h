@@ -148,7 +148,7 @@
 /**
  * @brief GPIO Pins available in the uC
  */
-enum pin_t {
+enum gpio_pin {
 	RB0,     ///< Port B Bit 0
 	RB1,     ///< Port B Bit 1
 	RB2,     ///< Port B Bit 2

@@ -38,7 +38,7 @@ extern result_t one_wire_init(void);
  * @param    pin  The GPIO Pin to use for the bus.
  * @return   result (negative on error)
  */
-extern result_t one_wire_reserve(enum pin_t pin);
+extern result_t one_wire_reserve(enum gpio_pin pin);
 
 #endif // SYS_ONE_WIRE
 #endif // _ONE_WIRE_H

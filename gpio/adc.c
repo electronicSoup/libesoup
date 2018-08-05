@@ -49,7 +49,7 @@ static const char *TAG = "SPI";
 #include "libesoup/gpio/gpio.h"
 
 struct adc_channel {
-	enum pin_t    pin;
+	enum gpio_pin    pin;
 	uint16_t      last_reported;
 	uint16_t      required_delta;
 	uint16_t      sample;
@@ -89,7 +89,7 @@ result_t adc_init(void)
 	return(0);
 }
 
-result_t adc_monitor_channel(enum pin_t pin, uint16_t delta)
+result_t adc_monitor_channel(enum gpio_pin pin, uint16_t delta)
 {
 	uint16_t loop;
 
@@ -116,7 +116,7 @@ result_t adc_monitor_channel(enum pin_t pin, uint16_t delta)
 }
 
 #if defined(__dsPIC33EP256MU806__)
-result_t adc_sample(enum pin_t pin, adc_handler_t handler)
+result_t adc_sample(enum gpio_pin pin, adc_handler_t handler)
 {
 	result_t  rc;
 	

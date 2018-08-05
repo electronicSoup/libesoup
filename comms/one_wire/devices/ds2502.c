@@ -50,9 +50,9 @@ static const char *TAG = "DS2502";
 
 
 
-//extern result_t one_wire_init(enum pin_t pin);
-//extern result_t one_wire_get_device_count(enum pin_t pin, uint8_t *count);
-extern result_t one_wire_ds2502_read_rom(enum pin_t pin);
+//extern result_t one_wire_init(enum gpio_pin pin);
+//extern result_t one_wire_get_device_count(enum gpio_pin pin, uint8_t *count);
+extern result_t one_wire_ds2502_read_rom(enum gpio_pin pin);
 
 #if 0
 #define DS2502_DDR                      TRISFbits.TRISF3
@@ -63,7 +63,7 @@ extern result_t one_wire_ds2502_read_rom(enum pin_t pin);
 #endif
 
 
-result_t one_wire_ds2502_read_rom(enum pin_t pin)
+result_t one_wire_ds2502_read_rom(enum gpio_pin pin)
 {
         uint8_t  i;
         uint8_t  byte;
@@ -98,7 +98,7 @@ result_t one_wire_ds2502_read_rom(enum pin_t pin)
         return(SUCCESS);
 }
 
-result_t one_wire_ds2502_read_rom(enum pin_t pin)
+result_t one_wire_ds2502_read_rom(enum gpio_pin pin)
 {
         uint8_t  i;
         uint8_t  byte;
@@ -133,7 +133,7 @@ result_t one_wire_ds2502_read_rom(enum pin_t pin)
         return(SUCCESS);
 }
 
-static result_t program_pulse(enum pin_t pin)
+static result_t program_pulse(enum gpio_pin pin)
 {
         uint8_t  i;
         uint8_t  value;

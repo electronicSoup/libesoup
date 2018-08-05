@@ -44,11 +44,11 @@
  * @param value The initial value of the pin, if an output pin
  * @return result_t result (Negative on error)
  */
-extern result_t gpio_set(enum pin_t pin, uint16_t mode, uint8_t value);
+extern result_t gpio_set(enum gpio_pin pin, uint16_t mode, uint8_t value);
 
 /**
  * @brief Read the current value on a GPIO pin
  * @param pin The pin whose value is to be read.
  * @return result_t The value read or negative on an error
  */
-extern result_t gpio_get(enum pin_t pin);
+extern result_t gpio_get(enum gpio_pin pin);

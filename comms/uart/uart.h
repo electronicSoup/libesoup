@@ -65,8 +65,8 @@
  * 
  */
 struct uart_data {
-	enum pin_t         tx_pin;                               ///< GPIO Pin for transmit (Possibly INVALID_PIN)
-	enum pin_t         rx_pin;                               ///< GPIO Pin for receive  (Possibly INVALID_PIN)
+	enum gpio_pin      tx_pin;                               ///< GPIO Pin for transmit (Possibly INVALID_PIN)
+	enum gpio_pin      rx_pin;                               ///< GPIO Pin for receive  (Possibly INVALID_PIN)
 	uint8_t            uindex;                               ///< Uart identifier (populated by libesoup code)
 	uint16_t           uart_mode;                            ///< Mode bits for the connection (calculated with call to uart_calculate_mode() passing required serial parameters)
 	uint32_t           baud;                                 ///< Baud rate for the connection

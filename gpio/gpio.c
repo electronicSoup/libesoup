@@ -40,7 +40,7 @@ static const char *TAG = "SPI";
 #include "libesoup/gpio/gpio.h"
 
 #if defined(__dsPIC33EP256MU806__)
-result_t gpio_set(enum pin_t pin, uint16_t mode, uint8_t value)
+result_t gpio_set(enum gpio_pin pin, uint16_t mode, uint8_t value)
 {
 	uint8_t  direction;
 	uint8_t  analog;
@@ -310,7 +310,7 @@ result_t gpio_set(enum pin_t pin, uint16_t mode, uint8_t value)
 
 
 #if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__)
-result_t gpio_set(enum pin_t pin, uint16_t mode, uint8_t value)
+result_t gpio_set(enum gpio_pin pin, uint16_t mode, uint8_t value)
 {
 	uint8_t  direction;
 	uint8_t  analog;
@@ -606,7 +606,7 @@ result_t gpio_set(enum pin_t pin, uint16_t mode, uint8_t value)
 #endif // #if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__)
 
 #if defined(__18F4585)
-result_t gpio_set(enum pin_t pin, uint16_t mode, uint8_t value)
+result_t gpio_set(enum gpio_pin pin, uint16_t mode, uint8_t value)
 {
 	uint8_t  direction;
 	uint8_t  analog;
@@ -799,7 +799,7 @@ result_t gpio_set(enum pin_t pin, uint16_t mode, uint8_t value)
 #endif // #if defined(__18F4585)
 
 #if defined(__dsPIC33EP256MU806__) || defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__)
-result_t gpio_get(enum pin_t pin)
+result_t gpio_get(enum gpio_pin pin)
 {
 	switch(pin) {
 	case RB0:
@@ -965,7 +965,7 @@ result_t gpio_get(enum pin_t pin)
 #endif // #if defined(__dsPIC33EP256MU806__) || defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__)
 
 #if defined(__18F4585)
-result_t gpio_get(enum pin_t pin)
+result_t gpio_get(enum gpio_pin pin)
 {
 	switch(pin) {
 	case PRA0:   // AN0

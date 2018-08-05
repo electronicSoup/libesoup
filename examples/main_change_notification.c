@@ -26,7 +26,7 @@ static const char *TAG = "Main";
 #include "libesoup/logger/serial_log.h"
 #include "libesoup/gpio/change_notification.h"
 
-void change_notification(enum pin_t pin);
+void change_notification(enum gpio_pin pin);
 
 int main(void)
 {
@@ -56,7 +56,7 @@ int main(void)
         return 0;
 }
 
-void change_notification(enum pin_t pin)
+void change_notification(enum gpio_pin pin)
 {
 #if ((defined SYS_SERIAL_LOGGING) && (defined DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
         LOG_D("Change\n\r");

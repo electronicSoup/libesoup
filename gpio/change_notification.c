@@ -40,13 +40,13 @@ __attribute__((unused)) static const char *TAG = "CHANGE";
 #include "libesoup/gpio/gpio.h"
 #include "libesoup/gpio/change_notification.h"
 
-static result_t enable_change(enum pin_t);
-static result_t disable_change(enum pin_t);
+static result_t enable_change(enum gpio_pin);
+static result_t disable_change(enum gpio_pin);
 
 struct change_entry {
 	uint8_t          monitored:1;
 	uint8_t          previous_value:1;
-	enum pin_t       pin;
+	enum gpio_pin       pin;
 	change_notifier  notify;
 };
 
@@ -84,7 +84,7 @@ result_t change_notifier_init()
 	return(0);
 }
 
-result_t change_notifier_register(enum pin_t pin, change_notifier notifier)
+result_t change_notifier_register(enum gpio_pin pin, change_notifier notifier)
 {
 	uint8_t     loop;
 
@@ -113,7 +113,7 @@ result_t change_notifier_register(enum pin_t pin, change_notifier notifier)
 	return(-ERR_NO_RESOURCES);
 }
 
-static result_t enable_change(enum pin_t pin)
+static result_t enable_change(enum gpio_pin pin)
 {
 	result_t rc = 0;
 
@@ -278,7 +278,7 @@ static result_t enable_change(enum pin_t pin)
 	return(rc);
 }
 
-result_t change_notifier_deregister(enum pin_t pin)
+result_t change_notifier_deregister(enum gpio_pin pin)
 {
 	uint16_t   loop;
 	
@@ -293,7 +293,7 @@ result_t change_notifier_deregister(enum pin_t pin)
 	return(-ERR_BAD_INPUT_PARAMETER);
 }
 
-static result_t disable_change(enum pin_t pin)
+static result_t disable_change(enum gpio_pin pin)
 {
 	result_t rc = 0;
 	switch(pin) {

@@ -79,8 +79,8 @@ struct uart uarts[NUM_UARTS];
  */
 static void     uart_tx_isr(uint8_t uindex);
 
-static result_t uart_set_rx_pin(uint8_t uindex, enum pin_t pin);
-static result_t uart_set_tx_pin(uint8_t uindex, enum pin_t pin);
+static result_t uart_set_rx_pin(uint8_t uindex, enum gpio_pin pin);
+static result_t uart_set_tx_pin(uint8_t uindex, enum gpio_pin pin);
 static result_t uart_set_uart_config(struct uart_data *udata);
 static result_t uart_putchar(uint8_t uindex, uint8_t ch);
 
@@ -814,7 +814,7 @@ static char tx_buffer_read(uint8_t uindex)
 }
 
 #if defined(__dsPIC33EP256MU806__)
-static result_t uart_set_rx_pin(uint8_t uindex, enum pin_t pin)
+static result_t uart_set_rx_pin(uint8_t uindex, enum gpio_pin pin)
 {
 	int16_t rc;
 	
@@ -844,7 +844,7 @@ static result_t uart_set_rx_pin(uint8_t uindex, enum pin_t pin)
 	return(0);
 }
 #elif defined (__PIC24FJ256GB106__)
-static result_t uart_set_rx_pin(uint8_t uindex, enum pin_t pin)
+static result_t uart_set_rx_pin(uint8_t uindex, enum gpio_pin pin)
 {
 	result_t rc;
 	
@@ -875,14 +875,14 @@ static result_t uart_set_rx_pin(uint8_t uindex, enum pin_t pin)
 	return(0);
 }
 #elif defined(__18F2680) || defined(__18F4585)
-static result_t uart_set_rx_pin(uint8_t uindex, enum pin_t pin)
+static result_t uart_set_rx_pin(uint8_t uindex, enum gpio_pin pin)
 {
 //        TRISCbits.TRISC7 = INPUT_PIN;
 }
 #endif // MicroContoller Selection
 
 #if defined(__dsPIC33EP256MU806__)
-static result_t uart_set_tx_pin(uint8_t uindex, enum pin_t pin)
+static result_t uart_set_tx_pin(uint8_t uindex, enum gpio_pin pin)
 {
 	result_t rc;
 	uint16_t tx_function;
@@ -917,7 +917,7 @@ static result_t uart_set_tx_pin(uint8_t uindex, enum pin_t pin)
 	return(0);
 }
 #elif defined (__PIC24FJ256GB106__)
-static result_t uart_set_tx_pin(uint8_t uindex, enum pin_t pin)
+static result_t uart_set_tx_pin(uint8_t uindex, enum gpio_pin pin)
 {
 	result_t   rc;
 	uint8_t    tx_function = 0x00;
@@ -953,7 +953,7 @@ static result_t uart_set_tx_pin(uint8_t uindex, enum pin_t pin)
 	return(0);
 }
 #elif defined(__18F2680) || defined(__18F4585)
-static result_t uart_set_tx_pin(uint8_t uindex, enum pin_t pin)
+static result_t uart_set_tx_pin(uint8_t uindex, enum gpio_pin pin)
 {
         TRISCbits.TRISC6 = GPIO_OUTPUT_PIN;
 	return(0);

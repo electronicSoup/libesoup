@@ -75,7 +75,7 @@
  * 'P' to make PRB0 etc, so that there's not a namespace clash.
  * 
  */
-enum pin_t {
+enum gpio_pin {
 	PRA0,    ///< Port A Bit 0
 	PRA1,    ///< Port A Bit 1
 	PRA2,    ///< Port A Bit 2

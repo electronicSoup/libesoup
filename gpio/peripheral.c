@@ -23,7 +23,7 @@
 #include "libesoup/gpio/gpio.h"
 
 #if defined(__dsPIC33EP256MU806__) || defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__)
-int16_t set_peripheral_input(enum pin_t pin)
+int16_t set_peripheral_input(enum gpio_pin pin)
 {
 	int16_t  ppin;
 	
@@ -475,7 +475,7 @@ int16_t set_peripheral_input(enum pin_t pin)
 #endif // #if defined(__dsPIC33EP256MU806__) || defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__)
 
 #if defined(__dsPIC33EP256MU806__) || defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__)
-int16_t set_peripheral_output(enum pin_t pin, uint16_t function)
+int16_t set_peripheral_output(enum gpio_pin pin, uint16_t function)
 {
 	result_t rc = 0;
 	

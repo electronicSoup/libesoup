@@ -39,9 +39,9 @@
  * @brief Structure to define the GPIO Pins used in an SPI Bus
  */
 struct spi_io_channel {
-	enum pin_t sck;
-	enum pin_t mosi;
-	enum pin_t miso;
+	enum gpio_pin sck;
+	enum gpio_pin mosi;
+	enum gpio_pin miso;
 };
 
 /**

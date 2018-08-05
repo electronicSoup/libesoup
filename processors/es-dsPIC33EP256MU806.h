@@ -179,7 +179,7 @@
 /**
  * @brief GPIO Pins available in the uC
  */
-enum pin_t {
+enum gpio_pin {
 	RB0,     ///< Port B Bit 0
 	RB1,     ///< Port B Bit 1
 	RB2,     ///< Port B Bit 2
@@ -238,6 +238,30 @@ enum pin_t {
 	RG9,     ///< Port G Bit 9
 
 	INVALID_PIN = 0xff,     ///< Dummy Value used to represent no GPIO Pin
+};
+
+/**
+ * @brief ADC Pins available in the uC
+ */
+enum adc_pin {
+	AN0,
+        AN1,
+	AN2,
+	AN3,
+	AN4,
+	AN5,
+	AN6,
+	AN7,
+	AN8,
+	AN9,
+	AN10,
+	AN11,
+	AN12,
+	AN13,
+	AN14,
+	AN15,
+
+	INVALID_ADC_PIN = 0xff,     ///< Dummy Value used to represent no GPIO Pin
 };
 
 /**
@@ -304,5 +328,7 @@ enum pin_t {
  * @brief micro-controller specific initialisation code
  */
 extern void cpu_init(void);
+extern enum adc_pin  get_adc_from_gpio(enum gpio_pin);
+extern enum gpio_pin get_gpio_from_adc(enum adc_pin);
 
 #endif // _ES_dsPIC33EP256MU806_H

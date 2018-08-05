@@ -210,4 +210,126 @@ static void clock_init(void)
 #endif // SYS_USB_HOST
 }
 
+enum adc_pin get_adc_from_gpio(enum gpio_pin gpio_pin)
+{
+	enum adc_pin adc_pin;
+	
+	switch(gpio_pin) {
+	case RB0:
+		adc_pin = AN0;
+		break;
+	case RB1:
+		adc_pin = AN1;
+		break;
+	case RB2:
+		adc_pin = AN2;
+		break;
+	case RB3:
+		adc_pin = AN3;
+		break;
+	case RB4:
+		adc_pin = AN4;
+		break;
+	case RB5:
+		adc_pin = AN5;
+		break;
+	case RB6:
+		adc_pin = AN6;
+		break;
+	case RB7:
+		adc_pin = AN7;
+		break;
+	case RB8:
+		adc_pin = AN8;
+		break;
+	case RB9:
+		adc_pin = AN9;
+		break;
+	case RB10:
+		adc_pin = AN10;
+		break;
+	case RB11:
+		adc_pin = AN11;
+		break;
+	case RB12:
+		adc_pin = AN12;
+		break;
+	case RB13:
+		adc_pin = AN13;
+		break;
+	case RB14:
+		adc_pin = AN14;
+		break;
+	case RB15:
+		adc_pin = AN15;
+		break;
+	default:
+		adc_pin = INVALID_ADC_PIN;
+		break;			
+	}
+	
+	return(adc_pin);
+}
+
+enum gpio_pin get_gpio_from_adc(enum adc_pin adc_pin)
+{
+	enum gpio_pin gpio_pin;
+	
+	switch(adc_pin) {
+	case AN0:
+		gpio_pin = RB0;
+		break;
+	case AN1:
+		gpio_pin = RB1;
+		break;
+	case AN2:
+		gpio_pin = RB2;
+		break;
+	case AN3:
+		gpio_pin = RB3;
+		break;
+	case AN4:
+		gpio_pin = RB4;
+		break;
+	case AN5:
+		gpio_pin = RB5;
+		break;
+	case AN6:
+		gpio_pin = RB6;
+		break;
+	case AN7:
+		gpio_pin = RB7;
+		break;
+	case AN8:
+		gpio_pin = RB8;
+		break;
+	case AN9:
+		gpio_pin = RB9;
+		break;
+	case AN10:
+		gpio_pin = RB10;
+		break;
+	case AN11:
+		gpio_pin = RB11;
+		break;
+	case AN12:
+		gpio_pin = RB12;
+		break;
+	case AN13:
+		gpio_pin = RB13;
+		break;
+	case AN14:
+		gpio_pin = RB14;
+		break;
+	case AN15:
+		gpio_pin = RB15;
+		break;
+	default:
+		gpio_pin = INVALID_ADC_PIN;
+		break;			
+	}
+	
+	return(gpio_pin);
+}
+
 #endif // defined(__dsPIC33EP256MU806__)

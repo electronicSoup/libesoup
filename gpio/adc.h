@@ -26,10 +26,10 @@
 #include "libesoup_config.h"
 
 #ifdef SYS_ADC
-typedef void (*adc_handler_t)(enum pin_t, uint16_t);
+typedef void (*adc_handler_t)(enum gpio_pin, uint16_t);
 
-extern result_t adc_monitor_channel(enum pin_t pin, uint16_t delta);
-extern result_t adc_sample(enum pin_t pin, adc_handler_t);
+extern result_t adc_monitor_channel(enum gpio_pin pin, uint16_t delta);
+extern result_t adc_sample(enum gpio_pin pin, adc_handler_t);
 
 #endif
 

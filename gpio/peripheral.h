@@ -256,7 +256,7 @@
  *     PPS_I_UART_1_RX = rc;
  * }
  */
-extern result_t set_peripheral_input(enum pin_t pin);
+extern result_t set_peripheral_input(enum gpio_pin pin);
 
 /**
  * @brief Set an Output pin to a peripheral function
@@ -270,6 +270,6 @@ extern result_t set_peripheral_input(enum pin_t pin);
  *     // Error
  * }
  */
-extern result_t set_peripheral_output(enum pin_t pin, uint16_t function);
+extern result_t set_peripheral_output(enum gpio_pin pin, uint16_t function);
 
 #endif // _PERIPHERAL_H

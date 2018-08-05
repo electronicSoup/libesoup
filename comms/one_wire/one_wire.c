@@ -91,7 +91,7 @@ static          int16_t  bus_changes;
 struct one_wire_bus {
 	uint8_t                 active:1;
 	uint8_t                 sem_device;
-	enum pin_t              pin;
+	enum gpio_pin              pin;
 } one_wire_bus;
 
 struct one_wire_device {
@@ -109,7 +109,7 @@ static struct one_wire_device device[SYS_ONE_WIRE_MAX_DEVICES];
  * Function Prototypes.
  */
 static result_t census(int16_t chan);
-static void     bus_change(enum pin_t pin);
+static void     bus_change(enum gpio_pin pin);
 static result_t reset_pulse(int16_t chan);
 static result_t write_byte(int16_t chan, uint8_t byte);
 static result_t write_one(int16_t chan);
@@ -151,7 +151,7 @@ result_t one_wire_init()
  * 
  * Returns the created channel number
  */
-result_t one_wire_reserve(enum pin_t pin)
+result_t one_wire_reserve(enum gpio_pin pin)
 {
 	result_t rc;
 	uint8_t  loop;
@@ -441,7 +441,7 @@ static result_t census(int16_t chan)
 	return(found_count);
 }
 
-static void bus_change(enum pin_t pin)
+static void bus_change(enum gpio_pin pin)
 {
 	bus_changes++;
 }
