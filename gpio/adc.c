@@ -90,13 +90,25 @@ result_t adc_init(void)
 	 * Clear all ADC Channel from Scan
 	 */
 	AD1CSSL = 0x0000;
-
+	AD1CSSH = 0x0000;
+	
+	/*
+	 * Configure ADC SFR registers
+	 */
+	AD1CON1bits.AD12B = ENABLED;   // 12 Bit mode
+	AD1CON1bits.FORM  = 0b00;      // Integer result
+	AD1CON1bits.ASAM  = 0b1;       // Auto Sample
+	AD1CON1bits.SSRCG = 0b0;
+	AD1CON1bits.SSRC  = 0b111;     // Auto Convert
+	
+	AD1CON2bits.VCFG  = 0b000;     //Avdd / Avss
 	return(0);
 }
 
 result_t adc_monitor_channel(enum gpio_pin gpio_pin, uint16_t delta)
 {
-	uint16_t loop;
+	result_t     rc;
+	uint16_t     loop;
 	enum adc_pin adc_pin;
 
 	/*
@@ -124,6 +136,10 @@ result_t adc_monitor_channel(enum gpio_pin gpio_pin, uint16_t delta)
 		return(ERR_NO_RESOURCES);
 	}
 
+	rc = gpio_set(gpio_pin, GPIO_MODE_ANALOG_INPUT, 0);
+	if (rc < 0)
+		return(rc);
+	
 	/*
 	 * Enable ADC pin in the list to sample.
 	 */
