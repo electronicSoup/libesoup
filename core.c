@@ -39,15 +39,17 @@ static const char  *TAG = "CORE";
 #include "libesoup/boards/board.h"
 
 #ifdef SYS_HW_TIMERS
-extern void     hw_timer_init(void);
+extern void   hw_timer_init(void);
 #endif
 
 #ifdef SYS_SW_TIMERS
-extern void     sw_timer_init(void);
+#include "libesoup/timers/sw_timers.h"
+extern void   sw_timer_init(void);
 #endif
 
 #ifdef SYS_UART
-extern void     uart_init(void);
+extern void   uart_init(void);
+extern void   timer_tick(void);
 #endif
 
 #ifdef SYS_JOBS
@@ -68,6 +70,7 @@ extern void     uart_init(void);
 
 #ifdef SYS_ADC
 extern result_t adc_init(void);
+extern result_t adc_tasks(void);
 #endif
 
 #ifdef SYS_CHANGE_NOTIFICATION
@@ -161,4 +164,17 @@ result_t libesoup_init(void)
 
 	CLEAR_WDT
 	return(board_init());
+}
+
+result_t libesoup_tasks(void)
+{
+	result_t   rc = 0;
+#ifdef SYS_SW_TIMERS
+	if(timer_ticked) timer_tick();
+#endif
+#ifdef SYS_ADC
+	rc = adc_tasks();
+	RC_CHECK
+#endif
+	return(rc);
 }

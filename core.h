@@ -153,5 +153,6 @@ typedef int16_t result_t;
  * on each API call is viewed as a waste of clock cycles. 
  */
 extern result_t libesoup_init(void);
+extern result_t libesoup_tasks(void);
 
 #endif // _CORE_H

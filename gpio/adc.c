@@ -68,6 +68,7 @@ void __attribute__((__interrupt__, __no_auto_psv__)) _AD1Interrupt(void)
 	IEC0bits.AD1IE   = 0;    // Disable the ISR	
 	AD1CON1bits.ADON = 0;  // Turn off the ADC
 	
+	serial_printf(".");
 //	if(sample_handler) sample_handler(RB0, ADC1BUF0);
 	
 //	sample_handler = NULL;
@@ -105,7 +106,17 @@ result_t adc_init(void)
 	return(0);
 }
 
-result_t adc_monitor_channel(enum gpio_pin gpio_pin, uint16_t delta)
+result_t adc_tasks(void)
+{
+	uint16_t loop;
+	
+	for(loop = 0; loop < SYS_ADC_CHANNELS; loop++) {
+	}
+
+	return(0);
+}
+
+result_t adc_monitor_channel(enum gpio_pin gpio_pin, uint16_t delta, adc_handler_t handler)
 {
 	result_t     rc;
 	uint16_t     loop;
@@ -128,6 +139,7 @@ result_t adc_monitor_channel(enum gpio_pin gpio_pin, uint16_t delta)
 			channels[loop].pin = gpio_pin;
 			channels[loop].last_reported = 0;
 			channels[loop].required_delta = delta;
+			channels[loop].handler = handler;
 			channels[loop].sample = 0;
 		}
 	}

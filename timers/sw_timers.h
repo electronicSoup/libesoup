@@ -50,33 +50,6 @@
  */
 extern volatile boolean timer_ticked;
 
-/**
- * @ingroup Timers
- * @brief Macro to check the status of Software Timers in the system.
- *
- * The Software Timers Module starts a Hardware timer to repeatedly expire 
- * at the interval configured by the libesoup_config.h definition of SYS_SW_TIMER_TICK_ms.
- * This Hardware timer provides the "System Tick" which the CHECK_TIMERS() macro
- * processes when called. The Macro must be called in the main loop of 
- * application code so that it calls the library timer functionality when ever 
- * the tick interrupt has occurred.
- */
-#define CHECK_TIMERS()  if(timer_ticked) timer_tick();
-
-/*
- * @ingroup Timers
- * @brief Process a system tick. Search for expired timers and call expiry functions.
- *
- * This function should be called when the HW Timer driving
- * the SW timer module has expired. The function can be called with the
- * CHECK_TIMERS macro defined above. It should be called only when the
- * timer interrupt has fired for a timer tick. The period of the timer tick
- * is defined by the macro in the system configuraiton file libesoup_config.h
- *
- * e.g. #define SYS_SW_TIMER_TICK_ms           5        // mSeconds
- */
-extern void timer_tick(void);
-
 #endif // XC16 || __XC8
 
 /**
