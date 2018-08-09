@@ -23,7 +23,19 @@
 #ifndef _ERRNO_H
 #define _ERRNO_H
 
+#include "libesoup_config.h"
+
 #define RC_CHECK if(rc < 0) return(rc);
+
+/*
+ * Define a macro to halt the uC on error
+ */
+#if defined(SYS_SERIAL_LOGGING)
+#define RC_CHECK_STOP(x)        if (rc <0) while (1);
+#else
+#define RC_CHECK_STOP(x)        if (rc <0){ LOG_E(x); while (1); }
+#endif // SYS_SERIAL_LOGGING
+
 #if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL >= LOG_ERROR))
 #define RC_CHECK_PRINT_CONT(x) if(rc < 0) LOG_E("x");
 #endif
