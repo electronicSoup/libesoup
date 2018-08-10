@@ -105,9 +105,6 @@ void __attribute__((__interrupt__, __no_auto_psv__)) _AD1Interrupt(void)
 #endif // SYS_ADC_AVERAGE_SAMPLES
 		}
 	}
-//	if(sample_handler) sample_handler(RB0, ADC1BUF0);
-	
-//	sample_handler = NULL;
 }
 #endif // (__dsPIC33EP256MU806__)
 
@@ -315,8 +312,25 @@ result_t adc_tasks(void)
 	for (loop = 0; loop < (SYS_ADC_MAX_CH + 1); loop++) {
 		if ((channels[loop].pin != INVALID_GPIO_PIN)
 		  && (channels[loop].last_reported != channels[loop].sample)) {
-			channels[loop].last_reported = channels[loop].sample;
-			LOG_D("AN%d - Sample %d\n\r",loop, channels[loop].sample);
+			if (channels[loop].sample > channels[loop].last_reported) {
+				if (channels[loop].last_reported + channels[loop].required_delta < channels[loop].sample) {
+					channels[loop].last_reported = channels[loop].sample;
+					if (channels[loop].handler) {
+						channels[loop].handler(channels[loop].pin, channels[loop].last_reported);
+					} else {
+						LOG_E("Ch Error\n\r");
+					}
+				}
+			} else {
+				if (channels[loop].last_reported - channels[loop].required_delta > channels[loop].sample) {
+					channels[loop].last_reported = channels[loop].sample;
+					if (channels[loop].handler) {
+						channels[loop].handler(channels[loop].pin, channels[loop].last_reported);
+					} else {
+						LOG_E("Ch Error\n\r");
+					}
+				}
+			}
 		}
 	}
 
