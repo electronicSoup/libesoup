@@ -26,11 +26,7 @@
 
 #ifdef SYS_SERIAL_LOGGING
 #define DEBUG_FILE
-#if defined(__XC16)
 __attribute__((unused)) static const char *TAG = "ADC";
-#elif defined(__XC8)
-static const char *TAG = "SPI";
-#endif
 #include "libesoup/logger/serial_log.h"
 /*
  * Check required libesoup_config.h defines are found
@@ -49,12 +45,22 @@ static const char *TAG = "SPI";
 #include "libesoup/gpio/gpio.h"
 #include "libesoup/timers/sw_timers.h"
 
+#ifdef SYS_ADC_AVERAGE_SAMPLES
+struct average_buffer {
+	uint16_t    samples[SYS_ADC_AVERAGE_SAMPLES];
+	uint8_t     head;
+};
+#endif // SYS_ADC_AVERAGE_SAMPLES
+
 struct adc_channel {
 	enum gpio_pin    pin;
 	uint16_t         last_reported;
 	uint16_t         required_delta;
 	uint16_t         sample;
 	adc_handler_t    handler;
+#ifdef SYS_ADC_AVERAGE_SAMPLES
+	struct average_buffer samples;
+#endif // SYS_ADC_AVERAGE_SAMPLES
 };
 
 struct   adc_channel channels[SYS_ADC_MAX_CH + 1];
@@ -68,6 +74,11 @@ void __attribute__((__interrupt__, __no_auto_psv__)) _AD1Interrupt(void)
 {
 	uint8_t   loop;
 	uint16_t *ptr;
+#ifdef SYS_ADC_AVERAGE_SAMPLES
+	uint8_t   i;
+	uint32_t  total;
+	uint8_t   count;
+#endif // SYS_ADC_AVERAGE_SAMPLES
 
 	IFS0bits.AD1IF   = 0;    // Clear the ISR Flag
 	IEC0bits.AD1IE   = 0;    // Disable the ISR	
@@ -76,7 +87,22 @@ void __attribute__((__interrupt__, __no_auto_psv__)) _AD1Interrupt(void)
 	ptr = (uint16_t *)&ADC1BUF0;
 	for (loop = 0; loop < (SYS_ADC_MAX_CH + 1); loop++) {
 		if (channels[loop].pin != INVALID_GPIO_PIN) {
+#ifdef SYS_ADC_AVERAGE_SAMPLES
+			channels[loop].samples.samples[channels[loop].samples.head] = *ptr++;
+			channels[loop].samples.head++;
+			channels[loop].samples.head %= SYS_ADC_AVERAGE_SAMPLES;
+			total = 0;
+			count = 0;
+			for(i = 0; i < SYS_ADC_AVERAGE_SAMPLES; i++) {
+				if (channels[loop].samples.samples[i] != 0xffff) {
+					total += channels[loop].samples.samples[i];
+					count++;
+				}
+			}
+			channels[loop].sample = total / count;
+#else
 			channels[loop].sample = *ptr++;
+#endif // SYS_ADC_AVERAGE_SAMPLES
 		}
 	}
 //	if(sample_handler) sample_handler(RB0, ADC1BUF0);
@@ -219,6 +245,9 @@ static result_t scan_disable_ch(enum adc_pin adc_pin)
 result_t adc_init(void)
 {
 	uint16_t loop;
+#ifdef SYS_ADC_AVERAGE_SAMPLES
+	uint8_t  i;
+#endif // SYS_ADC_AVERAGE_SAMPLES
 
 	adc_active_count = 0;
 
@@ -228,6 +257,12 @@ result_t adc_init(void)
 		channels[loop].required_delta = 0;
 		channels[loop].sample = 0;
 		channels[loop].handler = NULL;
+#ifdef SYS_ADC_AVERAGE_SAMPLES
+		for (i = 0; i < SYS_ADC_AVERAGE_SAMPLES; i++) {
+			channels[loop].samples.samples[i] = 0xffff;
+		}
+		channels[loop].samples.head = 0;
+#endif // SYS_ADC_AVERAGE_SAMPLES
 	}
 	
 	AD1CON1bits.ADON = DISABLED;     // Turn off for the moment
