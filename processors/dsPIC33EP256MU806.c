@@ -332,4 +332,78 @@ enum gpio_pin get_gpio_from_adc(enum adc_pin adc_pin)
 	return(gpio_pin);
 }
 
+enum pwm_pin get_pwm_from_gpio(enum gpio_pin gpio_pin)
+{
+	enum pwm_pin pwm_pin;
+
+	switch (gpio_pin) {
+	case RE0:
+		adc_pin = PWM1L;
+		break;
+	case RE1:
+		adc_pin = PWM1H;
+		break;
+	case RE2:
+		adc_pin = PWM2L;
+		break;
+	case RE3:
+		adc_pin = PWM2H;
+		break;
+	case RE4:
+		adc_pin = PWM3L;
+		break;
+	case RE5:
+		adc_pin = PWM3H;
+		break;
+	case RE6:
+		adc_pin = PWM4L;
+		break;
+	case RE7:
+		adc_pin = PWM4H;
+		break;
+	default:
+		adc_pin = INVALID_PWM_PIN;
+		break;
+	}
+
+	return(adc_pin);
+}
+
+enum gpio_pin get_gpio_from_pwm(enum pwm_pin pwm_pin)
+{
+	enum gpio_pin gpio_pin;
+
+	switch(pwm_pin) {
+	case PWM1L:
+		gpio_pin = RE0;
+		break;
+	case PWM1H:
+		gpio_pin = RE1;
+		break;
+	case PWM2L:
+		gpio_pin = RE2;
+		break;
+	case PWM2H:
+		gpio_pin = RE3;
+		break;
+	case PWM3L:
+		gpio_pin = RE4;
+		break;
+	case PWM3H:
+		gpio_pin = RE5;
+		break;
+	case PWM4L:
+		gpio_pin = RE6;
+		break;
+	case PWM4H:
+		gpio_pin = RE7;
+		break;
+	default:
+		gpio_pin = INVALID_PWM_PIN;
+		break;
+	}
+
+	return(gpio_pin);
+}
+
 #endif // defined(__dsPIC33EP256MU806__)
