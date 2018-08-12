@@ -338,35 +338,35 @@ enum pwm_pin get_pwm_from_gpio(enum gpio_pin gpio_pin)
 
 	switch (gpio_pin) {
 	case RE0:
-		adc_pin = PWM1L;
+		pwm_pin = PWM1L;
 		break;
 	case RE1:
-		adc_pin = PWM1H;
+		pwm_pin = PWM1H;
 		break;
 	case RE2:
-		adc_pin = PWM2L;
+		pwm_pin = PWM2L;
 		break;
 	case RE3:
-		adc_pin = PWM2H;
+		pwm_pin = PWM2H;
 		break;
 	case RE4:
-		adc_pin = PWM3L;
+		pwm_pin = PWM3L;
 		break;
 	case RE5:
-		adc_pin = PWM3H;
+		pwm_pin = PWM3H;
 		break;
 	case RE6:
-		adc_pin = PWM4L;
+		pwm_pin = PWM4L;
 		break;
 	case RE7:
-		adc_pin = PWM4H;
+		pwm_pin = PWM4H;
 		break;
 	default:
-		adc_pin = INVALID_PWM_PIN;
+		pwm_pin = INVALID_PWM_PIN;
 		break;
 	}
 
-	return(adc_pin);
+	return(pwm_pin);
 }
 
 enum gpio_pin get_gpio_from_pwm(enum pwm_pin pwm_pin)
