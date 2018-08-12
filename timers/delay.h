@@ -32,13 +32,13 @@
 /**
  * @ingroup Timers
  * @brief  Delay the uC for a duration
- * @param units  Time units of the duration parameter \ref ty_time_units
+ * @param units  Time units of the duration parameter \ref time_units
  * @param duration Duration fo the delay 
  * @return result (negative on error)
  *
  * The delay routine will return ERR_RANGE_ERROR if the duration
  * passed in is shorter then it can safely obtain.
 */
-extern result_t delay(ty_time_units units, uint16_t duration);
+extern result_t delay(enum time_units units, uint16_t duration);
 
 /**}@*/ 

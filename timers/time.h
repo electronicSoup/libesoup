@@ -5,7 +5,7 @@
  *
  * @brief time definitions required by both hardware and software timers
  *
- * Copyright 2017 electronicSoup Limited
+ * Copyright 2017-2018 electronicSoup Limited
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 2 of the GNU Lesser General Public License
@@ -31,17 +31,17 @@
 
 /**
  * @ingroup Timers
- * @enum ty_time_units
+ * @enum time_units
  * @brief Enumeration for units of time. Used to specify durations for timers.
  * 
  */
-typedef enum {
+enum time_units {
     uSeconds,        /**< Micro Seconds */
     mSeconds,        /**< Milli Seconds */
     Seconds,         /**< Seconds */
     Minutes,         /**< Minutes */
     Hours            /**< Hours */
-} ty_time_units;
+};
 
 /**
  * @ingroup Timers
@@ -111,7 +111,7 @@ typedef void (*expiry_function)(timer_id timer, union sigval data);
  * timer.
  */
 struct timer_req {
-    ty_time_units   units;    /**< Time units for timer @ref ty_time_units */
+    enum time_units units;    /**< Time units for timer @ref time_units */
     uint16_t        duration; /**< Duration of the timer in units */
     timer_type      type;     /**< Type of timer to be created @ref timer_type */
     expiry_function exp_fn;   /**< expiry function to be called @ref expiry_function */

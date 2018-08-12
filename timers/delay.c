@@ -62,7 +62,7 @@ void hw_expiry_function(timer_id timer, union sigval data)
 /*
  * delay function implementation
  */
-result_t delay(ty_time_units units, uint16_t duration)
+result_t delay(enum time_units units, uint16_t duration)
 {
 	result_t           rc;
 	struct timer_req   timer_request;
