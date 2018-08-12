@@ -20,7 +20,7 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  *
  */
-result_t pwm_config(enum gpio pin, frequengy, duty)
+result_t pwm_config(enum gpio pin, uint16_t frequency, uint8_t duty)
 {
 	return(0);
 }

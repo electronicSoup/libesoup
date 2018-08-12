@@ -30,7 +30,7 @@
  * but can be called after the pwm_on() API call to change the current
  * configuration of frequency or duty cycle.
  */
-extern result_t pwm_config(enum gpio pin, frequengy, duty);
+extern result_t pwm_config(enum gpio pin, uint16_t frequency, uint8_t duty);
 extern result_t pwm_on(enum gpio pin);
 extern result_t pwm_off(enum gpio pin);
 
