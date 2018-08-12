@@ -36,11 +36,22 @@
  * 
  */
 enum time_units {
-    uSeconds,        /**< Micro Seconds */
-    mSeconds,        /**< Milli Seconds */
-    Seconds,         /**< Seconds */
-    Minutes,         /**< Minutes */
-    Hours            /**< Hours */
+	uSeconds,        /**< Micro Seconds */
+	mSeconds,        /**< Milli Seconds */
+	Seconds,         /**< Seconds */
+	Minutes,         /**< Minutes */
+	Hours            /**< Hours */
+};
+
+/**
+ * @ingroup Timers
+ * @struct period
+ * @brief structure to define a period of time.
+ * 
+ */
+struct period {
+	enum time_units units;    /**< Time units for timer @ref time_units */
+	uint16_t        duration; /**< Duration of the timer in units */
 };
 
 /**
@@ -49,8 +60,8 @@ enum time_units {
  * @brief   Enumerated type for the different types of Timers
  */
 enum timer_type {
-    single_shot,  /**< Single shot time which expires once only */
-    repeat,       /**< Timer which repeats and will continuiously expire, unitl canceled */
+	single_shot,  /**< Single shot time which expires once only */
+	repeat,       /**< Timer which repeats and will continuiously expire, unitl canceled */
 };
 
 /**
@@ -79,8 +90,8 @@ typedef int16_t timer_id;
  * integer value or a pointer.
  */
 union sigval {
-           uint16_t   sival_int;         /**< 16 bit Integer value */
-           void      *sival_ptr;         /**< Pointer value */
+	uint16_t   sival_int;         /**< 16 bit Integer value */
+	void      *sival_ptr;         /**< Pointer value */
 };
 #endif  // if defined(XC16) || __XC8
 
@@ -111,11 +122,10 @@ typedef void (*expiry_function)(timer_id timer, union sigval data);
  * timer.
  */
 struct timer_req {
-    enum time_units units;    /**< Time units for timer @ref time_units */
-    uint16_t        duration; /**< Duration of the timer in units */
-    enum timer_type type;     /**< Type of timer to be created @ref timer_type */
-    expiry_function exp_fn;   /**< expiry function to be called @ref expiry_function */
-    union sigval    data;     /**< data to be passed to the expiry fnction on expiry union @ref sigval */
+	struct period   period;
+	enum timer_type type;     /**< Type of timer to be created @ref timer_type */
+	expiry_function exp_fn;   /**< expiry function to be called @ref expiry_function */
+	union sigval    data;     /**< data to be passed to the expiry fnction on expiry union @ref sigval */
 };
 
 /**
