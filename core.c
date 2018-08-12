@@ -45,11 +45,11 @@ extern void   hw_timer_init(void);
 #ifdef SYS_SW_TIMERS
 #include "libesoup/timers/sw_timers.h"
 extern void   sw_timer_init(void);
+extern void   timer_tick(void);
 #endif
 
 #ifdef SYS_UART
 extern void   uart_init(void);
-extern void   timer_tick(void);
 #endif
 
 #ifdef SYS_JOBS
