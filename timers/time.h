@@ -48,10 +48,10 @@ enum time_units {
  * @enum    timer_type
  * @brief   Enumerated type for the different types of Timers
  */
-typedef enum {
+enum timer_type {
     single_shot,  /**< Single shot time which expires once only */
     repeat,       /**< Timer which repeats and will continuiously expire, unitl canceled */
-} timer_type;
+};
 
 /**
  * @ingroup Timers
@@ -113,7 +113,7 @@ typedef void (*expiry_function)(timer_id timer, union sigval data);
 struct timer_req {
     enum time_units units;    /**< Time units for timer @ref time_units */
     uint16_t        duration; /**< Duration of the timer in units */
-    timer_type      type;     /**< Type of timer to be created @ref timer_type */
+    enum timer_type type;     /**< Type of timer to be created @ref timer_type */
     expiry_function exp_fn;   /**< expiry function to be called @ref expiry_function */
     union sigval    data;     /**< data to be passed to the expiry fnction on expiry union @ref sigval */
 };
