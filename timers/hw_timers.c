@@ -213,7 +213,7 @@ void hw_timer_init(void)
 	for(timer = 0; timer < NUMBER_HW_TIMERS; timer++) {
 		timers[timer].status = TIMER_UNUSED;
 		timers[timer].request.type = single_shot;
-		timers[timer].request.duration = 0;
+		timers[timer].request.period.duration = 0;
 		timers[timer].request.exp_fn = NULL;
 		timers[timer].request.data.sival_int = 0;
 		timers[timer].repeats = 0;
@@ -435,16 +435,16 @@ static timer_id start_timer(timer_id timer, struct timer_req *request)
                 return(-ERR_BAD_INPUT_PARAMETER);
         }
 
-	switch(request->units) {
+	switch(request->period.units) {
 	case uSeconds:
 		/*
 	         * If the duration is uSeconds compensate for the Instruction overhead of
 	         * starting a HW Timer.
 	         */
-		duration = request->duration;
+		duration = request->period.duration;
 		
 #if defined(__dsPIC33EP256MU806__)
-		if(request->duration > HW_TIMER_OVERHEAD) {
+		if(request->period.duration > HW_TIMER_OVERHEAD) {
 			duration -= HW_TIMER_OVERHEAD;
 		} else {
 			/*
@@ -458,7 +458,7 @@ static timer_id start_timer(timer_id timer, struct timer_req *request)
 #endif // defined(__dsPIC33EP256MU806__)
 		set_clock_divide(timer, 1);
 #if defined(__18F4585) || defined(__18F2680)
-		ticks = (uint32_t) ((uint32_t) (((uint32_t) sys_clock_freq / 4) / 1000000) * request->duration);
+		ticks = (uint32_t) ((uint32_t) (((uint32_t) sys_clock_freq / 4) / 1000000) * request->period.duration);
 #elif defined(__dsPIC33EP256MU806__)
 		ticks = (uint32_t) ((uint32_t) (((uint32_t) sys_clock_freq) / 1000000) * (duration));
 #endif // Target uC
@@ -467,7 +467,7 @@ static timer_id start_timer(timer_id timer, struct timer_req *request)
 	case mSeconds:
 #if defined(__18F4585)  || defined(__18F2680)
 		set_clock_divide(timer, 4);
-		ticks = (uint32_t) ((uint32_t) (((uint32_t)(sys_clock_freq / 4)) / 4000) * request->duration);
+		ticks = (uint32_t) ((uint32_t) (((uint32_t)(sys_clock_freq / 4)) / 4000) * request->period.duration);
 #else
                 /*
                  * Divided by 64 so sys_clock_freq/64 ticks in a Second
@@ -476,7 +476,7 @@ static timer_id start_timer(timer_id timer, struct timer_req *request)
                  *              = sys_clock_freq / 64 * 1,000
                  */
 		set_clock_divide(timer, 64);
-		ticks = (uint32_t) ((uint32_t) (((uint32_t) sys_clock_freq) / 64000 ) * request->duration);
+		ticks = (uint32_t) ((uint32_t) (((uint32_t) sys_clock_freq) / 64000 ) * request->period.duration);
 #endif
                 break;
 
@@ -484,10 +484,10 @@ static timer_id start_timer(timer_id timer, struct timer_req *request)
 #if defined(__18F4585)  || defined(__18F2680)
 		if(timer == TIMER_0) {
 			set_clock_divide(timer, 64);
-			ticks = (uint32_t) ((uint32_t) (((uint32_t) sys_clock_freq / 4) / 64) * request->duration);
+			ticks = (uint32_t) ((uint32_t) (((uint32_t) sys_clock_freq / 4) / 64) * request->period.duration);
 		} else if(timer == TIMER_1) {
 			set_clock_divide(timer, 8);
-			ticks = (uint32_t) ((uint32_t) (((uint32_t) sys_clock_freq / 4) / 8) * request->duration);
+			ticks = (uint32_t) ((uint32_t) (((uint32_t) sys_clock_freq / 4) / 8) * request->period.duration);
 		} else {
 			LOG_E("Unknown Timers\n\r");
 		}
@@ -497,7 +497,7 @@ static timer_id start_timer(timer_id timer, struct timer_req *request)
                  * in 1 Second (sys_clock_freq/256) ticks
                  */
 		set_clock_divide(timer, 256);
-		ticks = (uint32_t) ((uint32_t) (((uint32_t) sys_clock_freq) / 256) * request->duration);
+		ticks = (uint32_t) ((uint32_t) (((uint32_t) sys_clock_freq) / 256) * request->period.duration);
 #endif
                 break;
 
@@ -512,8 +512,8 @@ static timer_id start_timer(timer_id timer, struct timer_req *request)
 	if(ticks > 0) {
 		timers[timer].status            = TIMER_RUNNING;
 		timers[timer].request.type      = request->type;
-		timers[timer].request.units     = request->units;
-		timers[timer].request.duration  = request->duration;
+		timers[timer].request.period.units     = request->period.units;
+		timers[timer].request.period.duration  = request->period.duration;
 		timers[timer].request.exp_fn    = request->exp_fn;
 		timers[timer].request.data      = request->data;
 
