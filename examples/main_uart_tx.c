@@ -34,6 +34,7 @@ int main(void)
 {
 	result_t           rc;
 	uint8_t            buffer[] = "Hello World\n\r";
+	struct period      period;
 
 	/*
 	 * Before anything else have to initialise the library
@@ -87,7 +88,9 @@ int main(void)
 		return(rc);
 	}
 
-	rc = delay(Seconds, 10);
+	period.units    = Seconds;
+	period.duration = 10;
+	rc = delay(&period);
 	if(rc < 0) {
 		LATDbits.LATD0 = 1;
 		return(rc);
