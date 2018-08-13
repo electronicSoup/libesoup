@@ -109,6 +109,9 @@
 /**
  *
  */
+#define BRD_SPI_SCK      RD1
+#define BRD_SPI_MISO     RD2
+#define BRD_SPI_MOSI     RD3
 //#define SPI_RW_FINISHED     SPI1STATbits.SPIRBF
 //#define SPI_SCK_DIRECTION   TRISDbits.TRISD1
 //#define SPI_MISO_DIRECTION  TRISDbits.TRISD2

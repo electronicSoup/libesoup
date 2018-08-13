@@ -1,9 +1,7 @@
 /**
- *
  * @file libesoup/examples/projects/microchip/EEPROM.X/libesoup_config.h
  *
  * @author John Whitmore
- *
  *
  * Copyright 2017-2018 electronicSoup Limited
  *
