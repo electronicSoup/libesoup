@@ -68,6 +68,10 @@ extern void   uart_init(void);
 #include "libesoup/utils/rand.h"
 #endif
 
+#ifdef SYS_CAN_BUS
+#include "libesoup/comms/can/can.h"
+#endif
+
 #ifdef SYS_ADC
 extern result_t adc_init(void);
 extern result_t adc_tasks(void);
@@ -175,6 +179,9 @@ result_t libesoup_tasks(void)
 #ifdef SYS_ADC
 	rc = adc_tasks();
 	RC_CHECK
+#endif
+#ifdef SYS_CAN_BUS
+	can_tasks();
 #endif
 	return(rc);
 }
