@@ -748,16 +748,16 @@ void startConsecutiveFrameTimer(struct tx_buffer_t *tx_buffer)
 	result_t          rc;
 	struct timer_req  request;
 	
-	request.units = mSeconds;
+	request.period.units = mSeconds;
 	if ((tx_buffer->seperation_time > 0x06) && (tx_buffer->seperation_time <= 0x7f)) {
-		request.duration = tx_buffer->seperation_time;
+		request.period.duration = tx_buffer->seperation_time;
 	} else {
-		request.duration = 0x7f;
+		request.period.duration = 0x7f;
 	}
 	request.type           = single_shot;
 	request.exp_fn         = exp_sendConsecutiveFrame;
 	request.data.sival_ptr = (void *)tx_buffer;
-	LOG_D("startConsecutiveFrameTimer %d mS\n\r", request.duration);
+	LOG_D("startConsecutiveFrameTimer %d mS\n\r", request.period.duration);
 	rc = sw_timer_start(&request);
 	RC_CHECK_PRINT_VOID("Failed to start frame Timer\n\r");
 	tx_buffer->consecutive_frame_timer = rc;
@@ -768,11 +768,11 @@ void startTimer_N_Cr(rx_buffer_t *rx_buffer)
 	result_t          rc;
 	struct timer_req  request;
 
-	request.units          = mSeconds;
-	request.duration       = 1000;
-	request.type           = single_shot;
-	request.exp_fn         = exp_timer_N_Cr_Expired;
-	request.data.sival_ptr = (void *)rx_buffer;
+	request.period.units    = mSeconds;
+	request.period.duration = 1000;
+	request.type            = single_shot;
+	request.exp_fn          = exp_timer_N_Cr_Expired;
+	request.data.sival_ptr  = (void *)rx_buffer;
 
 	rc = sw_timer_cancel(&rx_buffer->timer_N_Cr);
 	RC_CHECK_PRINT_VOID("SW TIM_Cancel")
@@ -808,11 +808,11 @@ void startTimer_N_Bs(struct tx_buffer_t *tx_buffer)
 	rc = sw_timer_cancel(&tx_buffer->timer_N_Bs);
 	RC_CHECK_PRINT_CONT("SW TIM_Cancel")
 
-	request.units          = mSeconds;
-	request.duration       = 1000;
-	request.type           = single_shot;
-	request.exp_fn         = exp_timer_N_Bs_Expired;
-	request.data.sival_ptr = (void *)tx_buffer;
+	request.period.units    = mSeconds;
+	request.period.duration = 1000;
+	request.type            = single_shot;
+	request.exp_fn          = exp_timer_N_Bs_Expired;
+	request.data.sival_ptr  = (void *)tx_buffer;
 
 	rc = sw_timer_start(&request);
 	RC_CHECK_PRINT_VOID("Failed to start N_Bs Timer\n\r");
