@@ -346,4 +346,7 @@ extern void cpu_init(void);
 extern enum adc_pin  get_adc_from_gpio(enum gpio_pin);
 extern enum gpio_pin get_gpio_from_adc(enum adc_pin);
 
+extern enum pwm_pin get_pwm_from_gpio(enum gpio_pin gpio_pin);
+extern enum gpio_pin get_gpio_from_pwm(enum pwm_pin pwm_pin);
+
 #endif // _ES_dsPIC33EP256MU806_H

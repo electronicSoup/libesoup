@@ -20,17 +20,59 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  *
  */
-result_t pwm_config(enum gpio pin, uint16_t frequency, uint8_t duty)
+
+#include "libesoup_config.h"
+
+#include "libesoup/errno.h"
+
+result_t pwm_config(enum gpio_pin pin, uint16_t frequency, uint8_t duty)
+{
+	enum pwm_pin pwm_pin;
+
+	pwm_pin = get_pwm_from_gpio(pin);
+	
+	if (pwm_pin == INVALID_PWM_PIN) {
+		return(ERR_BAD_INPUT_PARAMETER);
+	}
+
+	switch (pwm_pin) {
+	case PWM1L:
+		IOCON1bits.PENL  = 1;
+		break;
+	case PWM1H:
+		IOCON1bits.PENH  = 1;
+		break;
+	case PWM2L:
+		IOCON2bits.PENL  = 1;
+		break;
+	case PWM2H:
+		IOCON2bits.PENH  = 1;
+		break;
+	case PWM3L:
+		IOCON3bits.PENL  = 1;
+		break;
+	case PWM3H:
+		IOCON3bits.PENH  = 1;
+		break;
+	case PWM4L:
+		IOCON4bits.PENL  = 1;
+		break;
+	case PWM4H:
+		IOCON4bits.PENH  = 1;
+		break;
+	default:
+		return(ERR_BAD_INPUT_PARAMETER);
+		break;
+	}
+	return(0);
+}
+
+result_t pwm_on(enum gpio_pin pin)
 {
 	return(0);
 }
 
-result_t pwm_on(enum gpio pin)
-{
-	return(0);
-}
-
-result_t pwm_off(enum gpio pin)
+result_t pwm_off(enum gpio_pin pin)
 {
 	return(0);
 }
