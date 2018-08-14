@@ -1,5 +1,5 @@
 /**
- * @file libesoup/gpio/adc.h
+ * @file libesoup/gpio/adc/adc.h
  *
  * @author John Whitmore
  * 

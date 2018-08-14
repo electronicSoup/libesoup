@@ -1,5 +1,5 @@
 /**
- * @file libesoup/gpio/adc.c
+ * @file libesoup/gpio/adc/adc.c
  *
  * @author John Whitmore
  * 
@@ -41,7 +41,7 @@ __attribute__((unused)) static const char *TAG = "ADC";
 #endif
 
 #include "libesoup/errno.h"
-#include "libesoup/gpio/adc.h"
+#include "libesoup/gpio/adc/adc.h"
 #include "libesoup/gpio/gpio.h"
 #include "libesoup/timers/sw_timers.h"
 
@@ -297,10 +297,10 @@ result_t adc_init(void)
 	/*
 	 * \Initialise a timer request structure
 	 */
-	timer_req.units     = SYS_ADC_PERIOD_UNITS;
-	timer_req.duration  = SYS_ADC_PERIOD_DURATION;
-	timer_req.type      = repeat;
-	timer_req.exp_fn    = adc_scan;
+	timer_req.period.units    = SYS_ADC_PERIOD_UNITS;
+	timer_req.period.duration = SYS_ADC_PERIOD_DURATION;
+	timer_req.type            = repeat;
+	timer_req.exp_fn          = adc_scan;
 	
 	return(0);
 }
