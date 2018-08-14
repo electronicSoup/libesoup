@@ -1,5 +1,4 @@
 /**
- *
  * @file libesoup/comms/modbus/modbus.c
  *
  * @author John Whitmore
@@ -19,7 +18,6 @@
  *
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
- *
  */
 #include "libesoup_config.h"
 
@@ -143,7 +141,7 @@ uint8_t crc_check(uint8_t *data, uint16_t len)
 	crc = crc_calculate(data, len - 2);
 
 	if (  (((crc >> 8) & 0xff) == data[len - 2])
-	    &&((crc & 0xff) == data[len -1]) ) {
+	    &&((crc & 0xff) == data[len - 1]) ) {
 		return (TRUE);
 	} else {
 		return (FALSE);
@@ -153,8 +151,6 @@ uint8_t crc_check(uint8_t *data, uint16_t len)
 static void hw_35_expiry_function(void *chan)
 {
 	struct modbus_channel *modbus_chan = (struct modbus_channel *)chan;
-
-	modbus_chan->hw_35_timer = BAD_TIMER;
 
 	if (modbus_chan->process_timer_35_expiry) {
 		// modbus_chan->process_timer_35_expiry(modbus_chan);
@@ -178,16 +174,22 @@ static void hw_15_expiry_function(void *chan)
 
 void start_15_timer(struct modbus_channel *channel)
 {
-	channel->hw_15_timer = hw_timer_start(uSeconds, ((1000000 * 17)/channel->uart->baud), FALSE, hw_15_expiry_function, (void *)channel);
+	struct period period;
+	
+	period.units    = uSeconds;
+	period.duration = ((1000000 * 17)/channel->uart->baud);
+//	channel->hw_15_timer = hw_timer_start(uSeconds, ((1000000 * 17)/channel->uart->baud), FALSE, hw_15_expiry_function, (void *)channel);
 }
 
 void start_35_timer(struct modbus_channel *channel)
 {
+#if 0
 	if(channel->hw_35_timer != BAD_TIMER) {
 		hw_timer_cancel(channel->hw_35_timer);
 	}
 
 	channel->hw_35_timer = hw_timer_start(uSeconds, ((1000000 * 39)/channel->uart->baud), FALSE, hw_35_expiry_function, (void *)channel);
+#endif
 }
 
 static void modbus_process_rx_character(uint8_t channel_id, uint8_t ch)

@@ -7,7 +7,7 @@
 //#include "es_lib/logger/serial_log.h"
 //#include "es_lib/timers/hw_timers.h"
 //#include "es_lib/timers/timers.h"
-//#include "es_lib/comms/uart.h"
+#include "libesoup/comms/uart/uart.h"
 //#include "es_lib/modbus/modbus.h"
 //#include "es_lib/jobs/jobs.h"
 
@@ -25,16 +25,7 @@ int main(void)
 {
         result_t rc;
 
-	jobs_init();
-	hw_timer_init();
-	timer_init();
-
-	/*
-	 * Univarsal UART Code
-	 */
-	uart_init();
-
-	serial_init();
+	rc = libesoup_init();
 
 	LOG_D("*************************\n\r");
 	LOG_D("***   ModbusMonitor   ***\n\r");
@@ -43,33 +34,25 @@ int main(void)
 
 	asm ("CLRWDT");
 
-
 	LOG_D("Initialise RS485 Chip Select\n\r");
-	/*
-	 * Pins RB2 and RB3 select transmit and receive so both are outputs
-	 */
-	TRISBbits.TRISB2 = 0;
-	TRISBbits.TRISB3 = 0;
 
-	RS485_RX;
-
-        uart.tx_pin = RP1;
-	uart.rx_pin = RP0;
-	uart.baud   = MM_BAUD;
-	uart.uart_mode = uart_calculate_mode(MM_DATABITS, MM_PARITY, MM_STOPBITS, IDLE_LOW);
+        uart.tx_pin = RD7;
+	uart.rx_pin = RD6;
+	uart.baud   = 9600;
+	rc = uart_calculate_mode(&uart.uart_mode, UART_8_DATABITS, UART_PARITY_NONE, UART_ONE_STOP_BIT, UART_IDLE_HIGH);
 	uart.tx_finished = NULL;
 
         rc = modbus_reserve(&uart, NULL, modbus_rx_frame, NULL);
-        if (rc != SUCCESS) {
+        if (rc != 0) {
                 LOG_E("Failed to reserve a Modbus Channel\n\r");
         }
 
         LOG_D("Entering the main loop\n\r");
 
 	while(1){
+		libesoup_tasks();
 		asm ("CLRWDT");
-		CHECK_TIMERS();
-		jobs_execute();
+//		jobs_execute();
 	}
 }
 

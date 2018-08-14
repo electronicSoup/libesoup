@@ -1,10 +1,9 @@
 /**
- *
  * @file libesoup/examples/projects/microchip/Modbus.X/libesoup_config.h
  *
  * @author John Whitmore
  *
- * Copyright 2017 electronicSoup Limited
+ * Copyright 2017-2018 electronicSoup Limited
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -18,7 +17,6 @@
  *
  *   You should have received a copy of the GNU General Public License
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.
- *
  */
 #ifndef _LIBESOUP_CONFIG_H
 #define _LIBESOUP_CONFIG_H
@@ -48,9 +46,20 @@
 #define SYS_MODBUS_RESPONSE_BROADCAST_TIMEOUT      MILLI_SECONDS_TO_TICKS(500)
 #endif // SYS_MODBUS
 
+#define SYS_SERIAL_LOGGING
+
+#if defined(SYS_SERIAL_LOGGING)
+
+//#define SYS_SERIAL_PORT_GndTxRx
+#define SYS_SERIAL_PORT_GndRxTx
+#define SYS_LOG_LEVEL LOG_DEBUG
+#define SYS_UART
+#define SYS_SERIAL_LOGGING_BAUD           19200
+
+#endif // defined(SYS_SERIAL_LOGGING)
 
 #if defined(__dsPIC33EP256MU806__)
-#include "libesoup/boards/cb-dsPIC33EP256MU806.h"
+#include "libesoup/boards/cinnamonBun/dsPIC33/cb-dsPIC33EP256MU806.h"
 #elif defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__)
 #include "libesoup/boards/cb-PIC24FJ256GB106/cb-PIC24FJ256GB106.h"
 #elif defined(__18F4585)

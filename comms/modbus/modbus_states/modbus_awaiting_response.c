@@ -54,7 +54,7 @@ void set_modbus_awaiting_response_state(struct modbus_channel *channel)
 
 	rc = start_response_timer(channel);
         
-        if(rc != SUCCESS) {
+        if(rc != 0) {
                 LOG_E("Failed to start response timer\n\r");
         }
 }
