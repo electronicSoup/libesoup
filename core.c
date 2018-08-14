@@ -45,11 +45,11 @@ extern void   hw_timer_init(void);
 #ifdef SYS_SW_TIMERS
 #include "libesoup/timers/sw_timers.h"
 extern void   sw_timer_init(void);
+extern void   timer_tick(void);
 #endif
 
 #ifdef SYS_UART
 extern void   uart_init(void);
-extern void   timer_tick(void);
 #endif
 
 #ifdef SYS_JOBS
@@ -66,6 +66,10 @@ extern void   timer_tick(void);
 
 #ifdef SYS_RAND
 #include "libesoup/utils/rand.h"
+#endif
+
+#ifdef SYS_CAN_BUS
+#include "libesoup/comms/can/can.h"
 #endif
 
 #ifdef SYS_ADC
@@ -175,6 +179,9 @@ result_t libesoup_tasks(void)
 #ifdef SYS_ADC
 	rc = adc_tasks();
 	RC_CHECK
+#endif
+#ifdef SYS_CAN_BUS
+	can_tasks();
 #endif
 	return(rc);
 }

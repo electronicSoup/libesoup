@@ -144,7 +144,7 @@ result_t rtc_update_current_datetime(uint8_t *data, uint16_t len)
 	return(SUCCESS);
 }
 
-void *rtc_set_alarm_offset(ty_time_units units, uint16_t time, uint8_t nice, void (*expiry_fn)(void *), void *expiry_data)
+void *rtc_set_alarm_offset(enum time_units units, uint16_t time, uint8_t nice, void (*expiry_fn)(void *), void *expiry_data)
 {
 	uint16_t                current_minutes;
 	uint16_t                total_alarm_minutes;

@@ -82,11 +82,11 @@ void can_ping_init(void)
 	
 	LOG_D("CAN ping duration - %d mSeconds\n\r", duration);
 
-	timer_request.units          = mSeconds;
-	timer_request.duration       = duration;
-	timer_request.type           = single_shot;
-	timer_request.exp_fn         = ping_network;
-	timer_request.data.sival_int = 0x00;
+	timer_request.period.units    = mSeconds;
+	timer_request.period.duration = duration;
+	timer_request.type            = single_shot;
+	timer_request.exp_fn          = ping_network;
+	timer_request.data.sival_int  = 0x00;
 	
         restart_ping_timer();
 }

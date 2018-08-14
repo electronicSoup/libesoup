@@ -141,10 +141,13 @@ result_t can_l2_bitrate(can_baud_rate_t baud);
 static void reset(void)
 {
 	uint8_t          current_mode;
+	struct period    period;
 
 	current_mode = C1CTRL1bits.OPMODE;
 	set_mode(CONFIG_MODE);
-	delay(mSeconds, 5);
+	period.units    = mSeconds;
+	period.duration = 5;
+	delay(&period);
 	set_mode(current_mode);
 }
 

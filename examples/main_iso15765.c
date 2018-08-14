@@ -52,6 +52,7 @@ int main(void)
 {
 	result_t         rc = 0;
 	can_l2_target_t  target;
+	struct period    period;
 #ifdef SYS_SW_TIMERS
 #if (defined(TX_NODE) && !defined(SYS_CAN_PING_FRAME_ID))
 	timer_id         timer;
@@ -67,14 +68,16 @@ int main(void)
 	/*
 	 * Allow the clock to settle
 	 */
-	delay(mSeconds, 500);
+	period.units    = mSeconds;
+	period.duration = 500;
+	delay(&period);
 	
 	LOG_D("************************\n\r");
 	LOG_D("***   CAN Bus Node   ***\n\r");
 	LOG_D("***   %ldMHz         ***\n\r", sys_clock_freq);
 	LOG_D("************************\n\r");
 
-	delay(mSeconds, 500);
+	delay(&period);
 	/*
 	 * A Layer 3 noded address of 0xff is the ISO11783 Broadcast address so
 	 * it should not be used as a Layer 3 address. If the can_init() function
@@ -129,10 +132,7 @@ int main(void)
 	LOG_D("Entering the main loop\n\r");
 	LOG_D("***   %ldMHz         ***\n\r", sys_clock_freq);
 	while(TRUE) {
-#ifdef SYS_SW_TIMERS
-		CHECK_TIMERS();
-#endif
-		can_tasks();
+		libesoup_tasks();
 	}
 }
 

@@ -174,8 +174,8 @@ void sw_timer_init(void)
 //#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__) || defined(__dsPIC33EP256MU806__)
 	hw_timer = BAD_TIMER_ID;
 
-	hw_timer_req.units = mSeconds;
-	hw_timer_req.duration = SYS_SW_TIMER_TICK_ms;
+	hw_timer_req.period.units = mSeconds;
+	hw_timer_req.period.duration = SYS_SW_TIMER_TICK_ms;
 	hw_timer_req.type = repeat;
 	hw_timer_req.exp_fn = hw_expiry_function;
 	hw_timer_req.data = data;
@@ -323,11 +323,11 @@ timer_id sw_timer_start(struct timer_req *request)
 			 */
 			timers[loop].active = TRUE;
 			calculate_expiry_count(loop, ticks);
-			timers[loop].request.data     = request->data;
-			timers[loop].request.duration = request->duration;
-			timers[loop].request.exp_fn   = request->exp_fn;
-			timers[loop].request.type     = request->type;
-			timers[loop].request.units    = request->units;
+			timers[loop].request.data            = request->data;
+			timers[loop].request.period.duration = request->period.duration;
+			timers[loop].request.exp_fn          = request->exp_fn;
+			timers[loop].request.type            = request->type;
+			timers[loop].request.period.units    = request->period.units;
 
 			/*
 			 * If our hw_timer isn't running restart it:
@@ -445,10 +445,10 @@ result_t sw_timer_cancel_all(void)
 
 static uint16_t calculate_ticks(struct timer_req *request)
 {
-	if(request->units == mSeconds) {
-		return((request->duration < SYS_SW_TIMER_TICK_ms) ? 1 : (request->duration / SYS_SW_TIMER_TICK_ms));
-	} else if (request->units == Seconds) {
-		return(request->duration * (1000 / SYS_SW_TIMER_TICK_ms));
+	if(request->period.units == mSeconds) {
+		return((request->period.duration < SYS_SW_TIMER_TICK_ms) ? 1 : (request->period.duration / SYS_SW_TIMER_TICK_ms));
+	} else if (request->period.units == Seconds) {
+		return(request->period.duration * (1000 / SYS_SW_TIMER_TICK_ms));
 	}
 	
 	return(0);   // Clears a compiler warning

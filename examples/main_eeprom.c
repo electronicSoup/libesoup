@@ -66,8 +66,8 @@ int main(void)
 	eeprom_address = 0;
 	eeprom_test_rd = 0;
 	
-	timer_request.units = Seconds;
-	timer_request.duration = 1;
+	timer_request.period.units = Seconds;
+	timer_request.period.duration = 1;
 	timer_request.type = repeat;
 	timer_request.data.sival_int = 0;
 	timer_request.exp_fn = exp_func;
@@ -79,7 +79,7 @@ int main(void)
 	LOG_D("Entering main loop\n\r");
 
         while(1) {
-		CHECK_TIMERS()
+		libesoup_tasks();
         }
         return 0;
 }

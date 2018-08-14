@@ -83,11 +83,11 @@ result_t can_bad_start_baud_scan()
 	/*
 	 * Initialise the timer request structure
 	 */
-	request.units = Seconds;
-	request.duration = SYS_CAN_BAUD_AUTO_DETECT_PERIOD;
-	request.type = single_shot;
-	request.exp_fn = expiry;
-	request.data.sival_int = 0x00;
+	request.period.units    = Seconds;
+	request.period.duration = SYS_CAN_BAUD_AUTO_DETECT_PERIOD;
+	request.type            = single_shot;
+	request.exp_fn          = expiry;
+	request.data.sival_int  = 0x00;
 	
 	current_baud_rate =  0;
 	rc = can_l2_bitrate(current_baud_rate);

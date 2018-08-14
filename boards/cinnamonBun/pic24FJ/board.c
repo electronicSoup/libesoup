@@ -28,17 +28,21 @@
 #ifdef SYS_SPI_BUS
 #include "libesoup/comms/spi/spi.h"
 #endif
+#ifdef SYS_EEPROM
+#include "libesoup/hardware/eeprom.h"
+#endif
 
 result_t board_init(void)
 {
 #ifdef SYS_SPI_BUS
+	result_t               rc;
 	uint8_t                spi_channel;	
 	struct spi_io_channel  spi_io;
-	
+
 	spi_io.miso = BRD_SPI_MISO;
 	spi_io.mosi = BRD_SPI_MOSI;
 	spi_io.sck  = BRD_SPI_SCK;
-		
+
 	rc = spi_channel_init(SPI_ANY_CHANNEL, &spi_io);
 	RC_CHECK
 	spi_channel = (uint8_t)rc;

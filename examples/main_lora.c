@@ -65,12 +65,11 @@ int main()
 	 * that it's emptied
 	 */
 #ifdef SYS_SW_TIMERS
-	TIMER_INIT(timer);
-	request.units = Seconds;
-	request.duration = 10;
-	request.type = repeat;
-	request.exp_fn = expiry;
-	request.data.sival_int = 0x00;
+	request.period.units    = Seconds;
+	request.period.duration = 10;
+	request.type            = repeat;
+	request.exp_fn          = expiry;
+	request.data.sival_int  = 0x00;
 	
 	timer = sw_timer_start(&request);
 	if(rc < 0) {
@@ -81,9 +80,7 @@ int main()
 #endif	
 	
         while(1) {
-#ifdef SYS_SW_TIMERS
-		CHECK_TIMERS();
-#endif
+		libesoup_tasks();
         }
 
         return(0);

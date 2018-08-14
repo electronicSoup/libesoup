@@ -52,6 +52,7 @@ int main(void)
 {
 	result_t         rc = 0;
 	can_l2_target_t  target;
+	struct period    period;
 #ifdef SYS_SW_TIMERS
 #if (defined(TX_NODE) && !defined(SYS_CAN_PING_FRAME_ID))
 	timer_id         timer;
@@ -67,14 +68,16 @@ int main(void)
 	/*
 	 * Allow the clock to settle
 	 */
-	delay(mSeconds, 500);
+	period.units    = mSeconds;
+	period.duration = 500;
+	delay(&period);
 	
 	LOG_D("************************\n\r");
 	LOG_D("***   CAN Bus Node   ***\n\r");
 	LOG_D("***   %ldMHz         ***\n\r", sys_clock_freq);
 	LOG_D("************************\n\r");
 
-	delay(mSeconds, 500);
+	delay(&period);
 #ifdef SYS_CAN_BAUD_AUTO_DETECT
 #if (defined(SYS_ISO15765) || defined(SYS_ISO11783)) || defined(SYS_TEST_L3_ADDRESS)
 	rc = can_init(no_baud, 0xff, system_status_handler, normal);  // Includes L3 Address
@@ -107,11 +110,11 @@ int main(void)
 #if (defined(TX_NODE) && !defined(SYS_CAN_PING_FRAME_ID))
 	LOG_D("Tx Node\n\r");
 #ifdef SYS_SW_TIMERS
-	request.units = Seconds;
-	request.duration = 10;
-	request.type = repeat;
-	request.exp_fn = expiry;
-	request.data.sival_int = 0x00;
+	request.period.units    = Seconds;
+	request.period.duration = 10;
+	request.type            = repeat;
+	request.exp_fn          = expiry;
+	request.data.sival_int  = 0x00;
 	
 	timer = sw_timer_start(&request);
 	if(timer < 0) {
@@ -124,11 +127,11 @@ int main(void)
 	 * Register a frame handler
 	 */
 #if defined(SYS_CAN_PING_FRAME_ID)
-	target.filter = SYS_CAN_PING_FRAME_ID;
+	target.filter  = SYS_CAN_PING_FRAME_ID;
 #else
-	target.filter = 0x777;
+	target.filter  = 0x777;
 #endif
-	target.mask   = CAN_SFF_MASK;
+	target.mask    = CAN_SFF_MASK;
 	target.handler = frame_handler;
 
 	rc = frame_dispatch_reg_handler(&target);
@@ -141,10 +144,7 @@ int main(void)
 	LOG_D("Entering the main loop\n\r");
 	LOG_D("***   %ldMHz         ***\n\r", sys_clock_freq);
 	while(TRUE) {
-#ifdef SYS_SW_TIMERS
-		CHECK_TIMERS();
-#endif
-		can_tasks();
+		libesoup_tasks();
 	}
 }
 

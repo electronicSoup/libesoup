@@ -1,5 +1,4 @@
 /**
- *
  * @file libesoup/processors/es-dsPIC33EP256MU806.h
  *
  * @author John Whitmore
@@ -262,6 +261,22 @@ enum adc_pin {
 	AN15,
 
 	INVALID_ADC_PIN = 0xff,     ///< Dummy Value used to represent no GPIO Pin
+};
+
+/**
+ * @brief PWM Pins available in the uC
+ */
+enum pwm_pin {
+	PWM1L,
+	PWM1H,
+	PWM2L,
+	PWM2H,
+	PWM3L,
+	PWM3H,
+	PWM4L,
+	PWM4H,
+
+	INVALID_PWM_PIN = 0xff,     ///< Dummy Value used to represent no GPIO Pin
 };
 
 /**

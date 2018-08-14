@@ -1,9 +1,9 @@
 /**
- * @file libesoup/gpio/adc.h
+ * @file libesoup/gpio/pwm.c
  *
  * @author John Whitmore
  * 
- * @brief API for ADC functions
+ * @brief API implementation for PWM functions
  * 
  * Copyright 2018 electronicSoup Limited
  *
@@ -20,17 +20,17 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  *
  */
-#ifndef _ADC_H
-#define _ADC_H
+result_t pwm_config(enum gpio pin, uint16_t frequency, uint8_t duty)
+{
+	return(0);
+}
 
-#include "libesoup_config.h"
+result_t pwm_on(enum gpio pin)
+{
+	return(0);
+}
 
-#ifdef SYS_ADC
-typedef void (*adc_handler_t)(enum gpio_pin, uint16_t);
-
-extern result_t adc_monitor_channel(enum gpio_pin pin, uint16_t delta, adc_handler_t handler);
-extern result_t adc_sample(enum gpio_pin pin, adc_handler_t);
-
-#endif
-
-#endif // _ADC_H
+result_t pwm_off(enum gpio pin)
+{
+	return(0);
+}
