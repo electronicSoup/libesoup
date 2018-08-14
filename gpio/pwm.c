@@ -51,6 +51,41 @@ result_t pwm_config(enum gpio_pin pin, uint16_t frequency, uint8_t duty)
 
 	switch (pwm_pin) {
 	case PWM1L:
+	case PWM1H:
+		PDC1 = 0xff;
+		break;
+	case PWM2L:
+	case PWM2H:
+		PDC2 = 0xff;
+		break;
+	case PWM3L:
+	case PWM3H:
+		PDC3 = 0xff;
+		break;
+	case PWM4L:
+	case PWM4H:
+		PDC3 = 0xff;
+		break;
+	default:
+		return(ERR_BAD_INPUT_PARAMETER);
+		break;
+	}
+	
+	return(0);
+}
+
+result_t pwm_on(enum gpio_pin pin)
+{
+	enum pwm_pin pwm_pin;
+
+	pwm_pin = get_pwm_from_gpio(pin);
+	
+	if (pwm_pin == INVALID_PWM_PIN) {
+		return(ERR_BAD_INPUT_PARAMETER);
+	}
+
+	switch (pwm_pin) {
+	case PWM1L:
 		IOCON1bits.PENL  = 1;
 		break;
 	case PWM1H:
@@ -78,17 +113,48 @@ result_t pwm_config(enum gpio_pin pin, uint16_t frequency, uint8_t duty)
 		return(ERR_BAD_INPUT_PARAMETER);
 		break;
 	}
-	
-	return(0);
-}
-
-result_t pwm_on(enum gpio_pin pin)
-{
 	return(0);
 }
 
 result_t pwm_off(enum gpio_pin pin)
 {
+	enum pwm_pin pwm_pin;
+
+	pwm_pin = get_pwm_from_gpio(pin);
+	
+	if (pwm_pin == INVALID_PWM_PIN) {
+		return(ERR_BAD_INPUT_PARAMETER);
+	}
+
+	switch (pwm_pin) {
+	case PWM1L:
+		IOCON1bits.PENL  = 0;
+		break;
+	case PWM1H:
+		IOCON1bits.PENH  = 0;
+		break;
+	case PWM2L:
+		IOCON2bits.PENL  = 0;
+		break;
+	case PWM2H:
+		IOCON2bits.PENH  = 0;
+		break;
+	case PWM3L:
+		IOCON3bits.PENL  = 0;
+		break;
+	case PWM3H:
+		IOCON3bits.PENH  = 0;
+		break;
+	case PWM4L:
+		IOCON4bits.PENL  = 0;
+		break;
+	case PWM4H:
+		IOCON4bits.PENH  = 0;
+		break;
+	default:
+		return(ERR_BAD_INPUT_PARAMETER);
+		break;
+	}
 	return(0);
 }
 
