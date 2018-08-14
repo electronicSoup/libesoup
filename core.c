@@ -77,6 +77,10 @@ extern result_t adc_init(void);
 extern result_t adc_tasks(void);
 #endif
 
+#ifdef SYS_PWM
+extern result_t pwm_init(void);
+#endif
+
 #ifdef SYS_CHANGE_NOTIFICATION
 #include "libesoup/gpio/change_notification.h"
 #endif // SYS_CHANGE_NOTIFICATION
@@ -166,6 +170,9 @@ result_t libesoup_init(void)
 	adc_init();
 #endif
 
+#ifdef SYS_PWM
+	rc =  pwm_init();
+#endif
 	CLEAR_WDT
 	return(board_init());
 }

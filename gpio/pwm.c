@@ -22,8 +22,22 @@
  */
 
 #include "libesoup_config.h"
+#ifdef SYS_PWM
 
 #include "libesoup/errno.h"
+
+result_t pwm_init(void)
+{
+	/*
+	 * Set the Input clock prescaler. For the moment set the slowest possible
+	 */
+	PTCONbits.PTEN     = DISABLED;    // Disable the PWM Module for write
+	PTCON2bits.PCLKDIV = 0b110;       // Divide by 64
+	PTPER              = 0x1ff;       // Master Period
+	PTCONbits.PTEN     = ENABLED;     // re-enable the PWM Module
+
+	return(0);
+}
 
 result_t pwm_config(enum gpio_pin pin, uint16_t frequency, uint8_t duty)
 {
@@ -64,6 +78,7 @@ result_t pwm_config(enum gpio_pin pin, uint16_t frequency, uint8_t duty)
 		return(ERR_BAD_INPUT_PARAMETER);
 		break;
 	}
+	
 	return(0);
 }
 
@@ -76,3 +91,5 @@ result_t pwm_off(enum gpio_pin pin)
 {
 	return(0);
 }
+
+#endif // SYS_PWM
