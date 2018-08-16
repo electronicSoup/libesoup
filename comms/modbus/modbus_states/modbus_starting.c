@@ -37,17 +37,17 @@ extern struct modbus_state modbus_state;
 
 static void process_timer_35_expiry(void *);
 
-void set_modbus_starting_state(struct modbus_channel *channel)
+result_t set_modbus_starting_state(struct modbus_channel *channel)
 {
-	LOG_I("set_modbus_starting_state(channel %d)\n\r", channel->uart->uindex);
-	channel->process_timer_15_expiry = NULL;
-	channel->process_timer_35_expiry = process_timer_35_expiry;
-	channel->transmit = NULL;
-	channel->modbus_tx_finished = NULL;
-	channel->process_rx_character = NULL;
+	LOG_I("%s(channel %d)\n\r", __func__, channel->uart->uindex);
+	channel->process_timer_15_expiry  = NULL;
+	channel->process_timer_35_expiry  = process_timer_35_expiry;
+	channel->transmit                 = NULL;
+	channel->modbus_tx_finished       = NULL;
+	channel->process_rx_character     = NULL;
 	channel->process_response_timeout = NULL;
 
-	start_35_timer(channel);
+	return(start_35_timer(channel));
 }
 
 static void process_timer_35_expiry(void *data)

@@ -316,7 +316,7 @@ void _ISR __attribute__((__no_auto_psv__)) _U1RXInterrupt(void)
 
 	while (U1STAbits.URXDA) {
 		ch = U1RXREG;
-		uarts[UART_1].udata->process_rx_char(ch);
+		uarts[UART_1].udata->process_rx_char(UART_1, ch);
 	}
 }
 #endif // #if defined(__dsPIC33EP256MU806__) || defined (__PIC24FJ256GB106__)
@@ -338,7 +338,7 @@ void _ISR __attribute__((__no_auto_psv__)) _U2RXInterrupt(void)
 
 	while (U2STAbits.URXDA) {
 		ch = U2RXREG;
-		uarts[UART_2].udata->process_rx_char(ch);
+		uarts[UART_2].udata->process_rx_char(UART_2, ch);
 	}
 }
 #endif // #if defined(__dsPIC33EP256MU806__) || defined (__PIC24FJ256GB106__)
@@ -360,7 +360,7 @@ void _ISR __attribute__((__no_auto_psv__)) _U3RXInterrupt(void)
 
 	while (U3STAbits.URXDA) {
 		ch = U3RXREG;
-		uarts[UART_3].udata->process_rx_char(ch);
+		uarts[UART_3].udata->process_rx_char(UART_3, ch);
 	}
 }
 #endif // #if defined(__dsPIC33EP256MU806__) || defined (__PIC24FJ256GB106__)
@@ -382,7 +382,7 @@ void _ISR __attribute__((__no_auto_psv__)) _U4RXInterrupt(void)
 
 	while (U4STAbits.URXDA) {
 		ch = U4RXREG;
-		uarts[UART_4].udata->process_rx_char(ch);
+		uarts[UART_4].udata->process_rx_char(UART_4, ch);
 	}
 }
 #endif // #if defined(__dsPIC33EP256MU806__) || defined (__PIC24FJ256GB106__)

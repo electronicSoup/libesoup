@@ -38,10 +38,8 @@ static void process_timer_35_expiry(void *);
 static void process_rx_character(struct modbus_channel *channel, uint8_t ch);
 static void process_response_timeout(struct modbus_channel *channel);
 
-void set_modbus_awaiting_response_state(struct modbus_channel *channel)
+result_t set_modbus_awaiting_response_state(struct modbus_channel *channel)
 {
-        result_t rc;
-        
 	LOG_D("set_modbus_awaiting_response_state()\n\r");
 	channel->rx_write_index = 0;
 
@@ -52,11 +50,7 @@ void set_modbus_awaiting_response_state(struct modbus_channel *channel)
 	channel->process_rx_character = process_rx_character;
 	channel->process_response_timeout = process_response_timeout;
 
-	rc = start_response_timer(channel);
-        
-        if(rc != 0) {
-                LOG_E("Failed to start response timer\n\r");
-        }
+	return(start_response_timer(channel));
 }
 
 void process_timer_35_expiry(void *data)

@@ -37,7 +37,7 @@ extern struct modbus_state modbus_state;
 
 static void tx_finished(void *);
 
-void set_modbus_transmitting_state(struct modbus_channel *channel)
+result_t set_modbus_transmitting_state(struct modbus_channel *channel)
 {
 	LOG_D("set_modbus_transmitting_state()\n\r");
 	channel->process_timer_15_expiry = NULL;
@@ -46,6 +46,8 @@ void set_modbus_transmitting_state(struct modbus_channel *channel)
 	channel->modbus_tx_finished = tx_finished;
 	channel->process_rx_character = NULL;
 	channel->process_response_timeout = NULL;
+	
+	return(SUCCESS);
 }
 
 void tx_finished(void *data)

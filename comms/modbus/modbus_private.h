@@ -73,13 +73,13 @@ struct modbus_channel {
 };
 
 
-extern void set_modbus_starting_state(struct modbus_channel *channel);
-extern void set_modbus_idle_state(struct modbus_channel *channel);
-extern void set_modbus_transmitting_state(struct modbus_channel *channel);
-extern void set_modbus_awaiting_response_state(struct modbus_channel *channel);
+extern result_t set_modbus_starting_state(struct modbus_channel *channel);
+extern result_t set_modbus_idle_state(struct modbus_channel *channel);
+extern result_t set_modbus_transmitting_state(struct modbus_channel *channel);
+extern result_t set_modbus_awaiting_response_state(struct modbus_channel *channel);
 
-extern void start_15_timer(struct modbus_channel *channel);
-extern void start_35_timer(struct modbus_channel *channel);
+extern result_t start_15_timer(struct modbus_channel *channel);
+extern result_t start_35_timer(struct modbus_channel *channel);
 
 extern void modbus_tx_data(struct modbus_channel *channel, uint8_t *data, uint16_t len);
 extern result_t modbus_attempt_transmission(struct uart_data *uart, uint8_t *data, uint16_t len, modbus_response_function fn, void *callback_data);

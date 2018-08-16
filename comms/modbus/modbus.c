@@ -112,8 +112,8 @@ static uint8_t crc_low_bytes[] = {
 	0x82, 0x42, 0x43, 0x83, 0x41, 0x81, 0x80, 0x40
 } ;
 
-void start_15_timer(struct modbus_channel *channel);
-void start_35_timer(struct modbus_channel *channel);
+result_t start_15_timer(struct modbus_channel *channel);
+result_t start_35_timer(struct modbus_channel *channel);
 
 static void resp_timeout_expiry_fn(timer_id timer, union sigval data);
 
@@ -164,37 +164,37 @@ result_t modbus_init(void)
 	return(0);
 }
 
-static void hw_35_expiry_function(void *chan)
+void hw_35_expiry_function(timer_id timer, union sigval data)
 {
-	LOG_D("%s\n\r", __func__);
-#if 0
-	struct modbus_channel *modbus_chan = (struct modbus_channel *)chan;
+	struct modbus_channel *chan = (struct modbus_channel *)data.sival_ptr;
 
-	if (modbus_chan->process_timer_35_expiry) {
-		modbus_chan->process_timer_35_expiry(modbus_chan);
-//		jobs_add(modbus_chan->process_timer_35_expiry, (void *)modbus_chan);
+	LOG_D("%s\n\r", __func__);
+
+	chan->hw_35_timer = BAD_TIMER_ID;
+
+	if (chan->process_timer_35_expiry) {
+		chan->process_timer_35_expiry(chan);
+//		jobs_add(chan->process_timer_35_expiry, (void *)chan);
 	} else {
 		LOG_E("T35 in unknown state\n\r");
 	}
-#endif
 }
 
-static void hw_15_expiry_function(void *chan)
+void hw_15_expiry_function(timer_id timer, union sigval data)
 {
-//	struct modbus_channel *modbus_chan = (struct modbus_channel *)chan;
+	struct modbus_channel *chan = (struct modbus_channel *)data.sival_ptr;
 
 	LOG_D("%s\n\r", __func__);
-#if 0
-	if (modbus_chan->process_timer_15_expiry) {
-		modbus_chan->process_timer_15_expiry(modbus_chan);
-//		jobs_add(modbus_chan->process_timer_15_expiry, (void *)modbus_chan);
+
+	if (chan->process_timer_15_expiry) {
+		chan->process_timer_15_expiry(chan);
+//		jobs_add(chan->process_timer_15_expiry, (void *)chan);
 	} else {
 		LOG_E("T15 in unknown state\n\r");
 	}
-#endif
 }
 
-void start_15_timer(struct modbus_channel *channel)
+result_t start_15_timer(struct modbus_channel *channel)
 {
 //	struct period period;
 	
@@ -204,18 +204,31 @@ void start_15_timer(struct modbus_channel *channel)
 	period.duration = ((1000000 * 17)/channel->uart->baud);
 //	channel->hw_15_timer = hw_timer_start(uSeconds, ((1000000 * 17)/channel->uart->baud), FALSE, hw_15_expiry_function, (void *)channel);
 #endif
+	return(SUCCESS);
 }
 
-void start_35_timer(struct modbus_channel *channel)
+result_t start_35_timer(struct modbus_channel *channel)
 {
+	result_t          rc;
+	struct timer_req  request;
+	
 	LOG_D("%s\n\r", __func__);
-#if 0
-	if(channel->hw_35_timer != BAD_TIMER) {
+
+	if(channel->hw_35_timer != BAD_TIMER_ID) {
 		hw_timer_cancel(channel->hw_35_timer);
 	}
 
-	channel->hw_35_timer = hw_timer_start(uSeconds, ((1000000 * 39)/channel->uart->baud), FALSE, hw_35_expiry_function, (void *)channel);
-#endif
+	request.period.units    = uSeconds;
+	request.period.duration = ((1000000 * 39)/channel->uart->baud);
+	request.type            = single_shot;
+	request.exp_fn          = hw_35_expiry_function;
+	request.data.sival_ptr  = (void *)channel;
+	
+	rc = hw_timer_start(&request);
+	RC_CHECK
+		
+	channel->hw_35_timer = rc;
+	return(SUCCESS);
 }
 
 static void modbus_process_rx_character(uint8_t channel_id, uint8_t ch)
@@ -265,12 +278,29 @@ void modbus_tx_finished(void *data)
 //result_t modbus_reserve(struct uart_data *uart, void (*idle_callback)(void *), modbus_response_function unsolicited, void *data)
 result_t modbus_reserve(struct uart_data *uart)
 {
-	LOG_D("%s\n\r", __func__);
-#if 0
 	result_t rc;
+	uint8_t  i;
 	void (*app_tx_finished)(void *data);
 
-        LOG_D("modbus_reserve()\n\r");
+	LOG_D("%s\n\r", __func__);
+	
+	if(!uart) {
+		return(ERR_BAD_INPUT_PARAMETER);
+	}
+	
+	/*
+	 * Find a free modbus channel
+	 */
+	for (i = 0; i < NUM_MODBUS_CHANNELS; i++) {
+		if(!channels[i].uart) {
+			break;
+		}
+	}
+	
+	if (i >= NUM_MODBUS_CHANNELS) {
+		return(ERR_NO_RESOURCES);
+	}
+
 	app_tx_finished = uart->tx_finished;
 
 	uart->process_rx_char = modbus_process_rx_character;
@@ -283,23 +313,22 @@ result_t modbus_reserve(struct uart_data *uart)
 	RC_CHECK
 
 	LOG_D("modbus_reserve took UART %d\n\r", uart->uindex);
-	channels[uart->uindex].process_unsolicited_msg = unsolicited;
-	channels[uart->uindex].idle_callback = idle_callback;
-	channels[uart->uindex].idle_callback_data = data;
-	channels[uart->uindex].app_tx_finished = app_tx_finished;
-	channels[uart->uindex].uart = uart;
-	channels[uart->uindex].response_callback_data = NULL;
+//	channels[uart->uindex].process_unsolicited_msg = unsolicited;
+//	channels[uart->uindex].idle_callback = idle_callback;
+//	channels[uart->uindex].idle_callback_data = data;
+	channels[i].app_tx_finished = app_tx_finished;
+	channels[i].uart            = uart;
+	channels[i].hw_15_timer     = BAD_TIMER_ID;
+	channels[i].hw_35_timer     = BAD_TIMER_ID;
+	channels[i].resp_timer      = BAD_TIMER_ID;
 
-	/*
-	 * Initialise the 35 timer so it can't be cancelled by mistake
-	 */
-//	channels[uart->uart].hw_35_timer = BAD_TIMER;
+//	channels[uart->uindex].response_callback_data = NULL;
 
 	/*
 	 * Set the starting state.
 	 */
-	set_modbus_starting_state(&channels[uart->uindex]);
-#endif
+	set_modbus_starting_state(&channels[i]);
+
 	return(0);
 }
 
