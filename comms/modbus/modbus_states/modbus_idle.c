@@ -43,19 +43,20 @@ static void transmit(struct modbus_channel *channel, uint8_t *data, uint16_t len
 static void process_timer_35_expiry(void *data);
 static void process_rx_character(struct modbus_channel *channel, uint8_t ch);
 
-result_t set_modbus_idle_state(struct modbus_channel *channel)
+result_t set_modbus_idle_state(struct modbus_channel *chan)
 {
-	LOG_D("set_modbus_idle_state(channel %d)\n\r", channel->uart->uindex);
-	channel->process_timer_15_expiry = NULL;
-	channel->process_timer_35_expiry = process_timer_35_expiry;
-	channel->transmit = transmit;
-        channel->rx_write_index = 0;
-	channel->modbus_tx_finished = NULL;
-	channel->process_rx_character = process_rx_character;
-	channel->process_response_timeout = NULL;
+	LOG_D("set_modbus_idle_state(channel %d)\n\r", chan->uart->uindex);
 
-	if(channel->idle_callback) {
-		channel->idle_callback(channel->idle_callback_data);
+	chan->process_timer_15_expiry  = NULL;
+	chan->process_timer_35_expiry  = process_timer_35_expiry;
+	chan->transmit                 = transmit;
+        chan->rx_write_index           = 0;
+	chan->modbus_tx_finished       = NULL;
+	chan->process_rx_character     = process_rx_character;
+	chan->process_response_timeout = NULL;
+
+	if(chan->idle_callback) {
+		chan->idle_callback(chan->modbus_index);
 	}
 	
 	return(SUCCESS);

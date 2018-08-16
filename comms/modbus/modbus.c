@@ -155,10 +155,11 @@ result_t modbus_init(void)
 	LOG_D("%s\n\r", __func__);
 
 	for (i = 0; i < NUM_MODBUS_CHANNELS; i++) {
-		channels[i].uart        = NULL;
-		channels[i].hw_15_timer = BAD_TIMER_ID;
-		channels[i].hw_35_timer = BAD_TIMER_ID;
-		channels[i].resp_timer  = BAD_TIMER_ID;
+		channels[i].uart         = NULL;
+		channels[i].hw_15_timer  = BAD_TIMER_ID;
+		channels[i].hw_35_timer  = BAD_TIMER_ID;
+		channels[i].resp_timer   = BAD_TIMER_ID;
+		channels[i].modbus_index = i;
 	}
 
 	return(0);
@@ -275,8 +276,11 @@ void modbus_tx_finished(void *data)
 #endif
 }
 
+/*
+ * Returns the index of the reserved modbus channel on success
+ */
 //result_t modbus_reserve(struct uart_data *uart, void (*idle_callback)(void *), modbus_response_function unsolicited, void *data)
-result_t modbus_reserve(struct uart_data *uart)
+result_t modbus_reserve(struct uart_data *uart, void (*idle_callback)(modbus_id))
 {
 	result_t rc;
 	uint8_t  i;
@@ -314,7 +318,7 @@ result_t modbus_reserve(struct uart_data *uart)
 
 	LOG_D("modbus_reserve took UART %d\n\r", uart->uindex);
 //	channels[uart->uindex].process_unsolicited_msg = unsolicited;
-//	channels[uart->uindex].idle_callback = idle_callback;
+	channels[i].idle_callback   = idle_callback;
 //	channels[uart->uindex].idle_callback_data = data;
 	channels[i].app_tx_finished = app_tx_finished;
 	channels[i].uart            = uart;
@@ -329,7 +333,7 @@ result_t modbus_reserve(struct uart_data *uart)
 	 */
 	set_modbus_starting_state(&channels[i]);
 
-	return(0);
+	return(i);
 }
 
 result_t modbus_release(struct uart_data *uart)

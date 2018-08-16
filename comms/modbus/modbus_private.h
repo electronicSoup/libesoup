@@ -30,6 +30,7 @@
 #ifdef SYS_MODBUS
 
 #include "libesoup/comms/uart/uart.h"
+#include "libesoup/comms/modbus/modbus.h"
 #include "libesoup/timers/sw_timers.h"
 
 typedef void (*modbus_response_function)(uint8_t *msg, uint8_t size, void *data);
@@ -39,6 +40,7 @@ struct modbus_channel {
     timer_id             hw_15_timer;
     timer_id             hw_35_timer;
     timer_id             resp_timer;
+    modbus_id            modbus_index;
     uint8_t              address;
     uint8_t              rx_buffer[SYS_MODBUS_RX_BUFFER_SIZE];
     uint16_t             rx_write_index;
@@ -53,8 +55,8 @@ struct modbus_channel {
      */
     modbus_response_function process_response;
     void                    *response_callback_data;
-    void                   (*idle_callback)(void*);
-    void                    *idle_callback_data;
+    void                   (*idle_callback)(modbus_id);
+//    void                    *idle_callback_data;
     
     /*
      * The higher layer application code will pass in a tx_finished() in the 
