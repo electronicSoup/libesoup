@@ -40,6 +40,7 @@ struct modbus_channel {
     timer_id             hw_15_timer;
     timer_id             hw_35_timer;
     timer_id             resp_timer;
+    timer_id             turnaround_timer;
     modbus_id            modbus_index;
     uint8_t              address;
     uint8_t              rx_buffer[SYS_MODBUS_RX_BUFFER_SIZE];
@@ -79,6 +80,7 @@ extern result_t set_modbus_starting_state(struct modbus_channel *channel);
 extern result_t set_modbus_idle_state(struct modbus_channel *channel);
 extern result_t set_modbus_transmitting_state(struct modbus_channel *channel);
 extern result_t set_modbus_awaiting_response_state(struct modbus_channel *channel);
+extern result_t set_modbus_turnaround_state(struct modbus_channel *chan);
 
 extern result_t start_15_timer(struct modbus_channel *channel);
 extern result_t start_35_timer(struct modbus_channel *channel);

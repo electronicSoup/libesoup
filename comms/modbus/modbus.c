@@ -318,13 +318,14 @@ result_t modbus_reserve(struct uart_data *uart, void (*idle_callback)(modbus_id,
 
 	LOG_D("modbus_reserve took UART %d\n\r", uart->uindex);
 //	channels[uart->uindex].process_unsolicited_msg = unsolicited;
-	channels[i].idle_callback   = idle_callback;
 //	channels[uart->uindex].idle_callback_data = data;
-	channels[i].app_tx_finished = app_tx_finished;
-	channels[i].uart            = uart;
-	channels[i].hw_15_timer     = BAD_TIMER_ID;
-	channels[i].hw_35_timer     = BAD_TIMER_ID;
-	channels[i].resp_timer      = BAD_TIMER_ID;
+	channels[i].idle_callback    = idle_callback;
+	channels[i].app_tx_finished  = app_tx_finished;
+	channels[i].uart             = uart;
+	channels[i].hw_15_timer      = BAD_TIMER_ID;
+	channels[i].hw_35_timer      = BAD_TIMER_ID;
+	channels[i].resp_timer       = BAD_TIMER_ID;
+	channels[i].turnaround_timer = BAD_TIMER_ID;
 
 //	channels[uart->uindex].response_callback_data = NULL;
 
@@ -457,6 +458,7 @@ result_t cancel_response_timer(struct modbus_channel *channel)
 static void resp_timeout_expiry_fn(timer_id timer, union sigval data)
 {
 	LOG_D("%s\n\r", __func__);
+	channels[data.sival_int].resp_timer = BAD_TIMER_ID;
 
 	if (channels[data.sival_int].process_response_timeout) {
 		channels[data.sival_int].process_response_timeout(&channels[data.sival_int]);

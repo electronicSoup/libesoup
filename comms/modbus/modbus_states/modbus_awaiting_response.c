@@ -43,11 +43,11 @@ result_t set_modbus_awaiting_response_state(struct modbus_channel *chan)
 	LOG_D("set_modbus_awaiting_response_state()\n\r");
 	chan->rx_write_index = 0;
 
-	chan->process_timer_15_expiry = NULL;
-	chan->process_timer_35_expiry = process_timer_35_expiry;
-	chan->transmit = NULL;
-	chan->modbus_tx_finished = NULL;
-	chan->process_rx_character = process_rx_character;
+	chan->process_timer_15_expiry  = NULL;
+	chan->process_timer_35_expiry  = process_timer_35_expiry;
+	chan->transmit                 = NULL;
+	chan->modbus_tx_finished       = NULL;
+	chan->process_rx_character     = process_rx_character;
 	chan->process_response_timeout = process_response_timeout;
 
 	if(chan->idle_callback) {
@@ -111,12 +111,12 @@ void process_rx_character(struct modbus_channel *channel, uint8_t ch)
 	}
 }
 
-static void process_response_timeout(struct modbus_channel *channel)
+static void process_response_timeout(struct modbus_channel *chan)
 {
 	LOG_D("process_response_timeout()\n\r");
-	set_modbus_starting_state(channel);
-	if(channel->process_response) {
-		channel->process_response(NULL, 0, channel->response_callback_data);
+	set_modbus_starting_state(chan);
+	if(chan->process_response) {
+		chan->process_response(NULL, 0, chan->response_callback_data);
 	} else {
 		LOG_E("No response Function\n\r");
 	}
