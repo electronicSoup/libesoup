@@ -372,6 +372,12 @@ result_t modbus_release(struct uart_data *uart)
 	return(0);
 }
 
+result_t modbus_read_config(modbus_id chan, uint8_t modbus_address, uint16_t mem_address, void (*callback)(void))
+{
+	LOG_D("%s\n\r", __func__);
+	return(SUCCESS);
+}
+
 void modbus_tx_data(struct modbus_channel *channel, uint8_t *data, uint16_t len)
 {
 	LOG_D("%s\n\r", __func__);
