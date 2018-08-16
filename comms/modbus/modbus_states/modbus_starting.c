@@ -39,7 +39,7 @@ static void process_timer_35_expiry(void *);
 
 void set_modbus_starting_state(struct modbus_channel *channel)
 {
-	LOG_I("set_modbus_starting_state(channel %d)\n\r", channel->uart->uart);
+	LOG_I("set_modbus_starting_state(channel %d)\n\r", channel->uart->uindex);
 	channel->process_timer_15_expiry = NULL;
 	channel->process_timer_35_expiry = process_timer_35_expiry;
 	channel->transmit = NULL;
@@ -55,7 +55,7 @@ static void process_timer_35_expiry(void *data)
         struct modbus_channel *channel = (struct modbus_channel *)data;
         
         if(channel->uart) {
-                LOG_D("process_timer_35_expiry(channel %d)\n\r", channel->uart->uart);
+                LOG_D("process_timer_35_expiry(channel %d)\n\r", channel->uart->uindex);
                 set_modbus_idle_state(channel);
         } else {
                 LOG_D("process_timer_35_expiry() No Uart\n\r");

@@ -85,6 +85,10 @@ extern result_t pwm_init(void);
 #include "libesoup/gpio/change_notification.h"
 #endif // SYS_CHANGE_NOTIFICATION
 
+#ifdef SYS_MODBUS
+extern result_t modbus_init(void);
+#endif
+
 /*
  * The Instruction Clock Frequency being used by the system.
  * 
@@ -172,6 +176,11 @@ result_t libesoup_init(void)
 
 #ifdef SYS_PWM
 	rc =  pwm_init();
+#endif
+
+#ifdef SYS_MODBUS
+	rc = modbus_init();
+	RC_CHECK
 #endif
 	CLEAR_WDT
 	return(board_init());

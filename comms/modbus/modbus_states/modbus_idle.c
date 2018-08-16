@@ -45,7 +45,7 @@ static void process_rx_character(struct modbus_channel *channel, uint8_t ch);
 
 void set_modbus_idle_state(struct modbus_channel *channel)
 {
-	LOG_D("set_modbus_idle_state(channel %d)\n\r", channel->uart->uart);
+	LOG_D("set_modbus_idle_state(channel %d)\n\r", channel->uart->uindex);
 	channel->process_timer_15_expiry = NULL;
 	channel->process_timer_35_expiry = process_timer_35_expiry;
 	channel->transmit = transmit;
@@ -61,7 +61,7 @@ void set_modbus_idle_state(struct modbus_channel *channel)
 
 void transmit(struct modbus_channel *channel, uint8_t *data, uint16_t len, modbus_response_function fn, void *callback_data)
 {
-	LOG_D("Modbus Idle state Transmit(%d)\n\r", channel->uart->uart);
+	LOG_D("Modbus Idle state Transmit(%d)\n\r", channel->uart->uindex);
 	/*
 	 * The response timeout timer is started when the transmission is
 	 * completed in the modbus_awaiting_response state.
@@ -82,7 +82,7 @@ void process_timer_35_expiry(void *data)
 	uint16_t loop;
 #endif
 
-	LOG_D("process_timer_35_expiry() channel %d msg length %d\n\r", channel->uart->uart, channel->rx_write_index);
+	LOG_D("process_timer_35_expiry() channel %d msg length %d\n\r", channel->uart->uindex, channel->rx_write_index);
         start_index = 0;
         if (crc_check(&(channel->rx_buffer[start_index]), channel->rx_write_index - start_index)) {
                 /*

@@ -5,6 +5,8 @@
  * @author John Whitmore
  *
  * Function prototypes for using modbus Comms.
+ * 
+ * http://www.modbus.org/docs/Modbus_over_serial_line_V1_02.pdf
  *
  * Copyright 2017-2018 electronicSoup Limited
  *
@@ -35,12 +37,12 @@ typedef void (*modbus_response_function)(uint8_t *msg, uint8_t size, void *data)
 
 struct modbus_channel {
     struct uart_data    *uart;
-    uint8_t                       hw_15_timer;
-    uint8_t                       hw_35_timer;
-    timer_id                      resp_timer;
-    uint8_t                       address;
-    uint8_t                       rx_buffer[SYS_MODBUS_RX_BUFFER_SIZE];
-    uint16_t                      rx_write_index;
+    timer_id             hw_15_timer;
+    timer_id             hw_35_timer;
+    timer_id             resp_timer;
+    uint8_t              address;
+    uint8_t              rx_buffer[SYS_MODBUS_RX_BUFFER_SIZE];
+    uint16_t             rx_write_index;
 
     /*
      * function to process unsolicited messages

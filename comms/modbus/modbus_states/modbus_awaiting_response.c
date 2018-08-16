@@ -69,7 +69,7 @@ void process_timer_35_expiry(void *data)
 	LOG_D("process_timer_35_expiry()\n\r");
 	set_modbus_idle_state(channel);
 
-	LOG_D("process_timer_35_expiry() channel %d msg length %d\n\r", channel->uart->uart, channel->rx_write_index);
+	LOG_D("process_timer_35_expiry() channel %d msg length %d\n\r", channel->uart->uindex, channel->rx_write_index);
 	if(channel->rx_write_index > 2) {
 		if(channel->rx_buffer[0] == channel->address) {
 			start_index = 0;

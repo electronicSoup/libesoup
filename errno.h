@@ -31,9 +31,9 @@
  * Define a macro to halt the uC on error
  */
 #if defined(SYS_SERIAL_LOGGING)
-#define RC_CHECK_STOP(x)        if (rc <0) while (1);
+#define RC_CHECK_STOP           if (rc <0){ LOG_E("%s-%d\n\r", __FILE__, __LINE__); while (1); }
 #else
-#define RC_CHECK_STOP(x)        if (rc <0){ LOG_E(x); while (1); }
+#define RC_CHECK_STOP           if (rc <0) while (1);
 #endif // SYS_SERIAL_LOGGING
 
 #if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL >= LOG_ERROR))
@@ -42,6 +42,8 @@
 #if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL >= LOG_ERROR))
 #define RC_CHECK_PRINT_VOID(x) if(rc < 0) { LOG_E("x"); return; }
 #endif
+
+#define SUCCESS                    0
 
 #define ERR_GENERAL_ERROR          1    /* Unspecified error occured in libesoup API Function execution.*/
 #define ERR_BAD_INPUT_PARAMETER    2    /* Bad parameter passed to libesoup API funtion. */

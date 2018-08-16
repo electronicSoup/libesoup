@@ -76,7 +76,7 @@ typedef int16_t timer_id;
  * @ingroup Timers
  * @brief Dummy timer identifier for a non existent timer.
  */
-#define BAD_TIMER_ID   0xff
+#define BAD_TIMER_ID   0x7fff
 //#define TIMER_INIT(timer) timer = BAD_TIMER_ID;
 
 #if defined(XC16) || defined(__XC8)
