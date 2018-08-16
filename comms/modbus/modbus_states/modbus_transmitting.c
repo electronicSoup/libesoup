@@ -37,25 +37,29 @@ extern struct modbus_state modbus_state;
 
 static void tx_finished(void *);
 
-result_t set_modbus_transmitting_state(struct modbus_channel *channel)
+result_t set_modbus_transmitting_state(struct modbus_channel *chan)
 {
 	LOG_D("set_modbus_transmitting_state()\n\r");
-	channel->process_timer_15_expiry = NULL;
-	channel->process_timer_35_expiry = NULL;
-	channel->transmit = NULL;
-	channel->modbus_tx_finished = tx_finished;
-	channel->process_rx_character = NULL;
-	channel->process_response_timeout = NULL;
+	chan->process_timer_15_expiry = NULL;
+	chan->process_timer_35_expiry = NULL;
+	chan->transmit = NULL;
+	chan->modbus_tx_finished = tx_finished;
+	chan->process_rx_character = NULL;
+	chan->process_response_timeout = NULL;
+	
+	if(chan->idle_callback) {
+		chan->idle_callback(chan->modbus_index, FALSE);
+	}
 	
 	return(SUCCESS);
 }
 
 void tx_finished(void *data)
 {
-        struct modbus_channel *channel = (struct modbus_channel *)data;
+        struct modbus_channel *chan = (struct modbus_channel *)data;
 
         LOG_D("tx_finished()\n\r");
-	set_modbus_awaiting_response_state(channel);
+	set_modbus_awaiting_response_state(chan);
 }
 
 #endif // SYS_MODBUS

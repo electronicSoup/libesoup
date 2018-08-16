@@ -38,19 +38,23 @@ static void process_timer_35_expiry(void *);
 static void process_rx_character(struct modbus_channel *channel, uint8_t ch);
 static void process_response_timeout(struct modbus_channel *channel);
 
-result_t set_modbus_awaiting_response_state(struct modbus_channel *channel)
+result_t set_modbus_awaiting_response_state(struct modbus_channel *chan)
 {
 	LOG_D("set_modbus_awaiting_response_state()\n\r");
-	channel->rx_write_index = 0;
+	chan->rx_write_index = 0;
 
-	channel->process_timer_15_expiry = NULL;
-	channel->process_timer_35_expiry = process_timer_35_expiry;
-	channel->transmit = NULL;
-	channel->modbus_tx_finished = NULL;
-	channel->process_rx_character = process_rx_character;
-	channel->process_response_timeout = process_response_timeout;
+	chan->process_timer_15_expiry = NULL;
+	chan->process_timer_35_expiry = process_timer_35_expiry;
+	chan->transmit = NULL;
+	chan->modbus_tx_finished = NULL;
+	chan->process_rx_character = process_rx_character;
+	chan->process_response_timeout = process_response_timeout;
 
-	return(start_response_timer(channel));
+	if(chan->idle_callback) {
+		chan->idle_callback(chan->modbus_index, FALSE);
+	}
+
+	return(start_response_timer(chan));
 }
 
 void process_timer_35_expiry(void *data)

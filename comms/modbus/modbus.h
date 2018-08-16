@@ -43,7 +43,7 @@ typedef int16_t modbus_id;
  * Idle callback function is called so that the application knows when the
  * Modbus channel is free to transmit.
  */
-extern result_t modbus_reserve(struct uart_data *uart, void (*idle_callback)(modbus_id));
+extern result_t modbus_reserve(struct uart_data *uart, void (*idle_callback)(modbus_id, uint8_t));
 extern result_t modbus_release(struct uart_data *uart);
 
 #endif //  SYS_MODBUS

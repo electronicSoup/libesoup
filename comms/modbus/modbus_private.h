@@ -55,7 +55,7 @@ struct modbus_channel {
      */
     modbus_response_function process_response;
     void                    *response_callback_data;
-    void                   (*idle_callback)(modbus_id);
+    void                   (*idle_callback)(modbus_id, uint8_t);
 //    void                    *idle_callback_data;
     
     /*

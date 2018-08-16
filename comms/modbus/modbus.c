@@ -280,7 +280,7 @@ void modbus_tx_finished(void *data)
  * Returns the index of the reserved modbus channel on success
  */
 //result_t modbus_reserve(struct uart_data *uart, void (*idle_callback)(void *), modbus_response_function unsolicited, void *data)
-result_t modbus_reserve(struct uart_data *uart, void (*idle_callback)(modbus_id))
+result_t modbus_reserve(struct uart_data *uart, void (*idle_callback)(modbus_id, uint8_t))
 {
 	result_t rc;
 	uint8_t  i;

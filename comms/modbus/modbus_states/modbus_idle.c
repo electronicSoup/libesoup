@@ -56,7 +56,7 @@ result_t set_modbus_idle_state(struct modbus_channel *chan)
 	chan->process_response_timeout = NULL;
 
 	if(chan->idle_callback) {
-		chan->idle_callback(chan->modbus_index);
+		chan->idle_callback(chan->modbus_index, TRUE);
 	}
 	
 	return(SUCCESS);
