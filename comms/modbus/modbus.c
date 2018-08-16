@@ -415,34 +415,34 @@ result_t modbus_attempt_transmission(struct uart_data *uart, uint8_t *data, uint
 	return(0);
 }
 
-result_t start_response_timer(struct modbus_channel *channel)
+result_t start_response_timer(struct modbus_channel *chan)
 {
+	result_t          rc;
+	struct timer_req  request;
+
 	LOG_D("%s\n\r", __func__);
-#if 0
-	uint16_t          ticks;
-	union sigval timer_data;
 
-	/*
-	 * Clear the RX ISR conditions and enable ISR
-	 */
-//	while (UxSTAbits.URXDA) {
-//		ch = UxRXREG;
-//	}
-//	RX_ISR_ENABLE = 1;
-
-	timer_data.sival_int = channel->uart->uart;
-
-	if (channel->address == 0) {
-		ticks = SYS_MODBUS_RESPONSE_BROADCAST_TIMEOUT;
-	} else {
-		ticks = SYS_MODBUS_RESPONSE_TIMEOUT;
+	if (chan->resp_timer != BAD_TIMER_ID) {
+		return(-ERR_GENERAL_ERROR);
 	}
-	return(sw_timer_start(ticks,
-		           resp_timeout_expiry_fn,
-		           timer_data,
-		           &channel->resp_timer));
-#endif
-	return(0);
+	request.period.units    = SYS_MODBUS_RESPONSE_TIMEOUT_UNITS;
+	request.period.duration = SYS_MODBUS_RESPONSE_TIMEOUT_DURATION;
+	request.type            = single_shot;
+	request.exp_fn          = resp_timeout_expiry_fn;
+	request.data.sival_int  = chan->modbus_index;
+
+//	if (channel->address == 0) {
+//		ticks = SYS_MODBUS_RESPONSE_BROADCAST_TIMEOUT;
+//	} else {
+//		ticks = SYS_MODBUS_RESPONSE_TIMEOUT;
+//	}
+
+	rc = sw_timer_start(&request);
+	RC_CHECK
+
+	chan->resp_timer = rc;
+
+	return(SUCCESS);
 }
 
 result_t cancel_response_timer(struct modbus_channel *channel)
@@ -457,13 +457,12 @@ result_t cancel_response_timer(struct modbus_channel *channel)
 static void resp_timeout_expiry_fn(timer_id timer, union sigval data)
 {
 	LOG_D("%s\n\r", __func__);
-#if 0
+
 	if (channels[data.sival_int].process_response_timeout) {
 		channels[data.sival_int].process_response_timeout(&channels[data.sival_int]);
 	} else {
 		LOG_E("Response Timout in unknown state\n\r");
 	}
-#endif
 }
 
 #endif // SYS_MODBUS

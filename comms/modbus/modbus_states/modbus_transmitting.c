@@ -40,11 +40,11 @@ static void tx_finished(void *);
 result_t set_modbus_transmitting_state(struct modbus_channel *chan)
 {
 	LOG_D("set_modbus_transmitting_state()\n\r");
-	chan->process_timer_15_expiry = NULL;
-	chan->process_timer_35_expiry = NULL;
-	chan->transmit = NULL;
-	chan->modbus_tx_finished = tx_finished;
-	chan->process_rx_character = NULL;
+	chan->process_timer_15_expiry  = NULL;
+	chan->process_timer_35_expiry  = NULL;
+	chan->transmit                 = NULL;
+	chan->modbus_tx_finished       = tx_finished;
+	chan->process_rx_character     = NULL;
 	chan->process_response_timeout = NULL;
 	
 	if(chan->idle_callback) {
