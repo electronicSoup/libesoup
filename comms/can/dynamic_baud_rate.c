@@ -126,7 +126,7 @@ static void exp_resend_baudrate_change(timer_id exp_timer __attribute__((unused)
 
 		msg.data[0] = status_baud;
 
-		if(can_l2_tx_frame(&msg) != ERR_CAN_NO_FREE_BUFFER) {
+		if(can_l2_tx_frame(&msg) != -ERR_CAN_NO_FREE_BUFFER) {
 			timer_request.units = mSeconds;
 			timer_request.duration = 500;
 			timer_request.type = single_shot;

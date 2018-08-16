@@ -465,7 +465,7 @@ result_t dcncp_register_this_node_net_logger(log_level_t level)
 	LOG_D("register_this_node_net_logger()\n\r");
 
 	if(!iso15765_initialised())
-		return(ERR_NOT_READY);
+		return(-ERR_NOT_READY);
 
 	local_iso15765_logger_frame.can_id = CAN_DCNCP_RegisterNetLogger;
 	local_iso15765_logger_frame.can_dlc = 2;

@@ -172,7 +172,7 @@ static result_t scan_enable_ch(enum adc_pin adc_pin)
 		AD1CSSLbits.CSS15 = 1;
 		break;
 	default:
-		return(ERR_GENERAL_ERROR);
+		return(-ERR_GENERAL_ERROR);
 	}
 
 	return(0);
@@ -233,7 +233,7 @@ static result_t scan_disable_ch(enum adc_pin adc_pin)
 		AD1CSSLbits.CSS15 = 0;
 		break;
 	default:
-		return(ERR_GENERAL_ERROR);
+		return(-ERR_GENERAL_ERROR);
 	}
 
 	return(0);
@@ -348,14 +348,14 @@ result_t adc_monitor_channel(enum gpio_pin gpio_pin, uint16_t delta, adc_handler
 	adc_pin = get_adc_from_gpio(gpio_pin);
 	
 	if(adc_pin == INVALID_ADC_PIN) {
-		return(ERR_BAD_INPUT_PARAMETER);
+		return(-ERR_BAD_INPUT_PARAMETER);
 	}
 
 	/*
 	 * Test if the ADC Channel already in use
 	 */
 	if (channels[adc_pin].pin != INVALID_GPIO_PIN) {
-		return(ERR_BUSY);
+		return(-ERR_BUSY);
 	}
 
 	/*
@@ -378,7 +378,7 @@ result_t adc_monitor_channel(enum gpio_pin gpio_pin, uint16_t delta, adc_handler
 
 	adc_active_count++;
 	if (adc_active_count > (SYS_ADC_MAX_CH + 1))
-		return(ERR_GENERAL_ERROR);
+		return(-ERR_GENERAL_ERROR);
 
 	AD1CON2bits.SMPI = adc_active_count - 1;
 	

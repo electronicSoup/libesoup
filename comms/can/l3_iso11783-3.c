@@ -378,7 +378,7 @@ result_t iso11783_dispatch_reg_handler(iso11783_target_t *target)
 	}
 
 	LOG_E("ISO11783 Dispatch full!\n\r");
-	return(ERR_NO_RESOURCES);
+	return(-ERR_NO_RESOURCES);
 }
 
 result_t iso11783_dispatch_unreg_handler(uint8_t id)
@@ -389,7 +389,7 @@ result_t iso11783_dispatch_unreg_handler(uint8_t id)
 		registered[id].handler = (iso11783_msg_handler_t)NULL;
 		return(SUCCESS);
 	}
-	return(ERR_BAD_INPUT_PARAMETER);
+	return(-ERR_BAD_INPUT_PARAMETER);
 }
 
 result_t iso11783_dispatch_set_unhandled_handler(iso11783_msg_handler_t handler)

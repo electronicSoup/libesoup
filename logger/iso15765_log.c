@@ -93,10 +93,10 @@ result_t iso15765_logger_register_as_logger(void (*handler)(uint8_t, log_level_t
 			return (dcncp_register_this_node_net_logger(level));
 		} else {
 			LOG_E("No handler given\n\r");
-			return(ERR_BAD_INPUT_PARAMETER);
+			return(-ERR_BAD_INPUT_PARAMETER);
 		}
 	} else {
-		return(ERR_NOT_READY);
+		return(-ERR_NOT_READY);
 	}
 }
 #endif // SYS_CAN_ISO15765_LOGGER

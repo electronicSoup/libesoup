@@ -1,5 +1,4 @@
 /**
- *
  * @file libesoup/comms/can/l2_lx_can.c
  *
  * @author John Whitmore
@@ -97,7 +96,7 @@ result_t can_l2_init(can_baud_rate_t arg_baud_rate,
  
 	if((can_socket = socket(PF_CAN, SOCK_RAW, CAN_RAW)) < 0) {
 		LOG_E("Error while opening socket\n\r");
-		return(ERR_GENERAL_ERROR);
+		return(-ERR_GENERAL_ERROR);
 	}
 
 	strcpy(ifr.ifr_name, ifname);
@@ -108,13 +107,13 @@ result_t can_l2_init(can_baud_rate_t arg_baud_rate,
  
 	if(bind(can_socket, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
 		LOG_D("Error binding socket\n\r");
-		return(ERR_GENERAL_ERROR);
+		return(-ERR_GENERAL_ERROR);
 	}
 
 	result = pthread_create(&thread_id, NULL, create_read_thread, (void *)can_socket);
 	if(result != 0){
 		LOG_E("Failed to create read thead\n\r");
-		return(ERR_GENERAL_ERROR);
+		return(-ERR_GENERAL_ERROR);
 	}
 	LOG_D("New Thread created\n\r");
 
@@ -136,7 +135,7 @@ result_t can_l2_tx_frame(can_frame *frame)
 
 	LOG_D("L2_CanTxMessage(0x%x)\n\r", frame->can_id);
 	if(can_status.bit_field.l2_status != L2_Connected)
-		return(ERR_CAN_NOT_CONNECTED);
+		return(-ERR_CAN_NOT_CONNECTED);
 
 	nbytes = write(can_socket, frame, sizeof(can_frame));
  
@@ -148,7 +147,7 @@ result_t can_l2_tx_frame(can_frame *frame)
 
 	if(nbytes != sizeof(can_frame)){
 		LOG_E("Wrote %d bytes! Expected %d\n\r", nbytes, sizeof(can_frame));
-		return(ERR_GENERAL_ERROR);
+		return(-ERR_GENERAL_ERROR);
 	}
 	
 	return (SUCCESS);
@@ -181,7 +180,7 @@ result_t can_l2_dispatch_reg_handler(can_l2_target_t *target)
 		}
 	}
 
-	return(ERR_NO_RESOURCES);
+	return(-ERR_NO_RESOURCES);
 }
 
 void *create_read_thread(void *arg)

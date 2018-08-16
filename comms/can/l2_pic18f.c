@@ -181,7 +181,7 @@ result_t can_l2_init(can_baud_rate_t arg_baud_rate, status_handler_t arg_status_
 		LOG_D("L2_CanInit() Baud Rate %s\n\r", can_baud_rate_strings[arg_baud_rate]);
 	} else {
 		LOG_E("L2_CanInit() ToDo!!! No Baud Rate Specified\n\r");
-		return (ERR_BAD_INPUT_PARAMETER);
+		return (-ERR_BAD_INPUT_PARAMETER);
 	}
 
 	status_handler = arg_status_handler;
@@ -495,7 +495,7 @@ result_t can_l2_tx_frame(can_frame *frame)
 	LOG_D("L2_CanTxMessage(0x%lx)\n\r", frame->can_id);
 	if (frame->can_dlc > 8) {
 		LOG_E("Bad Data length %d\n\r", frame->can_dlc);
-		return (ERR_BAD_INPUT_PARAMETER);
+		return (-ERR_BAD_INPUT_PARAMETER);
 	}
 	
 	/*
@@ -509,7 +509,7 @@ result_t can_l2_tx_frame(can_frame *frame)
 
 	if (buffer == TX_BUFFERS) {
 		LOG_E("No empty TX buffer\n\r");
-		return (ERR_NO_RESOURCES); //No Empty buffers
+		return (-ERR_NO_RESOURCES); //No Empty buffers
 	}
 
 	/*

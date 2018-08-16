@@ -289,7 +289,7 @@ result_t modbus_reserve(struct uart_data *uart, void (*idle_callback)(modbus_id,
 	LOG_D("%s\n\r", __func__);
 	
 	if(!uart) {
-		return(ERR_BAD_INPUT_PARAMETER);
+		return(-ERR_BAD_INPUT_PARAMETER);
 	}
 	
 	/*
@@ -302,7 +302,7 @@ result_t modbus_reserve(struct uart_data *uart, void (*idle_callback)(modbus_id,
 	}
 	
 	if (i >= SYS_MODBUS_NUM_CHANNELS) {
-		return(ERR_NO_RESOURCES);
+		return(-ERR_NO_RESOURCES);
 	}
 
 	app_tx_finished = uart->tx_finished;
@@ -409,7 +409,7 @@ result_t modbus_attempt_transmission(struct uart_data *uart, uint8_t *data, uint
 		return(0);
 	} else {
 		LOG_E("Tx Attempted in unknown state\n\r");
-		return(ERR_NOT_READY);
+		return(-ERR_NOT_READY);
 	}
 #endif
 	return(0);

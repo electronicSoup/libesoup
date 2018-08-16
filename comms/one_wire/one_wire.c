@@ -162,7 +162,7 @@ result_t one_wire_reserve(enum gpio_pin pin)
 	 */
 	for(loop = 0; loop < SYS_ONE_WIRE_MAX_BUS; loop++) {
 		if(bus[loop].active && (bus[loop].pin == pin)) {
-			return(ERR_BAD_INPUT_PARAMETER);
+			return(-ERR_BAD_INPUT_PARAMETER);
 		}
 	}
 
@@ -193,7 +193,7 @@ result_t one_wire_reserve(enum gpio_pin pin)
 
 		return(chan);
 	}
-	return(ERR_NO_RESOURCES);
+	return(-ERR_NO_RESOURCES);
 }
 
 void set_bit(struct one_wire_device *dev, uint8_t bit)
