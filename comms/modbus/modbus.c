@@ -35,7 +35,7 @@ static const char *TAG = "MODBUS";
 #include "libesoup/comms/uart/uart.h"
 #include "libesoup/jobs/jobs.h"
 
-struct modbus_channel channels[NUM_MODBUS_CHANNELS];
+struct modbus_channel channels[SYS_MODBUS_NUM_CHANNELS];
 
 /*
  *  Table of CRC values for high?order byte
@@ -154,7 +154,7 @@ result_t modbus_init(void)
 	
 	LOG_D("%s\n\r", __func__);
 
-	for (i = 0; i < NUM_MODBUS_CHANNELS; i++) {
+	for (i = 0; i < SYS_MODBUS_NUM_CHANNELS; i++) {
 		channels[i].uart         = NULL;
 		channels[i].hw_15_timer  = BAD_TIMER_ID;
 		channels[i].hw_35_timer  = BAD_TIMER_ID;
@@ -295,13 +295,13 @@ result_t modbus_reserve(struct uart_data *uart, void (*idle_callback)(modbus_id,
 	/*
 	 * Find a free modbus channel
 	 */
-	for (i = 0; i < NUM_MODBUS_CHANNELS; i++) {
+	for (i = 0; i < SYS_MODBUS_NUM_CHANNELS; i++) {
 		if(!channels[i].uart) {
 			break;
 		}
 	}
 	
-	if (i >= NUM_MODBUS_CHANNELS) {
+	if (i >= SYS_MODBUS_NUM_CHANNELS) {
 		return(ERR_NO_RESOURCES);
 	}
 
