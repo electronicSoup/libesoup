@@ -31,7 +31,7 @@ static const char *TAG = "MODBUS";
 
 #include "libesoup/timers/hw_timers.h"
 #include "libesoup/timers/sw_timers.h"
-#include "libesoup/comms/modbus/modbus.h"
+#include "libesoup/comms/modbus/modbus_private.h"
 #include "libesoup/comms/uart/uart.h"
 #include "libesoup/jobs/jobs.h"
 
@@ -155,8 +155,10 @@ result_t modbus_init(void)
 	LOG_D("%s\n\r", __func__);
 
 	for (i = 0; i < NUM_MODBUS_CHANNELS; i++) {
-		channels[i].uart = NULL;
+		channels[i].uart        = NULL;
 		channels[i].hw_15_timer = BAD_TIMER_ID;
+		channels[i].hw_35_timer = BAD_TIMER_ID;
+		channels[i].resp_timer  = BAD_TIMER_ID;
 	}
 
 	return(0);
@@ -260,7 +262,8 @@ void modbus_tx_finished(void *data)
 #endif
 }
 
-result_t modbus_reserve(struct uart_data *uart, void (*idle_callback)(void *), modbus_response_function unsolicited, void *data)
+//result_t modbus_reserve(struct uart_data *uart, void (*idle_callback)(void *), modbus_response_function unsolicited, void *data)
+result_t modbus_reserve(struct uart_data *uart)
 {
 	LOG_D("%s\n\r", __func__);
 #if 0

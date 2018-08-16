@@ -31,7 +31,7 @@ static const char *TAG = "MODBUS_IDLE";
 #include "libesoup/logger/serial_log.h"
 #endif
 
-#include "libesoup/comms/modbus/modbus.h"
+#include "libesoup/comms/modbus/modbus_private.h"
 
 /*
  * Check required libesoup_config.h defines are found

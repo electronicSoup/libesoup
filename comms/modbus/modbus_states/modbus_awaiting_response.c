@@ -30,7 +30,7 @@ static const char *TAG = "MODBUS_AWAITING_RESPONSE";
 #include "libesoup/logger/serial_log.h"
 #endif
 
-#include "libesoup/comms/modbus/modbus.h"
+#include "libesoup/comms/modbus/modbus_private.h"
 
 extern struct modbus_state modbus_state;
 
