@@ -70,7 +70,7 @@ struct uart_data {
 	uint8_t            uindex;                               ///< Uart identifier (populated by libesoup code)
 	uint16_t           uart_mode;                            ///< Mode bits for the connection (calculated with call to uart_calculate_mode() passing required serial parameters)
 	uint32_t           baud;                                 ///< Baud rate for the connection
-	void               (*tx_finished)(void *);               ///< Callback - transmission has finished (Possibly NULL)
+	void               (*tx_finished)(struct uart_data *);               ///< Callback - transmission has finished (Possibly NULL)
 	void               (*process_rx_char)(uint8_t uart_id, uint8_t ch);          ///< Callback - Character received (If an rx_pin is defined function to process received characters)
 };
 

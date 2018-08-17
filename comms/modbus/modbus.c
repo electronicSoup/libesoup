@@ -151,8 +151,6 @@ uint8_t crc_check(uint8_t *data, uint16_t len)
 result_t modbus_init(void)
 {
 	uint8_t i;
-	
-	LOG_D("%s\n\r", __func__);
 
 	for (i = 0; i < SYS_MODBUS_NUM_CHANNELS; i++) {
 		channels[i].uart         = NULL;
@@ -245,35 +243,40 @@ static void modbus_process_rx_character(uint8_t channel_id, uint8_t ch)
 /*
  * Called from UART ISR
  */
-void modbus_tx_finished(void *data)
+void modbus_tx_finished(struct uart_data *uart)
 {
-	LOG_D("%s\n\r", __func__);
-#if 0
-        struct uart_data *uart = (struct uart_data *)data;
-
-	if(!channels[uart->uindex].uart) {
-		LOG_E("Error tx_finished channel %d no UART struct\n\r", uart->uindex);
-		return;
-	}
+	uint8_t           i;
 
 	/*
-	 * Call the Modbus state machine's Tx finished function
+	 * Find what modbus channel is using this uart
 	 */
-	if(channels[uart->uindex].modbus_tx_finished) {
-		channels[uart->uindex].process_tx_finished(&channels[uart->uindex]);
-//		jobs_add(channels[uart->uart].modbus_tx_finished, (void *)&channels[uart->uart]);
-	} else {
-		LOG_E("Error processing tx_finished\n\r");
+
+	for (i = 0; i < SYS_MODBUS_NUM_CHANNELS; i++) {
+		if (channels[i].uart == uart) {
+			break;
+		}
+	}
+	
+	if (i >= SYS_MODBUS_NUM_CHANNELS) {
+		LOG_E("Unknown uart!\n\r");
+		return;
 	}
 
 	/*
 	 * Call the higher Application tx_finished function
 	 */
-	if(channels[uart->uindex].app_tx_finished) {
-		channels[uart->uindex].app_tx_finished(channel_id);
-//		jobs_add(channels[uart->uart].app_tx_finished, (void *)uart);
+	if(channels[i].app_tx_finished) {
+		channels[i].app_tx_finished(uart);
 	}
-#endif
+
+	/*
+	 * Call the Modbus state machine's Tx finished function
+	 */
+	if(channels[i].modbus_tx_finished) {
+		channels[i].modbus_tx_finished(&channels[i]);
+	} else {
+		LOG_E("Error processing tx_finished\n\r");
+	}
 }
 
 /*
@@ -284,10 +287,8 @@ result_t modbus_reserve(struct uart_data *uart, void (*idle_callback)(modbus_id,
 {
 	result_t rc;
 	uint8_t  i;
-	void (*app_tx_finished)(void *data);
+	void (*app_tx_finished)(struct uart_data *);
 
-	LOG_D("%s\n\r", __func__);
-	
 	if(!uart) {
 		return(-ERR_BAD_INPUT_PARAMETER);
 	}
@@ -316,7 +317,7 @@ result_t modbus_reserve(struct uart_data *uart, void (*idle_callback)(modbus_id,
 	rc = uart_reserve(uart);
 	RC_CHECK
 
-	LOG_D("modbus_reserve took UART %d\n\r", uart->uindex);
+	LOG_D("UART %d\n\r", uart->uindex);
 //	channels[uart->uindex].process_unsolicited_msg = unsolicited;
 //	channels[uart->uindex].idle_callback_data = data;
 	channels[i].idle_callback    = idle_callback;

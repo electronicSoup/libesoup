@@ -67,8 +67,8 @@ struct modbus_channel {
          * uart structure. Modbus code will hijack that function and call it from 
          * the modbus finished function.
          */
-        void                   (*app_tx_finished)(void *);
-        void                   (*modbus_tx_finished)(void *);
+        void                   (*app_tx_finished)(struct uart_data *);
+        void                   (*modbus_tx_finished)(struct modbus_channel *chan);
         void                   (*process_timer_15_expiry)(void *);
         void                   (*process_timer_35_expiry)(void *);
         result_t               (*transmit)(struct modbus_channel *chan, uint8_t *data, uint16_t len, modbus_response_function callback);

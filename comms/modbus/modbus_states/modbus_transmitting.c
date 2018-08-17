@@ -33,7 +33,7 @@ static const char *TAG = "MODBUS_Tx";
 
 #include "libesoup/comms/modbus/modbus_private.h"
 
-static void tx_finished(void *);
+static void tx_finished(struct modbus_channel *chan);
 
 result_t set_modbus_transmitting_state(struct modbus_channel *chan)
 {
@@ -53,10 +53,8 @@ result_t set_modbus_transmitting_state(struct modbus_channel *chan)
 	return(SUCCESS);
 }
 
-void tx_finished(void *data)
+void tx_finished(struct modbus_channel *chan)
 {
-        struct modbus_channel *chan = (struct modbus_channel *)data;
-
         LOG_D("tx_finished()\n\r");
 	set_modbus_awaiting_response_state(chan);
 }
