@@ -48,7 +48,7 @@ typedef void (*modbus_response_function)(modbus_id chan, uint8_t *msg, uint8_t s
 extern result_t modbus_reserve(struct uart_data *uart, void (*idle_callback)(modbus_id, uint8_t));
 extern result_t modbus_release(struct uart_data *uart);
 
-extern result_t modbus_read_config(modbus_id chan, uint8_t modbus_address, uint16_t mem_address, void (*callback)(void));
+extern result_t modbus_read_config(modbus_id chan, uint8_t modbus_address, uint16_t mem_address, modbus_response_function callback);
 
 #endif //  SYS_MODBUS
 #endif //  _MODBUS_H

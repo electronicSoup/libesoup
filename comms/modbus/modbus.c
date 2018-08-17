@@ -372,7 +372,7 @@ result_t modbus_release(struct uart_data *uart)
 	return(0);
 }
 
-result_t modbus_read_config(modbus_id chan, uint8_t modbus_address, uint16_t mem_address, void (*callback)(void))
+result_t modbus_read_config(modbus_id chan, uint8_t modbus_address, uint16_t mem_address, modbus_response_function callback)
 {
 	LOG_D("%s\n\r", __func__);
 
@@ -466,10 +466,7 @@ result_t start_response_timer(struct modbus_channel *chan)
 result_t cancel_response_timer(struct modbus_channel *channel)
 {
 	LOG_D("%s\n\r", __func__);
-#if 0
 	return(sw_timer_cancel(&(channel->resp_timer)));
-#endif
-	return(0);
 }
 
 static void resp_timeout_expiry_fn(timer_id timer, union sigval data)
