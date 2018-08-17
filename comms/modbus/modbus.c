@@ -375,6 +375,17 @@ result_t modbus_release(struct uart_data *uart)
 result_t modbus_read_config(modbus_id chan, uint8_t modbus_address, uint16_t mem_address, void (*callback)(void))
 {
 	LOG_D("%s\n\r", __func__);
+
+	if (chan >= SYS_MODBUS_NUM_CHANNELS || !channels[chan].uart || !callback) {
+		return(-ERR_BAD_INPUT_PARAMETER);
+	}
+	if (!channels[chan].transmit) {
+		return(-ERR_BUSY);
+	}
+	if (modbus_address == 0 || modbus_address > 247) {
+		return(-ERR_ADDRESS_RANGE);
+	}
+
 	return(SUCCESS);
 }
 
