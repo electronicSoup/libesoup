@@ -419,21 +419,6 @@ result_t modbus_tx_data(struct modbus_channel *channel, uint8_t *data, uint16_t 
 	return(uart_tx_buffer(channel->uart, buffer, loop));
 }
 
-result_t modbus_attempt_transmission(struct uart_data *uart, uint8_t *data, uint16_t len, modbus_response_function fn, void *callback_data)
-{
-	LOG_D("%s\n\r", __func__);
-#if 0
-	if (channels[uart->uart].transmit) {
-		channels[uart->uart].transmit(&channels[uart->uart], data, len, fn, callback_data);
-		return(0);
-	} else {
-		LOG_E("Tx Attempted in unknown state\n\r");
-		return(-ERR_NOT_READY);
-	}
-#endif
-	return(0);
-}
-
 result_t start_response_timer(struct modbus_channel *chan)
 {
 	result_t          rc;

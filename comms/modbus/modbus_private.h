@@ -87,7 +87,6 @@ extern result_t start_15_timer(struct modbus_channel *channel);
 extern result_t start_35_timer(struct modbus_channel *channel);
 
 extern result_t modbus_tx_data(struct modbus_channel *channel, uint8_t *data, uint16_t len);
-extern result_t modbus_attempt_transmission(struct uart_data *uart, uint8_t *data, uint16_t len, modbus_response_function fn, void *callback_data);
 
 extern uint16_t crc_calculate(uint8_t *data, uint16_t len);
 extern uint8_t crc_check(uint8_t *data, uint16_t len);
