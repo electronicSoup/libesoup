@@ -33,8 +33,8 @@ static const char *TAG = "MODBUS_AWAITING_RESPONSE";
 #include "libesoup/comms/modbus/modbus_private.h"
 
 static void process_timer_35_expiry(void *);
-static void process_rx_character(struct modbus_channel *channel, uint8_t ch);
-static void process_response_timeout(struct modbus_channel *channel);
+static void process_rx_character(struct modbus_channel *chan, uint8_t ch);
+static void process_response_timeout(struct modbus_channel *chan);
 
 result_t set_modbus_awaiting_response_state(struct modbus_channel *chan)
 {
@@ -57,54 +57,54 @@ result_t set_modbus_awaiting_response_state(struct modbus_channel *chan)
 
 void process_timer_35_expiry(void *data)
 {
-        struct modbus_channel *channel = (struct modbus_channel *)data;
+        struct modbus_channel *chan = (struct modbus_channel *)data;
         
 	uint8_t  start_index;
 //	uint16_t loop;
 
 	LOG_D("process_timer_35_expiry()\n\r");
-	set_modbus_idle_state(channel);
+	set_modbus_idle_state(chan);
 
-	LOG_D("process_timer_35_expiry() channel %d msg length %d\n\r", channel->uart->uindex, channel->rx_write_index);
-	if(channel->rx_write_index > 2) {
-		if(channel->rx_buffer[0] == channel->address) {
+	LOG_D("process_timer_35_expiry() chan %d msg length %d\n\r", chan->uart->uindex, chan->rx_write_index);
+	if(chan->rx_write_index > 2) {
+		if(chan->rx_buffer[0] == chan->address) {
 			start_index = 0;
-		} else if (channel->rx_buffer[1] == channel->address) {
+		} else if (chan->rx_buffer[1] == chan->address) {
 			start_index = 1;
 		} else {
-			LOG_D("message from wrong address channel Address 0x%x\n\r", channel->address);
-			LOG_D("channel->rx_buffer[0] = 0x%x\n\r", channel->rx_buffer[0]);
-			LOG_D("channel->rx_buffer[1] = 0x%x\n\r", channel->rx_buffer[1]);
+			LOG_D("message from wrong address chan Address 0x%x\n\r", chan->address);
+			LOG_D("chan->rx_buffer[0] = 0x%x\n\r", chan->rx_buffer[0]);
+			LOG_D("chan->rx_buffer[1] = 0x%x\n\r", chan->rx_buffer[1]);
 			return;
 		}
 
-		if (crc_check(&(channel->rx_buffer[start_index]), channel->rx_write_index - start_index)) {
+		if (crc_check(&(chan->rx_buffer[start_index]), chan->rx_write_index - start_index)) {
 			/*
 			 * Response Good
 			 * Subtract 2 for the CRC
 			 */
-			channel->process_response(channel->modbus_index, &(channel->rx_buffer[start_index]), channel->rx_write_index - (start_index + 2), channel->response_callback_data);
+			chan->process_response(chan->modbus_index, &(chan->rx_buffer[start_index]), chan->rx_write_index - (start_index + 2), chan->response_callback_data);
 		} else {
 			LOG_D("Message bad!\n\r");
-			channel->process_response(channel->modbus_index, NULL, 0, channel->response_callback_data);
+			chan->process_response(chan->modbus_index, NULL, 0, chan->response_callback_data);
 		}
 	} else {
 		LOG_D("Message too short\n\r");
-		channel->process_response(channel->modbus_index, NULL, 0, channel->response_callback_data);
+		chan->process_response(chan->modbus_index, NULL, 0, chan->response_callback_data);
 	}
 }
 
-void process_rx_character(struct modbus_channel *channel, uint8_t ch)
+void process_rx_character(struct modbus_channel *chan, uint8_t ch)
 {
-	if ((channel->rx_write_index == 0) && (ch == 0x00)) {
+	if ((chan->rx_write_index == 0) && (ch == 0x00)) {
 		return;
 	}
-	cancel_response_timer(channel);
-	start_35_timer(channel);
+	cancel_response_timer(chan);
+	start_35_timer(chan);
 
-	channel->rx_buffer[channel->rx_write_index++] = ch;
+	chan->rx_buffer[chan->rx_write_index++] = ch;
 
-	if (channel->rx_write_index == SYS_MODBUS_RX_BUFFER_SIZE) {
+	if (chan->rx_write_index == SYS_MODBUS_RX_BUFFER_SIZE) {
 		LOG_E("UART 2 Overflow: Line too long\n\r");
 	}
 }
