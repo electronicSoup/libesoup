@@ -34,7 +34,6 @@ static const char *TAG = "MODBUS_TURNAROUND";
 #include "libesoup/comms/modbus/modbus_private.h"
 
 extern struct modbus_channel channels[SYS_MODBUS_NUM_CHANNELS];
-extern struct modbus_state modbus_state;
 
 static void turnaround_expiry_fn(timer_id timer, union sigval data)
 {
@@ -77,6 +76,7 @@ static result_t start_turnaround_timer(struct modbus_channel *chan)
 result_t set_modbus_turnaround_state(struct modbus_channel *chan)
 {
 	LOG_D("set_modbus_turnaround_state()\n\r");
+
 	chan->rx_write_index           = 0;
 	chan->process_timer_15_expiry  = NULL;
 	chan->process_timer_35_expiry  = NULL;

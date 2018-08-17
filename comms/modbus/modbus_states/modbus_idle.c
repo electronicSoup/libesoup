@@ -37,8 +37,6 @@ static const char *TAG = "MODBUS_IDLE";
  * Check required libesoup_config.h defines are found
  */
 
-extern struct modbus_state modbus_state;
-
 static void transmit(struct modbus_channel *channel, uint8_t *data, uint16_t len, modbus_response_function fn, void* callback_data);
 static void process_timer_35_expiry(void *data);
 static void process_rx_character(struct modbus_channel *channel, uint8_t ch);
@@ -95,7 +93,7 @@ void process_timer_35_expiry(void *data)
                  */
                 LOG_D("Message Good! Start at 0\n\r");
                 if(chan->process_unsolicited_msg) {
-                        chan->process_unsolicited_msg(&(chan->rx_buffer[start_index]), chan->rx_write_index - (start_index + 2), chan->response_callback_data);
+                        chan->process_unsolicited_msg(chan->modbus_index, &(chan->rx_buffer[start_index]), chan->rx_write_index - (start_index + 2), chan->response_callback_data);
                 }
                 chan->rx_write_index = 0;
                 return;
@@ -109,7 +107,7 @@ void process_timer_35_expiry(void *data)
                  */
                 LOG_D("Message Good! Start at 1\n\r");
                 if(chan->process_unsolicited_msg) {
-                        chan->process_unsolicited_msg(&(chan->rx_buffer[start_index]), chan->rx_write_index - (start_index + 2), chan->response_callback_data);
+                        chan->process_unsolicited_msg(chan->modbus_index, &(chan->rx_buffer[start_index]), chan->rx_write_index - (start_index + 2), chan->response_callback_data);
                 }
                 chan->rx_write_index = 0;
                 return;
@@ -122,7 +120,7 @@ void process_timer_35_expiry(void *data)
 	}
 #endif
         if(chan->process_unsolicited_msg) {
-                chan->process_unsolicited_msg(NULL, 0, chan->response_callback_data);
+                chan->process_unsolicited_msg(chan->modbus_index, NULL, 0, chan->response_callback_data);
         }
         chan->rx_write_index = 0;
 }

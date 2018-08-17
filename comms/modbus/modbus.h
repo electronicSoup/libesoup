@@ -39,6 +39,8 @@
 
 typedef int16_t modbus_id;
 
+typedef void (*modbus_response_function)(modbus_id chan, uint8_t *msg, uint8_t size, void *data);
+
 /*
  * Idle callback function is called so that the application knows when the
  * Modbus channel is free to transmit.

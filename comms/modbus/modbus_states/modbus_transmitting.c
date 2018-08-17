@@ -33,13 +33,12 @@ static const char *TAG = "MODBUS_Tx";
 
 #include "libesoup/comms/modbus/modbus_private.h"
 
-extern struct modbus_state modbus_state;
-
 static void tx_finished(void *);
 
 result_t set_modbus_transmitting_state(struct modbus_channel *chan)
 {
 	LOG_D("set_modbus_transmitting_state()\n\r");
+
 	chan->process_timer_15_expiry  = NULL;
 	chan->process_timer_35_expiry  = NULL;
 	chan->transmit                 = NULL;

@@ -33,48 +33,43 @@
 #include "libesoup/comms/modbus/modbus.h"
 #include "libesoup/timers/sw_timers.h"
 
-typedef void (*modbus_response_function)(uint8_t *msg, uint8_t size, void *data);
-
 struct modbus_channel {
-    struct uart_data    *uart;
-    timer_id             hw_15_timer;
-    timer_id             hw_35_timer;
-    timer_id             resp_timer;
-    timer_id             turnaround_timer;
-    modbus_id            modbus_index;
-    uint8_t              address;
-    uint8_t              rx_buffer[SYS_MODBUS_RX_BUFFER_SIZE];
-    uint16_t             rx_write_index;
+        struct uart_data    *uart;
+        timer_id             hw_15_timer;
+        timer_id             hw_35_timer;
+        timer_id             resp_timer;
+        timer_id             turnaround_timer;
+        modbus_id            modbus_index;
+        uint8_t              address;
+        uint8_t              rx_buffer[SYS_MODBUS_RX_BUFFER_SIZE];
+        uint16_t             rx_write_index;
 
-    /*
-     * function to process unsolicited messages
-     */
-    modbus_response_function process_unsolicited_msg;
+        /*
+         * function to process unsolicited messages
+         */
+        modbus_response_function process_unsolicited_msg;
 
-    /*
-     * function to process response to sent messages
-     */
-    modbus_response_function process_response;
-    void                    *response_callback_data;
-    void                   (*idle_callback)(modbus_id, uint8_t);
-//    void                    *idle_callback_data;
+        /*
+         * function to process response to sent messages
+         */
+        modbus_response_function process_response;
+        void                    *response_callback_data;
+        void                   (*idle_callback)(modbus_id, uint8_t);
     
-    /*
-     * The higher layer application code will pass in a tx_finished() in the 
-     * uart structure. Modbus code will hijack that function and call it from 
-     * the modbus finished function.
-     */
-    void                   (*app_tx_finished)(void *);
-    void                   (*modbus_tx_finished)(void *);
-    void                   (*process_timer_15_expiry)(void *);
-    void                   (*process_timer_35_expiry)(void *);
-    void                   (*transmit)(struct modbus_channel *channel, uint8_t *data, uint16_t len, modbus_response_function fn, void *callback_data);
-    void                   (*process_rx_character)(struct modbus_channel *channel, uint8_t ch);
-    void                   (*process_response_timeout)();
+        /*
+         * The higher layer application code will pass in a tx_finished() in the 
+         * uart structure. Modbus code will hijack that function and call it from 
+         * the modbus finished function.
+         */
+        void                   (*app_tx_finished)(void *);
+        void                   (*modbus_tx_finished)(void *);
+        void                   (*process_timer_15_expiry)(void *);
+        void                   (*process_timer_35_expiry)(void *);
+        void                   (*transmit)(struct modbus_channel *channel, uint8_t *data, uint16_t len, modbus_response_function fn, void *callback_data);
+        void                   (*process_rx_character)(struct modbus_channel *channel, uint8_t ch);
+        void                   (*process_response_timeout)();
 //    void (*resp_timeout_expiry_fn(timer_t timer_id, union sigval data);
-
 };
-
 
 extern result_t set_modbus_starting_state(struct modbus_channel *channel);
 extern result_t set_modbus_idle_state(struct modbus_channel *channel);
