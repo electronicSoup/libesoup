@@ -49,7 +49,10 @@ static const char *TAG = "UART";
 #include "libesoup/gpio/gpio.h"
 #include "libesoup/utils/rand.h"
 #include "libesoup/comms/uart/uart.h"
-
+#include "libesoup/timers/time.h"
+#ifdef SYS_UART_TEST_RESPONSE
+#include "libesoup/timers/sw_timers.h"
+#endif
 /*
  * Check required libesoup_config.h defines are found
  */
@@ -467,7 +470,7 @@ result_t uart_init(void)
 
 	for(uindex = UART_1; uindex < NUM_UARTS; uindex++) {
 		uarts[uindex].status = UART_FREE;
-		uarts[uindex].udata = NULL;
+		uarts[uindex].udata  = NULL;
 	}
         
         return(0);
@@ -600,29 +603,38 @@ result_t uart_release(struct uart_data *udata)
 	return(0);
 }
 
+#ifdef SYS_UART_TEST_RESPONSE
+void test_response(timer_id timer, union sigval data)
+{
+	LOG_D("%s\n\r", __func__);
+
+	uarts[data.sival_int].udata->process_rx_char(data.sival_int, 'A');
+}
+#endif
+
 result_t uart_tx_buffer(struct uart_data *udata, uint8_t *buffer, uint16_t len)
 {
 	uint8_t   uindex;
 	uint8_t  *ptr;
 	result_t  rc = 0;
         int16_t   count = 0;
+#ifdef SYS_UART_TEST_RESPONSE
+	struct timer_req  request;
+	
+	request.period.units    = mSeconds;
+	request.period.duration = 50;
+	request.type            = single_shot;
+	request.exp_fn          = test_response;
+	request.data.sival_int  = udata->uindex;
+#endif
 
 	uindex = udata->uindex;
 
- 	if(uindex >= NUM_UARTS)
+ 	if(  (uindex >= NUM_UARTS)
+	   ||(uarts[uindex].status != UART_RESERVED)
+	   ||(uarts[uindex].udata != udata)
+	   ||(udata->tx_pin == INVALID_GPIO_PIN)) {
  		return(-ERR_BAD_INPUT_PARAMETER);
- 
- 	if(uarts[uindex].status != UART_RESERVED)
- 		return(-ERR_BAD_INPUT_PARAMETER);
- 
- 	if(uarts[uindex].udata != udata) 
- 		return(-ERR_BAD_INPUT_PARAMETER);
- 
- 	if(udata->tx_pin == INVALID_GPIO_PIN)
- 		return(-ERR_BAD_INPUT_PARAMETER);
-
-	if(uarts[uindex].udata != udata) {
-		return(-ERR_BAD_INPUT_PARAMETER);
 	}
 
 	ptr = buffer;
@@ -632,6 +644,9 @@ result_t uart_tx_buffer(struct uart_data *udata, uint8_t *buffer, uint16_t len)
                 RC_CHECK
                 count++;
 	}
+#ifdef SYS_UART_TEST_RESPONSE
+	rc = sw_timer_start(&request);
+#endif
 	return(count);
 }
 
