@@ -374,6 +374,8 @@ result_t modbus_release(struct uart_data *uart)
 
 result_t modbus_read_config(modbus_id chan, uint8_t modbus_address, uint16_t mem_address, modbus_response_function callback)
 {
+	uint8_t   tx_buffer[4];
+	
 	LOG_D("%s\n\r", __func__);
 
 	if (chan >= SYS_MODBUS_NUM_CHANNELS || !channels[chan].uart || !callback) {
@@ -385,19 +387,23 @@ result_t modbus_read_config(modbus_id chan, uint8_t modbus_address, uint16_t mem
 	if (modbus_address == 0 || modbus_address > 247) {
 		return(-ERR_ADDRESS_RANGE);
 	}
-
-	return(SUCCESS);
+	
+	tx_buffer[0] = modbus_address;
+	tx_buffer[1] = MODBUS_READ_CONFIG;
+	tx_buffer[2] = (uint8_t)((mem_address >> 8) & 0xff);
+	tx_buffer[3] = (uint8_t)(mem_address & 0xff);
+	
+	return(channels[chan].transmit(&channels[chan], tx_buffer, 4, callback));
 }
 
-void modbus_tx_data(struct modbus_channel *channel, uint8_t *data, uint16_t len)
+result_t modbus_tx_data(struct modbus_channel *channel, uint8_t *data, uint16_t len)
 {
-	LOG_D("%s\n\r", __func__);
-#if 0
 	uint16_t      crc;
 	uint8_t      *ptr;
 	uint16_t      loop;
 	uint8_t       buffer[SYS_UART_TX_BUFFER_SIZE];
-	result_t rc;
+
+	LOG_D("%s\n\r", __func__);
 
 	ptr = data;
 
@@ -410,12 +416,7 @@ void modbus_tx_data(struct modbus_channel *channel, uint8_t *data, uint16_t len)
 	buffer[loop++] = (crc >> 8) & 0xff;
 	buffer[loop++] = crc & 0xff;
 
-	rc = uart_tx_buffer(channel->uart, buffer, loop);
-
-	if(rc != 0) {
-		LOG_E("Failed to transmit modbus data\n\r");
-	}
-#endif
+	return(uart_tx_buffer(channel->uart, buffer, loop));
 }
 
 result_t modbus_attempt_transmission(struct uart_data *uart, uint8_t *data, uint16_t len, modbus_response_function fn, void *callback_data)

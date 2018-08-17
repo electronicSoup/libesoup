@@ -33,6 +33,12 @@
 #include "libesoup/comms/modbus/modbus.h"
 #include "libesoup/timers/sw_timers.h"
 
+#define MODBUS_READ_CONFIG     0x03
+#define MODBUS_READ_DATA       0x04
+#define MODBUS_WRITE_CONFIG    0x06
+#define MODBUS_WRITE_MULTIPLE  0x10
+#define MODBUS_ID_REQUEST      0x11
+
 struct modbus_channel {
         struct uart_data    *uart;
         timer_id             hw_15_timer;
@@ -53,7 +59,7 @@ struct modbus_channel {
          * function to process response to sent messages
          */
         modbus_response_function process_response;
-        void                    *response_callback_data;
+//        void                    *response_callback_data;
         void                   (*idle_callback)(modbus_id, uint8_t);
     
         /*
@@ -65,7 +71,7 @@ struct modbus_channel {
         void                   (*modbus_tx_finished)(void *);
         void                   (*process_timer_15_expiry)(void *);
         void                   (*process_timer_35_expiry)(void *);
-        void                   (*transmit)(struct modbus_channel *channel, uint8_t *data, uint16_t len, modbus_response_function fn, void *callback_data);
+        result_t               (*transmit)(struct modbus_channel *chan, uint8_t *data, uint16_t len, modbus_response_function callback);
         void                   (*process_rx_character)(struct modbus_channel *channel, uint8_t ch);
         void                   (*process_response_timeout)();
 //    void (*resp_timeout_expiry_fn(timer_t timer_id, union sigval data);
@@ -80,7 +86,7 @@ extern result_t set_modbus_turnaround_state(struct modbus_channel *chan);
 extern result_t start_15_timer(struct modbus_channel *channel);
 extern result_t start_35_timer(struct modbus_channel *channel);
 
-extern void modbus_tx_data(struct modbus_channel *channel, uint8_t *data, uint16_t len);
+extern result_t modbus_tx_data(struct modbus_channel *channel, uint8_t *data, uint16_t len);
 extern result_t modbus_attempt_transmission(struct uart_data *uart, uint8_t *data, uint16_t len, modbus_response_function fn, void *callback_data);
 
 extern uint16_t crc_calculate(uint8_t *data, uint16_t len);

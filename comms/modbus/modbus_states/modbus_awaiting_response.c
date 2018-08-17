@@ -83,14 +83,14 @@ void process_timer_35_expiry(void *data)
 			 * Response Good
 			 * Subtract 2 for the CRC
 			 */
-			chan->process_response(chan->modbus_index, &(chan->rx_buffer[start_index]), chan->rx_write_index - (start_index + 2), chan->response_callback_data);
+			chan->process_response(chan->modbus_index, &(chan->rx_buffer[start_index]), chan->rx_write_index - (start_index + 2));
 		} else {
 			LOG_D("Message bad!\n\r");
-			chan->process_response(chan->modbus_index, NULL, 0, chan->response_callback_data);
+			chan->process_response(chan->modbus_index, NULL, 0);
 		}
 	} else {
 		LOG_D("Message too short\n\r");
-		chan->process_response(chan->modbus_index, NULL, 0, chan->response_callback_data);
+		chan->process_response(chan->modbus_index, NULL, 0);
 	}
 }
 
@@ -114,7 +114,7 @@ static void process_response_timeout(struct modbus_channel *chan)
 	LOG_D("process_response_timeout()\n\r");
 	set_modbus_starting_state(chan);
 	if(chan->process_response) {
-		chan->process_response(chan->modbus_index, NULL, 0, chan->response_callback_data);
+		chan->process_response(chan->modbus_index, NULL, 0);
 	} else {
 		LOG_E("No response Function\n\r");
 	}

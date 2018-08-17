@@ -31,15 +31,11 @@
 
 #include "libesoup/comms/uart/uart.h"
 
-#define MODBUS_READ_CONFIG     0x03
-#define MODBUS_READ_DATA       0x04
-#define MODBUS_WRITE_CONFIG    0x06
-#define MODBUS_WRITE_MULTIPLE  0x10
-#define MODBUS_ID_REQUEST      0x11
-
 typedef int16_t modbus_id;
 
-typedef void (*modbus_response_function)(modbus_id chan, uint8_t *msg, uint8_t size, void *data);
+/*
+ */
+typedef void (*modbus_response_function)(modbus_id chan, uint8_t *msg, uint8_t len);
 
 /*
  * Idle callback function is called so that the application knows when the

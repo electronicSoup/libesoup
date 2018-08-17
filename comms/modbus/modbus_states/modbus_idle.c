@@ -37,7 +37,7 @@ static const char *TAG = "MODBUS_IDLE";
  * Check required libesoup_config.h defines are found
  */
 
-static void transmit(struct modbus_channel *channel, uint8_t *data, uint16_t len, modbus_response_function fn, void* callback_data);
+static result_t transmit(struct modbus_channel *chan, uint8_t *data, uint16_t len, modbus_response_function callback);
 static void process_timer_35_expiry(void *data);
 static void process_rx_character(struct modbus_channel *channel, uint8_t ch);
 
@@ -60,19 +60,22 @@ result_t set_modbus_idle_state(struct modbus_channel *chan)
 	return(SUCCESS);
 }
 
-void transmit(struct modbus_channel *chan, uint8_t *data, uint16_t len, modbus_response_function fn, void *callback_data)
+result_t transmit(struct modbus_channel *chan, uint8_t *data, uint16_t len, modbus_response_function callback)
 {
 	LOG_D("Modbus Idle state Transmit(%d)\n\r", chan->modbus_index);
+	
 	/*
 	 * The response timeout timer is started when the transmission is
 	 * completed in the modbus_awaiting_response state.
 	 */
+	if (!callback || !data || len == 0) {
+		return(-ERR_BAD_INPUT_PARAMETER);
+	}
 	chan->address                = data[0];
-	chan->process_response       = fn;
-	chan->response_callback_data = callback_data;
+	chan->process_response       = callback;
 	
 	set_modbus_transmitting_state(chan);
-	modbus_tx_data(chan, data, len);
+	return(modbus_tx_data(chan, data, len));
 }
 
 void process_timer_35_expiry(void *data)
@@ -93,7 +96,7 @@ void process_timer_35_expiry(void *data)
                  */
                 LOG_D("Message Good! Start at 0\n\r");
                 if(chan->process_unsolicited_msg) {
-                        chan->process_unsolicited_msg(chan->modbus_index, &(chan->rx_buffer[start_index]), chan->rx_write_index - (start_index + 2), chan->response_callback_data);
+                        chan->process_unsolicited_msg(chan->modbus_index, &(chan->rx_buffer[start_index]), chan->rx_write_index - (start_index + 2));
                 }
                 chan->rx_write_index = 0;
                 return;
@@ -107,7 +110,7 @@ void process_timer_35_expiry(void *data)
                  */
                 LOG_D("Message Good! Start at 1\n\r");
                 if(chan->process_unsolicited_msg) {
-                        chan->process_unsolicited_msg(chan->modbus_index, &(chan->rx_buffer[start_index]), chan->rx_write_index - (start_index + 2), chan->response_callback_data);
+                        chan->process_unsolicited_msg(chan->modbus_index, &(chan->rx_buffer[start_index]), chan->rx_write_index - (start_index + 2));
                 }
                 chan->rx_write_index = 0;
                 return;
@@ -120,7 +123,7 @@ void process_timer_35_expiry(void *data)
 	}
 #endif
         if(chan->process_unsolicited_msg) {
-                chan->process_unsolicited_msg(chan->modbus_index, NULL, 0, chan->response_callback_data);
+                chan->process_unsolicited_msg(chan->modbus_index, NULL, 0);
         }
         chan->rx_write_index = 0;
 }
