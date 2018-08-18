@@ -69,8 +69,8 @@ struct modbus_channel {
          */
         void                   (*app_tx_finished)(struct uart_data *);
         void                   (*modbus_tx_finished)(struct modbus_channel *chan);
-        void                   (*process_timer_15_expiry)(void *);
-        void                   (*process_timer_35_expiry)(void *);
+        void                   (*process_timer_15_expiry)(struct modbus_channel *chan);
+        void                   (*process_timer_35_expiry)(struct modbus_channel *chan);
         result_t               (*transmit)(struct modbus_channel *chan, uint8_t *data, uint16_t len, modbus_response_function callback);
         void                   (*process_rx_character)(struct modbus_channel *channel, uint8_t ch);
         void                   (*process_response_timeout)();
@@ -90,10 +90,6 @@ extern result_t modbus_tx_data(struct modbus_channel *channel, uint8_t *data, ui
 
 extern uint16_t crc_calculate(uint8_t *data, uint16_t len);
 extern uint8_t crc_check(uint8_t *data, uint16_t len);
-
-
-extern result_t start_response_timer(struct modbus_channel *channel);
-extern result_t cancel_response_timer(struct modbus_channel *channel);
 
 #endif //  SYS_MODBUS
 #endif //  _MODBUS_PRIVATE_H

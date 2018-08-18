@@ -33,7 +33,15 @@ static const char *TAG = "MODBUS_STARTING";
 
 #include "libesoup/comms/modbus/modbus_private.h"
 
-static void process_timer_35_expiry(void *);
+static void process_timer_35_expiry(struct modbus_channel *chan)
+{
+        if(chan->uart) {
+//                LOG_D("process_timer_35_expiry(channel %d)\n\r", chan->uart->uindex);
+                set_modbus_idle_state(chan);
+        } else {
+                LOG_D("process_timer_35_expiry() No Uart\n\r");
+        }
+}
 
 result_t set_modbus_starting_state(struct modbus_channel *chan)
 {
@@ -50,18 +58,6 @@ result_t set_modbus_starting_state(struct modbus_channel *chan)
 		chan->idle_callback(chan->modbus_index, FALSE);
 	}
 	return(start_35_timer(chan));
-}
-
-static void process_timer_35_expiry(void *data)
-{
-        struct modbus_channel *chan = (struct modbus_channel *)data;
-        
-        if(chan->uart) {
-                LOG_D("process_timer_35_expiry(channel %d)\n\r", chan->uart->uindex);
-                set_modbus_idle_state(chan);
-        } else {
-                LOG_D("process_timer_35_expiry() No Uart\n\r");
-        }
 }
 
 #endif // SYS_MODBUS

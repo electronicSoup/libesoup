@@ -476,7 +476,7 @@ result_t uart_init(void)
         return(0);
 }
 
-#ifdef SYS_DEBUG_BUILD
+#ifdef SYS_TEST_BUILD
 result_t uart_tx_buffer_count(struct uart_data *udata)
 {
 	uint8_t  uindex;
@@ -494,7 +494,7 @@ result_t uart_tx_buffer_count(struct uart_data *udata)
         
 	return(uarts[uindex].tx_count);
 }
-#endif // SYS_DEBUG_BUILD
+#endif // SYS_TEST_BUILD
 
 /*
  * uart_reserve - Reserve a UART Channel for future use by the caller.
@@ -603,14 +603,32 @@ result_t uart_release(struct uart_data *udata)
 	return(0);
 }
 
-#ifdef SYS_UART_TEST_RESPONSE
-void test_response(timer_id timer, union sigval data)
+#ifdef SYS_TEST_BUILD
+result_t uart_test_rx_buffer(struct uart_data *udata, uint8_t *buffer, uint16_t len)
 {
-	LOG_D("%s\n\r", __func__);
+	uint8_t   uindex;
+	uint8_t  *ptr;
+        int16_t   count = 0;
 
-	uarts[data.sival_int].udata->process_rx_char(data.sival_int, 'A');
+	uindex = udata->uindex;
+
+ 	if(  (uindex >= NUM_UARTS)
+	   ||(uarts[uindex].status != UART_RESERVED)
+	   ||(uarts[uindex].udata != udata)
+	   ||(udata->rx_pin == INVALID_GPIO_PIN)) {
+ 		return(-ERR_BAD_INPUT_PARAMETER);
+	}
+
+	ptr = buffer;
+
+	while(len--) {
+		uarts[uindex].udata->process_rx_char(uindex, *ptr++);
+                count++;
+	}
+
+	return(count);
 }
-#endif
+#endif // SYS_TEST_BUILD
 
 result_t uart_tx_buffer(struct uart_data *udata, uint8_t *buffer, uint16_t len)
 {
@@ -618,15 +636,6 @@ result_t uart_tx_buffer(struct uart_data *udata, uint8_t *buffer, uint16_t len)
 	uint8_t  *ptr;
 	result_t  rc = 0;
         int16_t   count = 0;
-#ifdef SYS_UART_TEST_RESPONSE
-	struct timer_req  request;
-	
-	request.period.units    = mSeconds;
-	request.period.duration = 50;
-	request.type            = single_shot;
-	request.exp_fn          = test_response;
-	request.data.sival_int  = udata->uindex;
-#endif
 
 	uindex = udata->uindex;
 
@@ -644,9 +653,7 @@ result_t uart_tx_buffer(struct uart_data *udata, uint8_t *buffer, uint16_t len)
                 RC_CHECK
                 count++;
 	}
-#ifdef SYS_UART_TEST_RESPONSE
-	rc = sw_timer_start(&request);
-#endif
+
 	return(count);
 }
 

@@ -1,5 +1,4 @@
 /**
- *
  * @file libesoup/comms/modbus/modbus_states/modbus_idle.c
  *
  * @author John Whitmore
@@ -33,34 +32,7 @@ static const char *TAG = "MODBUS_IDLE";
 
 #include "libesoup/comms/modbus/modbus_private.h"
 
-/*
- * Check required libesoup_config.h defines are found
- */
-
-static result_t transmit(struct modbus_channel *chan, uint8_t *data, uint16_t len, modbus_response_function callback);
-static void process_timer_35_expiry(void *data);
-static void process_rx_character(struct modbus_channel *channel, uint8_t ch);
-
-result_t set_modbus_idle_state(struct modbus_channel *chan)
-{
-	LOG_D("set_modbus_idle_state(channel %d)\n\r", chan->modbus_index);
-
-	chan->process_timer_15_expiry  = NULL;
-	chan->process_timer_35_expiry  = process_timer_35_expiry;
-	chan->transmit                 = transmit;
-        chan->rx_write_index           = 0;
-	chan->modbus_tx_finished       = NULL;
-	chan->process_rx_character     = process_rx_character;
-	chan->process_response_timeout = NULL;
-
-	if(chan->idle_callback) {
-		chan->idle_callback(chan->modbus_index, TRUE);
-	}
-	
-	return(SUCCESS);
-}
-
-result_t transmit(struct modbus_channel *chan, uint8_t *data, uint16_t len, modbus_response_function callback)
+static result_t transmit(struct modbus_channel *chan, uint8_t *data, uint16_t len, modbus_response_function callback)
 {
 	LOG_D("Modbus Idle state Transmit(%d)\n\r", chan->modbus_index);
 	
@@ -78,10 +50,24 @@ result_t transmit(struct modbus_channel *chan, uint8_t *data, uint16_t len, modb
 	return(modbus_tx_data(chan, data, len));
 }
 
-void process_timer_35_expiry(void *data)
-{
-        struct modbus_channel *chan = (struct modbus_channel *)data;
 
+static void process_rx_character(struct modbus_channel *chan, uint8_t ch)
+{
+	if ((chan->rx_write_index == 0) && (ch == 0x00)) {
+		return;
+	}
+
+	start_35_timer(chan);
+
+	chan->rx_buffer[chan->rx_write_index++] = ch;
+
+	if (chan->rx_write_index == SYS_MODBUS_RX_BUFFER_SIZE) {
+		LOG_E("UART 2 Overflow: Line too long\n\r");
+	}
+}
+
+static void process_timer_35_expiry(struct modbus_channel *chan)
+{
 	uint8_t  start_index;
 #if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	uint16_t loop;
@@ -128,19 +114,23 @@ void process_timer_35_expiry(void *data)
         chan->rx_write_index = 0;
 }
 
-void process_rx_character(struct modbus_channel *chan, uint8_t ch)
+result_t set_modbus_idle_state(struct modbus_channel *chan)
 {
-	if ((chan->rx_write_index == 0) && (ch == 0x00)) {
-		return;
+//	LOG_D("set_modbus_idle_state(channel %d)\n\r", chan->modbus_index);
+
+	chan->process_timer_15_expiry  = NULL;
+	chan->process_timer_35_expiry  = process_timer_35_expiry;
+	chan->transmit                 = transmit;
+        chan->rx_write_index           = 0;
+	chan->modbus_tx_finished       = NULL;
+	chan->process_rx_character     = process_rx_character;
+	chan->process_response_timeout = NULL;
+
+	if(chan->idle_callback) {
+		chan->idle_callback(chan->modbus_index, TRUE);
 	}
-
-	start_35_timer(chan);
-
-	chan->rx_buffer[chan->rx_write_index++] = ch;
-
-	if (chan->rx_write_index == SYS_MODBUS_RX_BUFFER_SIZE) {
-		LOG_E("UART 2 Overflow: Line too long\n\r");
-	}
+	
+	return(SUCCESS);
 }
 
 #endif // SYS_MODBUS

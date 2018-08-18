@@ -115,8 +115,6 @@ static uint8_t crc_low_bytes[] = {
 result_t start_15_timer(struct modbus_channel *channel);
 result_t start_35_timer(struct modbus_channel *channel);
 
-static void resp_timeout_expiry_fn(timer_id timer, union sigval data);
-
 uint16_t crc_calculate(uint8_t *data, uint16_t len)
 {
 	uint8_t *ptr = data;
@@ -171,7 +169,6 @@ void hw_35_expiry_function(timer_id timer, union sigval data)
 
 	if (chan->process_timer_35_expiry) {
 		chan->process_timer_35_expiry(chan);
-//		jobs_add(chan->process_timer_35_expiry, (void *)chan);
 	} else {
 		LOG_E("T35 in unknown state\n\r");
 	}
@@ -217,8 +214,8 @@ result_t start_35_timer(struct modbus_channel *channel)
 	request.period.duration = ((1000000 * 39)/channel->uart->baud);
 	request.type            = single_shot;
 	request.exp_fn          = hw_35_expiry_function;
-	request.data.sival_ptr  = (void *)channel;
-	
+	request.data.sival_ptr  = channel;
+
 	rc = hw_timer_start(&request);
 	RC_CHECK
 		
@@ -226,14 +223,20 @@ result_t start_35_timer(struct modbus_channel *channel)
 	return(SUCCESS);
 }
 
-static void modbus_process_rx_character(uint8_t channel_id, uint8_t ch)
+static void modbus_process_rx_character(uint8_t uindex, uint8_t ch)
 {
-	LOG_D("%s\n\r", __func__);
-#if 0
-	if(channels[channel_id].process_rx_character) {
-		channels[channel_id].process_rx_character(&channels[channel_id], ch);
+	uint8_t i;
+
+	for (i = 0; i < SYS_MODBUS_NUM_CHANNELS; i++) {
+		if (channels[i].uart && channels[i].uart->uindex == uindex) {
+			if(channels[i].process_rx_character) {
+				channels[i].process_rx_character(&channels[i], ch);
+			}
+			return;
+		}
 	}
-#endif
+
+	LOG_E("State Error\n\r");
 }
 
 /*
@@ -392,7 +395,7 @@ result_t modbus_read_config(modbus_id chan, uint8_t modbus_address, uint16_t mem
 	return(channels[chan].transmit(&channels[chan], tx_buffer, 4, callback));
 }
 
-result_t modbus_tx_data(struct modbus_channel *channel, uint8_t *data, uint16_t len)
+result_t modbus_tx_data(struct modbus_channel *chan, uint8_t *data, uint16_t len)
 {
 	uint16_t      crc;
 	uint8_t      *ptr;
@@ -410,55 +413,7 @@ result_t modbus_tx_data(struct modbus_channel *channel, uint8_t *data, uint16_t 
 	buffer[loop++] = (crc >> 8) & 0xff;
 	buffer[loop++] = crc & 0xff;
 
-	return(uart_tx_buffer(channel->uart, buffer, loop));
-}
-
-result_t start_response_timer(struct modbus_channel *chan)
-{
-	result_t          rc;
-	struct timer_req  request;
-
-	LOG_D("%s\n\r", __func__);
-
-	if (chan->resp_timer != BAD_TIMER_ID) {
-		return(-ERR_GENERAL_ERROR);
-	}
-	request.period.units    = SYS_MODBUS_RESPONSE_TIMEOUT_UNITS;
-	request.period.duration = SYS_MODBUS_RESPONSE_TIMEOUT_DURATION;
-	request.type            = single_shot;
-	request.exp_fn          = resp_timeout_expiry_fn;
-	request.data.sival_int  = chan->modbus_index;
-
-//	if (channel->address == 0) {
-//		ticks = SYS_MODBUS_RESPONSE_BROADCAST_TIMEOUT;
-//	} else {
-//		ticks = SYS_MODBUS_RESPONSE_TIMEOUT;
-//	}
-
-	rc = sw_timer_start(&request);
-	RC_CHECK
-
-	chan->resp_timer = rc;
-
-	return(SUCCESS);
-}
-
-result_t cancel_response_timer(struct modbus_channel *channel)
-{
-	LOG_D("%s\n\r", __func__);
-	return(sw_timer_cancel(&(channel->resp_timer)));
-}
-
-static void resp_timeout_expiry_fn(timer_id timer, union sigval data)
-{
-	LOG_D("%s\n\r", __func__);
-	channels[data.sival_int].resp_timer = BAD_TIMER_ID;
-
-	if (channels[data.sival_int].process_response_timeout) {
-		channels[data.sival_int].process_response_timeout(&channels[data.sival_int]);
-	} else {
-		LOG_E("Response Timout in unknown state\n\r");
-	}
+	return(uart_tx_buffer(chan->uart, buffer, loop));
 }
 
 #endif // SYS_MODBUS
