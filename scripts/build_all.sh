@@ -85,6 +85,15 @@ make_PIC24FJ256GB106
 #make_PIC18F4585
 cd - &> /dev/null
 
+cd ../examples/projects/microchip/uart_rx.X
+echo "uart_rx dsPIC33EP256MU806"
+make_dsPIC33EP256MU806
+#echo "uart_tx PIC24FJ256GB106"
+#make_PIC24FJ256GB106
+#echo "uart_tx PIC18F4585"
+#make_PIC18F4585
+cd - &> /dev/null
+
 #
 # Build the Serial Logging projets
 #
@@ -95,6 +104,14 @@ echo "SerialLogging PIC24FJ256GB106"
 make_PIC24FJ256GB106
 #echo "SerialLogging PIC18F4585"
 #make_PIC18F4585
+cd - &> /dev/null
+
+#
+# Build the Change Notification projets
+#
+cd ../examples/projects/microchip/ChangeNotification.X
+echo "EEPROM dsPIC33EP256MU806"
+make_dsPIC33EP256MU806
 cd - &> /dev/null
 
 #

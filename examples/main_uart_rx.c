@@ -40,7 +40,7 @@ static const char *TAG = "MAIN";
 
 static struct uart_data   uart;
 
-void rx_char(uint8_t ch)
+void rx_char(uint8_t uart_id, uint8_t ch)
 {
 	LOG_D("char %c\n\r");
 }
@@ -48,6 +48,7 @@ void rx_char(uint8_t ch)
 int main(void)
 {
 	result_t           rc;
+	struct period      period;
 	uint8_t            buffer[] = "Hello World\n\r";
 
 	/*
@@ -103,7 +104,9 @@ int main(void)
 		return(rc);
 	}
 
-	rc = delay(Seconds, 10);
+	period.units    = Seconds;
+	period.duration = 10;
+	rc = delay(&period);
 	if(rc < 0) {
 		LATDbits.LATD0 = 1;
 		return(rc);

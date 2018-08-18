@@ -1,15 +1,35 @@
+/**
+ * libesoup/examples/modbus_main.c
+ *
+ * An example main.c file for the MODBUS
+ * 
+ * The code is used in the example MPLAB-X project:
+ * libesoup/examples/projects/microchip/BareBones.X
+ *
+ * Copyright 2018 electronicSoup Limited
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the version 2 of the GNU Lesser General Public License
+ * as published by the Free Software Foundation
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program; if not, see <http://www.gnu.org/licenses/>.
+ *
+ *******************************************************************************
+ *
+ */
 #include "libesoup_config.h"
 
-//#include <stdio.h>
-//#include <string.h>
-
+#define DEBUG_FILE
+static const char *TAG = "MAIN";
 #include "libesoup/logger/serial_log.h"
-//#include "es_lib/logger/serial_log.h"
-//#include "es_lib/timers/hw_timers.h"
-//#include "es_lib/timers/timers.h"
 #include "libesoup/comms/uart/uart.h"
-//#include "es_lib/modbus/modbus.h"
-//#include "es_lib/jobs/jobs.h"
+#include "libesoup/comms/modbus/modbus.h"
 
 /*
  * Global Data
@@ -42,7 +62,7 @@ int main(void)
 	rc = uart_calculate_mode(&uart.uart_mode, UART_8_DATABITS, UART_PARITY_NONE, UART_ONE_STOP_BIT, UART_IDLE_HIGH);
 	uart.tx_finished = NULL;
 
-        rc = modbus_reserve(&uart, NULL, modbus_rx_frame, NULL);
+        rc = modbus_master_reserve(&uart, NULL);
         if (rc != 0) {
                 LOG_E("Failed to reserve a Modbus Channel\n\r");
         }
@@ -56,12 +76,12 @@ int main(void)
 	}
 }
 
-void modbus_rx_frame(u8 *msg, u8 size, void *data)
+void modbus_rx_frame(uint8_t *msg, uint8_t size, void *data)
 {
-        char  ch[10];
-        char  string[100];
-        u8   *ptr;
-        u16   loop;
+        char      ch[10];
+        char      string[100];
+        uint8_t  *ptr;
+        uint16_t  loop;
 
         string[0] = '\0';
         ptr = msg;
