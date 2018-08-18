@@ -207,7 +207,7 @@ result_t start_35_timer(struct modbus_channel *channel)
 	struct timer_req  request;
 
 	if(channel->hw_35_timer != BAD_TIMER_ID) {
-		hw_timer_cancel(channel->hw_35_timer);
+		hw_timer_cancel(&channel->hw_35_timer);
 	}
 
 	request.period.units    = uSeconds;
@@ -281,8 +281,7 @@ void modbus_tx_finished(struct uart_data *uart)
 /*
  * Returns the index of the reserved modbus channel on success
  */
-//result_t modbus_reserve(struct uart_data *uart, void (*idle_callback)(void *), modbus_response_function unsolicited, void *data)
-result_t modbus_reserve(struct uart_data *uart, void (*idle_callback)(modbus_id, uint8_t))
+result_t modbus_master_reserve(struct uart_data *uart, void (*idle_callback)(modbus_id, uint8_t))
 {
 	result_t rc;
 	uint8_t  i;
@@ -316,8 +315,6 @@ result_t modbus_reserve(struct uart_data *uart, void (*idle_callback)(modbus_id,
 	rc = uart_reserve(uart);
 	RC_CHECK
 
-//	channels[uart->uindex].process_unsolicited_msg = unsolicited;
-//	channels[uart->uindex].idle_callback_data = data;
 	channels[i].idle_callback    = idle_callback;
 	channels[i].app_tx_finished  = app_tx_finished;
 	channels[i].uart             = uart;
@@ -325,8 +322,6 @@ result_t modbus_reserve(struct uart_data *uart, void (*idle_callback)(modbus_id,
 	channels[i].hw_35_timer      = BAD_TIMER_ID;
 	channels[i].resp_timer       = BAD_TIMER_ID;
 	channels[i].turnaround_timer = BAD_TIMER_ID;
-
-//	channels[uart->uindex].response_callback_data = NULL;
 
 	/*
 	 * Set the starting state.
@@ -336,39 +331,48 @@ result_t modbus_reserve(struct uart_data *uart, void (*idle_callback)(modbus_id,
 	return(i);
 }
 
-result_t modbus_release(struct uart_data *uart)
+result_t modbus_release(uint8_t modbus_index)
 {
-//	result_t rc;
+	struct uart_data    *uart = channels[modbus_index].uart;
+	
+	LOG_D("%s UART %d\n\r", __func__, modbus_index);
 
-	LOG_D("%s UART %d\n\r", __func__, uart->uindex);
-#if 0
-	if(channels[uart->uart].hw_35_timer != BAD_TIMER) {
-		hw_timer_cancel(channels[uart->uart].hw_35_timer);
+	if (!uart) {
+		return(-ERR_BAD_INPUT_PARAMETER);
+	}
+
+	if(channels[modbus_index].hw_35_timer != BAD_TIMER_ID) {
+		hw_timer_cancel(&channels[modbus_index].hw_35_timer);
+	}
+	if(channels[modbus_index].hw_15_timer != BAD_TIMER_ID) {
+		hw_timer_cancel(&channels[modbus_index].hw_15_timer);
+	}
+	if(channels[modbus_index].resp_timer != BAD_TIMER_ID) {
+		hw_timer_cancel(&channels[modbus_index].resp_timer);
+	}
+	if(channels[modbus_index].turnaround_timer != BAD_TIMER_ID) {
+		hw_timer_cancel(&channels[modbus_index].turnaround_timer);
 	}
 
         /*
          * put back the tx_finished function
          */
-        uart->tx_finished = channels[uart->uart].app_tx_finished;
+        uart->tx_finished = channels[modbus_index].app_tx_finished;
 
-        channels[uart->uart].uart = NULL;
-	channels[uart->uart].process_unsolicited_msg = NULL;
-	channels[uart->uart].idle_callback = NULL;
-	channels[uart->uart].idle_callback_data = NULL;
-	channels[uart->uart].app_tx_finished = NULL;
-	channels[uart->uart].process_timer_15_expiry = NULL;
-	channels[uart->uart].process_timer_35_expiry = NULL;
-	channels[uart->uart].transmit = NULL;
-	channels[uart->uart].process_rx_character = NULL;
-	channels[uart->uart].process_response_timeout = NULL;
-	channels[uart->uart].hw_35_timer = BAD_TIMER;
+        channels[modbus_index].uart                     = NULL;
+	channels[modbus_index].process_unsolicited_msg  = NULL;
+	channels[modbus_index].idle_callback            = NULL;
+	channels[modbus_index].app_tx_finished          = NULL;
+	channels[modbus_index].process_timer_15_expiry  = NULL;
+	channels[modbus_index].process_timer_35_expiry  = NULL;
+	channels[modbus_index].transmit                 = NULL;
+	channels[modbus_index].process_rx_character     = NULL;
+	channels[modbus_index].process_response_timeout = NULL;
 
 	/*
 	 * Release our UART
 	 */
 	return(uart_release(uart));
-#endif
-	return(0);
 }
 
 result_t modbus_read_config(modbus_id chan, uint8_t modbus_address, uint16_t mem_address, modbus_response_function callback)

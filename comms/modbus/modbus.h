@@ -33,16 +33,30 @@
 
 typedef int16_t modbus_id;
 
-/*
+/**
+ * @ingroup MODBUS
+ * @typedef modbus_response_function - callback function to process received
+ *                                     MODBUS frames.
+ * 
+ * @input   modbus_id chan  MODBUS Channel identifier, of the channel over which
+ *                          the frame was received.
+ * @input   uint8_t  *frame MODBUS Frame to be processed.
+ * @input   uint8_t   len   Length of the received MODBUS frame.
  */
-typedef void (*modbus_response_function)(modbus_id chan, uint8_t *msg, uint8_t len);
+typedef void (*modbus_response_function)(modbus_id chan, uint8_t *frame, uint8_t len);
 
-/*
+/**
+ * @ingroup MODBUS
+ * @fn      modbus_master_reserve
+ * 
+ * @brief Enumeration for units of time. Used to specify durations for timers.
+ * 
+ * 
  * Idle callback function is called so that the application knows when the
  * Modbus channel is free to transmit.
  */
-extern result_t modbus_reserve(struct uart_data *uart, void (*idle_callback)(modbus_id, uint8_t));
-extern result_t modbus_release(struct uart_data *uart);
+extern result_t modbus_master_reserve(struct uart_data *uart, void (*idle_callback)(modbus_id, uint8_t));
+extern result_t modbus_release(uint8_t modbus_id);
 
 extern result_t modbus_read_config(modbus_id chan, uint8_t modbus_address, uint16_t mem_address, modbus_response_function callback);
 
