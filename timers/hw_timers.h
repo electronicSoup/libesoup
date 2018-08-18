@@ -105,7 +105,7 @@ extern timer_id hw_timer_restart(timer_id timer, struct timer_req *request);
  * 
  * @param timer Identifier of the timer, previously started, to be cancelled @ref timer_id
  */
-extern timer_id     hw_timer_cancel(timer_id timer);
+extern timer_id     hw_timer_cancel(timer_id *timer);
 
 /**
  * @ingroup Timers

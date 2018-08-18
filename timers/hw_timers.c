@@ -378,20 +378,22 @@ timer_id hw_timer_pause(timer_id timer)
 	return(timer);
 }
 
-timer_id hw_timer_cancel(timer_id timer)
+timer_id hw_timer_cancel(timer_id *timer)
 {
-        if(timer < NUMBER_HW_TIMERS) {
+        if(*timer < NUMBER_HW_TIMERS) {
 		INTERRUPTS_DISABLED
-                hw_timer_pause(timer);
 
-                timers[timer].status = TIMER_UNUSED;
-                timers[timer].request.exp_fn = NULL;
-                timers[timer].repeats = (uint16_t)0;
-                timers[timer].remainder = (uint16_t)0;
+                hw_timer_pause(*timer);
+
+                timers[*timer].status = TIMER_UNUSED;
+                timers[*timer].request.exp_fn = NULL;
+                timers[*timer].repeats = (uint16_t)0;
+                timers[*timer].remainder = (uint16_t)0;
 		INTERRUPTS_ENABLED
-		return(timer);
+		*timer = BAD_TIMER_ID;
+		return(*timer);
         } else {
-                LOG_E("Bad timer passed to hw_timer_cancel(0x%x)\n\r", timer);
+                LOG_E("Bad timer passed to hw_timer_cancel(0x%x)\n\r", *timer);
 		return(-ERR_BAD_INPUT_PARAMETER);
         }
 }
@@ -529,7 +531,7 @@ static timer_id start_timer(timer_id timer, struct timer_req *request)
                  * Simply call the expiry function
                  */
                 request->exp_fn(timer, request->data);
-                return(0);
+                return(BAD_TIMER_ID);
         }
 #ifndef __XC8 // X8 Compiler warns about unreachable code
 	return(-ERR_BAD_INPUT_PARAMETER);
