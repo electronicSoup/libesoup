@@ -321,7 +321,7 @@ timer_id sw_timer_start(struct timer_req *request)
 			/*
 			 * Found an inactive timer so assign to this expiry
 			 */
-			timers[loop].active = TRUE;
+			timers[loop].active                  = TRUE;
 			calculate_expiry_count(loop, ticks);
 			timers[loop].request.data            = request->data;
 			timers[loop].request.period.duration = request->period.duration;
@@ -335,6 +335,7 @@ timer_id sw_timer_start(struct timer_req *request)
 			if(hw_timer_paused) {
 				if((hw_timer = hw_timer_restart(hw_timer, &hw_timer_req)) < 0) {
 					LOG_E("Failed to restart HW timer\n\r");
+					return(-ERR_GENERAL_ERROR);
 				}
 				hw_timer_paused = FALSE;
 			}
