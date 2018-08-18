@@ -167,8 +167,6 @@ void hw_35_expiry_function(timer_id timer, union sigval data)
 {
 	struct modbus_channel *chan = (struct modbus_channel *)data.sival_ptr;
 
-	LOG_D("%s\n\r", __func__);
-
 	chan->hw_35_timer = BAD_TIMER_ID;
 
 	if (chan->process_timer_35_expiry) {
@@ -210,8 +208,6 @@ result_t start_35_timer(struct modbus_channel *channel)
 {
 	result_t          rc;
 	struct timer_req  request;
-	
-	LOG_D("%s\n\r", __func__);
 
 	if(channel->hw_35_timer != BAD_TIMER_ID) {
 		hw_timer_cancel(channel->hw_35_timer);
@@ -317,7 +313,6 @@ result_t modbus_reserve(struct uart_data *uart, void (*idle_callback)(modbus_id,
 	rc = uart_reserve(uart);
 	RC_CHECK
 
-	LOG_D("UART %d\n\r", uart->uindex);
 //	channels[uart->uindex].process_unsolicited_msg = unsolicited;
 //	channels[uart->uindex].idle_callback_data = data;
 	channels[i].idle_callback    = idle_callback;
@@ -404,12 +399,10 @@ result_t modbus_tx_data(struct modbus_channel *channel, uint8_t *data, uint16_t 
 	uint16_t      loop;
 	uint8_t       buffer[SYS_UART_TX_BUFFER_SIZE];
 
-	LOG_D("%s\n\r", __func__);
-
 	ptr = data;
 
 	crc = crc_calculate(data, len);
-	LOG_D("tx_data crc %x\n\r", crc);
+
 	for(loop = 0; loop < len; loop++) {
 		buffer[loop] = *ptr++;
 	}
