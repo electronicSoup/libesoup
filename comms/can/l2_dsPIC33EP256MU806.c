@@ -45,7 +45,7 @@ static const char *TAG = "dsPIC33_CAN";
 #ifdef SYS_CAN_PING_PROTOCOL
 #include "libesoup/comms/can/ping.h"
 #endif // SYS_CAN_PING_PROTOCOL
-#if defined(SYS_SW_TIMERS) && defined(SYS_DEBUG_BUILD)
+#if defined(SYS_SW_TIMERS) && defined(SYS_TEST_BUILD)
 #include "libesoup/timers/sw_timers.h"
 #endif
 /*
@@ -231,7 +231,7 @@ void __attribute__((__interrupt__, __no_auto_psv__)) _C1Interrupt(void)
         IFS2bits.C1IF   = 0x00;
 }
 
-#if defined(SYS_SW_TIMERS) && defined(SYS_DEBUG_BUILD)
+#if defined(SYS_SW_TIMERS) && defined(SYS_TEST_BUILD)
 void exp_fn(timer_id timer, union sigval data)
 {
 	LOG_D("EC-RX %d  Tx %d\n\r", C1ECbits.RERRCNT, C1ECbits.TERRCNT);	
@@ -245,7 +245,7 @@ result_t can_l2_init(can_baud_rate_t arg_baud_rate, status_handler_t arg_status_
 	result_t          rc;
 	uint32_t          address;
 	uint8_t           loop;
-#if defined(SYS_SW_TIMERS) && defined(SYS_DEBUG_BUILD)
+#if defined(SYS_SW_TIMERS) && defined(SYS_TEST_BUILD)
 	struct timer_req  request;
 #endif
 	
@@ -262,7 +262,7 @@ result_t can_l2_init(can_baud_rate_t arg_baud_rate, status_handler_t arg_status_
 #endif
 	}
 
-#if defined(SYS_SW_TIMERS) && defined(SYS_DEBUG_BUILD)
+#if defined(SYS_SW_TIMERS) && defined(SYS_TEST_BUILD)
 	request.units          = Seconds;
 	request.duration       = 10;
 	request.type           = repeat;

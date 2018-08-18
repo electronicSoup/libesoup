@@ -34,14 +34,14 @@ static const char *TAG      = "CRC";
 
 #include "libesoup/errno.h"
 #include "libesoup/processors/dsPIC33/crc.h"
-#ifdef SYS_DEBUG_BUILD
+#ifdef SYS_TEST_BUILD
 #include "libesoup/timers/delay.h"
 #endif
 
 static boolean busy         = FALSE;
 uint8_t  *crc_data_byte     = (uint8_t *)&CRCDATL;
 
-#ifdef SYS_DEBUG_BUILD
+#ifdef SYS_TEST_BUILD
 static uint8_t reverse_byte(uint8_t byte)
 {
 	union byte_bits {
@@ -74,9 +74,9 @@ static uint8_t reverse_byte(uint8_t byte)
 	
 	return(output.byte);
 }
-#endif // SYS_DEBUG_BUILD
+#endif // SYS_TEST_BUILD
 
-#ifdef SYS_DEBUG_BUILD
+#ifdef SYS_TEST_BUILD
 result_t crc_test(void)
 {
 	uint16_t  crc_sum;
@@ -344,7 +344,7 @@ result_t crc_test(void)
 
 	return(0);
 }
-#endif // SYS_DEBUG_BUILD
+#endif // SYS_TEST_BUILD
 	
 result_t crc_reserve(uint32_t polynomial, uint8_t polynomial_length, uint8_t data_word_width, boolean little_endian)
 {

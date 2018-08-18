@@ -115,7 +115,7 @@ static void expiry(timer_id timer, union sigval data)
 	}
 
 #ifdef XC16	
-#ifdef SYS_DEBUG_BUILD
+#ifdef SYS_TEST_BUILD
         serial_printf("%d\n\r", serial_buffer_count());
 #endif
 #endif  // XC16

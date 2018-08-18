@@ -156,7 +156,7 @@ result_t serial_logging_init(void)
         return(0);
 }
 
-#ifdef SYS_DEBUG_BUILD
+#ifdef SYS_TEST_BUILD
 uint16_t serial_buffer_count(void)
 {
 	return(uart_tx_buffer_count(&serial_uart));	

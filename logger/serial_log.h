@@ -49,7 +49,7 @@
  */
 #if defined(XC16) || defined(__XC8)
 extern result_t serial_logging_init(void);
-#ifdef SYS_DEBUG_BUILD
+#ifdef SYS_TEST_BUILD
 extern uint16_t serial_buffer_count(void);
 #endif
 #if defined(XC16)

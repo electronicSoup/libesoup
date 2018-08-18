@@ -95,10 +95,10 @@ struct uart_data {
  */
 extern result_t uart_calculate_mode(uint16_t *mode, uint8_t databits, uint8_t parity, uint8_t stopbits, uint8_t rx_idle_level);
 
-#ifdef SYS_DEBUG_BUILD
+#ifdef SYS_TEST_BUILD
 /**
- * @ingroup  debug_build
- * @brief    (#ifdef SYS_DEBUG_BUILD) - returns current count of bytes in the Transmit buffer of given uart.
+ * @ingroup  test_build
+ * @brief    (#ifdef SYS_TEST_BUILD) - returns current count of bytes in the Transmit buffer of given uart.
  * 
  * Simple debugging function to return the current count of bytes in the
  * transmit buffer so the filling and emptying of the buffer can be tracked
@@ -110,7 +110,7 @@ extern result_t uart_calculate_mode(uint16_t *mode, uint8_t databits, uint8_t pa
  *                      Positive - Number of bytes in transmit buffer of UART
  */
 extern result_t uart_tx_buffer_count(struct uart_data *udata);
-#endif // SYS_DEBUG_BULD
+#endif // SYS_TEST_BUILD
 
 /**
  * @ingroup Uart
@@ -161,6 +161,19 @@ extern result_t uart_tx_buffer(struct uart_data *udata, uint8_t *buffer, uint16_
  */
 extern result_t uart_tx_char(struct uart_data *udata, char ch);
 
+/**
+ * @ingroup Uart
+ * @brief   Simulate receiving a buffer of data on the Recieve channel
+ * 
+ * @param   udata       structure containing details of the previously reserved channel \ref uart_data
+ * @param   buffer      array of bytes to be received
+ * @param   len         length of the buffer to be received
+ * @return              Negative - Error
+ *                      Zero     - Success
+ */
+#ifdef SYS_TEST_BUILD
+extern result_t uart_test_rx_buffer(struct uart_data *udata, uint8_t *buffer, uint16_t len);
+#endif // SYS_TEST_BUILD
 #endif // SYS_UART
 
 #endif // _ES_LIB_UART_H
