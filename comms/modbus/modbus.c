@@ -281,7 +281,7 @@ void modbus_tx_finished(struct uart_data *uart)
 /*
  * Returns the index of the reserved modbus channel on success
  */
-result_t modbus_master_reserve(struct uart_data *uart, void (*idle_callback)(modbus_id, uint8_t))
+modbus_id modbus_master_reserve(struct uart_data *uart, void (*idle_callback)(modbus_id, uint8_t))
 {
 	result_t rc;
 	uint8_t  i;
@@ -331,7 +331,7 @@ result_t modbus_master_reserve(struct uart_data *uart, void (*idle_callback)(mod
 	return(i);
 }
 
-result_t modbus_release(uint8_t modbus_index)
+result_t modbus_release(modbus_id modbus_index)
 {
 	struct uart_data    *uart = channels[modbus_index].uart;
 	

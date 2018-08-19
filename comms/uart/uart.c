@@ -551,13 +551,9 @@ result_t uart_release(struct uart_data *udata)
 
 	uindex = udata->uindex;
 
- 	if(uindex >= NUM_UARTS)
- 		return(-ERR_BAD_INPUT_PARAMETER);
- 
- 	if(uarts[uindex].status != UART_RESERVED)
- 		return(-ERR_BAD_INPUT_PARAMETER);
- 
-	if(uarts[uindex].udata != udata) {
+ 	if (  (uindex >= NUM_UARTS)
+ 	    ||(uarts[uindex].status != UART_RESERVED)
+	    ||(uarts[uindex].udata != udata)) {
 		return(-ERR_BAD_INPUT_PARAMETER);
 	}
 
@@ -600,7 +596,7 @@ result_t uart_release(struct uart_data *udata)
 
 	udata->uindex = UART_BAD;
 
-	return(0);
+	return(SUCCESS);
 }
 
 #ifdef SYS_TEST_BUILD
