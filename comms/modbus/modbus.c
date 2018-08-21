@@ -331,6 +331,59 @@ modbus_id modbus_master_reserve(struct uart_data *uart, void (*idle_callback)(mo
 	return(i);
 }
 
+extern modbus_id modbus_slave_reserve(struct uart_data *uart,
+                                      void (*idle_callback)(modbus_id, uint8_t),
+                                      modbus_response_function frame_callback)
+{
+	result_t rc;
+	uint8_t  i;
+	void (*app_tx_finished)(struct uart_data *);
+
+	if(!uart || !frame_callback) {
+		return(-ERR_BAD_INPUT_PARAMETER);
+	}
+	
+	/*
+	 * Find a free modbus channel
+	 */
+	for (i = 0; i < SYS_MODBUS_NUM_CHANNELS; i++) {
+		if(!channels[i].uart) {
+			break;
+		}
+	}
+	
+	if (i >= SYS_MODBUS_NUM_CHANNELS) {
+		return(-ERR_NO_RESOURCES);
+	}
+
+	app_tx_finished = uart->tx_finished;
+
+	uart->process_rx_char = modbus_process_rx_character;
+	uart->tx_finished = modbus_tx_finished;
+
+	/*
+	 * Reserve a UART for the channel
+	 */
+	rc = uart_reserve(uart);
+	RC_CHECK
+
+	channels[i].idle_callback       = idle_callback;
+	channels[i].slave_frame_handler = frame_callback;
+	channels[i].app_tx_finished     = app_tx_finished;
+	channels[i].uart                = uart;
+	channels[i].hw_15_timer         = BAD_TIMER_ID;
+	channels[i].hw_35_timer         = BAD_TIMER_ID;
+	channels[i].resp_timer          = BAD_TIMER_ID;
+	channels[i].turnaround_timer    = BAD_TIMER_ID;
+
+	/*
+	 * Set the starting state.
+	 */
+	set_modbus_starting_state(&channels[i]);
+
+	return(i);	
+}
+
 result_t modbus_release(modbus_id modbus_index)
 {
 	struct uart_data    *uart = channels[modbus_index].uart;
