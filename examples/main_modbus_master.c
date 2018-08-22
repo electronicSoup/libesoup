@@ -38,10 +38,8 @@ static const char *TAG = "MASTER";
 #define SN65HVD72D_RECEIVE   0b0
 #define SN65HVD72D_SEND      0b1
 
-static struct uart_data   uart;
-
-	modbus_id         modbus_chan;
-	static uint8_t    modbus_chan_idle;
+static struct modbus_app_data   app_data;
+static uint8_t                  modbus_chan_idle;
 
 void callback(modbus_id chan, uint8_t *msg, uint8_t len)
 {
@@ -65,7 +63,7 @@ void exp_fn(timer_id timer, union sigval data)
 		rc = gpio_set(SN65HVD72D_TX_ENABLE, GPIO_MODE_DIGITAL_OUTPUT, SN65HVD72D_SEND);
 		RC_CHECK_STOP
 			
-		rc = modbus_read_config(modbus_chan, 0x01, 0x0000, callback);
+		rc = modbus_read_config(app_data.channel_id, 0x01, 0x0000, callback);
 		RC_CHECK_STOP
 	}
 }
@@ -78,16 +76,11 @@ void tx_finished(struct uart_data *uart)
 	RC_CHECK_STOP
 }
 
-void rx_char(uint8_t uart_id, uint8_t ch)
-{
-	LOG_D("rx_char(%c)\n\r", ch);
-}
-
 void modbus_idle(modbus_id modbus, uint8_t idle)
 {
 	result_t rc;
 
-	if (modbus != modbus_chan) {
+	if (modbus != app_data.channel_id) {
 		rc = -1;
 		RC_CHECK_STOP
 	}
@@ -121,21 +114,21 @@ int main()
 	/*
 	 * Initialise the UART connected to the MAX3221E
 	 */
-	rc = uart_calculate_mode(&uart.uart_mode, UART_8_DATABITS, UART_PARITY_NONE, UART_TWO_STOP_BITS, UART_IDLE_HIGH);
+	rc = uart_calculate_mode(&app_data.uart_data.uart_mode, UART_8_DATABITS, UART_PARITY_NONE, UART_TWO_STOP_BITS, UART_IDLE_HIGH);
 	RC_CHECK_STOP
 
-	uart.tx_pin          = SN65HVD72D_TX;
-	uart.rx_pin          = SN65HVD72D_RX;
-	uart.tx_finished     = tx_finished;
-	uart.baud            = 9600;                // Nice relaxed baud rate
+	app_data.idle_state_callback         = modbus_idle;
+	app_data.address                     = 0;               // Master Node
+	app_data.unsolicited_frame_handler   = NULL;            // As Master node only processing sollicitated responses
+	app_data.uart_data.tx_pin            = SN65HVD72D_TX;
+	app_data.uart_data.rx_pin            = SN65HVD72D_RX;
+	app_data.uart_data.tx_finished       = tx_finished;
+	app_data.uart_data.baud              = 9600;                // Nice relaxed baud rate
 	
 	/*
 	 * Reserve a UART channel for our use
 	 */
-	rc = modbus_master_reserve(&uart, modbus_idle);
-	if (rc >= 0) {
-		modbus_chan = rc;
-	}
+	rc = modbus_reserve(&app_data);
 	RC_CHECK_STOP
 
 	request.period.units    = Seconds;

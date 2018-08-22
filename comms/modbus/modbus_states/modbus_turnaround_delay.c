@@ -63,7 +63,7 @@ static result_t start_turnaround_timer(struct modbus_channel *chan)
 	request.period.duration = SYS_MODBUS_TURNAROUND_TIMEOUT_DURATION;
 	request.type            = single_shot;
 	request.exp_fn          = turnaround_expiry_fn;
-	request.data.sival_int  = chan->modbus_index;
+	request.data.sival_int  = chan->app_data->channel_id;
 
 	rc = sw_timer_start(&request);
 	RC_CHECK
@@ -76,7 +76,7 @@ static result_t start_turnaround_timer(struct modbus_channel *chan)
 result_t set_modbus_turnaround_state(struct modbus_channel *chan)
 {
 	LOG_D("set_modbus_turnaround_state()\n\r");
-
+	chan->state                    = mb_turnaround;
 	chan->rx_write_index           = 0;
 	chan->process_timer_15_expiry  = NULL;
 	chan->process_timer_35_expiry  = NULL;
@@ -85,8 +85,8 @@ result_t set_modbus_turnaround_state(struct modbus_channel *chan)
 	chan->process_rx_character     = NULL;
 	chan->process_response_timeout = NULL;
 
-	if(chan->idle_callback) {
-		chan->idle_callback(chan->modbus_index, FALSE);
+	if(chan->app_data->idle_state_callback) {
+		chan->app_data->idle_state_callback(chan->app_data->channel_id, FALSE);
 	}
 
 	return(start_turnaround_timer(chan));

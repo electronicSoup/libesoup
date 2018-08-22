@@ -139,6 +139,8 @@ typedef int16_t result_t;
 #define ERR_BUSY                   17
 #define ERR_NOTHING_TO_DO          18
 #define ERR_NO_RESPONSE            19
+#define ERR_NOT_MASTER             20
+#define ERR_NOT_SLAVE              21
 #define ERR_IM_A_TEAPOT           418
 
 #endif // _ERRNO_H

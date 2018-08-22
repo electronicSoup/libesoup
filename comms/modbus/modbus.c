@@ -151,7 +151,7 @@ result_t modbus_init(void)
 	uint8_t i;
 
 	for (i = 0; i < SYS_MODBUS_NUM_CHANNELS; i++) {
-		channels[i].uart         = NULL;
+		channels[i].app_data     = NULL;
 		channels[i].hw_15_timer  = BAD_TIMER_ID;
 		channels[i].hw_35_timer  = BAD_TIMER_ID;
 		channels[i].resp_timer   = BAD_TIMER_ID;
@@ -211,7 +211,7 @@ result_t start_35_timer(struct modbus_channel *channel)
 	}
 
 	request.period.units    = uSeconds;
-	request.period.duration = ((1000000 * 39)/channel->uart->baud);
+	request.period.duration = ((1000000 * 39)/channel->app_data->uart_data.baud);
 	request.type            = single_shot;
 	request.exp_fn          = hw_35_expiry_function;
 	request.data.sival_ptr  = channel;
@@ -228,7 +228,7 @@ static void modbus_process_rx_character(uint8_t uindex, uint8_t ch)
 	uint8_t i;
 
 	for (i = 0; i < SYS_MODBUS_NUM_CHANNELS; i++) {
-		if (channels[i].uart && channels[i].uart->uindex == uindex) {
+		if (channels[i].app_data && channels[i].app_data->uart_data.uindex == uindex) {
 			if(channels[i].process_rx_character) {
 				channels[i].process_rx_character(&channels[i], ch);
 			}
@@ -251,7 +251,7 @@ void modbus_tx_finished(struct uart_data *uart)
 	 */
 
 	for (i = 0; i < SYS_MODBUS_NUM_CHANNELS; i++) {
-		if (channels[i].uart == uart) {
+		if (channels[i].app_data && channels[i].app_data->uart_data.uindex == uart->uindex) {
 			break;
 		}
 	}
@@ -281,13 +281,14 @@ void modbus_tx_finished(struct uart_data *uart)
 /*
  * Returns the index of the reserved modbus channel on success
  */
-modbus_id modbus_master_reserve(struct uart_data *uart, void (*idle_callback)(modbus_id, uint8_t))
+//modbus_id modbus_master_reserve(struct uart_data *uart, void (*idle_callback)(modbus_id, uint8_t))
+modbus_id modbus_reserve(struct modbus_app_data *app_data)
 {
 	result_t rc;
 	uint8_t  i;
 	void (*app_tx_finished)(struct uart_data *);
 
-	if(!uart) {
+	if(!app_data) {
 		return(-ERR_BAD_INPUT_PARAMETER);
 	}
 	
@@ -295,7 +296,7 @@ modbus_id modbus_master_reserve(struct uart_data *uart, void (*idle_callback)(mo
 	 * Find a free modbus channel
 	 */
 	for (i = 0; i < SYS_MODBUS_NUM_CHANNELS; i++) {
-		if(!channels[i].uart) {
+		if(!channels[i].app_data) {
 			break;
 		}
 	}
@@ -304,20 +305,20 @@ modbus_id modbus_master_reserve(struct uart_data *uart, void (*idle_callback)(mo
 		return(-ERR_NO_RESOURCES);
 	}
 
-	app_tx_finished = uart->tx_finished;
+	app_tx_finished = app_data->uart_data.tx_finished;
 
-	uart->process_rx_char = modbus_process_rx_character;
-	uart->tx_finished = modbus_tx_finished;
+	app_data->uart_data.process_rx_char = modbus_process_rx_character;
+	app_data->uart_data.tx_finished     = modbus_tx_finished;
 
 	/*
 	 * Reserve a UART for the channel
 	 */
-	rc = uart_reserve(uart);
+	rc = uart_reserve(&app_data->uart_data);
 	RC_CHECK
 
-	channels[i].idle_callback    = idle_callback;
+	app_data->channel_id         = i;
+	channels[i].app_data         = app_data;
 	channels[i].app_tx_finished  = app_tx_finished;
-	channels[i].uart             = uart;
 	channels[i].hw_15_timer      = BAD_TIMER_ID;
 	channels[i].hw_35_timer      = BAD_TIMER_ID;
 	channels[i].resp_timer       = BAD_TIMER_ID;
@@ -331,117 +332,70 @@ modbus_id modbus_master_reserve(struct uart_data *uart, void (*idle_callback)(mo
 	return(i);
 }
 
-extern modbus_id modbus_slave_reserve(struct uart_data *uart,
-                                      void (*idle_callback)(modbus_id, uint8_t),
-                                      modbus_response_function frame_callback)
+result_t modbus_release(struct modbus_app_data *app_data)
 {
-	result_t rc;
-	uint8_t  i;
-	void (*app_tx_finished)(struct uart_data *);
-
-	if(!uart || !frame_callback) {
-		return(-ERR_BAD_INPUT_PARAMETER);
-	}
+	modbus_id index;
 	
-	/*
-	 * Find a free modbus channel
-	 */
-	for (i = 0; i < SYS_MODBUS_NUM_CHANNELS; i++) {
-		if(!channels[i].uart) {
-			break;
-		}
-	}
-	
-	if (i >= SYS_MODBUS_NUM_CHANNELS) {
-		return(-ERR_NO_RESOURCES);
-	}
-
-	app_tx_finished = uart->tx_finished;
-
-	uart->process_rx_char = modbus_process_rx_character;
-	uart->tx_finished = modbus_tx_finished;
-
-	/*
-	 * Reserve a UART for the channel
-	 */
-	rc = uart_reserve(uart);
-	RC_CHECK
-
-	channels[i].idle_callback       = idle_callback;
-	channels[i].slave_frame_handler = frame_callback;
-	channels[i].app_tx_finished     = app_tx_finished;
-	channels[i].uart                = uart;
-	channels[i].hw_15_timer         = BAD_TIMER_ID;
-	channels[i].hw_35_timer         = BAD_TIMER_ID;
-	channels[i].resp_timer          = BAD_TIMER_ID;
-	channels[i].turnaround_timer    = BAD_TIMER_ID;
-
-	/*
-	 * Set the starting state.
-	 */
-	set_modbus_starting_state(&channels[i]);
-
-	return(i);	
-}
-
-result_t modbus_release(modbus_id modbus_index)
-{
-	struct uart_data    *uart = channels[modbus_index].uart;
-	
-	LOG_D("%s UART %d\n\r", __func__, modbus_index);
-
-	if (!uart) {
+	if (!app_data) {
 		return(-ERR_BAD_INPUT_PARAMETER);
 	}
 
-	if(channels[modbus_index].hw_35_timer != BAD_TIMER_ID) {
-		hw_timer_cancel(&channels[modbus_index].hw_35_timer);
+	index = app_data->channel_id;
+	
+	if(channels[index].hw_35_timer != BAD_TIMER_ID) {
+		hw_timer_cancel(&channels[index].hw_35_timer);
 	}
-	if(channels[modbus_index].hw_15_timer != BAD_TIMER_ID) {
-		hw_timer_cancel(&channels[modbus_index].hw_15_timer);
+	if(channels[index].hw_15_timer != BAD_TIMER_ID) {
+		hw_timer_cancel(&channels[index].hw_15_timer);
 	}
-	if(channels[modbus_index].resp_timer != BAD_TIMER_ID) {
-		hw_timer_cancel(&channels[modbus_index].resp_timer);
+	if(channels[index].resp_timer != BAD_TIMER_ID) {
+		hw_timer_cancel(&channels[index].resp_timer);
 	}
-	if(channels[modbus_index].turnaround_timer != BAD_TIMER_ID) {
-		hw_timer_cancel(&channels[modbus_index].turnaround_timer);
+	if(channels[index].turnaround_timer != BAD_TIMER_ID) {
+		hw_timer_cancel(&channels[index].turnaround_timer);
 	}
 
         /*
          * put back the tx_finished function
          */
-        uart->tx_finished = channels[modbus_index].app_tx_finished;
+        app_data->uart_data.tx_finished = channels[index].app_tx_finished;
 
-        channels[modbus_index].uart                     = NULL;
-	channels[modbus_index].process_unsolicited_msg  = NULL;
-	channels[modbus_index].idle_callback            = NULL;
-	channels[modbus_index].app_tx_finished          = NULL;
-	channels[modbus_index].process_timer_15_expiry  = NULL;
-	channels[modbus_index].process_timer_35_expiry  = NULL;
-	channels[modbus_index].transmit                 = NULL;
-	channels[modbus_index].process_rx_character     = NULL;
-	channels[modbus_index].process_response_timeout = NULL;
+        channels[index].app_data                 = NULL;
+	channels[index].app_tx_finished          = NULL;
+	channels[index].process_timer_15_expiry  = NULL;
+	channels[index].process_timer_35_expiry  = NULL;
+	channels[index].transmit                 = NULL;
+	channels[index].process_rx_character     = NULL;
+	channels[index].process_response_timeout = NULL;
 
 	/*
 	 * Release our UART
 	 */
-	return(uart_release(uart));
+	return(uart_release(&app_data->uart_data));
 }
 
-result_t modbus_read_config(modbus_id chan, uint8_t modbus_address, uint16_t mem_address, modbus_response_function callback)
+result_t modbus_read_config_req(modbus_id chan, uint8_t modbus_address, uint16_t mem_address, modbus_response_function callback)
 {
 	uint8_t   tx_buffer[4];
 	
 	LOG_D("%s\n\r", __func__);
 
-	if (chan >= SYS_MODBUS_NUM_CHANNELS || !channels[chan].uart || !callback) {
+	if (chan >= SYS_MODBUS_NUM_CHANNELS || !channels[chan].app_data || !callback) {
 		return(-ERR_BAD_INPUT_PARAMETER);
 	}
-	if (!channels[chan].transmit) {
+	if (!channels[chan].transmit || channels[chan].state != mb_idle) {
 		return(-ERR_BUSY);
 	}
 	if (modbus_address == 0 || modbus_address > 247) {
 		return(-ERR_ADDRESS_RANGE);
+	}
+
+	/*
+	 * Can only send a request from a Modbus Master so check App data for
+	 * address of this channel. (0 = Master)
+	 */
+	if (channels[chan].app_data->address != 0) {
+		return(-ERR_NOT_MASTER);
 	}
 	
 	tx_buffer[0] = modbus_address;
@@ -450,6 +404,35 @@ result_t modbus_read_config(modbus_id chan, uint8_t modbus_address, uint16_t mem
 	tx_buffer[3] = (uint8_t)(mem_address & 0xff);
 	
 	return(channels[chan].transmit(&channels[chan], tx_buffer, 4, callback));
+}
+
+result_t  modbus_read_config_resp(modbus_id chan, uint16_t mem_address)
+{
+	uint8_t   tx_buffer[4];
+	
+	LOG_D("%s\n\r", __func__);
+
+	if (chan >= SYS_MODBUS_NUM_CHANNELS || !channels[chan].app_data) {
+		return(-ERR_BAD_INPUT_PARAMETER);
+	}
+	if (!channels[chan].transmit || channels[chan].state != mb_processing_request) {
+		return(-ERR_BUSY);
+	}
+
+	/*
+	 * Can only send a response from a Modbus Slave so check App data for
+	 * address of this channel. (0 = Master)
+	 */
+	if (channels[chan].app_data->address == 0) {
+		return(-ERR_NOT_SLAVE);
+	}
+	
+	tx_buffer[0] = channels[chan].app_data->address;
+	tx_buffer[1] = MODBUS_READ_CONFIG;
+	tx_buffer[2] = (uint8_t)((mem_address >> 8) & 0xff);
+	tx_buffer[3] = (uint8_t)(mem_address & 0xff);
+	
+	return(channels[chan].transmit(&channels[chan], tx_buffer, 4, NULL));
 }
 
 result_t modbus_tx_data(struct modbus_channel *chan, uint8_t *data, uint16_t len)
@@ -470,7 +453,7 @@ result_t modbus_tx_data(struct modbus_channel *chan, uint8_t *data, uint16_t len
 	buffer[loop++] = (crc >> 8) & 0xff;
 	buffer[loop++] = crc & 0xff;
 
-	return(uart_tx_buffer(chan->uart, buffer, loop));
+	return(uart_tx_buffer(&chan->app_data->uart_data, buffer, loop));
 }
 
 #endif // SYS_MODBUS

@@ -333,7 +333,6 @@ void _ISR __attribute__((__no_auto_psv__)) _U2RXInterrupt(void)
 
 	asm ("CLRWDT");
 
-        LOG_D("U2RX\n\r");
 	if (U2STAbits.OERR) {
 		LOG_E("RX Buffer overrun\n\r");
 		U2STAbits.OERR = 0;   /* Clear the error flag */
@@ -341,7 +340,9 @@ void _ISR __attribute__((__no_auto_psv__)) _U2RXInterrupt(void)
 
 	while (U2STAbits.URXDA) {
 		ch = U2RXREG;
-		uarts[UART_2].udata->process_rx_char(UART_2, ch);
+		if (uarts[UART_2].udata->process_rx_char) {
+			uarts[UART_2].udata->process_rx_char(UART_2, ch);
+		}
 	}
 }
 #endif // #if defined(__dsPIC33EP256MU806__) || defined (__PIC24FJ256GB106__)

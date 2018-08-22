@@ -40,52 +40,60 @@ static void tx_finished(struct modbus_channel *chan);
 result_t set_modbus_transmitting_state(struct modbus_channel *chan)
 {
 	LOG_D("set_modbus_transmitting_state()\n\r");
-
+	chan->state                    = mb_transmitting;
 	chan->process_timer_15_expiry  = NULL;
 	chan->process_timer_35_expiry  = NULL;
 	chan->transmit                 = NULL;
 	chan->modbus_tx_finished       = tx_finished;
 	chan->process_rx_character     = NULL;
 	chan->process_response_timeout = NULL;
-	
-	if(chan->idle_callback) {
-		chan->idle_callback(chan->modbus_index, FALSE);
+
+	if(chan->app_data->idle_state_callback) {
+		chan->app_data->idle_state_callback(chan->app_data->channel_id, FALSE);
 	}
 	
 	return(SUCCESS);
 }
 
-#ifdef SYS_TEST_BUILD
-void test_rx(timer_id timer, union sigval data)
-{
-	uint8_t   mindex = data.sival_int;
-	uint8_t   buffer[6] = {0x01, 0x02, 0x03, 0x04};
-
-	buffer[4] = 0xa1;
-	buffer[5] = 0x2b;
-
-	uart_test_rx_buffer(channels[mindex].uart, (uint8_t *)&buffer, 6);
-}
-#endif // SYS_TEST_BUILD
+//#ifdef SYS_TEST_BUILD
+//void test_rx(timer_id timer, union sigval data)
+//{
+//	uint8_t   mindex = data.sival_int;
+//	uint8_t   buffer[6] = {0x01, 0x02, 0x03, 0x04};
+//
+//	buffer[4] = 0xa1;
+//	buffer[5] = 0x2b;
+//
+//	uart_test_rx_buffer(channels[mindex].uart, (uint8_t *)&buffer, 6);
+//}
+//#endif // SYS_TEST_BUILD
 
 void tx_finished(struct modbus_channel *chan)
 {
-#ifdef SYS_TEST_BUILD
-	result_t          rc;
-	struct timer_req  request;
-#endif
+//#ifdef SYS_TEST_BUILD
+//	result_t          rc;
+//	struct timer_req  request;
+//#endif
         LOG_D("tx_finished()\n\r");
-	set_modbus_awaiting_response_state(chan);
+	/*
+	 * After transmission the Slave node returns to the idle state
+	 * whereas the master awaits a response to it's request.
+	 */
+	if (chan->app_data->address) {
+		set_modbus_idle_state(chan);
+	} else {
+		set_modbus_awaiting_response_state(chan);
+	}
 
-#ifdef SYS_TEST_BUILD
-	request.period.units    = mSeconds;
-	request.period.duration = 50;
-	request.type            = single_shot;
-	request.data.sival_int  = chan->modbus_index;
-	request.exp_fn          = test_rx;
-	
-	rc = sw_timer_start(&request);
-#endif
+//#ifdef SYS_TEST_BUILD
+//	request.period.units    = mSeconds;
+//	request.period.duration = 50;
+//	request.type            = single_shot;
+//	request.data.sival_int  = chan->modbus_index;
+//	request.exp_fn          = test_rx;
+//	
+//	rc = sw_timer_start(&request);
+//#endif
 }
 
 #endif // SYS_MODBUS

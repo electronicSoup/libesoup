@@ -81,7 +81,7 @@ static result_t start_response_timer(struct modbus_channel *chan)
 result_t set_modbus_awaiting_response_state(struct modbus_channel *chan)
 {
 	LOG_D("set_modbus_awaiting_response_state()\n\r");
-
+	chan->state                    = mb_awaiting_response;
 	chan->rx_write_index           = 0;
 	chan->process_timer_15_expiry  = NULL;
 	chan->process_timer_35_expiry  = process_timer_35_expiry;
@@ -90,8 +90,8 @@ result_t set_modbus_awaiting_response_state(struct modbus_channel *chan)
 	chan->process_rx_character     = process_rx_character;
 	chan->process_response_timeout = process_response_timeout;
 
-	if (chan->idle_callback) {
-		chan->idle_callback(chan->modbus_index, FALSE);
+	if(chan->app_data->idle_state_callback) {
+		chan->app_data->idle_state_callback(chan->app_data->channel_id, FALSE);
 	}
 
 	return(start_response_timer(chan));
@@ -111,12 +111,12 @@ void process_timer_35_expiry(struct modbus_channel *chan)
 
 	LOG_D("process_timer_35_expiry() chan %d msg length %d\n\r", chan->modbus_index, chan->rx_write_index);
 	if(chan->rx_write_index > 2) {
-		if(chan->rx_buffer[0] == chan->address) {
+		if(chan->rx_buffer[0] == chan->tx_modbus_address) {
 			start_index = 0;
-		} else if (chan->rx_buffer[1] == chan->address) {
+		} else if (chan->rx_buffer[1] == chan->tx_modbus_address) {
 			start_index = 1;
 		} else {
-			LOG_D("message from wrong address chan Address 0x%x\n\r", chan->address);
+			LOG_D("message from wrong address chan Address 0x%x\n\r", chan->tx_modbus_address);
 			LOG_D("chan->rx_buffer[0] = 0x%x\n\r", chan->rx_buffer[0]);
 			LOG_D("chan->rx_buffer[1] = 0x%x\n\r", chan->rx_buffer[1]);
 			set_modbus_idle_state(chan);

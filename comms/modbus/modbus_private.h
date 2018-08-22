@@ -39,29 +39,32 @@
 #define MODBUS_WRITE_MULTIPLE  0x10
 #define MODBUS_ID_REQUEST      0x11
 
-struct modbus_channel {
-        struct uart_data    *uart;
-        timer_id             hw_15_timer;
-        timer_id             hw_35_timer;
-        timer_id             resp_timer;
-        timer_id             turnaround_timer;
-        modbus_id            modbus_index;
-        uint8_t              address;
-        uint8_t              rx_buffer[SYS_MODBUS_RX_BUFFER_SIZE];
-        uint16_t             rx_write_index;
+enum modbus_state {
+        mb_starting,
+        mb_idle,
+        mb_transmitting,
+        mb_awaiting_response,
+        mb_receiving,
+        mb_processing_request,
+        mb_turnaround
+};
 
-        /*
-         * function to process unsolicited messages
-         */
-        modbus_response_function process_unsolicited_msg;
+struct modbus_channel {
+        uint8_t                  modbus_index;
+        enum modbus_state        state;
+        struct modbus_app_data  *app_data;
+        timer_id                 hw_15_timer;
+        timer_id                 hw_35_timer;
+        timer_id                 resp_timer;
+        timer_id                 turnaround_timer;
+        uint8_t                  rx_buffer[SYS_MODBUS_RX_BUFFER_SIZE];
+        uint16_t                 rx_write_index;
+        uint8_t                  tx_modbus_address;
 
         /*
          * function to process response to sent messages
          */
         modbus_response_function process_response;
-//        void                    *response_callback_data;
-        void                   (*idle_callback)(modbus_id, uint8_t);
-        modbus_response_function slave_frame_handler;
     
         /*
          * The higher layer application code will pass in a tx_finished() in the 
@@ -75,7 +78,6 @@ struct modbus_channel {
         result_t               (*transmit)(struct modbus_channel *chan, uint8_t *data, uint16_t len, modbus_response_function callback);
         void                   (*process_rx_character)(struct modbus_channel *channel, uint8_t ch);
         void                   (*process_response_timeout)();
-//    void (*resp_timeout_expiry_fn(timer_t timer_id, union sigval data);
 };
 
 extern result_t set_modbus_starting_state(struct modbus_channel *channel);
@@ -83,6 +85,8 @@ extern result_t set_modbus_idle_state(struct modbus_channel *channel);
 extern result_t set_modbus_transmitting_state(struct modbus_channel *channel);
 extern result_t set_modbus_awaiting_response_state(struct modbus_channel *channel);
 extern result_t set_modbus_turnaround_state(struct modbus_channel *chan);
+extern result_t set_modbus_receiving_state(struct modbus_channel *chan);
+extern result_t set_modbus_processing_request_state(struct modbus_channel *chan);
 
 extern result_t start_15_timer(struct modbus_channel *channel);
 extern result_t start_35_timer(struct modbus_channel *channel);

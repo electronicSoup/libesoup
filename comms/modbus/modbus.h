@@ -52,52 +52,25 @@ typedef int16_t modbus_id;
 typedef void (*modbus_response_function)(modbus_id chan,
 					 uint8_t *frame,
 					 uint8_t len);
-/**
- * @ingroup MODBUS
- * @fn      modbus_master_reserve
- * 
- * @brief   Function to reserve a MODBUS channel for Master communications.
- *
- * @param   struct uart_data *uart
- *                          Serial communications settings for the channel.
- *                          Baud rate, Rx & Tx pins etc.
- *
- * @param   void (*idle_callback)(modbus_id, uint8_t)
- *                          If the Application wants to be informed when the
- *                          MODBUS channel is idle, and ready to transmit a
- *                          frame, then a callback should be passed to the
- *                          reserve function.
- * 
- * @return  Modbus Channel Identifier, or error on fail.
- */
-extern modbus_id modbus_master_reserve(struct uart_data *uart,
-				       void (*idle_callback)(modbus_id, uint8_t));
+
+struct modbus_app_data {
+        modbus_id                 channel_id;
+        struct uart_data          uart_data;
+        uint8_t                   address;
+        void                    (*idle_state_callback)(modbus_id, uint8_t);
+        modbus_response_function  unsolicited_frame_handler;
+};
 
 /**
  * @ingroup MODBUS
- * @fn      modbus_slave_reserve
+ * @fn      modbus_reserve
  * 
- * @brief   Function to reserve a MODBUS channel for Slave communications.
+ * @brief   Function to reserve a MODBUS channel for Master communications.
+ *          a modbus address of 0 indicates master functionality.
  *
- * @param   struct uart_data *uart
- *                          Serial communications settings for the channel.
- *                          Baud rate, Rx & Tx pins etc.
- *
- * @param   void (*idle_callback)(modbus_id, uint8_t)
- *                          If the Application wants to be informed when the
- *                          MODBUS channel is idle, and ready to transmit a
- *                          frame, then a callback should be passed to the
- *                          reserve function.
- * 
- * @param   modbus_response_function frame_callback
- *                          Function to process MODBUS Frames received on the 
- *                          channel.
- * 
  * @return  Modbus Channel Identifier, or error on fail.
  */
-extern modbus_id modbus_slave_reserve(struct uart_data *uart,
-                                      void (*idle_callback)(modbus_id, uint8_t),
-                                      modbus_response_function frame_callback);
+extern modbus_id modbus_reserve(struct modbus_app_data *app_data);
 
 /**
  * @ingroup MODBUS
@@ -111,11 +84,14 @@ extern modbus_id modbus_slave_reserve(struct uart_data *uart,
  * @return  result_t        SUCCESS
  *                          -ERR_BAD_INPUT_PARAMETER
  */
-extern result_t  modbus_release(modbus_id id);
+extern result_t  modbus_release(struct modbus_app_data *app_data);
 
-extern result_t  modbus_read_config(modbus_id chan,
-				    uint8_t modbus_address,
-				    uint16_t mem_address,
-				    modbus_response_function callback);
+extern result_t  modbus_read_config_req(modbus_id                chan,
+			   	        uint8_t                  modbus_address,
+                                        uint16_t                 mem_address,
+				        modbus_response_function callback);
+
+extern result_t  modbus_read_config_resp(modbus_id                chan,
+                                         uint16_t                 mem_address);
 #endif //  SYS_MODBUS
 #endif //  _MODBUS_H

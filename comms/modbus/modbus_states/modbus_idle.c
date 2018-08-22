@@ -34,7 +34,7 @@ static const char *TAG = "MODBUS_IDLE";
 
 static result_t transmit(struct modbus_channel *chan, uint8_t *data, uint16_t len, modbus_response_function callback)
 {
-	LOG_D("Modbus Idle state Transmit(%d)\n\r", chan->modbus_index);
+	LOG_D("Modbus Idle state Transmit(%d)\n\r", chan->app_data->channel_id);
 	
 	/*
 	 * The response timeout timer is started when the transmission is
@@ -43,7 +43,7 @@ static result_t transmit(struct modbus_channel *chan, uint8_t *data, uint16_t le
 	if (!callback || !data || len == 0) {
 		return(-ERR_BAD_INPUT_PARAMETER);
 	}
-	chan->address                = data[0];
+	chan->tx_modbus_address      = data[0];
 	chan->process_response       = callback;
 	
 	set_modbus_transmitting_state(chan);
@@ -53,81 +53,26 @@ static result_t transmit(struct modbus_channel *chan, uint8_t *data, uint16_t le
 
 static void process_rx_character(struct modbus_channel *chan, uint8_t ch)
 {
-	if ((chan->rx_write_index == 0) && (ch == 0x00)) {
-		return;
-	}
-
-	start_35_timer(chan);
-
-	chan->rx_buffer[chan->rx_write_index++] = ch;
-
-	if (chan->rx_write_index == SYS_MODBUS_RX_BUFFER_SIZE) {
-		LOG_E("UART 2 Overflow: Line too long\n\r");
-	}
-}
-
-static void process_timer_35_expiry(struct modbus_channel *chan)
-{
-	uint8_t  start_index;
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-	uint16_t loop;
-#endif
-
-	LOG_D("process_timer_35_expiry() channel %d msg length %d\n\r", chan->modbus_index, chan->rx_write_index);
-        start_index = 0;
-        if (crc_check(&(chan->rx_buffer[start_index]), chan->rx_write_index - start_index)) {
-                /*
-                 * Response Good
-                 * Subtract 2 for the CRC
-                 */
-                LOG_D("Message Good! Start at 0\n\r");
-                if(chan->process_unsolicited_msg) {
-                        chan->process_unsolicited_msg(chan->modbus_index, &(chan->rx_buffer[start_index]), chan->rx_write_index - (start_index + 2));
-                }
-                chan->rx_write_index = 0;
-                return;
-        }
-
-        start_index = 1;
-        if (crc_check(&(chan->rx_buffer[start_index]), chan->rx_write_index - start_index)) {
-                /*
-                 * Response Good
-                 * Subtract 2 for the CRC
-                 */
-                LOG_D("Message Good! Start at 1\n\r");
-                if(chan->process_unsolicited_msg) {
-                        chan->process_unsolicited_msg(chan->modbus_index, &(chan->rx_buffer[start_index]), chan->rx_write_index - (start_index + 2));
-                }
-                chan->rx_write_index = 0;
-                return;
-        }
-
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-        LOG_D("Message bad!\n\r");
-	for(loop = 0; loop < chan->rx_write_index; loop++) {
-		LOG_D("Char %d - 0x%x\n\r", loop, chan->rx_buffer[loop]);
-	}
-#endif
-        if(chan->process_unsolicited_msg) {
-                chan->process_unsolicited_msg(chan->modbus_index, NULL, 0);
-        }
-        chan->rx_write_index = 0;
+	result_t  rc;
+	
+	rc = set_modbus_receiving_state(chan);
+	chan->process_rx_character(chan, ch);
 }
 
 result_t set_modbus_idle_state(struct modbus_channel *chan)
 {
 //	LOG_D("set_modbus_idle_state(channel %d)\n\r", chan->modbus_index);
-
+	chan->state                    = mb_idle;
 	chan->process_timer_15_expiry  = NULL;
-	chan->process_timer_35_expiry  = process_timer_35_expiry;
+	chan->process_timer_35_expiry  = NULL;
 	chan->transmit                 = transmit;
         chan->rx_write_index           = 0;
 	chan->modbus_tx_finished       = NULL;
 	chan->process_rx_character     = process_rx_character;
 	chan->process_response_timeout = NULL;
 
-	if(chan->idle_callback) {
-		chan->idle_callback(chan->modbus_index, TRUE);
+	if(chan->app_data->idle_state_callback) {
+		chan->app_data->idle_state_callback(chan->app_data->channel_id, TRUE);
 	}
 	
 	return(SUCCESS);

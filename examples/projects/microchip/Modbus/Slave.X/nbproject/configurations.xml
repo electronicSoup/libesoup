@@ -55,6 +55,8 @@
               <itemPath>../../../../../comms/modbus/modbus_states/modbus_idle.c</itemPath>
               <itemPath>../../../../../comms/modbus/modbus_states/modbus_transmitting.c</itemPath>
               <itemPath>../../../../../comms/modbus/modbus_states/modbus_awaiting_response.c</itemPath>
+              <itemPath>../../../../../comms/modbus/modbus_states/modbus_receiving.c</itemPath>
+              <itemPath>../../../../../comms/modbus/modbus_states/modbus_processing_request.c</itemPath>
             </logicalFolder>
             <itemPath>../../../../../comms/modbus/modbus.c</itemPath>
           </logicalFolder>
