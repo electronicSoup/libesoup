@@ -5,7 +5,8 @@
  *
  * Function prototypes for using modbus Comms.
  * 
- * http://www.modbus.org/docs/Modbus_over_serial_line_V1_02.pdf
+ * Layer 7 http://www.modbus.org/docs/Modbus_Application_Protocol_V1_1b3.pdf
+ * Layers 1 & 2 http://www.modbus.org/docs/Modbus_over_serial_line_V1_02.pdf
  *
  * Copyright 2017-2018 electronicSoup Limited
  *

@@ -63,7 +63,7 @@ void exp_fn(timer_id timer, union sigval data)
 		rc = gpio_set(SN65HVD72D_TX_ENABLE, GPIO_MODE_DIGITAL_OUTPUT, SN65HVD72D_SEND);
 		RC_CHECK_STOP
 			
-		rc = modbus_read_config(app_data.channel_id, 0x01, 0x0000, callback);
+		rc = modbus_read_config_req(app_data.channel_id, 0x01, 0x0000, callback);
 		RC_CHECK_STOP
 	}
 }
