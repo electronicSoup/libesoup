@@ -177,8 +177,15 @@ cd - &> /dev/null
 #make_PIC24FJ256GB106
 #cd - &> /dev/null
 
-cd ../examples/projects/microchip/Modbus.X
-echo "Modbus.X dsPIC33EP256MU806"
+cd ../examples/projects/microchip/Modbus/Master.X
+echo "Modbus Master.X dsPIC33EP256MU806"
+make_dsPIC33EP256MU806
+#echo "Modbus.X PIC24FJ256GB106"
+#make_PIC24FJ256GB106
+cd - &> /dev/null
+
+cd ../examples/projects/microchip/Modbus/Slave.X
+echo "Modbus Slave.X dsPIC33EP256MU806"
 make_dsPIC33EP256MU806
 #echo "Modbus.X PIC24FJ256GB106"
 #make_PIC24FJ256GB106
