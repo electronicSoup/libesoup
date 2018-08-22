@@ -61,6 +61,7 @@ struct modbus_channel {
         modbus_response_function process_response;
 //        void                    *response_callback_data;
         void                   (*idle_callback)(modbus_id, uint8_t);
+        modbus_response_function slave_frame_handler;
     
         /*
          * The higher layer application code will pass in a tx_finished() in the 
