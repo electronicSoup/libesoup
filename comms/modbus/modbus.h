@@ -31,6 +31,12 @@
 
 #include "libesoup/comms/uart/uart.h"
 
+/**
+ * @typedef  modbus_id
+ * @brief    This is an overlay type to the result_t return code type.
+ *
+ * Modbus channel identifier is returned by the 
+ */
 typedef int16_t modbus_id;
 
 /**
@@ -43,22 +49,46 @@ typedef int16_t modbus_id;
  * @input   uint8_t  *frame MODBUS Frame to be processed.
  * @input   uint8_t   len   Length of the received MODBUS frame.
  */
-typedef void (*modbus_response_function)(modbus_id chan, uint8_t *frame, uint8_t len);
-
+typedef void (*modbus_response_function)(modbus_id chan,
+					 uint8_t *frame,
+					 uint8_t len);
 /**
  * @ingroup MODBUS
  * @fn      modbus_master_reserve
  * 
- * @brief Enumeration for units of time. Used to specify durations for timers.
- * 
- * 
- * Idle callback function is called so that the application knows when the
- * Modbus channel is free to transmit.
+ * @brief   Function to reserve a MODBUS channel for Master communications.
+ *
+ * @param   struct uart_data *uart
+ *                          Serial communications settings for the channel.
+ *                          Baud rate, Rx & Tx pins etc.
+ *
+ * @param   void (*idle_callback)(modbus_id, uint8_t)
+ *                          If the Application wants to be informed when the
+ *                          MODBUS channel is idle, and ready to transmit a
+ *                          frame, then a callback should be passed to the
+ *                          reserve funciton.
  */
-extern result_t modbus_master_reserve(struct uart_data *uart, void (*idle_callback)(modbus_id, uint8_t));
-extern result_t modbus_release(uint8_t modbus_id);
+extern modbus_id modbus_master_reserve(struct uart_data *uart,
+				       void (*idle_callback)(modbus_id, uint8_t));
 
-extern result_t modbus_read_config(modbus_id chan, uint8_t modbus_address, uint16_t mem_address, modbus_response_function callback);
+/**
+ * @ingroup MODBUS
+ * @fn      modbus_release
+ * 
+ * @brief   API Function to relase a MODBUS Channel, which is no longer required
+ *          by the application.
+ *
+ * @param   modbus_id       Identifer of the MODBUS channel to be released.
+ *
+ * @return  result_t        SUCCESS
+ *                          -ERR_BAD_INPUT_PARAMETER
+ */
+extern result_t  modbus_release(modbus_id id);
 
+
+extern result_t  modbus_read_config(modbus_id chan,
+				    uint8_t modbus_address,
+				    uint16_t mem_address,
+				    modbus_response_function callback);
 #endif //  SYS_MODBUS
 #endif //  _MODBUS_H

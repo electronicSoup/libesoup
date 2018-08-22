@@ -25,6 +25,8 @@
 
 #include "libesoup_config.h"
 
+#include "errno.h"
+
 #ifndef SYS_SERIAL_LOGGING
 #ifdef XC16
 #define LOG_D(...)      ///< fake entry for the DEBUG logging level
@@ -121,12 +123,6 @@ typedef uint8_t    boolean;
 #endif
 
 /** @}*/
-
-/**
- * @typedef  result_t
- * @brief    Return type from API function call. Negative on error condition
- */
-typedef int16_t result_t;
 
 /**
  * @ingroup Core
