@@ -408,8 +408,8 @@ result_t modbus_read_config_req(modbus_id chan, uint8_t modbus_address, uint16_t
 
 result_t  modbus_read_config_resp(modbus_id chan, uint16_t mem_address)
 {
-	uint8_t   tx_buffer[4];
-	
+	uint8_t   tx_buffer[SYS_MODBUS_MAX_RESP_LEN];
+
 	LOG_D("%s\n\r", __func__);
 
 	if (chan >= SYS_MODBUS_NUM_CHANNELS || !channels[chan].app_data) {
@@ -433,6 +433,37 @@ result_t  modbus_read_config_resp(modbus_id chan, uint16_t mem_address)
 	tx_buffer[3] = (uint8_t)(mem_address & 0xff);
 	
 	return(channels[chan].transmit(&channels[chan], tx_buffer, 4, NULL));
+}
+
+extern result_t  modbus_error_resp(modbus_id chan, uint8_t *msg, uint16_t len)
+{
+	uint16_t  i;
+	uint8_t   tx_buffer[SYS_MODBUS_MAX_RESP_LEN];
+
+	LOG_D("%s\n\r", __func__);
+
+	if (chan >= SYS_MODBUS_NUM_CHANNELS || !channels[chan].app_data) {
+		return(-ERR_BAD_INPUT_PARAMETER);
+	}
+	if (!channels[chan].transmit || channels[chan].state != mb_processing_request) {
+		return(-ERR_BUSY);
+	}
+
+	/*
+	 * Can only send a response from a Modbus Slave so check App data for
+	 * address of this channel. (0 = Master)
+	 */
+	if (channels[chan].app_data->address == 0) {
+		return(-ERR_NOT_SLAVE);
+	}
+
+	tx_buffer[0] = channels[chan].app_data->address;
+
+	for (i = 0; i < len; i++) {
+		tx_buffer[i + 1] = *msg++;
+	}
+
+	return(channels[chan].transmit(&channels[chan], tx_buffer, (len + 1), NULL));
 }
 
 result_t modbus_tx_data(struct modbus_channel *chan, uint8_t *data, uint16_t len)

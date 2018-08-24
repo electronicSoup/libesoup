@@ -108,5 +108,9 @@ extern result_t  modbus_read_config_req(modbus_id                chan,
 
 extern result_t  modbus_read_config_resp(modbus_id                chan,
                                          uint16_t                 mem_address);
+
+extern result_t  modbus_error_resp(modbus_id                chan,
+                                   uint8_t                 *msg,
+                                   uint16_t                 len);
 #endif //  SYS_MODBUS
 #endif //  _MODBUS_H

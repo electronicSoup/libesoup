@@ -78,7 +78,18 @@ void modbus_idle(modbus_id modbus, uint8_t idle)
 
 void modbus_process(modbus_id chan, uint8_t *frame, uint8_t len)
 {
-	uint8_t i;
+	result_t rc;
+	uint8_t  i;
+	uint8_t  response[5];
+
+	/*
+	 * If not other response is sent then the request is unsupported.
+	 * Send an error response accordingly.
+	 */
+	response[0] = 0xff;
+	response[1] = 0xff;
+	rc = modbus_error_resp(chan, response, 2);
+	RC_CHECK_PRINT_CONT("Response!\n\r");
 
 	LOG_D("%s chan-%d, len-%d\n\r", __func__, chan, len);
 
