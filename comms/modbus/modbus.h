@@ -5,8 +5,7 @@
  *
  * Function prototypes for using modbus Comms.
  * 
- * Layer 7 http://www.modbus.org/docs/Modbus_Application_Protocol_V1_1b3.pdf
- * Layers 1 & 2 http://www.modbus.org/docs/Modbus_over_serial_line_V1_02.pdf
+ * Specs are at http://www.modbus.org/specs.php
  *
  * Copyright 2017-2018 electronicSoup Limited
  *
@@ -28,6 +27,7 @@
  * - Incorrect implementation of Response timeout, which currently gets
  *   canceled on the first response byte received.
  * - No retry counters.
+ * - Turnaround timer not correctly started on braodcast message transmission
  */
 #ifndef _MODBUS_H
 #define _MODBUS_H
