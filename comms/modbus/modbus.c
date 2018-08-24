@@ -138,8 +138,8 @@ uint8_t crc_check(uint8_t *data, uint16_t len)
 
 	crc = crc_calculate(data, len - 2);
 
-	if (  (((crc >> 8) & 0xff) == data[len - 2])
-	    &&((crc & 0xff) == data[len - 1]) ) {
+	if (  (((crc >> 8) & 0xff) == data[len - 1])
+	    &&((crc & 0xff) == data[len - 2]) ) {
 		return (TRUE);
 	} else {
 		return (FALSE);
@@ -481,8 +481,8 @@ result_t modbus_tx_data(struct modbus_channel *chan, uint8_t *data, uint16_t len
 		buffer[loop] = *ptr++;
 	}
 
-	buffer[loop++] = (crc >> 8) & 0xff;
 	buffer[loop++] = crc & 0xff;
+	buffer[loop++] = (crc >> 8) & 0xff;
 
 	return(uart_tx_buffer(&chan->app_data->uart_data, buffer, loop));
 }

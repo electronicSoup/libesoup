@@ -131,7 +131,7 @@ int main()
 	/*
 	 * Initialise the UART connected to the MAX3221E
 	 */
-	rc = uart_calculate_mode(&modbus_data.uart_data.uart_mode, UART_8_DATABITS, UART_PARITY_NONE, UART_TWO_STOP_BITS, UART_IDLE_HIGH);
+	rc = uart_calculate_mode(&modbus_data.uart_data.uart_mode, UART_8_DATABITS, UART_PARITY_EVEN, UART_ONE_STOP_BIT, UART_IDLE_HIGH);
 	RC_CHECK_STOP
 
 	modbus_data.address                   = 0x01;                // Modbus Slave Address

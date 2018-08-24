@@ -23,10 +23,13 @@
  *
  * This implementation does not fully implement the standard.
  * 
- * - No processing of response received from the worng slave.
+ * - Only RTU Mode is implemented.
+ * - T15 not implemented
+ * - No processing of response received from the wrong slave.
  * - Incorrect implementation of Response timeout, which currently gets
  *   canceled on the first response byte received.
  * - No retry counters.
+ * - No diagnostics counters
  * - Turnaround timer not correctly started on braodcast message transmission
  */
 #ifndef _MODBUS_H
