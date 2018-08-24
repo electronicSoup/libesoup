@@ -32,6 +32,11 @@
 
 #include "libesoup/comms/uart/uart.h"
 
+/*
+ * MODBUS addresses above 247 are reserved and should not be used.
+ */
+#define MODBUS_MAX_ADDRESS  247
+
 /**
  * @typedef  modbus_id
  * @brief    This is an overlay type to the result_t return code type.

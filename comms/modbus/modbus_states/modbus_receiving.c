@@ -57,6 +57,8 @@ static void process_timer_35_expiry(struct modbus_channel *chan)
 	 */
 	if(!chan->app_data || !chan->app_data->unsolicited_frame_handler) {
 		chan->rx_write_index = 0;
+		LOG_W("No Handler\n\r");
+		set_modbus_idle_state(chan);
 		return;
 	}
 
@@ -77,12 +79,16 @@ static void process_timer_35_expiry(struct modbus_channel *chan)
 		for(loop = 0; loop < chan->rx_write_index; loop++) {
 			LOG_D("Char %d - 0x%x\n\r", loop, chan->rx_buffer[loop]);
 		}
+#endif
+		set_modbus_idle_state(chan);
 		return;
 	}
-#endif
-	chan->app_data->unsolicited_frame_handler(chan->app_data->channel_id, &(chan->rx_buffer[start_index]), chan->rx_write_index - (start_index + 2));
+	if(chan->rx_buffer[start_index] == chan->app_data->address) {
+		chan->app_data->unsolicited_frame_handler(chan->app_data->channel_id, &(chan->rx_buffer[start_index + 1]), chan->rx_write_index - (start_index + 3));
+	} else {
+		LOG_I("Not for this address\n\r");
+	}
         chan->rx_write_index = 0;
-
 	set_modbus_idle_state(chan);
 }
 

@@ -288,7 +288,7 @@ modbus_id modbus_reserve(struct modbus_app_data *app_data)
 	uint8_t  i;
 	void (*app_tx_finished)(struct uart_data *);
 
-	if(!app_data) {
+	if(!app_data || app_data->address > MODBUS_MAX_ADDRESS) {
 		return(-ERR_BAD_INPUT_PARAMETER);
 	}
 	
