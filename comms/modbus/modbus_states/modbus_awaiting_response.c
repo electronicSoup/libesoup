@@ -36,15 +36,15 @@ static void process_timer_35_expiry(struct modbus_channel *chan);
 static void process_rx_character(struct modbus_channel *chan, uint8_t ch);
 static void process_response_timeout(struct modbus_channel *chan);
 
-extern struct modbus_channel channels[SYS_MODBUS_NUM_CHANNELS];
-
 static void resp_timeout_expiry_fn(timer_id timer, union sigval data)
 {
+	struct modbus_channel *chan = (struct modbus_channel *)data.sival_ptr;
+	
 	LOG_D("%s\n\r", __func__);
-	channels[data.sival_int].resp_timer = BAD_TIMER_ID;
+	chan->resp_timer = BAD_TIMER_ID;
 
-	if (channels[data.sival_int].process_response_timeout) {
-		channels[data.sival_int].process_response_timeout(&channels[data.sival_int]);
+	if (chan->process_response_timeout) {
+		chan->process_response_timeout(chan);
 	} else {
 		LOG_E("Response Timout in unknown state\n\r");
 	}
@@ -62,7 +62,7 @@ static result_t start_response_timer(struct modbus_channel *chan)
 	request.period.duration = SYS_MODBUS_RESPONSE_TIMEOUT_DURATION;
 	request.type            = single_shot;
 	request.exp_fn          = resp_timeout_expiry_fn;
-	request.data.sival_int  = chan->modbus_index;
+	request.data.sival_ptr  = chan;
 
 //	if (channel->address == 0) {
 //		ticks = SYS_MODBUS_RESPONSE_BROADCAST_TIMEOUT;

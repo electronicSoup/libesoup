@@ -33,17 +33,16 @@ static const char *TAG = "MODBUS_TURNAROUND";
 
 #include "libesoup/comms/modbus/modbus_private.h"
 
-extern struct modbus_channel channels[SYS_MODBUS_NUM_CHANNELS];
-
 static void turnaround_expiry_fn(timer_id timer, union sigval data)
 {
 	result_t rc;
-	
+	struct modbus_channel *chan = (struct modbus_channel *)data.sival_ptr;
+
 	LOG_D("%s\n\r", __func__);
 
-	channels[data.sival_int].turnaround_timer = BAD_TIMER_ID;
+	chan->turnaround_timer = BAD_TIMER_ID;
 
-	rc = set_modbus_idle_state(&channels[data.sival_int]);
+	rc = set_modbus_idle_state(chan);
 	if (rc < 0) {
 		LOG_E("Failed to set idle state\n\r");
 	}
@@ -63,7 +62,7 @@ static result_t start_turnaround_timer(struct modbus_channel *chan)
 	request.period.duration = SYS_MODBUS_TURNAROUND_TIMEOUT_DURATION;
 	request.type            = single_shot;
 	request.exp_fn          = turnaround_expiry_fn;
-	request.data.sival_int  = chan->app_data->channel_id;
+	request.data.sival_ptr  = chan;
 
 	rc = sw_timer_start(&request);
 	RC_CHECK
