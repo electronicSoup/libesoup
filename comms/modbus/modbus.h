@@ -22,6 +22,12 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  *
+ * This implementation does not fully implement the standard.
+ * 
+ * - No processing of response received from the worng slave.
+ * - Incorrect implementation of Response timeout, which currently gets
+ *   canceled on the first response byte received.
+ * - No retry counters.
  */
 #ifndef _MODBUS_H
 #define _MODBUS_H
