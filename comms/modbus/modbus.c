@@ -281,7 +281,6 @@ void modbus_tx_finished(struct uart_data *uart)
 /*
  * Returns the index of the reserved modbus channel on success
  */
-//modbus_id modbus_master_reserve(struct uart_data *uart, void (*idle_callback)(modbus_id, uint8_t))
 modbus_id modbus_reserve(struct modbus_app_data *app_data)
 {
 	result_t rc;
@@ -327,8 +326,29 @@ modbus_id modbus_reserve(struct modbus_app_data *app_data)
 	/*
 	 * Set the starting state.
 	 */
-	set_modbus_starting_state(&channels[i]);
+#if defined(SYS_MODBUS_MASTER) && !defined(SYS_MODBUS_SLAVE)
+	if (app_data->address == 0) {
+		set_master_starting_state(&channels[i]);
+	} else {
+		return(-ERR_BAD_INPUT_PARAMETER);
+	}
+#endif
+	
+#if defined(SYS_MODBUS_SLAVE) && !defined(SYS_MODBUS_MASTER)
+	if (app_data->address > 0) {
+		set_slave_idle_state(&channels[i]);
+	} else {
+		return(-ERR_BAD_INPUT_PARAMETER);
+	}
+#endif
 
+#if defined(SYS_MODBUS_MASTER) && defined(SYS_MODBUS_SLAVE)
+	if (app_data->address == 0) {
+		set_master_starting_state(&channels[i]);
+	} else {
+		set_slave_idle_state(&channels[i]);
+	}
+#endif
 	return(i);
 }
 
@@ -374,16 +394,21 @@ result_t modbus_release(struct modbus_app_data *app_data)
 	return(uart_release(&app_data->uart_data));
 }
 
-result_t modbus_read_config_req(modbus_id chan, uint8_t modbus_address, uint16_t mem_address, modbus_response_function callback)
+#if defined(SYS_MODBUS_MASTER)
+result_t  modbus_read_coils_req(modbus_id                chan,
+	                        uint8_t                  modbus_address,
+                                uint16_t                 coil_address,
+                                uint16_t                 number_of_coils,
+				modbus_response_function callback)
 {
-	uint8_t   tx_buffer[4];
+	uint8_t   tx_buffer[6];
 	
 	LOG_D("%s\n\r", __func__);
 
 	if (chan >= SYS_MODBUS_NUM_CHANNELS || !channels[chan].app_data || !callback) {
 		return(-ERR_BAD_INPUT_PARAMETER);
 	}
-	if (!channels[chan].transmit || channels[chan].state != mb_idle) {
+	if (!channels[chan].transmit || channels[chan].state != mb_m_idle) {
 		return(-ERR_BUSY);
 	}
 	if (modbus_address == 0 || modbus_address > 247) {
@@ -399,23 +424,29 @@ result_t modbus_read_config_req(modbus_id chan, uint8_t modbus_address, uint16_t
 	}
 	
 	tx_buffer[0] = modbus_address;
-	tx_buffer[1] = MODBUS_READ_CONFIG;
-	tx_buffer[2] = (uint8_t)((mem_address >> 8) & 0xff);
-	tx_buffer[3] = (uint8_t)(mem_address & 0xff);
+	tx_buffer[1] = MODBUS_READ_COILS;
+	tx_buffer[2] = (uint8_t)((coil_address >> 8) & 0xff);
+	tx_buffer[3] = (uint8_t)(coil_address & 0xff);
+	tx_buffer[4] = (uint8_t)((number_of_coils >> 8) & 0xff);
+	tx_buffer[5] = (uint8_t)(number_of_coils & 0xff);
 	
 	return(channels[chan].transmit(&channels[chan], tx_buffer, 4, callback));
 }
+#endif
 
-result_t  modbus_read_config_resp(modbus_id chan, uint16_t mem_address)
+#if defined(SYS_MODBUS_SLAVE)
+result_t  modbus_error_resp(modbus_id  chan,
+                            uint8_t    modbus_function,
+                            uint8_t    exception)
 {
-	uint8_t   tx_buffer[SYS_MODBUS_MAX_RESP_LEN];
-
-	LOG_D("%s\n\r", __func__);
-
+	uint8_t  response[2];
+	
 	if (chan >= SYS_MODBUS_NUM_CHANNELS || !channels[chan].app_data) {
+		LOG_E("Bad chan\n\r");
 		return(-ERR_BAD_INPUT_PARAMETER);
 	}
-	if (!channels[chan].transmit || channels[chan].state != mb_processing_request) {
+	if (!channels[chan].transmit || channels[chan].state != mb_s_processing_request) {
+		LOG_E("Bad state\n\r");
 		return(-ERR_BUSY);
 	}
 
@@ -427,25 +458,33 @@ result_t  modbus_read_config_resp(modbus_id chan, uint16_t mem_address)
 		return(-ERR_NOT_SLAVE);
 	}
 	
-	tx_buffer[0] = channels[chan].app_data->address;
-	tx_buffer[1] = MODBUS_READ_CONFIG;
-	tx_buffer[2] = (uint8_t)((mem_address >> 8) & 0xff);
-	tx_buffer[3] = (uint8_t)(mem_address & 0xff);
+	response[0] = modbus_function | 0x80;   // Set MSBit for Error Code
+	response[1] = exception;
 	
-	return(channels[chan].transmit(&channels[chan], tx_buffer, 4, NULL));
+	return(channels[chan].transmit(&channels[chan], response, 2, NULL));
 }
+#endif
 
-extern result_t  modbus_error_resp(modbus_id chan, uint8_t *msg, uint16_t len)
+#if defined(SYS_MODBUS_SLAVE)
+result_t  modbus_read_coils_resp(modbus_id   chan,
+                                 uint8_t    *buffer,
+                                 uint8_t     len)
 {
-	uint16_t  i;
-	uint8_t   tx_buffer[SYS_MODBUS_MAX_RESP_LEN];
+	uint8_t   i;
+	uint8_t   tx_buffer[254];
 
 	LOG_D("%s\n\r", __func__);
 
-	if (chan >= SYS_MODBUS_NUM_CHANNELS || !channels[chan].app_data) {
+	/*
+	 * Maximum frame size if 256 bytes which includes an address byte and
+	 * two CRC bytes so 253. The response has to include a byte for 
+	 * function code and a byte for byte count so len as to be less then
+	 * 251
+	 */
+	if (len > 251 || chan >= SYS_MODBUS_NUM_CHANNELS || !channels[chan].app_data) {
 		return(-ERR_BAD_INPUT_PARAMETER);
 	}
-	if (!channels[chan].transmit || channels[chan].state != mb_processing_request) {
+	if (!channels[chan].transmit || channels[chan].state != mb_s_processing_request) {
 		return(-ERR_BUSY);
 	}
 
@@ -456,15 +495,18 @@ extern result_t  modbus_error_resp(modbus_id chan, uint8_t *msg, uint16_t len)
 	if (channels[chan].app_data->address == 0) {
 		return(-ERR_NOT_SLAVE);
 	}
-
+	
 	tx_buffer[0] = channels[chan].app_data->address;
-
+	tx_buffer[1] = MODBUS_READ_COILS;
+	tx_buffer[2] = len;
+	
 	for (i = 0; i < len; i++) {
-		tx_buffer[i + 1] = *msg++;
+		tx_buffer[3 + i] = buffer[i];
 	}
-
-	return(channels[chan].transmit(&channels[chan], tx_buffer, (len + 1), NULL));
+	
+	return(channels[chan].transmit(&channels[chan], tx_buffer, (i + 3), NULL));
 }
+#endif
 
 result_t modbus_tx_data(struct modbus_channel *chan, uint8_t *data, uint16_t len)
 {

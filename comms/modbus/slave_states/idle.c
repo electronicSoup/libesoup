@@ -1,5 +1,5 @@
 /**
- * @file libesoup/comms/modbus/modbus_states/modbus_idle.c
+ * @file libesoup/comms/modbus/slave_states/idle.c
  *
  * @author John Whitmore
  *
@@ -22,7 +22,7 @@
  */
 #include "libesoup_config.h"
 
-#ifdef SYS_MODBUS
+#if defined(SYS_MODBUS) && defined(SYS_MODBUS_SLAVE)
 
 #ifdef SYS_SERIAL_LOGGING
 #define DEBUG_FILE
@@ -32,40 +32,21 @@ static const char *TAG = "MODBUS_IDLE";
 
 #include "libesoup/comms/modbus/modbus_private.h"
 
-static result_t transmit(struct modbus_channel *chan, uint8_t *data, uint16_t len, modbus_response_function callback)
-{
-	LOG_D("Modbus Idle state Transmit(%d)\n\r", chan->app_data->channel_id);
-	
-	/*
-	 * The response timeout timer is started when the transmission is
-	 * completed in the modbus_awaiting_response state.
-	 */
-	if (!callback || !data || len == 0) {
-		return(-ERR_BAD_INPUT_PARAMETER);
-	}
-	chan->tx_modbus_address      = data[0];
-	chan->process_response       = callback;
-	
-	set_modbus_transmitting_state(chan);
-	return(modbus_tx_data(chan, data, len));
-}
-
-
 static void process_rx_character(struct modbus_channel *chan, uint8_t ch)
 {
 	result_t  rc;
 	
-	rc = set_modbus_receiving_state(chan);
+	rc = set_slave_receiving_state(chan);
 	chan->process_rx_character(chan, ch);
 }
 
-result_t set_modbus_idle_state(struct modbus_channel *chan)
+result_t set_slave_idle_state(struct modbus_channel *chan)
 {
 //	LOG_D("set_modbus_idle_state(channel %d)\n\r", chan->modbus_index);
-	chan->state                    = mb_idle;
+	chan->state                    = mb_s_idle;
 	chan->process_timer_15_expiry  = NULL;
 	chan->process_timer_35_expiry  = NULL;
-	chan->transmit                 = transmit;
+	chan->transmit                 = NULL;
         chan->rx_write_index           = 0;
 	chan->modbus_tx_finished       = NULL;
 	chan->process_rx_character     = process_rx_character;

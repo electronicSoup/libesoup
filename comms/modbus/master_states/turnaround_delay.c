@@ -1,5 +1,5 @@
 /**
- * @file libesoup/comms/modbus/modbus_states/modbus_turn_around.c
+ * @file libesoup/comms/modbus/master_states/modbus_turn_around.c
  *
  * @author John Whitmore
  *
@@ -23,7 +23,7 @@
  */
 #include "libesoup_config.h"
 
-#ifdef SYS_MODBUS
+#if defined(SYS_MODBUS) && defined(SYS_MODBUS_MASTER)
 
 #ifdef SYS_SERIAL_LOGGING
 #define DEBUG_FILE
@@ -42,7 +42,7 @@ static void turnaround_expiry_fn(timer_id timer, union sigval data)
 
 	chan->turnaround_timer = BAD_TIMER_ID;
 
-	rc = set_modbus_idle_state(chan);
+	rc = set_master_starting_state(chan);
 	if (rc < 0) {
 		LOG_E("Failed to set idle state\n\r");
 	}
@@ -75,7 +75,7 @@ static result_t start_turnaround_timer(struct modbus_channel *chan)
 result_t set_modbus_turnaround_state(struct modbus_channel *chan)
 {
 	LOG_D("set_modbus_turnaround_state()\n\r");
-	chan->state                    = mb_turnaround;
+	chan->state                    = mb_m_turnaround;
 	chan->rx_write_index           = 0;
 	chan->process_timer_15_expiry  = NULL;
 	chan->process_timer_35_expiry  = NULL;

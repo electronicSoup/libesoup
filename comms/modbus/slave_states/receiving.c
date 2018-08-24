@@ -22,7 +22,7 @@
  */
 #include "libesoup_config.h"
 
-#ifdef SYS_MODBUS
+#if defined(SYS_MODBUS) && defined(SYS_MODBUS_SLAVE)
 
 #ifdef SYS_SERIAL_LOGGING
 #define DEBUG_FILE
@@ -57,8 +57,6 @@ static void process_timer_35_expiry(struct modbus_channel *chan)
 	 */
 	if(!chan->app_data || !chan->app_data->unsolicited_frame_handler) {
 		chan->rx_write_index = 0;
-		LOG_W("No Handler\n\r");
-		set_modbus_idle_state(chan);
 		return;
 	}
 
@@ -79,28 +77,18 @@ static void process_timer_35_expiry(struct modbus_channel *chan)
 		for(loop = 0; loop < chan->rx_write_index; loop++) {
 			LOG_D("Char %d - 0x%x\n\r", loop, chan->rx_buffer[loop]);
 		}
-#endif
-		set_modbus_idle_state(chan);
 		return;
 	}
-	if(chan->rx_buffer[start_index] == chan->app_data->address) {
-		chan->app_data->unsolicited_frame_handler(chan->app_data->channel_id, &(chan->rx_buffer[start_index + 1]), chan->rx_write_index - (start_index + 3));
-	} else if(chan->rx_buffer[start_index] == MODBUS_BROADCAST_ADDRESS) {
-		if(chan->app_data->broadcast_frame_handler) {
-			chan->app_data->broadcast_frame_handler(chan->app_data->channel_id, &(chan->rx_buffer[start_index + 1]), chan->rx_write_index - (start_index + 3));
-		} else {
-			LOG_W("No Broadcast handler\n\r");
-		}
-	} else {
-		LOG_I("Not for this address\n\r");
-	}
+#endif
+	chan->app_data->unsolicited_frame_handler(chan->app_data->channel_id, &(chan->rx_buffer[start_index]), chan->rx_write_index - (start_index + 2));
         chan->rx_write_index = 0;
-	set_modbus_idle_state(chan);
+
+	set_slave_processing_request_state(chan);
 }
 
-result_t set_modbus_receiving_state(struct modbus_channel *chan)
+result_t set_slave_receiving_state(struct modbus_channel *chan)
 {
-	chan->state                    = mb_receiving;
+	chan->state                    = mb_s_receiving;
 	chan->process_timer_15_expiry  = NULL;
 	chan->process_timer_35_expiry  = process_timer_35_expiry;
 	chan->transmit                 = NULL;

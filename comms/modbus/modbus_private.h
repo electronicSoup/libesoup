@@ -33,20 +33,17 @@
 #include "libesoup/comms/modbus/modbus.h"
 #include "libesoup/timers/sw_timers.h"
 
-#define MODBUS_READ_CONFIG     0x03
-#define MODBUS_READ_DATA       0x04
-#define MODBUS_WRITE_CONFIG    0x06
-#define MODBUS_WRITE_MULTIPLE  0x10
-#define MODBUS_ID_REQUEST      0x11
-
 enum modbus_state {
-        mb_starting,
-        mb_idle,
-        mb_transmitting,
-        mb_awaiting_response,
-        mb_receiving,
-        mb_processing_request,
-        mb_turnaround
+        mb_m_starting,
+        mb_m_idle,
+        mb_m_transmitting,
+        mb_m_awaiting_response,
+        mb_m_turnaround,
+
+        mb_s_idle,
+        mb_s_receiving,
+        mb_s_processing_request,
+        mb_s_transmitting,
 };
 
 struct modbus_channel {
@@ -80,13 +77,20 @@ struct modbus_channel {
         void                   (*process_response_timeout)();
 };
 
-extern result_t set_modbus_starting_state(struct modbus_channel *channel);
-extern result_t set_modbus_idle_state(struct modbus_channel *channel);
-extern result_t set_modbus_transmitting_state(struct modbus_channel *channel);
-extern result_t set_modbus_awaiting_response_state(struct modbus_channel *channel);
-extern result_t set_modbus_turnaround_state(struct modbus_channel *chan);
-extern result_t set_modbus_receiving_state(struct modbus_channel *chan);
-extern result_t set_modbus_processing_request_state(struct modbus_channel *chan);
+#if defined(SYS_MODBUS_MASTER)
+extern result_t set_master_starting_state(struct modbus_channel *chan);
+extern result_t set_master_idle_state(struct modbus_channel *channel);
+extern result_t set_master_transmitting_state(struct modbus_channel *channel);
+extern result_t set_master_awaiting_response_state(struct modbus_channel *channel);
+extern result_t set_master_turnaround_state(struct modbus_channel *chan);
+#endif
+
+#if defined(SYS_MODBUS_SLAVE)
+extern result_t set_slave_idle_state(struct modbus_channel *chan);
+extern result_t set_slave_receiving_state(struct modbus_channel *chan);
+extern result_t set_slave_processing_request_state(struct modbus_channel *chan);
+extern result_t set_slave_transmitting_state(struct modbus_channel *channel);
+#endif
 
 extern result_t start_15_timer(struct modbus_channel *channel);
 extern result_t start_35_timer(struct modbus_channel *channel);

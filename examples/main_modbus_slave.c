@@ -41,16 +41,6 @@ static const char *TAG = "SLAVE";
 static struct modbus_app_data  modbus_data;
 static uint8_t                 modbus_chan_idle;
 
-void callback(modbus_id chan, uint8_t *msg, uint8_t len)
-{
-	uint8_t i;
-	
-	LOG_D("%s\n\r", __func__);
-	for (i = 0; i < len; i++) {
-		LOG_D("0x%x\n\r", msg[i]);
-	}
-}
-
 void tx_finished(struct uart_data *uart)
 {
 	result_t rc;
@@ -59,37 +49,64 @@ void tx_finished(struct uart_data *uart)
 	RC_CHECK_STOP
 }
 
-void modbus_idle(modbus_id modbus, uint8_t idle)
+static result_t process_read_coils(modbus_id chan, uint8_t *frame, uint8_t len)
 {
-	result_t rc;
+	result_t  rc;
+	uint16_t  coil_address;
+	uint16_t  number_of_coils;
+	uint8_t   buffer;
 
-	if (modbus != modbus_data.channel_id) {
-		rc = -1;
-		RC_CHECK_STOP
+	if (len != 4) {
+		rc = modbus_error_resp(chan, MODBUS_READ_COILS, MODBUS_ADDRESS_EXCEPTION);
+		RC_CHECK_LINE_CONT
+		return(-ERR_BAD_INPUT_PARAMETER);
 	}
+
+	coil_address    = (frame[0] << 8) | frame[1];
+	number_of_coils = (frame[2] << 8) | frame[3];
+
+	LOG_D("Read %d coils from address 0x%x\n\r", coil_address, number_of_coils);
 	
-	if(idle) {
-		LOG_D("Idle\n\r");
-	} else {
-		LOG_D("Busy\n\r");
+	/*
+	 * Just for example let's pretend we have one coil at address zero
+	 */
+	if (coil_address != 0x00) {
+		return(modbus_error_resp(chan, MODBUS_READ_COILS, MODBUS_ADDRESS_EXCEPTION));
 	}
-	modbus_chan_idle = idle;
+
+	/*
+	 * Respond with a single bit for coil 0x000 value 1
+	 */
+	buffer = 0x01;
+	return(modbus_read_coils_resp(chan, &buffer, 0x01));
 }
+
 
 void modbus_process(modbus_id chan, uint8_t *frame, uint8_t len)
 {
 	result_t rc;
 	uint8_t  i;
-	uint8_t  response[5];
 
+	LOG_D("Process a received frame\n\r");
 	/*
-	 * If not other response is sent then the request is unsupported.
-	 * Send an error response accordingly.
+	 * A simple application which only processes the MODBUS_READ_COILS
+	 * Function code. All other function requests will result in an error
+	 * response to the master.
 	 */
-	response[0] = 0xff;
-	response[1] = 0xff;
-	rc = modbus_error_resp(chan, response, 2);
-	RC_CHECK_PRINT_CONT("Response!\n\r");
+	switch(frame[0]) {
+	case MODBUS_READ_COILS:
+		rc = process_read_coils(chan, frame, len);
+		RC_CHECK_PRINT_CONT("Read Coils!\n\r");
+		break;
+
+	default:
+		/*
+		 * Function code is not handled so return error
+		 */
+		rc = modbus_error_resp(chan, frame[0], MODBUS_FUNCTION_CODE_EXCEPTION);
+		RC_CHECK_LINE_CONT
+		break;
+	}
 
 	LOG_D("%s chan-%d, len-%d\n\r", __func__, chan, len);
 
@@ -135,14 +152,13 @@ int main()
 	RC_CHECK_STOP
 
 	modbus_data.address                   = 0x01;                // Modbus Slave Address
-	modbus_data.idle_state_callback       = modbus_idle;
 	modbus_data.unsolicited_frame_handler = modbus_process;
 	modbus_data.broadcast_frame_handler   = modbus_broadcast_handler;
 	modbus_data.uart_data.tx_pin          = SN65HVD72D_TX;
 	modbus_data.uart_data.rx_pin          = SN65HVD72D_RX;
 	modbus_data.uart_data.tx_finished     = tx_finished;
-	modbus_data.uart_data.baud            = 9600;                // Nice relaxed baud rate
-	
+	modbus_data.uart_data.baud            = 9600;	// Nice relaxed baud rate
+
 	/*
 	 * Reserve a UART channel for our use
 	 */

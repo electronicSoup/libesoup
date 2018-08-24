@@ -48,6 +48,41 @@
  */
 #define MODBUS_MAX_ADDRESS         247
 
+/*
+ * MODBUS Layer 7 Function Codes
+ */
+#define MODBUS_READ_COILS                      0x01
+#define MODBUS_READ_DISCRETE_INPUT             0x02
+#define MODBUS_READ_HOLDING_REGISTER           0x03
+#define MODBUS_READ_INPUT_REGISTER             0x04
+#define MODBUS_WRITE_SINGLE_COIL               0x05
+#define MODBUS_WRITE_SINGLE_REGISTER           0x06
+#define MODBUS_READ_EXCEPTION_STATUS           0x07
+#define MODBUS_DIAGNOSTICS                     0x08
+#define MODBUS_GET_COMM_EVENT_COUNTER          0x0B
+#define MODBUS_GET_COMM_EVENT_LOG              0x0C
+#define MODBUS_WRITE_MULTIPLE_COILS            0x0F
+#define MODBUS_WRITE_MULTIPLE_REGISTERS        0x10
+#define MODBUS_REPORT_SERVER_ID                0x11
+#define MODBUS_READ_FILE_RECORD                0x14
+#define MODBUS_WRITE_FILE_RECORD               0x15
+#define MODBUS_MASK_WRITE_REGISTER             0x16
+#define MODBUS_READ_WRITE_MULTIPLE_REGISTERS   0x17
+#define MODBUS_READ_FIFO_QUEUE                 0x18
+
+#define MODBUS_CANOPEN_REQUEST                 0x2B
+#define MODBUS_CANOPEN_RESPONSE                0x0D
+
+#define MODBUS_READ_DEVICE_IDENTIFICATION_0E   0x0E
+#define MODBUS_READ_DEVICE_IDENTIFICATION_2B   0x2B
+
+/*
+ * MODBUS Layer 7 Exception codes
+ */
+#define MODBUS_FUNCTION_CODE_EXCEPTION         0x01
+#define MODBUS_ADDRESS_EXCEPTION               0x02
+#define MODBUS_DATA_EXCEPTION                  0x03
+
 /**
  * @typedef  modbus_id
  * @brief    This is an overlay type to the result_t return code type.
@@ -104,16 +139,23 @@ extern modbus_id modbus_reserve(struct modbus_app_data *app_data);
  */
 extern result_t  modbus_release(struct modbus_app_data *app_data);
 
-extern result_t  modbus_read_config_req(modbus_id                chan,
-			   	        uint8_t                  modbus_address,
-                                        uint16_t                 mem_address,
-				        modbus_response_function callback);
+#if defined(SYS_MODBUS_MASTER)
+extern result_t  modbus_read_coils_req(modbus_id                chan,
+			   	       uint8_t                  modbus_address,
+                                       uint16_t                 coil_address,
+                                       uint16_t                 number_of_coils,
+				       modbus_response_function callback);
+#endif // SYS_MODBUS_MASTER
 
-extern result_t  modbus_read_config_resp(modbus_id                chan,
-                                         uint16_t                 mem_address);
+#if defined(SYS_MODBUS_SLAVE)
+extern result_t  modbus_error_resp(modbus_id  chan,
+                                   uint8_t    modbus_function,
+                                   uint8_t    exception);
 
-extern result_t  modbus_error_resp(modbus_id                chan,
-                                   uint8_t                 *msg,
-                                   uint16_t                 len);
+extern result_t  modbus_read_coils_resp(modbus_id   chan,
+                                        uint8_t    *buffer,
+                                        uint8_t     len);
+#endif // SYS_MODBUS_SLAVE
+
 #endif //  SYS_MODBUS
 #endif //  _MODBUS_H

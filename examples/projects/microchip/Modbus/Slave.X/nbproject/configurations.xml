@@ -47,16 +47,22 @@
             <itemPath>../../../../../comms/can/can.c</itemPath>
           </logicalFolder>
           <logicalFolder name="modbus" displayName="modbus" projectFiles="true">
-            <logicalFolder name="modbus_states"
-                           displayName="modbus_states"
+            <logicalFolder name="master_states"
+                           displayName="master_states"
                            projectFiles="true">
-              <itemPath>../../../../../comms/modbus/modbus_states/modbus_turnaround_delay.c</itemPath>
-              <itemPath>../../../../../comms/modbus/modbus_states/modbus_starting.c</itemPath>
-              <itemPath>../../../../../comms/modbus/modbus_states/modbus_idle.c</itemPath>
-              <itemPath>../../../../../comms/modbus/modbus_states/modbus_transmitting.c</itemPath>
-              <itemPath>../../../../../comms/modbus/modbus_states/modbus_awaiting_response.c</itemPath>
-              <itemPath>../../../../../comms/modbus/modbus_states/modbus_receiving.c</itemPath>
-              <itemPath>../../../../../comms/modbus/modbus_states/modbus_processing_request.c</itemPath>
+              <itemPath>../../../../../comms/modbus/master_states/turnaround_delay.c</itemPath>
+              <itemPath>../../../../../comms/modbus/master_states/awaiting_response.c</itemPath>
+              <itemPath>../../../../../comms/modbus/master_states/starting.c</itemPath>
+              <itemPath>../../../../../comms/modbus/master_states/transmitting.c</itemPath>
+              <itemPath>../../../../../comms/modbus/master_states/idle.c</itemPath>
+            </logicalFolder>
+            <logicalFolder name="slave_states"
+                           displayName="slave_states"
+                           projectFiles="true">
+              <itemPath>../../../../../comms/modbus/slave_states/processing_request.c</itemPath>
+              <itemPath>../../../../../comms/modbus/slave_states/transmitting.c</itemPath>
+              <itemPath>../../../../../comms/modbus/slave_states/idle.c</itemPath>
+              <itemPath>../../../../../comms/modbus/slave_states/receiving.c</itemPath>
             </logicalFolder>
             <itemPath>../../../../../comms/modbus/modbus.c</itemPath>
           </logicalFolder>
@@ -375,6 +381,7 @@
         <property key="UART 4" value="true"/>
         <property key="USB" value="true"/>
         <property key="debugoptions.useswbreakpoints" value="false"/>
+        <property key="firmware.download.all" value="false"/>
         <property key="hwtoolclock.frcindebug" value="false"/>
         <property key="memories.aux" value="false"/>
         <property key="memories.bootflash" value="true"/>

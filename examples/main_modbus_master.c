@@ -45,7 +45,7 @@ void callback(modbus_id chan, uint8_t *msg, uint8_t len)
 {
 	uint8_t i;
 	
-	LOG_D("%s\n\r", __func__);
+	LOG_D("%s len-%d\n\r", __func__, len);
 	for (i = 0; i < len; i++) {
 		LOG_D("0x%x\n\r", msg[i]);
 	}
@@ -62,8 +62,8 @@ void exp_fn(timer_id timer, union sigval data)
 		 */
 		rc = gpio_set(SN65HVD72D_TX_ENABLE, GPIO_MODE_DIGITAL_OUTPUT, SN65HVD72D_SEND);
 		RC_CHECK_STOP
-			
-		rc = modbus_read_config_req(app_data.channel_id, 0x01, 0x0000, callback);
+
+		rc = modbus_read_coils_req(app_data.channel_id, 0x01, 0x0000, 0x01, callback);
 		RC_CHECK_STOP
 	}
 }
@@ -114,7 +114,7 @@ int main()
 	/*
 	 * Initialise the UART connected to the MAX3221E
 	 */
-	rc = uart_calculate_mode(&app_data.uart_data.uart_mode, UART_8_DATABITS, UART_PARITY_NONE, UART_TWO_STOP_BITS, UART_IDLE_HIGH);
+	rc = uart_calculate_mode(&app_data.uart_data.uart_mode, UART_8_DATABITS, UART_PARITY_EVEN, UART_ONE_STOP_BIT, UART_IDLE_HIGH);
 	RC_CHECK_STOP
 
 	app_data.idle_state_callback         = modbus_idle;

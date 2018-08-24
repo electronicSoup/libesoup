@@ -47,6 +47,7 @@
 #define SYS_MODBUS
 
 #ifdef SYS_MODBUS
+#define SYS_MODBUS_MASTER
 #define SYS_MODBUS_NUM_CHANNELS                  2
 #define SYS_MODBUS_RX_BUFFER_SIZE                256
 #define SYS_MODBUS_RESPONSE_TIMEOUT_UNITS        mSeconds

@@ -82,7 +82,9 @@ typedef int16_t result_t;
  * If SYS_SERIAL_LOGGING is not enabled then any error is ignored.
  */
 #if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL >= LOG_ERROR))
-#define RC_CHECK_PRINT_CONT(x) if(rc < 0) LOG_E("x");
+#define RC_CHECK_PRINT_CONT(x) if(rc < 0) LOG_E(x);
+#else
+#define RC_CHECK_PRINT_CONT(x)
 #endif
 
 /**
@@ -104,6 +106,14 @@ typedef int16_t result_t;
 #else
 #define RC_CHECK_PRINT_VOID(x) if(rc < 0) { return; }
 #endif
+
+#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL >= LOG_ERROR))
+#define RC_CHECK_LINE_CONT     if(rc < 0) LOG_E("&s-%d\n\r", __FILE__, __LINE__);
+#else
+#define RC_CHECK_LINE_CONT
+#endif
+
+#define FILE_LINE      LOG_E("%s-%d\n\r", __FILE__, __LINE__);
 
 /**
  * @def      SUCCESS

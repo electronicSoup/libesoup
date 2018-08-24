@@ -23,24 +23,30 @@
  */
 #include "libesoup_config.h"
 
-#ifdef SYS_MODBUS
+#if defined(SYS_MODBUS) && defined(SYS_MODBUS_SLAVE)
 
 #ifdef SYS_SERIAL_LOGGING
 #define DEBUG_FILE
-static const char *TAG = "MODBUS_Tx";
+static const char *TAG = "MB_S_Tx";
 #include "libesoup/logger/serial_log.h"
 #endif
 
 #include "libesoup/comms/modbus/modbus_private.h"
 
-#define TEST_MODBUS_LOOPBACK
+static void tx_finished(struct modbus_channel *chan)
+{
+        LOG_D("tx_finished()\n\r");
+	/*
+	 * After transmission the Slave node returns to the idle state
+	 * whereas the master awaits a response to it's request.
+	 */
+	set_slave_idle_state(chan);
+}
 
-static void tx_finished(struct modbus_channel *chan);
-
-result_t set_modbus_transmitting_state(struct modbus_channel *chan)
+result_t set_slave_transmitting_state(struct modbus_channel *chan)
 {
 	LOG_D("set_modbus_transmitting_state()\n\r");
-	chan->state                    = mb_transmitting;
+	chan->state                    = mb_s_transmitting;
 	chan->process_timer_15_expiry  = NULL;
 	chan->process_timer_35_expiry  = NULL;
 	chan->transmit                 = NULL;
@@ -53,47 +59,6 @@ result_t set_modbus_transmitting_state(struct modbus_channel *chan)
 	}
 	
 	return(SUCCESS);
-}
-
-#if defined(SYS_TEST_BUILD) && defined(TEST_MODBUS_LOOPBACK)
-void test_rx(timer_id timer, union sigval data)
-{
-	struct modbus_channel *chan = (struct modbus_channel *)data.sival_ptr;
-	uint8_t   buffer[6] = {0x01, 0x02, 0x03, 0x04};
-
-	buffer[4] = 0xa1;
-	buffer[5] = 0x2b;
-
-	uart_test_rx_buffer(&chan->app_data->uart_data, (uint8_t *)&buffer, 6);
-}
-#endif // SYS_TEST_BUILD
-
-void tx_finished(struct modbus_channel *chan)
-{
-#if defined(SYS_TEST_BUILD) && defined(TEST_MODBUS_LOOPBACK)
-	result_t          rc;
-	struct timer_req  request;
-#endif
-        LOG_D("tx_finished()\n\r");
-	/*
-	 * After transmission the Slave node returns to the idle state
-	 * whereas the master awaits a response to it's request.
-	 */
-	if (chan->app_data->address) {
-		set_modbus_idle_state(chan);
-	} else {
-		set_modbus_awaiting_response_state(chan);
-	}
-
-#if defined(SYS_TEST_BUILD) && defined(TEST_MODBUS_LOOPBACK)
-	request.period.units    = mSeconds;
-	request.period.duration = 50;
-	request.type            = single_shot;
-	request.data.sival_ptr  = chan;
-	request.exp_fn          = test_rx;
-	
-	rc = sw_timer_start(&request);
-#endif
 }
 
 #endif // SYS_MODBUS
