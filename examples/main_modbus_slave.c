@@ -79,9 +79,21 @@ void modbus_idle(modbus_id modbus, uint8_t idle)
 void modbus_process(modbus_id chan, uint8_t *frame, uint8_t len)
 {
 	uint8_t i;
-	
+
 	LOG_D("%s chan-%d, len-%d\n\r", __func__, chan, len);
-	
+
+	for (i = 0; i < len; i++) {
+		serial_printf("0x%x,", frame[i]);
+	}
+	serial_printf("\n\r");
+}
+
+void modbus_broadcast_handler(modbus_id chan, uint8_t *frame, uint8_t len)
+{
+	uint8_t i;
+
+	LOG_D("%s chan-%d, len-%d\n\r", __func__, chan, len);
+
 	for (i = 0; i < len; i++) {
 		serial_printf("0x%x,", frame[i]);
 	}
@@ -114,6 +126,7 @@ int main()
 	modbus_data.address                   = 0x01;                // Modbus Slave Address
 	modbus_data.idle_state_callback       = modbus_idle;
 	modbus_data.unsolicited_frame_handler = modbus_process;
+	modbus_data.broadcast_frame_handler   = modbus_broadcast_handler;
 	modbus_data.uart_data.tx_pin          = SN65HVD72D_TX;
 	modbus_data.uart_data.rx_pin          = SN65HVD72D_RX;
 	modbus_data.uart_data.tx_finished     = tx_finished;

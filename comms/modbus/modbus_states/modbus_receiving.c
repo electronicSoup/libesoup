@@ -85,6 +85,12 @@ static void process_timer_35_expiry(struct modbus_channel *chan)
 	}
 	if(chan->rx_buffer[start_index] == chan->app_data->address) {
 		chan->app_data->unsolicited_frame_handler(chan->app_data->channel_id, &(chan->rx_buffer[start_index + 1]), chan->rx_write_index - (start_index + 3));
+	} else if(chan->rx_buffer[start_index] == MODBUS_BROADCAST_ADDRESS) {
+		if(chan->app_data->broadcast_frame_handler) {
+			chan->app_data->broadcast_frame_handler(chan->app_data->channel_id, &(chan->rx_buffer[start_index + 1]), chan->rx_write_index - (start_index + 3));
+		} else {
+			LOG_W("No Broadcast handler\n\r");
+		}
 	} else {
 		LOG_I("Not for this address\n\r");
 	}

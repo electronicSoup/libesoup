@@ -32,10 +32,12 @@
 
 #include "libesoup/comms/uart/uart.h"
 
+#define MODBUS_BROADCAST_ADDRESS  0x00
+
 /*
  * MODBUS addresses above 247 are reserved and should not be used.
  */
-#define MODBUS_MAX_ADDRESS  247
+#define MODBUS_MAX_ADDRESS         247
 
 /**
  * @typedef  modbus_id
@@ -65,6 +67,7 @@ struct modbus_app_data {
         uint8_t                   address;
         void                    (*idle_state_callback)(modbus_id, uint8_t);
         modbus_response_function  unsolicited_frame_handler;
+        modbus_response_function  broadcast_frame_handler;
 };
 
 /**
