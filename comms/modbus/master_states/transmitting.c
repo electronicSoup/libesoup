@@ -52,7 +52,6 @@ static void tx_finished(struct modbus_channel *chan)
 	result_t          rc;
 	struct timer_req  request;
 #endif
-        LOG_D("tx_finished()\n\r");
 	set_master_awaiting_response_state(chan);
 
 #if defined(SYS_TEST_BUILD) && defined(TEST_MODBUS_LOOPBACK)
@@ -68,7 +67,6 @@ static void tx_finished(struct modbus_channel *chan)
 
 result_t set_master_transmitting_state(struct modbus_channel *chan)
 {
-	LOG_D("set_master_transmitting_state()\n\r");
 	chan->state                    = mb_m_transmitting;
 	chan->process_timer_15_expiry  = NULL;
 	chan->process_timer_35_expiry  = NULL;

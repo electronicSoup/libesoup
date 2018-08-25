@@ -87,7 +87,6 @@ void process_timer_35_expiry(struct modbus_channel *chan)
 	uint8_t  i;
 	uint8_t  start_index;
 
-	LOG_D("process_timer_35_expiry() chan %d msg length %d\n\r", chan->modbus_index, chan->rx_write_index);
 	if(chan->rx_write_index > 2) {
 		if(chan->rx_buffer[0] == chan->tx_modbus_address) {
 			start_index = 0;
@@ -159,7 +158,6 @@ static void process_response_timeout(struct modbus_channel *chan)
 
 result_t set_master_awaiting_response_state(struct modbus_channel *chan)
 {
-	LOG_D("set_master_awaiting_response_state()\n\r");
 	chan->state                    = mb_m_awaiting_response;
 	chan->rx_write_index           = 0;
 	chan->process_timer_15_expiry  = NULL;

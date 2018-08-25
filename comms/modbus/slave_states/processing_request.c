@@ -35,8 +35,6 @@ static const char *TAG = "MODBUS_PROCESSING";
 
 static result_t transmit(struct modbus_channel *chan, uint8_t *data, uint16_t len, modbus_response_function callback)
 {
-	LOG_D("Modbus Idle state Transmit(%d)\n\r", chan->app_data->channel_id);
-
 	if (!data || len == 0) {
 		return(-ERR_BAD_INPUT_PARAMETER);
 	}
@@ -51,15 +49,10 @@ result_t set_slave_processing_request_state(struct modbus_channel *chan)
 	chan->process_timer_15_expiry  = NULL;
 	chan->process_timer_35_expiry  = NULL;
 	chan->transmit                 = transmit;
-        chan->rx_write_index           = 0;
 	chan->modbus_tx_finished       = NULL;
 	chan->process_rx_character     = NULL;
 	chan->process_response_timeout = NULL;
 
-	if(chan->app_data->idle_state_callback) {
-		chan->app_data->idle_state_callback(chan->app_data->channel_id, FALSE);
-	}
-	
 	return(SUCCESS);
 }
 

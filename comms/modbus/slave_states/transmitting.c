@@ -35,7 +35,6 @@ static const char *TAG = "MB_S_Tx";
 
 static void tx_finished(struct modbus_channel *chan)
 {
-        LOG_D("tx_finished()\n\r");
 	/*
 	 * After transmission the Slave node returns to the idle state
 	 * whereas the master awaits a response to it's request.
@@ -45,19 +44,15 @@ static void tx_finished(struct modbus_channel *chan)
 
 result_t set_slave_transmitting_state(struct modbus_channel *chan)
 {
-	LOG_D("set_modbus_transmitting_state()\n\r");
 	chan->state                    = mb_s_transmitting;
 	chan->process_timer_15_expiry  = NULL;
 	chan->process_timer_35_expiry  = NULL;
 	chan->transmit                 = NULL;
+        chan->rx_write_index           = 0;
 	chan->modbus_tx_finished       = tx_finished;
 	chan->process_rx_character     = NULL;
 	chan->process_response_timeout = NULL;
 
-	if(chan->app_data->idle_state_callback) {
-		chan->app_data->idle_state_callback(chan->app_data->channel_id, FALSE);
-	}
-	
 	return(SUCCESS);
 }
 

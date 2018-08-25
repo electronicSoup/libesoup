@@ -34,8 +34,6 @@ static const char *TAG = "MB_M_IDLE";
 
 static result_t transmit(struct modbus_channel *chan, uint8_t *data, uint16_t len, modbus_response_function callback)
 {
-	LOG_D("Master Idle state Transmit(%d)\n\r", chan->app_data->channel_id);
-
 	/*
 	 * The response timeout timer is started when the transmission is
 	 * completed in the modbus_awaiting_response state.
@@ -50,12 +48,6 @@ static result_t transmit(struct modbus_channel *chan, uint8_t *data, uint16_t le
 	return(modbus_tx_data(chan, data, len));
 }
 
-
-static void process_rx_character(struct modbus_channel *chan, uint8_t ch)
-{
-	LOG_E("Received in Idle state\n\r");
-}
-
 result_t set_master_idle_state(struct modbus_channel *chan)
 {
 //	LOG_D("set_modbus_idle_state(channel %d)\n\r", chan->modbus_index);
@@ -65,7 +57,7 @@ result_t set_master_idle_state(struct modbus_channel *chan)
 	chan->transmit                 = transmit;
         chan->rx_write_index           = 0;
 	chan->modbus_tx_finished       = NULL;
-	chan->process_rx_character     = process_rx_character;
+	chan->process_rx_character     = NULL;
 	chan->process_response_timeout = NULL;
 
 	if(chan->app_data->idle_state_callback) {

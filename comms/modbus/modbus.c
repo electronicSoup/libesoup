@@ -231,12 +231,12 @@ static void modbus_process_rx_character(uint8_t uindex, uint8_t ch)
 		if (channels[i].app_data && channels[i].app_data->uart_data.uindex == uindex) {
 			if(channels[i].process_rx_character) {
 				channels[i].process_rx_character(&channels[i], ch);
+			} else {
+				serial_printf("-");
 			}
 			return;
 		}
 	}
-
-	LOG_E("State Error\n\r");
 }
 
 /*
@@ -403,8 +403,6 @@ result_t  modbus_read_coils_req(modbus_id                chan,
 {
 	uint8_t   tx_buffer[6];
 	
-	LOG_D("%s\n\r", __func__);
-
 	if (chan >= SYS_MODBUS_NUM_CHANNELS || !channels[chan].app_data || !callback) {
 		return(-ERR_BAD_INPUT_PARAMETER);
 	}
@@ -430,7 +428,7 @@ result_t  modbus_read_coils_req(modbus_id                chan,
 	tx_buffer[4] = (uint8_t)((number_of_coils >> 8) & 0xff);
 	tx_buffer[5] = (uint8_t)(number_of_coils & 0xff);
 	
-	return(channels[chan].transmit(&channels[chan], tx_buffer, 4, callback));
+	return(channels[chan].transmit(&channels[chan], tx_buffer, 6, callback));
 }
 #endif
 
@@ -439,7 +437,7 @@ result_t  modbus_error_resp(modbus_id  chan,
                             uint8_t    modbus_function,
                             uint8_t    exception)
 {
-	uint8_t  response[2];
+	uint8_t  response[3];
 	
 	if (chan >= SYS_MODBUS_NUM_CHANNELS || !channels[chan].app_data) {
 		LOG_E("Bad chan\n\r");
@@ -457,11 +455,12 @@ result_t  modbus_error_resp(modbus_id  chan,
 	if (channels[chan].app_data->address == 0) {
 		return(-ERR_NOT_SLAVE);
 	}
+
+	response[0] = channels[chan].app_data->address;
+	response[1] = modbus_function | 0x80;   // Set MSBit for Error Code
+	response[2] = exception;
 	
-	response[0] = modbus_function | 0x80;   // Set MSBit for Error Code
-	response[1] = exception;
-	
-	return(channels[chan].transmit(&channels[chan], response, 2, NULL));
+	return(channels[chan].transmit(&channels[chan], response, 3, NULL));
 }
 #endif
 
@@ -472,8 +471,6 @@ result_t  modbus_read_coils_resp(modbus_id   chan,
 {
 	uint8_t   i;
 	uint8_t   tx_buffer[254];
-
-	LOG_D("%s\n\r", __func__);
 
 	/*
 	 * Maximum frame size if 256 bytes which includes an address byte and

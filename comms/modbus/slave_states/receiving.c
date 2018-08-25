@@ -45,12 +45,14 @@ static void process_rx_character(struct modbus_channel *chan, uint8_t ch)
 
 static void process_timer_35_expiry(struct modbus_channel *chan)
 {
-	uint8_t  start_index;
+	uint8_t                    i;
+	uint8_t                    start_index;
+	uint8_t                    len;
+	modbus_response_function   handler;
+
 #if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	uint16_t loop;
 #endif
-
-	LOG_D("process_timer_35_expiry() channel %d msg length %d\n\r", chan->app_data->channel_id, chan->rx_write_index);
 
 	/*
 	 * If there's no handler forget the frame
@@ -80,10 +82,26 @@ static void process_timer_35_expiry(struct modbus_channel *chan)
 		return;
 	}
 #endif
-	chan->app_data->unsolicited_frame_handler(chan->app_data->channel_id, &(chan->rx_buffer[start_index]), chan->rx_write_index - (start_index + 2));
-        chan->rx_write_index = 0;
-
+	/*
+	 * As the response will be completed in the same thread of execution
+	 * change state prior to calling the handler.
+	 */
+	handler = chan->app_data->unsolicited_frame_handler;
 	set_slave_processing_request_state(chan);
+
+	if (chan->rx_buffer[start_index] == chan->app_data->address) {
+		for (i = start_index; i < chan->rx_write_index; i++) {
+			serial_printf("0x%x-", chan->rx_buffer[i]);
+		}
+		serial_printf("\n\r");
+
+		/*
+		 * Strip off the destination address and CRC no point sending.
+		 */
+		start_index++;
+		len = chan->rx_write_index - 3;   // write index points after end of msg so add one
+		handler(chan->app_data->channel_id, &(chan->rx_buffer[start_index]), len);
+	}
 }
 
 result_t set_slave_receiving_state(struct modbus_channel *chan)
@@ -97,10 +115,6 @@ result_t set_slave_receiving_state(struct modbus_channel *chan)
 	chan->process_rx_character     = process_rx_character;
 	chan->process_response_timeout = NULL;
 
-	if(chan->app_data->idle_state_callback) {
-		chan->app_data->idle_state_callback(chan->app_data->channel_id, FALSE);
-	}
-	
 	return(SUCCESS);
 }
 

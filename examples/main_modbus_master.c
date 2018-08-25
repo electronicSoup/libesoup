@@ -47,7 +47,12 @@ void callback(modbus_id chan, uint8_t *msg, uint8_t len)
 	
 	LOG_D("%s len-%d\n\r", __func__, len);
 	for (i = 0; i < len; i++) {
-		LOG_D("0x%x\n\r", msg[i]);
+		serial_printf("0x%x-", msg[i]);
+	}
+	serial_printf("\n\r");
+	
+	if (msg[1] & 0x80) {
+		LOG_E("Error Resp\n\r");
 	}
 }
 
@@ -78,17 +83,8 @@ void tx_finished(struct uart_data *uart)
 
 void modbus_idle(modbus_id modbus, uint8_t idle)
 {
-	result_t rc;
-
 	if (modbus != app_data.channel_id) {
-		rc = -1;
-		RC_CHECK_STOP
-	}
-	
-	if(idle) {
-		LOG_D("Idle\n\r");
-	} else {
-		LOG_D("Busy\n\r");
+		while(1);
 	}
 	modbus_chan_idle = idle;
 }

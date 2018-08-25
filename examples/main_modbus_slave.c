@@ -51,10 +51,18 @@ void tx_finished(struct uart_data *uart)
 
 static result_t process_read_coils(modbus_id chan, uint8_t *frame, uint8_t len)
 {
+	uint8_t   i;
 	result_t  rc;
 	uint16_t  coil_address;
 	uint16_t  number_of_coils;
 	uint8_t   buffer;
+
+	LOG_D("%s len %d\n\r", __func__, len);
+
+	for (i = 0; i < len; i++) {
+		serial_printf("0x%x,", frame[i]);
+	}
+	serial_printf("\n\r");
 
 	if (len != 4) {
 		rc = modbus_error_resp(chan, MODBUS_READ_COILS, MODBUS_ADDRESS_EXCEPTION);
@@ -62,11 +70,11 @@ static result_t process_read_coils(modbus_id chan, uint8_t *frame, uint8_t len)
 		return(-ERR_BAD_INPUT_PARAMETER);
 	}
 
-	coil_address    = (frame[0] << 8) | frame[1];
-	number_of_coils = (frame[2] << 8) | frame[3];
+	coil_address    = frame[0];
+	coil_address    = (coil_address << 8) | frame[1];
+	number_of_coils = frame[2];
+	number_of_coils = (number_of_coils << 8) | frame[3];
 
-	LOG_D("Read %d coils from address 0x%x\n\r", coil_address, number_of_coils);
-	
 	/*
 	 * Just for example let's pretend we have one coil at address zero
 	 */
@@ -85,9 +93,7 @@ static result_t process_read_coils(modbus_id chan, uint8_t *frame, uint8_t len)
 void modbus_process(modbus_id chan, uint8_t *frame, uint8_t len)
 {
 	result_t rc;
-	uint8_t  i;
 
-	LOG_D("Process a received frame\n\r");
 	/*
 	 * A simple application which only processes the MODBUS_READ_COILS
 	 * Function code. All other function requests will result in an error
@@ -95,7 +101,10 @@ void modbus_process(modbus_id chan, uint8_t *frame, uint8_t len)
 	 */
 	switch(frame[0]) {
 	case MODBUS_READ_COILS:
-		rc = process_read_coils(chan, frame, len);
+		/*
+		 * Don't send on Function code for processing only data
+		 */
+		rc = process_read_coils(chan, &frame[1], len - 1);
 		RC_CHECK_PRINT_CONT("Read Coils!\n\r");
 		break;
 
@@ -107,13 +116,6 @@ void modbus_process(modbus_id chan, uint8_t *frame, uint8_t len)
 		RC_CHECK_LINE_CONT
 		break;
 	}
-
-	LOG_D("%s chan-%d, len-%d\n\r", __func__, chan, len);
-
-	for (i = 0; i < len; i++) {
-		serial_printf("0x%x,", frame[i]);
-	}
-	serial_printf("\n\r");
 }
 
 void modbus_broadcast_handler(modbus_id chan, uint8_t *frame, uint8_t len)

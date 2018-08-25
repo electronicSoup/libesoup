@@ -42,7 +42,6 @@ static void process_rx_character(struct modbus_channel *chan, uint8_t ch)
 
 result_t set_slave_idle_state(struct modbus_channel *chan)
 {
-//	LOG_D("set_modbus_idle_state(channel %d)\n\r", chan->modbus_index);
 	chan->state                    = mb_s_idle;
 	chan->process_timer_15_expiry  = NULL;
 	chan->process_timer_35_expiry  = NULL;
@@ -52,10 +51,6 @@ result_t set_slave_idle_state(struct modbus_channel *chan)
 	chan->process_rx_character     = process_rx_character;
 	chan->process_response_timeout = NULL;
 
-	if(chan->app_data->idle_state_callback) {
-		chan->app_data->idle_state_callback(chan->app_data->channel_id, TRUE);
-	}
-	
 	return(SUCCESS);
 }
 
