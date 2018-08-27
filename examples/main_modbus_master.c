@@ -44,13 +44,13 @@ static uint8_t                  modbus_chan_idle;
 void callback(modbus_id chan, uint8_t *msg, uint8_t len)
 {
 	uint8_t i;
-	
+
 	LOG_D("%s len-%d\n\r", __func__, len);
 	for (i = 0; i < len; i++) {
 		serial_printf("0x%x-", msg[i]);
 	}
 	serial_printf("\n\r");
-	
+
 	if (msg[1] & 0x80) {
 		LOG_E("Error Resp\n\r");
 	}
@@ -68,7 +68,7 @@ void exp_fn(timer_id timer, union sigval data)
 		rc = gpio_set(SN65HVD72D_TX_ENABLE, GPIO_MODE_DIGITAL_OUTPUT, SN65HVD72D_SEND);
 		RC_CHECK_STOP
 
-		rc = modbus_read_coils_req(app_data.channel_id, 0x01, 0x0000, 0x01, callback);
+		rc = modbus_read_coils_req(app_data.channel_id, 0x01, 0x0000, 0x0001, callback);
 		RC_CHECK_STOP
 	}
 }

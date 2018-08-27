@@ -129,16 +129,46 @@ extern modbus_id modbus_reserve(struct modbus_app_data *app_data);
  * @ingroup MODBUS
  * @fn      modbus_release
  * 
- * @brief   API Function to relase a MODBUS Channel, which is no longer required
- *          by the application.
+ * @brief   MODBUS Function to release channel, no longer needed.
  *
- * @param   modbus_id       Identifer of the MODBUS channel to be released.
- *
+ * @param   struct modbus_app_data    *app_data
+ * 
+ *          - Application data of the MODBUS channel to release.
+ * 
  * @return  result_t        SUCCESS
  *                          -ERR_BAD_INPUT_PARAMETER
  */
 extern result_t  modbus_release(struct modbus_app_data *app_data);
 
+/**
+ * @ingroup MODBUS
+ * @fn      modbus_read_coils_req
+ * 
+ * @brief   MODBUS Master Function to read coil status.
+ *
+ * @param   modbus_id                  chan
+ * 
+ *          - Identifier of the MODBUS channel to use.
+ * 
+ * @param   uint8_t                    modbus_address
+ * 
+ *          - MODBUS Address of the slave to read the coil status of.
+ * 
+ * @param   uint16_t                   coil_address
+ * 
+ *          - Address of the first coil to read status of.
+ * 
+ * @param   uint16_t                   number_of_coils
+ * 
+ *          - Number of coils to read the status of
+ * 
+ * @param   modbus_response_function   callback
+ * 
+ *          - Callback function to be called with response from the Slave.
+ *
+ * @return  result_t        SUCCESS
+ *                          -ERR_BAD_INPUT_PARAMETER
+ */
 #if defined(SYS_MODBUS_MASTER)
 extern result_t  modbus_read_coils_req(modbus_id                chan,
 			   	       uint8_t                  modbus_address,
@@ -147,11 +177,56 @@ extern result_t  modbus_read_coils_req(modbus_id                chan,
 				       modbus_response_function callback);
 #endif // SYS_MODBUS_MASTER
 
+/**
+ * @ingroup MODBUS
+ * @fn      modbus_error_response
+ * 
+ * @brief   MODBUS Slave Function to return an error to the Master
+ *
+ * @param   modbus_id                  chan
+ * 
+ *          - Identifier of the MODBUS channel to use.
+ * 
+ * @param   uint8_t                    modbus_function
+ *
+ *          - The MODBUS Function which was received by the Slave
+ * 
+ * @param   uint8_t                    exception
+ * 
+ *          - The error code for the exception found
+ *
+ * @return  result_t        SUCCESS
+ *                          -ERR_BAD_INPUT_PARAMETER
+ */
 #if defined(SYS_MODBUS_SLAVE)
 extern result_t  modbus_error_resp(modbus_id  chan,
                                    uint8_t    modbus_function,
                                    uint8_t    exception);
+#endif // SYS_MODBUS_SLAVE
 
+/**
+ * @ingroup MODBUS
+ * @fn      modbus_read_coils_resp
+ * 
+ * @brief   MODBUS Slave Function to return requested coil status to Master
+ *
+ * @param   modbus_id                  chan
+ * 
+ *          - Identifier of the MODBUS channel to use.
+ * 
+ * @param   uint8_t                   *buffer
+ * 
+ *          - Address of the first byte to be returned to the MODBUS Master
+ * 
+ * @param   uint8_t                    len
+ * 
+ *          - Number of coil status bytes in the buffer to be retruned to the
+ *            Modbus Master.
+ *
+ * @return  result_t        SUCCESS
+ *                          -ERR_BAD_INPUT_PARAMETER
+ */
+#if defined(SYS_MODBUS_SLAVE)
 extern result_t  modbus_read_coils_resp(modbus_id   chan,
                                         uint8_t    *buffer,
                                         uint8_t     len);

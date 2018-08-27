@@ -49,10 +49,6 @@
 #define SYS_MODBUS_SLAVE
 #define SYS_MODBUS_NUM_CHANNELS                    2
 #define SYS_MODBUS_RX_BUFFER_SIZE                256
-#define SYS_MODBUS_RESPONSE_TIMEOUT_UNITS        mSeconds
-#define SYS_MODBUS_RESPONSE_TIMEOUT_DURATION     500
-#define SYS_MODBUS_TURNAROUND_TIMEOUT_UNITS      mSeconds
-#define SYS_MODBUS_TURNAROUND_TIMEOUT_DURATION   200
 #endif // SYS_MODEBUS
         
 #include "libesoup/boards/cinnamonBun/dsPIC33/cb-dsPIC33EP256MU806.h"
