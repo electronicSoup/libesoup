@@ -432,6 +432,45 @@ result_t  modbus_read_coils_req(modbus_id                chan,
 }
 #endif
 
+#if defined(SYS_MODBUS_MASTER)
+extern result_t  modbus_read_holding_regs_req(modbus_id                chan,
+                                              uint8_t                  modbus_address,
+                                              uint16_t                 reg_address,
+                                              uint16_t                 number_of_regs,
+				              modbus_response_function callback)
+{
+	uint8_t   tx_buffer[6];
+
+	if (chan >= SYS_MODBUS_NUM_CHANNELS || !channels[chan].app_data || !callback) {
+		return(-ERR_BAD_INPUT_PARAMETER);
+	}
+	if (!channels[chan].transmit || channels[chan].state != mb_m_idle) {
+		return(-ERR_BUSY);
+	}
+	if (modbus_address == 0 || modbus_address > 247) {
+		return(-ERR_ADDRESS_RANGE);
+	}
+
+	/*
+	 * Can only send a request from a Modbus Master so check App data for
+	 * address of this channel. (0 = Master)
+	 */
+	if (channels[chan].app_data->address != 0) {
+		return(-ERR_NOT_MASTER);
+	}
+
+	tx_buffer[0] = modbus_address;
+	tx_buffer[1] = MODBUS_READ_HOLDING_REGISTERS;
+	tx_buffer[2] = (uint8_t)((reg_address >> 8) & 0xff);
+	tx_buffer[3] = (uint8_t)(reg_address & 0xff);
+	tx_buffer[4] = (uint8_t)((number_of_regs >> 8) & 0xff);
+	tx_buffer[5] = (uint8_t)(number_of_regs & 0xff);
+
+	return(channels[chan].transmit(&channels[chan], tx_buffer, 6, callback));
+	
+}
+#endif // SYS_MODBUS_MASTER
+
 #if defined(SYS_MODBUS_SLAVE)
 result_t  modbus_error_resp(modbus_id  chan,
                             uint8_t    modbus_function,

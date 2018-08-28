@@ -27,10 +27,10 @@
  * - T15 not implemented
  * - No processing of response received from the wrong slave.
  * - Incorrect implementation of Response timeout, which currently gets
- *   canceled on the first response byte received.
+ *   cancelled on the first response byte received.
  * - No retry counters.
  * - No diagnostics counters
- * - Turnaround timer not correctly started on braodcast message transmission
+ * - Turnaround timer not correctly started on broadcast message transmission
  */
 #ifndef _MODBUS_H
 #define _MODBUS_H
@@ -53,7 +53,7 @@
  */
 #define MODBUS_READ_COILS                      0x01
 #define MODBUS_READ_DISCRETE_INPUT             0x02
-#define MODBUS_READ_HOLDING_REGISTER           0x03
+#define MODBUS_READ_HOLDING_REGISTERS          0x03
 #define MODBUS_READ_INPUT_REGISTER             0x04
 #define MODBUS_WRITE_SINGLE_COIL               0x05
 #define MODBUS_WRITE_SINGLE_REGISTER           0x06
@@ -145,6 +145,7 @@ extern result_t  modbus_release(struct modbus_app_data *app_data);
  * @fn      modbus_read_coils_req
  * 
  * @brief   MODBUS Master Function to read coil status.
+ *          MODBUS Function code 0x01
  *
  * @param   modbus_id                  chan
  * 
@@ -175,6 +176,44 @@ extern result_t  modbus_read_coils_req(modbus_id                chan,
                                        uint16_t                 coil_address,
                                        uint16_t                 number_of_coils,
 				       modbus_response_function callback);
+#endif // SYS_MODBUS_MASTER
+
+/**
+ * @ingroup MODBUS
+ * @fn      modbus_read_holding_regs_req
+ * 
+ * @brief   MODBUS Master Function to read holding registers.
+ *          MODBUS Function Code 0x03
+ *
+ * @param   modbus_id                  chan
+ * 
+ *          - Identifier of the MODBUS channel to use.
+ * 
+ * @param   uint8_t                    modbus_address
+ * 
+ *          - MODBUS Address of the slave to read the coil status of.
+ * 
+ * @param   uint16_t                   coil_address
+ * 
+ *          - Address of the first coil to read status of.
+ * 
+ * @param   uint16_t                   number_of_coils
+ * 
+ *          - Number of coils to read the status of
+ * 
+ * @param   modbus_response_function   callback
+ * 
+ *          - Callback function to be called with response from the Slave.
+ *
+ * @return  result_t        SUCCESS
+ *                          -ERR_BAD_INPUT_PARAMETER
+ */
+#if defined(SYS_MODBUS_MASTER)
+extern result_t  modbus_read_holding_regs_req(modbus_id                chan,
+                                              uint8_t                  modbus_address,
+                                              uint16_t                 coil_address,
+                                              uint16_t                 number_of_coils,
+				              modbus_response_function callback);
 #endif // SYS_MODBUS_MASTER
 
 /**
