@@ -65,6 +65,8 @@ static result_t process_read_coils(modbus_id chan, uint8_t *frame, uint8_t len)
 	serial_printf("\n\r");
 
 	if (len != 4) {
+		rc = gpio_set(SN65HVD72D_TX_ENABLE, GPIO_MODE_DIGITAL_OUTPUT, SN65HVD72D_SEND);
+		RC_CHECK_STOP
 		rc = modbus_error_resp(chan, MODBUS_READ_COILS, MODBUS_ADDRESS_EXCEPTION);
 		RC_CHECK_LINE_CONT
 		return(-ERR_BAD_INPUT_PARAMETER);
@@ -79,6 +81,8 @@ static result_t process_read_coils(modbus_id chan, uint8_t *frame, uint8_t len)
 	 * Just for example let's pretend we have one coil at address zero
 	 */
 	if (coil_address != 0x00) {
+		rc = gpio_set(SN65HVD72D_TX_ENABLE, GPIO_MODE_DIGITAL_OUTPUT, SN65HVD72D_SEND);
+		RC_CHECK_STOP
 		return(modbus_error_resp(chan, MODBUS_READ_COILS, MODBUS_ADDRESS_EXCEPTION));
 	}
 
@@ -86,9 +90,59 @@ static result_t process_read_coils(modbus_id chan, uint8_t *frame, uint8_t len)
 	 * Respond with a single bit for coil 0x000 value 1
 	 */
 	buffer = 0x01;
+	rc = gpio_set(SN65HVD72D_TX_ENABLE, GPIO_MODE_DIGITAL_OUTPUT, SN65HVD72D_SEND);
+	RC_CHECK_STOP
 	return(modbus_read_coils_resp(chan, &buffer, 0x01));
 }
 
+static result_t process_read_registers(modbus_id chan, uint8_t *frame, uint8_t len)
+{
+	uint8_t   i;
+	result_t  rc;
+	uint16_t  reg_address;
+	uint16_t  number_of_regs;
+	uint8_t   buffer[4];
+
+	LOG_D("%s len %d\n\r", __func__, len);
+
+	for (i = 0; i < len; i++) {
+		serial_printf("0x%x,", frame[i]);
+	}
+	serial_printf("\n\r");
+
+	if (len != 4) {
+		rc = gpio_set(SN65HVD72D_TX_ENABLE, GPIO_MODE_DIGITAL_OUTPUT, SN65HVD72D_SEND);
+		RC_CHECK_STOP
+		rc = modbus_error_resp(chan, MODBUS_READ_COILS, MODBUS_ADDRESS_EXCEPTION);
+		RC_CHECK_LINE_CONT
+		return(-ERR_BAD_INPUT_PARAMETER);
+	}
+
+	reg_address    = frame[0];
+	reg_address    = (reg_address << 8) | frame[1];
+	number_of_regs = frame[2];
+	number_of_regs = (number_of_regs << 8) | frame[3];
+
+	/*
+	 * Just for example let's pretend we have one coil at address zero
+	 */
+	if (reg_address != 0x00) {
+		rc = gpio_set(SN65HVD72D_TX_ENABLE, GPIO_MODE_DIGITAL_OUTPUT, SN65HVD72D_SEND);
+		RC_CHECK_STOP
+		return(modbus_error_resp(chan, MODBUS_READ_COILS, MODBUS_ADDRESS_EXCEPTION));
+	}
+
+	/*
+	 * Respond with a single bit for coil 0x000 value 1
+	 */
+	buffer[0] = 0x00;
+	buffer[1] = 0xb7;
+	buffer[2] = 0x02;
+	buffer[3] = 0x79;
+	rc = gpio_set(SN65HVD72D_TX_ENABLE, GPIO_MODE_DIGITAL_OUTPUT, SN65HVD72D_SEND);
+	RC_CHECK_STOP
+	return(modbus_read_registers_resp(chan, (uint8_t *)&buffer[0], 0x04));
+}
 
 void modbus_process(modbus_id chan, uint8_t *frame, uint8_t len)
 {
@@ -108,12 +162,25 @@ void modbus_process(modbus_id chan, uint8_t *frame, uint8_t len)
 		RC_CHECK_PRINT_CONT("Read Coils!\n\r");
 		break;
 
+	case MODBUS_READ_HOLDING_REGISTERS:
+		/*
+		 * Don't send on Function code for processing only data
+		 */
+		rc = process_read_registers(chan, &frame[1], len - 1);
+		RC_CHECK_PRINT_CONT("Read Regs!\n\r");
+		break;
+
 	default:
 		/*
 		 * Function code is not handled so return error
 		 */
+		LOG_D("Unrecognised message type\n\r");
+		rc = gpio_set(SN65HVD72D_TX_ENABLE, GPIO_MODE_DIGITAL_OUTPUT, SN65HVD72D_SEND);
+		RC_CHECK_STOP
 		rc = modbus_error_resp(chan, frame[0], MODBUS_FUNCTION_CODE_EXCEPTION);
-		RC_CHECK_LINE_CONT
+		if (rc < 0) {
+			LOG_E("Response failed\n\r");
+		}
 		break;
 	}
 }
@@ -150,7 +217,7 @@ int main()
 	/*
 	 * Initialise the UART connected to the MAX3221E
 	 */
-	rc = uart_calculate_mode(&modbus_data.uart_data.uart_mode, UART_8_DATABITS, UART_PARITY_EVEN, UART_ONE_STOP_BIT, UART_IDLE_HIGH);
+	rc = uart_calculate_mode(&modbus_data.uart_data.uart_mode, UART_8_DATABITS, UART_PARITY_NONE, UART_ONE_STOP_BIT, UART_IDLE_HIGH);
 	RC_CHECK_STOP
 
 	modbus_data.address                   = 0x01;                // Modbus Slave Address
