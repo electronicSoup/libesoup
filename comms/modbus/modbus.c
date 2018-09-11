@@ -138,8 +138,8 @@ uint8_t crc_check(uint8_t *data, uint16_t len)
 
 	crc = crc_calculate(data, len - 2);
 
-	if (  (((crc >> 8) & 0xff) == data[len - 1])
-	    &&((crc & 0xff) == data[len - 2]) ) {
+	if (  (((crc >> 8) & 0xff) == data[len - 2])
+	    &&((crc & 0xff) == data[len - 1]) ) {
 		return (TRUE);
 	} else {
 		return (FALSE);
@@ -201,6 +201,25 @@ result_t start_15_timer(struct modbus_channel *channel)
 	return(SUCCESS);
 }
 
+/*
+ * In RTU mode, message frames are separated by a silent interval of at
+ * least 3.5 character times.
+ * 
+ * Character time is 1 start bit, 8 data bits and say 2 stop bits for arguments
+ * sake, that's 11 * 1 / baud rate for a character.
+ * 
+ * For 3.5 char times it's (11 * 3.5) / baudrate
+ * 
+ * multiply but 1,000,000 for uSeconds 
+ * 
+ * (1,000,000 * 11 * 3.5) / baudrate
+ * Approx 1,000,000 * 39 / baudrate
+ * 
+ * I'm getting a time out on a baudrate of 9600 from a linux based machine so 
+ * up the timer to 
+ * 
+ * 
+ */
 result_t start_35_timer(struct modbus_channel *channel)
 {
 	result_t          rc;
@@ -211,7 +230,7 @@ result_t start_35_timer(struct modbus_channel *channel)
 	}
 
 	request.period.units    = uSeconds;
-	request.period.duration = ((1000000 * 39)/channel->app_data->uart_data.baud);
+	request.period.duration = ((1000000 * 50)/channel->app_data->uart_data.baud);
 	request.type            = single_shot;
 	request.exp_fn          = hw_35_expiry_function;
 	request.data.sival_ptr  = channel;
@@ -492,6 +511,7 @@ result_t  modbus_error_resp(modbus_id  chan,
 	 * address of this channel. (0 = Master)
 	 */
 	if (channels[chan].app_data->address == 0) {
+		LOG_E("Not Slave\n\r");
 		return(-ERR_NOT_SLAVE);
 	}
 
@@ -544,6 +564,47 @@ result_t  modbus_read_coils_resp(modbus_id   chan,
 }
 #endif
 
+#if defined(SYS_MODBUS_SLAVE)
+result_t  modbus_read_registers_resp(modbus_id   chan,
+	                             uint8_t    *buffer,
+                                     uint8_t     len)
+{
+	uint8_t   i;
+	uint8_t   tx_buffer[254];
+
+	/*
+	 * Maximum frame size if 256 bytes which includes an address byte and
+	 * two CRC bytes so 253. The response has to include a byte for 
+	 * function code and a byte for byte count so len as to be less then
+	 * 251
+	 */
+	if (len > 251 || chan >= SYS_MODBUS_NUM_CHANNELS || !channels[chan].app_data) {
+		return(-ERR_BAD_INPUT_PARAMETER);
+	}
+	if (!channels[chan].transmit || channels[chan].state != mb_s_processing_request) {
+		return(-ERR_BUSY);
+	}
+
+	/*
+	 * Can only send a response from a Modbus Slave so check App data for
+	 * address of this channel. (0 = Master)
+	 */
+	if (channels[chan].app_data->address == 0) {
+		return(-ERR_NOT_SLAVE);
+	}
+	
+	tx_buffer[0] = channels[chan].app_data->address;
+	tx_buffer[1] = MODBUS_READ_HOLDING_REGISTERS;
+	tx_buffer[2] = len;
+	
+	for (i = 0; i < len; i++) {
+		tx_buffer[3 + i] = buffer[i];
+	}
+	
+	return(channels[chan].transmit(&channels[chan], tx_buffer, (i + 3), NULL));
+}
+#endif
+
 result_t modbus_tx_data(struct modbus_channel *chan, uint8_t *data, uint16_t len)
 {
 	uint16_t      crc;
@@ -559,8 +620,8 @@ result_t modbus_tx_data(struct modbus_channel *chan, uint8_t *data, uint16_t len
 		buffer[loop] = *ptr++;
 	}
 
-	buffer[loop++] = crc & 0xff;
 	buffer[loop++] = (crc >> 8) & 0xff;
+	buffer[loop++] = crc & 0xff;
 
 	return(uart_tx_buffer(&chan->app_data->uart_data, buffer, loop));
 }

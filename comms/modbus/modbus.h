@@ -271,5 +271,11 @@ extern result_t  modbus_read_coils_resp(modbus_id   chan,
                                         uint8_t     len);
 #endif // SYS_MODBUS_SLAVE
 
+#if defined(SYS_MODBUS_SLAVE)
+extern result_t  modbus_read_registers_resp(modbus_id   chan,
+	                                    uint8_t    *buffer,
+                                            uint8_t     len);
+#endif // SYS_MODBUS_SLAVE
+
 #endif //  SYS_MODBUS
 #endif //  _MODBUS_H
