@@ -41,7 +41,7 @@ static const char *TAG = "MASTER";
 static struct modbus_app_data   app_data;
 static uint8_t                  modbus_chan_idle;
 
-void callback(modbus_id chan, uint8_t *msg, uint8_t len)
+void coil_callback(modbus_id chan, uint8_t *msg, uint8_t len)
 {
 	uint8_t i;
 
@@ -56,11 +56,24 @@ void callback(modbus_id chan, uint8_t *msg, uint8_t len)
 	}
 }
 
+void regs_callback(modbus_id chan, uint8_t *msg, uint8_t len)
+{
+	uint8_t i;
+
+	for (i = 0; i < len; i++) {
+		serial_printf("0x%x-", msg[i]);
+	}
+	serial_printf("\n\r");
+
+	if (msg[1] & 0x80) {
+		LOG_E("Error Resp\n\r");
+	}
+}
+
 void exp_fn(timer_id timer, union sigval data)
 {
 	result_t rc;
 
-	serial_printf(".");	
 	if (modbus_chan_idle) {
 		/*
 		 * Enter Transmit mode on the transceiver
@@ -68,7 +81,8 @@ void exp_fn(timer_id timer, union sigval data)
 		rc = gpio_set(SN65HVD72D_TX_ENABLE, GPIO_MODE_DIGITAL_OUTPUT, SN65HVD72D_SEND);
 		RC_CHECK_STOP
 
-		rc = modbus_read_coils_req(app_data.channel_id, 0x01, 0x0000, 0x0001, callback);
+//		rc = modbus_read_coils_req(app_data.channel_id, 0x01, 0x0000, 0x0001, coil_callback);
+		rc = modbus_read_holding_regs_req(app_data.channel_id, 0x01, 0x0000, 0x0002, regs_callback);
 		RC_CHECK_STOP
 	}
 }
@@ -110,7 +124,7 @@ int main()
 	/*
 	 * Initialise the UART connected to the MAX3221E
 	 */
-	rc = uart_calculate_mode(&app_data.uart_data.uart_mode, UART_8_DATABITS, UART_PARITY_EVEN, UART_ONE_STOP_BIT, UART_IDLE_HIGH);
+	rc = uart_calculate_mode(&app_data.uart_data.uart_mode, UART_8_DATABITS, UART_PARITY_NONE, UART_ONE_STOP_BIT, UART_IDLE_HIGH);
 	RC_CHECK_STOP
 
 	app_data.idle_state_callback         = modbus_idle;
@@ -128,7 +142,7 @@ int main()
 	RC_CHECK_STOP
 
 	request.period.units    = Seconds;
-	request.period.duration = 10;
+	request.period.duration = 120;
 	request.type            = repeat;
 	request.exp_fn          = exp_fn;
 	
