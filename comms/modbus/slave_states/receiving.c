@@ -73,15 +73,15 @@ static void process_timer_35_expiry(struct modbus_channel *chan)
 		/*
 		 * No valid frame found
 		 */
-		chan->rx_write_index = 0;
 #if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-		LOG_D("Message bad!\n\r");
+		LOG_D("Message bad! Count %d\n\r", chan->rx_write_index);
 		for(loop = 0; loop < chan->rx_write_index; loop++) {
 			LOG_D("Char %d - 0x%x\n\r", loop, chan->rx_buffer[loop]);
 		}
+#endif
+		chan->rx_write_index = 0;
 		return;
 	}
-#endif
 	/*
 	 * As the response will be completed in the same thread of execution
 	 * change state prior to calling the handler.
