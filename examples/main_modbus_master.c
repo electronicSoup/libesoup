@@ -142,7 +142,7 @@ int main()
 	RC_CHECK_STOP
 
 	request.period.units    = Seconds;
-	request.period.duration = 120;
+	request.period.duration = 30;
 	request.type            = repeat;
 	request.exp_fn          = exp_fn;
 	
