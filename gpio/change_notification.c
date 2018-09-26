@@ -102,9 +102,10 @@ result_t change_notifier_register(enum gpio_pin pin, change_notifier notifier)
 	 */
 	for(loop = 0; loop < SYS_CHANGE_NOTIFICATION_MAX_PINS; loop++) {
 		if(!pins[loop].monitored) {
-			pins[loop].monitored = TRUE;
-			pins[loop].pin       = pin;
-			pins[loop].notify    = notifier;
+			pins[loop].monitored      = TRUE;
+			pins[loop].pin            = pin;
+			pins[loop].notify         = notifier;
+			pins[loop].previous_value = gpio_get(pin);
 
 			return(enable_change(pin));
 		}

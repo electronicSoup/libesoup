@@ -27,7 +27,7 @@
 #ifdef SYS_CAN_BUS
 
 #ifdef SYS_SERIAL_LOGGING
-#define DEBUG_FILE
+#undef DEBUG_FILE
 #include "libesoup/logger/serial_log.h"
 static const char *TAG = "dsPIC33_CAN";
 #endif // SYS_SERIAL_LOGGING
@@ -461,7 +461,6 @@ result_t can_l2_init(can_baud_rate_t arg_baud_rate, status_handler_t arg_status_
 		}
 #endif
 	}
-	LOG_D("init end EC-RX %d  Tx %d\n\r", C1ECbits.RERRCNT, C1ECbits.TERRCNT);	
         return(0);
 }
 

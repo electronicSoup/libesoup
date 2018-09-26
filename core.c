@@ -89,6 +89,10 @@ extern result_t pwm_init(void);
 extern result_t modbus_init(void);
 #endif
 
+#ifdef SYS_CHANGE_NOTIFICATION
+extern result_t change_notifier_init(void);
+#endif
+
 /*
  * The Instruction Clock Frequency being used by the system.
  * 
