@@ -18,8 +18,6 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  *
  */
-//#define TX_NODE
-
 #include "libesoup_config.h"
 
 #ifdef SYS_SERIAL_LOGGING
@@ -37,7 +35,7 @@ void rd2_change(enum gpio_pin pin)
 	result_t  rc;
 	can_frame frame;
 
-	frame.can_id = 0x777;
+	frame.can_id = 0x777 | CAN_EFF_FLAG;
 	frame.can_dlc = 0x00;
 	rc = can_l2_tx_frame(&frame);
 	RC_CHECK_STOP
@@ -75,7 +73,7 @@ int main(void)
 	 * Register a frame handler
 	 */
 	target.filter  = 0x777;
-	target.mask    = CAN_SFF_MASK;
+	target.mask    = CAN_SFF_MASK;    // | CAN_EFF_FLAG;
 	target.handler = frame_handler;
 
 	rc = frame_dispatch_reg_handler(&target);

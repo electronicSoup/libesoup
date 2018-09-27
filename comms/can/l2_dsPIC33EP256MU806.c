@@ -27,7 +27,8 @@
 #ifdef SYS_CAN_BUS
 
 #ifdef SYS_SERIAL_LOGGING
-#undef DEBUG_FILE
+//#undef DEBUG_FILE
+#define DEBUG_FILE
 #include "libesoup/logger/serial_log.h"
 static const char *TAG = "dsPIC33_CAN";
 #endif // SYS_SERIAL_LOGGING
@@ -499,6 +500,7 @@ result_t can_l2_tx_frame(can_frame *frame)
 				can_buffers[loop].ide = 0b1;
 				can_buffers[loop].ssr = 0b1;
 				can_buffers[loop].rtr = frame->can_id & CAN_RTR_FLAG;
+				can_buffers[loop].sid = frame->can_id & CAN_SFF_MASK;
 				can_buffers[loop].eid_l = (frame->can_id >> 11) & 0b111111; 
 				can_buffers[loop].eid_h = (frame->can_id >> 17) & 0x0fff;
 			} else {
@@ -560,6 +562,7 @@ void can_l2_tasks(void)
 			 */
 			LOG_E("CAN Overflow\n\r");
 		}
+		
 		/*
 		 * Process the Rx'd buffer
 		 */
@@ -581,7 +584,7 @@ void can_l2_tasks(void)
 		}
 		frame.can_dlc = can_buffers[fifo_rd_index].dlc;
 
-		for(loop = 0; loop < frame.can_dlc; loop++) {
+		for (loop = 0; loop < frame.can_dlc; loop++) {
 			frame.data[loop] = can_buffers[fifo_rd_index].data[loop];
 		}
 #ifdef SYS_CAN_PING_PROTOCOL

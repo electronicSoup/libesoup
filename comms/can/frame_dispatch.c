@@ -40,8 +40,8 @@
 
 
 #ifdef SYS_SERIAL_LOGGING
-//#define DEBUG_FILE
-#undef DEBUG_FILE
+#define DEBUG_FILE
+//#undef DEBUG_FILE
 #include "libesoup/logger/serial_log.h"
 #if defined(__XC16)
 __attribute__ ((unused)) static const char *TAG = "CAN_DISPATCH";
@@ -86,14 +86,6 @@ result_t frame_dispatch_reg_handler(can_l2_target_t *target)
 
 	LOG_I("sys_l2_can_dispatch_reg_handler mask 0x%lx, filter 0x%lx\n\r",
 		target->mask, target->filter);
-	/*
-	 * clean up the target in case the caller has included spurious bits
-	 */
-	if(target->mask & CAN_EFF_FLAG) {
-		target->mask = target->mask & (CAN_EFF_FLAG | CAN_EFF_MASK);
-	} else {
-		target->mask = target->mask & CAN_SFF_MASK;
-	}
 
 	// Find a free slot
 	for(loop = 0; loop < SYS_CAN_L2_HANDLER_ARRAY_SIZE; loop++) {
@@ -134,7 +126,7 @@ void frame_dispatch_handle_frame(can_frame *frame)
 	uint8_t loop;
 	boolean found = FALSE;
 
-	LOG_D("frame_dispatch_handle_frame(%lx)\n\r", frame->can_id);
+	LOG_D("frame_dispatch_handle_frame(0x%lx)\n\r", frame->can_id);
 
 	for (loop = 0; loop < SYS_CAN_L2_HANDLER_ARRAY_SIZE; loop++) {
 		if(registered_handlers[loop].used) {
