@@ -1119,7 +1119,7 @@ result_t gpio_get(enum gpio_pin pin)
 		break;
 	}
 	
-	return(0);
+	return(-ERR_BAD_INPUT_PARAMETER);
 }
 #endif // #if defined(__dsPIC33EP256MU806__) || defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__)
 
