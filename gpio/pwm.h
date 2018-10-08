@@ -24,6 +24,7 @@
 #define _PWM_H
 
 #include "libesoup_config.h"
+#ifdef SYS_PWM
 
 /*
  * Must be called before the pin is turned on with the pwm_on() API call.
@@ -34,4 +35,5 @@ extern result_t pwm_config(enum gpio_pin, uint16_t frequency, uint8_t duty);
 extern result_t pwm_on(enum gpio_pin);
 extern result_t pwm_off(enum gpio_pin);
 
+#endif // SYS_PWM
 #endif // _PWM_H

@@ -25,6 +25,7 @@
 #ifdef SYS_PWM
 
 #include "libesoup/errno.h"
+#include "libesoup/gpio/gpio.h"
 
 result_t pwm_init(void)
 {
@@ -39,8 +40,13 @@ result_t pwm_init(void)
 	return(0);
 }
 
-result_t pwm_config(enum gpio_pin pin, uint16_t frequency, uint8_t duty)
+result_t pwm_config(enum gpio_pin pin, uint16_t frequency, uint8_t duty_percent)
 {
+	uint32_t i;
+	uint32_t n;
+	uint8_t  clkdiv;
+	result_t rc;
+	
 	enum pwm_pin pwm_pin;
 
 	pwm_pin = get_pwm_from_gpio(pin);
@@ -49,23 +55,100 @@ result_t pwm_config(enum gpio_pin pin, uint16_t frequency, uint8_t duty)
 		return(-ERR_BAD_INPUT_PARAMETER);
 	}
 
+	/*
+	 * Set the GPIO Pin as a digital output
+	 */
+	rc = gpio_set(pin, GPIO_MODE_DIGITAL_OUTPUT, 0);
+	RC_CHECK
+
+	/*
+	 * The period of the PWM pulses is defined by PTPER SFR (in Master Time
+	 * Base Mode) or PHASEx and SPHASEx (in Independent Time Based Mode)
+	 * 
+	 * PTPER, PHASEx, SPHASEx = ( Fosc / ( PWM_Freq * PWM_Prescaler) )
+	 * 
+	 * PTPER = SYS_CLOCK_FREQ / frequency * 1 << PTCON2bits.PCLKDIV
+	 */
+	i = (SYS_CLOCK_FREQ / frequency);
+	clkdiv = PTCON2bits.PCLKDIV;
+	do {
+		n = (i / (1 << clkdiv));
+		
+		if (n > 0xffff) {
+			clkdiv++;
+		}
+	} while (n > 0xffff && clkdiv < 0b111);
+
+	if (clkdiv == 0b111 || n > 0xffff)
+		return(-ERR_RANGE_ERROR);
+
+	PTCON2bits.PCLKDIV = clkdiv;	
+	
 	switch (pwm_pin) {
-	case PWM1L:
 	case PWM1H:
-		PDC1 = 0xff;
+		PWMCON1bits.ITB = 1;
+		PWMCON1bits.MDCS = 0;
+		PHASE1 = (uint16_t)(n & 0xffff);
+		DTR1 = 0x00;
+		PDC1 = (uint16_t)(((n / 100) * duty_percent) & 0xffff);
 		break;
-	case PWM2L:
+
+	case PWM1L:
+		PWMCON1bits.ITB = 1;
+		PWMCON1bits.MDCS = 0;
+		SPHASE1 = (uint16_t)(n & 0xffff);
+		ALTDTR1 = 0x00;
+		SDC1 = (uint16_t)(((n / 100) * duty_percent) & 0xffff);
+		break;
+
 	case PWM2H:
-		PDC2 = 0xff;
+		PWMCON2bits.ITB = 1;
+		PWMCON2bits.MDCS = 0;
+		PHASE2 = (uint16_t)(n & 0xffff);
+		DTR2 = 0x00;
+		PDC2 = (uint16_t)(((n / 100) * duty_percent) & 0xffff);
 		break;
-	case PWM3L:
+
+	case PWM2L:
+		PWMCON2bits.ITB = 1;
+		PWMCON2bits.MDCS = 0;
+		SPHASE2 = (uint16_t)(n & 0xffff);
+		ALTDTR2 = 0x00;
+		SDC2 = (uint16_t)(((n / 100) * duty_percent) & 0xffff);
+		break;
+
 	case PWM3H:
-		PDC3 = 0xff;
+		PWMCON3bits.ITB = 1;
+		PWMCON3bits.MDCS = 0;
+		PHASE3 = (uint16_t)(n & 0xffff);
+		DTR3 = 0x00;
+		PDC3 = (uint16_t)(((n / 100) * duty_percent) & 0xffff);
 		break;
-	case PWM4L:
+
+	case PWM3L:
+		PWMCON3bits.ITB = 1;
+		PWMCON3bits.MDCS = 0;
+		SPHASE3 = (uint16_t)(n & 0xffff);
+		ALTDTR3 = 0x00;
+		SDC3 = (uint16_t)(((n / 100) * duty_percent) & 0xffff);
+		break;
+
 	case PWM4H:
-		PDC3 = 0xff;
+		PWMCON4bits.ITB = 1;
+		PWMCON4bits.MDCS = 0;
+		PHASE4 = (uint16_t)(n & 0xffff);
+		DTR4 = 0x00;
+		PDC4 = (uint16_t)(((n / 100) * duty_percent) & 0xffff);
 		break;
+
+	case PWM4L:
+		PWMCON4bits.ITB = 1;
+		PWMCON4bits.MDCS = 0;
+		SPHASE4 = (uint16_t)(n & 0xffff);
+		ALTDTR4 = 0x00;
+		SDC4 = (uint16_t)(((n / 100) * duty_percent) & 0xffff);
+		break;
+
 	default:
 		return(-ERR_BAD_INPUT_PARAMETER);
 		break;
