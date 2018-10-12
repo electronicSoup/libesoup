@@ -33,8 +33,7 @@ result_t pwm_init(void)
 	 * Set the Input clock prescaler. For the moment set the slowest possible
 	 */
 	PTCONbits.PTEN     = DISABLED;    // Disable the PWM Module for write
-	PTCON2bits.PCLKDIV = 0b110;       // Divide by 64
-	PTPER              = 0x1ff;       // Master Period
+	PTCON2bits.PCLKDIV = 0b000;       // Divide by 64
 	PTCONbits.PTEN     = ENABLED;     // re-enable the PWM Module
 
 	return(0);
@@ -61,6 +60,8 @@ result_t pwm_config(enum gpio_pin pin, uint16_t frequency, uint8_t duty_percent)
 	rc = gpio_set(pin, GPIO_MODE_DIGITAL_OUTPUT, 0);
 	RC_CHECK
 
+	PTCONbits.PTEN = DISABLED;    // Disable the PWM Module for write
+
 	/*
 	 * The period of the PWM pulses is defined by PTPER SFR (in Master Time
 	 * Base Mode) or PHASEx and SPHASEx (in Independent Time Based Mode)
@@ -69,6 +70,7 @@ result_t pwm_config(enum gpio_pin pin, uint16_t frequency, uint8_t duty_percent)
 	 * 
 	 * PTPER = SYS_CLOCK_FREQ / frequency * 1 << PTCON2bits.PCLKDIV
 	 */
+#if 0
 	i = (SYS_CLOCK_FREQ / frequency);
 	clkdiv = PTCON2bits.PCLKDIV;
 	do {
@@ -81,8 +83,8 @@ result_t pwm_config(enum gpio_pin pin, uint16_t frequency, uint8_t duty_percent)
 
 	if (clkdiv == 0b111 || n > 0xffff)
 		return(-ERR_RANGE_ERROR);
-
-	PTCON2bits.PCLKDIV = clkdiv;	
+#endif
+	PTCON2bits.PCLKDIV = 0b000; //clkdiv;	
 	
 	switch (pwm_pin) {
 	case PWM1H:
@@ -96,9 +98,9 @@ result_t pwm_config(enum gpio_pin pin, uint16_t frequency, uint8_t duty_percent)
 	case PWM1L:
 		PWMCON1bits.ITB = 1;
 		PWMCON1bits.MDCS = 0;
-		SPHASE1 = (uint16_t)(n & 0xffff);
+		SPHASE1 = 0xff; //(uint16_t)(n & 0xffff);
 		ALTDTR1 = 0x00;
-		SDC1 = (uint16_t)(((n / 100) * duty_percent) & 0xffff);
+		SDC1 = 0x7f; //(uint16_t)(((n / 100) * duty_percent) & 0xffff);
 		break;
 
 	case PWM2H:
@@ -154,6 +156,8 @@ result_t pwm_config(enum gpio_pin pin, uint16_t frequency, uint8_t duty_percent)
 		break;
 	}
 	
+	PTCONbits.PTEN     = ENABLED;    // Disable the PWM Module for write
+
 	return(0);
 }
 
