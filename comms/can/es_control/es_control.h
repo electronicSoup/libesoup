@@ -30,8 +30,8 @@ union es_control_id {
         uint16_t  word;
 };
 
-const uint16_t es_type_mask = 0x00ff;
 const uint16_t es_rtr_mask  = 0x0100;
+const uint16_t es_type_mask = 0x00ff;
 
 const uint8_t priority_0 = 0x00;   // Highest Priority
 const uint8_t priority_1 = 0x01;
