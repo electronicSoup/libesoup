@@ -139,7 +139,7 @@ static void set_mode(uint8_t mode);
 
 result_t can_l2_bitrate(can_baud_rate_t baud);
 
-static void reset(void)
+static void __attribute__ ((unused)) reset(void)
 {
 	uint8_t          current_mode;
 	struct period    period;
