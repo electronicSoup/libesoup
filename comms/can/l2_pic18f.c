@@ -4,7 +4,7 @@
  *
  * Functions for retrieving the CinnamonBun Info Strings
  *
- * Copyright 2017 2018 electronicSoup Limited
+ * Copyright 2017 - 2018 electronicSoup Limited
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 2 of the GNU Lesser General Public License
@@ -41,17 +41,6 @@
 #define DEBUG_FILE
 #include "libesoup/logger/serial_log.h"
 static const char *TAG = "18F_CAN";
-
-//char baud_rate_strings[8][10] = {
-//    "baud_10K",
-//    "baud_20K",
-//    "baud_50K",
-//    "baud_125K",
-//    "baud_250K",
-//    "baud_500K",
-//    "baud_800K",
-//    "baud_1M"
-//};
 #endif // SYS_SERIAL_LOGGING
 
 #include "libesoup/comms/can/can.h"
@@ -72,7 +61,6 @@ static timer_id         networkIdleTimer = BAD_TIMER_ID;
 static struct timer_req idle_timer_request;
 #endif
 
-//static ty_CanStatus canStatus = Listening;
 static void set_baud_rate(can_baud_rate_t baudRate);
 static void finaliseBaudRateChange(timer_id timer, union sigval data);
 
@@ -96,8 +84,8 @@ canBuffer_t *tx_buffers[TX_BUFFERS];
 #else
 can_frame rxMsg;
 
-#define     TX_BUFFERS  6
-#define     RX_BUFFERS  5
+#define     TX_BUFFERS  3
+#define     RX_BUFFERS  8
 
 canBuffer_t *tx_buffers[TX_BUFFERS];
 canBuffer_t *rx_buffers[RX_BUFFERS];
@@ -113,13 +101,16 @@ can_mask masks[MASKS] =
 };
 
 
-static void setMode(uint8_t mode);
-//static void setBitRate(can_baud_rate_t baudRate);
+static void set_mode(ty_can_mode mode);
 
 #ifdef SYS_CAN_PING_PROTOCOL
 static void restart_idle_timer(void);
 #endif
 
+/*
+ * CAN Bus module uses the System status handler functionality so an application
+ * can be notified of asynchronous changes in state of the CAN Bus
+ */
 static status_handler_t status_handler;
 
 result_t can_l2_init(can_baud_rate_t arg_baud_rate, status_handler_t arg_status_handler)
@@ -131,6 +122,10 @@ result_t can_l2_init(can_baud_rate_t arg_baud_rate, status_handler_t arg_status_
 		LOG_D("L2_CanInit() Baud Rate %s\n\r", can_baud_rate_strings[arg_baud_rate]);
 #endif
 	} else {
+		/*
+		 * No Baud rate specified should start baud rate detection if
+		 * enabled.
+		 */
 #if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
 		LOG_E("L2_CanInit() ToDo!!! No Baud Rate Specified\n\r");
 #endif
@@ -142,12 +137,11 @@ result_t can_l2_init(can_baud_rate_t arg_baud_rate, status_handler_t arg_status_
 	/*
 	 * Set up the SYS_CAN Configuration
 	 */
-
 	// IO Settings for SYS_CAN Tx and Rx on Port B
 	TRISBbits.TRISB2 = OUTPUT_PIN;
 	TRISBbits.TRISB3 = INPUT_PIN;
 
-	setMode(CONFIG_MODE);
+	set_mode(config);
 
 	/*
 	 * Set the Baud rate.
@@ -175,10 +169,9 @@ result_t can_l2_init(can_baud_rate_t arg_baud_rate, status_handler_t arg_status_
 
 	/*
 	 * Set 6 Additional buffers
-	 * 3 (5,4,3) Tx
-	 * 3 (2,1,0) Rx
+	 * 6 (5,4,3, 2,1,0) Rx
 	 */
-	BSEL0 = 0xe0;
+	BSEL0 = 0x00;
 
 	/*
 	 * Set FIFO to interrupt when one RX Buffer left
@@ -188,15 +181,15 @@ result_t can_l2_init(can_baud_rate_t arg_baud_rate, status_handler_t arg_status_
 	tx_buffers[0] = (canBuffer_t *) & TXB0CON;
 	tx_buffers[1] = (canBuffer_t *) & TXB1CON;
 	tx_buffers[2] = (canBuffer_t *) & TXB2CON;
-	tx_buffers[3] = (canBuffer_t *) & B3CON;
-	tx_buffers[4] = (canBuffer_t *) & B4CON;
-	tx_buffers[5] = (canBuffer_t *) & B5CON;
 
 	rx_buffers[0] = (canBuffer_t *) & RXB0CON;
 	rx_buffers[1] = (canBuffer_t *) & RXB1CON;
 	rx_buffers[2] = (canBuffer_t *) & B0CON;
 	rx_buffers[3] = (canBuffer_t *) & B1CON;
 	rx_buffers[4] = (canBuffer_t *) & B2CON;
+	rx_buffers[5] = (canBuffer_t *) & B3CON;
+	rx_buffers[6] = (canBuffer_t *) & B4CON;
+	rx_buffers[7] = (canBuffer_t *) & B5CON;
 
 	/*
 	 * Recieve all valid messages
@@ -210,10 +203,10 @@ result_t can_l2_init(can_baud_rate_t arg_baud_rate, status_handler_t arg_status_
 	 * Disable all filters for the moment
 	 */
 	for (loop = 0; loop < MASKS; loop++) {
-		*(masks[loop].sidh) = 0;
-		*(masks[loop].sidl) = 0;
-		*(masks[loop].eidh) = 0;
-		*(masks[loop].eidl) = 0;
+		*(masks[loop].sidh) = 0x00;
+		*(masks[loop].sidl) = 0x00;
+		*(masks[loop].eidh) = 0x00;
+		*(masks[loop].eidl) = 0x00;
 	}
 
 	//    RXFCON0 = 0x00;
@@ -235,7 +228,7 @@ result_t can_l2_init(can_baud_rate_t arg_baud_rate, status_handler_t arg_status_
 	 * Drop out of the configuration mode
 	 * we're good to go
 	 */
-	setMode(NORMAL_MODE);
+	set_mode(normal);
 
 //	canStatus = Connected;
 
@@ -514,7 +507,7 @@ result_t can_l2_tx_frame(can_frame *frame)
 #endif
 
 #if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-	LOG_D("L2_CanTxMessage(0x%lx)\n\r", frame->can_id);
+	LOG_D("can_l2_tx_frame(0x%lx)\n\r", frame->can_id);
 #endif
 	if (frame->can_dlc > 8) {
 #if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
@@ -540,7 +533,7 @@ result_t can_l2_tx_frame(can_frame *frame)
 	}
 
 	/*
-	 * Trasmit buffer with index "buffer" is empty
+	 * Transmit buffer with index "buffer" is empty
 	 * so fill in the registers with data.
 	 */
 	if (frame->can_id & CAN_EFF_FLAG) {
@@ -606,6 +599,7 @@ void L2_CanTxError(uint8_t node_type, uint8_t node_number, UINT32 errorCode)
 }
 #endif
 
+#if 0
 void L2_SetCanNodeBuadRate(can_baud_rate_t baudRate)
 {
 	timer_id         timer;
@@ -649,25 +643,30 @@ void L2_SetCanNodeBuadRate(can_baud_rate_t baudRate)
 	timer_request.data.sival_int = 0;
 	sw_timer_start(&timer, &timer_request);
 }
+#endif // 0
 
+#if 0
 static void finaliseBaudRateChange(timer_id timer, union sigval data)
 {
 #if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	LOG_D("finaliseBaudRateChange()\n\r");
 #endif
 //	canStatus = Connected;
-	setMode(NORMAL_MODE);
+	set_mode(normal);
 }
+#endif // 0
 
+#if 0
 void L2_SetCanNetworkBuadRate(can_baud_rate_t baudRate)
 {
 #if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	LOG_D("L2_SetCanNetworkBuadRate()\n\r");
 #endif
-	setMode(CONFIG_MODE);
+	set_mode(config);
 	set_baud_rate(baudRate);
-	setMode(NORMAL_MODE);
+	set_mode(normal);
 }
+#endif // 0
 
 static void set_baud_rate(can_baud_rate_t baudRate)
 {
@@ -678,81 +677,81 @@ static void set_baud_rate(can_baud_rate_t baudRate)
 	uint8_t propseg = 0;
 
 	switch (baudRate) {
-		case baud_10K:
-			brp = 49;
-			propseg = 7;
-			sjw = 3;
-			phseg1 = 4;
-			phseg2 = 4;
-			break;
+	case baud_10K:
+		brp = 49;
+		propseg = 7;
+		sjw = 3;
+		phseg1 = 4;
+		phseg2 = 4;
+		break;
 
-		case baud_20K:
-			brp = 24;
-			propseg = 7;
-			sjw = 3;
-			phseg1 = 4;
-			phseg2 = 4;
-			break;
+	case baud_20K:
+		brp = 24;
+		propseg = 7;
+		sjw = 3;
+		phseg1 = 4;
+		phseg2 = 4;
+		break;
 
-		case baud_50K:
-			brp = 9;
-			propseg = 7;
-			sjw = 3;
-			phseg1 = 4;
-			phseg2 = 4;
-			break;
+	case baud_50K:
+		brp = 9;
+		propseg = 7;
+		sjw = 3;
+		phseg1 = 4;
+		phseg2 = 4;
+		break;
 
-		case baud_125K:
-			brp = 3;
-			propseg = 7;
-			sjw = 3;
-			phseg1 = 4;
-			phseg2 = 4;
-			break;
+	case baud_125K:
+		brp = 3;
+		propseg = 7;
+		sjw = 3;
+		phseg1 = 4;
+		phseg2 = 4;
+		break;
 
-		case baud_250K:
-			brp = 1;
-			propseg = 7;
-			sjw = 3;
-			phseg1 = 4;
-			phseg2 = 4;
-			break;
+	case baud_250K:
+		brp = 1;
+		propseg = 7;
+		sjw = 3;
+		phseg1 = 4;
+		phseg2 = 4;
+		break;
 
-		case baud_500K:
-			brp = 0;
-			propseg = 7;
-			sjw = 3;
-			phseg1 = 4;
-			phseg2 = 4;
-			break;
+	case baud_500K:
+		brp = 0;
+		propseg = 7;
+		sjw = 3;
+		phseg1 = 4;
+		phseg2 = 4;
+		break;
 
-		case baud_800K:
-			brp = 0;
-			propseg = 3;
-			sjw = 2;
-			phseg1 = 3;
-			phseg2 = 3;
-			break;
+	case baud_800K:
+		brp = 0;
+		propseg = 3;
+		sjw = 2;
+		phseg1 = 3;
+		phseg2 = 3;
+		break;
 
-		case baud_1M:
-			brp = 0;
-			propseg = 3;
-			sjw = 1;
-			phseg1 = 2;
-			phseg2 = 2;
-			break;
+	case baud_1M:
+		brp = 0;
+		propseg = 3;
+		sjw = 1;
+		phseg1 = 2;
+		phseg2 = 2;
+		break;
 
-		default:
+	default:
 #if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
-			LOG_E("Invalid Baud Rate Specified\n\r");
+		LOG_E("Invalid Baud Rate Specified\n\r");
 #endif
-			break;
+		break;
 	}
 
 	BRGCON1 = (((sjw - 1) & 0x03) << 6) | ((brp) & 0x3f);
 
 	BRGCON2 = (((phseg1 - 1) & 0x07) << 3) | ((propseg - 1) & 0x07);
-	BRGCON2bits.SAM = 0; //One sampe point
+	BRGCON2bits.SAM = 0;      //One sampe point
 	BRGCON2bits.SEG2PHTS = 1; //Phase Segement 2 programmed
 
 	BRGCON3 = ((phseg2 - 1) & 0x07);
@@ -761,24 +760,24 @@ static void set_baud_rate(can_baud_rate_t baudRate)
 /*
  * Function Header
  */
-static void setMode(uint8_t mode)
+static void set_mode(ty_can_mode mode)
 {
 	uint8_t value;
 
 	/*
 	 * Enter SYS_CAN Configuration mode
 	 */
-	// Todo
-//	value = SYS_CANCON;
+	value = CANCON;
 
-	value = value & ~MODE_MASK;
-	value = value | (mode & MODE_MASK);
+	value &= ~MODE_MASK;
+	value |= (mode << 5);
+
 	CANCON = value;
 
 	/*
 	 * SYS_CAN Mode is a request so we have to wait for confirmation
 	 */
-	while ((CANSTAT & MODE_MASK) != mode);
+	while ((CANSTAT & MODE_MASK) != (CANCON & MODE_MASK));
 }
 
 #ifdef SYS_CAN_PING_PROTOCOL
