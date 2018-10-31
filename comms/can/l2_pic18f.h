@@ -30,15 +30,17 @@
 #define TX_CON_TXBIF    0x80
 
 /*
- * CAN Modes of Opperation
+ * CAN Modes of Operation
  */
-#define MODE_MASK     0xe0
+#define MODE_MASK 0xe0
 
-#define NORMAL_MODE   0x00
-#define SLEEP_MODE    0x20
-#define LOOPBACK_MODE 0x40
-#define LISTEN_MODE   0x60
-#define CONFIG_MODE   0x80
+typedef enum { 
+    normal      = 0b000,
+    disabled    = 0b001,
+    loopback    = 0b010,
+    listen_only = 0b011,
+    config      = 0b100,
+} ty_can_mode;
 
 
 #define SIDL_SRTR   0x10
