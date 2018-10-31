@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<configurationDescriptor version="62">
+<configurationDescriptor version="65">
   <logicalFolder name="root" displayName="root" projectFiles="true">
     <logicalFolder name="HeaderFiles"
                    displayName="Header Files"
@@ -13,6 +13,21 @@
                    displayName="Source Files"
                    projectFiles="true">
       <logicalFolder name="libesoup" displayName="libesoup" projectFiles="true">
+        <logicalFolder name="boards" displayName="boards" projectFiles="true">
+          <logicalFolder name="cinnamonBun" displayName="cinnamonBun" projectFiles="true">
+            <logicalFolder name="dsPIC33" displayName="dsPIC33" projectFiles="true">
+              <itemPath>../../../../boards/cinnamonBun/dsPIC33/board.c</itemPath>
+            </logicalFolder>
+            <logicalFolder name="pic24FJ" displayName="pic24FJ" projectFiles="true">
+              <itemPath>../../../../boards/cinnamonBun/pic24FJ/board.c</itemPath>
+            </logicalFolder>
+          </logicalFolder>
+          <logicalFolder name="gauge" displayName="gauge" projectFiles="true">
+            <itemPath>../../../../boards/gauge/board.c</itemPath>
+          </logicalFolder>
+          <logicalFolder name="rpi" displayName="rpi" projectFiles="true">
+          </logicalFolder>
+        </logicalFolder>
         <logicalFolder name="comms" displayName="comms" projectFiles="true">
           <logicalFolder name="spi" displayName="spi" projectFiles="true">
             <itemPath>../../../../comms/spi/spi.c</itemPath>
@@ -20,6 +35,10 @@
           <logicalFolder name="uart" displayName="uart" projectFiles="true">
             <itemPath>../../../../comms/uart/uart.c</itemPath>
           </logicalFolder>
+        </logicalFolder>
+        <logicalFolder name="gpio" displayName="gpio" projectFiles="true">
+          <itemPath>../../../../gpio/peripheral.c</itemPath>
+          <itemPath>../../../../gpio/gpio.c</itemPath>
         </logicalFolder>
         <logicalFolder name="hardware" displayName="hardware" projectFiles="true">
           <itemPath>../../../../hardware/eeprom.c</itemPath>
@@ -64,9 +83,12 @@
         <targetPluginBoard></targetPluginBoard>
         <platformTool>PICkit3PlatformTool</platformTool>
         <languageToolchain>XC16</languageToolchain>
-        <languageToolchainVersion>1.31</languageToolchainVersion>
+        <languageToolchainVersion>1.33</languageToolchainVersion>
         <platform>2</platform>
       </toolsSet>
+      <packs>
+        <pack name="dsPIC33E-GM-GP-MC-GU-MU_DFP" vendor="Microchip" version="0.1.17"/>
+      </packs>
       <compileType>
         <linkerTool>
           <linkerLibItems>
@@ -304,9 +326,12 @@
         <targetPluginBoard></targetPluginBoard>
         <platformTool>PICkit3PlatformTool</platformTool>
         <languageToolchain>XC16</languageToolchain>
-        <languageToolchainVersion>1.31</languageToolchainVersion>
+        <languageToolchainVersion>1.33</languageToolchainVersion>
         <platform>2</platform>
       </toolsSet>
+      <packs>
+        <pack name="PIC24F-GA-GB_DFP" vendor="Microchip" version="0.1.24"/>
+      </packs>
       <compileType>
         <linkerTool>
           <linkerLibItems>
@@ -346,7 +371,7 @@
         <property key="enable-short-double" value="false"/>
         <property key="enable-symbols" value="true"/>
         <property key="enable-unroll-loops" value="false"/>
-        <property key="extra-include-directories" value="../../../../../;."/>
+        <property key="extra-include-directories" value=".;../../../../../"/>
         <property key="isolate-each-function" value="false"/>
         <property key="keep-inline" value="false"/>
         <property key="oXC16gcc-align-arr" value="false"/>
@@ -480,7 +505,6 @@
         <property key="UART 3" value="true"/>
         <property key="UART 4" value="true"/>
         <property key="UCNFG1" value="true"/>
-        <property key="firmware.download.all" value="false"/>
         <property key="hwtoolclock.frcindebug" value="false"/>
         <property key="memories.aux" value="false"/>
         <property key="memories.bootflash" value="true"/>

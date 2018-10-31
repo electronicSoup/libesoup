@@ -1,10 +1,11 @@
 /**
+ * @file libesoup/timers/hw_rtc.c
  *
- * \file libesoup/timers/hw_rtc.c
+ * @author John Whitmore
  *
- * This file contains code for dealing with Real Date Time values
+ * @brief Code for dealing with Real Time Clock device
  *
- * Copyright 2017 2018 electronicSoup Limited
+ * Copyright 2017-2018 electronicSoup Limited
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 2 of the GNU Lesser General Public License

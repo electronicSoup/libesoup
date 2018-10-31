@@ -1,10 +1,12 @@
 /**
  *
- * \file libesoup/logger/serial_log.h
+ * @file libesoup/logger/serial_log.h
  *
- * Definitions for configuration of the Serial Port
+ * @author John Whitmore
+ * 
+ * @brief Definitions for configuration of the Serial Port
  *
- * Copyright 2017 electronicSoup Limited
+ * Copyright 2017-2018 electronicSoup Limited
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 2 of the GNU Lesser General Public License
@@ -26,34 +28,9 @@
 #ifndef _SERIAL_LOG_H
 #define _SERIAL_LOG_H
 
-#ifdef SYS_SERIAL_LOGGING
+#include "libesoup_config.h"
 
-/**
- * @def   LOG_DEBUG
- * @brief Debug logging level
- *
- * @def   LOG_INFO
- * @brief Info logging level
- *
- * @def   LOG_WARNING
- * @brief Warning logging level
- *
- * @def   LOG_ERROR
- * @brief ERROR logging level
- *
- * @def   NO_LOGGING
- * @brief No logging in System
- *
- * This series of defines are here as they should be included very early. At 
- * leasy before the serial logging code. These macros are used to conditionally
- * compile debugging code out of an executable. The actual logging level of the
- * build should be defined in libesoup_config.h
- */
-#define LOG_DEBUG   0
-#define LOG_INFO    1
-#define LOG_WARNING 2
-#define LOG_ERROR   3
-#define NO_LOGGING  4
+#ifdef SYS_SERIAL_LOGGING
 
 /**
  *  serial_logging_init()
@@ -72,12 +49,17 @@
  */
 #if defined(XC16) || defined(__XC8)
 extern result_t serial_logging_init(void);
+#ifdef SYS_TEST_BUILD
+extern uint16_t serial_buffer_count(void);
+#endif
 #if defined(XC16)
-extern void     serial_log(uint8_t level, const char * tag, const char * f, ...);
+extern result_t serial_log(uint8_t level, const char * tag, const char * f, ...);
+extern result_t serial_printf(const char * f, ...);
 #elif defined(__XC8)
 extern void     serial_log(const char* fmt, ...);
 #endif
 extern result_t serial_logging_exit(void);
+#endif // defined(XC16) || defined(__XC8)
 
 /*
  * The PIC18 Processors process the serial Interrupt loading up the TXREG
@@ -88,27 +70,31 @@ extern result_t serial_logging_exit(void);
 //extern void putch(char);
 #endif // (__18F2680) || (__18F4585)
 
-#endif // XC16 || __XC8
-
 #ifdef XC16
 /*
  * XC16 Compiler does support Variadic Macros see:
  * https://gcc.gnu.org/onlinedocs/cpp/Variadic-Macros.html
  */
-#if (SYS_LOG_LEVEL <= LOG_DEBUG)
+#if defined(DEBUG_FILE) && (SYS_LOG_LEVEL >= LOG_DEBUG)
 #define LOG_D(...)  serial_log(LOG_DEBUG, TAG, __VA_ARGS__);
+#else
+#define LOG_D(...)
 #endif
 
-#if (SYS_LOG_LEVEL <= LOG_INFO)
+#if defined(DEBUG_FILE) && (SYS_LOG_LEVEL >= LOG_INFO)
 #define LOG_I(...)  serial_log(LOG_INFO, TAG, __VA_ARGS__);
+#else
+#define LOG_I(...)
 #endif
 
-#if (SYS_LOG_LEVEL <= LOG_WARNING)
+#if defined(DEBUG_FILE) && (SYS_LOG_LEVEL >= LOG_WARNING)
 #define LOG_W(...)  serial_log(LOG_WARNING, TAG, __VA_ARGS__);
+#else
+#define LOG_W(...)
 #endif
 
-#if (SYS_LOG_LEVEL <= LOG_ERROR)
-#define LOG_E(...)  serial_log(LOG_ERROR, TAG, __VA_ARGS__);
+#if (SYS_LOG_LEVEL >= LOG_ERROR)
+#define LOG_E(args...)  serial_log(LOG_ERROR, TAG, ##args);
 #endif
 
 #elif defined(__XC8)
@@ -116,22 +102,28 @@ extern result_t serial_logging_exit(void);
  * XC8 Compiler does NOT support Variadic Macros see:
  * https://gcc.gnu.org/onlinedocs/cpp/Variadic-Macros.html
  */
-#if (SYS_LOG_LEVEL <= LOG_DEBUG)
+#if defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG)
 #define LOG_D     serial_log("D-");  \
                   serial_log("%s:", TAG);   \
                   serial_log
+#else
+#define LOG_D()
 #endif
 
-#if (SYS_LOG_LEVEL <= LOG_INFO)
+#if defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_INFO)
 #define LOG_I     serial_log("I-");  \
                   serial_log("%s:", TAG);   \
                   serial_log
+#else
+#define LOG_I()
 #endif
 
-#if (SYS_LOG_LEVEL <= LOG_WARNING)
+#if defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_WARNING)
 #define LOG_W     serial_log("W-");  \
                   serial_log("%s:", TAG);   \
                   serial_log
+#else
+#define LOG_W()
 #endif
 
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
@@ -142,9 +134,11 @@ extern result_t serial_logging_exit(void);
 
 #endif // __XC8
 
-#endif // SERIAL_LOG_H
 
 #endif // SYS_SERIAL_LOGGING
+
+#endif // _SERIAL_LOG_H
+
 /**
  * @}
  */

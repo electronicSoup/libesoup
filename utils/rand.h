@@ -1,10 +1,12 @@
 /**
  *
- * \file libesoup/utils/rand.h
+ * @file libesoup/utils/rand.h
  *
- * prototype of the random initialisation function.
+ * @author John Whitmore
  *
- * Copyright 2017 electronicSoup Limited
+ * @brief prototype of the random initialisation function.
+ *
+ * Copyright 2017-2018 electronicSoup Limited
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 2 of the GNU Lesser General Public License
@@ -20,8 +22,12 @@
  *
  */
 
-#ifndef RAND_H
-#define RAND_H
+#ifndef _RAND_H
+#define _RAND_H
+
+#include "libesoup_config.h"
+
+#ifdef SYS_RAND
 
 extern void random_init(void);
 
@@ -30,4 +36,5 @@ extern void random_init(void);
  */
 extern int rand(void);
 
-#endif //RAND_H
+#endif // SYS_RAND
+#endif // _RAND_H

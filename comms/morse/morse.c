@@ -1,10 +1,13 @@
 /**
  *
- * \file libesoup/morse.morse.c
+ * @file libesoup/comms/morse/morse.c
  *
- * This file contains code for dealing Morse code
+ * @author John Whitmore
  *
- * Copyright 2017 - 2018 electronicSoup Limited
+ * @brief Morse code functionality which is not complete or fully tested. Was used for
+ * demonstration purposes.
+ *
+ * Copyright 2017-2018 electronicSoup Limited
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 2 of the GNU Lesser General Public License
@@ -322,9 +325,7 @@ void morse_tx(char *msg)
 		tx_buffer_count++;
 	}
 
-#if ((DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	LOG_D("Leaving morse_tx() buffer count is %d\n\r", tx_buffer_count);
-#endif
 }
 #endif  // if MORSE_TX
 
@@ -404,9 +405,7 @@ void tx_start_character_space(void)
 	tx_current_state = CHARACTER_SPACE_STATE;
 #ifdef MORSE_RX
 	if(current_letter_valid) {
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 		LOG_D("LETTER VALID -%c-\n\r", current_letter->ch);
-#endif
 	}
 	current_letter_valid = 0x01;
 	current_letter = &alphabet[0];
@@ -430,9 +429,7 @@ void timer_on(uint8_t duration)
 	result_t     rc;
 	union sigval data;
 
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	LOG_D("timer_on(%d)\n\r", MILLI_SECONDS_TO_TICKS(DOT_TIME * duration));
-#endif
 	data.sival_int = 0x00;
 
 	rc = timer_start(MILLI_SECONDS_TO_TICKS(DOT_TIME * duration), exp_function, data, &tx_timer);
@@ -461,9 +458,7 @@ void exp_function(timer_t timer_id, union sigval data)
 
 		// TODO Would be next character
 		if (tx_buffer_count > 0) {
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 			LOG_D("Tx '%c'\n\r", tx_buffer[tx_buffer_read_index]);
-#endif
 			tx_char(tx_buffer[tx_buffer_read_index]);
 			tx_buffer_read_index = (tx_buffer_read_index + 1) % MORSE_TX_BUFFER_SIZE;
 			tx_buffer_count--;

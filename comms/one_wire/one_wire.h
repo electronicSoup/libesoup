@@ -1,12 +1,44 @@
+/**
+ * @file libesoup/comms/one_wire/one_wire.h
+ *
+ * @brief function prototypes for OneWire API Finctions
+ *
+ * @author John Whitmore
+ *
+ * Copyright 2017-2018 electronicSoup Limited
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the version 2 of the GNU Lesser General Public License
+ * as published by the Free Software Foundation
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program; if not, see <http://www.gnu.org/licenses/>.
+ *
+ */
+#ifndef _ONE_WIRE_H
+#define _ONE_WIRE_H
 
-//extern result_t one_wire_init(enum pin_t pin);
-//extern result_t one_wire_get_device_count(enum pin_t pin, uint8_t *count);
-extern result_t one_wire_ds2502_read_rom(enum pin_t pin);
+#include "libesoup_config.h"
 
-#if 0
-#define DS2502_DDR                      TRISFbits.TRISF3
-#define DS2502_OPEN_DRAIN_BIT           ODCFbits.ODCF3
-#define DS2502_DATA_W                   LATFbits.LATF3
-#define DS2502_DATA_R                   PORTFbits.RF3
-#define DS2502_CHANGE_NOTIFICATION_ISR  CNENFbits.CNIEF3
-#endif
+#ifdef SYS_ONE_WIRE
+
+/**
+ * @brief    function to initialise the One Wire module's data structure
+ * @return   result (negative on error)
+ */
+extern result_t one_wire_init(void);
+
+/**
+ * @brief    function to initialise a One Wire Bus on a GPIO Pin
+ * @param    pin  The GPIO Pin to use for the bus.
+ * @return   result (negative on error)
+ */
+extern result_t one_wire_reserve(enum gpio_pin pin);
+
+#endif // SYS_ONE_WIRE
+#endif // _ONE_WIRE_H

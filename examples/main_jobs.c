@@ -1,11 +1,11 @@
 /**
- * @file libesoup/examples/main_job.c
+ * @file libesoup/examples/main_jobs.c
  *
  * @author John Whitmore
  * 
  * Example main.c file to demonstrate jobs. 
  *
- * Copyright 2017 electronicSoup Limited
+ * Copyright 2017-2018 electronicSoup Limited
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 2 of the GNU Lesser General Public License
@@ -31,6 +31,9 @@ int main(void)
 	 * Initialise the libesoup library
 	 */
 	rc = libesoup_init();
+	if(rc < 0) {
+		// Error Condition?
+	}
 
         while(1) {
         }

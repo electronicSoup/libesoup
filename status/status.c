@@ -1,9 +1,8 @@
 /**
+ * @file libesoup/status/status.c
  *
- * libesoup/status/status.c
- *
- * File containing the function to initialise the libesoup library
- *
+ * @author John Whitmore
+ * 
  * Copyright 2018 electronicSoup Limited
  *
  * This program is free software; you can redistribute it and/or modify

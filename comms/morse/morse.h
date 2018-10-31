@@ -1,10 +1,14 @@
 /**
  *
- * \file libesoup/morse/morse.h
+ * @file libesoup/comms/morse/morse.h
  *
- * Timer function prototypes of the electronicSoup Cinnamon Bun
+ * @author John Whitmore
  *
- * Copyright 2017 electronicSoup Limited
+ * Morse code functionality. This was only ever used as example code and has
+ * not been completed or fully tested. I'd like to get back to it when I get
+ * a chance but it's not a priority.
+ *
+ * Copyright 2017-2018 electronicSoup Limited
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 2 of the GNU Lesser General Public License
@@ -19,6 +23,9 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  *
  */
+#ifndef _MORSE_H
+#define _MORSE_H
+
 #include "libesoup_config.h"
 
 #if defined (MORSE_RX)
@@ -31,3 +38,5 @@ extern void morse_rx_off(void);
 extern void morse_tx_init(void (*on)(void), void (*off)(void));
 extern void morse_tx(char *);
 #endif
+
+#endif // _MORSE_H

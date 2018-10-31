@@ -1,9 +1,11 @@
 /**
- * \file libesoup/comms/uart/uart.h
+ * @file libesoup/comms/uart/uart.h
  *
- * \brief UART functionality for the electronicSoup Cinnamon Bun
+ * @author John Whitmore
  *
- * Copyright 2017 electronicSoup Limited
+ * @brief UART functionality for the electronicSoup Cinnamon Bun
+ *
+ * Copyright 2017-2018 electronicSoup Limited
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 2 of the GNU Lesser General Public License
@@ -20,113 +22,161 @@
  *******************************************************************************
  */
 /**
- * \defgroup Uart Uart
+ * @defgroup Uart Uart
  * @{
  * 
  */
-#ifndef ES_LIB_UART_H
-#define ES_LIB_UART_H
+#ifndef _ES_LIB_UART_H
+#define _ES_LIB_UART_H
+
+#include "libesoup_config.h"
 
 #ifdef SYS_UART
 
-#define UART_8_DATABITS       8 /**< 8 Databits on serial connection */
-#define UART_9_DATABITS       9 /**< 9 Databits on serial connection */
+#include "libesoup/gpio/gpio.h"
+#include "libesoup/gpio/peripheral.h"
 
-#define UART_PARITY_NONE      0 /**< No Parity on serial connection */
-#define UART_PARITY_ODD       1 /**< Odd Parity on serial Connection */
-#define UART_PARITY_EVEN      2 /**< Even Parity on serial Connection */
+#define UART_8_DATABITS       8   /**< 8 Databits on serial connection */
+#define UART_9_DATABITS       9   /**< 9 Databits on serial connection */
 
-#define UART_ONE_STOP_BIT     1 /**< One Stop bit on serial Connection */
-#define UART_TWO_STOP_BITS    2 /**< Two Stop bits on serial Connection */
+#define UART_PARITY_NONE      0   /**< No Parity on serial connection */
+#define UART_PARITY_ODD       1   /**< Odd Parity on serial Connection */
+#define UART_PARITY_EVEN      2   /**< Even Parity on serial Connection */
 
-#define UART_IDLE_LOW         0 /**< Serial connection idles high */
-#define UART_IDLE_HIGH        1 /**< Serial connection idles low */ 
+#define UART_ONE_STOP_BIT     1   /**< One Stop bit on serial Connection */
+#define UART_TWO_STOP_BITS    2   /**< Two Stop bits on serial Connection */
+
+#define UART_IDLE_LOW         0   /**< Serial connection idles high */
+#define UART_IDLE_HIGH        1   /**< Serial connection idles low */ 
 #if defined(XC16) || defined(__XC8)
-#define UART_LITTLE_ENDIAN    0 /**< Serial connection is little endian */
-#define UART_BIG_ENDIAN       1 /**< Serial connection is big endian */
+#define UART_LITTLE_ENDIAN    0   /**< Serial connection is little endian */
+#define UART_BIG_ENDIAN       1   /**< Serial connection is big endian */
 #endif  // XC16 || __XC8
 
-#define UART_BAD         0xff   /**< Dummy value for a bad uart identifier */
+#define UART_BAD           0xff   /**< Dummy value for a bad uart identifier */
 
 /**
- * \ingroup Uart
- * \brief  Structure defining a uart configuration
- * \var tx_pin Peripheral pin to use for transmission
+ * @ingroup Uart
+ * @struct  uart_data
+ * @brief   Structure defining a uart configuration
+ * 
+ * Applicaton code should populate this structure with the required configuration
+ * of the UART before a call to reserve a UART on the target micro-controller.
+ * 
  */
 struct uart_data {
-     ty_peripheral_pin tx_pin; /**< GPIO Pin to be used for the transmit pin of connection \ref */
-     ty_peripheral_pin rx_pin; /**< GPIO Pin to be used for the transmit pin of connection \ref */
-    uint8_t            uart;        /**< Uart identifier */
-    uint16_t           uart_mode;   /**< Mode bits for the connection */
-    uint32_t           baud;        /**< Baud rate for the connection */
-    void               (*tx_finished)(void *);  /**< Function to be called when a requested transmission has finished */
-    void               (*process_rx_char)(uint8_t, uint8_t); /**< Function to be called when a character is received */
+	enum gpio_pin      tx_pin;                               ///< GPIO Pin for transmit (Possibly INVALID_GPIO_PIN)
+	enum gpio_pin      rx_pin;                               ///< GPIO Pin for receive  (Possibly INVALID_GPIO_PIN)
+	uint8_t            uindex;                               ///< Uart identifier (populated by libesoup code)
+	uint16_t           uart_mode;                            ///< Mode bits for the connection (calculated with call to uart_calculate_mode() passing required serial parameters)
+	uint32_t           baud;                                 ///< Baud rate for the connection
+	void               (*tx_finished)(struct uart_data *);               ///< Callback - transmission has finished (Possibly NULL)
+	void               (*process_rx_char)(uint8_t uart_id, uint8_t ch);          ///< Callback - Character received (If an rx_pin is defined function to process received characters)
 };
 
 /**
- * \ingroup Uart
- * \brief Calculate the bit field for the mode of operation for connection
+ * @ingroup Uart
+ * @brief   Calculate the bit field for the mode of operation for connection
  * 
- * \param mode  The calculated bitfield for the required mode of operation. 
- * \param databits Number of databits required. Either UART_8_DATABITS or 
- * UART_9_DATABITS
- * \param parity Either #define UART_PARITY_NONE, UART_PARITY_ODD or 
- * UART_PARITY_EVEN
- * \param stopbits Either UART_ONE_STOP_BIT or UART_TWO_STOP_BITS
- * \param rx_idle_level Either UART_IDLE_LOW or UART_IDLE_HIGH
- * \return Either ERR_BAD_INPUT_PARAMETER or SUCCESS 
+ * Serial comms parameters are fairly standard at this stage, although you would
+ * go a long time before you find something that's not 8N1 (8 Data bits, No Parity
+ * and one stop bit. What is obviously is the Special Function Register (SFR) 
+ * settings for the uC you're using and how those comms parameters translate to
+ * SFR bit fields. This function takes the parameters and calculates the required
+ * SFR bit fields.
+ * 
+ * @param mode          The calculated bitfield for the required mode of operation. 
+ * @param databits      Number of databits required. Either UART_8_DATABITS or UART_9_DATABITS
+ * @param parity        Either UART_PARITY_NONE, UART_PARITY_ODD or UART_PARITY_EVEN
+ * @param stopbits      Either UART_ONE_STOP_BIT or UART_TWO_STOP_BITS
+ * @param rx_idle_level Either UART_IDLE_LOW or UART_IDLE_HIGH
+ * 
+ * @return              Negative on error, or 0 on Success
  */
 extern result_t uart_calculate_mode(uint16_t *mode, uint8_t databits, uint8_t parity, uint8_t stopbits, uint8_t rx_idle_level);
 
+#ifdef SYS_TEST_BUILD
 /**
- * \ingroup Uart
- * \brief Initialise the UART module, auto called by \ref libesoup_init() if \SYS_UART is defined
+ * @ingroup  test_build
+ * @brief    (#ifdef SYS_TEST_BUILD) - returns current count of bytes in the Transmit buffer of given uart.
  * 
+ * Simple debugging function to return the current count of bytes in the
+ * transmit buffer so the filling and emptying of the buffer can be tracked
+ * if required.
+ * 
+ * @param udata         Pointer to uart_data structure for which count is required.
+ * 
+ * @return              Negative - Error (bad input parameter)
+ *                      Positive - Number of bytes in transmit buffer of UART
  */
-extern void     uart_init(void);
+extern result_t uart_tx_buffer_count(struct uart_data *udata);
+#endif // SYS_TEST_BUILD
 
 /**
- * \ingroup Uart
- * \brief reserve one of the system UARTs for use. 
+ * @ingroup Uart
+ * @brief   reserve a system UARTs for use. 
  * 
- * \param data structure containing details of the channel to be reserved \ref uart_data
- * \return \ref result_t
+ * The struct uart_data *udata contains all the relevant information on a comms
+ * channel. Using this reserve function and release a single uC UART channel could
+ * but multiplexed between a number of sensors. Reserve the UART, transmit and 
+ * recieve and then release the UART. Then change the rx_pin and tx_pin of the
+ * udata structure and repeat.
+ * 
+ * @param udata         Pointer to struct uart_data containing uart configuration \ref uart_data
+ * @return              Negative on error,
+ *                      Positive or 0 - SUCCESS
  */
-extern result_t uart_reserve(struct uart_data *data);
+extern result_t uart_reserve(struct uart_data *udata);
 
 /**
- * \ingroup Uart
- * \brief release a previously reserved system UARTs. 
+ * @ingroup Uart
+ * @brief   release a previously reserved system UART.  
  * 
- * \param data structure containing details of the reserved channel \ref uart_data
- * \return \ref result_t
+ * @param udata         pointer structure containing details of the reserved channel \ref uart_data
+ * @return              Negative - Error
+ *                      Positive - Success
  */
-extern result_t uart_release(struct uart_data *data);
+extern result_t uart_release(struct uart_data *udata);
 
 /**
- * \ingroup Uart
- * \brief transmit a buffer of data on a previously reserved system UARTs. 
+ * @ingroup Uart
+ * @brief   transmit a buffer of data on a previously reserved system UARTs. 
  * 
- * \param data structure containing details of the reserved channel \ref uart_data
- * \param buffer array of bytes to be transmitted.
- * \param len length of the buffer to be transmitted
- * \return \ref result_t
+ * @param udata         structure containing details of the previously reserved channel \ref uart_data
+ * @param buffer        array of bytes to be transmitted.
+ * @param len           length of the buffer to be transmitted
+ * @return              Negative - Error
+ *                      Positive - Number of bytes added to tx buffers for transmission
  */
-extern result_t uart_tx_buffer(struct uart_data *data, uint8_t *buffer, uint16_t len);
+extern result_t uart_tx_buffer(struct uart_data *udata, uint8_t *buffer, uint16_t len);
 
 /**
- * \ingroup Uart
- * \brief transmit a single byte on a previously reserved system UARTs. 
+ * @ingroup Uart
+ * @brief   transmit a single byte on a previously reserved system UARTs.
  * 
- * \param data structure containing details of the reserved channel \ref uart_data
- * \param ch the byte to be transmitted.
- * \return \ref result_t
+ * @param   udata       structure containing details of the previously reserved channel \ref uart_data
+ * @param   ch          the byte to be transmitted.
+ * @return              Negative - Error
+ *                      Zero     - Success
  */
-extern result_t uart_tx_char(struct uart_data *data, char ch);
+extern result_t uart_tx_char(struct uart_data *udata, char ch);
 
+/**
+ * @ingroup Uart
+ * @brief   Simulate receiving a buffer of data on the Recieve channel
+ * 
+ * @param   udata       structure containing details of the previously reserved channel \ref uart_data
+ * @param   buffer      array of bytes to be received
+ * @param   len         length of the buffer to be received
+ * @return              Negative - Error
+ *                      Zero     - Success
+ */
+#ifdef SYS_TEST_BUILD
+extern result_t uart_test_rx_buffer(struct uart_data *udata, uint8_t *buffer, uint16_t len);
+#endif // SYS_TEST_BUILD
 #endif // SYS_UART
 
-#endif // ES_LIB_UART_H
+#endif // _ES_LIB_UART_H
 
 /**
  * @}

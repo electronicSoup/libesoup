@@ -1,10 +1,11 @@
-/*
+/**
+ * @file libesoup/timers/hw_timers.c
  *
- * libesoup/timers/hw_timers.c
+ * @author John Whitmore
  *
- * Hardware Timer functionality for the electronicSoup Cinnamon Bun
+ * @brief Hardware Timer functionality for the electronicSoup Cinnamon Bun
  *
- * Copyright 2017 2018 electronicSoup Limited
+ * Copyright 2017-2018 electronicSoup Limited
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 2 of the GNU Lesser General Public License
@@ -30,7 +31,6 @@
 #pragma warning disable 520
 #endif
 
-
 #include "libesoup_config.h"
 
 #ifdef SYS_HW_TIMERS
@@ -38,27 +38,34 @@
 #ifdef SYS_SERIAL_LOGGING
 #define DEBUG_FILE
 static const char *TAG = "HW_TIMERS";
-#include "libesoup/logger/serial_log.h"
 /*
  * Check required libesoup_config.h defines are found
  */
 #ifndef SYS_LOG_LEVEL
 #error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
 #endif
+#include "libesoup/logger/serial_log.h"
 #endif // SYS_SERIAL_LOGGING
 
+#include "libesoup/errno.h"
 #include "libesoup/timers/hw_timers.h"
-
-/*
- * Check required libesoup_config.h defines are found
- */
-#ifndef SYS_CLOCK_FREQ
-#error libesoup_config.h file should define the SYS_CLOCK_FREQ
-#endif
 
 /*
  * Local definitions
  */
+#if defined(__dsPIC33EP256MU806__)
+#if (SYS_CLOCK_FREQ == 8000000)
+#define HW_TIMER_OVERHEAD (123)
+#elif (SYS_CLOCK_FREQ == 30000000)
+#define HW_TIMER_OVERHEAD (33)
+#elif (SYS_CLOCK_FREQ == 60000000)
+#define HW_TIMER_OVERHEAD (16)
+#else
+#error Unprogrammed System Clock Frequency!
+#endif
+#elif defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__)
+#elif defined(__18F4585)
+#endif
 
 /*
  * constants:
@@ -100,13 +107,13 @@ static struct hw_timer_data timers[NUMBER_HW_TIMERS];
 /*
  * Function definitions:
  */
-static result_t start_timer(timer_id timer, struct timer_req *request);
-static void     set_clock_divide(uint8_t timer, uint16_t clock_divide);
+static timer_id start_timer(timer_id timer, struct timer_req *request);
+static void     set_clock_divide(timer_id timer, uint16_t clock_divide);
 
 /*
  * Called from external scope by pic18f4585.c
  */
-void      check_timer(uint8_t timer);
+void check_timer(timer_id timer);
 
 /*
  * The Code:
@@ -201,12 +208,12 @@ void __attribute__((__interrupt__, __no_auto_psv__)) _T5Interrupt(void)
  */
 void hw_timer_init(void)
 {
-	uint8_t timer;
+	timer_id timer;
 
 	for(timer = 0; timer < NUMBER_HW_TIMERS; timer++) {
 		timers[timer].status = TIMER_UNUSED;
 		timers[timer].request.type = single_shot;
-		timers[timer].request.duration = 0;
+		timers[timer].request.period.duration = 0;
 		timers[timer].request.exp_fn = NULL;
 		timers[timer].request.data.sival_int = 0;
 		timers[timer].repeats = 0;
@@ -252,11 +259,11 @@ void hw_timer_init(void)
 #endif
 }
 
-#if (SYS_LOG_LEVEL != NO_LOGGING)
+#ifdef SYS_TEST_BUILD
 uint8_t hw_timer_active_count(void)
 {
-        uint8_t count = 0;
-	uint8_t timer;
+        uint8_t  count = 0;
+	timer_id timer;
 
 	for(timer = 0; timer < NUMBER_HW_TIMERS; timer++) {
 		if(timers[timer].status != TIMER_UNUSED)
@@ -264,68 +271,61 @@ uint8_t hw_timer_active_count(void)
         }
         return(count);
 }
-#endif
+#endif // SYS_TEST_BUILD
 
 /*
  * hw_timer_start returns the id of the started timer.
  */
-result_t hw_timer_start(timer_id *timer, struct timer_req *request)
+timer_id hw_timer_start(struct timer_req *request)
 {
+	timer_id timer;
+
 	/*
 	 * XC8 Compiler don't like recursion have to find a way around this.
 	 */
 #if defined(__XC8)
-	if(request->type == repeat) return(ERR_BAD_INPUT_PARAMETER);
+	if(request->type == repeat) return(-ERR_BAD_INPUT_PARAMETER);
 #endif // 18F4585
 	/*
 	 * Find a free timer
 	 */
-	*timer = 0;
-
-	while(*timer < NUMBER_HW_TIMERS) {
-		if(timers[*timer].status == TIMER_UNUSED) {
-			return(start_timer(*timer, request));
+	timer = 0;
+	while(timer < NUMBER_HW_TIMERS) {
+		if(timers[timer].status == TIMER_UNUSED) {
+			return(start_timer(timer, request));
 		}
 		/*
 		 * Increment the value pointed at not the address
 		 */
-		(*timer)++;
+		timer++;
 	}
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
 	LOG_E("Failed to start the HW Timer\n\r");
-#endif
-	return(ERR_NO_RESOURCES);
+	return(-ERR_NO_RESOURCES);
 }
 
-result_t hw_timer_restart(timer_id *timer, struct timer_req *request)
+timer_id hw_timer_restart(timer_id timer, struct timer_req *request)
 {
-	if(*timer == BAD_TIMER_ID) {
-		return(hw_timer_start(timer, request));
+	if(timer == BAD_TIMER_ID) {
+		return(hw_timer_start(request));
 	}
-	if(*timer >= NUMBER_HW_TIMERS) {
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
+	if(timer >= NUMBER_HW_TIMERS) {
 		LOG_E("Bad time passed to hw_timer_restart()\n\r!");
-#endif
-		return(ERR_BAD_INPUT_PARAMETER);
+		return(-ERR_BAD_INPUT_PARAMETER);
 	}
 
-	return(start_timer(*timer, request));
+	return(start_timer(timer, request));
 }
 
-result_t hw_timer_pause(timer_id timer)
+timer_id hw_timer_pause(timer_id timer)
 {
 	if(timer >= NUMBER_HW_TIMERS) {
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
 		LOG_E("Bad timer passed to hw_timer_pause(0x%x)\n\r!", timer);
-#endif
-		return(ERR_BAD_INPUT_PARAMETER);
+		return(-ERR_BAD_INPUT_PARAMETER);
 	}
 
 	if(timers[timer].status == TIMER_UNUSED) {
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
 		LOG_E("Timer passed to hw_timer_pause() is NOT in use\n\r");
-#endif
-		return(ERR_BAD_INPUT_PARAMETER);
+		return(-ERR_BAD_INPUT_PARAMETER);
 	}
 
 	switch (timer) {
@@ -370,29 +370,31 @@ result_t hw_timer_pause(timer_id timer)
 #endif
 
         default:
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
                 LOG_E("Unknown Timer\n\r");
-#endif
                 break;
 	}
 
 	timers[timer].status = TIMER_PAUSED;
-	return(SUCCESS);
+	return(timer);
 }
 
-void hw_timer_cancel(timer_id timer)
+timer_id hw_timer_cancel(timer_id *timer)
 {
-        if(timer < NUMBER_HW_TIMERS) {
-                hw_timer_pause(timer);
+        if(*timer < NUMBER_HW_TIMERS) {
+		INTERRUPTS_DISABLED
 
-                timers[timer].status = TIMER_UNUSED;
-                timers[timer].request.exp_fn = NULL;
-                timers[timer].repeats = (uint16_t)0;
-                timers[timer].remainder = (uint16_t)0;
+                hw_timer_pause(*timer);
+
+                timers[*timer].status = TIMER_UNUSED;
+                timers[*timer].request.exp_fn = NULL;
+                timers[*timer].repeats = (uint16_t)0;
+                timers[*timer].remainder = (uint16_t)0;
+		INTERRUPTS_ENABLED
+		*timer = BAD_TIMER_ID;
+		return(*timer);
         } else {
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
-                LOG_E("Bad timer passed to hw_timer_cancel(0x%x)\n\r", timer);
-#endif
+                LOG_E("Bad timer passed to hw_timer_cancel(0x%x)\n\r", *timer);
+		return(-ERR_BAD_INPUT_PARAMETER);
         }
 }
 
@@ -425,65 +427,58 @@ void hw_timer_cancel_all()
 	}
 }
 
-//static result_t  start_timer(timer_t timer, ty_time_units units, uint16_t duration, timer_type type, expiry_function fn, union sigval data)
-static result_t start_timer(timer_id timer, struct timer_req *request)
+static timer_id start_timer(timer_id timer, struct timer_req *request)
 {
 	uint32_t ticks = 0;
+	uint16_t duration;
 
 	if(timer >= NUMBER_HW_TIMERS) {
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
                 LOG_E("Bad time passed to start_timer(0x%x)\n\r", timer);
-#endif
-                return(ERR_BAD_INPUT_PARAMETER);
+                return(-ERR_BAD_INPUT_PARAMETER);
         }
 
-	switch(request->units) {
+	switch(request->period.units) {
 	case uSeconds:
+		/*
+	         * If the duration is uSeconds compensate for the Instruction overhead of
+	         * starting a HW Timer.
+	         */
+		duration = request->period.duration;
+		
+#if defined(__dsPIC33EP256MU806__)
+		if(request->period.duration > HW_TIMER_OVERHEAD) {
+			duration -= HW_TIMER_OVERHEAD;
+		} else {
+			/*
+			 * The delay passed in is too small to accurately calculate
+			 * The calculations depend on sys_clock_freq and multiply and
+			 * divide calculations will cost more then the timer.
+			 * Roll it by hand!
+			 */
+			return(-ERR_RANGE_ERROR);
+		}
+#endif // defined(__dsPIC33EP256MU806__)
 		set_clock_divide(timer, 1);
 #if defined(__18F4585) || defined(__18F2680)
-		ticks = (uint32_t) ((uint32_t) (((uint32_t) SYS_CLOCK_FREQ / 4) / 1000000) * request->duration);
+		ticks = (uint32_t) ((uint32_t) (((uint32_t) sys_clock_freq / 4) / 1000000) * request->period.duration);
 #elif defined(__dsPIC33EP256MU806__)
-		/*
-		 * SYS_CLOCK_FREQ ticks in a Second 
-                 * 1uS = 1Sec/1,000,000
-                 * Ticks in a uS = SYS_CLOCK_FREQ/1,000,000
-                 * 
-                 * dsPIC33EP256MU806 @ 60,000,000 :
-                 * Minimum time is 13uS if ticks is set to 1 the overhead of 
-                 * functions calls to here and back to the expiry function are
-                 * that long.
-                 */
-#if (SYS_CLOCK_FREQ == 60000000)
-		if(request->duration > 13) {
-			ticks = (uint32_t) ((uint32_t) (((uint32_t) SYS_CLOCK_FREQ) / 1000000) * (request->duration - 13));
-		} else {
-			ticks = 0;
-		}
-#elif (SYS_CLOCK_FREQ == 8000000)
-		if(request->duration > 88) {
-			ticks = (uint32_t) ((uint32_t) (((uint32_t) SYS_CLOCK_FREQ) / 1000000) * (request->duration - 88));
-		} else {
-			ticks = 0;
-		}
-#else
-#error SYS_CLOCK_FREQ Not coded in hw_timers.c
-#endif // SYS_CLOCK_FREQ
+		ticks = (uint32_t) ((uint32_t) (((uint32_t) sys_clock_freq) / 1000000) * (duration));
 #endif // Target uC
                 break;
 
 	case mSeconds:
 #if defined(__18F4585)  || defined(__18F2680)
 		set_clock_divide(timer, 4);
-		ticks = (uint32_t) ((uint32_t) (((uint32_t)(SYS_CLOCK_FREQ / 4)) / 4000) * request->duration);
+		ticks = (uint32_t) ((uint32_t) (((uint32_t)(sys_clock_freq / 4)) / 4000) * request->period.duration);
 #else
                 /*
-                 * Divided by 64 so SYS_CLOCK_FREQ/64 ticks in a Second
+                 * Divided by 64 so sys_clock_freq/64 ticks in a Second
                  * 1mS = 1Sec/1,000
-                 * Ticks in 1mS = (SYS_CLOCK_FREQ/64)/1,000
-                 *              = SYS_CLOCK_FREQ / 64 * 1,000
+                 * Ticks in 1mS = (sys_clock_freq/64)/1,000
+                 *              = sys_clock_freq / 64 * 1,000
                  */
 		set_clock_divide(timer, 64);
-		ticks = (uint32_t) ((uint32_t) (((uint32_t) SYS_CLOCK_FREQ) / 64000 ) * request->duration);
+		ticks = (uint32_t) ((uint32_t) (((uint32_t) sys_clock_freq) / 64000 ) * request->period.duration);
 #endif
                 break;
 
@@ -491,30 +486,26 @@ static result_t start_timer(timer_id timer, struct timer_req *request)
 #if defined(__18F4585)  || defined(__18F2680)
 		if(timer == TIMER_0) {
 			set_clock_divide(timer, 64);
-			ticks = (uint32_t) ((uint32_t) (((uint32_t) SYS_CLOCK_FREQ / 4) / 64) * request->duration);
+			ticks = (uint32_t) ((uint32_t) (((uint32_t) sys_clock_freq / 4) / 64) * request->period.duration);
 		} else if(timer == TIMER_1) {
 			set_clock_divide(timer, 8);
-			ticks = (uint32_t) ((uint32_t) (((uint32_t) SYS_CLOCK_FREQ / 4) / 8) * request->duration);
+			ticks = (uint32_t) ((uint32_t) (((uint32_t) sys_clock_freq / 4) / 8) * request->period.duration);
 		} else {
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
 			LOG_E("Unknown Timers\n\r");
-#endif
 		}
 #else
                 /*
                  * Divide by 256 so 
-                 * in 1 Second (SYS_CLOCK_FREQ/256) ticks
+                 * in 1 Second (sys_clock_freq/256) ticks
                  */
 		set_clock_divide(timer, 256);
-		ticks = (uint32_t) ((uint32_t) (((uint32_t) SYS_CLOCK_FREQ) / 256) * request->duration);
+		ticks = (uint32_t) ((uint32_t) (((uint32_t) sys_clock_freq) / 256) * request->period.duration);
 #endif
                 break;
 
 	default:
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
 		LOG_E("Bad duration Units for Hardware Timer\n\r");
-#endif
-		return(ERR_BAD_INPUT_PARAMETER);
+		return(-ERR_BAD_INPUT_PARAMETER);
 #ifndef __XC8
 		break;
 #endif
@@ -523,37 +514,33 @@ static result_t start_timer(timer_id timer, struct timer_req *request)
 	if(ticks > 0) {
 		timers[timer].status            = TIMER_RUNNING;
 		timers[timer].request.type      = request->type;
-		timers[timer].request.units     = request->units;
-		timers[timer].request.duration  = request->duration;
+		timers[timer].request.period.units     = request->period.units;
+		timers[timer].request.period.duration  = request->period.duration;
 		timers[timer].request.exp_fn    = request->exp_fn;
 		timers[timer].request.data      = request->data;
 
 		timers[timer].repeats           = (uint16_t)((ticks >> 16) & 0xffff);
 		timers[timer].remainder         = (uint16_t)(ticks & 0xffff);
 
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 //                LOG_D("Ticks 0x%lx, Repeats 0x%x, remainder 0x%x\n\r", ticks, timers[timer].repeats, timers[timer].remainder);
-#endif
 		check_timer(timer);
 
-                return(SUCCESS);
+                return(timer);
 	} else {
                 /*
                  * Simply call the expiry function
                  */
                 request->exp_fn(timer, request->data);
-                return(SUCCESS);
+                return(BAD_TIMER_ID);
         }
 #ifndef __XC8 // X8 Compiler warns about unreachable code
-	return(ERR_BAD_INPUT_PARAMETER);
+	return(-ERR_BAD_INPUT_PARAMETER);
 #endif // __XC8
 }
 
-static void set_clock_divide(uint8_t timer, uint16_t clock_divide)
+static void set_clock_divide(timer_id timer, uint16_t clock_divide)
 {
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 //	LOG_D("set_clock_divide()\n\r");
-#endif
 
 	switch(timer) {
 #if defined(__18F4585) || defined(__18F2680)
@@ -580,9 +567,7 @@ static void set_clock_divide(uint8_t timer, uint16_t clock_divide)
                         } else if(clock_divide == 256) {
                                 T0CONbits.T0PS = 0x07;   // Divide by 256
                         } else {
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
                                 LOG_E("Unknown divide\n\r");
-#endif
                         }
                 }
                 break;
@@ -621,9 +606,7 @@ static void set_clock_divide(uint8_t timer, uint16_t clock_divide)
                         T1CONbits.TCKPS1 = 1; // Divide by 256
                         T1CONbits.TCKPS0 = 1;
                 } else {
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
                         LOG_E("Bad clock divider!\n\r");
-#endif
                 }
                 break;
 #endif
@@ -643,9 +626,7 @@ static void set_clock_divide(uint8_t timer, uint16_t clock_divide)
                         T2CONbits.TCKPS1 = 1; // Divide by 256
                         T2CONbits.TCKPS0 = 1;
                 } else {
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
                         LOG_E("Bad clock divider!\n\r");
-#endif
                 }
                 break;
 #endif
@@ -665,9 +646,7 @@ static void set_clock_divide(uint8_t timer, uint16_t clock_divide)
                         T3CONbits.TCKPS1 = 1; // Divide by 256
                         T3CONbits.TCKPS0 = 1;
                 } else {
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
                         LOG_E("Bad clock divider!\n\r");
-#endif
                 }
                 break;
 #endif
@@ -687,9 +666,7 @@ static void set_clock_divide(uint8_t timer, uint16_t clock_divide)
                         T4CONbits.TCKPS1 = 1; // Divide by 256
                         T4CONbits.TCKPS0 = 1;
                 } else {
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
                         LOG_E("Bad clock divider!\n\r");
-#endif
                 }
                 break;
 #endif
@@ -709,17 +686,13 @@ static void set_clock_divide(uint8_t timer, uint16_t clock_divide)
                         T5CONbits.TCKPS1 = 1; // Divide by 256
                         T5CONbits.TCKPS0 = 1;
                 } else {
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
                         LOG_E("Bad clock divider!\n\r");
-#endif
                 }
                 break;
 #endif
 
         default:
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
                 LOG_E("Unknown Timer\n\r");
-#endif
                 break;
 
 	}
@@ -778,19 +751,13 @@ void check_timer(timer_id timer)
                         break;
 
                 default:
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
                         LOG_E("Unknown Timer\n\r");
-#endif
                         break;
 		}
 		timers[timer].repeats--;
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
   //              LOG_D("After Repeats %d\n\r", timers[timer].repeats);
-#endif
 	} else if(timers[timer].remainder) {
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 //                LOG_D("Remainder %d\n\r", timers[timer].remainder);
-#endif
 		switch (timer) {
                 case TIMER_1:
                         TMR1 = 0x00;
@@ -833,9 +800,7 @@ void check_timer(timer_id timer)
                         break;
 
                 default:
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
                         LOG_E("Unknown Timer\n\r");
-#endif
                         break;
 		}
 		timers[timer].remainder = 0;
@@ -880,9 +845,7 @@ void check_timer(timer_id timer)
                         break;
 
                 default:
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
                         LOG_E("Unknown Timer\n\r");
-#endif
                         break;
 		}
 		timers[timer].repeats--;
@@ -906,9 +869,7 @@ void check_timer(timer_id timer)
                         break;
 
                 default:
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
                         LOG_E("Unknown Timer\n\r");
-#endif
                         break;
 		}
 		timers[timer].remainder = 0;

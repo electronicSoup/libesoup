@@ -1,12 +1,12 @@
 /**
  *
- * \file libesoup/jobs/jobs.c
+ * @file libesoup/jobs/jobs.c
  *
- * Functions for using system Jobs.
+ * @author John Whitmore
+ * 
+ * @brief Functions for using system Jobs.
  *
- * The first uart port is used by the logger. See libesoup/logger
- *
- * Copyright 2017 2018 electronicSoup Limited
+ * Copyright 2017-2018 electronicSoup Limited
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 2 of the GNU Lesser General Public License
@@ -31,6 +31,7 @@ static const char *TAG = "JOBS";
 #include "libesoup/logger/serial_log.h"
 #endif
 
+#include "libesoup/errno.h"
 #include "libesoup/jobs/jobs.h"
 
 struct job {
@@ -59,7 +60,7 @@ void jobs_init(void)
 
 result_t jobs_add(void (*function)(void *), void *data)
 {
-	result_t rc = SUCCESS;
+	result_t rc = 0;
 
         __builtin_disi(0x3FFF); /* disable interrupts */
         jobs[write_index].function = function;
@@ -72,7 +73,7 @@ result_t jobs_add(void (*function)(void *), void *data)
 
 result_t jobs_execute(void)
 {
-	result_t  rc = SUCCESS;
+	result_t  rc = 0;
         void    (*function)(void *);
         void     *data;
 
@@ -88,10 +89,8 @@ result_t jobs_execute(void)
 
                         function(data);
                 } else {
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
                         LOG_E("Bad job at %d\n\r", read_index);
-#endif
-                        rc = ERR_GENERAL_ERROR;
+                        rc = -ERR_GENERAL_ERROR;
                 }
 	}
 

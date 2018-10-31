@@ -1,10 +1,11 @@
 /**
+ * @file libesoup/utils/rand.c
  *
- * \file libesoup/utils/rand.c
+ * @author John Whitmore
  *
- * Random initialisation function for the electronicSoup Cinnamon Bun
+ * @brief Random initialisation function for the electronicSoup Cinnamon Bun
  *
- * Copyright 2017 -2018 electronicSoup Limited
+ * Copyright 2017-2018 electronicSoup Limited
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 2 of the GNU Lesser General Public License
@@ -44,12 +45,23 @@ static const char *TAG = "RAND";
 void random_init(void)
 {
 	uint16_t  loop;
-	uint32_t  seed;
+	uint16_t  seed;
+
+#if defined(__dsPIC33EP256MU806__)
+	uint16_t  *data;
+
+	data = (uint16_t *)&TMR1;
+
+	seed = 0;
+
+	for(loop = 0; loop < (&OC16TMR - &TMR1); loop++) {
+		asm("CLRWDT");
+		seed = seed + *data;
+		data++;
+	}
+#elif defined (__PIC24FJ256GB106__)
 	uint8_t  *data;
 
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_INFO))
-	LOG_I("random_init()\n\r");
-#endif
 	data = (uint8_t *)&IC1TMR;
 
 	seed = 0;
@@ -59,10 +71,9 @@ void random_init(void)
 		seed = seed + *data;
 		data++;
 	}
-
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-	LOG_D("Seed 0x%lx\n\r", seed);
 #endif
+	
+	LOG_D("Seed 0x%lx\n\r", seed);
 	srand(seed);
 }
 

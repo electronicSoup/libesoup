@@ -1,8 +1,9 @@
 /**
+ * @file libesoup/comms/one_wire/one_wire.c
  *
- * \file libesoup/comms/one_wire/one_wire.c
- *
- * Copyright 2017 - 2018 electronicSoup Limited
+ * @author John Whitmore
+ * 
+ * Copyright 2017-2018 electronicSoup Limited
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 2 of the GNU Lesser General Public License
@@ -30,380 +31,453 @@ static const char *TAG = "OneWire";
 #endif
 #endif
 
+#ifndef SYS_ONE_WIRE_MAX_BUS
+#error SYS_ONE_WIRE_BUS Should be defined
+#endif
+
+#ifndef SYS_CRC
+#error ONE_WIRE functionality relies on CRC functionality libesoup_config.h should define SYS_CRC
+#endif
+
+#include "libesoup/errno.h"
+#include "libesoup/gpio/gpio.h"
 #include "libesoup/timers/hw_timers.h"
 #include "libesoup/timers/delay.h"
-//#include "libesoup/timers/sw_timers.h"
+#include "libesoup/comms/one_wire/one_wire.h"
+#include "libesoup/gpio/change_notification.h"
+#include "libesoup/processors/dsPIC33/crc.h"
 
-
-#if defined(__dsPIC33EP256MU806__)
-#if (SYS_CLOCK_FREQ == 60000000)
-#define NOP_DURATION 4.6
-#elif (SYS_CLOCK_FREQ == 8000000)
-#define NOP_DURATION 28.6
-#else
-#error SYS_CLOCK_FREQ Not coded in hw_timers.c
-#endif
+#ifndef SYS_CHANGE_NOTIFICATION
+#error SYS_CHANGE_NOTIFICATION Not defined required by OneWire
 #endif
 
-static uint32_t d;
-#define DELAY(x) for(d = 0; d < (uint32_t)(((float)x )/NOP_DURATION); d++) Nop();
+#ifndef SYS_ONE_WIRE_MAX_BUS
+#error SYS_ONE_WIRE_MAX_BUS should be defined
+#endif
+
+#ifndef SYS_ONE_WIRE_MAX_DEVICES
+#error SYS_ONE_WIRE_MAX_DEVICES should be defined
+#endif
 
 /*
- * Pins used
+ * Local definitions
  */
+#define NO_CHANNEL 0xFF
+#define NO_DEVICE  0xFF
 
-#define READ_ROM                 0x33
-#define MATCH_ROM                0x55
-#define SKIP_ROM                 0xCC
-#define SEARCH_ROM               0xF0
+/*
+ * One Wire Commands
+ */
+#define READ_ROM      0x33
+#define MATCH_ROM     0x55
+#define ALARM_SEARCH  0xEC
+#define ROM_SEARCH    0xF0
 
-#define READ_DATA                0xF0 // Followed by 2 Byte Address
-#define READ_STATUS              0xAA // Followed by 2 Byte Address
-#define READ_DATA_GENERATE_CRC   0xC3 // Followed by 2 Byte Address
-#define WRITE_DATA               0x0F // Followed by 2 Byte Address
-#define WRITE_STATUS             0x55 // Followed by 2 Byte Address
+/*
+ * CRC details
+ */
+#define ONE_WIRE_CRC_POLYNOMIAL                0x131 // 0b1 0011 0001
+#define ONE_WIRE_CRC_POLYNOMIAL_LENGTH             7
+#define ONE_WIRE_CRC_DATA_WIDTH                    7
+#define ONE_WIRE_CRC_LITTLE_ENDIAN              TRUE
+        
 
-#define MAX_ADDRESS              0x7F
+/*
+ * Local variables
+ */
+static volatile uint8_t  timer_expired = TRUE;
+static          int16_t  bus_changes;
 
-#define DS2502_FAMILY_CODE       0x09
-#if 0
-static uint8_t read_bit;
-static uint8_t read_count;
-static uint8_t write_byte;
-static uint8_t write_count;
-static     enum   pin_t pin;
-static volatile uint8_t device_present = FALSE;
-static          uint8_t bus_busy = FALSE;
-static          uint8_t bus_level;
-static void (*callback)(void) = NULL;
-#endif
-static volatile uint8_t timer_expired = TRUE;
+struct one_wire_bus {
+	uint8_t                 active:1;
+	uint8_t                 sem_device;
+	enum gpio_pin              pin;
+} one_wire_bus;
 
+struct one_wire_device {
+	uint8_t                 ow_channel;
+	uint8_t                 family;
+	uint8_t                 serial_number[6];
+	uint8_t                 crc;
+} one_wire_device;
+
+
+static struct one_wire_bus    bus[SYS_ONE_WIRE_MAX_BUS];
+static struct one_wire_device device[SYS_ONE_WIRE_MAX_DEVICES];
 
 /*
  * Function Prototypes.
  */
-static result_t set_pin(enum pin_t pin, uint8_t direction, uint8_t value);
-static result_t get_pin(enum pin_t pin, uint8_t *value);
-static void     expiry_fn(void *data);
-static result_t reset_pulse(enum pin_t pin);
-static result_t tx_byte(enum pin_t pin, uint8_t byte);
-result_t rx_byte(enum pin_t pin, uint8_t *byte);
-static uint8_t  rx_bit(enum pin_t pin);
+static result_t census(int16_t chan);
+static void     bus_change(enum gpio_pin pin);
+static result_t reset_pulse(int16_t chan);
+static result_t write_byte(int16_t chan, uint8_t byte);
+static result_t write_one(int16_t chan);
+static result_t write_zero(int16_t chan);
+static result_t read_byte(int16_t chan);
+static result_t read_bit(int16_t chan);
 
-static result_t program_pulse(enum pin_t pin);
-
-#if 0
-static void reset_pulse();
-static void exp_end_reset(void *data);
-static void exp_end_presence(void *data);
-
-static void write_one();
-static void exp_end_write_one_pulse(void *data);
-static void exp_end_write_one(void *data);
-
-static void write_zero();
-static void exp_end_write_zero(void *data);
-
-static void read();
-static void exp_end_read_pulse(void *data);
-static void exp_read(void *data);
-static void exp_end_read(void *data);
-
-static void write_byte_fn(uint8_t byte);
-static void write_bit_fn(void);
-
-static void rom_command(void);
-static void read_rom(void);
-static void bit_read(uint8_t read_bit);
-#endif
-
-#if 0
-#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__) || defined(__dsPIC33EP256MU806__)
-void __attribute__((__interrupt__, __no_auto_psv__)) _CNInterrupt(void)
+static result_t get_free_device(void)
 {
-        IFS1bits.CNIF = 0;
+	uint8_t loop;
 
-        switch(pin) {
-        case (RF3):
-                if (bus_level && ~PORTFbits.RF3)
-                        device_present = TRUE;
-                break;
-                
-        default:
-                break;
-        }
-}
-#endif
-
-result_t one_wire_init(enum pin_t p)
-{
-        /*
-         * DS2502 data is on RF3 / RP99
-         * 
-         * 64 Bits ROM 
-         *     8 Bits Family Code
-         *     48 Bits Serial Number
-         *     8 Bits CRC
-         * 
-         * 1024 Bits = 128 Bytes divided into 4 pages (32 Bytes)
-         * 
-         * 64 Bits Status
-         *     First Byte Write Protect Page bits
-         *         - Bit 0 Write Protect Page 0
-         * 
-         *     4 Bytes of Page Address Redirection Bytes
-         *         One's Compliment of new page address
-         *         - 0xFF Page data is valid
-         *         - 0xFD Page invalid, valid data found in page 2 
-         * 
-         * Read and Write LSbit First
-         * 
-         * Have to set to opendrain mode
-         */
-        pin = p;
-
-        if(bus_busy) {
-                return(ERR_NOT_READY);
-        }
-        
-        switch(pin) {
-        case (RF3):
-                ODCFbits.ODCF3 = 1;
-                TRISFbits.TRISF3 = INPUT_PIN;
-                LATFbits.LATF3= 1;
-                break;
-                
-        default:
-                pin = INVALID_PIN;
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
-                LOG_E("Pin has not been coded yet!\n\r");
-#endif
-                return(ERR_BAD_INPUT_PARAMETER);
-//              break;
-        }
-
-        IPC4bits.CNIP = 0x07;
-        IFS1bits.CNIF = 0;
-        IEC1bits.CNIE = DISABLED;
-        return(SUCCESS);
+	for (loop = 0; loop < SYS_ONE_WIRE_MAX_DEVICES; loop++) {
+		if (device[loop].ow_channel == NO_CHANNEL)
+                        return(loop);
+	}
+	return(-ERR_NO_RESOURCES);
 }
 
-result_t one_wire_get_device_count(enum pin_t pin, uint8_t *count)
+/*
+ * Simply initialises the data structures for One Wire buses and devices.
+ */
+result_t one_wire_init()
 {
-        if(bus_busy) {
-                return(ERR_NOT_READY);
-        }
-        
-        *count = 0;
-        return(SUCCESS);
-}
-#endif
+	uint8_t loop;
 
-static result_t set_pin(enum pin_t pin, uint8_t direction, uint8_t value)
-{
-        switch(pin) {
-        case (RF3):
-                ODCFbits.ODCF3 = 1;            // Open Drive Pin
-                TRISFbits.TRISF3 = direction;
-                LATFbits.LATF3= value;
-                break;
-                
-        case (RD0):
-                ODCDbits.ODCD0 = 1;            // Open Drive Pin
-                TRISDbits.TRISD0 = direction;
-                LATDbits.LATD0= value;
-                break;
-                
-        default:
-                pin = INVALID_PIN;
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
-                LOG_E("Pin has not been coded yet!\n\r");
-#endif
-                return(ERR_BAD_INPUT_PARAMETER);
-//              break;
-        }
-        return(SUCCESS);
+	for(loop = 0; loop < SYS_ONE_WIRE_MAX_BUS; loop++) {
+		bus[loop].active     = 0b0;
+		bus[loop].sem_device = NO_DEVICE;
+	}
+
+	for(loop = 0; loop < SYS_ONE_WIRE_MAX_DEVICES; loop++) {
+		device[loop].ow_channel = NO_CHANNEL;
+	}
+	return(0);
 }
 
-static result_t get_pin(enum pin_t pin, uint8_t *value)
+/*
+ * Create a OneWire bus on the given pin
+ * 
+ * Returns the created channel number
+ */
+result_t one_wire_reserve(enum gpio_pin pin)
 {
-        switch(pin) {
-        case (RF3):
-                ODCFbits.ODCF3 = 1;            // Open Drive Pin
-                TRISFbits.TRISF3 = INPUT_PIN;
-                *value = PORTFbits.RF3;
-                break;
-                
-        case (RD0):
-                ODCDbits.ODCD0 = 1;            // Open Drive Pin
-                TRISDbits.TRISD0 = INPUT_PIN;
-                *value = PORTDbits.RD0;
-                break;
-                
-        default:
-                pin = INVALID_PIN;
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
-                LOG_E("Pin has not been coded yet!\n\r");
-#endif
-                return(ERR_BAD_INPUT_PARAMETER);
-//              break;
-        }
-        
-        return(SUCCESS);
+	result_t rc;
+	uint8_t  loop;
+	int16_t  chan;
+	LOG_D("one_wire_reserve()\n\r");
+	/*
+	 * check for existing OneWire bus on the given pin
+	 */
+	for(loop = 0; loop < SYS_ONE_WIRE_MAX_BUS; loop++) {
+		if(bus[loop].active && (bus[loop].pin == pin)) {
+			return(-ERR_BAD_INPUT_PARAMETER);
+		}
+	}
+
+	/*
+	 * Find a free slot for the new OneWire bus
+	 */
+	for(loop = 0; loop < SYS_ONE_WIRE_MAX_BUS; loop++) {
+		if(!bus[loop].active) {
+			chan = loop;
+			break;
+		}
+	}
+	
+        /*
+         * If we've found a free slot in data structures populate it.
+         */
+	if(chan < SYS_ONE_WIRE_MAX_BUS) {
+		bus[chan].active     = 0b1;
+		bus[chan].sem_device = NO_DEVICE;
+		bus[chan].pin        = pin;
+
+		rc = gpio_set(pin, GPIO_MODE_DIGITAL_OUTPUT | GPIO_MODE_OPENDRAIN_OUTPUT, 1);
+		RC_CHECK
+
+		rc = census(chan);
+		RC_CHECK
+		LOG_D("Found %d devices\n\r", rc);
+
+		return(chan);
+	}
+	return(-ERR_NO_RESOURCES);
 }
 
-static void expiry_fn(void *data)
+void set_bit(struct one_wire_device *dev, uint8_t bit)
 {
-        timer_expired = TRUE;
+	if(bit < 8) {
+		dev->family |= (0b1 << bit);
+	} else if (bit < 16) {
+		dev->serial_number[0] |= (0b1 << (bit - 8));			
+	} else if (bit < 24) {
+		dev->serial_number[1] |= (0b1 << (bit - 16));			
+	} else if (bit < 32) {
+		dev->serial_number[2] |= (0b1 << (bit - 24));			
+	} else if (bit < 40) {
+		dev->serial_number[3] |= (0b1 << (bit - 32));			
+	} else if (bit < 48) {
+		dev->serial_number[4] |= (0b1 << (bit - 40));			
+	} else if (bit < 56) {
+		dev->serial_number[5] |= (0b1 << (bit - 48));			
+	} else if (bit < 64) {
+		dev->crc |= (0b1 << (bit - 56));			
+	}
 }
 
-result_t one_wire_ds2502_read_rom(enum pin_t pin)
+uint8_t get_bit(struct one_wire_device *dev, uint8_t bit)
 {
-        uint8_t  i;
-        uint8_t  byte;
-        result_t rc;
+	if(bit < 8) {
+		return(dev->family & (0b1 << bit));
+	} else if (bit < 16) {
+		return(dev->serial_number[0] & (0b1 << (bit - 8)));			
+	} else if (bit < 24) {
+		return(dev->serial_number[1] & (0b1 << (bit - 16)));			
+	} else if (bit < 32) {
+		return(dev->serial_number[2] & (0b1 << (bit - 24)));			
+	} else if (bit < 40) {
+		return(dev->serial_number[3] & (0b1 << (bit - 32)));			
+	} else if (bit < 48) {
+		return(dev->serial_number[4] & (0b1 << (bit - 40)));			
+	} else if (bit < 56) {
+		return(dev->serial_number[5] & (0b1 << (bit - 48)));			
+	} else if (bit < 64) {
+		return(dev->crc & (0b1 << (bit - 56)));			
+	}
         
-        /*
-         * Start with a reset pulse
-         */
-        rc = reset_pulse(pin);
-
-        rc = program_pulse(pin);
-        return;
-//        if(rc != SUCCESS) return(rc);
-        
-        /*
-         * Now we want to send the read rom command
-         */
-        rc =  tx_byte(pin, READ_ROM);
-        
-        /*
-         * Read the response from the Slave
-         */
-  //      for (i = 0; i < 8; i++)
-        rc =  rx_byte(pin, &byte);
-        
-        if (byte != DS2502_FAMILY_CODE) {
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL != NO_LOGGING))
-                LOG_E("Unexpected Family Code\n\r");
-#endif                
-        } else {
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-                LOG_D("DS2502 Present on OneWire Bus\n\r");
-#endif                
-        }
-        
-        return(SUCCESS);
+        return(0);
 }
 
-static result_t reset_pulse(enum pin_t pin)
+/*
+ * Returns the number of devices on the OneWire bus
+ */
+static result_t census(int16_t chan)
 {
-        uint8_t  i;
-        uint8_t  value;
-        uint8_t  hw_timer;
-        result_t rc;
+        struct search_dev {
+                boolean                 used;
+                struct one_wire_device  dev;
+                uint8_t                 discrepancy;
+        };
         
-        /*
-         * First reset pulse at least 480uS 
-         */
-        rc = set_pin(pin, OUTPUT_PIN, 0);
+        struct search_dev  search[SYS_ONE_WIRE_MAX_DEVICES];        
+	result_t           rc;
+	uint8_t            bit_loop;
+        uint8_t            loop;
+        uint8_t            i;
+	boolean            first_read;
+	boolean            second_read;
+        boolean            finished = FALSE;
+        uint8_t            index = 0;
+        uint32_t           crc_sum;
+	uint8_t            found_count = 0;
 
-//        LOG_D("500/4.6 %ld\n\r", (uint32_t)(((float)500 )/NOP_DURATION));
-//        DELAY(500);        
-//        for(i = 0; i < 10; i++)
-//                Nop();
-        delay(uSeconds, 500);
+        // polynomial X^8 + X^5 + X^4 + X^0
+        rc = crc_reserve(ONE_WIRE_CRC_POLYNOMIAL, ONE_WIRE_CRC_POLYNOMIAL_LENGTH, ONE_WIRE_CRC_DATA_WIDTH, ONE_WIRE_CRC_LITTLE_ENDIAN);
+        RC_CHECK
 
-        rc = set_pin(pin, OUTPUT_PIN, 1);
-
-        /*
-         * DS2502 should reply with 60-240uS pulse after a 15-60uS Delay
-         * There is a recovery time as well, at least 480uS.
-         */
-        timer_expired = FALSE;
-        hw_timer = hw_timer_start(uSeconds, 500, FALSE, expiry_fn, NULL);
-
-        /*
-         * I'll ignore the return code from the function. We've tested the
-         * value of pin previously so unless it's been corrupted by a write
-         * it should be good.
-         */
-        rc = get_pin(pin, &value);
-        while(value && !timer_expired)
-                rc = get_pin(pin, &value);
-        
-        /*
-         * The line has either gone low or the timer has expired.
-         */
-        if(timer_expired) {
-                /*
-                 * Bad! :-( Timer has expired with no response from the Bus
-                 */
-                return(ERR_NO_RESPONSE);                
-        }
-        
-        /*
-         * The Bus level should now be low because whatever is on the bus
-         * (assume it's the DS2502) has pulled the bus low. The bus should
-         * remain low for 60-240uS but I'm not going to time that response 
-         * for the moment we'll assume it's in spec.
-         */
-        if(value) {
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL != NO_LOGGING))
-                LOG_E("Unexpected level detected on the BUS\n\r");
-#endif
-                return(ERR_GENERAL_ERROR);
+        for (loop = 0; loop < SYS_ONE_WIRE_MAX_DEVICES; loop++) {
+                search[loop].used         = FALSE;
+                search[loop].discrepancy  = 0xff;  // No Discrepancy as yet
         }
 
-//        LOG_D("\\/ Value 0x%x\n\r", value);
-        
-        while(!value && !timer_expired)
-                rc = get_pin(pin, &value);
-        
-        /*
-         * Now the Bus should have gone high again after the response pulse
-         * from the Slave device(s).
-         */
-        if(timer_expired) {
-                /*
-                 * Oops! The timer expired, as if the Slave(s) pulled the bus
-                 * low but forgot to raise it again?
-                 */
-                if(!value) {
+        search[index].used           = TRUE;
+        search[index].dev.family     = 0x00;
+        search[index].dev.crc        = 0x00;
+        search[index].dev.ow_channel = chan;
+        search[index].discrepancy    = 0xff;  // No Discrepancy as yet
+
+        for (i = 0; i < 6; i++)
+                search[index].dev.serial_number[i] = 0x00;
+
+	while (!finished) {
+                delay(mSeconds, 100);
+	
+                rc = reset_pulse(chan);
+                RC_CHECK
+                if(rc == 0) return(rc);
+
+                rc = write_byte(chan, ROM_SEARCH);
+                RC_CHECK
+
+		for (bit_loop = 0; bit_loop < 64; bit_loop++) {
+			rc = read_bit(chan);
+			RC_CHECK
+			first_read = (boolean)(rc == 1);
+
+			rc = read_bit(chan);
+			RC_CHECK
+			second_read = (boolean)(rc == 1);
+	
+			if (!first_read && !second_read) {
+				// Discrepancy at this bit
+                                if ((search[index].discrepancy == 0xff) || (bit_loop > search[index].discrepancy)) {
+                                        /*
+                                         * We have a new device to search so add it to the search list.
+                                         */
+                                        for (loop = 0; (loop < SYS_ONE_WIRE_MAX_DEVICES && search[loop].used); loop++);
+                                        if(loop < SYS_ONE_WIRE_MAX_DEVICES) {
+//                                                LOG_D("Added new device at index %d discrepency @ bit %d\n\r", loop, bit_loop);
+                                                search[loop].used           = TRUE;
+                                                search[loop].dev.family     = search[index].dev.family;
+                                                search[loop].dev.crc        = search[index].dev.crc;
+                                                search[loop].dev.ow_channel = chan;
+                                                search[loop].discrepancy    = bit_loop;
+
+                                                for (i = 0; i < 6; i++)
+                                                        search[loop].dev.serial_number[i] = search[index].dev.serial_number[i];
+                                        } else {
+                                                LOG_E("More OneWire devices then mem allocated\n\r");
+                                        }
+
+                                        rc = write_zero(chan);
+                                        RC_CHECK
+                                } else if (bit_loop < search[index].discrepancy) {
+                                        if(get_bit(&search[loop].dev, bit_loop)) {
+                                                rc = write_one(chan);
+                                                RC_CHECK
+                                        } else {
+                                                rc = write_zero(chan);
+                                                RC_CHECK
+                                        }
+                                } else if (bit_loop == search[index].discrepancy) {
+                                        rc = write_one(chan);
+                                        RC_CHECK
+                                        set_bit(&search[index].dev, bit_loop);
+                                } 
+			} else if (first_read && second_read) {
+				// No devices, must be finished
+				LOG_D("No Devices on branch loop %d\n\r", bit_loop);
+				return(0);
+				break;
+			} else if (first_read) {
+//				serial_printf("1");
+				set_bit(&search[index].dev, bit_loop);
+				rc = write_one(chan);
+				RC_CHECK
+			} else {
+//				serial_printf("0");
+				rc = write_zero(chan);
+				RC_CHECK
+			}
+                        
                         /*
-                         * Oops? The Bus should have gone high
+                         * Send the received data to the CRC Engine
                          */
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL != NO_LOGGING))
-                        LOG_E("Unexpected level detected on the BUS\n\r");
-#endif
-                        return(ERR_GENERAL_ERROR);
+                        if (bit_loop == 7) {
+                                rc = crc_sum_byte(search[index].dev.family);
+                                RC_CHECK
+                        } else if (bit_loop == 15) {
+                                rc = crc_sum_byte(search[index].dev.serial_number[0]);
+                                RC_CHECK
+                        } else if (bit_loop == 23) {
+                                rc = crc_sum_byte(search[index].dev.serial_number[1]);
+                                RC_CHECK
+                        } else if (bit_loop == 31) {
+                                rc = crc_sum_byte(search[index].dev.serial_number[2]);
+                                RC_CHECK
+                        } else if (bit_loop == 39) {
+                                rc = crc_sum_byte(search[index].dev.serial_number[3]);
+                                RC_CHECK
+                        } else if (bit_loop == 47) {
+                                rc = crc_sum_byte(search[index].dev.serial_number[4]);
+                                RC_CHECK
+                        } else if (bit_loop == 55) {
+                                rc = crc_sum_byte(search[index].dev.serial_number[5]);
+                                RC_CHECK
+                        } else if (bit_loop == 63) {
+                                rc = crc_sum_byte(search[index].dev.crc);
+                                RC_CHECK
+                        }
+                        delay(mSeconds, 5);
+		}
+                
+                rc = crc_sum_result(&crc_sum);
+                RC_CHECK
+  //              LOG_D("CRC Sum 0x%x\n\r", (uint8_t)crc_sum);
+
+		if ((uint8_t)crc_sum == 0x00) {
+			/*
+			 * Add the device to the list of devices
+			 */
+			for (loop = 0; loop < SYS_ONE_WIRE_MAX_DEVICES; loop++) {
+				if (device[loop].ow_channel == NO_CHANNEL) {
+					device[loop].ow_channel = chan;
+					device[loop].family     = search[index].dev.family;
+					device[loop].crc        = search[index].dev.crc;
+
+					for (i = 0; i < 6; i++)
+						device[loop].serial_number[i] = search[index].dev.serial_number[i];
+
+					found_count++;
+					break;
+				}
+			}
+		}
+		crc_sum_reset();
+
+                /*
+                 * Mark this search as done
+                 */
+                search[index].discrepancy = 0xff;
+#if 0
+#ifdef SYS_SERIAL_LOGGING
+                LOG_D("Family Code 0x%x\n\r", search[index].dev.family);
+                for (loop = 0; loop < 6; loop++) {
+                        LOG_D("serial[%d] 0x%x\n\r", loop, search[index].dev.serial_number[loop]);		
                 }
-        }
+                LOG_D("CRC 0x%x\n\r", search[index].dev.crc);	
+#endif
+#endif
+                /*
+                 * Find next path to follow
+                 */
+                for (loop = 0; loop < SYS_ONE_WIRE_MAX_DEVICES; loop++) {
+                        if(search[loop].used && search[loop].discrepancy != 0xff) {
+                                index = loop;
+                                break;
+                        }
+                }
+                
+                finished = (loop == SYS_ONE_WIRE_MAX_DEVICES);
+//                rc = get_free_device();
+//                RC_CHECK
+                
+//                device_index = (uint8_t)rc;
 
-        /*
-         * Wait for the timer to expire so we allow recovery time on bus
-         */
-        while(!timer_expired) Nop();
+	}
         
-        return(SUCCESS);
-}        
-
-static result_t program_pulse(enum pin_t pin)
-{
-        uint8_t  i;
-        uint8_t  value;
-        uint8_t  hw_timer;
-        result_t rc;
-        
-        /*
-         */
-        LATDbits.LATD1= 0;
-        delay(uSeconds, 480);
-        LATDbits.LATD1= 1;        
+	return(found_count);
 }
 
-static result_t tx_byte(enum pin_t pin, uint8_t byte)
+static void bus_change(enum gpio_pin pin)
+{
+	bus_changes++;
+}
+
+/*
+ * Synchronous Function it will spin
+ */
+static result_t reset_pulse(int16_t chan)
+{
+        result_t rc;
+        
+	/*
+	 * Want to receive a presence pulse from the devices on the bus
+	 * so request change notification on the bus I/O Pin
+	 */
+	bus_changes = 0;
+	rc = change_notifier_register(bus[chan].pin, bus_change);
+	RC_CHECK
+	
+        delay(mSeconds, 100);
+	rc = gpio_set(bus[chan].pin, GPIO_MODE_DIGITAL_OUTPUT | GPIO_MODE_OPENDRAIN_OUTPUT, 0);
+	RC_CHECK
+        delay(uSeconds, 500);
+	rc = gpio_set(bus[chan].pin, GPIO_MODE_DIGITAL_OUTPUT | GPIO_MODE_OPENDRAIN_OUTPUT, 1);
+	rc = gpio_set(bus[chan].pin, GPIO_MODE_DIGITAL_INPUT | GPIO_MODE_OPENDRAIN_OUTPUT, 1);
+	RC_CHECK
+		
+	// Give the slaves on the bus time to respond
+	delay(uSeconds, 500);
+	rc = change_notifier_deregister(bus[chan].pin);
+	RC_CHECK
+
+	return(bus_changes);
+}
+
+static result_t write_byte(int16_t chan, uint8_t byte)
 {
         uint8_t  bit = 0;
         uint8_t  i;
@@ -419,424 +493,113 @@ static result_t tx_byte(enum pin_t pin, uint8_t byte)
                  * Check is the bit zero or one
                  */
                 if(byte & bit) {
-                        /*
-                         * Write one to the Bus. Starts with pulling bus low 
-                         * for less then 15uS. I'll go 2uS
-                         */
-                        // Todo make the 10uS time a #define
-                        INTCON2bits.GIE = DISABLED;
-                        rc = set_pin(pin, OUTPUT_PIN, 0);
-                        
-                        Nop();
-                        Nop();
-//                        delay(uSeconds, 2);
-                        
-                        /*
-                         * Now all the line to go high for the remainder of 
-                         * the slot.
-                         * The slot is 60uS <= slot <= 120uS Total
-                         */
-                        rc = set_pin(pin, OUTPUT_PIN, 1);
-                        INTCON2bits.GIE = ENABLED;
-        
-                        delay(uSeconds, 100);
-                } else {
-                        /*
-                         * writing 0 to the bus we pull it low for the entire
-                         * slot. I'll use 100uS for the slot
-                         */
-                        rc = set_pin(pin, OUTPUT_PIN, 0);
-        
-                        delay(uSeconds, 100);
-
-                        rc = set_pin(pin, OUTPUT_PIN, 1);
-                }
-                
-                /*
-                 * Let's pause for thought before the next bit. The datasheet 
-                 * for the DS2502 says between 1uS and Infinity. I'll got 5uS
-                 */
-                delay(uSeconds, 5);
-        }
-        
-        /*
-         * End of the byte so pause 
-         */
-        delay(uSeconds, 100);
-
-//#if (DEBUG_FILE && (SYS_LOG_LEVEL <= LOG_DEBUG))
-//        LOG_D("Finished the tx_byte() active timers %d\n\r", hw_timer_active_count());
-//#endif
-        return(SUCCESS);
+			rc = write_one(chan);
+			RC_CHECK
+		} else {
+			rc = write_zero(chan);
+			RC_CHECK
+		}
+	}
+        return(0);
 }
 
-result_t rx_byte(enum pin_t pin, uint8_t *byte)
+result_t write_one(int16_t chan)
 {
-        uint8_t  i;
-        uint8_t  read_byte = 0x00;
-        uint8_t  value;
-        uint8_t  hw_timer;
-        result_t rc;
-        uint32_t j;
+	result_t  rc;
 
-        for(i = 0; i < 8; i++) {
-                read_byte = read_byte >> 1;
-                __asm__ ("CLRWDT");
-                /*
-                 * Send the low pulse on the bus to signal the Slave can
-                 * write to the bus. 1uS <= pulse <= 15uS. I'll use 2uS
-                 */
-                INTCON2bits.GIE = DISABLED;
-//                SRbits.IPL = 0x07;
-                rc = set_pin(pin, OUTPUT_PIN, 0);
-                
-                Nop();  
-                        
-                /*
-                 * Now all the line to go high for the remainder of 
-                 * the read slot.
-                 * The slot is 60uS <= slot <= 120uS Total
-                 */
-                rc = set_pin(pin, OUTPUT_PIN, 1);
-//                SRbits.IPL = 0x00;
-                INTCON2bits.GIE = ENABLED;
+	rc = gpio_set(bus[chan].pin, GPIO_MODE_DIGITAL_OUTPUT | GPIO_MODE_OPENDRAIN_OUTPUT, 0);
+	RC_CHECK
+	Nop();
+	Nop();
+	Nop();
+	Nop();
+	Nop();
+	Nop();
+	Nop();
+	Nop();
+	rc = gpio_set(bus[chan].pin, GPIO_MODE_DIGITAL_OUTPUT | GPIO_MODE_OPENDRAIN_OUTPUT, 1);
+	RC_CHECK
+		
+	// Wait for the end of the write slot
+	delay(uSeconds, 100);
 
-                if(rx_bit(pin)) read_byte = read_byte | 0x80;
-        }
-
-        *byte = read_byte;
-        return(SUCCESS);
+	return(0);
 }
 
-static uint8_t rx_bit(enum pin_t pin)
+result_t write_zero(int16_t chan)
 {
-        uint8_t  i;
-        uint8_t  value;
-        uint8_t  hw_timer;
-        result_t rc;
-        uint32_t j;
-
-        rc = get_pin(pin, &value);
-
-        /*
-         * We'll delay for the slot 60 - 120uS
-         */
-        delay(uSeconds, 80);
-        return(value);
+	result_t  rc;
+	
+	rc = gpio_set(bus[chan].pin, GPIO_MODE_DIGITAL_OUTPUT | GPIO_MODE_OPENDRAIN_OUTPUT, 0);
+	RC_CHECK
+        rc = delay(uSeconds, 100);
+	RC_CHECK
+	rc = gpio_set(bus[chan].pin, GPIO_MODE_DIGITAL_OUTPUT | GPIO_MODE_OPENDRAIN_OUTPUT, 1);
+	RC_CHECK
+        rc = delay(uSeconds, 20);
+	RC_CHECK
+		
+	return(0);
 }
 
-#if 0
-void reset_pulse()
+static result_t read_byte(int16_t chan)
 {
-        uint8_t hw_timer;
+	result_t  rc;
+	uint8_t   loop;
+	uint8_t   byte = 0x00;
 
-        /*
-         * Make sure the pin is an output
-         */
-        if (pin != INVALID_PIN) {
-                device_present = FALSE;
-                
-                switch(pin) {
-                case RF3:
-                        TRISFbits.TRISF3 = OUTPUT_PIN;
-                        LATFbits.LATF3 = 0;
-                        break;
-
-                default:
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
-                        LOG_E("Pin has not been coded yet!\n\r");
-#endif
-                        break;
-                }
-
-                /*
-                 * Reset pulse minimum 480 uS
-                 */        
-                hw_timer = hw_timer_start(uSeconds, 500, FALSE, exp_end_reset, NULL);
-                
-                bus_busy = TRUE;
-        }
+	for(loop = 0; loop < 8; loop++) {
+		rc = read_bit(chan);
+		RC_CHECK
+			
+		byte = byte >> 1;
+		if(rc) {
+			byte |= 0x80;
+		} else {
+			byte &= 0x7f;
+		}
+	}
+	return(byte);
 }
 
-void exp_end_reset(void *data)
+static result_t read_bit(int16_t chan)
 {
-        uint8_t hw_timer;
-        
-        /*
-         * Now set the pin as an input and wait for presence pulse
-         */
-        if (pin != INVALID_PIN) {
-                switch(pin) {
-                case RF3:
-                        TRISFbits.TRISF3 = INPUT_PIN;
-                        
-                        /*
-                         * Store the current value on the bus to detect change
-                         */
-                        bus_level = PORTFbits.RF3;
-                        CNENFbits.CNIEF3 = ENABLED;
-                        break;
-                        
-                default:
-                        break;
-                }
-                
-                IFS1bits.CNIF = 0;
-                IEC1bits.CNIE = 1;
-        
-                hw_timer = hw_timer_start(uSeconds, 500, FALSE, exp_end_presence, NULL);
-        }
+	int16_t   bit;
+	result_t  rc;
+	
+	rc = gpio_set(bus[chan].pin, GPIO_MODE_DIGITAL_OUTPUT | GPIO_MODE_OPENDRAIN_OUTPUT, 0);
+	RC_CHECK
+	Nop();
+	Nop();
+	Nop();
+	Nop();
+	Nop();
+	Nop();
+	Nop();
+	Nop();
+	Nop();
+	Nop();
+	Nop();
+	Nop();
+	Nop();
+	Nop();
+	Nop();
+	Nop();
+	rc = gpio_set(bus[chan].pin, GPIO_MODE_DIGITAL_OUTPUT | GPIO_MODE_OPENDRAIN_OUTPUT, 1);
+	RC_CHECK
+	rc = gpio_set(bus[chan].pin, GPIO_MODE_DIGITAL_INPUT | GPIO_MODE_OPENDRAIN_INPUT, 1);
+	RC_CHECK
+	Nop();
+	Nop();
+	Nop();
+	Nop();
+	rc = gpio_get(bus[chan].pin);
+	RC_CHECK
+	bit = rc;
+//	LOG_D("read bit %d\n\r", rc);
+	rc = delay(uSeconds, 100);
+	RC_CHECK
+	return(bit);
 }
-
-void exp_end_presence(void *data)
-{
-        /*
-         * set pin to Output and cancel change notification
-         */
-        if (pin != INVALID_PIN) {
-                switch(pin) {
-                case RF3:
-                        TRISFbits.TRISF3 = OUTPUT_PIN;
-                        CNENFbits.CNIEF3 = DISABLED;
-                        break;
-                        
-                default:
-                        break;
-                }
-                
-                IFS1bits.CNIF = 0;
-                IEC1bits.CNIE = 0;
-        
-                if(!device_present) {
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL != NO_LOGGING))
-                        LOG_E("No Devices!\n\r");
-#endif
-                } else {
-                        if(callback) {
-                                callback();
-                        } else {
-                                bus_busy = FALSE;
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL != NO_LOGGING))
-                                LOG_E("No callback function\n\r");
-#endif
-                        }
-                }
-        }
-}
-
-void write_one()
-{
-        uint8_t hw_timer;
-        
-        if (pin != INVALID_PIN) {
-                switch(pin) {
-                case RF3:
-                        TRISFbits.TRISF3 = OUTPUT_PIN;
-                        LATFbits.LATF3 = 0;
-                        break;
-                        
-                default:
-                        break;
-                }
-                
-                /*
-                 * pulse 15 uS
-                 */
-                hw_timer = hw_timer_start(uSeconds, 20, FALSE, exp_end_write_one_pulse, NULL);
-        }
-}
-
-void exp_end_write_one_pulse(void *data)
-{
-        uint8_t hw_timer;
-
-        if (pin != INVALID_PIN) {
-                switch(pin) {
-                case RF3:
-                        LATFbits.LATF3 = 1;
-                        break;
-                        
-                default:
-                        break;
-                }
-        
-                hw_timer = hw_timer_start(uSeconds, 100, FALSE, exp_end_write_one, NULL);
-        }
-}
-
-void exp_end_write_one(void *data)
-{
-        write_bit_fn();
-}
-
-void write_zero()
-{
-        uint8_t hw_timer;
-        
-        if (pin != INVALID_PIN) {
-                switch(pin) {
-                case RF3:
-                        TRISFbits.TRISF3 = 0;
-                        LATFbits.LATF3 = 0;
-                        break;
-                        
-                default:
-                        break;
-                }
-                
-                /*
-                 * pulse 15 uS
-                 */
-                hw_timer = hw_timer_start(uSeconds, 120, FALSE, exp_end_write_zero, NULL);
-        }
-}
-
-void exp_end_write_zero(void *data)
-{
-        if (pin != INVALID_PIN) {
-                switch(pin) {
-                case RF3:
-                        TRISFbits.TRISF3 = INPUT_PIN;
-                        write_bit_fn();
-                        
-                default:
-                        break;
-                }
-        }
-}
-
-void read()
-{
-        uint8_t hw_timer;
-
-        if (pin != INVALID_PIN) {
-                switch(pin) {
-                case RF3:
-                        TRISFbits.TRISF3 = OUTPUT_PIN;
-                        LATFbits.LATF3 = 0;
-                        break;
-                        
-                default:
-                        break;
-                }
-
-                /*
-                 * pulse 15 uS
-                 */        
-                hw_timer = hw_timer_start(uSeconds, 20, FALSE, exp_end_read_pulse, NULL);
-        }
-}
-
-void exp_end_read_pulse(void *data)
-{
-        uint8_t hw_timer;
-
-        if (pin != INVALID_PIN) {
-                switch(pin) {
-                case RF3:
-                        LATFbits.LATF3 = 1;
-                        TRISFbits.TRISF3 = INPUT_PIN;
-                        break;
-                        
-                default:
-                        break;
-                }
-                hw_timer = hw_timer_start(uSeconds, 20, FALSE, exp_read, NULL);
-        }
-}
-
-void exp_read(void *data)
-{
-        uint8_t hw_timer;
-        
-        if (pin != INVALID_PIN) {
-                switch(pin) {
-                case RF3:
-                        read_bit = PORTFbits.RF3;
-                        break;
-                        
-                default:
-                        break;
-                }
-                hw_timer = hw_timer_start(uSeconds, 80, FALSE, exp_end_read, NULL);        
-        }
-}
-
-void exp_end_read(void *data)
-{
-        if (pin != INVALID_PIN) {
-                switch(pin) {
-                case RF3:
-                        TRISFbits.TRISF3 = OUTPUT_PIN;
-                        break;
-                        
-                default:
-                        break;
-                }        
-                bit_read(read_bit);
-        }
-}
-
-void write_byte_fn(uint8_t data)
-{
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-        LOG_D("write_byte_fn(0x%x)\n\r", data);
-#endif
-        write_byte = data;
-        write_count = 0;
-
-        write_bit_fn();
-}
-
-void write_bit_fn(void)
-{
-        if(write_count < 8) {
-                if (write_byte & 0x01) {
-                        write_one();
-                } else {
-                        write_zero();
-                }
-                write_byte = write_byte >> 1;
-                write_count++;
-        } else {
-                if(callback) {
-                        callback();
-                } else {
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL != NO_LOGGING))
-		        LOG_E("No callback function\n\r");
-#endif
-                }
-        }
-}
-
-void rom_command(void)
-{
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-        LOG_D("rom_command()\n\r");
-#endif
-        callback = read_rom;
-        write_byte_fn(READ_ROM);
-}
-
-void read_rom(void)
-{
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-        LOG_D("read_rom()\n\r");
-#endif
-        read_count = 8;       
-        read();
-}
-
-void bit_read(uint8_t read_bit)
-{
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-        LOG_D("bit_read(0x%x)\n\r", read_bit);
-#endif
-        read_count--;        
-        if(read_count > 0) {
-                read();
-        }
-}
-#endif
 
 #endif // SYS_ONE_WIRE

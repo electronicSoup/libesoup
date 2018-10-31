@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<configurationDescriptor version="62">
+<configurationDescriptor version="65">
   <logicalFolder name="root" displayName="root" projectFiles="true">
     <logicalFolder name="HeaderFiles"
                    displayName="Header Files"
@@ -14,6 +14,21 @@
                    projectFiles="true">
       <logicalFolder name="src" displayName="src" projectFiles="true">
         <logicalFolder name="libesoup" displayName="libesoup" projectFiles="true">
+          <logicalFolder name="boards" displayName="boards" projectFiles="true">
+            <logicalFolder name="cinnamonBun" displayName="cinnamonBun" projectFiles="true">
+              <logicalFolder name="dsPIC33" displayName="dsPIC33" projectFiles="true">
+                <itemPath>../../../../boards/cinnamonBun/dsPIC33/board.c</itemPath>
+              </logicalFolder>
+              <logicalFolder name="pic24FJ" displayName="pic24FJ" projectFiles="true">
+                <itemPath>../../../../boards/cinnamonBun/pic24FJ/board.c</itemPath>
+              </logicalFolder>
+            </logicalFolder>
+            <logicalFolder name="gauge" displayName="gauge" projectFiles="true">
+              <itemPath>../../../../boards/gauge/board.c</itemPath>
+            </logicalFolder>
+            <logicalFolder name="rpi" displayName="rpi" projectFiles="true">
+            </logicalFolder>
+          </logicalFolder>
           <logicalFolder name="comms" displayName="comms" projectFiles="true">
             <logicalFolder name="uart" displayName="uart" projectFiles="true">
               <itemPath>../../../../comms/uart/uart.c</itemPath>
@@ -21,6 +36,10 @@
           </logicalFolder>
           <logicalFolder name="examples" displayName="examples" projectFiles="true">
             <itemPath>../../../main_serial_logging.c</itemPath>
+          </logicalFolder>
+          <logicalFolder name="gpio" displayName="gpio" projectFiles="true">
+            <itemPath>../../../../gpio/peripheral.c</itemPath>
+            <itemPath>../../../../gpio/gpio.c</itemPath>
           </logicalFolder>
           <logicalFolder name="logger" displayName="logger" projectFiles="true">
             <itemPath>../../../../logger/serial_log.c</itemPath>
@@ -30,6 +49,13 @@
             <itemPath>../../../../processors/pic18f2680.c</itemPath>
             <itemPath>../../../../processors/dsPIC33EP256MU806.c</itemPath>
             <itemPath>../../../../processors/pic18f4585.c</itemPath>
+          </logicalFolder>
+          <logicalFolder name="timers" displayName="timers" projectFiles="true">
+            <itemPath>../../../../timers/hw_rtc.c</itemPath>
+            <itemPath>../../../../timers/delay.c</itemPath>
+            <itemPath>../../../../timers/hw_timers.c</itemPath>
+            <itemPath>../../../../timers/sw_timers.c</itemPath>
+            <itemPath>../../../../timers/sw_rtc.c</itemPath>
           </logicalFolder>
           <itemPath>../../../../core.c</itemPath>
         </logicalFolder>
@@ -57,6 +83,9 @@
         <languageToolchainVersion>1.31</languageToolchainVersion>
         <platform>2</platform>
       </toolsSet>
+      <packs>
+        <pack name="dsPIC33E-GM-GP-MC-GU-MU_DFP" vendor="Microchip" version="0.1.17"/>
+      </packs>
       <compileType>
         <linkerTool>
           <linkerLibItems>
@@ -247,6 +276,7 @@
         <property key="UART 3" value="true"/>
         <property key="UART 4" value="true"/>
         <property key="USB" value="true"/>
+        <property key="firmware.download.all" value="false"/>
         <property key="hwtoolclock.frcindebug" value="false"/>
         <property key="memories.aux" value="false"/>
         <property key="memories.bootflash" value="true"/>
@@ -299,6 +329,9 @@
         <languageToolchainVersion>1.31</languageToolchainVersion>
         <platform>2</platform>
       </toolsSet>
+      <packs>
+        <pack name="PIC24F-GA-GB_DFP" vendor="Microchip" version="0.1.24"/>
+      </packs>
       <compileType>
         <linkerTool>
           <linkerLibItems>
@@ -521,6 +554,9 @@
         <languageToolchainVersion>1.38</languageToolchainVersion>
         <platform>2</platform>
       </toolsSet>
+      <packs>
+        <pack name="PIC18Fxxxx_DFP" vendor="Microchip" version="0.1.3"/>
+      </packs>
       <compileType>
         <linkerTool>
           <linkerLibItems>

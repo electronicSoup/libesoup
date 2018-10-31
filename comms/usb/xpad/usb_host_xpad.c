@@ -1,12 +1,13 @@
-/*********************************************************************
+/**
+ * @file libesoup/usb/xpad/usb_config.c
  *
- * \file libesoup/usb/xpad/usb_config.c
- *
- * The USB Driver for the Logitech xbox gamepad
+ * @author John Whtimore
+ * 
+ * @brief The USB Driver for the Logitech xbox gamepad
  *
  * http://euc.jp/periphs/xbox-controller.ja.html
  *
- * Copyright 2017 - 2018 electronicSoup Limited
+ * Copyright 2017-2018 electronicSoup Limited
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 2 of the GNU Lesser General Public License
@@ -189,6 +190,15 @@ XPAD_DATA xpad_data;
 #define RX_BUFFER_SIZE 32
 uint8_t rx_buffer[RX_BUFFER_SIZE];
 
+/*
+ * Interrupt for the USB Peripheral
+ */
+void _ISR __attribute__((__no_auto_psv__)) _USB1Interrupt(void)
+{
+	LATDbits.LATD4 = ~PORTDbits.RD4;
+	USB_HostInterruptHandler();
+}
+
 /****************************************************************************
  *  Function: xpad_start()
  *
@@ -198,9 +208,7 @@ uint8_t rx_buffer[RX_BUFFER_SIZE];
  ****************************************************************************/
 void xpad_start()
 {
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_INFO))
 	LOG_I("xpad_start()\n\r");
-#endif
 	memset(&xpad_device,0x00,sizeof(xpad_device));
 	memset(&xpad_data,0x00,sizeof(xpad_data));
 }
@@ -273,9 +281,7 @@ void xpad_tasks(void)
 		if (error_code == USB_SUCCESS) {
 			xpad_device.state = READING;
 		} else {
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
 			LOG_E("xpad_read returned Error 0x%x\n\r", error_code);
-#endif
 		}
 		break;
 
@@ -287,9 +293,7 @@ void xpad_tasks(void)
 		break;
 
 	default:
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
 		LOG_E("xpad_tasks() - default state\n\r");
-#endif
 		break;
 	}
 }
@@ -340,160 +344,120 @@ bool xpad_initialise ( uint8_t address, uint32_t flags, uint8_t clientDriverID )
 	uint8_t descriptor_length;
 	uint16_t config_total_length;
 	uint8_t i;
+#ifdef SYS_SERIAL_LOGGING
 	uint8_t loop;
+#endif
 	uint16_t tmp_word;
 
 	uint8_t endpoint_address;
 	uint16_t endpoint_packet_size;
 
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_INFO))
 	LOG_I("xpad_initialise(Address 0x%x)\n\r", address);
-#endif
 	xpad_device.address = address;
 
 	descriptor = USBHostGetDeviceDescriptor(address);
 
-#if (defined(SYS_SERIAL_LOGGING) && defined (DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	LOG_D("Descriptor Length %d\n\r", descriptor[USB_DESC_bLength]);
 	LOG_D("Descriptor Type 0x%x\n\r", descriptor[USB_DESC_bDescriptorType]);
-#endif
 	
 	if(descriptor[USB_DESC_bDescriptorType] != USB_DEVICE_DESCRIPTOR){
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
 		LOG_E("Expected the Device Descriptor\n\r");
-#endif
 		return(false);
 	}
-
+#ifdef SYS_SERIAL_LOGGING
 	for(loop = 0; loop < descriptor[USB_DESC_bLength]; loop++) {
-		printf("-0x%x-", descriptor[loop]);
+		serial_printf("-0x%x-", descriptor[loop]);
 	}
-
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
+#endif
 	LOG_D("Device Class 0x%x\n\r", descriptor[USB_DEV_DESC_bDeviceClass]);
 	LOG_D("Device Sub Class 0x%x\n\r", descriptor[USB_DEV_DESC_bDeviceSubClass]);
 	LOG_D("Device Protocol 0x%x\n\r", descriptor[USB_DEV_DESC_bDeviceProtocol]);
 	LOG_D("Device MaxPacketSize0 0x%x\n\r", descriptor[USB_DEV_DESC_bMaxPacketSize0]);
-#endif
 
 	tmp_word = (uint16_t)descriptor[USB_DEV_DESC_VID_OFFSET];
 	tmp_word |= ((uint16_t)descriptor[USB_DEV_DESC_VID_OFFSET + 1]) << 8;
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	LOG_D("VID 0x%x\n\r", tmp_word);
-#endif
 
 	tmp_word = (uint16_t)descriptor[USB_DEV_DESC_PID_OFFSET];
 	tmp_word |= ((uint16_t)descriptor[USB_DEV_DESC_PID_OFFSET + 1]) << 8;
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	LOG_D("PID 0x%x\n\r", tmp_word);
 	LOG_D("Number of Configurations %d\n\r", descriptor[USB_DEV_DESC_NUM_CONFIGS_OFFSET]);
 	LOG_D("*******************************\n\r");
-#endif
         if(xpad_device.state != NO_DEVICE) {
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
 		LOG_E("xpad_initilise() - device Not in NO_DEVICE State\n\r");
-#endif
 		return(false);
 	}
 
 	descriptor = USBHostGetCurrentConfigurationDescriptor(address);
 
 	descriptor_length = descriptor[USB_DESC_bLength];
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	LOG_D("Configuration Descriptor\n\r");
 	LOG_D("Descriptor Length %d\n\r", descriptor_length);
 	LOG_D("Descriptor Type 0x%x\n\r", descriptor[USB_DESC_bDescriptorType]);
-#endif
 
 	if(descriptor[USB_DESC_bDescriptorType] != USB_CONFIG_DESCRIPTOR){
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
 		LOG_E("Expected the Device Descriptor\n\r");
-#endif
 		return(false);
 	}
 
 	config_total_length = (uint16_t)descriptor[USB_CONFIG_DESC_wTotalLength];
 	config_total_length |= ((uint16_t)descriptor[USB_CONFIG_DESC_wTotalLength + 1]) << 8;
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	LOG_D("Total Length of config Descriptor %d\n\r", config_total_length);
 	LOG_D("*******************************\n\r");
-#endif
 	ptr = descriptor + descriptor_length;
 	i = 0;
 
 	while(ptr < (descriptor + config_total_length)) {
 		descriptor_length = ptr[USB_DESC_bLength];
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 		LOG_D("Process Descriptor %d\n\r", i);
 		LOG_D("Descriptor %d Length %d\n\r", i, descriptor_length);
 		LOG_D("Descriptor %d Type 0x%x\n\r", i, ptr[USB_DESC_bDescriptorType]);
-#endif
 
 		if(ptr[USB_DESC_bDescriptorType] == USB_ENDPOINT_DESCRIPTOR) {
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 			LOG_D("Endpoint Descriptor\n\r");
-#endif
 			endpoint_address = ptr[USB_ENDPOINT_DESC_bEndpointAddress];
 			endpoint_packet_size = (uint16_t) ptr[USB_ENDPOINT_DESC_wMaxPacketSize];
 			endpoint_packet_size |= ((uint16_t) ptr[USB_ENDPOINT_DESC_wMaxPacketSize + 1]) << 8;
 
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 			LOG_D("Endpoint number - 0x%x\n\r", endpoint_address);
 			LOG_D("Maximum packet size %d\n\r", endpoint_packet_size);
 			LOG_D("Attributes 0x%x\n\r", ptr[USB_ENDPOINT_DESC_bmAttributes]);
-#endif
 			if(endpoint_address & 0x80) {
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 				LOG_D("IN\n\r");
-#endif
 				xpad_device.INEndpointNum = endpoint_address;
 				xpad_device.INEndpointSize = endpoint_packet_size;
 			} else {
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 				LOG_D("OUT\n\r");
-#endif
 				xpad_device.OUTEndpointNum = endpoint_address;
 				xpad_device.OUTEndpointSize = endpoint_packet_size;
 			}
 		} else if (ptr[USB_DESC_bDescriptorType] == USB_INTERFACE_DESCRIPTOR) {
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 			LOG_D("Interface Descriptor\n\r");
 			LOG_D("Interface Number 0x%x\n\r", ptr[USB_INTERFACE_DESC_bInterfaceNumber]);
 			LOG_D("Interface Number of Endpoints 0x%x\n\r", ptr[USB_INTERFACE_DESC_bNumEndpoints]);
 			LOG_D("Interface Class 0x%x\n\r", ptr[USB_INTERFACE_DESC_bInterfaceClass]);
 			LOG_D("Interface SubClass 0x%x\n\r", ptr[USB_INTERFACE_DESC_bInterfaceSubClass]);
 			LOG_D("Interface Protocol 0x%x\n\r", ptr[USB_INTERFACE_DESC_bInterfaceProtocol]);
-#endif
 		} else if (ptr[USB_DESC_bDescriptorType] == USB_HID_DESCRIPTOR) {
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 			LOG_D("HID Descriptor\n\r");
 			LOG_D("HID Num Descriptors 0x%x\n\r", ptr[USB_HID_DESC_bNumDescriptors]);
 			LOG_D("HID Descriptor Type 0x%x\n\r", ptr[USB_HID_DESC_bDescriptorType]);
-#endif
 
 			tmp_word = (uint16_t) ptr[USB_HID_DESC_wDescriptorLength];
 			tmp_word |= ((uint16_t) ptr[USB_HID_DESC_wDescriptorLength + 1]) << 8;
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 			LOG_D("HID Descriptor Length 0x%x\n\r", tmp_word);
 			LOG_D("HID Optional Descriptor Type 0x%x\n\r", ptr[USB_HID_DESC_bOptionalDescriptorType]);
-#endif
 			tmp_word = (uint16_t) ptr[USB_HID_DESC_wOptionalDescriptorLength];
 			tmp_word |= ((uint16_t) ptr[USB_HID_DESC_wOptionalDescriptorLength + 1]) << 8;
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 			LOG_D("HID Optional Descriptor Lenght 0x%x\n\r", tmp_word);
-#endif
 		}
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 		LOG_D("*******************************\n\r");
-#endif
 		i++;
 		ptr += descriptor_length;
 	}
 
 	xpad_device.state = DEVICE_ATTACHED;
-#if ((defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	LOG_D("End of descriptors\n\r");
-#endif
 	return true;
 }
 
@@ -514,9 +478,7 @@ bool xpad_event_handler( uint8_t address, USB_EVENT event, void *data, uint32_t 
 			return true;
 
 		case EVENT_DETACH:
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 			LOG_D("EVENT_DETACH\n\r");
-#endif
 			xpad_device.state = NO_DEVICE;
 			return true;
 
@@ -541,39 +503,27 @@ bool xpad_event_handler( uint8_t address, USB_EVENT event, void *data, uint32_t 
 			return true;
 
 		case EVENT_RESUME:
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 			LOG_D("EVENT_RESUME\n\r");
-#endif
 			return true;
 
 		case EVENT_SUSPEND:
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 			LOG_D("EVENT_SUSPEND\n\r");
-#endif
 			return true;
 
 		case EVENT_RESET:
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 			LOG_D("EVENT_RESET\n\r");
-#endif
 			return true;
 
 		case EVENT_STALL:
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 			LOG_D("EVENT_STALL\n\r");
-#endif
 			return true;
 
 		case EVENT_BUS_ERROR:
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 			LOG_D("EVENT_BUS_ERROR\n\r");
-#endif
 			return true;
 
 		default:
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
 			LOG_E("default unprocessed Even 0x%x\n\r", event);
-#endif
 			break;
 	}
 	return false;
@@ -590,18 +540,14 @@ bool xpad_data_event_handler( uint8_t address, USB_EVENT event, void *data, uint
 {
 	switch (event) {
 		case EVENT_SOF: // Start of frame - NOT NEEDED
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 			LOG_D("EVENT_SOF\n\r");
-#endif
 			return true;
 
 		case EVENT_1MS: // 1ms timer
 			xpad_tasks();
 			return true;
 		default:
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 			LOG_D("Default event do nothing! 0x%x\n\r", event);
-#endif
 			break;
 	}
 	return false;

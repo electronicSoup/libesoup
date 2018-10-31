@@ -1,10 +1,12 @@
 /**
  *
- * \file libesoup/usb/android/android_state.h
+ * @file libesoup/comms/usb/android/state.h
+ *
+ * @author John Whitmore
  *
  * Definitions of structures for Android state.
  *
- * Copyright 2017 electronicSoup Limited
+ * Copyright 2017-2018 electronicSoup Limited
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 2 of the GNU Lesser General Public License
@@ -19,10 +21,13 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  *
  */
-#ifndef ANDROID_STATE_H
-#define ANDROID_STATE_H
+#ifndef _ANDROID_STATE_H
+#define _ANDROID_STATE_H
 
 #include "libesoup_config.h"
+
+#if defined(SYS_USB_ANDROID)
+
 //#include "usb/usb.h"
 #include "usb/inc/usb.h"
 
@@ -36,4 +41,5 @@ typedef struct android_state_t
 
 extern android_state_t android_state;
 
-#endif // ANDROID_STATE_H
+#endif // defined(SYS_USB_ANDROID)
+#endif // _ANDROID_STATE_H

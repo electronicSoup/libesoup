@@ -1,10 +1,11 @@
-/*
+/**
+ * @file libesoup/comms/can/ping.c
  *
- * libesoup/comms/can/ping.c
+ * @author John Whitmore
+ * 
+ * @brief CAN Bus Ping Protocol functionality
  *
- * Hardware Timer functionality for the electronicSoup Cinnamon Bun
- *
- * Copyright 2017 2018 electronicSoup Limited
+ * Copyright 2017-2018 electronicSoup Limited
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 2 of the GNU Lesser General Public License
@@ -31,7 +32,27 @@ const char *TAG = "CAN_PING";
 #include "libesoup/logger/serial_log.h"
 #endif // SYS_SERIAL_LOGGING
 
-#include "libesoup/timers/timers.h"
+#include <stdlib.h>   // rand()
+#include "libesoup/errno.h"
+#include "libesoup/comms/can/can.h"
+#include "libesoup/timers/sw_timers.h"
+#include "libesoup/utils/rand.h"
+
+#ifndef SYS_CAN_PING_FRAME_ID
+#error libesoup_config.h should define the SYS_CAN_PING_FRAME_ID
+#endif
+
+#ifndef SYS_CAN_PING_IDLE_SPREAD
+#error libesoup_config.h should define the SYS_CAN_PING_IDLE_SPREAD
+#endif
+
+#ifndef SYS_CAN_PING_IDLE_INTERVAL
+#error libesoup_config.h should define the SYS_CAN_PING_IDLE_INTERVAL
+#endif
+
+#ifndef SYS_RAND
+#error libesoup_config.h should define the SYS_RAND
+#endif
 
 /**
  * \brief Network Idle functionality
@@ -41,83 +62,59 @@ const char *TAG = "CAN_PING";
  * we'll keep a timer and if nothing has been received or transmitted in this
  * time we'll fire a ping message.
  */
-static u16 networkIdleDuration = 0;
-static es_timer networkIdleTimer;
-//static can_status_t canStatus;
 
-/*
- * Idle duration before sending a Ping Message. Initialised to a random value
- * on powerup.
- */
-static uint16_t ping_time;
-//static result_t send_ping(void);
+static  timer_id         ping_timer;
+static 	struct timer_req timer_request;
 
 
-static void     exp_test_ping(timer_t timer_id, union sigval data);
-static void     restart_ping_timer(void);
-static uint8_t ping_timer;
+result_t    restart_ping_timer(void);
+static void ping_network(timer_id timer, union sigval data);
 
-
-
-
-
-void ping_network(u8 *);
-
-void ping_init(void)
+void can_ping_init(void)
 {
-	// Create a random timer between 1 and 1.5 seconds for firing the
-	// Network Idle Ping message
-	networkIdleDuration = (u16) ((rand() % 500) + 1000);
+	uint16_t duration;
+	int16_t  tmp;
+	
+	tmp = (rand() % SYS_CAN_PING_IDLE_SPREAD) - (SYS_CAN_PING_IDLE_SPREAD/2);
+	duration = (uint16_t) SYS_CAN_PING_IDLE_INTERVAL + tmp;
+	
+	ping_timer = 0xFF;
+	
+	LOG_D("CAN ping duration - %d mSeconds\n\r", duration);
 
-	TIMER_INIT(networkIdleTimer)
-
-#if DEBUG_LEVEL <= LOG_DEBUG
-	LOG_D("Network Idle Duration set to %d milliSeconds\n\r", networkIdleDuration);
-#endif
-//	networkIdleTimer = start_timer(networkIdleDuration, ping_network, NULL);
-
-	ping_time = (uint16_t)((rand() % SECONDS_TO_TICKS(1)) + (SECONDS_TO_TICKS(CAN_PING_PROTOCOL_PERIOD) - MILLI_SECONDS_TO_TICKS(500)));
+	timer_request.period.units    = mSeconds;
+	timer_request.period.duration = duration;
+	timer_request.type            = single_shot;
+	timer_request.exp_fn          = ping_network;
+	timer_request.data.sival_int  = 0x00;
+	
         restart_ping_timer();
+}
 
-	// Create a random timer for firing the
-	// Network Idle Ping message
-	frame.can_id = CAN_DCNCP_NodePingMessage;
+static void ping_network(timer_id timer, union sigval data)
+{
+	can_frame frame;
+
+	ping_timer = 0xFF;
+		
+//	LOG_D("CAN Ping\n\r");
+	frame.can_id = SYS_CAN_PING_FRAME_ID;
 	frame.can_dlc = 0;
 
-	can_l2_tx_frame(&frame);
+	can_l2_tx_frame(&frame); // Transmission of frame will cause timer to restart
 }
 
-void ping_network(u8 *data)
+result_t restart_ping_timer(void)
 {
-	LOG_D("Network Idle Expired so send a ping message and restart\n\r");
-//	networkIdleTimer = start_timer(networkIdleDuration, pingNetwork, NULL);
-	send_ping_message();
-}
+	result_t  rc;
 
-void exp_test_ping(timer_t timer_id __attribute__((unused)), union sigval data __attribute__((unused)))
-{
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-        LOG_D("exp_test_ping()\n\r");
-#endif
-	dcncp_send_ping();
-        restart_ping_timer();
-}
-
-void restart_ping_timer(void)
-{
-	if(ping_timer.status == ACTIVE) {
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-//		LOG_D("Cancel running ping timer\n\r");
-#endif
- 		if(timer_cancel(&ping_timer) != SUCCESS) {
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
-			LOG_E("Failed to cancel the Ping timer\n\r");
-#endif
-			return;
-		}
-	}
-
-	sw_timer_start(ping_time, exp_test_ping, (union sigval)(void *) NULL, &ping_timer);
+	rc = sw_timer_cancel(&ping_timer);
+	RC_CHECK
+	
+	rc = sw_timer_start(&timer_request);
+	RC_CHECK
+	ping_timer = rc;
+	return(rc);
 }
 
 #endif // #ifdef SYS_CAN_PING_PROTOCOL

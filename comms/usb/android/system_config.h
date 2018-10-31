@@ -1,10 +1,12 @@
 /**
  *
- * \file libesoup/usb/android/system_config.h
+ * @file libesoup/comms/usb/android/system_config.h
+ *
+ * @author John Whitmore
  *
  * Definition file required by the Microchip USB Host stack
  *
- * Copyright 2017 electronicSoup Limited
+ * Copyright 2017-2018 electronicSoup Limited
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 2 of the GNU Lesser General Public License
@@ -19,6 +21,13 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  *
  */
+#ifndef _SYSTEM_CONFIG_H
+#define _SYSTEM_CONFIG_H
+
+#include "libesoup_config.h"
+
+#if defined(SYS_USB_ANDROID)
+
 #define USB_SUPPORT_HOST
 
 #define MAX_ALLOWED_CURRENT   500
@@ -56,3 +65,5 @@
         USBHostInit(x);             \
     }
 
+#endif // defined(SYS_USB_ANDROID)
+#endif // _SYSTEM_CONFIG_H

@@ -1,10 +1,11 @@
 /**
+ * @file libesoup/timers/delay.c
  *
- * \file libesoup/utils/sleep.c
+ * @author John Whitmore
  *
- * Functionality for delaying the uC
+ * @brief Functionality for delaying the uC
  *
- * Copyright 2017 electronicSoup Limited
+ * Copyright 2017-2018 electronicSoup Limited
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 2 of the GNU Lesser General Public License
@@ -23,13 +24,29 @@
 
 #include "libesoup_config.h"
 
+#ifdef SYS_SERIAL_LOGGING
+#define DEBUG_FILE
+#if defined(XC16)
+__attribute__ ((unused)) static const char *TAG = "DELAY";
+#elif defined(__XC8)
+static const char *TAG = "DELAY";
+#endif // XC16 XC8
+#include "libesoup/logger/serial_log.h"
+/*
+ * Check required libesoup_config.h defines are found
+ */
+#ifndef SYS_LOG_LEVEL
+#error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
+#endif
+#endif // SYS_SERIAL_LOGGING
+
 /*
  * Code should only be compiled if SYS_HW_TIMERS is enabled in libesoup_config.h
  */
 #ifdef SYS_HW_TIMERS
 
+#include "libesoup/errno.h"
 #include "libesoup/timers/hw_timers.h"
-
 
 static volatile uint8_t delay_over;
 
@@ -44,19 +61,19 @@ void hw_expiry_function(timer_id timer, union sigval data)
 /*
  * delay function implementation
  */
-void delay(ty_time_units units, uint16_t duration)
+result_t delay(struct period *period)
 {
-	timer_id  hw_timer;
-	struct timer_req timer_request;
-	
-	TIMER_INIT(hw_timer);
-	timer_request.units = units;
-	timer_request.duration = duration;
-	timer_request.exp_fn = hw_expiry_function;
-	timer_request.data.sival_int = 0;
+	result_t           rc;
+	struct timer_req   timer_request;
+
+	timer_request.period.units    = period->units;
+	timer_request.period.duration = period->duration;
+	timer_request.type            = single_shot;
+	timer_request.exp_fn          = hw_expiry_function;
 
         delay_over = FALSE;
-        hw_timer = hw_timer_start(&hw_timer, &timer_request);
+        rc = hw_timer_start(&timer_request);
+	RC_CHECK
 
         while(!delay_over) {
 #if defined(XC16)
@@ -67,6 +84,7 @@ void delay(ty_time_units units, uint16_t duration)
 #error "Need a nop of watchdog macro for compiler"
 #endif
         }
+	return(0);
 }
 
 #endif // #ifdef SYS_HW_TIMERS

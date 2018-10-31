@@ -1,10 +1,12 @@
 /**
  *
- * \file libesoup/usb/android/android.h
+ * @file libesoup/comms/usb/android/android_comms.h
+ *
+ * @author John Whitmore
  *
  * Function prototypes for Android Comms
  *
- * Copyright 2017 electronicSoup Limited
+ * Copyright 2017-2018 electronicSoup Limited
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 2 of the GNU Lesser General Public License
@@ -19,10 +21,12 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  *
  */
-#ifndef ANDROID_COMMS_H
-#define ANDROID_COMMS_H
+#ifndef _ANDROID_COMMS_H
+#define _ANDROID_COMMS_H
 
 #include "libesoup_config.h"
+
+#if defined(SYS_USB_ANDROID)
 
 /** @defgroup group1 Android Message Identifiers
  *
@@ -251,5 +255,6 @@ extern void      android_set_tx_finished_callback(void (*data)(void));
 extern void      android_tasks(void);
 extern uint8_t   android_transmit(uint8_t *buffer, uint8_t size);
 
+#endif // defined(SYS_USB_ANDROID
 
-#endif /* ANDROID_COMMS_H */
+#endif // _ANDROID_COMMS_H

@@ -1,10 +1,11 @@
 /**
+ * @file libesoup/core.c
  *
- * libesoup/core.c
+ * @author John Whitmore
+ * 
+ * @brief File containing the function to initialise the libesoup library
  *
- * File containing the function to initialise the libesoup library
- *
- * Copyright 2017 electronicSoup Limited
+ * Copyright 2017-2018 electronicSoup Limited
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 2 of the GNU Lesser General Public License
@@ -30,24 +31,25 @@
 static const char  __attribute__((unused)) *TAG = "CORE";
 #elif __XC8
 static const char  *TAG = "CORE";
-#endif
+#endif // XC16 elif XC8
 #include "libesoup/logger/serial_log.h"
-#endif
+#endif  // SYS_SERIAL_LOGGING
+
+#include "libesoup/errno.h"
+#include "libesoup/boards/board.h"
 
 #ifdef SYS_HW_TIMERS
-#include "libesoup/timers/hw_timers.h"
+extern void   hw_timer_init(void);
 #endif
 
 #ifdef SYS_SW_TIMERS
 #include "libesoup/timers/sw_timers.h"
+extern void   sw_timer_init(void);
+extern void   timer_tick(void);
 #endif
 
 #ifdef SYS_UART
-#include "libesoup/comms/uart/uart.h"
-#endif
-
-#ifdef SYS_SERIAL_LOGGING
-#include "libesoup/logger/serial_log.h"
+extern void   uart_init(void);
 #endif
 
 #ifdef SYS_JOBS
@@ -62,84 +64,144 @@ static const char  *TAG = "CORE";
 #include "libesoup/comms/spi/spi.h"
 #endif
 
-#ifdef SYS_EEPROM
-#include "libesoup/hardware/eeprom.h"
-#endif
-
 #ifdef SYS_RAND
 #include "libesoup/utils/rand.h"
 #endif
 
+#ifdef SYS_CAN_BUS
+#include "libesoup/comms/can/can.h"
+#endif
+
+#ifdef SYS_ADC
+extern result_t adc_init(void);
+extern result_t adc_tasks(void);
+#endif
+
+#ifdef SYS_PWM
+extern result_t pwm_init(void);
+#endif
+
+#ifdef SYS_CHANGE_NOTIFICATION
+#include "libesoup/gpio/change_notification.h"
+#endif // SYS_CHANGE_NOTIFICATION
+
+#ifdef SYS_MODBUS
+extern result_t modbus_init(void);
+#endif
+
+#ifdef SYS_CHANGE_NOTIFICATION
+extern result_t change_notifier_init(void);
+#endif
+
+/*
+ * The Instruction Clock Frequency being used by the system.
+ * 
+ * SYS_CLOCK_FREQ is the frequency requested by libesoup_config.h but that
+ * may not be possible, if invalid.
+ */
+uint32_t sys_clock_freq;
+
 result_t libesoup_init(void)
 {
+	uint32_t loop;
 #ifdef XC16
-	result_t rc  __attribute__((unused)) = SUCCESS;
+	result_t rc  __attribute__((unused)) = 0;
 #else
-	result_t rc = SUCCESS;
+	result_t rc = 0;
 #endif
 
 #if __XC8
 #ifdef SYS_SERIAL_LOGGING
 	TAG = TAG;
 #endif // SYS_SERIAL_LOGGING
-	rc = SUCCESS;
+	rc = 0;
 #endif
 	
 	cpu_init();
+	
+	/*
+	 * Allow the clock to settle
+	 */
+	for(loop = 0; loop < 0x100000; loop++) {
+                CLEAR_WDT
+	}
 
 #ifdef SYS_UART
 	uart_init();
+	__asm__ ("CLRWDT");
 #endif
 
 #ifdef SYS_SERIAL_LOGGING
         rc = serial_logging_init();
-        if (rc != SUCCESS) {
-                /*
-                 * What to do?
-                 */
-                return(rc);
-        }
+	RC_CHECK
+        __asm__ ("CLRWDT");
 #endif
 
 #ifdef SYS_HW_TIMERS
 	hw_timer_init();
+	__asm__ ("CLRWDT");
 #endif
 	
 #ifdef SYS_SW_TIMERS
 	sw_timer_init();
+	__asm__ ("CLRWDT");
 #endif
 
 #ifdef SYS_HW_RTC
 	rc = rtc_init();
-        if (rc != SUCCESS) {
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
-		LOG_E("Failed in initialise RTC Module\n\r");
-#endif
-                return(rc);
-	}
+	RC_CHECK
+	__asm__ ("CLRWDT");
 #endif
 		
 #ifdef SYS_JOBS
 	jobs_init();
+	__asm__ ("CLRWDT");
 #endif
 
-#ifdef SYS_EEPROM
-	rc = eprom_init();
-        if (rc != SUCCESS) {
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
-		LOG_E("Failed in initialise RTC Module\n\r");
-#endif
-                return(rc);
-	}
-#endif
-	
 #ifdef SYS_SPI_BUS
         spi_init();
+	__asm__ ("CLRWDT");
 #endif
 
 #ifdef SYS_RAND
 	random_init();
+	__asm__ ("CLRWDT");
 #endif
 
-	return(SUCCESS);
+#ifdef SYS_CHANGE_NOTIFICATION
+	rc = change_notifier_init();
+	RC_CHECK
+	__asm__ ("CLRWDT");
+#endif // SYS_CHANGE_NOTIFICATION
+
+#ifdef SYS_ADC
+	adc_init();
+#endif
+
+#ifdef SYS_PWM
+	rc =  pwm_init();
+#endif
+
+#ifdef SYS_MODBUS
+	rc = modbus_init();
+	RC_CHECK
+#endif
+	CLEAR_WDT
+	return(board_init());
+}
+
+result_t libesoup_tasks(void)
+{
+	result_t   rc = 0;
+#ifdef SYS_SW_TIMERS
+	if(timer_ticked) timer_tick();
+#endif
+#ifdef SYS_ADC
+	rc = adc_tasks();
+	RC_CHECK
+#endif
+#ifdef SYS_CAN_BUS
+	can_tasks();
+#endif
+	return(rc);
 }

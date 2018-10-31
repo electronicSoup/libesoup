@@ -3,7 +3,7 @@
  *
  * @author John Whitmore
  *
- * Copyright 2017 - 2018 electronicSoup Limited
+ * Copyright 2017-2018 electronicSoup Limited
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 2 of the GNU Lesser General Public License
@@ -22,7 +22,6 @@
 
 #include "libesoup_config.h"
 
-extern void check_timer(uint8_t timer);
 
 #pragma config WDT = OFF
 #pragma config MCLRE = OFF
@@ -48,7 +47,12 @@ extern void check_timer(uint8_t timer);
 #pragma config EBTR1 = OFF
 #pragma config EBTR2 = OFF
 
+#ifdef SYS_HW_TIMERS
+#include "libesoup/timers/time.h"
+extern void check_timer(timer_id timer);
 extern void pic18f_timer_isr(uint8_t timer);
+#endif
+
 extern void pic18f_uart_isr(void);
 
 void cpu_init(void)
@@ -56,6 +60,8 @@ void cpu_init(void)
         RCONbits.IPEN   = 0;  // No Interrupt priority level
 	INTCONbits.GIE  = 1;  // Enable Interrupts
 	INTCONbits.PEIE = 1;  // Enable Peripheral Interrupts
+
+	sys_clock_freq = BRD_CRYSTAL_FREQ;
 }
 
 void interrupt tc_int(void)
@@ -68,14 +74,18 @@ void interrupt tc_int(void)
                 TMR0IF = 0;
                 TMR0IE = 0;
                 T0CONbits.TMR0ON = 0;
+#ifdef SYS_HW_TIMERS
                 check_timer(TIMER_0);
+#endif
         }
 
         if (TMR1IE && TMR1IF) {
                 TMR1IF=0;
                 TMR1IE = 0;
                 T1CONbits.TMR1ON = 0;
+#ifdef SYS_HW_TIMERS
                 check_timer(TIMER_1);
+#endif
         }
 
 #ifdef SYS_UART

@@ -1,10 +1,12 @@
 /**
  *
- * \file libesoup/can/l3_can.c
+ * @file libesoup/comms/can/l3_iso11783-3.c
  *
- * Implementation of ISO 11783-3
+ * @author John Whitmore
  *
- * Copyright 2017 - 2018 electronicSoup Limited
+ * @brief Implementation of ISO 11783-3
+ *
+ * Copyright 2017-2018 electronicSoup Limited
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 2 of the GNU Lesser General Public License
@@ -134,9 +136,7 @@ result_t iso11783_init(uint8_t address)
 	uint16_t loop;
 	can_l2_target_t target;
 
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	LOG_D("iso11783_init(0x%x)\n\r", address);
-#endif
 
 	node_address = address;
 
@@ -238,9 +238,7 @@ result_t iso11783_tx_msg(iso11783_msg_t *msg)
 {
 	can_frame frame;
 
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	LOG_D("iso11783_tx_msg()\n\r");
-#endif
 	frame.can_id = pgn_to_canid(msg->priority, msg->pgn, msg->destination);
 	frame.can_dlc = 0x00;
 
@@ -252,9 +250,7 @@ result_t iso11783_tx_msg(iso11783_msg_t *msg)
 result_t iso11783_tx_pgn_request(uint8_t priority, u8 dst, u32 pgn)
 {
 	can_frame frame;
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	LOG_D("iso11783_tx_pgn_request()\n\r");
-#endif
 
 	frame.can_id = pgn_to_canid(priority, PGN_REQUEST, dst);
 	frame.can_dlc = 0x03;
@@ -273,9 +269,7 @@ result_t iso11783_tx_ack_pgn(uint8_t priority, u8 dst, u32 pgn, iso11783_ack_t a
 	uint8_t        loop;
 	u32       tmp_pgn;
 	can_frame frame;
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	LOG_D("iso11783_tx_ack_pgn()\n\r");
-#endif
 
 	frame.can_id = pgn_to_canid(priority, PGN_ACK, dst);
 	frame.can_dlc = 0x08;
@@ -306,9 +300,7 @@ void iso11783_frame_handler(can_frame *frame)
 	uint8_t             handled;
 	iso11783_msg_t msg;
 
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	LOG_D("iso11783_frame_handler(frame id 0x%x)\n\r", frame->can_id);
-#endif
 	/*
 	 * Parameter Group Numbers PGN:
 	 *
@@ -318,13 +310,8 @@ void iso11783_frame_handler(can_frame *frame)
 	 */
 	pgn = canid_to_pgn(frame->can_id);
 
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	LOG_D("iso11783_frame_handler received PGN %d  =  0x%lx\n\r", pgn, pgn);
-#endif
-
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	LOG_D(" PGN %d (0x%x) [", pgn, pgn);
-#endif
 
 	for(loop = 0; loop < frame->can_dlc; loop++) {
 		printf("%x,", frame->data[loop]);
@@ -375,9 +362,8 @@ result_t iso11783_dispatch_reg_handler(iso11783_target_t *target)
 
 	target->handler_id = 0xff;
 
-#if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
 	LOG_D("iso11783_dispatch_register_handler(0x%lx)\n\r", target->pgn);
-#endif
+
 	/*
 	 * Find a free slot and add the Protocol
 	 */
@@ -391,10 +377,8 @@ result_t iso11783_dispatch_reg_handler(iso11783_target_t *target)
 		}
 	}
 
-#if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
 	LOG_E("ISO11783 Dispatch full!\n\r");
-#endif
-	return(ERR_NO_RESOURCES);
+	return(-ERR_NO_RESOURCES);
 }
 
 result_t iso11783_dispatch_unreg_handler(uint8_t id)
@@ -405,7 +389,7 @@ result_t iso11783_dispatch_unreg_handler(uint8_t id)
 		registered[id].handler = (iso11783_msg_handler_t)NULL;
 		return(SUCCESS);
 	}
-	return(ERR_BAD_INPUT_PARAMETER);
+	return(-ERR_BAD_INPUT_PARAMETER);
 }
 
 result_t iso11783_dispatch_set_unhandled_handler(iso11783_msg_handler_t handler)

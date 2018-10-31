@@ -1,10 +1,12 @@
 /**
  *
- * \file libesoup/logger/serial_port.c
+ * @file libesoup/logger/serial_log.c
  *
- * Functions for initialisation of the Serial Port.
+ * @author John Whitmore
  *
- * Copyright 2017 - 2018 electronicSoup Limited
+ * @brief Functions for initialisation of the Logging Serial Port.
+ *
+ * Copyright 2017-2018 electronicSoup Limited
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 2 of the GNU Lesser General Public License
@@ -25,9 +27,10 @@
 
 #ifdef SYS_SERIAL_LOGGING
 
-//#define DEBUG_FILE
-//static const char *TAG ="SERIAL_LOG";
+#define DEBUG_FILE
+static const char *TAG ="SERIAL_LOG";
 
+#include "libesoup/errno.h"
 #include "libesoup/comms/uart/uart.h"
 #include "libesoup/logger/serial_log.h"
 
@@ -48,8 +51,8 @@
 #error libesoup_config.h should define SYS_UART_TX_BUFFER_SIZE (see libesoup/examples/libesoup_config.h)
 #endif
 #else
-#ifndef SERIAL_LOGGING_TX_PIN
-#error libesoup_config.h should include a board file which defines SERIAL_LOGGING_TX_PIN (see libesoup/examples/libesoup_config.h)
+#ifndef BRD_SERIAL_LOGGING_TX_PIN
+#error libesoup_config.h should include a board file which defines BRD_SERIAL_LOGGING_TX_PIN (see libesoup/examples/libesoup_config.h)
 #endif
 #endif
 
@@ -57,9 +60,6 @@
 #error libesoup_config.h file should define the SYS_UART required for serial logging!
 #endif
 
-#ifndef SYS_CLOCK_FREQ
-#error libesoup_config.h file should define the SYS_CLOCK_FREQ
-#endif
 #endif
 
 #if defined(XC16) || defined(__XC8)
@@ -77,8 +77,13 @@ static const char error_string[LEVEL_STRING_LEN + 1]   = "E-";
 /*
  * Local helper functions
  */
+#ifdef XC16
+static result_t es_printf(const char * fmt, va_list args);
+#endif // #ifdef XC16
 static uint8_t *itoa(uint16_t num, uint8_t *str, uint8_t base);
+#ifdef XC16
 static uint8_t *itoa32bit(uint32_t num, uint8_t *str, uint8_t base);
+#endif
 static uint16_t strlen(char *string);
 static void reverse(uint8_t str[], uint16_t length);
 
@@ -117,21 +122,15 @@ result_t serial_logging_init(void)
 	/*
 	 * Serial Port pin configuration should be defined
 	 * in include file libesoup_config.h
-	 */
-//#ifdef SERIAL_LOGGING_RX_ENABLE
-//        SERIAL_LOGGING_RX_DDR = INPUT_PIN;
-//	UART_1_RX = SERIAL_LOGGING_RX_PIN;
-//	IEC0bits.U1RXIE = 1;
-//#endif // SERIAL_LOGGING_RX_ENABLE
-        /*
+	 *
          * Reserve a uart for the RS232 Comms
          */
         serial_uart.baud = SYS_SERIAL_LOGGING_BAUD;
-        serial_uart.tx_pin = SERIAL_LOGGING_TX_PIN;
-#ifdef SERIAL_LOGGING_RX_ENABLE
-        serial_uart.rx_pin = SERIAL_LOGGING_RX_PIN;
+        serial_uart.tx_pin = BRD_SERIAL_LOGGING_TX_PIN;
+#ifdef SYS_SERIAL_LOGGING_RX_ENABLE
+        serial_uart.rx_pin = BRD_SERIAL_LOGGING_RX_PIN;
 #else
-        serial_uart.rx_pin = NO_PIN;
+        serial_uart.rx_pin = INVALID_GPIO_PIN;
 #endif
 	/*
 	 * Get the UART Module to calculate the mode of operation required for
@@ -139,14 +138,10 @@ result_t serial_logging_init(void)
 	 * data structure.
 	 */
 	rc = uart_calculate_mode(&serial_uart.uart_mode, UART_8_DATABITS, UART_PARITY_NONE, UART_ONE_STOP_BIT, UART_IDLE_HIGH);
-        if(rc != SUCCESS) {
-                return(rc);
-        }                
+	RC_CHECK
 
         rc =  uart_reserve(&serial_uart);
-        if(rc != SUCCESS) {
-                return(rc);
-        }
+	RC_CHECK
 #endif // ifdef XC16 || __XC8
 
 	/*
@@ -154,24 +149,25 @@ result_t serial_logging_init(void)
 	 * first character on the channel
 	 */
 	for (delay = 0; delay < 0x100; delay++) Nop();
-
-	rc = uart_tx_char(&serial_uart, '\n');
-	rc = uart_tx_char(&serial_uart, '\r');
-	rc = uart_tx_char(&serial_uart, '\n');
-	rc = uart_tx_char(&serial_uart, '\r');
-        return(SUCCESS);
+#ifdef XC16
+	rc = serial_printf("\n\r\n\r");
+	RC_CHECK
+#endif
+        return(0);
 }
 
+#ifdef SYS_TEST_BUILD
+uint16_t serial_buffer_count(void)
+{
+	return(uart_tx_buffer_count(&serial_uart));	
+}
+#endif
+
 #if defined(XC16)
-void serial_log(uint8_t level, const char *tag, const char *fmt, ...)
+result_t serial_log(uint8_t level, const char *tag, const char *fmt, ...)
 {
 	result_t  rc;
-	char     *ptr;
 	va_list   args;
-	uint16_t  i;
-	uint32_t  li;
-	uint8_t   buf[256];
-	uint8_t  *string;
 
 	va_start(args, fmt);
 
@@ -180,87 +176,40 @@ void serial_log(uint8_t level, const char *tag, const char *fmt, ...)
 	 */
 	switch(level) {
 	case LOG_DEBUG:
-		rc = uart_tx_buffer(&serial_uart, debug_string, LEVEL_STRING_LEN);
+		rc = serial_printf(debug_string);
+		RC_CHECK
 		break;
 
 	case LOG_INFO:
-		rc = uart_tx_buffer(&serial_uart, info_string, LEVEL_STRING_LEN);
+		rc = serial_printf(info_string);
+		RC_CHECK
 		break;
 
 	case LOG_WARNING:
-		rc = uart_tx_buffer(&serial_uart, warning_string, LEVEL_STRING_LEN);
+		rc = serial_printf(warning_string);
+		RC_CHECK
 		break;
 
 	case LOG_ERROR:
-		rc = uart_tx_buffer(&serial_uart, error_string, LEVEL_STRING_LEN);
+		rc = serial_printf(error_string);
+		RC_CHECK
 		break;
 	}
 
 	/*
 	 * Print the tag field
 	 */
-	ptr = (char *)tag;
-	rc = uart_tx_buffer(&serial_uart, (uint8_t*)ptr, strlen(ptr));
-	rc = uart_tx_char(&serial_uart, ':');
+	rc = serial_printf("%s:", tag);
+	RC_CHECK
 
-	/*
-	 * Next print the format string
-	 */
-	ptr = (char *)fmt;
-	while(*ptr) {
-		
-		if(*ptr != '%') {
-			rc = uart_tx_char(&serial_uart, *ptr);
-		} else {
-			/*
-			 * Format specifier
-			 */
-			switch(*++ptr) {
-			case '%' :
-				rc = uart_tx_char(&serial_uart, *ptr);
-				break;
-
-			case 'd':
-				i = va_arg(args, uint16_t);
-				string = itoa((uint32_t)i, buf, 10);
-				rc = uart_tx_buffer(&serial_uart, string, strlen((char*)string));
-				break;
-
-			case 's':
-				string = va_arg(args, uint8_t *);
-				rc = uart_tx_buffer(&serial_uart, string, strlen((char*)string));
-				break;
-
-			case 'x':
-				i = va_arg(args, uint16_t);
-				string = itoa(i, buf, 16);
-				rc = uart_tx_buffer(&serial_uart, string, strlen((char*)string));
-				break;
-				
-			case 'l':
-				switch(*++ptr) {
-				case 'd':
-					li = va_arg(args, uint32_t);
-					*buf = 0;
-					string = itoa32bit(li, buf, 10);
-					rc = uart_tx_buffer(&serial_uart, buf, strlen((char*)buf));
-					break;
-
-				case 'x':
-					li = va_arg(args, uint32_t);
-					*buf = 0;
-					string = itoa32bit(li, buf, 16);
-					rc = uart_tx_buffer(&serial_uart, buf, strlen((char*)buf));
-					break;
-				}
-				break;
-			}
-		}
-		ptr++;
-	}
+	rc = es_printf(fmt, args);
+	RC_CHECK
+	va_end(args);
+	
+	return(0);
 }
 #elif defined(__XC8)
-void serial_log(const char* fmt, ...)
+result_t serial_log(const char* fmt, ...)
 {
 	result_t  rc;
 	char     *ptr;
@@ -279,6 +228,7 @@ void serial_log(const char* fmt, ...)
 		
 		if(*ptr != '%') {
 			rc = uart_tx_char(&serial_uart, *ptr);
+			RC_CHECK
 		} else {
 			/*
 			 * Format specifier
@@ -286,23 +236,27 @@ void serial_log(const char* fmt, ...)
 			switch(*++ptr) {
 			case '%' :
 				rc = uart_tx_char(&serial_uart, *ptr);
+				RC_CHECK
 				break;
 
 			case 'd':
 				i = va_arg(args, uint16_t);
 				string = itoa(i, buf, 10);
 				rc = uart_tx_buffer(&serial_uart, string, strlen((char*)string));
+				RC_CHECK
 				break;
 
 			case 's':
 				string = va_arg(args, uint8_t *);
 				rc = uart_tx_buffer(&serial_uart, string, strlen((char*)string));
+				RC_CHECK
 				break;
 
 			case 'x':
 				i = va_arg(args, uint16_t);
 				string = itoa(i, buf, 16);
 				rc = uart_tx_buffer(&serial_uart, string, strlen((char*)string));
+				RC_CHECK
 				break;
 				
 			case 'l':
@@ -311,12 +265,14 @@ void serial_log(const char* fmt, ...)
 					i = va_arg(args, uint32_t);
 					string = itoa(i, buf, 10);
 					rc = uart_tx_buffer(&serial_uart, string, strlen((char*)string));
+					RC_CHECK
 					break;
 
 				case 'x':
 					i = va_arg(args, uint32_t);
 					string = itoa(i, buf, 16);
 					rc = uart_tx_buffer(&serial_uart, string, strlen((char*)string));
+					RC_CHECK
 					break;
 				}
 				break;
@@ -327,6 +283,166 @@ void serial_log(const char* fmt, ...)
 }
 #endif // defined(XC16) || defined(__XC8)
 
+#if defined(XC16)
+result_t serial_printf(const char * fmt, ...)
+{
+	result_t  rc;
+	char     *ptr;
+	va_list   args;
+	uint16_t  i;
+	uint32_t  li;
+	uint8_t   buf[256];
+	uint8_t  *string;
+
+	va_start(args, fmt);
+
+	ptr = (char *)fmt;
+
+	while(*ptr) {
+		
+		if(*ptr != '%') {
+			rc = uart_tx_char(&serial_uart, *ptr);
+			RC_CHECK
+		} else {
+			/*
+			 * Format specifier
+			 */
+			switch(*++ptr) {
+			case '%' :
+				rc = uart_tx_char(&serial_uart, *ptr);
+				RC_CHECK
+				break;
+
+			case 'd':
+				i = va_arg(args, uint16_t);
+				string = itoa((uint32_t)i, buf, 10);
+				rc = uart_tx_buffer(&serial_uart, string, strlen((char*)string));
+				RC_CHECK
+				break;
+
+			case 's':
+				string = va_arg(args, uint8_t *);
+				rc = uart_tx_buffer(&serial_uart, string, strlen((char*)string));
+				RC_CHECK
+				break;
+
+			case 'x':
+				i = va_arg(args, uint16_t);
+				string = itoa(i, buf, 16);
+				rc = uart_tx_buffer(&serial_uart, string, strlen((char*)string));
+				RC_CHECK
+				break;
+				
+			case 'l':
+				switch(*++ptr) {
+				case 'd':
+					li = va_arg(args, uint32_t);
+					*buf = 0;
+					string = itoa32bit(li, buf, 10);
+					rc = uart_tx_buffer(&serial_uart, buf, strlen((char*)buf));
+					RC_CHECK
+					break;
+
+				case 'x':
+					li = va_arg(args, uint32_t);
+					*buf = 0;
+					string = itoa32bit(li, buf, 16);
+					rc = uart_tx_buffer(&serial_uart, buf, strlen((char*)buf));
+					RC_CHECK
+					break;
+				}
+				break;
+			}
+		}
+		ptr++;
+	}
+	
+	va_end(args);
+	return(0);
+}
+#endif // #if defined(XC16)
+
+#ifdef XC16
+static result_t es_printf(const char * fmt, va_list args)
+{
+	result_t  rc;
+	char     *ptr;
+	uint16_t  i;
+	uint32_t  li;
+	uint8_t   buf[256];
+	uint8_t  *string;
+
+	ptr = (char *)fmt;
+
+	while(*ptr) {
+		
+		if(*ptr != '%') {
+			rc = uart_tx_char(&serial_uart, *ptr);
+			RC_CHECK
+		} else {
+			/*
+			 * Format specifier
+			 */
+			switch(*++ptr) {
+			case '%' :
+				rc = uart_tx_char(&serial_uart, *ptr);
+				RC_CHECK
+				break;
+
+			case 'c':
+				i = va_arg(args, uint8_t);
+				string[0] = i;
+				string[1] = 0;
+				rc = uart_tx_buffer(&serial_uart, string, 1);
+				RC_CHECK
+				break;
+
+			case 'd':
+				i = va_arg(args, uint16_t);
+				string = itoa((uint32_t)i, buf, 10);
+				rc = uart_tx_buffer(&serial_uart, string, strlen((char*)string));
+				RC_CHECK
+				break;
+
+			case 's':
+				string = va_arg(args, uint8_t *);
+				rc = uart_tx_buffer(&serial_uart, string, strlen((char*)string));
+				RC_CHECK
+				break;
+
+			case 'x':
+				i = va_arg(args, uint16_t);
+				string = itoa(i, buf, 16);
+				rc = uart_tx_buffer(&serial_uart, string, strlen((char*)string));
+				RC_CHECK
+				break;
+				
+			case 'l':
+				switch(*++ptr) {
+				case 'd':
+					li = va_arg(args, uint32_t);
+					*buf = 0;
+					string = itoa32bit(li, buf, 10);
+					rc = uart_tx_buffer(&serial_uart, buf, strlen((char*)buf));
+					RC_CHECK
+					break;
+
+				case 'x':
+					li = va_arg(args, uint32_t);
+					*buf = 0;
+					string = itoa32bit(li, buf, 16);
+					rc = uart_tx_buffer(&serial_uart, buf, strlen((char*)buf));
+					RC_CHECK
+					break;
+				}
+				break;
+			}
+		}
+		ptr++;
+	}
+	return(0);
+}
+#endif // #if defined(XC16)
 
 result_t serial_logging_exit(void)
 {
@@ -408,7 +524,7 @@ static uint8_t *itoa32bit(uint32_t num, uint8_t *str, uint8_t base)
 
 	return str;
 }
-#endif
+#endif // XC16
 
 static uint16_t strlen(char *string)
 {
@@ -440,7 +556,7 @@ static void reverse(uint8_t str[], uint16_t length)
  */
 void putch(char character)
 {
-        result_t rc = SUCCESS;
+        result_t rc;
 
         rc = uart_tx_char(&serial_uart, character);
 }
