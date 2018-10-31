@@ -54,12 +54,6 @@ result_t pwm_config(enum gpio_pin pin, uint16_t frequency, uint8_t duty_percent)
 		return(-ERR_BAD_INPUT_PARAMETER);
 	}
 
-	/*
-	 * Set the GPIO Pin as a digital output
-	 */
-	rc = gpio_set(pin, GPIO_MODE_DIGITAL_OUTPUT, 0);
-	RC_CHECK
-
 	PTCONbits.PTEN = DISABLED;    // Disable the PWM Module for write
 
 	/*
@@ -70,8 +64,7 @@ result_t pwm_config(enum gpio_pin pin, uint16_t frequency, uint8_t duty_percent)
 	 * 
 	 * PTPER = SYS_CLOCK_FREQ / frequency * 1 << PTCON2bits.PCLKDIV
 	 */
-#if 0
-	i = (SYS_CLOCK_FREQ / frequency);
+	i = ((SYS_CLOCK_FREQ / frequency) * 2);
 	clkdiv = PTCON2bits.PCLKDIV;
 	do {
 		n = (i / (1 << clkdiv));
@@ -83,24 +76,28 @@ result_t pwm_config(enum gpio_pin pin, uint16_t frequency, uint8_t duty_percent)
 
 	if (clkdiv == 0b111 || n > 0xffff)
 		return(-ERR_RANGE_ERROR);
-#endif
-	PTCON2bits.PCLKDIV = 0b000; //clkdiv;	
+
+	PTCON2bits.PCLKDIV = clkdiv;	
 	
 	switch (pwm_pin) {
 	case PWM1H:
-		PWMCON1bits.ITB = 1;
+		PWMCON1bits.ITB  = 1;
 		PWMCON1bits.MDCS = 0;
+		IOCON1bits.PENH  = 1;
+		IOCON1bits.PMOD  = 0b11;
 		PHASE1 = (uint16_t)(n & 0xffff);
 		DTR1 = 0x00;
 		PDC1 = (uint16_t)(((n / 100) * duty_percent) & 0xffff);
 		break;
 
 	case PWM1L:
-		PWMCON1bits.ITB = 1;
+		PWMCON1bits.ITB  = 1;
 		PWMCON1bits.MDCS = 0;
-		SPHASE1 = 0xff; //(uint16_t)(n & 0xffff);
+		IOCON1bits.PENL  = 1;
+		IOCON1bits.PMOD  = 0b11;
+		SPHASE1 = (uint16_t)(n & 0xffff);
 		ALTDTR1 = 0x00;
-		SDC1 = 0x7f; //(uint16_t)(((n / 100) * duty_percent) & 0xffff);
+		SDC1 = (uint16_t)(((n / 100) * duty_percent) & 0xffff);
 		break;
 
 	case PWM2H:
