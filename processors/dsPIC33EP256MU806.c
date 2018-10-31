@@ -196,7 +196,7 @@ static void clock_init(void)
         // ACLKCON3 = 0x24C1;
         // ACLKDIV3 = 0x7;
         ACLKCON3bits.ENAPLL   = 0;     // APLL is disabled, the USB clock source is the input clock to the APLL
-        ACLKCON3bits.SELACLK  = 1;                 // Primary PLL provides the source clock for auxiliary clock divider
+        ACLKCON3bits.SELACLK  = 1;     // Primary PLL provides the source clock for auxiliary clock divider
         ACLKCON3bits.AOSCMD   = 0;     // Auxiliary Oscillator disabled
         ACLKCON3bits.ASRCSEL  = 1;     // Primary Oscillator is the clock source for APLL
         ACLKCON3bits.FRCSEL   = 0;     // Auxiliary Oscillator or Primary Oscillator is the clock source for APLL (determined by ASRCSEL bit)
