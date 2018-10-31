@@ -28,7 +28,7 @@
 #ifdef SYS_SERIAL_LOGGING
 
 #define DEBUG_FILE
-static const char *TAG ="SERIAL_LOG";
+static const char  __attribute__((unused)) *TAG ="SERIAL_LOG";
 
 #include "libesoup/errno.h"
 #include "libesoup/comms/uart/uart.h"
@@ -370,7 +370,7 @@ static result_t es_printf(const char * fmt, va_list args)
 	uint16_t  i;
 	uint32_t  li;
 	uint8_t   buf[256];
-	uint8_t  *string;
+	uint8_t  *string = NULL;
 
 	ptr = (char *)fmt;
 
