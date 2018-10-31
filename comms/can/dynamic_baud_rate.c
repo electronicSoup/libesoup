@@ -1,10 +1,10 @@
 /*
  *
- * libesoup/comms/can/ping.c
+ * libesoup/comms/can/dynamic_baud_rate.c
  *
- * Hardware Timer functionality for the electronicSoup Cinnamon Bun
+ * Code to dynamically change CAN Bus Bit rate
  *
- * Copyright 2017 2018 electronicSoup Limited
+ * Copyright 2017 - 2018 electronicSoup Limited
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 2 of the GNU Lesser General Public License
