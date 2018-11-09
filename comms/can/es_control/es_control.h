@@ -43,7 +43,7 @@ const uint8_t bool_431_input  = 0x11;
 
 union bool_431 {
 	struct {
-		uint8_t   status:1;
+		uint8_t   es_bool:1;
 		uint8_t   chan:3;
 		uint8_t   node:4;
 	} bitfield;
