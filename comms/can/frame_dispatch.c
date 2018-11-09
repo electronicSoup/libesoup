@@ -40,8 +40,8 @@
 
 
 #ifdef SYS_SERIAL_LOGGING
-#define DEBUG_FILE
-//#undef DEBUG_FILE
+//#define DEBUG_FILE
+#undef DEBUG_FILE
 #include "libesoup/logger/serial_log.h"
 #if defined(__XC16)
 __attribute__ ((unused)) static const char *TAG = "CAN_DISPATCH";

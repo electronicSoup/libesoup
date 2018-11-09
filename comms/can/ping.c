@@ -27,7 +27,8 @@
 #ifdef SYS_CAN_PING_PROTOCOL
 
 #ifdef SYS_SERIAL_LOGGING
-#define DEBUG_FILE
+//#define DEBUG_FILE
+#undef DEBUG_FILE
 const char *TAG = "CAN_PING";
 #include "libesoup/logger/serial_log.h"
 #endif // SYS_SERIAL_LOGGING
@@ -70,15 +71,16 @@ static 	struct timer_req timer_request;
 result_t    restart_ping_timer(void);
 static void ping_network(timer_id timer, union sigval data);
 
-void can_ping_init(void)
+result_t can_ping_init(void)
 {
+	result_t rc;
 	uint16_t duration;
 	int16_t  tmp;
 	
 	tmp = (rand() % SYS_CAN_PING_IDLE_SPREAD) - (SYS_CAN_PING_IDLE_SPREAD/2);
 	duration = (uint16_t) SYS_CAN_PING_IDLE_INTERVAL + tmp;
 	
-	ping_timer = 0xFF;
+	ping_timer = BAD_TIMER_ID;
 	
 	LOG_D("CAN ping duration - %d mSeconds\n\r", duration);
 
@@ -88,16 +90,20 @@ void can_ping_init(void)
 	timer_request.exp_fn          = ping_network;
 	timer_request.data.sival_int  = 0x00;
 	
-        restart_ping_timer();
+	rc = sw_timer_start(&timer_request);
+	RC_CHECK
+	ping_timer = rc;
+	
+	return(0);
 }
 
 static void ping_network(timer_id timer, union sigval data)
 {
 	can_frame frame;
 
-	ping_timer = 0xFF;
+	ping_timer = BAD_TIMER_ID;
 		
-//	LOG_D("CAN Ping\n\r");
+	LOG_D("CAN Ping\n\r");
 	frame.can_id = SYS_CAN_PING_FRAME_ID;
 	frame.can_dlc = 0;
 
@@ -108,8 +114,11 @@ result_t restart_ping_timer(void)
 {
 	result_t  rc;
 
-	rc = sw_timer_cancel(&ping_timer);
-	RC_CHECK
+	LOG_D("Ping rst\n\r");
+	if (ping_timer != BAD_TIMER_ID) {
+		rc = sw_timer_cancel(&ping_timer);
+		RC_CHECK
+	}
 	
 	rc = sw_timer_start(&timer_request);
 	RC_CHECK
