@@ -35,13 +35,11 @@ const char *TAG = "CAN_PING";
 
 #include <stdlib.h>   // rand()
 #include "libesoup/errno.h"
+#include "libesoup/gpio/gpio.h"
 #include "libesoup/comms/can/can.h"
+#include "libesoup/comms/can/es_control/es_control.h"
 #include "libesoup/timers/sw_timers.h"
 #include "libesoup/utils/rand.h"
-
-#ifndef SYS_CAN_PING_FRAME_ID
-#error libesoup_config.h should define the SYS_CAN_PING_FRAME_ID
-#endif
 
 #ifndef SYS_CAN_PING_IDLE_SPREAD
 #error libesoup_config.h should define the SYS_CAN_PING_IDLE_SPREAD
@@ -83,7 +81,9 @@ result_t can_ping_init(void)
 	ping_timer = BAD_TIMER_ID;
 	
 	LOG_D("CAN ping duration - %d mSeconds\n\r", duration);
-
+#if defined(BRD_STATUS_LED_PIN) && defined (SYS_CAN_PING_PROTOCOL_LED)
+	rc = gpio_set(BRD_STATUS_LED_PIN, GPIO_MODE_DIGITAL_OUTPUT, 0);
+#endif
 	timer_request.period.units    = mSeconds;
 	timer_request.period.duration = duration;
 	timer_request.type            = single_shot;
@@ -97,17 +97,40 @@ result_t can_ping_init(void)
 	return(0);
 }
 
+#if defined(BRD_STATUS_LED_PIN) && defined (SYS_CAN_PING_PROTOCOL_LED)
+static void status_led_off(timer_id timer, union sigval data)
+{
+	gpio_set(BRD_STATUS_LED_PIN, GPIO_MODE_DIGITAL_OUTPUT, 0);
+}
+#endif
+
 static void ping_network(timer_id timer, union sigval data)
 {
+#if defined(BRD_STATUS_LED_PIN) && defined (SYS_CAN_PING_PROTOCOL_LED)
+	result_t         rc;
+	struct timer_req led_off_timer;
+#endif
 	can_frame frame;
 
 	ping_timer = BAD_TIMER_ID;
 		
 	LOG_D("CAN Ping\n\r");
-	frame.can_id = SYS_CAN_PING_FRAME_ID;
+	frame.can_id = ESC_PING_PROTOCOL_ID;
 	frame.can_dlc = 0;
 
 	can_l2_tx_frame(&frame); // Transmission of frame will cause timer to restart
+
+#if defined(BRD_STATUS_LED_PIN) && defined (SYS_CAN_PING_PROTOCOL_LED)
+	rc = gpio_set(BRD_STATUS_LED_PIN, GPIO_MODE_DIGITAL_OUTPUT, 1);
+
+	led_off_timer.period.units    = mSeconds;
+	led_off_timer.period.duration = 50;
+	led_off_timer.type            = single_shot;
+	led_off_timer.exp_fn          = status_led_off;
+	led_off_timer.data.sival_int  = 0x00;
+	
+	rc = sw_timer_start(&led_off_timer);
+#endif
 }
 
 result_t restart_ping_timer(void)
