@@ -19,6 +19,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
+#ifndef __ES_CONTROL_H
+#define __ES_CONTROL_H
 
 union es_control_id {
         struct {
@@ -30,16 +32,22 @@ union es_control_id {
         uint16_t  word;
 };
 
-const uint16_t es_rtr_mask  = 0x0100;
-const uint16_t es_type_mask = 0x00ff;
+#define  ESC_RTR_MASK                 0x0100
+#define  ESC_TYPE_MASK                0x00ff
 
-const uint8_t priority_0 = 0x00;   // Highest Priority
-const uint8_t priority_1 = 0x01;
-const uint8_t priority_2 = 0x02;
-const uint8_t priority_3 = 0x03;   // Lowest Priority
+#define  ESC_PRIORITY_0               0x00   // Highest Priority
+#define  ESC_PRIORITY_1               0x01
+#define  ESC_PRIORITY_2               0x02
+#define  ESC_PRIORITY_3               0x03   // Lowest Priority
 
-const uint8_t bool_431_output = 0x10;
-const uint8_t bool_431_input  = 0x11;
+#define  ESC_BOOL_431_OUTPUT          0x10
+#define  ESC_BOOL_431_INPUT           0x11
+#define  ESC_PING_PROTOCOL            0xff
+/*
+ * Hardcode the ping frame ID to be lowest priority, no RTR and the lowest 
+ * priority es_type 0xff
+ */
+#define  ESC_PING_PROTOCOL_ID         0x6ff
 
 union bool_431 {
 	struct {
@@ -50,3 +58,4 @@ union bool_431 {
 	uint8_t byte;
 };
 
+#endif // __ES_CONTROL_H
