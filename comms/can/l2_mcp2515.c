@@ -125,7 +125,7 @@ result_t can_l2_init(can_baud_rate_t arg_baud_rate, status_handler_t handler)
 
 	LOG_D("can_l2_init()\n\r");
 
-#ifdef SYS_CAN_PING_PROTOCOL
+#if defined(SYS_CAN_PING_PROTOCOL_PEER_TO_PEER) || defined(SYS_CAN_PING_PROTOCOL_CENTRALISED_MASTER) || defined(SYS_CAN_PING_PROTOCOL_CENTRALISED_SLAVE)
 	ping_init();
 #endif // SYS_CAN_PING_PROTOCOL
 	
@@ -299,7 +299,7 @@ static void service_device(void)
 
 		if (flags & RX0IE) {
 			LOG_D("RX0IE\n\r");
-#if defined(SYS_CAN_PING_PROTOCOL)
+#if defined(SYS_CAN_PING_PROTOCOL_PEER_TO_PEER) || defined(SYS_CAN_PING_PROTOCOL_CENTRALISED_MASTER)
 			restart_ping_timer();
 #endif
 			/*
@@ -323,7 +323,7 @@ static void service_device(void)
 
 		if (flags & RX1IE) {
 			LOG_D("RX1IE\n\r");
-#if defined(SYS_CAN_PING_PROTOCOL)
+#if defined(SYS_CAN_PING_PROTOCOL_PEER_TO_PEER) || defined(SYS_CAN_PING_PROTOCOL_CENTRALISED_MASTER)
 			restart_ping_timer();
 #endif
 
@@ -480,7 +480,7 @@ result_t can_l2_tx_frame(can_frame  *frame)
 
 	LOG_D("L2 => Id %lx\n\r", frame->can_id);
 
-#if defined(SYS_CAN_PING_PROTOCOL)
+#if defined(SYS_CAN_PING_PROTOCOL_PEER_TO_PEER) || defined(SYS_CAN_PING_PROTOCOL_CENTRALISED_MASTER)
         restart_ping_timer();
 #endif
 	if(connected_baudrate == no_baud) {

@@ -43,7 +43,7 @@ static const char *TAG = "dsPIC33_CAN";
 #include "libesoup/timers/delay.h"
 #include "libesoup/status/status.h"
 #include "libesoup/comms/can/can.h"
-#ifdef SYS_CAN_PING_PROTOCOL
+#if defined(SYS_CAN_PING_PROTOCOL_PEER_TO_PEER) || defined(SYS_CAN_PING_PROTOCOL_CENTRALISED_MASTER)
 #include "libesoup/comms/can/ping.h"
 #endif // SYS_CAN_PING_PROTOCOL
 #if defined(SYS_SW_TIMERS) && defined(SYS_TEST_BUILD)
@@ -517,7 +517,7 @@ result_t can_l2_tx_frame(can_frame *frame)
 			 */
 			tx_control[loop].tx_request = 0b1;
 
-#ifdef SYS_CAN_PING_PROTOCOL
+#if defined(SYS_CAN_PING_PROTOCOL_PEER_TO_PEER) || defined(SYS_CAN_PING_PROTOCOL_CENTRALISED_MASTER)
 			restart_ping_timer();
 #endif // SYS_CAN_PING_PROTOCOL
 			
@@ -587,7 +587,7 @@ void can_l2_tasks(void)
 		for (loop = 0; loop < frame.can_dlc; loop++) {
 			frame.data[loop] = can_buffers[fifo_rd_index].data[loop];
 		}
-#ifdef SYS_CAN_PING_PROTOCOL
+#if defined(SYS_CAN_PING_PROTOCOL_PEER_TO_PEER) || defined(SYS_CAN_PING_PROTOCOL_CENTRALISED_MASTER)
 		restart_ping_timer();
 #endif // SYS_CAN_PING_PROTOCOL
 		

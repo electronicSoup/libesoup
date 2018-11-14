@@ -63,7 +63,7 @@ char can_baud_rate_strings[8][10] = {
 #include "libesoup/can/dcncp/dcncp_iso15765.h"
 #endif // SYS_CAN_ISO15765_DCNCP
 
-#ifdef SYS_CAN_PING_PROTOCOL
+#if defined(SYS_CAN_PING_PROTOCOL_PEER_TO_PEER) || defined(SYS_CAN_PING_PROTOCOL_CENTRALISED_MASTER) || defined(SYS_CAN_PING_PROTOCOL_CENTRALISED_SLAVE)
 #include "libesoup/comms/can/ping.h"
 #endif // SYS_CAN_PING_PROTOCOL
 
@@ -101,7 +101,7 @@ result_t can_init(can_baud_rate_t baudrate, status_handler_t status_handler,  ty
 	rc = can_l2_init(baudrate, can_status_handler, mode);
 	RC_CHECK_PRINT_CONT("Failed to initialise Layer \n\r");
 
-#ifdef SYS_CAN_PING_PROTOCOL
+#if defined(SYS_CAN_PING_PROTOCOL_PEER_TO_PEER) || defined(SYS_CAN_PING_PROTOCOL_CENTRALISED_MASTER) || defined(SYS_CAN_PING_PROTOCOL_CENTRALISED_SLAVE)
 	can_ping_init();
 #endif
 	return(0);

@@ -35,7 +35,7 @@
 
 #include "libesoup/timers/sw_timers.h"
 
-#ifdef SYS_CAN_PING_PROTOCOL
+#if defined(SYS_CAN_PING_PROTOCOL_PEER_TO_PEER) || defined(SYS_CAN_PING_PROTOCOL_CENTRALISED_MASTER) || defined(SYS_CAN_PING_PROTOCOL_CENTRALISED_SLAVE)
 #include "libesoup/comms/can/ping.h"
 #endif
 
