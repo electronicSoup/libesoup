@@ -19,7 +19,7 @@
 
 # -- Project information -----------------------------------------------------
 
-project = 'electronicSoup libesoup'
+project = 'libesoup'
 copyright = '2018, John Whitmore'
 author = 'John Whitmore'
 
