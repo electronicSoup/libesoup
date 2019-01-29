@@ -50,10 +50,6 @@
             <logicalFolder name="modbus_states"
                            displayName="modbus_states"
                            projectFiles="true">
-              <itemPath>../../../../comms/modbus/modbus_states/modbus_transmitting.c</itemPath>
-              <itemPath>../../../../comms/modbus/modbus_states/modbus_starting.c</itemPath>
-              <itemPath>../../../../comms/modbus/modbus_states/modbus_awaiting_response.c</itemPath>
-              <itemPath>../../../../comms/modbus/modbus_states/modbus_idle.c</itemPath>
             </logicalFolder>
             <itemPath>../../../../comms/modbus/modbus.c</itemPath>
           </logicalFolder>
