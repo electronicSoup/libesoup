@@ -5,7 +5,7 @@
  * 
  * @brief Timer functionalty for the electronicSoup Cinnamon Bun
  *
- * Copyright 2017-2018 electronicSoup Limited
+ * Copyright 2017-2019 electronicSoup Limited
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 2 of the GNU Lesser General Public License
@@ -176,7 +176,7 @@ void sw_timer_init(void)
 
 	hw_timer_req.period.units = mSeconds;
 	hw_timer_req.period.duration = SYS_SW_TIMER_TICK_ms;
-	hw_timer_req.type = repeat;
+	hw_timer_req.type = repeat_expiry;
 	hw_timer_req.exp_fn = hw_expiry_function;
 	hw_timer_req.data = data;
 	
@@ -247,11 +247,11 @@ void timer_tick(void)
 				data = timers[loop].request.data;
 				function(loop, data);
 
-				if(timers[loop].request.type == single_shot) {
+				if(timers[loop].request.type == single_shot_expiry) {
 					timers[loop].active = FALSE;
 					timers[loop].expiry_count = 0;
 					timers[loop].request.exp_fn = NULL;
-				} else if(timers[loop].request.type == repeat) {
+				} else if(timers[loop].request.type == repeat_expiry) {
 					ticks = calculate_ticks(&timers[loop].request);
 					calculate_expiry_count(loop, ticks);
 				}				

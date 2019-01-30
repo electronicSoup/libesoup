@@ -5,7 +5,7 @@
  *
  * @brief Functionality for delaying the uC
  *
- * Copyright 2017-2018 electronicSoup Limited
+ * Copyright 2017-2019 electronicSoup Limited
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 2 of the GNU Lesser General Public License
@@ -68,7 +68,7 @@ result_t delay(struct period *period)
 
 	timer_request.period.units    = period->units;
 	timer_request.period.duration = period->duration;
-	timer_request.type            = single_shot;
+	timer_request.type            = single_shot_expiry;
 	timer_request.exp_fn          = hw_expiry_function;
 
         delay_over = FALSE;

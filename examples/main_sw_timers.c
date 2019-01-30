@@ -3,7 +3,7 @@
  *
  * @author John Whitmore
  *
- * Copyright 2017-2018 electronicSoup Limited
+ * Copyright 2017-2019 electronicSoup Limited
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 2 of the GNU Lesser General Public License
@@ -54,7 +54,7 @@ int main(void)
 	
 	request.period.units    = Seconds;
 	request.period.duration = 30;
-	request.type            = single_shot;
+	request.type            = single_shot_expiry;
 	request.exp_fn          = expiry;
 	request.data.sival_int  = 0;
 	

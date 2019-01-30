@@ -7,7 +7,7 @@
  *
  * Core definitions required by electronicSoup Code Library
  *
- * Copyright 2017-2018 electronicSoup Limited
+ * Copyright 2017-2019 electronicSoup Limited
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 2 of the GNU Lesser General Public License
@@ -89,11 +89,11 @@ int main(void)
 	 * recursion so not repeating timers, single_shot only
 	 */
 #if defined(__18F4585)
-	request.type           = single_shot;	
+	request.type           = single_shot_expiry;	
 #elif defined(HW_TIMER_REPEAT)
-	request.type           = repeat;
+	request.type           = repeat_expiry;
 #else
-	request.type           = single_shot;
+	request.type           = single_shot_expiry;
 #endif
 	request.exp_fn         = exp_func;
 	request.data.sival_int = 0;

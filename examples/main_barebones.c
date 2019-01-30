@@ -9,7 +9,7 @@
  * The code is used in the example MPLAB-X project:
  * libesoup/examples/projects/microchip/BareBones.X
  *
- * Copyright 2018 electronicSoup Limited
+ * Copyright 2018-2019 electronicSoup Limited
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 2 of the GNU Lesser General Public License
@@ -38,6 +38,6 @@ int main()
 	}
 	
 	while(1) {
-		Nop();
+		libesoup_tasks();
 	}
 }

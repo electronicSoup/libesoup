@@ -6,7 +6,7 @@
  * @brief Code for Modbus state after transmitting a broadcast message
  *        turn around delay before next transmission.
  *
- * Copyright 2018 electronicSoup Limited
+ * Copyright 2018-2019 electronicSoup Limited
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 2 of the GNU Lesser General Public License
@@ -60,7 +60,7 @@ static result_t start_turnaround_timer(struct modbus_channel *chan)
 	}
 	request.period.units    = SYS_MODBUS_TURNAROUND_TIMEOUT_UNITS;
 	request.period.duration = SYS_MODBUS_TURNAROUND_TIMEOUT_DURATION;
-	request.type            = single_shot;
+	request.type            = single_shot_expiry;
 	request.exp_fn          = turnaround_expiry_fn;
 	request.data.sival_ptr  = chan;
 

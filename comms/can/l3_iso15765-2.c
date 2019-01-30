@@ -8,7 +8,7 @@
  * The standard allows for 4KB of a message whereas for the electronicSoup 
  * CAN Bus Nodes the limit is 74 Bytes, including an initial protocol byte.
  *
- * Copyright 2017-2018 electronicSoup Limited
+ * Copyright 2017-2019 electronicSoup Limited
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 2 of the GNU Lesser General Public License
@@ -754,7 +754,7 @@ void startConsecutiveFrameTimer(struct tx_buffer_t *tx_buffer)
 	} else {
 		request.period.duration = 0x7f;
 	}
-	request.type           = single_shot;
+	request.type           = single_shot_expiry;
 	request.exp_fn         = exp_sendConsecutiveFrame;
 	request.data.sival_ptr = (void *)tx_buffer;
 	LOG_D("startConsecutiveFrameTimer %d mS\n\r", request.period.duration);
@@ -770,7 +770,7 @@ void startTimer_N_Cr(rx_buffer_t *rx_buffer)
 
 	request.period.units    = mSeconds;
 	request.period.duration = 1000;
-	request.type            = single_shot;
+	request.type            = single_shot_expiry;
 	request.exp_fn          = exp_timer_N_Cr_Expired;
 	request.data.sival_ptr  = (void *)rx_buffer;
 
@@ -810,7 +810,7 @@ void startTimer_N_Bs(struct tx_buffer_t *tx_buffer)
 
 	request.period.units    = mSeconds;
 	request.period.duration = 1000;
-	request.type            = single_shot;
+	request.type            = single_shot_expiry;
 	request.exp_fn          = exp_timer_N_Bs_Expired;
 	request.data.sival_ptr  = (void *)tx_buffer;
 

@@ -5,7 +5,7 @@
  * 
  * @brief Protocol for auto detecting CAN Bus baud rate
  *
- * Copyright 2017-2018 electronicSoup Limited
+ * Copyright 2017-2019 electronicSoup Limited
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 2 of the GNU Lesser General Public License
@@ -85,7 +85,7 @@ result_t can_bad_start_baud_scan()
 	 */
 	request.period.units    = Seconds;
 	request.period.duration = SYS_CAN_BAUD_AUTO_DETECT_PERIOD;
-	request.type            = single_shot;
+	request.type            = single_shot_expiry;
 	request.exp_fn          = expiry;
 	request.data.sival_int  = 0x00;
 	

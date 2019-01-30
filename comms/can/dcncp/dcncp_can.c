@@ -5,7 +5,7 @@
  *
  * @brief Dynamic SYS_CAN Node Configuration Protocol 
  *
- * Copyright 2017-2018 electronicSoup Limited
+ * Copyright 2017-2019 electronicSoup Limited
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 2 of the GNU Lesser General Public License
@@ -113,7 +113,7 @@ result_t dcncp_init(status_handler_t arg_status_handler, uint8_t arg_l3_address)
 	// struct timer_req  request;
 	request.period.units    = mSeconds;
 	request.period.duration = (uint16_t)((rand() % 4000) + 1000);
-	request.type            = single_shot;
+	request.type            = single_shot_expiry;
 	request.data.sival_int  = 0;
 	request.exp_fn          = exp_send_address_register_request;
 
@@ -261,7 +261,7 @@ void exp_send_address_register_request(timer_id timer, union sigval data)
 	// struct timer_req  request;
 	request.period.units    = Seconds;
 	request.period.duration = 2;
-	request.type            = single_shot;
+	request.type            = single_shot_expiry;
 	request.data.sival_int  = 0;
 	request.exp_fn          = exp_node_address_registered;
 
@@ -380,7 +380,7 @@ void can_l2_msg_handler(can_frame *frame)
 		// struct timer_req  request;
 		request.period.units    = mSeconds;
 		request.period.duration = ((rand() % 900) + 100);
-		request.type            = single_shot;
+		request.type            = single_shot_expiry;
 		request.data.sival_int  = 0;
 		request.exp_fn          = exp_send_node_addr_report;
 		rc = sw_timer_start(&request);

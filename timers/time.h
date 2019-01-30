@@ -5,7 +5,7 @@
  *
  * @brief time definitions required by both hardware and software timers
  *
- * Copyright 2017-2018 electronicSoup Limited
+ * Copyright 2017-2019 electronicSoup Limited
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 2 of the GNU Lesser General Public License
@@ -60,8 +60,9 @@ struct period {
  * @brief   Enumerated type for the different types of Timers
  */
 enum timer_type {
-	single_shot,  /**< Single shot time which expires once only */
-	repeat,       /**< Timer which repeats and will continuiously expire, unitl canceled */
+	single_shot_expiry,  /**< Single shot time which expires once only */
+	repeat_expiry,       /**< Timer which repeats and will continuiously expire, unitl canceled */
+        stopwatch
 };
 
 /**

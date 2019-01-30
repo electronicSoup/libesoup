@@ -3,7 +3,7 @@
  *
  * Example main.c file for using AI Thinker Ra-01 LoRa Module .
  *
- * Copyright 2017-2018 electronicSoup Limited
+ * Copyright 2017-2019 electronicSoup Limited
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 2 of the GNU Lesser General Public License
@@ -67,7 +67,7 @@ int main()
 #ifdef SYS_SW_TIMERS
 	request.period.units    = Seconds;
 	request.period.duration = 10;
-	request.type            = repeat;
+	request.type            = repeat_expiry;
 	request.exp_fn          = expiry;
 	request.data.sival_int  = 0x00;
 	

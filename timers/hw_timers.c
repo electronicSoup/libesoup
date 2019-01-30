@@ -5,7 +5,7 @@
  *
  * @brief Hardware Timer functionality for the electronicSoup Cinnamon Bun
  *
- * Copyright 2017-2018 electronicSoup Limited
+ * Copyright 2017-2019 electronicSoup Limited
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 2 of the GNU Lesser General Public License
@@ -108,6 +108,7 @@ static struct hw_timer_data timers[NUMBER_HW_TIMERS];
  * Function definitions:
  */
 static timer_id start_timer(timer_id timer, struct timer_req *request);
+static timer_id start_stopwatch(timer_id timer, struct timer_req *request);
 static void     set_clock_divide(timer_id timer, uint16_t clock_divide);
 
 /*
@@ -212,7 +213,7 @@ void hw_timer_init(void)
 
 	for(timer = 0; timer < NUMBER_HW_TIMERS; timer++) {
 		timers[timer].status = TIMER_UNUSED;
-		timers[timer].request.type = single_shot;
+		timers[timer].request.type = single_shot_expiry;
 		timers[timer].request.period.duration = 0;
 		timers[timer].request.exp_fn = NULL;
 		timers[timer].request.data.sival_int = 0;
@@ -292,7 +293,11 @@ timer_id hw_timer_start(struct timer_req *request)
 	timer = 0;
 	while(timer < NUMBER_HW_TIMERS) {
 		if(timers[timer].status == TIMER_UNUSED) {
-			return(start_timer(timer, request));
+			if (request->type == stopwatch) {
+				return(start_stopwatch(timer, request));		
+			} else {
+				return(start_timer(timer, request));
+			}
 		}
 		/*
 		 * Increment the value pointed at not the address
@@ -538,6 +543,63 @@ static timer_id start_timer(timer_id timer, struct timer_req *request)
 #endif // __XC8
 }
 
+static timer_id start_stopwatch(timer_id timer, struct timer_req *request)
+{
+	LOG_D("start_stopwatch()\n\r");
+	set_clock_divide(timer, 1);
+
+	timers[timer].status                   = TIMER_RUNNING;
+	timers[timer].request.type             = request->type;
+	timers[timer].request.period.units     = request->period.units;
+
+	switch (timer) {
+	case TIMER_1:
+		TMR1 = 0x00;
+		PR1 = 0xffff;
+
+		IEC0bits.T1IE = 1;
+		T1CONbits.TON = 1;
+		break;
+
+	case TIMER_2:
+		TMR2 = 0x00;
+		PR2 = 0xffff;
+                        
+		IEC0bits.T2IE = 1;
+		T2CONbits.TON = 1;
+		break;
+
+	case TIMER_3:
+		TMR3 = 0x00;
+		PR3 = 0xffff;
+                        
+		IEC0bits.T3IE = 1;
+		T3CONbits.TON = 1;
+		break;
+
+	case TIMER_4:
+		TMR4 = 0x00;
+		PR4 = 0xffff;
+
+		IEC1bits.T4IE = 1;
+		T4CONbits.TON = 1;
+		break;
+
+	case TIMER_5:
+		TMR5 = 0x00;
+		PR5 = 0xffff;
+
+		IEC1bits.T5IE = 1;
+		T5CONbits.TON = 1;
+		break;
+
+	default:
+		LOG_E("Unknown Timer\n\r");
+		break;
+	}
+	return(timer);
+}
+
 static void set_clock_divide(timer_id timer, uint16_t clock_divide)
 {
 //	LOG_D("set_clock_divide()\n\r");
@@ -707,7 +769,9 @@ void check_timer(timer_id timer)
 	expiry_function  expiry;
 	union sigval     data;
 
-	if(timers[timer].repeats) {
+	if(timers[timer].request.type == stopwatch) {
+		LOG_W("Stopwatch Overflow!\n\r");	
+	} else if(timers[timer].repeats) {
 		switch (timer) {
 
                 case TIMER_1:
@@ -809,7 +873,7 @@ void check_timer(timer_id timer)
                 expiry = timers[timer].request.exp_fn;
                 data = timers[timer].request.data;
 
-		if(timers[timer].request.type == repeat) {
+		if(timers[timer].request.type == repeat_expiry) {
 			start_timer(timer, &timers[timer].request);
 		} else {
 			timers[timer].status = TIMER_UNUSED;

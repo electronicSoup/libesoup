@@ -1,7 +1,7 @@
 /*
  * libesoup/examples/main_modbus_master.c
  *
- * Copyright 2018 electronicSoup Limited
+ * Copyright 2018-2019 electronicSoup Limited
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 2 of the GNU Lesser General Public License
@@ -143,7 +143,7 @@ int main()
 
 	request.period.units    = Seconds;
 	request.period.duration = 30;
-	request.type            = repeat;
+	request.type            = repeat_expiry;
 	request.exp_fn          = exp_fn;
 	
 	rc = sw_timer_start(&request);
