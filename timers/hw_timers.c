@@ -129,10 +129,6 @@ void check_timer(timer_id timer);
 #if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__) || defined(__dsPIC33EP256MU806__)
 void __attribute__((__interrupt__, __no_auto_psv__)) _T1Interrupt(void)
 {
-	IFS0bits.T1IF = 0;
-        IEC0bits.T1IE = 0;
-        T1CONbits.TON = 0;
-        
 	check_timer(TIMER_1);
 }
 #endif
@@ -146,10 +142,6 @@ void __attribute__((__interrupt__, __no_auto_psv__)) _T1Interrupt(void)
 #if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__) || defined(__dsPIC33EP256MU806__)
 void __attribute__((__interrupt__, __no_auto_psv__)) _T2Interrupt(void)
 {
-	IFS0bits.T2IF = 0;
-        IEC0bits.T2IE = 0;
-        T2CONbits.TON = 0;
-
 	check_timer(TIMER_2);
 }
 #endif
@@ -163,10 +155,6 @@ void __attribute__((__interrupt__, __no_auto_psv__)) _T2Interrupt(void)
 #if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__) || defined(__dsPIC33EP256MU806__)
 void __attribute__((__interrupt__, __no_auto_psv__)) _T3Interrupt(void)
 {
-	IFS0bits.T3IF = 0;
-        IEC0bits.T3IE = 0;
-        T3CONbits.TON = 0;
-
 	check_timer(TIMER_3);
 }
 #endif
@@ -180,10 +168,6 @@ void __attribute__((__interrupt__, __no_auto_psv__)) _T3Interrupt(void)
 #if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__) || defined(__dsPIC33EP256MU806__)
 void __attribute__((__interrupt__, __no_auto_psv__)) _T4Interrupt(void)
 {
-	IFS1bits.T4IF = 0;
-        IEC1bits.T4IE = 0;
-        T4CONbits.TON = 0;
-
 	check_timer(TIMER_4);
 }
 #endif
@@ -197,13 +181,42 @@ void __attribute__((__interrupt__, __no_auto_psv__)) _T4Interrupt(void)
 #if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__) || defined(__dsPIC33EP256MU806__)
 void __attribute__((__interrupt__, __no_auto_psv__)) _T5Interrupt(void)
 {
-	IFS1bits.T5IF = 0;
-        IEC1bits.T5IE = 0;
-        T5CONbits.TON = 0;
-
 	check_timer(TIMER_5);
 }
 #endif
+
+static void sfr_stop_timer(timer_id timer)
+{
+	switch(timer) {
+	case TIMER_1:
+		IFS0bits.T1IF = 0;
+		IEC0bits.T1IE = 0;
+		T1CONbits.TON = 0;
+		break;
+	case TIMER_2:
+		IFS0bits.T2IF = 0;
+		IEC0bits.T2IE = 0;
+		T2CONbits.TON = 0;
+		break;
+	case TIMER_3:
+		IFS0bits.T3IF = 0;
+		IEC0bits.T3IE = 0;
+		T3CONbits.TON = 0;
+		break;
+	case TIMER_4:
+		IFS1bits.T4IF = 0;
+		IEC1bits.T4IE = 0;
+		T4CONbits.TON = 0;
+		break;
+	case TIMER_5:
+		IFS1bits.T5IF = 0;
+		IEC1bits.T5IE = 0;
+		T5CONbits.TON = 0;
+		break;
+	default:
+		LOG_E("Bad Timer\n\r");
+	}
+}
 
 /*
  */
@@ -383,6 +396,99 @@ timer_id hw_timer_pause(timer_id timer)
 	return(timer);
 }
 
+result_t hw_timer_stop(timer_id timer, struct period *period)
+{
+	uint32_t scale;
+	uint32_t clock;
+	uint32_t factor;
+	uint16_t ticks;
+
+	if ((timer >= NUMBER_HW_TIMERS) || (timers[timer].status == TIMER_UNUSED)) {
+		LOG_E("Timer passed to hw_timer_pause() is NOT in use\n\r");
+		return(-ERR_BAD_INPUT_PARAMETER);
+	}
+
+	switch (timer) {
+#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__) || defined(__dsPIC33EP256MU806__)
+        case TIMER_1:
+		ticks = TMR1;
+                break;
+#endif
+
+#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__) || defined(__dsPIC33EP256MU806__)
+        case TIMER_2:
+		ticks = TMR2;
+                break;
+#endif
+
+#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__) || defined(__dsPIC33EP256MU806__)
+        case TIMER_3:
+		ticks = TMR3;
+                break;
+#endif
+
+#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__) || defined(__dsPIC33EP256MU806__)
+        case TIMER_4:
+		ticks = TMR4;
+                break;
+#endif
+
+#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__) || defined(__dsPIC33EP256MU806__)
+        case TIMER_5:
+		ticks = TMR5;
+                break;
+#endif
+
+        default:
+                LOG_E("Unknown Timer\n\r");
+		return(-ERR_BAD_INPUT_PARAMETER);
+                break;
+	}
+
+	sfr_stop_timer(timer);
+
+	/*
+	 * Calculate duration in given units
+	 */
+	period->units    = timers[timer].request.period.units;
+
+	switch(period->units) {
+	case uSeconds:
+		factor = 1000000;
+                break;
+
+	case mSeconds:
+		factor = 64000;
+                break;
+
+	case Seconds:
+		factor = 256;
+                break;
+
+	default:
+		LOG_E("Bad duration Units for Hardware Timer\n\r");
+		return(-ERR_BAD_INPUT_PARAMETER);
+	}
+
+	/*
+	 * Have to scale things so that don't overflow the 32 bit value
+	 */
+	clock = sys_clock_freq;
+	scale = 0xffffffff / factor;
+	while ((scale) < ticks) {
+		/*
+		 * Overflow condition so scale down
+		 */
+		factor = factor / 10;
+		clock = clock / 10;
+		scale = 0xffffffff / factor;
+	}
+	period->duration = (ticks * factor) / clock;
+
+	timers[timer].status = TIMER_UNUSED;
+	return(timer);
+}
+
 timer_id hw_timer_cancel(timer_id *timer)
 {
         if(*timer < NUMBER_HW_TIMERS) {
@@ -517,15 +623,15 @@ static timer_id start_timer(timer_id timer, struct timer_req *request)
 	}
 
 	if(ticks > 0) {
-		timers[timer].status            = TIMER_RUNNING;
-		timers[timer].request.type      = request->type;
+		timers[timer].status                   = TIMER_RUNNING;
+		timers[timer].request.type             = request->type;
 		timers[timer].request.period.units     = request->period.units;
 		timers[timer].request.period.duration  = request->period.duration;
-		timers[timer].request.exp_fn    = request->exp_fn;
-		timers[timer].request.data      = request->data;
+		timers[timer].request.exp_fn           = request->exp_fn;
+		timers[timer].request.data             = request->data;
 
-		timers[timer].repeats           = (uint16_t)((ticks >> 16) & 0xffff);
-		timers[timer].remainder         = (uint16_t)(ticks & 0xffff);
+		timers[timer].repeats                  = (uint16_t)((ticks >> 16) & 0xffff);
+		timers[timer].remainder                = (uint16_t)(ticks & 0xffff);
 
 //                LOG_D("Ticks 0x%lx, Repeats 0x%x, remainder 0x%x\n\r", ticks, timers[timer].repeats, timers[timer].remainder);
 		check_timer(timer);
@@ -545,12 +651,27 @@ static timer_id start_timer(timer_id timer, struct timer_req *request)
 
 static timer_id start_stopwatch(timer_id timer, struct timer_req *request)
 {
-	LOG_D("start_stopwatch()\n\r");
-	set_clock_divide(timer, 1);
-
 	timers[timer].status                   = TIMER_RUNNING;
 	timers[timer].request.type             = request->type;
 	timers[timer].request.period.units     = request->period.units;
+
+	switch(request->period.units) {
+	case uSeconds:
+		set_clock_divide(timer, 1);
+                break;
+
+	case mSeconds:
+		set_clock_divide(timer, 64);
+                break;
+
+	case Seconds:
+		set_clock_divide(timer, 256);
+                break;
+
+	default:
+		LOG_E("Bad duration Units for Hardware Timer\n\r");
+		return(-ERR_BAD_INPUT_PARAMETER);
+	}
 
 	switch (timer) {
 	case TIMER_1:
@@ -594,7 +715,7 @@ static timer_id start_stopwatch(timer_id timer, struct timer_req *request)
 		break;
 
 	default:
-		LOG_E("Unknown Timer\n\r");
+		LOG_E("Bad Timer\n\r");
 		break;
 	}
 	return(timer);
@@ -754,7 +875,7 @@ static void set_clock_divide(timer_id timer, uint16_t clock_divide)
 #endif
 
         default:
-                LOG_E("Unknown Timer\n\r");
+                LOG_E("Bad Timer\n\r");
                 break;
 
 	}
@@ -770,118 +891,116 @@ void check_timer(timer_id timer)
 	union sigval     data;
 
 	if(timers[timer].request.type == stopwatch) {
-		LOG_W("Stopwatch Overflow!\n\r");	
-	} else if(timers[timer].repeats) {
-		switch (timer) {
-
-                case TIMER_1:
-                        TMR1 = 0x00;
-                        PR1 = 0xffff;
-
-                        IEC0bits.T1IE = 1;
-                        T1CONbits.TON = 1;
-                        break;
-
-                case TIMER_2:
-                        TMR2 = 0x00;
-                        PR2 = 0xffff;
-                        
-                        IEC0bits.T2IE = 1;
-                        T2CONbits.TON = 1;
-                        break;
-
-                case TIMER_3:
-                        TMR3 = 0x00;
-                        PR3 = 0xffff;
-                        
-                        IEC0bits.T3IE = 1;
-                        T3CONbits.TON = 1;
-                        break;
-
-                case TIMER_4:
-                        TMR4 = 0x00;
-                        PR4 = 0xffff;
-
-                        IEC1bits.T4IE = 1;
-                        T4CONbits.TON = 1;
-                        break;
-
-                case TIMER_5:
-                        TMR5 = 0x00;
-                        PR5 = 0xffff;
-
-                        IEC1bits.T5IE = 1;
-                        T5CONbits.TON = 1;
-                        break;
-
-                default:
-                        LOG_E("Unknown Timer\n\r");
-                        break;
-		}
-		timers[timer].repeats--;
-  //              LOG_D("After Repeats %d\n\r", timers[timer].repeats);
-	} else if(timers[timer].remainder) {
-//                LOG_D("Remainder %d\n\r", timers[timer].remainder);
-		switch (timer) {
-                case TIMER_1:
-                        TMR1 = 0x00;
-                        PR1 = timers[timer].remainder;
-
-                        IEC0bits.T1IE = 1;
-                        T1CONbits.TON = 1;
-                        break;
-                        
-                case TIMER_2:
-                        TMR2 = 0x00;
-                        PR2 = timers[timer].remainder;
-
-                        IEC0bits.T2IE = 1;
-                        T2CONbits.TON = 1;
-                        break;
-                        
-                case TIMER_3:
-                        TMR3 = 0x00;
-                        PR3 = timers[timer].remainder;
-
-                        IEC0bits.T3IE = 1;
-                        T3CONbits.TON = 1;
-                        break;
-
-                case TIMER_4:
-                        TMR4 = 0x00;
-                        PR4 = timers[timer].remainder;
-
-                        IEC1bits.T4IE = 1;
-                        T4CONbits.TON = 1;
-                        break;
-
-                case TIMER_5:
-                        TMR5 = 0x00;
-                        PR5 = timers[timer].remainder;
-
-                        IEC1bits.T5IE = 1;
-                        T5CONbits.TON = 1;
-                        break;
-
-                default:
-                        LOG_E("Unknown Timer\n\r");
-                        break;
-		}
-		timers[timer].remainder = 0;
-
+		LOG_W("Stopwatch Overflow!\n\r");
 	} else {
-                expiry = timers[timer].request.exp_fn;
-                data = timers[timer].request.data;
+		sfr_stop_timer(timer);
+		if(timers[timer].repeats) {
+			switch (timer) {
 
-		if(timers[timer].request.type == repeat_expiry) {
-			start_timer(timer, &timers[timer].request);
+			case TIMER_1:
+				TMR1 = 0x00;
+				PR1 = 0xffff;
+
+				IEC0bits.T1IE = 1;
+				T1CONbits.TON = 1;
+				break;
+
+			case TIMER_2:
+				TMR2 = 0x00;
+				PR2 = 0xffff;
+                        
+				IEC0bits.T2IE = 1;
+				T2CONbits.TON = 1;
+				break;
+
+			case TIMER_3:
+				TMR3 = 0x00;
+				PR3 = 0xffff;
+                        
+				IEC0bits.T3IE = 1;
+				T3CONbits.TON = 1;
+				break;
+
+			case TIMER_4:
+				TMR4 = 0x00;
+				PR4 = 0xffff;
+
+				IEC1bits.T4IE = 1;
+				T4CONbits.TON = 1;
+				break;
+
+			case TIMER_5:
+				TMR5 = 0x00;
+				PR5 = 0xffff;
+
+				IEC1bits.T5IE = 1;
+				T5CONbits.TON = 1;
+				break;
+
+			default:
+				LOG_E("Bad Timer\n\r");
+				break;
+			}
+			timers[timer].repeats--;
+  //              LOG_D("After Repeats %d\n\r", timers[timer].repeats);
+		} else if(timers[timer].remainder) {
+//                LOG_D("Remainder %d\n\r", timers[timer].remainder);
+			switch (timer) {
+			case TIMER_1:
+				TMR1 = 0x00;
+				PR1 = timers[timer].remainder;
+
+				IEC0bits.T1IE = 1;
+				T1CONbits.TON = 1;
+				break;
+			case TIMER_2:
+				TMR2 = 0x00;
+				PR2 = timers[timer].remainder;
+
+				IEC0bits.T2IE = 1;
+				T2CONbits.TON = 1;
+				break;
+			case TIMER_3:
+				TMR3 = 0x00;
+				PR3 = timers[timer].remainder;
+
+				IEC0bits.T3IE = 1;
+				T3CONbits.TON = 1;
+				break;
+			case TIMER_4:
+				TMR4 = 0x00;
+				PR4 = timers[timer].remainder;
+
+				IEC1bits.T4IE = 1;
+				T4CONbits.TON = 1;
+				break;
+			case TIMER_5:
+				TMR5 = 0x00;
+				PR5 = timers[timer].remainder;
+
+				IEC1bits.T5IE = 1;
+				T5CONbits.TON = 1;
+				break;
+			default:
+				LOG_E("Bad Timer\n\r");
+				break;
+			}
+			timers[timer].remainder = 0;
+
 		} else {
-			timers[timer].status = TIMER_UNUSED;
-		}
+			expiry = timers[timer].request.exp_fn;
+			data = timers[timer].request.data;
 
-		if(expiry) {
-                        expiry(timer, data);
-                }
+			if(timers[timer].request.type == repeat_expiry) {
+				start_timer(timer, &timers[timer].request);
+			} else {
+				timers[timer].status = TIMER_UNUSED;
+			}
+
+			if(expiry) {
+				expiry(timer, data);
+			}
+		}
 	}
 }
 #endif  // #if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__) || defined(__dsPIC33EP256MU806__)
