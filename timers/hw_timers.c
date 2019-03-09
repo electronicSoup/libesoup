@@ -185,6 +185,29 @@ void __attribute__((__interrupt__, __no_auto_psv__)) _T5Interrupt(void)
 }
 #endif
 
+static void sfr_clear_isr_flag(timer_id timer)
+{
+	switch(timer) {
+	case TIMER_1:
+		IFS0bits.T1IF = 0;
+		break;
+	case TIMER_2:
+		IFS0bits.T2IF = 0;
+		break;
+	case TIMER_3:
+		IFS0bits.T3IF = 0;
+		break;
+	case TIMER_4:
+		IFS1bits.T4IF = 0;
+		break;
+	case TIMER_5:
+		IFS1bits.T5IF = 0;
+		break;
+	default:
+		LOG_E("Bad Timer\n\r");
+	}
+}
+
 static void sfr_stop_timer(timer_id timer)
 {
 	switch(timer) {
@@ -398,13 +421,15 @@ timer_id hw_timer_pause(timer_id timer)
 
 result_t hw_timer_stop(timer_id timer, struct period *period)
 {
+	uint32_t duration_32;
 	uint32_t scale;
 	uint32_t clock;
 	uint32_t factor;
+	uint32_t total_ticks;
 	uint16_t ticks;
 
 	if ((timer >= NUMBER_HW_TIMERS) || (timers[timer].status == TIMER_UNUSED)) {
-		LOG_E("Timer passed to hw_timer_pause() is NOT in use\n\r");
+		LOG_E("Timer passed to hw_timer_stop() is NOT in use\n\r");
 		return(-ERR_BAD_INPUT_PARAMETER);
 	}
 
@@ -457,6 +482,10 @@ result_t hw_timer_stop(timer_id timer, struct period *period)
 		factor = 1000000;
                 break;
 
+	case Tenths_mSeconds:
+		factor = 640000;
+                break;
+
 	case mSeconds:
 		factor = 64000;
                 break;
@@ -469,22 +498,47 @@ result_t hw_timer_stop(timer_id timer, struct period *period)
 		LOG_E("Bad duration Units for Hardware Timer\n\r");
 		return(-ERR_BAD_INPUT_PARAMETER);
 	}
-
+	
 	/*
-	 * Have to scale things so that don't overflow the 32 bit value
+	 * Calculate the total ticks the timer has been running for
+	 * the timer may be overflowed the 16 bit value
 	 */
-	clock = sys_clock_freq;
-	scale = 0xffffffff / factor;
-	while ((scale) < ticks) {
-		/*
-		 * Overflow condition so scale down
-		 */
-		factor = factor / 10;
-		clock = clock / 10;
-		scale = 0xffffffff / factor;
-	}
-	period->duration = (ticks * factor) / clock;
+	if (((0xffffffff / 0xffff) > timers[timer].repeats) && (((0xffffffff - (timers[timer].repeats * 0xffff)) > ticks))) {
+		total_ticks = (timers[timer].repeats * 0xffff);
+		total_ticks += ticks;
 
+		/*
+	         * Have to scale things so that don't overflow the 32 bit value
+	         */
+		clock = sys_clock_freq;
+		scale = 0xffffffff / factor;
+		while ((scale) < total_ticks) {
+			/*
+		         * Overflow condition so scale down
+		         */
+			factor = factor / 10;
+			clock = clock / 10;
+			scale = 0xffffffff / factor;
+		}
+
+
+		duration_32 = (total_ticks * factor) / clock;
+#if 0
+		if(timers[timer].repeats) {
+			LOG_D("Stop timer repeats %d ticks %d\n\r", timers[timer].repeats, ticks);
+			LOG_D("total ticks %ld\n\r", total_ticks);
+			LOG_D("Scale %ld, Factor %ld, Clock %ld\n\r", scale, factor, clock);
+			LOG_D("Caclulated Duration %ld\n\r", duration_32);
+		}
+#endif
+		if (duration_32 > 0xffff) {
+			period->duration = 0xffff;
+		} else {
+			period->duration = (uint32_t)duration_32;
+		}
+	} else {
+		period->duration = 0xffff;		
+	}
 	timers[timer].status = TIMER_UNUSED;
 	return(timer);
 }
@@ -652,6 +706,7 @@ static timer_id start_timer(timer_id timer, struct timer_req *request)
 static timer_id start_stopwatch(timer_id timer, struct timer_req *request)
 {
 	timers[timer].status                   = TIMER_RUNNING;
+	timers[timer].repeats                  = 0;
 	timers[timer].request.type             = request->type;
 	timers[timer].request.period.units     = request->period.units;
 
@@ -660,6 +715,7 @@ static timer_id start_stopwatch(timer_id timer, struct timer_req *request)
 		set_clock_divide(timer, 1);
                 break;
 
+	case Tenths_mSeconds:
 	case mSeconds:
 		set_clock_divide(timer, 64);
                 break;
@@ -891,7 +947,8 @@ void check_timer(timer_id timer)
 	union sigval     data;
 
 	if(timers[timer].request.type == stopwatch) {
-		LOG_W("Stopwatch Overflow!\n\r");
+		sfr_clear_isr_flag(timer);
+		timers[timer].repeats++;
 	} else {
 		sfr_stop_timer(timer);
 		if(timers[timer].repeats) {

@@ -37,6 +37,7 @@
  */
 enum time_units {
 	uSeconds,        /**< Micro Seconds */
+	Tenths_mSeconds, /**< Tenths of Milli Seconds */
 	mSeconds,        /**< Milli Seconds */
 	Seconds,         /**< Seconds */
 	Minutes,         /**< Minutes */
