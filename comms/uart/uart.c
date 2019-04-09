@@ -3,9 +3,9 @@
  *
  * @author John Whitmore
  * 
- * @brief UART functionalty for the electronicSoup Cinnamon Bun
+ * @brief UART functionality for the electronicSoup Cinnamon Bun
  *
- * Copyright 2017-2018 electronicSoup Limited
+ * Copyright 2017-2019 electronicSoup Limited
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 2 of the GNU Lesser General Public License
@@ -141,7 +141,7 @@ void _ISR __attribute__((__no_auto_psv__)) _U4TXInterrupt(void)
 static void uart_tx_isr(uint8_t uindex)
 {
  	result_t rc;
- 	
+
  	if((uindex >= NUM_UARTS) || (uarts[uindex].status != UART_RESERVED) || (uarts[uindex].udata == NULL)) {
  		// Todo - Possibly call global status handler with error?
 		LOG_E("UART Null in ISR!\n\r");

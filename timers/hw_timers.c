@@ -498,7 +498,8 @@ result_t hw_timer_stop(timer_id timer, struct period *period)
 		LOG_E("Bad duration Units for Hardware Timer\n\r");
 		return(-ERR_BAD_INPUT_PARAMETER);
 	}
-	
+
+//	LOG_D("Stop timer repeats %d ticks %d\n\r", timers[timer].repeats, ticks);
 	/*
 	 * Calculate the total ticks the timer has been running for
 	 * the timer may be overflowed the 16 bit value
@@ -516,8 +517,8 @@ result_t hw_timer_stop(timer_id timer, struct period *period)
 			/*
 		         * Overflow condition so scale down
 		         */
-			factor = factor / 10;
-			clock = clock / 10;
+			factor = factor >> 1;
+			clock = clock >> 1;
 			scale = 0xffffffff / factor;
 		}
 
@@ -716,6 +717,9 @@ static timer_id start_stopwatch(timer_id timer, struct timer_req *request)
                 break;
 
 	case Tenths_mSeconds:
+		set_clock_divide(timer, 64);
+                break;
+
 	case mSeconds:
 		set_clock_divide(timer, 64);
                 break;
@@ -824,7 +828,7 @@ static void set_clock_divide(timer_id timer, uint16_t clock_divide)
                         T1CONbits.T1CKPS = 0x03;   // Divide by 8
                 } else {
 #if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
-                        LOG_E("Unknow divide\n\r");
+                        LOG_E("Unknown divide\n\r");
 #endif
                 }
                 break;
