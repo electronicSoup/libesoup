@@ -4,7 +4,7 @@
  *
  * @author John Whitmore
  * 
- * Copyright 2017-2018 electronicSoup Limited
+ * Copyright 2017-2019 electronicSoup Limited
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 2 of the GNU Lesser General Public License
@@ -66,9 +66,9 @@ int main(void)
 	eeprom_address = 0;
 	eeprom_test_rd = 0;
 	
-	timer_request.units = Seconds;
-	timer_request.duration = 1;
-	timer_request.type = repeat;
+	timer_request.period.units = Seconds;
+	timer_request.period.duration = 1;
+	timer_request.type = repeat_expiry;
 	timer_request.data.sival_int = 0;
 	timer_request.exp_fn = exp_func;
 	
@@ -79,7 +79,7 @@ int main(void)
 	LOG_D("Entering main loop\n\r");
 
         while(1) {
-		CHECK_TIMERS()
+		libesoup_tasks();
         }
         return 0;
 }

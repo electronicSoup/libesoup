@@ -85,7 +85,7 @@ boolean flash_page_empty(uint32_t address)
  *
  * Input  : uint16_t address - Flash page to erase.
  *
- * Return : result_t  -  ERR_ADDRESS_RANGE if the passed address is incorrect.
+ * Return : result_t  -  -ERR_ADDRESS_RANGE if the passed address is incorrect.
  *                    -  SUCCESS if the page has been erased.
  */
 result_t flash_erase_page(uint32_t address)
@@ -98,7 +98,7 @@ result_t flash_erase_page(uint32_t address)
 	 */
         if((address & (FLASH_PAGE_SIZE - 1)) != 0x00) {
 		LOG_E("ERR_ADDRESS_RANGE(0x%lx)\n\r", address);
-		return (ERR_ADDRESS_RANGE);
+		return (-ERR_ADDRESS_RANGE);
 	}
 
 	/*
@@ -106,7 +106,7 @@ result_t flash_erase_page(uint32_t address)
 	 */
         if((address < FLASH_FIRMWARE_START_ADDRESS) && (address != FLASH_APP_HANDLE_PAGE)) {
 		LOG_E("ERR_ADDRESS_RANGE(0x%lx)\n\r", address);
-		return (ERR_ADDRESS_RANGE);
+		return (-ERR_ADDRESS_RANGE);
         }
 
 	TBLPAG = ((address & 0x7F0000)>>16);
@@ -131,7 +131,7 @@ result_t flash_erase_page(uint32_t address)
  *
  * Input  : uint8_t *data     - The row of data to be written to the Flash Page.
  *
- * Return : result_t  -  ERR_ADDRESS_RANGE if the passed address is incorrect.
+ * Return : result_t  -  -ERR_ADDRESS_RANGE if the passed address is incorrect.
  *                    -  SUCCESS if the Row has been written.
  */
 result_t flash_write_row(uint32_t address, uint8_t *data)
@@ -146,14 +146,14 @@ result_t flash_write_row(uint32_t address, uint8_t *data)
 	 * Check that the given address is on a Flash Row boundary.
 	 */
         if((address & (FLASH_NUM_INSTRUCTION_PER_ROW - 1)) != 0x00)
-		return (ERR_ADDRESS_RANGE);
+		return (-ERR_ADDRESS_RANGE);
 	
 	/*
 	 * Check that the given address is in an area of Firmware Address space which we can erase.
 	 */
         if((address < FLASH_FIRMWARE_START_ADDRESS) && (address != FLASH_APP_HANDLE_PAGE)) {
 		LOG_E("flash_write ERR_ADDRESS_RANGE 0x%lx\n\r", address);
-		return (ERR_ADDRESS_RANGE);
+		return (-ERR_ADDRESS_RANGE);
         }
 
 	/*

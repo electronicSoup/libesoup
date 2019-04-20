@@ -1,15 +1,35 @@
+/**
+ * libesoup/examples/modbus_main.c
+ *
+ * An example main.c file for the MODBUS
+ * 
+ * The code is used in the example MPLAB-X project:
+ * libesoup/examples/projects/microchip/BareBones.X
+ *
+ * Copyright 2018 electronicSoup Limited
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the version 2 of the GNU Lesser General Public License
+ * as published by the Free Software Foundation
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program; if not, see <http://www.gnu.org/licenses/>.
+ *
+ *******************************************************************************
+ *
+ */
 #include "libesoup_config.h"
 
-//#include <stdio.h>
-//#include <string.h>
-
+#define DEBUG_FILE
+static const char *TAG = "MAIN";
 #include "libesoup/logger/serial_log.h"
-//#include "es_lib/logger/serial_log.h"
-//#include "es_lib/timers/hw_timers.h"
-//#include "es_lib/timers/timers.h"
-//#include "es_lib/comms/uart.h"
-//#include "es_lib/modbus/modbus.h"
-//#include "es_lib/jobs/jobs.h"
+#include "libesoup/comms/uart/uart.h"
+#include "libesoup/comms/modbus/modbus.h"
 
 /*
  * Global Data
@@ -25,16 +45,7 @@ int main(void)
 {
         result_t rc;
 
-	jobs_init();
-	hw_timer_init();
-	timer_init();
-
-	/*
-	 * Univarsal UART Code
-	 */
-	uart_init();
-
-	serial_init();
+	rc = libesoup_init();
 
 	LOG_D("*************************\n\r");
 	LOG_D("***   ModbusMonitor   ***\n\r");
@@ -43,42 +54,34 @@ int main(void)
 
 	asm ("CLRWDT");
 
-
 	LOG_D("Initialise RS485 Chip Select\n\r");
-	/*
-	 * Pins RB2 and RB3 select transmit and receive so both are outputs
-	 */
-	TRISBbits.TRISB2 = 0;
-	TRISBbits.TRISB3 = 0;
 
-	RS485_RX;
-
-        uart.tx_pin = RP1;
-	uart.rx_pin = RP0;
-	uart.baud   = MM_BAUD;
-	uart.uart_mode = uart_calculate_mode(MM_DATABITS, MM_PARITY, MM_STOPBITS, IDLE_LOW);
+        uart.tx_pin = RD7;
+	uart.rx_pin = RD6;
+	uart.baud   = 9600;
+	rc = uart_calculate_mode(&uart.uart_mode, UART_8_DATABITS, UART_PARITY_NONE, UART_ONE_STOP_BIT, UART_IDLE_HIGH);
 	uart.tx_finished = NULL;
 
-        rc = modbus_reserve(&uart, NULL, modbus_rx_frame, NULL);
-        if (rc != SUCCESS) {
+        rc = modbus_master_reserve(&uart, NULL);
+        if (rc != 0) {
                 LOG_E("Failed to reserve a Modbus Channel\n\r");
         }
 
         LOG_D("Entering the main loop\n\r");
 
 	while(1){
+		libesoup_tasks();
 		asm ("CLRWDT");
-		CHECK_TIMERS();
-		jobs_execute();
+//		jobs_execute();
 	}
 }
 
-void modbus_rx_frame(u8 *msg, u8 size, void *data)
+void modbus_rx_frame(uint8_t *msg, uint8_t size, void *data)
 {
-        char  ch[10];
-        char  string[100];
-        u8   *ptr;
-        u16   loop;
+        char      ch[10];
+        char      string[100];
+        uint8_t  *ptr;
+        uint16_t  loop;
 
         string[0] = '\0';
         ptr = msg;

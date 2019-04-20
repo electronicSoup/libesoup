@@ -26,7 +26,7 @@
  * polynomial_length is the length - 1!!!!
  * data_word_width is the width -1 !!!
  */
-#ifdef SYS_DEBUG_BUILD
+#ifdef SYS_TEST_BUILD
 extern result_t crc_test(void);
 #endif
 extern result_t crc_reserve(uint32_t polynomial, uint8_t polynomial_length, uint8_t data_word_width, boolean little_endian);

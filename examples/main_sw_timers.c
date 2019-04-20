@@ -3,7 +3,7 @@
  *
  * @author John Whitmore
  *
- * Copyright 2017-2018 electronicSoup Limited
+ * Copyright 2017-2019 electronicSoup Limited
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 2 of the GNU Lesser General Public License
@@ -36,6 +36,7 @@ int main(void)
         result_t         rc;
 	struct timer_req request;
 	timer_id         timer;
+	struct period    period;
 
 	rc = libesoup_init();
 
@@ -47,14 +48,15 @@ int main(void)
         TRISEbits.TRISE2 = GPIO_OUTPUT_PIN;
         TRISEbits.TRISE3 = GPIO_OUTPUT_PIN;
 #endif
-
-	delay(Seconds, 5);
+	period.units     = Seconds;
+	period.duration  = 5;
+	delay(&period);
 	
-	request.units          = Seconds;
-	request.duration       = 30;
-	request.type           = single_shot;
-	request.exp_fn         = expiry;
-	request.data.sival_int = 0;
+	request.period.units    = Seconds;
+	request.period.duration = 30;
+	request.type            = single_shot_expiry;
+	request.exp_fn          = expiry;
+	request.data.sival_int  = 0;
 	
 #if defined(__dsPIC33EP256MU806__)	
 	LATDbits.LATD3 = 1;
@@ -66,9 +68,7 @@ int main(void)
         }
         
         while(1) {
-#if defined(XC16) || defined(__XC8)
-                CHECK_TIMERS();
-#endif
+		libesoup_tasks();
         }
         return 0;
 }

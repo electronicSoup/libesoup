@@ -47,6 +47,13 @@
 extern result_t gpio_set(enum gpio_pin pin, uint16_t mode, uint8_t value);
 
 /**
+ * @brief Toggle output of GPIO Pin
+ * @param pin The GPIO pin to be toggled
+ * @return result_t result (Negative on error)
+ */
+extern result_t gpio_toggle_output(enum gpio_pin pin);
+
+/**
  * @brief Read the current value on a GPIO pin
  * @param pin The pin whose value is to be read.
  * @return result_t The value read or negative on an error

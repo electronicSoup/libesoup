@@ -5,7 +5,7 @@
  *
  * @brief Functionality for delaying the uC
  *
- * Copyright 2017-2018 electronicSoup Limited
+ * Copyright 2017-2019 electronicSoup Limited
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 2 of the GNU Lesser General Public License
@@ -48,7 +48,6 @@ static const char *TAG = "DELAY";
 #include "libesoup/errno.h"
 #include "libesoup/timers/hw_timers.h"
 
-
 static volatile uint8_t delay_over;
 
 /*
@@ -62,16 +61,15 @@ void hw_expiry_function(timer_id timer, union sigval data)
 /*
  * delay function implementation
  */
-result_t delay(ty_time_units units, uint16_t duration)
+result_t delay(struct period *period)
 {
 	result_t           rc;
 	struct timer_req   timer_request;
 
-	timer_request.units          = units;
-	timer_request.duration       = duration;
-	timer_request.type           = single_shot;
-	timer_request.exp_fn         = hw_expiry_function;
-	timer_request.data.sival_int = 0;
+	timer_request.period.units    = period->units;
+	timer_request.period.duration = period->duration;
+	timer_request.type            = single_shot_expiry;
+	timer_request.exp_fn          = hw_expiry_function;
 
         delay_over = FALSE;
         rc = hw_timer_start(&timer_request);

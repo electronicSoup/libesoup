@@ -5,7 +5,7 @@
  * 
  * @brief Timer functionalty for the electronicSoup Cinnamon Bun
  *
- * Copyright 2017-2018 electronicSoup Limited
+ * Copyright 2017-2019 electronicSoup Limited
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 2 of the GNU Lesser General Public License
@@ -174,9 +174,9 @@ void sw_timer_init(void)
 //#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__) || defined(__dsPIC33EP256MU806__)
 	hw_timer = BAD_TIMER_ID;
 
-	hw_timer_req.units = mSeconds;
-	hw_timer_req.duration = SYS_SW_TIMER_TICK_ms;
-	hw_timer_req.type = repeat;
+	hw_timer_req.period.units = mSeconds;
+	hw_timer_req.period.duration = SYS_SW_TIMER_TICK_ms;
+	hw_timer_req.type = repeat_expiry;
 	hw_timer_req.exp_fn = hw_expiry_function;
 	hw_timer_req.data = data;
 	
@@ -247,11 +247,11 @@ void timer_tick(void)
 				data = timers[loop].request.data;
 				function(loop, data);
 
-				if(timers[loop].request.type == single_shot) {
+				if(timers[loop].request.type == single_shot_expiry) {
 					timers[loop].active = FALSE;
 					timers[loop].expiry_count = 0;
 					timers[loop].request.exp_fn = NULL;
-				} else if(timers[loop].request.type == repeat) {
+				} else if(timers[loop].request.type == repeat_expiry) {
 					ticks = calculate_ticks(&timers[loop].request);
 					calculate_expiry_count(loop, ticks);
 				}				
@@ -321,13 +321,13 @@ timer_id sw_timer_start(struct timer_req *request)
 			/*
 			 * Found an inactive timer so assign to this expiry
 			 */
-			timers[loop].active = TRUE;
+			timers[loop].active                  = TRUE;
 			calculate_expiry_count(loop, ticks);
-			timers[loop].request.data     = request->data;
-			timers[loop].request.duration = request->duration;
-			timers[loop].request.exp_fn   = request->exp_fn;
-			timers[loop].request.type     = request->type;
-			timers[loop].request.units    = request->units;
+			timers[loop].request.data            = request->data;
+			timers[loop].request.period.duration = request->period.duration;
+			timers[loop].request.exp_fn          = request->exp_fn;
+			timers[loop].request.type            = request->type;
+			timers[loop].request.period.units    = request->period.units;
 
 			/*
 			 * If our hw_timer isn't running restart it:
@@ -335,6 +335,7 @@ timer_id sw_timer_start(struct timer_req *request)
 			if(hw_timer_paused) {
 				if((hw_timer = hw_timer_restart(hw_timer, &hw_timer_req)) < 0) {
 					LOG_E("Failed to restart HW timer\n\r");
+					return(-ERR_GENERAL_ERROR);
 				}
 				hw_timer_paused = FALSE;
 			}
@@ -445,10 +446,10 @@ result_t sw_timer_cancel_all(void)
 
 static uint16_t calculate_ticks(struct timer_req *request)
 {
-	if(request->units == mSeconds) {
-		return((request->duration < SYS_SW_TIMER_TICK_ms) ? 1 : (request->duration / SYS_SW_TIMER_TICK_ms));
-	} else if (request->units == Seconds) {
-		return(request->duration * (1000 / SYS_SW_TIMER_TICK_ms));
+	if(request->period.units == mSeconds) {
+		return((request->period.duration < SYS_SW_TIMER_TICK_ms) ? 1 : (request->period.duration / SYS_SW_TIMER_TICK_ms));
+	} else if (request->period.units == Seconds) {
+		return(request->period.duration * (1000 / SYS_SW_TIMER_TICK_ms));
 	}
 	
 	return(0);   // Clears a compiler warning

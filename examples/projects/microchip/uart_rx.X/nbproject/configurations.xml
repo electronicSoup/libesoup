@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<configurationDescriptor version="62">
+<configurationDescriptor version="65">
   <logicalFolder name="root" displayName="root" projectFiles="true">
     <logicalFolder name="HeaderFiles"
                    displayName="Header Files"
@@ -47,13 +47,22 @@
             <itemPath>../../../../comms/can/can.c</itemPath>
           </logicalFolder>
           <logicalFolder name="modbus" displayName="modbus" projectFiles="true">
-            <logicalFolder name="modbus_states"
-                           displayName="modbus_states"
+            <logicalFolder name="master_states"
+                           displayName="master_states"
                            projectFiles="true">
-              <itemPath>../../../../comms/modbus/modbus_states/modbus_starting.c</itemPath>
-              <itemPath>../../../../comms/modbus/modbus_states/modbus_idle.c</itemPath>
-              <itemPath>../../../../comms/modbus/modbus_states/modbus_transmitting.c</itemPath>
-              <itemPath>../../../../comms/modbus/modbus_states/modbus_awaiting_response.c</itemPath>
+              <itemPath>../../../../comms/modbus/master_states/turnaround_delay.c</itemPath>
+              <itemPath>../../../../comms/modbus/master_states/awaiting_response.c</itemPath>
+              <itemPath>../../../../comms/modbus/master_states/starting.c</itemPath>
+              <itemPath>../../../../comms/modbus/master_states/transmitting.c</itemPath>
+              <itemPath>../../../../comms/modbus/master_states/idle.c</itemPath>
+            </logicalFolder>
+            <logicalFolder name="slave_states"
+                           displayName="slave_states"
+                           projectFiles="true">
+              <itemPath>../../../../comms/modbus/slave_states/processing_request.c</itemPath>
+              <itemPath>../../../../comms/modbus/slave_states/transmitting.c</itemPath>
+              <itemPath>../../../../comms/modbus/slave_states/idle.c</itemPath>
+              <itemPath>../../../../comms/modbus/slave_states/receiving.c</itemPath>
             </logicalFolder>
             <itemPath>../../../../comms/modbus/modbus.c</itemPath>
           </logicalFolder>
@@ -90,9 +99,14 @@
         <logicalFolder name="firmware" displayName="firmware" projectFiles="true">
         </logicalFolder>
         <logicalFolder name="gpio" displayName="gpio" projectFiles="true">
+          <logicalFolder name="adc" displayName="adc" projectFiles="true">
+            <logicalFolder name="Inputs" displayName="Inputs" projectFiles="true">
+              <itemPath>../../../../gpio/adc/Inputs/BTS5045.c</itemPath>
+            </logicalFolder>
+            <itemPath>../../../../gpio/adc/adc.c</itemPath>
+          </logicalFolder>
           <itemPath>../../../../gpio/peripheral.c</itemPath>
           <itemPath>../../../../gpio/gpio.c</itemPath>
-          <itemPath>../../../../gpio/adc.c</itemPath>
           <itemPath>../../../../gpio/change_notification.c</itemPath>
         </logicalFolder>
         <logicalFolder name="hardware" displayName="hardware" projectFiles="true">
@@ -143,7 +157,7 @@
   </sourceRootList>
   <projectmakefile>Makefile</projectmakefile>
   <confs>
-    <conf name="default" type="2">
+    <conf name="dsPIC33EP256MU806" type="2">
       <toolsSet>
         <developmentServer>localhost</developmentServer>
         <targetDevice>dsPIC33EP256MU806</targetDevice>
@@ -154,6 +168,9 @@
         <languageToolchainVersion>1.33</languageToolchainVersion>
         <platform>2</platform>
       </toolsSet>
+      <packs>
+        <pack name="dsPIC33E-GM-GP-MC-GU-MU_DFP" vendor="Microchip" version="0.1.17"/>
+      </packs>
       <compileType>
         <linkerTool>
           <linkerLibItems>
@@ -348,7 +365,7 @@
         <property key="UART 3" value="true"/>
         <property key="UART 4" value="true"/>
         <property key="USB" value="true"/>
-        <property key="firmware.download.all" value="false"/>
+        <property key="debugoptions.useswbreakpoints" value="false"/>
         <property key="hwtoolclock.frcindebug" value="false"/>
         <property key="memories.aux" value="false"/>
         <property key="memories.bootflash" value="true"/>

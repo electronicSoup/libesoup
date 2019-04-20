@@ -24,7 +24,7 @@
 #ifdef SYS_CAN_BUS
 
 #ifdef SYS_SERIAL_LOGGING
-#define DEBUG_FILE
+#undef DEBUG_FILE
 static const char *TAG = "CAN";
 #include "libesoup/logger/serial_log.h"
 
@@ -63,7 +63,7 @@ char can_baud_rate_strings[8][10] = {
 #include "libesoup/can/dcncp/dcncp_iso15765.h"
 #endif // SYS_CAN_ISO15765_DCNCP
 
-#ifdef SYS_CAN_PING_PROTOCOL
+#if defined(SYS_CAN_PING_PROTOCOL_PEER_TO_PEER) || defined(SYS_CAN_PING_PROTOCOL_CENTRALISED_MASTER) || defined(SYS_CAN_PING_PROTOCOL_CENTRALISED_SLAVE)
 #include "libesoup/comms/can/ping.h"
 #endif // SYS_CAN_PING_PROTOCOL
 
@@ -101,7 +101,7 @@ result_t can_init(can_baud_rate_t baudrate, status_handler_t status_handler,  ty
 	rc = can_l2_init(baudrate, can_status_handler, mode);
 	RC_CHECK_PRINT_CONT("Failed to initialise Layer \n\r");
 
-#ifdef SYS_CAN_PING_PROTOCOL
+#if defined(SYS_CAN_PING_PROTOCOL_PEER_TO_PEER) || defined(SYS_CAN_PING_PROTOCOL_CENTRALISED_MASTER) || defined(SYS_CAN_PING_PROTOCOL_CENTRALISED_SLAVE)
 	can_ping_init();
 #endif
 	return(0);
@@ -112,22 +112,20 @@ static void can_status_handler(status_source_t source, int16_t status, int16_t d
 	result_t rc;
 
 	rc = 0;
-	
-	LOG_D("can_status_handler(src %d)\n\r", source);
 
 	switch(source) {
 	case can_bus_l2_status:
 		switch(status) {
 		case can_l2_detecting_baud:
-			LOG_D("Bit Rate Auto Detect\n\r");
+//			LOG_D("Bit Rate Auto Detect\n\r");
 			if(app_status_handler) app_status_handler(source, status, data);
 			break;
 		case can_l2_connecting:
-			LOG_D("Connecting\n\r");
+//			LOG_D("Connecting\n\r");
 			if(app_status_handler) app_status_handler(source, status, data);
 			break;
 		case can_l2_connected:
-			LOG_D("Connected - %s\n\r", can_baud_rate_strings[data]);
+//			LOG_D("Connected - %s\n\r", can_baud_rate_strings[data]);
 #if defined(SYS_CAN_DCNCP)
 			rc = dcncp_init(can_status_handler, l3_address);
 			RC_CHECK_PRINT_VOID("DCNCP Fail\n\r");

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<configurationDescriptor version="62">
+<configurationDescriptor version="65">
   <logicalFolder name="root" displayName="root" projectFiles="true">
     <logicalFolder name="HeaderFiles"
                    displayName="Header Files"
@@ -18,35 +18,135 @@
             <logicalFolder name="dsPIC33" displayName="dsPIC33" projectFiles="true">
               <itemPath>../../../../boards/cinnamonBun/dsPIC33/board.c</itemPath>
             </logicalFolder>
-            <logicalFolder name="gauge" displayName="gauge" projectFiles="true">
-              <itemPath>../../../../boards/gauge/board.c</itemPath>
-            </logicalFolder>
             <logicalFolder name="pic24FJ" displayName="pic24FJ" projectFiles="true">
               <itemPath>../../../../boards/cinnamonBun/pic24FJ/board.c</itemPath>
             </logicalFolder>
           </logicalFolder>
+          <logicalFolder name="gauge" displayName="gauge" projectFiles="true">
+            <itemPath>../../../../boards/gauge/board.c</itemPath>
+          </logicalFolder>
           <logicalFolder name="rpi" displayName="rpi" projectFiles="true">
           </logicalFolder>
         </logicalFolder>
+        <logicalFolder name="comms" displayName="comms" projectFiles="true">
+          <logicalFolder name="can" displayName="can" projectFiles="true">
+            <logicalFolder name="dcncp" displayName="dcncp" projectFiles="true">
+              <itemPath>../../../../comms/can/dcncp/dcncp_iso15765.c</itemPath>
+              <itemPath>../../../../comms/can/dcncp/dcncp_can.c</itemPath>
+            </logicalFolder>
+            <logicalFolder name="es_control" displayName="es_control" projectFiles="true">
+            </logicalFolder>
+            <itemPath>../../../../comms/can/baud_auto_detect.c</itemPath>
+            <itemPath>../../../../comms/can/dynamic_baud_rate.c</itemPath>
+            <itemPath>../../../../comms/can/l2_lx_can.c</itemPath>
+            <itemPath>../../../../comms/can/can.c</itemPath>
+            <itemPath>../../../../comms/can/l3_iso15765-2.c</itemPath>
+            <itemPath>../../../../comms/can/frame_dispatch.c</itemPath>
+            <itemPath>../../../../comms/can/l2_mcp2515.c</itemPath>
+            <itemPath>../../../../comms/can/l2_pic18f.c</itemPath>
+            <itemPath>../../../../comms/can/l3_iso11783-3.c</itemPath>
+            <itemPath>../../../../comms/can/ping.c</itemPath>
+            <itemPath>../../../../comms/can/l2_dsPIC33EP256MU806.c</itemPath>
+          </logicalFolder>
+          <logicalFolder name="modbus" displayName="modbus" projectFiles="true">
+            <logicalFolder name="master_states"
+                           displayName="master_states"
+                           projectFiles="true">
+              <itemPath>../../../../comms/modbus/master_states/turnaround_delay.c</itemPath>
+              <itemPath>../../../../comms/modbus/master_states/starting.c</itemPath>
+              <itemPath>../../../../comms/modbus/master_states/transmitting.c</itemPath>
+              <itemPath>../../../../comms/modbus/master_states/awaiting_response.c</itemPath>
+              <itemPath>../../../../comms/modbus/master_states/idle.c</itemPath>
+            </logicalFolder>
+            <logicalFolder name="slave_states"
+                           displayName="slave_states"
+                           projectFiles="true">
+              <itemPath>../../../../comms/modbus/slave_states/receiving.c</itemPath>
+              <itemPath>../../../../comms/modbus/slave_states/transmitting.c</itemPath>
+              <itemPath>../../../../comms/modbus/slave_states/processing_request.c</itemPath>
+              <itemPath>../../../../comms/modbus/slave_states/idle.c</itemPath>
+            </logicalFolder>
+            <itemPath>../../../../comms/modbus/modbus.c</itemPath>
+          </logicalFolder>
+          <logicalFolder name="morse" displayName="morse" projectFiles="true">
+            <itemPath>../../../../comms/morse/morse.c</itemPath>
+          </logicalFolder>
+          <logicalFolder name="one_wire" displayName="one_wire" projectFiles="true">
+            <logicalFolder name="devices" displayName="devices" projectFiles="true">
+              <itemPath>../../../../comms/one_wire/devices/ds2502.c</itemPath>
+            </logicalFolder>
+            <itemPath>../../../../comms/one_wire/one_wire.c</itemPath>
+          </logicalFolder>
+          <logicalFolder name="spi" displayName="spi" projectFiles="true">
+            <itemPath>../../../../comms/spi/spi.c</itemPath>
+          </logicalFolder>
+          <logicalFolder name="uart" displayName="uart" projectFiles="true">
+            <itemPath>../../../../comms/uart/uart.c</itemPath>
+          </logicalFolder>
+          <logicalFolder name="usb" displayName="usb" projectFiles="true">
+            <logicalFolder name="android" displayName="android" projectFiles="true">
+              <itemPath>../../../../comms/usb/android/usb_config.c</itemPath>
+              <itemPath>../../../../comms/usb/android/state_idle.c</itemPath>
+              <itemPath>../../../../comms/usb/android/android_comms.c</itemPath>
+            </logicalFolder>
+            <logicalFolder name="xpad" displayName="xpad" projectFiles="true">
+              <itemPath>../../../../comms/usb/xpad/usb_config.c</itemPath>
+              <itemPath>../../../../comms/usb/xpad/usb_host_xpad.c</itemPath>
+            </logicalFolder>
+          </logicalFolder>
+        </logicalFolder>
+        <logicalFolder name="examples" displayName="examples" projectFiles="true">
+          <itemPath>../../../main_hw_timers.c</itemPath>
+        </logicalFolder>
         <logicalFolder name="gpio" displayName="gpio" projectFiles="true">
+          <logicalFolder name="adc" displayName="adc" projectFiles="true">
+            <logicalFolder name="Inputs" displayName="Inputs" projectFiles="true">
+              <itemPath>../../../../gpio/adc/Inputs/BTS5045.c</itemPath>
+            </logicalFolder>
+            <itemPath>../../../../gpio/adc/adc.c</itemPath>
+          </logicalFolder>
+          <itemPath>../../../../gpio/change_notification.c</itemPath>
           <itemPath>../../../../gpio/peripheral.c</itemPath>
           <itemPath>../../../../gpio/gpio.c</itemPath>
+          <itemPath>../../../../gpio/pwm.c</itemPath>
+        </logicalFolder>
+        <logicalFolder name="hardware" displayName="hardware" projectFiles="true">
+          <itemPath>../../../../hardware/flash.c</itemPath>
+          <itemPath>../../../../hardware/eeprom.c</itemPath>
+        </logicalFolder>
+        <logicalFolder name="jobs" displayName="jobs" projectFiles="true">
+          <itemPath>../../../../jobs/jobs.c</itemPath>
         </logicalFolder>
         <logicalFolder name="logger" displayName="logger" projectFiles="true">
+          <itemPath>../../../../logger/iso15765_log.c</itemPath>
+          <itemPath>../../../../logger/serial_log.c</itemPath>
         </logicalFolder>
         <logicalFolder name="processors" displayName="processors" projectFiles="true">
-          <itemPath>../../../../processors/pic24FJ256GB106.c</itemPath>
-          <itemPath>../../../../processors/pic18f2680.c</itemPath>
+          <logicalFolder name="dsPIC33" displayName="dsPIC33" projectFiles="true">
+            <itemPath>../../../../processors/dsPIC33/crc.c</itemPath>
+          </logicalFolder>
           <itemPath>../../../../processors/dsPIC33EP256MU806.c</itemPath>
           <itemPath>../../../../processors/pic18f4585.c</itemPath>
+          <itemPath>../../../../processors/pic18f2680.c</itemPath>
+          <itemPath>../../../../processors/rpi.c</itemPath>
+          <itemPath>../../../../processors/pic24FJ256GB106.c</itemPath>
+        </logicalFolder>
+        <logicalFolder name="status" displayName="status" projectFiles="true">
+          <itemPath>../../../../status/status.c</itemPath>
         </logicalFolder>
         <logicalFolder name="timers" displayName="timers" projectFiles="true">
-          <itemPath>../../../../timers/hw_timers.c</itemPath>
+          <itemPath>../../../../timers/stop_watch.c</itemPath>
           <itemPath>../../../../timers/delay.c</itemPath>
+          <itemPath>../../../../timers/hw_rtc.c</itemPath>
+          <itemPath>../../../../timers/hw_timers.c</itemPath>
+          <itemPath>../../../../timers/sw_rtc.c</itemPath>
+          <itemPath>../../../../timers/sw_timers.c</itemPath>
+        </logicalFolder>
+        <logicalFolder name="utils" displayName="utils" projectFiles="true">
+          <itemPath>../../../../utils/rand.c</itemPath>
         </logicalFolder>
         <itemPath>../../../../core.c</itemPath>
       </logicalFolder>
-      <itemPath>../../../main_hw_timers.c</itemPath>
     </logicalFolder>
     <logicalFolder name="ExternalFiles"
                    displayName="Important Files"
@@ -70,6 +170,9 @@
         <languageToolchainVersion>1.33</languageToolchainVersion>
         <platform>2</platform>
       </toolsSet>
+      <packs>
+        <pack name="dsPIC33E-GM-GP-MC-GU-MU_DFP" vendor="Microchip" version="0.1.17"/>
+      </packs>
       <compileType>
         <linkerTool>
           <linkerLibItems>
@@ -310,6 +413,9 @@
         <languageToolchainVersion>1.33</languageToolchainVersion>
         <platform>2</platform>
       </toolsSet>
+      <packs>
+        <pack name="PIC24F-GA-GB_DFP" vendor="Microchip" version="0.1.24"/>
+      </packs>
       <compileType>
         <linkerTool>
           <linkerLibItems>
@@ -527,9 +633,12 @@
         <targetPluginBoard></targetPluginBoard>
         <platformTool>PICkit3PlatformTool</platformTool>
         <languageToolchain>XC8</languageToolchain>
-        <languageToolchainVersion>1.45</languageToolchainVersion>
+        <languageToolchainVersion>1.33</languageToolchainVersion>
         <platform>2</platform>
       </toolsSet>
+      <packs>
+        <pack name="PIC18Fxxxx_DFP" vendor="Microchip" version="0.1.3"/>
+      </packs>
       <compileType>
         <linkerTool>
           <linkerLibItems>

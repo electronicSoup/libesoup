@@ -1,7 +1,7 @@
 /**
  * \file   main_change_notification.c
  *
- * Copyright 2018 electronicSoup Limited
+ * Copyright 2018-2019 electronicSoup Limited
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 2 of the GNU Lesser General Public License
@@ -26,7 +26,10 @@ static const char *TAG = "Main";
 #include "libesoup/logger/serial_log.h"
 #include "libesoup/gpio/change_notification.h"
 
-void change_notification(enum gpio_pin pin);
+void change_notification(enum gpio_pin pin)
+{
+        LOG_D("Change\n\r");
+}
 
 int main(void)
 {
@@ -34,31 +37,18 @@ int main(void)
         
 	rc = libesoup_init();
 	if(rc < 0) {
-#if ((defined SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
 		LOG_E("libesoup_init()\n\r");
-#endif		
 	}
 
 	rc = change_notifier_register(RD2, change_notification);
 	if(rc < 0) {
-#if ((defined SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
 		LOG_E("change_notifier_register()\n\r");
-#endif
 	}
 
-#if ((defined SYS_SERIAL_LOGGING) && (defined DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
         LOG_D("Starting \n\r");
-#endif
 
         while(1) {
                 Nop();
         }
         return 0;
-}
-
-void change_notification(enum gpio_pin pin)
-{
-#if ((defined SYS_SERIAL_LOGGING) && (defined DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
-        LOG_D("Change\n\r");
-#endif	
 }

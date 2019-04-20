@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<configurationDescriptor version="62">
+<configurationDescriptor version="65">
   <logicalFolder name="root" displayName="root" projectFiles="true">
     <logicalFolder name="HeaderFiles"
                    displayName="Header Files"
@@ -47,13 +47,22 @@
             <itemPath>../../../../comms/can/l3_iso15765-2.c</itemPath>
           </logicalFolder>
           <logicalFolder name="modbus" displayName="modbus" projectFiles="true">
-            <logicalFolder name="modbus_states"
-                           displayName="modbus_states"
+            <logicalFolder name="master_states"
+                           displayName="master_states"
                            projectFiles="true">
-              <itemPath>../../../../comms/modbus/modbus_states/modbus_transmitting.c</itemPath>
-              <itemPath>../../../../comms/modbus/modbus_states/modbus_starting.c</itemPath>
-              <itemPath>../../../../comms/modbus/modbus_states/modbus_awaiting_response.c</itemPath>
-              <itemPath>../../../../comms/modbus/modbus_states/modbus_idle.c</itemPath>
+              <itemPath>../../../../comms/modbus/master_states/turnaround_delay.c</itemPath>
+              <itemPath>../../../../comms/modbus/master_states/starting.c</itemPath>
+              <itemPath>../../../../comms/modbus/master_states/transmitting.c</itemPath>
+              <itemPath>../../../../comms/modbus/master_states/awaiting_response.c</itemPath>
+              <itemPath>../../../../comms/modbus/master_states/idle.c</itemPath>
+            </logicalFolder>
+            <logicalFolder name="slave_states"
+                           displayName="slave_states"
+                           projectFiles="true">
+              <itemPath>../../../../comms/modbus/slave_states/receiving.c</itemPath>
+              <itemPath>../../../../comms/modbus/slave_states/transmitting.c</itemPath>
+              <itemPath>../../../../comms/modbus/slave_states/processing_request.c</itemPath>
+              <itemPath>../../../../comms/modbus/slave_states/idle.c</itemPath>
             </logicalFolder>
             <itemPath>../../../../comms/modbus/modbus.c</itemPath>
           </logicalFolder>
@@ -335,6 +344,9 @@
         <languageToolchainVersion>1.33</languageToolchainVersion>
         <platform>2</platform>
       </toolsSet>
+      <packs>
+        <pack name="dsPIC33E-GM-GP-MC-GU-MU_DFP" vendor="Microchip" version="0.1.17"/>
+      </packs>
       <compileType>
         <linkerTool>
           <linkerLibItems>

@@ -62,6 +62,8 @@
 #endif
 #endif // SYS_SERIAL_LOGGING
 
+#define BRD_STATUS_LED_PIN                 RG9
+
 /**
  * @brief EEPROM Definitions
  *

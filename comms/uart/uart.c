@@ -3,9 +3,9 @@
  *
  * @author John Whitmore
  * 
- * @brief UART functionalty for the electronicSoup Cinnamon Bun
+ * @brief UART functionality for the electronicSoup Cinnamon Bun
  *
- * Copyright 2017-2018 electronicSoup Limited
+ * Copyright 2017-2019 electronicSoup Limited
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 2 of the GNU Lesser General Public License
@@ -49,7 +49,10 @@ static const char *TAG = "UART";
 #include "libesoup/gpio/gpio.h"
 #include "libesoup/utils/rand.h"
 #include "libesoup/comms/uart/uart.h"
-
+#include "libesoup/timers/time.h"
+#ifdef SYS_UART_TEST_RESPONSE
+#include "libesoup/timers/sw_timers.h"
+#endif
 /*
  * Check required libesoup_config.h defines are found
  */
@@ -138,7 +141,7 @@ void _ISR __attribute__((__no_auto_psv__)) _U4TXInterrupt(void)
 static void uart_tx_isr(uint8_t uindex)
 {
  	result_t rc;
- 	
+
  	if((uindex >= NUM_UARTS) || (uarts[uindex].status != UART_RESERVED) || (uarts[uindex].udata == NULL)) {
  		// Todo - Possibly call global status handler with error?
 		LOG_E("UART Null in ISR!\n\r");
@@ -316,7 +319,7 @@ void _ISR __attribute__((__no_auto_psv__)) _U1RXInterrupt(void)
 
 	while (U1STAbits.URXDA) {
 		ch = U1RXREG;
-		uarts[UART_1].udata->process_rx_char(ch);
+		uarts[UART_1].udata->process_rx_char(UART_1, ch);
 	}
 }
 #endif // #if defined(__dsPIC33EP256MU806__) || defined (__PIC24FJ256GB106__)
@@ -330,7 +333,6 @@ void _ISR __attribute__((__no_auto_psv__)) _U2RXInterrupt(void)
 
 	asm ("CLRWDT");
 
-        LOG_D("U2RX\n\r");
 	if (U2STAbits.OERR) {
 		LOG_E("RX Buffer overrun\n\r");
 		U2STAbits.OERR = 0;   /* Clear the error flag */
@@ -338,7 +340,9 @@ void _ISR __attribute__((__no_auto_psv__)) _U2RXInterrupt(void)
 
 	while (U2STAbits.URXDA) {
 		ch = U2RXREG;
-		uarts[UART_2].udata->process_rx_char(ch);
+		if (uarts[UART_2].udata->process_rx_char) {
+			uarts[UART_2].udata->process_rx_char(UART_2, ch);
+		}
 	}
 }
 #endif // #if defined(__dsPIC33EP256MU806__) || defined (__PIC24FJ256GB106__)
@@ -360,7 +364,7 @@ void _ISR __attribute__((__no_auto_psv__)) _U3RXInterrupt(void)
 
 	while (U3STAbits.URXDA) {
 		ch = U3RXREG;
-		uarts[UART_3].udata->process_rx_char(ch);
+		uarts[UART_3].udata->process_rx_char(UART_3, ch);
 	}
 }
 #endif // #if defined(__dsPIC33EP256MU806__) || defined (__PIC24FJ256GB106__)
@@ -382,7 +386,7 @@ void _ISR __attribute__((__no_auto_psv__)) _U4RXInterrupt(void)
 
 	while (U4STAbits.URXDA) {
 		ch = U4RXREG;
-		uarts[UART_4].udata->process_rx_char(ch);
+		uarts[UART_4].udata->process_rx_char(UART_4, ch);
 	}
 }
 #endif // #if defined(__dsPIC33EP256MU806__) || defined (__PIC24FJ256GB106__)
@@ -467,13 +471,13 @@ result_t uart_init(void)
 
 	for(uindex = UART_1; uindex < NUM_UARTS; uindex++) {
 		uarts[uindex].status = UART_FREE;
-		uarts[uindex].udata = NULL;
+		uarts[uindex].udata  = NULL;
 	}
         
         return(0);
 }
 
-#ifdef SYS_DEBUG_BUILD
+#ifdef SYS_TEST_BUILD
 result_t uart_tx_buffer_count(struct uart_data *udata)
 {
 	uint8_t  uindex;
@@ -491,7 +495,7 @@ result_t uart_tx_buffer_count(struct uart_data *udata)
         
 	return(uarts[uindex].tx_count);
 }
-#endif // SYS_DEBUG_BUILD
+#endif // SYS_TEST_BUILD
 
 /*
  * uart_reserve - Reserve a UART Channel for future use by the caller.
@@ -548,13 +552,9 @@ result_t uart_release(struct uart_data *udata)
 
 	uindex = udata->uindex;
 
- 	if(uindex >= NUM_UARTS)
- 		return(-ERR_BAD_INPUT_PARAMETER);
- 
- 	if(uarts[uindex].status != UART_RESERVED)
- 		return(-ERR_BAD_INPUT_PARAMETER);
- 
-	if(uarts[uindex].udata != udata) {
+ 	if (  (uindex >= NUM_UARTS)
+ 	    ||(uarts[uindex].status != UART_RESERVED)
+	    ||(uarts[uindex].udata != udata)) {
 		return(-ERR_BAD_INPUT_PARAMETER);
 	}
 
@@ -597,8 +597,35 @@ result_t uart_release(struct uart_data *udata)
 
 	udata->uindex = UART_BAD;
 
-	return(0);
+	return(SUCCESS);
 }
+
+#ifdef SYS_TEST_BUILD
+result_t uart_test_rx_buffer(struct uart_data *udata, uint8_t *buffer, uint16_t len)
+{
+	uint8_t   uindex;
+	uint8_t  *ptr;
+        int16_t   count = 0;
+
+	uindex = udata->uindex;
+
+ 	if(  (uindex >= NUM_UARTS)
+	   ||(uarts[uindex].status != UART_RESERVED)
+	   ||(uarts[uindex].udata != udata)
+	   ||(udata->rx_pin == INVALID_GPIO_PIN)) {
+ 		return(-ERR_BAD_INPUT_PARAMETER);
+	}
+
+	ptr = buffer;
+
+	while(len--) {
+		uarts[uindex].udata->process_rx_char(uindex, *ptr++);
+                count++;
+	}
+
+	return(count);
+}
+#endif // SYS_TEST_BUILD
 
 result_t uart_tx_buffer(struct uart_data *udata, uint8_t *buffer, uint16_t len)
 {
@@ -609,20 +636,11 @@ result_t uart_tx_buffer(struct uart_data *udata, uint8_t *buffer, uint16_t len)
 
 	uindex = udata->uindex;
 
- 	if(uindex >= NUM_UARTS)
+ 	if(  (uindex >= NUM_UARTS)
+	   ||(uarts[uindex].status != UART_RESERVED)
+	   ||(uarts[uindex].udata != udata)
+	   ||(udata->tx_pin == INVALID_GPIO_PIN)) {
  		return(-ERR_BAD_INPUT_PARAMETER);
- 
- 	if(uarts[uindex].status != UART_RESERVED)
- 		return(-ERR_BAD_INPUT_PARAMETER);
- 
- 	if(uarts[uindex].udata != udata) 
- 		return(-ERR_BAD_INPUT_PARAMETER);
- 
- 	if(udata->tx_pin == INVALID_GPIO_PIN)
- 		return(-ERR_BAD_INPUT_PARAMETER);
-
-	if(uarts[uindex].udata != udata) {
-		return(-ERR_BAD_INPUT_PARAMETER);
 	}
 
 	ptr = buffer;
@@ -632,6 +650,7 @@ result_t uart_tx_buffer(struct uart_data *udata, uint8_t *buffer, uint16_t len)
                 RC_CHECK
                 count++;
 	}
+
 	return(count);
 }
 

@@ -111,7 +111,7 @@ result_t rtc_update_current_datetime(uint8_t *data, uint16_t len)
 
 	if(len != 17) {
 		LOG_E("Bad input datetime\n\r");
-		return(ERR_BAD_INPUT_PARAMETER);
+		return(-ERR_BAD_INPUT_PARAMETER);
 	}
 
 	current_datetime.year    = ((data[0] - '0') * 1000) + ((data[1] -'0') * 100) + ((data[2] -'0') * 10) + (data[3] - '0');
@@ -144,7 +144,7 @@ result_t rtc_update_current_datetime(uint8_t *data, uint16_t len)
 	return(SUCCESS);
 }
 
-void *rtc_set_alarm_offset(ty_time_units units, uint16_t time, uint8_t nice, void (*expiry_fn)(void *), void *expiry_data)
+void *rtc_set_alarm_offset(enum time_units units, uint16_t time, uint8_t nice, void (*expiry_fn)(void *), void *expiry_data)
 {
 	uint16_t                current_minutes;
 	uint16_t                total_alarm_minutes;
@@ -375,7 +375,7 @@ result_t rtc_get_current_datetime(struct datetime *dt)
 
 		return (SUCCESS);
 	} else {
-		return(ERR_NOT_READY);
+		return(-ERR_NOT_READY);
 	}
 }
 

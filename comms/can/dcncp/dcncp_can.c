@@ -5,7 +5,7 @@
  *
  * @brief Dynamic SYS_CAN Node Configuration Protocol 
  *
- * Copyright 2017-2018 electronicSoup Limited
+ * Copyright 2017-2019 electronicSoup Limited
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 2 of the GNU Lesser General Public License
@@ -111,11 +111,11 @@ result_t dcncp_init(status_handler_t arg_status_handler, uint8_t arg_l3_address)
 	 * requests so we'll hold off. Random time between 1 and 5 seconds.
 	 */
 	// struct timer_req  request;
-	request.units          = mSeconds;
-	request.duration       = (uint16_t)((rand() % 4000) + 1000);
-	request.type           = single_shot;
-	request.data.sival_int = 0;
-	request.exp_fn         = exp_send_address_register_request;
+	request.period.units    = mSeconds;
+	request.period.duration = (uint16_t)((rand() % 4000) + 1000);
+	request.type            = single_shot_expiry;
+	request.data.sival_int  = 0;
+	request.exp_fn          = exp_send_address_register_request;
 
 	rc = sw_timer_start(&request);
 	RC_CHECK;
@@ -259,11 +259,11 @@ void exp_send_address_register_request(timer_id timer, union sigval data)
 	 * this node shall consider itself registered
 	 */
 	// struct timer_req  request;
-	request.units          = Seconds;
-	request.duration       = 2;
-	request.type           = single_shot;
-	request.data.sival_int = 0;
-	request.exp_fn         = exp_node_address_registered;
+	request.period.units    = Seconds;
+	request.period.duration = 2;
+	request.type            = single_shot_expiry;
+	request.data.sival_int  = 0;
+	request.exp_fn          = exp_node_address_registered;
 
 	rc = sw_timer_start(&request);
 	RC_CHECK_PRINT_VOID("SW Timer Start\n\r");
@@ -378,11 +378,11 @@ void can_l2_msg_handler(can_frame *frame)
 
 //		rc = timer_start(MILLI_SECONDS_TO_TICKS((uint16_t) ((rand() % 900) + 100)), exp_send_node_addr_report, (union sigval)(void *)NULL, &timer);
 		// struct timer_req  request;
-		request.units          = mSeconds;
-		request.duration       = ((rand() % 900) + 100);
-		request.type           = single_shot;
-		request.data.sival_int = 0;
-		request.exp_fn         = exp_send_node_addr_report;
+		request.period.units    = mSeconds;
+		request.period.duration = ((rand() % 900) + 100);
+		request.type            = single_shot_expiry;
+		request.data.sival_int  = 0;
+		request.exp_fn          = exp_send_node_addr_report;
 		rc = sw_timer_start(&request);
 		RC_CHECK_PRINT_VOID("SW Timer Start\n\r");
 #endif // SYS_CAN_ISO15765 || SYS_ISO11783 || defined(SYS_TEST_L3_ADDRESS)
@@ -465,7 +465,7 @@ result_t dcncp_register_this_node_net_logger(log_level_t level)
 	LOG_D("register_this_node_net_logger()\n\r");
 
 	if(!iso15765_initialised())
-		return(ERR_NOT_READY);
+		return(-ERR_NOT_READY);
 
 	local_iso15765_logger_frame.can_id = CAN_DCNCP_RegisterNetLogger;
 	local_iso15765_logger_frame.can_dlc = 2;

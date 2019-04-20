@@ -7,7 +7,7 @@
  *
  * Core definitions required by electronicSoup Code Library
  *
- * Copyright 2017-2018 electronicSoup Limited
+ * Copyright 2017-2019 electronicSoup Limited
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 2 of the GNU Lesser General Public License
@@ -41,19 +41,20 @@ void exp_func(timer_id timer, union sigval data);
 
 int main(void)
 {
-	result_t         rc;
+        result_t         rc;
         timer_id         timer;
-	struct timer_req request;
+        struct timer_req request;
+        struct period    period;
 
-	/*
-	 * Initialise the libesoup library
-	 */
-	rc = libesoup_init();
-	if(rc < 0) {
-		/*
+    	/*
+         * Initialise the libesoup library
+         */
+        rc = libesoup_init();
+    	if(rc < 0) {
+                /*
 		 * Error condition
 		 */
-	}
+        }
 
         /*
          * 
@@ -69,7 +70,9 @@ int main(void)
 #endif // (__18F4585)
 
 #ifdef HW_TIMER_TEST
-	delay(Seconds, 5);
+	period.units     = Seconds;
+	period.duration  = 5;
+	delay(&period);
 
 	/*
 	 * Documentation:
@@ -78,19 +81,19 @@ int main(void)
 	 * dsPIC33 @ 30M 500uS timer gives 504uS  Delta  4uS
 	 * dsPIC33 @  8M 500uS timer gives 508uS  Delta  8uS
 	 */
-	request.units          = mSeconds;
-	request.duration       = 20;
-	
+	request.period.units          = mSeconds;
+	request.period.duration       = 20;
+
 	/*
 	 * pic18F4585 or more specifically XC8 compiler doesn't do 
 	 * recursion so not repeating timers, single_shot only
 	 */
 #if defined(__18F4585)
-	request.type           = single_shot;	
+	request.type           = single_shot_expiry;	
 #elif defined(HW_TIMER_REPEAT)
-	request.type           = repeat;
+	request.type           = repeat_expiry;
 #else
-	request.type           = single_shot;
+	request.type           = single_shot_expiry;
 #endif
 	request.exp_fn         = exp_func;
 	request.data.sival_int = 0;
@@ -121,13 +124,15 @@ int main(void)
 		 * The delay routine will return ERR_RANGE_ERROR if the duration
 		 * passed in is shorter then it can safely obtain.
 	         */
-		LATDbits.LATD3 = 0;
-		rc = delay(uSeconds, 10);
+		LATDbits.LATD3  = 0;
+		period.units    = uSeconds;
+		period.duration = 10;
+		rc = delay(&period);
 		if(rc != SUCCESS) {
 			LATDbits.LATD0 = 1;
 		}
 		LATDbits.LATD3 = 1;
-		rc = delay(uSeconds, 10);
+		rc = delay(&period);
 		if(rc != SUCCESS) {
 			LATDbits.LATD0 = 1;
 		}

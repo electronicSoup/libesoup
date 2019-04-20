@@ -99,13 +99,15 @@ extern timer_id hw_timer_pause(timer_id timer);
  */
 extern timer_id hw_timer_restart(timer_id timer, struct timer_req *request);
 
+extern result_t hw_timer_stop(timer_id timer, struct period *period);
+
 /**
  * @ingroup Timers
  * @brief Function to cancel a hardware timer running in the system.
  * 
  * @param timer Identifier of the timer, previously started, to be cancelled @ref timer_id
  */
-extern timer_id     hw_timer_cancel(timer_id timer);
+extern timer_id     hw_timer_cancel(timer_id *timer);
 
 /**
  * @ingroup Timers

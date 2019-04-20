@@ -5,7 +5,7 @@
  *
  * @brief time definitions required by both hardware and software timers
  *
- * Copyright 2017 electronicSoup Limited
+ * Copyright 2017-2019 electronicSoup Limited
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 2 of the GNU Lesser General Public License
@@ -31,27 +31,40 @@
 
 /**
  * @ingroup Timers
- * @enum ty_time_units
+ * @enum time_units
  * @brief Enumeration for units of time. Used to specify durations for timers.
  * 
  */
-typedef enum {
-    uSeconds,        /**< Micro Seconds */
-    mSeconds,        /**< Milli Seconds */
-    Seconds,         /**< Seconds */
-    Minutes,         /**< Minutes */
-    Hours            /**< Hours */
-} ty_time_units;
+enum time_units {
+	uSeconds,        /**< Micro Seconds */
+	Tenths_mSeconds, /**< Tenths of Milli Seconds */
+	mSeconds,        /**< Milli Seconds */
+	Seconds,         /**< Seconds */
+	Minutes,         /**< Minutes */
+	Hours            /**< Hours */
+};
+
+/**
+ * @ingroup Timers
+ * @struct period
+ * @brief structure to define a period of time.
+ * 
+ */
+struct period {
+	enum time_units units;    /**< Time units for timer @ref time_units */
+	uint16_t        duration; /**< Duration of the timer in units */
+};
 
 /**
  * @ingroup Timers
  * @enum    timer_type
  * @brief   Enumerated type for the different types of Timers
  */
-typedef enum {
-    single_shot,  /**< Single shot time which expires once only */
-    repeat,       /**< Timer which repeats and will continuiously expire, unitl canceled */
-} timer_type;
+enum timer_type {
+	single_shot_expiry,  /**< Single shot time which expires once only */
+	repeat_expiry,       /**< Timer which repeats and will continuiously expire, unitl canceled */
+        stopwatch
+};
 
 /**
  * @ingroup Timers
@@ -65,7 +78,7 @@ typedef int16_t timer_id;
  * @ingroup Timers
  * @brief Dummy timer identifier for a non existent timer.
  */
-#define BAD_TIMER_ID   0xff
+#define BAD_TIMER_ID   0x7fff
 //#define TIMER_INIT(timer) timer = BAD_TIMER_ID;
 
 #if defined(XC16) || defined(__XC8)
@@ -79,8 +92,8 @@ typedef int16_t timer_id;
  * integer value or a pointer.
  */
 union sigval {
-           uint16_t   sival_int;         /**< 16 bit Integer value */
-           void      *sival_ptr;         /**< Pointer value */
+	uint16_t   sival_int;         /**< 16 bit Integer value */
+	void      *sival_ptr;         /**< Pointer value */
 };
 #endif  // if defined(XC16) || __XC8
 
@@ -111,11 +124,10 @@ typedef void (*expiry_function)(timer_id timer, union sigval data);
  * timer.
  */
 struct timer_req {
-    ty_time_units   units;    /**< Time units for timer @ref ty_time_units */
-    uint16_t        duration; /**< Duration of the timer in units */
-    timer_type      type;     /**< Type of timer to be created @ref timer_type */
-    expiry_function exp_fn;   /**< expiry function to be called @ref expiry_function */
-    union sigval    data;     /**< data to be passed to the expiry fnction on expiry union @ref sigval */
+	struct period   period;
+	enum timer_type type;     /**< Type of timer to be created @ref timer_type */
+	expiry_function exp_fn;   /**< expiry function to be called @ref expiry_function */
+	union sigval    data;     /**< data to be passed to the expiry fnction on expiry union @ref sigval */
 };
 
 /**

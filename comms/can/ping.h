@@ -22,4 +22,6 @@
  *
  */
 extern void can_ping_init(void);
+#if defined(SYS_CAN_PING_PROTOCOL_PEER_TO_PEER) || defined(SYS_CAN_PING_PROTOCOL_CENTRALISED_MASTER)
 extern void restart_ping_timer(void);
+#endif

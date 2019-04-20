@@ -308,6 +308,165 @@ result_t gpio_set(enum gpio_pin pin, uint16_t mode, uint8_t value)
 }
 #endif  // #if defined(__dsPIC33EP256MU806__)
 
+#if defined(__dsPIC33EP256MU806__)
+result_t gpio_toggle_output(enum gpio_pin pin)
+{
+	switch(pin) {
+	case RB0:
+		LATBbits.LATB0   = ~LATBbits.LATB0;
+		break;
+	case RB1:
+		LATBbits.LATB1   = ~LATBbits.LATB1;
+		break;
+	case RB2:
+		LATBbits.LATB2   = ~LATBbits.LATB2;
+		break;
+	case RB3:
+		LATBbits.LATB3   = ~LATBbits.LATB3;
+		break;
+	case RB4:
+		LATBbits.LATB4   = ~LATBbits.LATB4;
+		break;
+	case RB5:
+		LATBbits.LATB5   = ~LATBbits.LATB5;
+		break;
+	case RB6:
+		LATBbits.LATB6   = ~LATBbits.LATB6;
+		break;
+	case RB7:
+		LATBbits.LATB7   = ~LATBbits.LATB7;
+		break;
+	case RB8:
+		LATBbits.LATB8   = ~LATBbits.LATB8;
+		break;
+	case RB9:
+		LATBbits.LATB9   = ~LATBbits.LATB9;
+		break;
+	case RB10:
+		LATBbits.LATB10  = ~LATBbits.LATB10;
+		break;
+	case RB11:
+		LATBbits.LATB11  = ~LATBbits.LATB11;
+		break;
+	case RB12:
+		LATBbits.LATB12  = ~LATBbits.LATB12;
+		break;
+	case RB13:
+		LATBbits.LATB13  = ~LATBbits.LATB13;
+		break;
+	case RB14:
+		LATBbits.LATB14  = ~LATBbits.LATB14;
+		break;
+	case RB15:
+		LATBbits.LATB15  = ~LATBbits.LATB15;
+		break;
+	case RC12:
+		LATCbits.LATC12  = ~LATCbits.LATC12;
+		break;
+	case RC13:
+		LATCbits.LATC13  = ~LATCbits.LATC13;
+		break;
+	case RC14:
+		LATCbits.LATC14  = ~LATCbits.LATC14;
+		break;
+	case RC15:
+		LATCbits.LATC15  = ~LATCbits.LATC15;
+		break;
+	case RD0:
+		LATDbits.LATD0   = ~LATDbits.LATD0;
+		break;
+	case RD1:
+		LATDbits.LATD1   = ~LATDbits.LATD1;
+		break;
+	case RD2:
+		LATDbits.LATD2   = ~LATDbits.LATD2;
+		break;
+	case RD3:
+		LATDbits.LATD3   = ~LATDbits.LATD3;
+		break;
+	case RD4:
+		LATDbits.LATD4   = ~LATDbits.LATD4;
+		break;
+	case RD5:
+		LATDbits.LATD5   = ~LATDbits.LATD5;
+		break;
+	case RD6:
+		LATDbits.LATD6   = ~LATDbits.LATD6;
+		break;
+	case RD7:
+		LATDbits.LATD7   = ~LATDbits.LATD7;
+		break;
+	case RD8:
+		LATDbits.LATD8   = ~LATDbits.LATD8;
+		break;
+	case RD9:
+		LATDbits.LATD9   = ~LATDbits.LATD9;
+		break;
+	case RD10:
+		LATDbits.LATD10  = ~LATDbits.LATD10;
+		break;
+	case RD11:
+		LATDbits.LATD11  = ~LATDbits.LATD11;
+		break;
+	case RE0:
+		LATEbits.LATE0   = ~LATEbits.LATE0;
+		break;
+	case RE1:
+		LATEbits.LATE1   = ~LATEbits.LATE1;
+		break;
+	case RE2:
+		LATEbits.LATE2   = ~LATEbits.LATE2;
+		break;
+	case RE3:
+		LATEbits.LATE3   = ~LATEbits.LATE3;
+		break;
+	case RE4:
+		LATEbits.LATE4   = ~LATEbits.LATE4;
+		break;
+	case RE5:
+		LATEbits.LATE5   = ~LATEbits.LATE5;
+		break;
+	case RE6:
+		LATEbits.LATE6   = ~LATEbits.LATE6;
+		break;
+	case RE7:
+		LATEbits.LATE7   = ~LATEbits.LATE7;
+		break;
+	case RF0:
+		LATFbits.LATF0   = ~LATFbits.LATF0;
+		break;
+	case RF1:
+		LATFbits.LATF1   = ~LATFbits.LATF1;
+		break;
+	case RF3:
+		LATFbits.LATF3   = ~LATFbits.LATF3;
+		break;
+	case RF4:
+		LATFbits.LATF4   = ~LATFbits.LATF4;
+		break;
+	case RF5:
+		LATFbits.LATF5   = ~LATFbits.LATF5;
+		break;
+	case RG6:
+		LATGbits.LATG6   = ~LATGbits.LATG6;
+		break;
+	case RG7:
+		LATGbits.LATG7   = ~LATGbits.LATG7;
+		break;
+	case RG8:
+		LATGbits.LATG8   = ~LATGbits.LATG8;
+		break;
+	case RG9:
+		LATGbits.LATG9   = ~LATGbits.LATG9;
+		break;
+	default:
+		return(-ERR_BAD_INPUT_PARAMETER);
+		break;
+	}
+	
+	return(0);
+}
+#endif // __dsPIC33EP256MU806__
 
 #if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__)
 result_t gpio_set(enum gpio_pin pin, uint16_t mode, uint8_t value)
@@ -960,7 +1119,7 @@ result_t gpio_get(enum gpio_pin pin)
 		break;
 	}
 	
-	return(0);
+	return(-ERR_BAD_INPUT_PARAMETER);
 }
 #endif // #if defined(__dsPIC33EP256MU806__) || defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__)
 

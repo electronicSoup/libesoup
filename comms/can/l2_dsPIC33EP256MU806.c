@@ -27,6 +27,7 @@
 #ifdef SYS_CAN_BUS
 
 #ifdef SYS_SERIAL_LOGGING
+//#undef DEBUG_FILE
 #define DEBUG_FILE
 #include "libesoup/logger/serial_log.h"
 static const char *TAG = "dsPIC33_CAN";
@@ -42,10 +43,10 @@ static const char *TAG = "dsPIC33_CAN";
 #include "libesoup/timers/delay.h"
 #include "libesoup/status/status.h"
 #include "libesoup/comms/can/can.h"
-#ifdef SYS_CAN_PING_PROTOCOL
+#if defined(SYS_CAN_PING_PROTOCOL_PEER_TO_PEER) || defined(SYS_CAN_PING_PROTOCOL_CENTRALISED_MASTER)
 #include "libesoup/comms/can/ping.h"
 #endif // SYS_CAN_PING_PROTOCOL
-#if defined(SYS_SW_TIMERS) && defined(SYS_DEBUG_BUILD)
+#if defined(SYS_SW_TIMERS) && defined(SYS_TEST_BUILD)
 #include "libesoup/timers/sw_timers.h"
 #endif
 /*
@@ -138,13 +139,16 @@ static void set_mode(uint8_t mode);
 
 result_t can_l2_bitrate(can_baud_rate_t baud);
 
-static void reset(void)
+static void __attribute__ ((unused)) reset(void)
 {
 	uint8_t          current_mode;
+	struct period    period;
 
 	current_mode = C1CTRL1bits.OPMODE;
 	set_mode(CONFIG_MODE);
-	delay(mSeconds, 5);
+	period.units    = mSeconds;
+	period.duration = 5;
+	delay(&period);
 	set_mode(current_mode);
 }
 
@@ -228,7 +232,7 @@ void __attribute__((__interrupt__, __no_auto_psv__)) _C1Interrupt(void)
         IFS2bits.C1IF   = 0x00;
 }
 
-#if defined(SYS_SW_TIMERS) && defined(SYS_DEBUG_BUILD)
+#if defined(SYS_SW_TIMERS) && defined(SYS_TEST_BUILD)
 void exp_fn(timer_id timer, union sigval data)
 {
 	LOG_D("EC-RX %d  Tx %d\n\r", C1ECbits.RERRCNT, C1ECbits.TERRCNT);	
@@ -242,7 +246,7 @@ result_t can_l2_init(can_baud_rate_t arg_baud_rate, status_handler_t arg_status_
 	result_t          rc;
 	uint32_t          address;
 	uint8_t           loop;
-#if defined(SYS_SW_TIMERS) && defined(SYS_DEBUG_BUILD)
+#if defined(SYS_SW_TIMERS) && defined(SYS_TEST_BUILD)
 	struct timer_req  request;
 #endif
 	
@@ -259,7 +263,7 @@ result_t can_l2_init(can_baud_rate_t arg_baud_rate, status_handler_t arg_status_
 #endif
 	}
 
-#if defined(SYS_SW_TIMERS) && defined(SYS_DEBUG_BUILD)
+#if defined(SYS_SW_TIMERS) && defined(SYS_TEST_BUILD)
 	request.units          = Seconds;
 	request.duration       = 10;
 	request.type           = repeat;
@@ -458,7 +462,6 @@ result_t can_l2_init(can_baud_rate_t arg_baud_rate, status_handler_t arg_status_
 		}
 #endif
 	}
-	LOG_D("init end EC-RX %d  Tx %d\n\r", C1ECbits.RERRCNT, C1ECbits.TERRCNT);	
         return(0);
 }
 
@@ -497,6 +500,7 @@ result_t can_l2_tx_frame(can_frame *frame)
 				can_buffers[loop].ide = 0b1;
 				can_buffers[loop].ssr = 0b1;
 				can_buffers[loop].rtr = frame->can_id & CAN_RTR_FLAG;
+				can_buffers[loop].sid = frame->can_id & CAN_SFF_MASK;
 				can_buffers[loop].eid_l = (frame->can_id >> 11) & 0b111111; 
 				can_buffers[loop].eid_h = (frame->can_id >> 17) & 0x0fff;
 			} else {
@@ -513,7 +517,7 @@ result_t can_l2_tx_frame(can_frame *frame)
 			 */
 			tx_control[loop].tx_request = 0b1;
 
-#ifdef SYS_CAN_PING_PROTOCOL
+#if defined(SYS_CAN_PING_PROTOCOL_PEER_TO_PEER) || defined(SYS_CAN_PING_PROTOCOL_CENTRALISED_MASTER)
 			restart_ping_timer();
 #endif // SYS_CAN_PING_PROTOCOL
 			
@@ -558,6 +562,7 @@ void can_l2_tasks(void)
 			 */
 			LOG_E("CAN Overflow\n\r");
 		}
+		
 		/*
 		 * Process the Rx'd buffer
 		 */
@@ -579,10 +584,10 @@ void can_l2_tasks(void)
 		}
 		frame.can_dlc = can_buffers[fifo_rd_index].dlc;
 
-		for(loop = 0; loop < frame.can_dlc; loop++) {
+		for (loop = 0; loop < frame.can_dlc; loop++) {
 			frame.data[loop] = can_buffers[fifo_rd_index].data[loop];
 		}
-#ifdef SYS_CAN_PING_PROTOCOL
+#if defined(SYS_CAN_PING_PROTOCOL_PEER_TO_PEER) || defined(SYS_CAN_PING_PROTOCOL_CENTRALISED_MASTER)
 		restart_ping_timer();
 #endif // SYS_CAN_PING_PROTOCOL
 		
