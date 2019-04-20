@@ -40,7 +40,7 @@ static const char *TAG = "SPI";
 #endif
 #endif // SYS_SERIAL_LOGGING
 
-#ifndef SYS_ADC_CHANNELS
+#ifndef SYS_ADC_MAX_CH
 #error libesoup_config.h file should define number of required ADC Channels in build
 #endif
 
@@ -48,15 +48,26 @@ static const char *TAG = "SPI";
 #include "libesoup/gpio/adc.h"
 #include "libesoup/gpio/gpio.h"
 
+#ifdef SYS_ADC_AVERAGE_SAMPLES
+struct average_buffer {
+	uint16_t    samples[SYS_ADC_AVERAGE_SAMPLES];
+	uint8_t     head;
+};
+#endif // SYS_ADC_AVERAGE_SAMPLES
+
 struct adc_channel {
 	enum gpio_pin    pin;
-	uint16_t      last_reported;
-	uint16_t      required_delta;
-	uint16_t      sample;
-	adc_handler_t handler;
+	uint16_t         last_reported;
+	uint16_t         required_delta;
+	uint16_t         sample;
+	adc_handler_t    handler;
+#ifdef SYS_ADC_AVERAGE_SAMPLES
+	struct average_buffer samples;
+#endif // SYS_ADC_AVERAGE_SAMPLES
 };
 
-struct adc_channel channels[SYS_ADC_CHANNELS];
+struct   adc_channel channels[SYS_ADC_MAX_CH + 1];
+uint8_t  adc_active_count = 0;
 
 #if defined(__dsPIC33EP256MU806__)
 #endif
@@ -64,98 +75,52 @@ struct adc_channel channels[SYS_ADC_CHANNELS];
 #if defined(__dsPIC33EP256MU806__)
 void __attribute__((__interrupt__, __no_auto_psv__)) _AD1Interrupt(void)
 {
+	uint8_t   loop;
+	uint16_t *ptr;
+#ifdef SYS_ADC_AVERAGE_SAMPLES
+	uint8_t   i;
+	uint32_t  total;
+	uint8_t   count;
+#endif // SYS_ADC_AVERAGE_SAMPLES
+
 	IFS0bits.AD1IF   = 0;    // Clear the ISR Flag
-	IEC0bits.AD1IE   = 0;    // Disable the ISR	
-	AD1CON1bits.ADON = 0;  // Turn off the ADC
+//	IEC0bits.AD1IE   = 0;    // Disable the ISR	
+//	AD1CON1bits.ADON = 0;  // Turn off the ADC
 	
-	serial_printf(".");
+//	serial_printf(".");
+	ptr = (uint16_t *)&ADC1BUF0;
+	for (loop = 0; loop < (SYS_ADC_MAX_CH + 1); loop++) {
+		if (channels[loop].pin != INVALID_GPIO_PIN) {
+#ifdef SYS_ADC_AVERAGE_SAMPLES
+			channels[loop].samples.samples[channels[loop].samples.head] = *ptr++;
+			channels[loop].samples.head++;
+			channels[loop].samples.head %= SYS_ADC_AVERAGE_SAMPLES;
+			total = 0;
+			count = 0;
+			for(i = 0; i < SYS_ADC_AVERAGE_SAMPLES; i++) {
+				if (channels[loop].samples.samples[i] != 0xffff) {
+					total += channels[loop].samples.samples[i];
+					count++;
+				}
+			}
+			channels[loop].sample = total / count;
+#else
+			channels[loop].sample = *ptr++;
+#endif // SYS_ADC_AVERAGE_SAMPLES
+		}
+	}
 //	if(sample_handler) sample_handler(RB0, ADC1BUF0);
 	
 //	sample_handler = NULL;
 }
 #endif // (__dsPIC33EP256MU806__)
 
-result_t adc_init(void)
+static result_t enable_scan(enum adc_pin adc_pin)
 {
-	uint16_t loop;
-	
-	for(loop = 0; loop < SYS_ADC_CHANNELS; loop++) {
-		channels[loop].pin = INVALID_GPIO_PIN; 
-		channels[loop].last_reported = 0;
-		channels[loop].required_delta = 0;
-		channels[loop].sample = 0;
-		channels[loop].handler = NULL;
-	}
-
-	/*
-	 * Clear all ADC Channel from Scan
-	 */
-	AD1CSSL = 0x0000;
-	AD1CSSH = 0x0000;
-	
-	/*
-	 * Configure ADC SFR registers
-	 */
-	AD1CON1bits.AD12B = ENABLED;   // 12 Bit mode
-	AD1CON1bits.FORM  = 0b00;      // Integer result
-	AD1CON1bits.ASAM  = 0b1;       // Auto Sample
-	AD1CON1bits.SSRCG = 0b0;
-	AD1CON1bits.SSRC  = 0b111;     // Auto Convert
-	
-	AD1CON2bits.VCFG  = 0b000;     //Avdd / Avss
-	return(0);
-}
-
-result_t adc_tasks(void)
-{
-	uint16_t loop;
-	
-	for(loop = 0; loop < SYS_ADC_CHANNELS; loop++) {
-	}
-
-	return(0);
-}
-
-result_t adc_monitor_channel(enum gpio_pin gpio_pin, uint16_t delta, adc_handler_t handler)
-{
-	result_t     rc;
-	uint16_t     loop;
-	enum adc_pin adc_pin;
-
-	/*
-	 * Check the input gpio pin
-	 */
-	adc_pin = get_adc_from_gpio(gpio_pin);
-	
-	if(adc_pin == INVALID_ADC_PIN) {
-		return(ERR_BAD_INPUT_PARAMETER);
-	}
-
-	/*
-	 * Find a free slot in the channels array
-	 */
-	for(loop = 0; loop < SYS_ADC_CHANNELS; loop++) {
-		if (channels[loop].pin == INVALID_GPIO_PIN) {
-			channels[loop].pin = gpio_pin;
-			channels[loop].last_reported = 0;
-			channels[loop].required_delta = delta;
-			channels[loop].handler = handler;
-			channels[loop].sample = 0;
-		}
-	}
-
-	if (loop >= SYS_ADC_CHANNELS) {
-		return(ERR_NO_RESOURCES);
-	}
-
-	rc = gpio_set(gpio_pin, GPIO_MODE_ANALOG_INPUT, 0);
-	if (rc < 0)
-		return(rc);
-	
 	/*
 	 * Enable ADC pin in the list to sample.
 	 */
-	switch(adc_pin) {
+	switch (adc_pin) {
 	case AN0:
 		AD1CSSLbits.CSS0 = 1;
 		break;
@@ -207,6 +172,174 @@ result_t adc_monitor_channel(enum gpio_pin gpio_pin, uint16_t delta, adc_handler
 	default:
 		return(ERR_GENERAL_ERROR);
 	}
+
+	return(0);
+}
+
+static result_t disable_scan(enum adc_pin adc_pin)
+{
+	/*
+	 * Enable ADC pin in the list to sample.
+	 */
+	switch(adc_pin) {
+	case AN0:
+		AD1CSSLbits.CSS0 = 0;
+		break;
+	case AN1:
+		AD1CSSLbits.CSS1 = 0;
+		break;
+	case AN2:
+		AD1CSSLbits.CSS2 = 0;
+		break;
+	case AN3:
+		AD1CSSLbits.CSS3 = 0;
+		break;
+	case AN4:
+		AD1CSSLbits.CSS4 = 0;
+		break;
+	case AN5:
+		AD1CSSLbits.CSS5 = 0;
+		break;
+	case AN6:
+		AD1CSSLbits.CSS6 = 0;
+		break;
+	case AN7:
+		AD1CSSLbits.CSS7 = 0;
+		break;
+	case AN8:
+		AD1CSSLbits.CSS8 = 0;
+		break;
+	case AN9:
+		AD1CSSLbits.CSS9 = 0;
+		break;
+	case AN10:
+		AD1CSSLbits.CSS10 = 0;
+		break;
+	case AN11:
+		AD1CSSLbits.CSS11 = 0;
+		break;
+	case AN12:
+		AD1CSSLbits.CSS12 = 0;
+		break;
+	case AN13:
+		AD1CSSLbits.CSS13 = 0;
+		break;
+	case AN14:
+		AD1CSSLbits.CSS14 = 0;
+		break;
+	case AN15:
+		AD1CSSLbits.CSS15 = 0;
+		break;
+	default:
+		return(ERR_GENERAL_ERROR);
+	}
+
+	return(0);
+}
+
+result_t adc_init(void)
+{
+	uint16_t loop;
+#ifdef SYS_ADC_AVERAGE_SAMPLES
+	uint8_t  i;
+#endif // SYS_ADC_AVERAGE_SAMPLES
+
+	adc_active_count = 0;
+
+	for (loop = 0; loop < (SYS_ADC_MAX_CH + 1); loop++) {
+		channels[loop].pin = INVALID_GPIO_PIN;
+		channels[loop].last_reported = 0;
+		channels[loop].required_delta = 0;
+		channels[loop].sample = 0;
+		channels[loop].handler = NULL;
+#ifdef SYS_ADC_AVERAGE_SAMPLES
+		for (i = 0; i < SYS_ADC_AVERAGE_SAMPLES; i++) {
+			channels[loop].samples.samples[i] = 0xffff;
+		}
+		channels[loop].samples.head = 0;
+#endif // SYS_ADC_AVERAGE_SAMPLES
+	}
+
+	/*
+	 * Clear all ADC Channel from Scan
+	 */
+	AD1CSSL = 0x0000;
+	AD1CSSH = 0x0000;
+	
+	/*
+	 * Configure ADC SFR registers
+	 */
+	AD1CON1bits.AD12B   = ENABLED;   // 12 Bit mode
+	AD1CON1bits.ADDMABM = DISABLED;  // Don't use DMA
+	AD1CON1bits.FORM    = 0b00;      // Integer result
+	AD1CON1bits.ASAM    = 0b1;       // Auto Sample
+	AD1CON1bits.SSRCG   = 0b0;
+	AD1CON1bits.SSRC    = 0b111;     // Auto Convert
+	
+	AD1CON2bits.VCFG    = 0b000;     //Avdd / Avss
+	return(0);
+}
+
+result_t adc_tasks(void)
+{
+	uint16_t loop;
+	
+	for (loop = 0; loop < (SYS_ADC_MAX_CH + 1); loop++) {
+		if ((channels[loop].pin != INVALID_GPIO_PIN)
+		  && (channels[loop].last_reported != channels[loop].sample)) {
+			channels[loop].last_reported = channels[loop].sample;
+			LOG_D("AN%d - Sample %d\n\r",loop, channels[loop].sample);
+		}
+	}
+
+	return(0);
+}
+
+result_t adc_monitor_channel(enum gpio_pin gpio_pin, uint16_t delta, adc_handler_t handler)
+{
+	result_t     rc;
+	enum adc_pin adc_pin;
+
+	/*
+	 * Check the input gpio pin
+	 */
+	adc_pin = get_adc_from_gpio(gpio_pin);
+	
+	if(adc_pin == INVALID_ADC_PIN) {
+		return(ERR_BAD_INPUT_PARAMETER);
+	}
+
+	/*
+	 * Test if the ADC Channel already in use
+	 */
+	if (channels[adc_pin].pin != INVALID_GPIO_PIN) {
+		return(ERR_BUSY);
+	}
+
+	/*
+	 * Disable the ADC for the moment
+	 */
+	AD1CON1bits.ADON = DISABLED;
+
+	channels[adc_pin].pin = gpio_pin;
+	channels[adc_pin].last_reported = 0;
+	channels[adc_pin].required_delta = delta;
+	channels[adc_pin].handler = handler;
+	channels[adc_pin].sample = 0;
+
+	rc = gpio_set(gpio_pin, GPIO_MODE_ANALOG_INPUT, 0);
+	if (rc < 0)
+		return(rc);
+
+	rc = enable_scan(adc_pin);
+	RC_CHECK
+
+	adc_active_count++;
+
+	AD1CON1bits.ADON = ENABLED;
+	AD1CON2bits.SMPI = adc_active_count - 1;
+	IFS0bits.AD1IF = 0;
+	IEC0bits.AD1IE = ENABLED;  // Enable the ISR
 	
 	return(0);
 }
