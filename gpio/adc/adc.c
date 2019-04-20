@@ -66,8 +66,17 @@ struct adc_channel {
 struct   adc_channel channels[SYS_ADC_MAX_CH + 1];
 uint8_t  adc_active_count = 0;
 
+#ifdef SYS_ADC_MONITOR
+#ifndef SYS_ADC_PERIOD_UNITS
+#error libesoup_config.h file should define SYS_ADC_PERIOD_UNITS (Period Units for monitoring ADC Channels)
+#endif
+#ifndef SYS_ADC_PERIOD_DURATION
+#error libesoup_config.h file should define SYS_ADC_PERIOD_DURATION (Period Duration for monitoring ADC Channels)
+#endif
+
 static timer_id adc_timer = BAD_TIMER_ID;
 static struct timer_req timer_req;
+#endif
 
 #if defined(__dsPIC33EP256MU806__)
 void __attribute__((__interrupt__, __no_auto_psv__)) _AD1Interrupt(void)
@@ -294,14 +303,15 @@ result_t adc_init(void)
 	// ADC DMA
 	AD1CON4bits.ADDMAEN = 0b0;       // Don't use DMA
 	
+#ifdef SYS_ADC_MONITOR
 	/*
 	 * \Initialise a timer request structure
 	 */
 	timer_req.period.units    = SYS_ADC_PERIOD_UNITS;
 	timer_req.period.duration = SYS_ADC_PERIOD_DURATION;
-	timer_req.type            = repeat;
+	timer_req.type            = repeat_expiry;
 	timer_req.exp_fn          = adc_scan;
-	
+#endif
 	return(0);
 }
 
@@ -337,6 +347,7 @@ result_t adc_tasks(void)
 	return(0);
 }
 
+#ifdef SYS_ADC_MONITOR
 result_t adc_monitor_channel(enum gpio_pin gpio_pin, uint16_t delta, adc_handler_t handler)
 {
 	result_t     rc;
@@ -390,6 +401,7 @@ result_t adc_monitor_channel(enum gpio_pin gpio_pin, uint16_t delta, adc_handler
 	}
 	return(0);
 }
+#endif // SYS_ADC_MONITOR
 
 #if defined(__dsPIC33EP256MU806__)
 result_t adc_sample(enum gpio_pin pin, adc_handler_t handler)

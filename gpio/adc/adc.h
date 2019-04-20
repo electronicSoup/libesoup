@@ -28,7 +28,9 @@
 #ifdef SYS_ADC
 typedef void (*adc_handler_t)(enum gpio_pin, uint16_t);
 
+#ifdef SYS_ADC_MONITOR
 extern result_t adc_monitor_channel(enum gpio_pin pin, uint16_t delta, adc_handler_t handler);
+#endif
 extern result_t adc_sample(enum gpio_pin pin, adc_handler_t);
 
 #endif
