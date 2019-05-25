@@ -31,6 +31,7 @@
 #ifndef _ERRNO_H
 #define _ERRNO_H
 
+#include <stdint.h>
 #include "libesoup_config.h"
 
 /**
