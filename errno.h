@@ -65,7 +65,7 @@ typedef int16_t result_t;
  * Once again this MACRO assumes that the type result_t variable is called 'rc'.
  */
 #if defined(SYS_SERIAL_LOGGING)
-#define RC_CHECK_STOP           if (rc <0){ LOG_E("%s-%d\n\r", __FILE__, __LINE__); while (1); }
+#define RC_CHECK_STOP           if (rc <0){ LOG_E("#%d %s-%d (%d)\n\r", rc, __FILE__, __LINE__); while (1); }
 #else
 #define RC_CHECK_STOP           if (rc <0) while (1);
 #endif // SYS_SERIAL_LOGGING
