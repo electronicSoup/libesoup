@@ -52,6 +52,9 @@ extern volatile boolean timer_ticked;
 
 #endif // XC16 || __XC8
 
+#ifdef SYS_SW_TIMER_TICKS_COUNT
+extern uint16_t current_system_ticks(void);
+#endif // SYS_SW_TIMER_TICKS_COUNT
 /**
  * @ingroup Timers
  * @brief Start a Software based timer.

@@ -258,7 +258,11 @@ void timer_tick(void)
 			}
 		}
 	}
-
+#ifndef SYS_SW_TIMER_TICKS_COUNT
+	/*
+	 * Only deactivate the Hardware timer tick if no application SW is
+	 * using the count of ticks.
+	 */
 	if(!active_timers && !hw_timer_paused) {
 		/*
 		 * No active timers in the system so might as well pause the
@@ -267,9 +271,16 @@ void timer_tick(void)
 		hw_timer_paused = TRUE;
 		hw_timer_pause(hw_timer);
 	}
-
+#endif
 }
 #endif // XC16 || __XC8
+
+#ifdef SYS_SW_TIMER_TICKS_COUNT
+uint16_t current_system_ticks(void)
+{
+	return(timer_counter);
+}
+#endif // SYS_SW_TIMER_TICKS_COUNT
 
 /*
  * result_t sw_timer_start(uint16_t ticks,
