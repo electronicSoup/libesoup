@@ -51,8 +51,8 @@
 #ifdef SYS_SW_TIMERS
 
 #ifdef SYS_SERIAL_LOGGING
-//#define DEBUG_FILE
-#undef DEBUG_FILE
+#define DEBUG_FILE
+//#undef DEBUG_FILE
 static const char *TAG = "SW_TIMERS";
 #include "libesoup/logger/serial_log.h"
 #endif
@@ -229,6 +229,7 @@ void timer_tick(void)
 	active_timers = 0;
 	timer_ticked = FALSE;
 	timer_counter++;
+	if(timer_counter == 0) LOG_D("TC Ovr\n\r");
 
 	/*
 	 * Check for expired timers

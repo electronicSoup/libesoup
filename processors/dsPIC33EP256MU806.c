@@ -58,6 +58,12 @@ static const char *TAG = "dsPIC33";
 #pragma config BOREN   = OFF
 #pragma config JTAGEN  = OFF
 
+//#pragma config OSCIOFNC = ON            // OSC2 Pin Function bit (OSC2 is general purpose digital I/O pin)
+
+//#pragma config PLLKEN = ON              // PLL Lock Wait Enable bit (Clock switch to PLL source will wait until the PLL lock signal is valid.)
+//#pragma config FPWRT = PWR128           // Power-on Reset Timer Value Select bits (128ms)
+//#pragma config ALTI2C1 = OFF            // Alternate I2C pins for I2C1 (SDA1/SCK1 pins are selected as the I/O pins for I2C1)
+//
 static void clock_init(void);
 
 /*

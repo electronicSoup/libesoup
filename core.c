@@ -93,6 +93,14 @@ extern result_t modbus_init(void);
 extern result_t change_notifier_init(void);
 #endif
 
+#ifdef SYS_USB_KEYBOARD
+#include "system.h"
+#include "usb.h"
+
+extern result_t usb_keyboard_tasks(void);
+extern void SYSTEM_Initialize(  SYSTEM_STATE SYSTEM_STATE_USB_START );
+#endif
+
 /*
  * The Instruction Clock Frequency being used by the system.
  * 
@@ -186,6 +194,13 @@ result_t libesoup_init(void)
 	rc = modbus_init();
 	RC_CHECK
 #endif
+
+#ifdef SYS_USB_KEYBOARD
+	SYSTEM_Initialize( SYSTEM_STATE_USB_START );
+
+	USBDeviceInit();
+	USBDeviceAttach();
+#endif
 	CLEAR_WDT
 	return(board_init());
 }
@@ -202,6 +217,10 @@ result_t libesoup_tasks(void)
 #endif
 #ifdef SYS_CAN_BUS
 	can_tasks();
+#endif
+
+#ifdef SYS_USB_KEYBOARD
+	rc = usb_keyboard_tasks();
 #endif
 	return(rc);
 }

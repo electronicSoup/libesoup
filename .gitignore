@@ -11,3 +11,6 @@ default
 build
 dist
 private
+mcp_usb_device.c
+mcp_usb_device_hid.c
+mcp_usb_hal_16bit.c
