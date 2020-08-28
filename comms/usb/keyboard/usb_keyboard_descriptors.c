@@ -29,6 +29,10 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  *
  */
+#include "libesoup_config.h"
+
+#ifdef SYS_USB_KEYBOARD
+
 #include <stdint.h>
 
 #include "usb.h"
@@ -130,3 +134,5 @@ const uint8_t *const USB_SD_Ptr[]=
 	(const uint8_t *const)&sd001,
 	(const uint8_t *const)&sd002
 };
+
+#endif // SYS_USB_KEYBOARD

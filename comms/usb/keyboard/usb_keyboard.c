@@ -27,9 +27,10 @@
 //#define DEBUG_FILE
 
 #include "libesoup_config.h"
-#include "libesoup/logger/serial_log.h"
 
 #ifdef SYS_USB_KEYBOARD
+
+#include "libesoup/logger/serial_log.h"
 
 #include <stdint.h>
 #include <string.h>
