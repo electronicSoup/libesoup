@@ -1,0 +1,28 @@
+#ifndef _LIBESOUP_CONFIG_h
+#define _LIBESOUP_CONFIG_h
+
+#define SYS_CLOCK_FREQ  60000000 // 60 MHz
+
+#define SYS_UART
+#define SYS_UART_TX_BUFFER_SIZE  512
+
+#define SYS_SERIAL_LOGGING
+#define SYS_SERIAL_PORT_GndRxTx
+#define SYS_LOG_LEVEL            LOG_DEBUG
+#define SYS_SERIAL_LOGGING_BAUD  19200
+
+#define SYS_CHANGE_NOTIFICATION
+#define SYS_CHANGE_NOTIFICATION_MAX_PINS    4
+
+#define SYS_HW_TIMERS
+
+#define SYS_SW_TIMERS
+#define SYS_NUMBER_OF_SW_TIMERS   5
+#define SYS_SW_TIMER_TICK_ms         5
+#define SYS_SW_TIMER_TICKS_COUNT
+
+#define SYS_USB_KEYBOARD
+
+#include "libesoup/boards/cinnamonBun/dsPIC33/cb-dsPIC33EP256MU806.h"
+
+#endif // _LIBESOUP_CONFIG_h
