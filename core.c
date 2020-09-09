@@ -64,6 +64,10 @@ extern void   uart_init(void);
 #include "libesoup/comms/spi/spi.h"
 #endif
 
+#ifdef SYS_I2C
+extern void i2c_init(void);
+#endif
+
 #ifdef SYS_RAND
 #include "libesoup/utils/rand.h"
 #endif
@@ -169,6 +173,10 @@ result_t libesoup_init(void)
 #ifdef SYS_SPI_BUS
         spi_init();
 	__asm__ ("CLRWDT");
+#endif
+
+#ifdef SYS_I2C
+	i2c_init();
 #endif
 
 #ifdef SYS_RAND
