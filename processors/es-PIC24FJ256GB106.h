@@ -104,6 +104,15 @@
 #define U4_TX_ISR_PRIOTITY IPC22bits.U4RXIP    ///< UART 4 Transmit Interrupt Priority SFR
 #define U4_TX_ISR_ENABLE   IEC5bits.U4TXIE     ///< UART 4 Transmit Interrupt Enable SFR Bit
 
+/*
+ * I2C Channels
+ */
+enum i2c_channel {
+        I2C1,
+        I2C2,
+        I2C3
+};
+
 /**
  * @brief UART Modes of operation bit field for the UxMODE SFR
  */

@@ -29,20 +29,61 @@
 
 #include "libesoup/logger/serial_log.h"
 
-#ifdef SYS_I2C
+#if defined(SYS_I2C1) || defined(SYS_I2C2) || defined(SYS_I2C3)
 
 void __attribute__((__interrupt__, __no_auto_psv__)) _MI2C3Interrupt(void)
 {
-	
+	LOG_D("I2C3 Master ISR\n\r");
 }
 
-void i2c_init(void)
+void __attribute__((__interrupt__, __no_auto_psv__)) _SI2C3Interrupt(void)
+{
+	LOG_D("I2C3 Slave ISR\n\r");
+}
+
+void __attribute__((__interrupt__, __no_auto_psv__)) _BI2C3Interrupt(void)
+{
+	LOG_D("I2C3 Collision ISR\n\r");
+}
+
+result_t i2c_init(enum i2c_channel chan)
 {
 	LOG_D("i2c_init()\n\r");
+        switch (chan) {
+                case I2C1:
+                        LOG_E("Not implemented\n\r");
+                        return(-ERR_NOT_CODED);
+                        break;
+                case I2C2:
+                        LOG_E("Not implemented\n\r");
+                        return(-ERR_NOT_CODED);
+                        break;
+                case I2C3:
+                        I2C3BRG             = 255;
 
-	I2C3BRG           = 255;
-	I2C3CONbits.IPMIEN = 0; // Disable IPMI mode
-	I2C3CONbits.I2CEN = 1;
+                        I2C3CONbits.I2CSIDL = 0;  // Module continues in Idle.
+                        I2C3CONbits.SCLREL  = 1;  // Release clock (Slave mode))
+                        I2C3CONbits.IPMIEN  = 0;  // Disable IPMI mode
+                        I2C3CONbits.A10M    = 0;  // 7 bit mode
+                        I2C3CONbits.DISSLW  = 1;  // Disable Slew rate.
+                        I2C3CONbits.SMEN    = 0;  // Disable SMBus thresholds
+                        I2C3CONbits.GCEN    = 0;  // Disable General call address
+                        I2C3CONbits.STREN   = 0;  // Disable clock stretching
+                        I2C3CONbits.ACKDT   = 0;  // Send /ACK to acknowledge
+
+                        IFS5bits.MI2C3IF    = 0   // Clear Master ISR Flag
+                        IFS5bits.SI2C3IF    = 0   // Clear Slave ISR Flag
+                        IEC5bits.MI2C3IE    = 1;  // Enable Master Interrupts
+                        IEC5bits.SI2C3IE    = 1;  // Enable Slave Interrupts
+
+                        I2C3CONbits.I2CEN   = 1;
+                        break;
+                default:
+                        LOG_E("No such I2C\n\r");
+                        return (-ERR_BAD_INPUT_PARAMETER);
+                        break;
+        }
+        return (SUCCESS);
 }
 
 result_t i2c_send(uint8_t data)
@@ -59,4 +100,4 @@ result_t i2c_send(uint8_t data)
 	return(SUCCESS);
 }
 
-#endif // _SYS_I2C
+#endif // _SYS_I2C1 || SYS_I2S2 || SYS_I2S3
