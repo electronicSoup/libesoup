@@ -45,6 +45,10 @@ void __attribute__((__interrupt__, __no_auto_psv__)) _MI2C3Interrupt(void)
                         LOG_E("IWCOL\n\r");
                 }
 
+		if (I2C3STATbits.S) {
+			LOG_D("Started\n\r");
+		}
+
 		state = I2C3CON & 0x1f;
 		switch (state) {
 		case 0x00:

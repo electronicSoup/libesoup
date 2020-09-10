@@ -1,9 +1,10 @@
+#include "libesoup_config.h"
+
 #ifdef SYS_TEST_24LC64
 
 #define DEBUG_FILE
 #define TAG "24LC64_TST"
 
-#include "libesoup_config.h"
 #include "libesoup/logger/serial_log.h"
 #include "libesoup/gpio/gpio.h"
 #include "libesoup/comms/i2c/i2c.h"
