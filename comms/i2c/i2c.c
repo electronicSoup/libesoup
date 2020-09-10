@@ -33,12 +33,52 @@
 
 void __attribute__((__interrupt__, __no_auto_psv__)) _MI2C3Interrupt(void)
 {
-	LOG_D("I2C3 Master ISR\n\r");
+	static uint8_t txing = 0;
+	uint8_t        state;
+
+	serial_printf("*");
+	while (IFS5bits.MI2C3IF) {
+		serial_printf("+");
+		IFS5bits.MI2C3IF    = 0;  // Clear Master ISR Flag
+		state = I2C3CON & 0x1f;
+		switch (state) {
+		case 0x00:
+			if (I2C3STATbits.TRSTAT) {
+				serial_printf("X");
+			} else {
+				serial_printf("I");
+				if (!txing) {
+					I2C3TRN         = 0x55;
+					txing = 1;
+				} else {
+					I2C3CONbits.PEN = 1;
+					txing = 0;
+				}
+			}
+			break;
+		case 0x01:
+			serial_printf("1");
+			break;
+		case 0x02:
+			serial_printf("2");
+			break;
+		case 0x04:
+			serial_printf("4");
+			break;
+		case 0x08:
+			serial_printf("8");
+			break;
+		case 0x10:
+			serial_printf("9");
+			break;
+		}
+		serial_printf("\n\r");
+	}
 }
 
 void __attribute__((__interrupt__, __no_auto_psv__)) _SI2C3Interrupt(void)
 {
-	LOG_D("I2C3 Slave ISR\n\r");
+	serial_printf("-");
 }
 
 void __attribute__((__interrupt__, __no_auto_psv__)) _BI2C3Interrupt(void)
@@ -59,7 +99,7 @@ result_t i2c_init(enum i2c_channel chan)
                         return(-ERR_NOT_CODED);
                         break;
                 case I2C3:
-                        I2C3BRG             = 255;
+                        I2C3BRG             = 0x27;
 
                         I2C3CONbits.I2CSIDL = 0;  // Module continues in Idle.
                         I2C3CONbits.SCLREL  = 1;  // Release clock (Slave mode))
@@ -71,8 +111,8 @@ result_t i2c_init(enum i2c_channel chan)
                         I2C3CONbits.STREN   = 0;  // Disable clock stretching
                         I2C3CONbits.ACKDT   = 0;  // Send /ACK to acknowledge
 
-                        IFS5bits.MI2C3IF    = 0   // Clear Master ISR Flag
-                        IFS5bits.SI2C3IF    = 0   // Clear Slave ISR Flag
+                        IFS5bits.MI2C3IF    = 0;  // Clear Master ISR Flag
+                        IFS5bits.SI2C3IF    = 0;  // Clear Slave ISR Flag
                         IEC5bits.MI2C3IE    = 1;  // Enable Master Interrupts
                         IEC5bits.SI2C3IE    = 1;  // Enable Slave Interrupts
 
@@ -90,12 +130,12 @@ result_t i2c_send(uint8_t data)
 {
 	LOG_D("i2c_send()\n\r");
 
-	while (!I2C3STATbits.P) {
-		Nop();
-	}
-	LOG_D("Idle!\n\r");
+//	while (!I2C3STATbits.P) {
+//		Nop();
+//	}
+//	LOG_D("Idle!\n\r");
 	I2C3CONbits.SEN = 1;
-	I2C3TRN         = data;
+//	I2C3TRN         = data;
 
 	return(SUCCESS);
 }
