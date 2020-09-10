@@ -38,8 +38,13 @@ void __attribute__((__interrupt__, __no_auto_psv__)) _MI2C3Interrupt(void)
 
 	serial_printf("*");
 	while (IFS5bits.MI2C3IF) {
-		serial_printf("+");
 		IFS5bits.MI2C3IF    = 0;  // Clear Master ISR Flag
+		serial_printf("+0x%x", I2C3STAT);
+
+                if (I2C3STATbits.IWCOL) {
+                        LOG_E("IWCOL\n\r");
+                }
+
 		state = I2C3CON & 0x1f;
 		switch (state) {
 		case 0x00:
@@ -79,11 +84,6 @@ void __attribute__((__interrupt__, __no_auto_psv__)) _MI2C3Interrupt(void)
 void __attribute__((__interrupt__, __no_auto_psv__)) _SI2C3Interrupt(void)
 {
 	serial_printf("-");
-}
-
-void __attribute__((__interrupt__, __no_auto_psv__)) _BI2C3Interrupt(void)
-{
-	LOG_D("I2C3 Collision ISR\n\r");
 }
 
 result_t i2c_init(enum i2c_channel chan)
@@ -126,18 +126,45 @@ result_t i2c_init(enum i2c_channel chan)
         return (SUCCESS);
 }
 
-result_t i2c_send(uint8_t data)
+result_t i2c_start(enum i2c_channel chan)
 {
-	LOG_D("i2c_send()\n\r");
+        if (chan == I2C3) {
+                if (I2C3STATbits.P) {
+                        I2C3CONbits.SEN = 1;
+                } else {
+                        return (ERR_BUSY);
+                }
+        }
 
-//	while (!I2C3STATbits.P) {
-//		Nop();
-//	}
-//	LOG_D("Idle!\n\r");
-	I2C3CONbits.SEN = 1;
-//	I2C3TRN         = data;
+        return(SUCCESS);
+}
 
-	return(SUCCESS);
+result_t i2c_restart(enum i2c_channel chan)
+{
+        if (chan == I2C3) {
+                I2C3CONbits.RSEN = 1;
+        }
+
+        return(SUCCESS);
+}
+
+result_t i2c_stop(enum i2c_channel chan)
+{
+        if (chan == I2C3) {
+                I2C3CONbits.PEN = 1;
+        }
+
+        return(SUCCESS);
+}
+
+result_t i2c_write(enum i2c_channel chan, uint8_t *tx_buf, uint8_t num_tx_bytes)
+{
+        return(SUCCESS);
+}
+
+result_t i2c_read(enum i2c_channel chan, uint8_t *tx_buf, uint8_t num_tx_bytes, uint8_t *rx_buf, uint8_t num_rx_bytes)
+{
+        return(SUCCESS);
 }
 
 #endif // _SYS_I2C1 || SYS_I2S2 || SYS_I2S3
