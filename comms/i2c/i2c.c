@@ -31,6 +31,8 @@
 
 #if defined(SYS_I2C1) || defined(SYS_I2C2) || defined(SYS_I2C3)
 
+static void (*i2c3_started_callback)(void) = NULL;
+
 void __attribute__((__interrupt__, __no_auto_psv__)) _MI2C3Interrupt(void)
 {
 	static uint8_t txing = 0;
@@ -47,6 +49,9 @@ void __attribute__((__interrupt__, __no_auto_psv__)) _MI2C3Interrupt(void)
 
 		if (I2C3STATbits.S) {
 			LOG_D("Started\n\r");
+                        if (i2c3_started_callback) {
+                                i2c3_started_callback();
+                        }
 		}
 
 		state = I2C3CON & 0x1f;
@@ -130,9 +135,11 @@ result_t i2c_init(enum i2c_channel chan)
         return (SUCCESS);
 }
 
-result_t i2c_start(enum i2c_channel chan)
+result_t i2c_start(enum i2c_channel chan, void (*callback)(void))
 {
         if (chan == I2C3) {
+                i2c3_started_callback = callback;
+
                 if (I2C3STATbits.P) {
                         I2C3CONbits.SEN = 1;
                 } else {
@@ -143,7 +150,7 @@ result_t i2c_start(enum i2c_channel chan)
         return(SUCCESS);
 }
 
-result_t i2c_restart(enum i2c_channel chan)
+result_t i2c_restart(enum i2c_channel chan, void (*callback)(void))
 {
         if (chan == I2C3) {
                 I2C3CONbits.RSEN = 1;
@@ -152,7 +159,7 @@ result_t i2c_restart(enum i2c_channel chan)
         return(SUCCESS);
 }
 
-result_t i2c_stop(enum i2c_channel chan)
+result_t i2c_stop(enum i2c_channel chan, void (*callback)(void))
 {
         if (chan == I2C3) {
                 I2C3CONbits.PEN = 1;
@@ -161,12 +168,12 @@ result_t i2c_stop(enum i2c_channel chan)
         return(SUCCESS);
 }
 
-result_t i2c_write(enum i2c_channel chan, uint8_t *tx_buf, uint8_t num_tx_bytes)
+result_t i2c_write(enum i2c_channel chan, uint8_t *tx_buf, uint8_t num_tx_bytes, void (*callback)(void))
 {
         return(SUCCESS);
 }
 
-result_t i2c_read(enum i2c_channel chan, uint8_t *tx_buf, uint8_t num_tx_bytes, uint8_t *rx_buf, uint8_t num_rx_bytes)
+result_t i2c_read(enum i2c_channel chan, uint8_t *tx_buf, uint8_t num_tx_bytes, uint8_t *rx_buf, uint8_t num_rx_bytes, void (*callback)(void))
 {
         return(SUCCESS);
 }
