@@ -13,7 +13,7 @@
  * Software timer. This timer identifier can then be used to cancel the started
  * timer.
  *
- * Copyright 2018 electronicSoup Limited
+ * Copyright 2018 - 2020 electronicSoup Limited
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 2 of the GNU Lesser General Public License
@@ -33,6 +33,10 @@
 
 #include <stdint.h>
 #include "libesoup_config.h"
+
+#ifdef DEBUG_BUILD
+extern char *error_text(result_t);
+#endif
 
 /**
  * @typedef  result_t
@@ -152,6 +156,7 @@ typedef int16_t result_t;
 #define ERR_NO_RESPONSE            19
 #define ERR_NOT_MASTER             20
 #define ERR_NOT_SLAVE              21
+#define ERR_BAD_STATE              22
 #define ERR_IM_A_TEAPOT           418
 
 #endif // _ERRNO_H

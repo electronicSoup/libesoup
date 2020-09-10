@@ -1,6 +1,7 @@
 #ifndef _LIBESOUP_CONFIG_H
 #define _LIBESOUP_CONFIG_H
 
+#define DEBUG_BUILD
 #define SYS_TEST_24LC64
         
 #define SYS_TEST_BUILD

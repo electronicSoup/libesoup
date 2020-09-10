@@ -23,6 +23,9 @@ static void expiry(timer_id timer  __attribute__((unused)), union sigval data __
 
 //	gpio_set(RE5, GPIO_MODE_DIGITAL_OUTPUT, ~gpio_get(RE5));
         rc = mc24lc64_read(I2C3, 0x00, 0x00, 0x01, buffer, callback_24lc64);
+	if (rc < 0) {
+		LOG_E("failed to read - %s\n\r", error_text(rc));
+	}
 }
 
 int main(void)

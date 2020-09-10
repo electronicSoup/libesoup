@@ -18,6 +18,7 @@ static uint16_t         mem_addr;
 static uint8_t          num_bytes;
 static uint8_t         *buffer;
 static void           (*done_callback)(uint8_t *);
+static uint8_t          tx_buffer[4];
 
 void started_callback(void);
 void preamble_sent(void);
@@ -27,7 +28,6 @@ void read_finished(void);
 void started_callback(void)
 {
         result_t  rc;
-        uint8_t   tx_buffer[4];
 
         LOG_D("Started\n\r");
 
@@ -56,7 +56,7 @@ void restarted_callback(void)
 
         LOG_D("Started\n\r");
 
-        tx_buffer[0]  = 0xA0 || (chip_addr & 0x0E) || READ;
+        tx_buffer[0] = 0xA0 || (chip_addr & 0x0E) || READ;
         rc = i2c_read(chan, tx_buffer, 1, buffer, 1, read_finished);
 }
 
@@ -73,15 +73,15 @@ result_t mc24lc64_read(enum i2c_channel p_chan, uint8_t p_chip_addr, uint16_t p_
         LOG_D("mc24lc64_read()\n\r");
 
         if (!busy) {
-                rc = i2c_start(chan, started_callback);
-                RC_CHECK
-
                 chan          = p_chan;
                 chip_addr     = p_chip_addr;
                 mem_addr      = p_mem_addr;
                 num_bytes     = p_num_bytes;
                 buffer        = p_buffer;
                 done_callback = p_callback;
+
+                rc = i2c_start(chan, started_callback);
+                RC_CHECK
 
                 return (SUCCESS);
         } else {

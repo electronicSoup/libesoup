@@ -31,7 +31,14 @@
 
 #if defined(SYS_I2C1) || defined(SYS_I2C2) || defined(SYS_I2C3)
 
+static uint8_t  sent;
+static uint8_t *tx_buf;
+static uint8_t  num_tx_bytes;
+static void   (*callback)(void) = NULL;
+
 static void (*i2c3_started_callback)(void) = NULL;
+static void (*i2c3_restarted_callback)(void) = NULL;
+static void i2c3_send_next();
 
 void __attribute__((__interrupt__, __no_auto_psv__)) _MI2C3Interrupt(void)
 {
@@ -54,6 +61,11 @@ void __attribute__((__interrupt__, __no_auto_psv__)) _MI2C3Interrupt(void)
                         }
 		}
 
+		if(I2C3STATbits.ACKSTAT) {
+			serial_printf("NACK\n\r");
+			I2C3STATbits.ACKSTAT = 0;
+			i2c3_send_next();
+		}
 		state = I2C3CON & 0x1f;
 		switch (state) {
 		case 0x00:
@@ -137,13 +149,24 @@ result_t i2c_init(enum i2c_channel chan)
 
 result_t i2c_start(enum i2c_channel chan, void (*callback)(void))
 {
+	static uint8_t count = 0;
+
+	LOG_D("Start\n\r");
         if (chan == I2C3) {
                 i2c3_started_callback = callback;
 
+		if (count == 0) {
+			count++;
+			LOG_D("Starting\n\r");
+                        I2C3CONbits.SEN = 1;
+			return(SUCCESS);
+		}
+
                 if (I2C3STATbits.P) {
+			LOG_D("Starting\n\r");
                         I2C3CONbits.SEN = 1;
                 } else {
-                        return (ERR_BUSY);
+                        return (-ERR_BAD_STATE);
                 }
         }
 
@@ -152,8 +175,15 @@ result_t i2c_start(enum i2c_channel chan, void (*callback)(void))
 
 result_t i2c_restart(enum i2c_channel chan, void (*callback)(void))
 {
+	LOG_D("Restart\n\r");
         if (chan == I2C3) {
-                I2C3CONbits.RSEN = 1;
+                i2c3_restarted_callback = callback;
+		if (I2C3STATbits.S) {
+			I2C3CONbits.RSEN = 1;
+			return(SUCCESS);
+		} else {
+			return (-ERR_BAD_STATE);
+		}
         }
 
         return(SUCCESS);
@@ -161,6 +191,7 @@ result_t i2c_restart(enum i2c_channel chan, void (*callback)(void))
 
 result_t i2c_stop(enum i2c_channel chan, void (*callback)(void))
 {
+	LOG_D("Stop\n\r");
         if (chan == I2C3) {
                 I2C3CONbits.PEN = 1;
         }
@@ -168,14 +199,33 @@ result_t i2c_stop(enum i2c_channel chan, void (*callback)(void))
         return(SUCCESS);
 }
 
-result_t i2c_write(enum i2c_channel chan, uint8_t *tx_buf, uint8_t num_tx_bytes, void (*callback)(void))
+result_t i2c_write(enum i2c_channel chan, uint8_t *p_tx_buf, uint8_t p_num_tx_bytes, void (*p_callback)(void))
 {
+	sent         = 1;
+	tx_buf       = p_tx_buf;
+	num_tx_bytes = p_num_tx_bytes;
+	callback     = p_callback;
+	
+	i2c3_send_next();
         return(SUCCESS);
 }
 
 result_t i2c_read(enum i2c_channel chan, uint8_t *tx_buf, uint8_t num_tx_bytes, uint8_t *rx_buf, uint8_t num_rx_bytes, void (*callback)(void))
 {
         return(SUCCESS);
+}
+
+static void i2c3_send_next(void)
+{
+	serial_printf("Num %d", num_tx_bytes);
+	if (sent < num_tx_bytes) {
+		serial_printf("Next%d", sent);
+		I2C3TRN = *tx_buf++;
+		sent++;
+	} else {
+		serial_printf("None");
+		callback;
+	}
 }
 
 #endif // _SYS_I2C1 || SYS_I2S2 || SYS_I2S3
