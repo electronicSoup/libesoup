@@ -35,7 +35,7 @@ int main(void)
 	timer_id         timer;
 
 	rc = libesoup_init();
-	
+
 	/*
 	 * RE5        3rd pin <-> Pin 7 of EEPROM WP
 	 * RE6 / SCL3 2nd pin <-> Pin 6 of EEPROM SCL
@@ -46,12 +46,13 @@ int main(void)
 
 	request.period.units    = Seconds;
 	request.period.duration = 10;
-	request.type            = repeat_expiry; //single_shot_expiry;
+//	request.type            = repeat_expiry;
+	request.type            = single_shot_expiry;
 	request.exp_fn          = expiry;
 	request.data.sival_int  = 0;
-	
+
         timer = sw_timer_start(&request);
-        
+
         if(timer < 0) {
 		// Error Condition
         }
