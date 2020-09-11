@@ -35,6 +35,9 @@ static result_t error = SUCCESS;
 static uint8_t  sent;
 static uint8_t *tx_buf;
 static uint8_t  num_tx_bytes;
+static uint8_t *rx_buffer;
+static uint8_t  read_count;
+
 //static void   (*callback)(result_t) = NULL;
 
 static void (*i2c3_callback)(result_t) = NULL;
@@ -64,6 +67,9 @@ static enum state current_state;
 
 #define I2C3_STOP            I2C3CONbits.PEN = 1
 #define I2C3_RESTART         I2C3CONbits.RSEN = 1
+#define I2C3_READ            I2C3CONbits.RCEN = 1
+#define I2C3_RX_ACK          I2C3CONbits.ACKDT = 0; I2C3CONbits.ACKEN =1
+#define I2C3_RX_NACK         I2C3CONbits.ACKDT = 1; I2C3CONbits.ACKEN =1
 
 void __attribute__((__interrupt__, __no_auto_psv__)) _MI2C3Interrupt(void)
 {
@@ -296,7 +302,11 @@ result_t i2c_write(enum i2c_channel chan, uint8_t *p_tx_buf, uint8_t p_num_tx_by
 
 result_t i2c_read(enum i2c_channel chan, uint8_t *rx_buf, uint8_t num_rx_bytes, void (*p_callback)(result_t))
 {
-	LOG_D("i2c_read()")
+	LOG_D("i2c_read()");
+	i2c3_callback  = p_callback;
+	current_state  = RX_STATE;
+	read_count     = 0;
+	I2C3_READ;
         return(SUCCESS);
 }
 
