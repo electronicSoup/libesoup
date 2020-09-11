@@ -11,9 +11,12 @@
 #include "libesoup/comms/i2c/mc24LC64.h"
 #include "libesoup/timers/sw_timers.h"
 
-void callback_24lc64(result_t rc, uint8_t *buffer)
+void callback_24lc64(result_t rc, uint8_t *buffer, uint8_t count)
 {
         LOG_D("callback_24lc64()\n\r");
+	if(rc == SUCCESS) {
+		LOG_D("SUCCESS count %d\n\r", count);
+	}
 }
 
 static void expiry(timer_id timer  __attribute__((unused)), union sigval data __attribute__((unused)))

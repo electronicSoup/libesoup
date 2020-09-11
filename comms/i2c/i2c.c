@@ -32,15 +32,16 @@
 #if defined(SYS_I2C1) || defined(SYS_I2C2) || defined(SYS_I2C3)
 
 static result_t error = SUCCESS;
+static uint8_t  finished = 0;
 static uint8_t  sent;
 static uint8_t *tx_buf;
 static uint8_t  num_tx_bytes;
-static uint8_t *rx_buffer;
+static uint8_t *rx_buf;
+static uint8_t  num_rx_bytes;
 static uint8_t  read_count;
 
-//static void   (*callback)(result_t) = NULL;
-
 static void (*i2c3_callback)(result_t) = NULL;
+static void (*i2c3_read_callback)(result_t, uint8_t) = NULL;
 
 /*
  * Prototype
@@ -52,7 +53,6 @@ enum state {
         STARTING_STATE,
         STARTED_STATE,
         TX_STATE,
-//        WAITING_ACK_STATE,
         RESTARTING_STATE,
         RX_STATE,
         STOPPING_STATE
@@ -62,6 +62,7 @@ static enum state current_state;
 
 #define I2C3_STARTED         I2C3STATbits.S
 #define I2C3_STOPPED         I2C3STATbits.P
+#define I2C3_BYTE_READ       I2C3STATbits.RBF
 #define I2C3_TRANSMITTING    I2C3STATbits.TBF
 #define I2C3_WRITE_COLLISION I2C3STATbits.IWCOL
 
@@ -73,10 +74,6 @@ static enum state current_state;
 
 void __attribute__((__interrupt__, __no_auto_psv__)) _MI2C3Interrupt(void)
 {
-	static uint8_t txing = 0;
-	uint8_t        state;
-//	enum state     next_state = current_state;
-
 	serial_printf("*%d*\n\r", current_state);
 	while (IFS5bits.MI2C3IF) {
 		IFS5bits.MI2C3IF    = 0;  // Clear Master ISR Flag
@@ -94,7 +91,6 @@ void __attribute__((__interrupt__, __no_auto_psv__)) _MI2C3Interrupt(void)
 		case STARTING_STATE:
 			if (I2C3_STARTED) {
 				current_state = STARTED_STATE;
-//				next_state = STARTED_STATE;
 				LOG_D("Started\n\r");
 				if (i2c3_callback) {
 					i2c3_callback(SUCCESS);
@@ -103,7 +99,6 @@ void __attribute__((__interrupt__, __no_auto_psv__)) _MI2C3Interrupt(void)
 				LOG_E("Failed to start\n\r");
 				error = ERR_BAD_STATE;
 				I2C3_STOP;
-//				next_state = STOPPING_STATE;
 				current_state = STOPPING_STATE;
 			}
 			break;
@@ -115,7 +110,6 @@ void __attribute__((__interrupt__, __no_auto_psv__)) _MI2C3Interrupt(void)
 				serial_printf("NACK\n\r");
 				error = -ERR_NO_RESPONSE;
 				I2C3_STOP;
-//				next_state = STOPPING_STATE;
 				current_state = STOPPING_STATE;
 			} else {
 				serial_printf("ACK");
@@ -125,8 +119,6 @@ void __attribute__((__interrupt__, __no_auto_psv__)) _MI2C3Interrupt(void)
 		case RESTARTING_STATE:
 			if (I2C3_STARTED) {
 				current_state = STARTED_STATE;
-//				next_state = STARTED_STATE;
-				LOG_D("Re-S\n\r");
 				if (i2c3_callback) {
 					i2c3_callback(SUCCESS);
 				}
@@ -139,11 +131,19 @@ void __attribute__((__interrupt__, __no_auto_psv__)) _MI2C3Interrupt(void)
 			}
 			break;
 		case RX_STATE:
-			LOG_D("Rx State ???\n\r");
+			if (I2C3_BYTE_READ) {
+				I2C3_RX_NACK;
+				*rx_buf++ = I2C3RCV;
+				read_count++;
+
+				if (read_count >= num_rx_bytes) {
+					LOG_D("Finished\n\r");
+					finished = 1;
+				}
+			}
 			break;
 		case STOPPING_STATE:
 			if (I2C3_STOPPED) {
-				LOG_D("Stopped\n\r");
 				current_state = IDLE_STATE;
 			} else {
 				serial_printf("Failed to stop\n\r");
@@ -217,6 +217,13 @@ result_t i2c_tasks(void)
                         error = SUCCESS;
                 }
         }
+
+	if(finished) {
+		i2c3_read_callback(SUCCESS, read_count);
+		finished           = 0;
+		i2c3_callback      = NULL;
+		i2c3_read_callback = NULL;
+	}
         return(rc);
 }
 
@@ -271,12 +278,12 @@ result_t i2c_restart(enum i2c_channel chan, void (*p_callback)(result_t))
         return(SUCCESS);
 }
 
-result_t i2c_stop(enum i2c_channel chan, void (*p_callback)(void))
+result_t i2c_stop(enum i2c_channel chan)
 {
 	LOG_D("Stop\n\r");
-	i2c3_callback = p_callback;
+	current_state = STOPPING_STATE;
         if (chan == I2C3) {
-                I2C3CONbits.PEN = 1;
+		I2C3_STOP;
         }
 
         return(SUCCESS);
@@ -300,12 +307,14 @@ result_t i2c_write(enum i2c_channel chan, uint8_t *p_tx_buf, uint8_t p_num_tx_by
 	}
 }
 
-result_t i2c_read(enum i2c_channel chan, uint8_t *rx_buf, uint8_t num_rx_bytes, void (*p_callback)(result_t))
+result_t i2c_read(enum i2c_channel chan, uint8_t *p_rx_buf, uint8_t p_num_rx_bytes, void (*p_callback)(result_t, uint8_t))
 {
-	LOG_D("i2c_read()");
-	i2c3_callback  = p_callback;
-	current_state  = RX_STATE;
-	read_count     = 0;
+	LOG_D("i2c_read()\n\r");
+	i2c3_read_callback  = p_callback;
+	rx_buf               = p_rx_buf;
+	num_rx_bytes         = p_num_rx_bytes;
+	current_state        = RX_STATE;
+	read_count           = 0;
 	I2C3_READ;
         return(SUCCESS);
 }

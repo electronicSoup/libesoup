@@ -17,14 +17,14 @@ static uint8_t          chip_addr;
 static uint16_t         mem_addr;
 static uint8_t          num_bytes;
 static uint8_t         *buffer;
-static void           (*done_callback)(result_t, uint8_t *);
+static void           (*done_callback)(result_t, uint8_t *, uint8_t);
 static uint8_t          tx_buffer[4];
 
 void started_callback(result_t);
 void preamble_sent(result_t);
 void restarted_callback(result_t);
 void read_bytes_sent(result_t);
-void read_finished(result_t);
+void read_finished(result_t, uint8_t);
 
 void started_callback(result_t p_rc)
 {
@@ -33,7 +33,7 @@ void started_callback(result_t p_rc)
         if (p_rc < 0) {
                 LOG_E("Failed to start\n\r");
                 if (done_callback) {
-                        done_callback(p_rc, NULL);
+                        done_callback(p_rc, NULL, 0);
                 }
         } else {
 //                LOG_D("Send preamble\n\r");
@@ -53,7 +53,7 @@ void preamble_sent(result_t p_rc)
         if (p_rc < 0) {
                 LOG_E("Preamble Failed\n\r");
                 if (done_callback) {
-                        done_callback(p_rc, NULL);
+                        done_callback(p_rc, NULL, 0);
                 }
         } else {
                 LOG_D("preamble sent\n\r");
@@ -69,7 +69,7 @@ void restarted_callback(result_t p_rc)
         if (p_rc < 0) {
                 LOG_E("Restart Failed\n\r");
                 if (done_callback) {
-                        done_callback(p_rc, NULL);
+                        done_callback(p_rc, NULL, 0);
                 }
         } else {
                 LOG_D("restarted_callback\n\r");
@@ -88,7 +88,7 @@ void read_bytes_sent(result_t p_rc)
         if (p_rc < 0) {
                 LOG_E("Read ctrl bytes Failed\n\r");
                 if (done_callback) {
-                        done_callback(p_rc, NULL);
+                        done_callback(p_rc, NULL, 0);
                 }
         } else {
                 LOG_D("Read ctrl sent\n\r");
@@ -98,20 +98,22 @@ void read_bytes_sent(result_t p_rc)
 
 }
 
-void read_finished(result_t p_rc) {
+void read_finished(result_t p_rc, uint8_t count) {
         result_t rc;
 
+	LOG_D("Read Finished\n\r");
+	rc = i2c_stop(chan);
         if (p_rc < 0) {
                 LOG_E("Restart Failed\n\r");
                 if (done_callback) {
-                        done_callback(p_rc, NULL);
+                        done_callback(p_rc, NULL, 0);
                 }
         } else {
-                rc = i2c_stop(chan);
+		done_callback(SUCCESS, buffer, count);
         }
 }
 
-result_t mc24lc64_read(enum i2c_channel p_chan, uint8_t p_chip_addr, uint16_t p_mem_addr, uint8_t p_num_bytes, uint8_t *p_buffer, void (*p_callback)(result_t, uint8_t *))
+result_t mc24lc64_read(enum i2c_channel p_chan, uint8_t p_chip_addr, uint16_t p_mem_addr, uint8_t p_num_bytes, uint8_t *p_buffer, void (*p_callback)(result_t, uint8_t *, uint8_t))
 {
         result_t rc;
 
