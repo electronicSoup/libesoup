@@ -2,7 +2,7 @@
  * @file libesoup/comms/i2c/i2c.c
  *
  * @author John Whitmore
- * 
+ *
  * @brief  Implementaiton of the I2C protocol. Initial PIC24FJ256GB106
  *
  * Copyright 2020 electronicSoup Limited
@@ -31,14 +31,38 @@
 
 #if defined(SYS_I2C1) || defined(SYS_I2C2) || defined(SYS_I2C3)
 
+static result_t error = SUCCESS;
 static uint8_t  sent;
 static uint8_t *tx_buf;
 static uint8_t  num_tx_bytes;
-static void   (*callback)(void) = NULL;
+static void   (*callback)(result_t) = NULL;
 
-static void (*i2c3_started_callback)(void) = NULL;
-static void (*i2c3_restarted_callback)(void) = NULL;
+static void (*i2c3_callback)(result_t) = NULL;
+
+/*
+ * Prototype
+ */
 static void i2c3_send_next();
+
+enum state {
+        IDLE_STATE,
+        STARTING_STATE,
+        STARTED_STATE,
+        TX_STATE,
+        WAITING_ACK_STATE,
+        RESTARTING_STATE,
+        RX_STATE,
+        STOPPING_STATE
+};
+
+static enum state current_state;
+
+#define I2C3_STARTED         I2C3STATbits.S
+#define I2C3_STOPPED         I2C3STATbits.P
+#define I2C3_TRANSMITTING    I2C3STATbits.TBF
+#define I2C3_WRITE_COLLISION I2C3STATbits.IWCOL
+
+#define I2C3_STOP            I2C3CONbits.PEN
 
 void __attribute__((__interrupt__, __no_auto_psv__)) _MI2C3Interrupt(void)
 {
@@ -50,55 +74,46 @@ void __attribute__((__interrupt__, __no_auto_psv__)) _MI2C3Interrupt(void)
 		IFS5bits.MI2C3IF    = 0;  // Clear Master ISR Flag
 		serial_printf("+0x%x", I2C3STAT);
 
-                if (I2C3STATbits.IWCOL) {
+                if (I2C3_WRITE_COLLISION) {
                         LOG_E("IWCOL\n\r");
+                        error = -ERR_NOT_READY;
                 }
 
-		if (I2C3STATbits.S) {
-			LOG_D("Started\n\r");
-                        if (i2c3_started_callback) {
-                                i2c3_started_callback();
-                        }
-		}
+                switch(current_state) {
+                        case STARTING_STATE:
+                                if (I2C3_STARTED) {
+                                        current_state = STARTED_STATE;
+                                        LOG_D("Started\n\r");
+                                        if (i2c3_callback) {
+                                                i2c3_callback(SUCCESS);
+                                        }
+                                } else {
+                                        LOG_E("Failed to start\n\r");
+                                        error = ERR_BAD_STATE;
+                                        I2C3_STOP;
+                                        current_state = STOPPING_STATE;
+                                }
+                                break;
+                        case WAITING_ACK_STATE:
+                                if(I2C3STATbits.ACKSTAT) {
+                                        serial_printf("NACK\n\r");
+                                        error = -ERR_NO_RESPONSE;
+                                        I2C3_STOP;
+                                        current_state = STOPPING_STATE;
+                                } else {
+                                        serial_printf("ACK");
+                                        i2c3_send_next();
+                                }
+                                break;
+                        case STOPPING_STATE:
+                                if (I2C3_STOPPED) {
 
-		if(I2C3STATbits.ACKSTAT) {
-			serial_printf("NACK\n\r");
-			I2C3STATbits.ACKSTAT = 0;
-			i2c3_send_next();
-		}
-		state = I2C3CON & 0x1f;
-		switch (state) {
-		case 0x00:
-			if (I2C3STATbits.TRSTAT) {
-				serial_printf("X");
-			} else {
-				serial_printf("I");
-				if (!txing) {
-					I2C3TRN         = 0x55;
-					txing = 1;
-				} else {
-					I2C3CONbits.PEN = 1;
-					txing = 0;
-				}
-			}
-			break;
-		case 0x01:
-			serial_printf("1");
-			break;
-		case 0x02:
-			serial_printf("2");
-			break;
-		case 0x04:
-			serial_printf("4");
-			break;
-		case 0x08:
-			serial_printf("8");
-			break;
-		case 0x10:
-			serial_printf("9");
-			break;
-		}
-		serial_printf("\n\r");
+                                } else {
+                                        serial_printf("Failed to stop\n\r");
+                                        error = -ERR_IM_A_TEAPOT;
+                                }
+                                break;
+                }
 	}
 }
 
@@ -138,6 +153,8 @@ result_t i2c_init(enum i2c_channel chan)
                         IEC5bits.SI2C3IE    = 1;  // Enable Slave Interrupts
 
                         I2C3CONbits.I2CEN   = 1;
+                        I2C3CONbits.PEN     = 0;  // Send Stop
+                        current_state       = IDLE_STATE;
                         break;
                 default:
                         LOG_E("No such I2C\n\r");
@@ -147,23 +164,39 @@ result_t i2c_init(enum i2c_channel chan)
         return (SUCCESS);
 }
 
-result_t i2c_start(enum i2c_channel chan, void (*callback)(void))
+result_t i2c_tasks(void)
 {
-	static uint8_t count = 0;
+        result_t rc;
+
+        rc = error;
+
+        if(error < 0) {
+                if(i2c3_callback) {
+                        i2c3_callback(error);
+                        error = SUCCESS;
+                }
+        }
+        return(rc);
+}
+
+result_t i2c_start(enum i2c_channel chan, void (*callback)(result_t))
+{
+//	static uint8_t count = 0;
 
 	LOG_D("Start\n\r");
         if (chan == I2C3) {
-                i2c3_started_callback = callback;
+                i2c3_callback = callback;
 
-		if (count == 0) {
-			count++;
-			LOG_D("Starting\n\r");
-                        I2C3CONbits.SEN = 1;
-			return(SUCCESS);
-		}
+//		if (count == 0) {
+//			count++;
+//			LOG_D("Starting\n\r");
+  //                      I2C3CONbits.SEN = 1;
+//			return(SUCCESS);
+//		}
 
-                if (I2C3STATbits.P) {
+                if (I2C3STATbits.P && (current_state == IDLE_STATE)) {
 			LOG_D("Starting\n\r");
+                        current_state = STARTING_STATE;
                         I2C3CONbits.SEN = 1;
                 } else {
                         return (-ERR_BAD_STATE);
@@ -173,11 +206,11 @@ result_t i2c_start(enum i2c_channel chan, void (*callback)(void))
         return(SUCCESS);
 }
 
-result_t i2c_restart(enum i2c_channel chan, void (*callback)(void))
+result_t i2c_restart(enum i2c_channel chan, void (*callback)(result_t))
 {
 	LOG_D("Restart\n\r");
         if (chan == I2C3) {
-                i2c3_restarted_callback = callback;
+                i2c3_callback = callback;
 		if (I2C3STATbits.S) {
 			I2C3CONbits.RSEN = 1;
 			return(SUCCESS);
@@ -199,18 +232,23 @@ result_t i2c_stop(enum i2c_channel chan, void (*callback)(void))
         return(SUCCESS);
 }
 
-result_t i2c_write(enum i2c_channel chan, uint8_t *p_tx_buf, uint8_t p_num_tx_bytes, void (*p_callback)(void))
+result_t i2c_write(enum i2c_channel chan, uint8_t *p_tx_buf, uint8_t p_num_tx_bytes, void (*p_callback)(result_t))
 {
-	sent         = 1;
-	tx_buf       = p_tx_buf;
-	num_tx_bytes = p_num_tx_bytes;
-	callback     = p_callback;
-	
-	i2c3_send_next();
-        return(SUCCESS);
+	if (current_state == STARTED_STATE) {
+		sent          = 1;
+		tx_buf        = p_tx_buf;
+		num_tx_bytes  = p_num_tx_bytes;
+		callback      = p_callback;
+
+		i2c3_send_next();
+
+		return(SUCCESS);
+	} else {
+		return(-ERR_BAD_STATE);
+	}
 }
 
-result_t i2c_read(enum i2c_channel chan, uint8_t *tx_buf, uint8_t num_tx_bytes, uint8_t *rx_buf, uint8_t num_rx_bytes, void (*callback)(void))
+result_t i2c_read(enum i2c_channel chan, uint8_t *tx_buf, uint8_t num_tx_bytes, uint8_t *rx_buf, uint8_t num_rx_bytes, void (*callback)(result_t))
 {
         return(SUCCESS);
 }
@@ -220,11 +258,12 @@ static void i2c3_send_next(void)
 	serial_printf("Num %d", num_tx_bytes);
 	if (sent < num_tx_bytes) {
 		serial_printf("Next%d", sent);
+		current_state = TX_STATE;
 		I2C3TRN = *tx_buf++;
 		sent++;
 	} else {
 		serial_printf("None");
-		callback;
+		callback(SUCCESS);
 	}
 }
 

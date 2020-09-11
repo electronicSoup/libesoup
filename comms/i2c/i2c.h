@@ -24,11 +24,11 @@
  */
 #if defined (SYS_I2C1) || defined (SYS_I2C2) || defined (SYS_I2C3)
 
-extern result_t i2c_start(enum i2c_channel chan, void (*callback)(void));
-extern result_t i2c_restart(enum i2c_channel chan, void (*callback)(void));
+extern result_t i2c_start(enum i2c_channel chan, void (*callback)(result_t));
+extern result_t i2c_restart(enum i2c_channel chan, void (*callback)(result_t));
 extern result_t i2c_stop(enum i2c_channel chan);
 
-extern result_t i2c_write(enum i2c_channel chan, uint8_t *tx_buf, uint8_t num_tx_bytes, void (*callback)(void));
-extern result_t i2c_read(enum i2c_channel chan, uint8_t *tx_buf, uint8_t num_tx_bytes, uint8_t *rx_buf, uint8_t num_rx_bytes, void (*callback)(void));
+extern result_t i2c_write(enum i2c_channel chan, uint8_t *tx_buf, uint8_t num_tx_bytes, void (*callback)(result_t));
+extern result_t i2c_read(enum i2c_channel chan, uint8_t *tx_buf, uint8_t num_tx_bytes, uint8_t *rx_buf, uint8_t num_rx_bytes, void (*callback)(result_t));
 
 #endif // SYS_I2C

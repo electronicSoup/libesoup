@@ -11,7 +11,7 @@
 #include "libesoup/comms/i2c/mc24LC64.h"
 #include "libesoup/timers/sw_timers.h"
 
-void callback_24lc64(uint8_t *buffer)
+void callback_24lc64(result_t rc, uint8_t *buffer)
 {
         LOG_D("callback_24lc64()\n\r");
 }

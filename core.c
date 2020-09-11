@@ -65,6 +65,7 @@ extern void   uart_init(void);
 #endif
 
 #if defined(SYS_I2C1) || defined(SYS_I2C2) || defined(SYS_I2C3)
+extern result_t i2c_tasks(void);
 extern result_t i2c_init(enum i2c_channel);
 #endif
 
@@ -235,6 +236,10 @@ result_t libesoup_tasks(void)
 
 #ifdef SYS_USB_KEYBOARD
 	rc = usb_keyboard_tasks();
+#endif
+
+#if defined(SYS_I2C1) || defined(SYS_I2C2) || defined(SYS_I2C3)
+        rc = i2c_tasks();
 #endif
 	return(rc);
 }

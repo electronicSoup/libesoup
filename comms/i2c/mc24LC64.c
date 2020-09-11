@@ -17,56 +17,81 @@ static uint8_t          chip_addr;
 static uint16_t         mem_addr;
 static uint8_t          num_bytes;
 static uint8_t         *buffer;
-static void           (*done_callback)(uint8_t *);
+static void           (*done_callback)(result_t, uint8_t *);
 static uint8_t          tx_buffer[4];
 
-void started_callback(void);
-void preamble_sent(void);
-void restarted_callback(void);
-void read_finished(void);
+void started_callback(result_t);
+void preamble_sent(result_t);
+void restarted_callback(result_t);
+void read_finished(result_t);
 
-void started_callback(void)
+void started_callback(result_t p_rc)
 {
         result_t  rc;
 
-        LOG_D("Started\n\r");
+        if (p_rc < 0) {
+                LOG_E("Failed to start\n\r");
+                if (done_callback) {
+                        done_callback(p_rc, NULL);
+                }
+        } else {
+                LOG_D("Started\n\r");
 
-        tx_buffer[0]  = 0xA0 || (chip_addr & 0x0E) || WRITE;
-        tx_buffer[1]  = (mem_addr >> 8) & 0xff;
-        tx_buffer[2]  = mem_addr & 0xff;
+                tx_buffer[0]  = 0xA0 || (chip_addr & 0x0E) || WRITE;
+                tx_buffer[1]  = (mem_addr >> 8) & 0xff;
+                tx_buffer[2]  = mem_addr & 0xff;
 
-        rc = i2c_write(chan, tx_buffer, 3, preamble_sent);
+                rc = i2c_write(chan, tx_buffer, 3, preamble_sent);
+        }
 }
 
-void preamble_sent(void)
+void preamble_sent(result_t p_rc)
 {
         result_t rc;
-        LOG_D("preamble sent\n\r");
 
-        rc = i2c_restart(chan, restarted_callback);
+        if (p_rc < 0) {
+                LOG_E("Preamble Failed\n\r");
+                if (done_callback) {
+                        done_callback(p_rc, NULL);
+                }
+        } else {
+                LOG_D("preamble sent\n\r");
+
+                rc = i2c_restart(chan, restarted_callback);
+        }
 }
 
-void restarted_callback(void)
+void restarted_callback(result_t p_rc)
 {
         result_t rc;
 
-        LOG_D("restarted_callback\n\r");
+        if (p_rc < 0) {
+                LOG_E("Restart Failed\n\r");
+                if (done_callback) {
+                        done_callback(p_rc, NULL);
+                }
+        } else {
+                LOG_D("restarted_callback\n\r");
 
-        uint8_t   tx_buffer[4];
-
-        LOG_D("Started\n\r");
-
-        tx_buffer[0] = 0xA0 || (chip_addr & 0x0E) || READ;
-        rc = i2c_read(chan, tx_buffer, 1, buffer, 1, read_finished);
+                tx_buffer[0] = 0xA0 || (chip_addr & 0x0E) || READ;
+                rc = i2c_read(chan, tx_buffer, 1, buffer, 1, read_finished);
+        }
 }
 
-void read_finished(void) {
+void read_finished(result_t p_rc) {
         result_t rc;
 
-        rc = i2c_stop(chan);
+        if (p_rc < 0) {
+                LOG_E("Restart Failed\n\r");
+                if (done_callback) {
+                        done_callback(p_rc, NULL);
+                }
+        } else {
+                rc = i2c_stop(chan);
+        }
 }
 
-result_t mc24lc64_read(enum i2c_channel p_chan, uint8_t p_chip_addr, uint16_t p_mem_addr, uint8_t p_num_bytes, uint8_t *p_buffer, void (*p_callback)(uint8_t *))
+result_t mc24lc64_read(enum i2c_channel p_chan, uint8_t p_chip_addr, uint16_t p_mem_addr, uint8_t p_num_bytes, uint8_t *p_buffer, void (*p_callback)(result_t, uint8_t *))
 {
         result_t rc;
 
