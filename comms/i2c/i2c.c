@@ -176,7 +176,7 @@ void __attribute__((__interrupt__, __no_auto_psv__)) _MI2C3Interrupt(void)
 
 void __attribute__((__interrupt__, __no_auto_psv__)) _SI2C3Interrupt(void)
 {
-	serial_printf("-");
+	serial_printf("S");
 }
 
 result_t i2c_init(enum i2c_channel chan)
