@@ -37,7 +37,7 @@ static uint8_t  sent;
 static uint8_t *tx_buf;
 static uint8_t  num_tx_bytes;
 static uint8_t *rx_buf;
-static uint8_t  num_rx_bytes;
+static uint16_t num_rx_bytes;
 static uint8_t  read_count;
 
 static void (*i2c3_callback)(result_t) = NULL;
@@ -55,6 +55,7 @@ enum state {
         TX_STATE,
         RESTARTING_STATE,
         RX_STATE,
+	RX_DONE_STATE,
         STOPPING_STATE
 };
 
@@ -74,10 +75,12 @@ static enum state current_state;
 
 void __attribute__((__interrupt__, __no_auto_psv__)) _MI2C3Interrupt(void)
 {
-	serial_printf("*%d*\n\r", current_state);
+	uint8_t  rx_char;
+
+//	serial_printf("*%d*\n\r", current_state);
 	while (IFS5bits.MI2C3IF) {
 		IFS5bits.MI2C3IF    = 0;  // Clear Master ISR Flag
-		serial_printf("+0x%x", I2C3STAT);
+//		serial_printf("+0x%x", I2C3STAT);
 
                 if (I2C3_WRITE_COLLISION) {
                         LOG_E("IWCOL\n\r");
@@ -132,15 +135,29 @@ void __attribute__((__interrupt__, __no_auto_psv__)) _MI2C3Interrupt(void)
 			break;
 		case RX_STATE:
 			if (I2C3_BYTE_READ) {
-				I2C3_RX_NACK;
-				*rx_buf++ = I2C3RCV;
+				rx_char = I2C3RCV;
+				*rx_buf++ = rx_char;
 				read_count++;
+				if(read_count % 10 == 0) {
+					serial_printf("0");
+				}
 
+//				LOG_D("%d:%x", read_count, rx_char);
 				if (read_count >= num_rx_bytes) {
+					I2C3_RX_NACK;
 					LOG_D("Finished\n\r");
 					finished = 1;
+					current_state = RX_DONE_STATE;
+				} else {
+					I2C3_RX_ACK;
+					I2C3_READ;
 				}
+			} else {
+				I2C3_READ;
 			}
+			break;
+		case RX_DONE_STATE:
+			LOG_D("RX_DONE_STATE\n\r")
 			break;
 		case STOPPING_STATE:
 			if (I2C3_STOPPED) {
@@ -307,10 +324,10 @@ result_t i2c_write(enum i2c_channel chan, uint8_t *p_tx_buf, uint8_t p_num_tx_by
 	}
 }
 
-result_t i2c_read(enum i2c_channel chan, uint8_t *p_rx_buf, uint8_t p_num_rx_bytes, void (*p_callback)(result_t, uint8_t))
+result_t i2c_read(enum i2c_channel chan, uint8_t *p_rx_buf, uint16_t p_num_rx_bytes, void (*p_callback)(result_t, uint8_t))
 {
 	LOG_D("i2c_read()\n\r");
-	i2c3_read_callback  = p_callback;
+	i2c3_read_callback   = p_callback;
 	rx_buf               = p_rx_buf;
 	num_rx_bytes         = p_num_rx_bytes;
 	current_state        = RX_STATE;
@@ -321,13 +338,11 @@ result_t i2c_read(enum i2c_channel chan, uint8_t *p_rx_buf, uint8_t p_num_rx_byt
 
 static void i2c3_send_next(void)
 {
-	serial_printf("Num %d/%d\n\r", sent, num_tx_bytes);
 	if (sent < num_tx_bytes) {
 		current_state = TX_STATE;
 		I2C3TRN = *tx_buf++;
 		sent++;
 	} else {
-		serial_printf("None");
 		i2c3_callback(SUCCESS);
 	}
 }

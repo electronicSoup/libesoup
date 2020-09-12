@@ -15,7 +15,7 @@ static uint8_t          busy = 0;
 static enum i2c_channel chan;
 static uint8_t          chip_addr;
 static uint16_t         mem_addr;
-static uint8_t          num_bytes;
+static uint16_t         num_bytes;
 static uint8_t         *buffer;
 static void           (*done_callback)(result_t, uint8_t *, uint8_t);
 static uint8_t          tx_buffer[4];
@@ -93,7 +93,7 @@ void read_bytes_sent(result_t p_rc)
         } else {
                 LOG_D("Read ctrl sent\n\r");
 
-                rc = i2c_read(chan, buffer, 1, read_finished);
+                rc = i2c_read(chan, buffer, num_bytes, read_finished);
         }
 
 }
@@ -113,7 +113,7 @@ void read_finished(result_t p_rc, uint8_t count) {
         }
 }
 
-result_t mc24lc64_read(enum i2c_channel p_chan, uint8_t p_chip_addr, uint16_t p_mem_addr, uint8_t p_num_bytes, uint8_t *p_buffer, void (*p_callback)(result_t, uint8_t *, uint8_t))
+result_t mc24lc64_read(enum i2c_channel p_chan, uint8_t p_chip_addr, uint16_t p_mem_addr, uint16_t p_num_bytes, uint8_t *p_buffer, void (*p_callback)(result_t, uint8_t *, uint8_t))
 {
         result_t rc;
 
