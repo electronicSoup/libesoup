@@ -32,16 +32,18 @@
 static const char *TAG = "CC_MAIN";
 #include "libesoup/logger/serial_log.h"
 
-#define SN65HVD72D_TX        RD0
-#define SN65HVD72D_TX_ENABLE RD1
-#define SN65HVD72D_RX        RD2
+#define CC_TX                RD0
+#define CC_TX_WR_PIN         RD1
+#define CC_RX_WR_PIN         RB1
+#define CC_RX                RB2
 
 #define SN65HVD72D_RECEIVE   0b0
 #define SN65HVD72D_SEND      0b1
 
 #define CONTROL_CHAIN_BAUD   9600
 
-static struct uart_data      cc_channel;
+static struct uart_data      cc_rx_channel;
+static struct uart_data      cc_tx_channel;
 
 static void cc_rx(uint8_t uart_id, uint8_t ch)
 {
@@ -215,44 +217,32 @@ int main()
 	rc = libesoup_init();
 	RC_CHECK_STOP
 
-	rc = gpio_set(SN65HVD72D_TX, GPIO_MODE_DIGITAL_OUTPUT, 0);
+	rc = gpio_set(CC_TX, GPIO_MODE_DIGITAL_OUTPUT, 0);
+	RC_CHECK_STOP
+	rc = gpio_set(CC_TX_WR_PIN, GPIO_MODE_DIGITAL_OUTPUT, SN65HVD72D_SEND);
 	RC_CHECK_STOP
 
-	rc = gpio_set(SN65HVD72D_TX_ENABLE, GPIO_MODE_DIGITAL_OUTPUT, SN65HVD72D_RECEIVE);
+	rc = gpio_set(CC_RX, GPIO_MODE_DIGITAL_INPUT, 0);
+	RC_CHECK_STOP
+	rc = gpio_set(CC_RX_WR_PIN, GPIO_MODE_DIGITAL_OUTPUT, SN65HVD72D_RECEIVE);
 	RC_CHECK_STOP
 
-	rc = gpio_set(SN65HVD72D_RX, GPIO_MODE_DIGITAL_INPUT, 0);
-	RC_CHECK_STOP
+	cc_rx_channel.rx_pin          = CC_RX;
+	cc_rx_channel.tx_pin          = INVALID_GPIO_PIN;
+	cc_rx_channel.baud            = CONTROL_CHAIN_BAUD;
+	cc_rx_channel.process_rx_char = cc_rx;
+	rc = uart_calculate_mode(&cc_rx_channel.uart_mode, UART_8_DATABITS, UART_PARITY_NONE, UART_ONE_STOP_BIT, UART_IDLE_HIGH);
 
+	rc = uart_reserve(&cc_rx_channel);
 
-	cc_channel.rx_pin          = SN65HVD72D_RX;
-	cc_channel.tx_pin          = SN65HVD72D_TX;
-	cc_channel.baud            = CONTROL_CHAIN_BAUD;
-	cc_channel.process_rx_char = cc_rx;
-	rc = uart_calculate_mode(&cc_channel.uart_mode, UART_8_DATABITS, UART_PARITY_NONE, UART_ONE_STOP_BIT, UART_IDLE_HIGH);
+	cc_tx_channel.rx_pin          = INVALID_GPIO_PIN;
+	cc_tx_channel.tx_pin          = CC_TX;
+	cc_tx_channel.baud            = CONTROL_CHAIN_BAUD;
+	cc_tx_channel.process_rx_char = NULL;
+	rc = uart_calculate_mode(&cc_tx_channel.uart_mode, UART_8_DATABITS, UART_PARITY_NONE, UART_ONE_STOP_BIT, UART_IDLE_HIGH);
 
-	rc = uart_reserve(&cc_channel);
-#if 0
-	/*
-	 * Initialise the UART connected to the MAX3221E
-	 */
-	rc = uart_calculate_mode(&modbus_data.uart_data.uart_mode, UART_8_DATABITS, UART_PARITY_NONE, UART_ONE_STOP_BIT, UART_IDLE_HIGH);
-	RC_CHECK_STOP
+	rc = uart_reserve(&cc_tx_channel);
 
-	modbus_data.address                   = 0x01;                // Modbus Slave Address
-	modbus_data.unsolicited_frame_handler = modbus_process;
-	modbus_data.broadcast_frame_handler   = modbus_broadcast_handler;
-	modbus_data.uart_data.tx_pin          = SN65HVD72D_TX;
-	modbus_data.uart_data.rx_pin          = SN65HVD72D_RX;
-	modbus_data.uart_data.tx_finished     = tx_finished;
-	modbus_data.uart_data.baud            = 9600;	// Nice relaxed baud rate
-
-	/*
-	 * Reserve a UART channel for our use
-	 */
-	rc = modbus_reserve(&modbus_data);
-	RC_CHECK_STOP
-#endif
 	LOG_D("Entering main loop\n\r");
 
 	while(1) {
