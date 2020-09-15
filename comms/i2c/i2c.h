@@ -22,6 +22,8 @@
  *******************************************************************************
  *
  */
+#include "libesoup_config.h"
+
 #if defined (SYS_I2C1) || defined (SYS_I2C2) || defined (SYS_I2C3)
 
 extern result_t i2c_start(enum i2c_channel chan, void (*callback)(result_t));

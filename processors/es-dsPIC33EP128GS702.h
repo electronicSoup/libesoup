@@ -109,6 +109,14 @@
 #define PDSEL0_MASK      0x0002
 #define STSEL_MASK       0x0001   ///< Stop Bit Selection bit
 
+/*
+ * I2C Channels
+ */
+enum i2c_channel {
+        I2C1,
+        I2C2
+};
+
 /**
  * @brief GPIO Pins available in the uC
  */

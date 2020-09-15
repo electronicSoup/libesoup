@@ -18,7 +18,7 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  *
  */
-#if defined(__dsPIC33E128GS702__)
+#if defined(__dsPIC33EP128GS702__)
 #include "libesoup_config.h"
 
 #ifdef SYS_SERIAL_LOGGING
@@ -32,18 +32,23 @@ static const char *TAG = "dsPIC33";
 /*
  * Check required libesoup_config.h defines are found
  */
-#ifndef SYS_CLOCK_FREQ
-#error libesoup_config.h should define SYS_CLOCK_FREQ (see libesoup/examples/libesoup_config.h)
-#endif
+//#ifndef SYS_CLOCK_FREQ
+//#error libesoup_config.h should define SYS_CLOCK_FREQ (see libesoup/examples/libesoup_config.h)
+//#endif
 
 /*
  * Set up the configuration words of the processor:
  *
  * file:///opt/microchip/xc16/v1.26/docs/config_docs/33EP256MU806.html
  */
+#pragma config BWRP    = OFF
+#pragma config BSS     = DISABLED
+#pragma config BSEN    = OFF
 #pragma config GWRP    = OFF
-#pragma config GSS     = OFF
-#pragma config GSSK    = OFF
+#pragma config GSS     = DISABLED
+#pragma config CWRP    = OFF
+#pragma config CSS     = DISABLED
+#pragma config AIVTDIS = OFF
 #pragma config FNOSC = FRC
 //#pragma config FNOSC   = PRI   // Primary oscillator
 //#pragma config FNOSC = SOSC  // Secondary oscillator
@@ -51,11 +56,10 @@ static const char *TAG = "dsPIC33";
 #pragma config POSCMD  = HS
 #pragma config IOL1WAY = OFF
 #pragma config FCKSM   = CSECMD
-#pragma config FWDTEN  = OFF    // Enable the Watch Dog Timer
-#pragma config WDTPRE  = PR128  // 1:128  
+#pragma config WDTEN   = OFF    // Disable the Watch Dog Timer
+#pragma config WDTPRE  = PR128  // 1:128
 #pragma config WDTPOST = PS128  // 1:128
 #pragma config WINDIS  = ON     // Watchdog Timer Window disabled
-#pragma config BOREN   = OFF
 #pragma config JTAGEN  = OFF
 
 //#pragma config OSCIOFNC = ON            // OSC2 Pin Function bit (OSC2 is general purpose digital I/O pin)
@@ -86,12 +90,12 @@ void _ISR __attribute__((__no_auto_psv__)) _StackError(void)
 void cpu_init(void)
 {
 //        clock_init();
-        
+
         INTCON2bits.GIE = ENABLED;
 }
 
 /*
- * The switch __dsPIC33EP256MU806__ is automatically set by the Microchip 
+ * The switch __dsPIC33EP256MU806__ is automatically set by the Microchip
  * build system, if that is the target device of the build.
  */
 #if 0
@@ -115,7 +119,7 @@ static void clock_init(void)
 
         if(sys_clock_freq != (BRD_CRYSTAL_FREQ/2)) {
 		fosc = sys_clock_freq * 2;
-	
+
 		if((fosc < 15000000) || (fosc > 120000000)) {
 			sys_clock_freq = BRD_CRYSTAL_FREQ/2;
 			fosc = sys_clock_freq * 2;
@@ -123,7 +127,7 @@ static void clock_init(void)
 
 		/*
 	         * Assuming that we're only interested in Whole MHz frequencies choose
-	         * N1 so that Fplli is 1MHz 
+	         * N1 so that Fplli is 1MHz
 	         */
 		n1 = BRD_CRYSTAL_FREQ / 1000000;
 
@@ -134,7 +138,7 @@ static void clock_init(void)
 		for(loop = 0; loop < 3; loop++) {
 			n2 = 2 << loop;
 			fsys = fosc * n2;
-		
+
 			if((fsys >= 120000000) && (fsys <= 340000000)) {
 				found = TRUE;
 				break;
@@ -178,11 +182,11 @@ static void clock_init(void)
 		if(n2 == 2) {
 			CLKDIVbits.PLLPOST = 0b00;
 		} else if (n2 == 4) {
-			CLKDIVbits.PLLPOST = 0b01;			
+			CLKDIVbits.PLLPOST = 0b01;
 		} else if (n2 == 8) {
-			CLKDIVbits.PLLPOST = 0b11;			
+			CLKDIVbits.PLLPOST = 0b11;
 		}
-		
+
                 PLLFBDbits.PLLDIV  = m - 2;
         }
 
@@ -209,7 +213,7 @@ static void clock_init(void)
         ACLKCON3bits.FRCSEL   = 0;     // Auxiliary Oscillator or Primary Oscillator is the clock source for APLL (determined by ASRCSEL bit)
         ACLKCON3bits.APLLPOST = 0b110; // Divided by 2
         ACLKCON3bits.APLLPRE  = 0b011; // Divided by 4  // Different from Isacc 8MHz -> 16 MHz
-        
+
         ACLKDIV3bits.APLLDIV  = 0b111; // Divide by 24
 
         ACLKCON3bits.ENAPLL = 1;
@@ -221,7 +225,7 @@ static void clock_init(void)
 enum adc_pin get_adc_from_gpio(enum gpio_pin gpio_pin)
 {
 	enum adc_pin adc_pin;
-	
+
 	switch(gpio_pin) {
 	case RA0:
 		adc_pin = AN0;
@@ -258,16 +262,16 @@ enum adc_pin get_adc_from_gpio(enum gpio_pin gpio_pin)
 		break;
 	default:
 		adc_pin = INVALID_ADC_PIN;
-		break;			
+		break;
 	}
-	
+
 	return(adc_pin);
 }
 
 enum gpio_pin get_gpio_from_adc(enum adc_pin adc_pin)
 {
 	enum gpio_pin gpio_pin;
-	
+
 	switch(adc_pin) {
 	case AN0:
 		gpio_pin = RA0;
@@ -304,9 +308,9 @@ enum gpio_pin get_gpio_from_adc(enum adc_pin adc_pin)
 		break;
 	default:
 		gpio_pin = INVALID_ADC_PIN;
-		break;			
+		break;
 	}
-	
+
 	return(gpio_pin);
 }
 

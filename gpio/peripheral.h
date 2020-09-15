@@ -104,6 +104,44 @@
   #define PPS_I_FLT5          RPINR42bits.FLT5R    ///< PWM Fault 5
   #define PPS_I_FLT6          RPINR42bits.FLT6R    ///< PWM Fault 6
   #define PPS_I_FLT7          RPINR43bits.FLT7R    ///< PWM Fault 7
+#elif defined(__dsPIC33EP128GS702__)
+  #define PPS_I_EX_INT_1      RPINR0bits.INT1      ///< External Interrupt 1
+  #define PPS_I_EX_INT_2      RPINR1bits.INT2      ///< External Interrupt 2
+  #define PPS_I_T1CK          RPINR2bits.T1CK      ///< Timer 1 clock input source
+  #define PPS_I_T2CK          RPINR3bits.T2CK      ///< Timer 2 clock input source
+  #define PPS_I_T3CK          RPINR3bits.T3CK      ///< Timer 3 clock input source
+  #define PPS_I_IC1           RPINR7bits.IC1       ///< Input Capture 1
+  #define PPS_I_IC2           RPINR7bits.IC2       ///< Input Capture 2
+  #define PPS_I_IC3           RPINR8bits.IC3       ///< Input Capture 3
+  #define PPS_I_IC4           RPINR8bits.IC4       ///< Input Capture 4
+  #define PPS_I_OCFA          RPINR11bits.OCFA     ///< Output Compare Fault A
+  #define PPS_I_FLT1          RPINR12bits.FLT1     ///< PMW Fault 1
+  #define PPS_I_FLT2          RPINR12bits.FLT2     ///< PMW Fault 2
+  #define PPS_I_FLT3          RPINR13bits.FLT3     ///< PMW Fault 3
+  #define PPS_I_FLT4          RPINR13bits.FLT4     ///< PMW Fault 4
+  #define PPS_I_UART_1_RX     RPINR18bits.U1RXR    ///< UART 1 Recieve
+  #define PPS_I_U1CTS         RPINR18bits.U1CTS    ///< UART 1 Clear To Send
+  #define PPS_I_UART_2_RX     RPINR19bits.U2RXR    ///< UART 2 Recieve
+  #define PPS_I_U2CTS         RPINR19bits.U2CTS    ///< UART 2 Clear To Send
+  #define PPS_I_SPI_1_DI      RPINR20bits.SDI1R    ///< SPI 1 Data Input
+  #define PPS_I_SPI_1_CLK     RPINR20bits.SCK1R    ///< SPI 1 Clock
+  #define PPS_I_SPI_1_SS      RPINR21bits.SS1R     ///< SPI 1 Slave Select
+  #define PPS_I_SPI_2_DI      RPINR22bits.SDI2R    ///< SPI 2 Data Input
+  #define PPS_I_SPI_2_CLK     RPINR22bits.SCK2R    ///< SPI 2 Clock
+  #define PPS_I_SPI_2_SS      RPINR22bits.SS2R     ///< SPI 2 Slave Select
+  #define PPS_I_CAN1_RX       RPINR26bits.C1RXR    ///< CAN 1 Recieve
+  #define PPS_I_CAN2_RX       RPINR26bits.C2RXR    ///< CAN 2 Recieve
+  #define PPS_I_SPI_3_DI      RPINR29bits.SDI3R    ///< SPI 3 Data Input
+  #define PPS_I_SPI_3_CLK     RPINR29bits.SCK3R    ///< SPI 3 Clock Input
+  #define PPS_I_SPI_3_SS      RPINR30bits.SS3R     ///< SPI 3 Slave Select Input
+  #define PPS_I_PWM_SYNC1     RPINR37bit
+  #define PPS_I_PWM_SYNC2     RPINR38bit
+  #define PPS_I_FLT5          RPINR42bits.FLT5R    ///< PWM Fault 5
+  #define PPS_I_FLT6          RPINR42bits.FLT6R    ///< PWM Fault 6
+  #define PPS_I_FLT7          RPINR43bits.FLT7R    ///< PWM Fault 7
+  #define PPS_I_FLT8          RPINR43bits.FLT8R    ///< PWM Fault 8
+  #define PPS_I_CLCA          RPINR45bit
+  #define PPS_I_CLCB          RPINR45bit
 #endif
 
 /**
@@ -200,12 +238,39 @@
   #define PPS_O_QEI1CCMP                  0x2F     ///< QEI 1 Counter Comparator Output
   #define PPS_O_QEI2CCMP                  0x30     ///< QEI 2 Counter Comparator Output
   #define PPS_O_REFCLK                    0x31     ///< Reference Clock Output
-#endif
-
+/**
+ * @brief Peripheral Output functions for the dsPIC33EP256MU806
+ */
+#elif defined(__dsPIC33EP128GS702__)
+  #define PPS_O_DEFAULRT_PORT             0x00     ///< Defauly Pin
+  #define PPS_O_UART_1_TX                 0x01     ///< UART 1 Transmit
+  #define PPS_O_U1RTS                     0x02     ///< UART 1 Request To Send
+  #define PPS_O_UART_2_TX                 0x03     ///< UART 2 Transmit
+  #define PPS_O_U2RTS                     0x04     ///< UART 2 Request To Send
+  #define PPS_O_SPI1DO                    0x05     ///< SPI 1 Data Output
+  #define PPS_O_SPI1CLK                   0x06     ///< SPI 1 Clock Output
+  #define PPS_O_SPI1SS                    0x07     ///< SPI 1 Slave Select Output
+  #define PPS_O_SPI2DO                    0x08     ///< SPI 2 Data Output
+  #define PPS_O_SPI2CLK                   0x09     ///< SPI 2 Clock Output
+  #define PPS_O_SPI2SS                    0x0A     ///< SPI 2 Slave Select Output
+  #define PPS_O_CAN1_TX                   0x0E     ///< CAN 1 Transmit
+  #define PPS_O_CAN2_TX                   0x0F     ///< CAN 2 Transmit
+  #define PPS_O_OC1                       0x10     ///< Output Compare 1 Output
+  #define PPS_O_OC2                       0x11     ///< Output Compare 2 Output
+  #define PPS_O_OC3                       0x12     ///< Output Compare 3 Output
+  #define PPS_O_C1OUT                     0x18     ///< Comparator Output 1
+  #define PPS_O_C2OUT                     0x19     ///< Comparator Output 2
+  #define PPS_O_C3OUT                     0x1A     ///< Comparator Output 3
+  #define PPS_O_SPI3DO                    0x1F     ///< SPI 3 Data Output
+  #define PPS_O_SPI3CLK                   0x20     ///< SPI 3 Clock Output
+  #define PPS_O_SYNCO1                    0x2D     ///< PWM Primary Time Base Sync Output
+  #define PPS_O_SYNCO2                    0x2E     ///< PWM Secondary Time Base Sync Output
+  #define PPS_O_REFCLK                    0x31     ///< Reference Clock Output
+  #define PPS_O_OC4                       0x32     ///< Output Compare 4 Output
 /**
  * @brief Peripheral Output functions for the PIC24FJ256GB106
  */
-#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__)
+#elif defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__)
   #define PPS_O_C1OUT                     1        ///< Comparator 1 Output
   #define PPS_O_C2OUT                     2        ///< Comparator 2 Output
   #define PPS_O_UART_1_TX                 3        ///< UART 1 Transmit

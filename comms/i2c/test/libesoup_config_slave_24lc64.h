@@ -1,7 +1,7 @@
 #ifndef _LIBESOUP_CONFIG_H
 #define _LIBESOUP_CONFIG_H
 
-#define DEBUG_BUILD
+//#define DEBUG_BUILD
 #define SYS_TEST_SLAVE_24LC64
         
 #define SYS_TEST_BUILD
@@ -19,13 +19,13 @@
 
 #endif // defined(SYS_SERIAL_LOGGING)
 
-#define SYS_I2C3
+#define SYS_I2C1
 #define SYS_SLV_24LC64
 
 /*
  * Include a board file
  */
-#include "libesoup/boards/cinnamonBun/pic24FJ/cb-PIC24FJ256GB106.h"
+#include "libesoup/boards/stereo_guitar.h"
 
 /*
  *******************************************************************************
