@@ -56,7 +56,7 @@ static const char  __attribute__((unused)) *TAG ="SERIAL_LOG";
 #endif
 #endif
 
-#ifndef SYS_UART
+#if !(defined(SYS_UART1) || defined(SYS_UART2) || defined(SYS_UART3) || defined(SYS_UART4))
 #error libesoup_config.h file should define the SYS_UART required for serial logging!
 #endif
 
@@ -110,14 +110,14 @@ static struct uart_data serial_uart;
  *
  * \brief Initialisation function for serial logging
  *
- * The libesoup_config.h file should define serial port pin orientation, and include the 
+ * The libesoup_config.h file should define serial port pin orientation, and include the
  * board file which defines the pins being used by the serial port.
  */
 result_t serial_logging_init(void)
 {
         result_t rc;
 	uint16_t delay;
-        
+
 #if defined(XC16) || defined(__XC8)
 	/*
 	 * Serial Port pin configuration should be defined
@@ -145,7 +145,7 @@ result_t serial_logging_init(void)
 #endif // ifdef XC16 || __XC8
 
 	/*
-	 * Short delay to allow the line to stabilise before sending the 
+	 * Short delay to allow the line to stabilise before sending the
 	 * first character on the channel
 	 */
 	for (delay = 0; delay < 0x100; delay++) Nop();
@@ -159,7 +159,7 @@ result_t serial_logging_init(void)
 #ifdef SYS_TEST_BUILD
 uint16_t serial_buffer_count(void)
 {
-	return(uart_tx_buffer_count(&serial_uart));	
+	return(uart_tx_buffer_count(&serial_uart));
 }
 #endif
 
@@ -205,7 +205,7 @@ result_t serial_log(uint8_t level, const char *tag, const char *fmt, ...)
 	rc = es_printf(fmt, args);
 	RC_CHECK
 	va_end(args);
-	
+
 	return(0);
 }
 #elif defined(__XC8)
@@ -225,7 +225,7 @@ result_t serial_log(const char* fmt, ...)
 	 */
 	ptr = (char *)fmt;
 	while(*ptr) {
-		
+
 		if(*ptr != '%') {
 			rc = uart_tx_char(&serial_uart, *ptr);
 			RC_CHECK
@@ -258,7 +258,7 @@ result_t serial_log(const char* fmt, ...)
 				rc = uart_tx_buffer(&serial_uart, string, strlen((char*)string));
 				RC_CHECK
 				break;
-				
+
 			case 'l':
 				switch(*++ptr) {
 				case 'd':
@@ -279,7 +279,7 @@ result_t serial_log(const char* fmt, ...)
 			}
 		}
 		ptr++;
-	}	
+	}
 }
 #endif // defined(XC16) || defined(__XC8)
 
@@ -299,7 +299,7 @@ result_t serial_printf(const char * fmt, ...)
 	ptr = (char *)fmt;
 
 	while(*ptr) {
-		
+
 		if(*ptr != '%') {
 			rc = uart_tx_char(&serial_uart, *ptr);
 			RC_CHECK
@@ -332,7 +332,7 @@ result_t serial_printf(const char * fmt, ...)
 				rc = uart_tx_buffer(&serial_uart, string, strlen((char*)string));
 				RC_CHECK
 				break;
-				
+
 			case 'l':
 				switch(*++ptr) {
 				case 'd':
@@ -356,7 +356,7 @@ result_t serial_printf(const char * fmt, ...)
 		}
 		ptr++;
 	}
-	
+
 	va_end(args);
 	return(0);
 }
@@ -375,7 +375,7 @@ static result_t es_printf(const char * fmt, va_list args)
 	ptr = (char *)fmt;
 
 	while(*ptr) {
-		
+
 		if(*ptr != '%') {
 			rc = uart_tx_char(&serial_uart, *ptr);
 			RC_CHECK
@@ -416,7 +416,7 @@ static result_t es_printf(const char * fmt, va_list args)
 				rc = uart_tx_buffer(&serial_uart, string, strlen((char*)string));
 				RC_CHECK
 				break;
-				
+
 			case 'l':
 				switch(*++ptr) {
 				case 'd':
@@ -478,7 +478,7 @@ static uint8_t *itoa(uint16_t num, uint8_t *str, uint8_t base)
 	// If number is negative, append '-'
 	if (isNegative)
 		str[i++] = '-';
-	
+
 	str[i] = '\0'; // Append string terminator
 
 	// Reverse the string
@@ -529,9 +529,9 @@ static uint8_t *itoa32bit(uint32_t num, uint8_t *str, uint8_t base)
 static uint16_t strlen(char *string)
 {
 	uint16_t len = 0;
-	
+
 	while(*string++) len++;
-	return(len);	
+	return(len);
 }
 
 static void reverse(uint8_t str[], uint16_t length)

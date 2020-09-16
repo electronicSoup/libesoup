@@ -23,34 +23,13 @@
  *
  */
 #include "libesoup_config.h"
+#if defined(__dsPIC33EP128GS702__) && (defined(SYS_I2C1) || defined(SYS_I2C2))
 
 #define DEBUG_FILE
 #define TAG "I2C"
 
 #include "libesoup/logger/serial_log.h"
 
-#if defined(SYS_I2C1) || defined(SYS_I2C2) || defined(SYS_I2C3)
-
-static result_t error = SUCCESS;
-static uint8_t  finished = 0;
-static uint8_t  sent;
-static uint8_t *tx_buf;
-static uint8_t  num_tx_bytes;
-static uint8_t *rx_buf;
-static uint16_t num_rx_bytes;
-static uint8_t  read_count;
-
-static void (*i2c1_callback)(result_t) = NULL;
-
-#if defined(SYS_I2C3)
-static void (*i2c3_callback)(result_t) = NULL;
-static void (*i2c3_read_callback)(result_t, uint8_t) = NULL;
-#endif // defined(SYS_I2C3)
-
-/*
- * Prototype
- */
-static void i2c3_send_next();
 
 enum state {
         IDLE_STATE,
@@ -63,124 +42,156 @@ enum state {
         STOPPING_STATE
 };
 
-static enum state current_state;
+struct i2c_channel_data {
+	enum i2c_channel chan;
+	enum state       state;
+	result_t         error;
+	uint8_t          finished;
+	uint8_t          sent;
+	uint8_t         *tx_buf;
+	uint8_t          num_tx_bytes;
+	uint8_t         *rx_buf;
+	uint16_t         num_rx_bytes;
+	uint8_t          read_count;
+	void           (*callback)(result_t);
+	void           (*read_callback)(result_t, uint8_t);
+};
 
+struct i2c_channel_data i2c_channels[NUM_I2C_CHANNELS];
+
+
+/*
+ * Prototype
+ */
+static void i2c3_send_next(enum i2c_channel);
+
+
+
+#if defined(SYS_I2C1)
+#define I2C1_STARTED         I2C1STATbits.S
 #define I2C1_STOPPED         I2C1STATbits.P
+#define I2C1_BYTE_READ       I2C1STATbits.RBF
+#define I2C1_TRANSMITTING    I2C1STATbits.TBF
+#define I2C1_WRITE_COLLISION I2C1STATbits.IWCOL
+#define I2C1_ACKSTAT         I2C1STATbits.ACKSTAT
 
-#if defined(SYS_I2C3)
-#define I2C3_STARTED         I2C3STATbits.S
-#define I2C3_STOPPED         I2C3STATbits.P
-#define I2C3_BYTE_READ       I2C3STATbits.RBF
-#define I2C3_TRANSMITTING    I2C3STATbits.TBF
-#define I2C3_WRITE_COLLISION I2C3STATbits.IWCOL
+#define I2C1_START           I2C1CONLbits.SEN   = 1
+#define I2C1_STOP            I2C1CONLbits.PEN   = 1
+#define I2C1_RESTART         I2C1CONLbits.RSEN  = 1
+#define I2C1_READ            I2C1CONLbits.RCEN  = 1
+#define I2C1_RX_ACK          I2C1CONLbits.ACKDT = 0; I2C1CONLbits.ACKEN =1
+#define I2C1_RX_NACK         I2C1CONLbits.ACKDT = 1; I2C1CONLbits.ACKEN =1
+#endif
 
-#define I2C3_STOP            I2C3CONbits.PEN = 1
-#define I2C3_RESTART         I2C3CONbits.RSEN = 1
-#define I2C3_READ            I2C3CONbits.RCEN = 1
-#define I2C3_RX_ACK          I2C3CONbits.ACKDT = 0; I2C3CONbits.ACKEN =1
-#define I2C3_RX_NACK         I2C3CONbits.ACKDT = 1; I2C3CONbits.ACKEN =1
-#endif // defined(SYS_I2C3)
+#if defined(SYS_I2C2)
+#define I2C2_STARTED         I2C2STATbits.S
+#define I2C2_STOPPED         I2C2STATbits.P
+#define I2C2_BYTE_READ       I2C2STATbits.RBF
+#define I2C2_TRANSMITTING    I2C2STATbits.TBF
+#define I2C2_WRITE_COLLISION I2C2STATbits.IWCOL
+#define I2C2_ACKSTAT         I2C2STATbits.ACKSTAT
+
+#define I2C2_START           I2C2CONLbits.SEN   = 1
+#define I2C2_STOP            I2C2CONbits.PEN    = 1
+#define I2C2_RESTART         I2C2CONbits.RSEN   = 1
+#define I2C2_READ            I2C2CONbits.RCEN   = 1
+#define I2C2_RX_ACK          I2C2CONbits.ACKDT  = 0; I2C2CONbits.ACKEN =1
+#define I2C2_RX_NACK         I2C2CONbits.ACKDT  = 1; I2C2CONbits.ACKEN =1
+#endif // defined(SYS_I2C2)
 
 #ifdef SYS_I2C1
 void __attribute__((__interrupt__, __no_auto_psv__)) _MI2C1Interrupt(void)
 {
-
-}
-#endif
-
-#ifdef SYS_I2C3
-void __attribute__((__interrupt__, __no_auto_psv__)) _MI2C3Interrupt(void)
-{
 	uint8_t  rx_char;
 
 //	serial_printf("*%d*\n\r", current_state);
-	while (IFS5bits.MI2C3IF) {
-		IFS5bits.MI2C3IF    = 0;  // Clear Master ISR Flag
+	while (IFS1bits.MI2C1IF) {
+		IFS1bits.MI2C1IF    = 0;  // Clear Master ISR Flag
 //		serial_printf("+0x%x", I2C3STAT);
 
-                if (I2C3_WRITE_COLLISION) {
+                if (I2C1_WRITE_COLLISION) {
                         LOG_E("IWCOL\n\r");
-                        error = -ERR_NOT_READY;
+                        i2c_channels[I2C1].error = -ERR_NOT_READY;
                 }
 
-                switch(current_state) {
+                switch(i2c_channels[I2C1].state) {
 		case IDLE_STATE:
 			LOG_D("Idle State???\n\r");
 			break;
 		case STARTING_STATE:
-			if (I2C3_STARTED) {
-				current_state = STARTED_STATE;
+			if (I2C1_STARTED) {
+				i2c_channels[I2C1].state = STARTED_STATE;
 				LOG_D("Started\n\r");
-				if (i2c3_callback) {
-					i2c3_callback(SUCCESS);
+				if (i2c_channels[I2C1].callback) {
+					i2c_channels[I2C1].callback(SUCCESS);
 				}
 			} else {
 				LOG_E("Failed to start\n\r");
-				error = ERR_BAD_STATE;
-				I2C3_STOP;
-				current_state = STOPPING_STATE;
+				i2c_channels[I2C1].error = ERR_BAD_STATE;
+				I2C1_STOP;
+				i2c_channels[I2C1].state = STOPPING_STATE;
 			}
 			break;
 		case STARTED_STATE:
 			LOG_D("Started ???\n\r");
 			break;
 		case TX_STATE:
-			if(I2C3STATbits.ACKSTAT) {
+			if(I2C1_ACKSTAT) {
 				serial_printf("NACK\n\r");
-				error = -ERR_NO_RESPONSE;
-				I2C3_STOP;
-				current_state = STOPPING_STATE;
+				i2c_channels[I2C1].error = -ERR_NO_RESPONSE;
+				I2C1_STOP;
+				i2c_channels[I2C1].state = STOPPING_STATE;
 			} else {
 				serial_printf("ACK");
-				i2c3_send_next();
+				i2c3_send_next(I2C1);
 			}
 			break;
 		case RESTARTING_STATE:
-			if (I2C3_STARTED) {
-				current_state = STARTED_STATE;
-				if (i2c3_callback) {
-					i2c3_callback(SUCCESS);
+			if (I2C1_STARTED) {
+				i2c_channels[I2C1].state = STARTED_STATE;
+				if (i2c_channels[I2C1].callback) {
+					i2c_channels[I2C1].callback(SUCCESS);
 				}
 			} else {
 				LOG_E("Failed to restart\n\r");
-				error = ERR_BAD_STATE;
-				I2C3_STOP;
+				i2c_channels[I2C1].error = ERR_BAD_STATE;
+				I2C1_STOP;
 //				next_state = STOPPING_STATE;
-				current_state = STOPPING_STATE;
+				i2c_channels[I2C1].state = STOPPING_STATE;
 			}
 			break;
 		case RX_STATE:
-			if (I2C3_BYTE_READ) {
-				rx_char = I2C3RCV;
-				*rx_buf++ = rx_char;
-				read_count++;
-				if(read_count % 10 == 0) {
+			if (I2C1_BYTE_READ) {
+				rx_char = I2C1RCV;
+				*i2c_channels[I2C1].rx_buf++ = rx_char;
+				i2c_channels[I2C1].read_count++;
+				if(i2c_channels[I2C1].read_count % 10 == 0) {
 					serial_printf("0");
 				}
 
 //				LOG_D("%d:%x", read_count, rx_char);
-				if (read_count >= num_rx_bytes) {
-					I2C3_RX_NACK;
+				if (i2c_channels[I2C1].read_count >= i2c_channels[I2C1].num_rx_bytes) {
+					I2C1_RX_NACK;
 					LOG_D("Finished\n\r");
-					finished = 1;
-					current_state = RX_DONE_STATE;
+					i2c_channels[I2C1].finished = 1;
+					i2c_channels[I2C1].state = RX_DONE_STATE;
 				} else {
-					I2C3_RX_ACK;
-					I2C3_READ;
+					I2C1_RX_ACK;
+					I2C1_READ;
 				}
 			} else {
-				I2C3_READ;
+				I2C1_READ;
 			}
 			break;
 		case RX_DONE_STATE:
 			LOG_D("RX_DONE_STATE\n\r")
 			break;
 		case STOPPING_STATE:
-			if (I2C3_STOPPED) {
-				current_state = IDLE_STATE;
+			if (I2C1_STOPPED) {
+				i2c_channels[I2C1].state = IDLE_STATE;
 			} else {
 				serial_printf("Failed to stop\n\r");
-				error = -ERR_IM_A_TEAPOT;
+				i2c_channels[I2C1].error = -ERR_IM_A_TEAPOT;
 			}
 			break;
 		default:
@@ -189,7 +200,13 @@ void __attribute__((__interrupt__, __no_auto_psv__)) _MI2C3Interrupt(void)
                 }
 	}
 }
-#endif // SYS_I2C3
+#endif
+
+#ifdef SYS_I2C2
+void __attribute__((__interrupt__, __no_auto_psv__)) _MI2C2Interrupt(void)
+{
+}
+#endif // SYS_I2C2
 
 #ifdef SYS_I2C1
 void __attribute__((__interrupt__, __no_auto_psv__)) _SI2C1Interrupt(void)
@@ -198,20 +215,36 @@ void __attribute__((__interrupt__, __no_auto_psv__)) _SI2C1Interrupt(void)
 }
 #endif
 
-#ifdef SYS_I2C3
-void __attribute__((__interrupt__, __no_auto_psv__)) _SI2C3Interrupt(void)
+#ifdef SYS_I2C2
+void __attribute__((__interrupt__, __no_auto_psv__)) _SI2C2Interrupt(void)
 {
 	serial_printf("S");
 }
 #endif
 
-result_t i2c_init(enum i2c_channel chan)
+result_t i2c_init()
 {
+	uint8_t chan;
+
 	LOG_D("i2c_init()\n\r");
-        switch (chan) {
-                case I2C1:
-#if defined(__dsPIC33EP128GS702__)
-                        I2C1BRG             = 0x0d;
+	for ( chan = 0; chan < NUM_I2C_CHANNELS; chan++) {
+		switch (chan) {
+#if defined(SYS_I2C1)
+		case I2C1:
+			i2c_channels[I2C1].chan          = chan;
+			i2c_channels[I2C1].state         = IDLE_STATE;
+			i2c_channels[I2C1].error         = SUCCESS;
+			i2c_channels[I2C1].finished      = 0;
+			i2c_channels[I2C1].sent          = 0;
+			i2c_channels[I2C1].tx_buf        = NULL;
+			i2c_channels[I2C1].num_tx_bytes  = 0;
+			i2c_channels[I2C1].rx_buf        = NULL;
+			i2c_channels[I2C1].num_rx_bytes  = 0;
+			i2c_channels[I2C1].read_count    = 0;
+			i2c_channels[I2C1].callback      = NULL;
+			i2c_channels[I2C1].read_callback = NULL;
+
+                        I2C1BRG              = 0x0d;
 
                         I2C1CONLbits.I2CSIDL = 0;  // Module continues in Idle.
                         I2C1CONLbits.SCLREL  = 1;  // Release clock (Slave mode))
@@ -223,78 +256,86 @@ result_t i2c_init(enum i2c_channel chan)
                         I2C1CONLbits.ACKDT   = 0;  // Send /ACK to acknowledge
 
 			IFS10bits.I2C1BCIF   = 0;
-                        IFS1bits.MI2C1IF    = 0;  // Clear Master ISR Flag
-                        IFS1bits.SI2C1IF    = 0;  // Clear Slave ISR Flag
-                        IEC1bits.MI2C1IE    = 1;  // Enable Master Interrupts
-                        IEC1bits.SI2C1IE    = 1;  // Enable Slave Interrupts
+                        IFS1bits.MI2C1IF     = 0;  // Clear Master ISR Flag
+                        IFS1bits.SI2C1IF     = 0;  // Clear Slave ISR Flag
+                        IEC1bits.MI2C1IE     = 1;  // Enable Master Interrupts
+                        IEC1bits.SI2C1IE     = 1;  // Enable Slave Interrupts
 
                         I2C1CONLbits.I2CEN   = 1;
                         I2C1CONLbits.PEN     = 1;  // Send Stop
-                        current_state       = IDLE_STATE;
                         break;
-#else
-                        LOG_E("Not implemented\n\r");
-                        return(-ERR_NOT_CODED);
-                        break;
-#endif // #if defined(__dsPIC33EP128GS702__)
-                case I2C2:
-                        LOG_E("Not implemented\n\r");
-                        return(-ERR_NOT_CODED);
-                        break;
-#if defined(__dsPIC33EP256MU806__) || defined (__PIC24FJ256GB106__)
-                case I2C3:
-                        I2C3BRG             = 0x0d;
+#endif
+#if defined(SYS_I2C2)
+		case I2C2:
+			i2c_channels[I2C2].chan          = chan;
+			i2c_channels[I2C2].state         = IDLE_STATE;
+			i2c_channels[I2C2].error         = SUCCESS;
+			i2c_channels[I2C2].finished      = 0;
+			i2c_channels[I2C2].sent          = 0;
+			i2c_channels[I2C2].tx_buf        = NULL;
+			i2c_channels[I2C2].num_tx_bytes  = 0;
+			i2c_channels[I2C2].rx_buf        = NULL;
+			i2c_channels[I2C2].num_rx_bytes  = 0;
+			i2c_channels[I2C2].read_count    = 0;
+			i2c_channels[I2C2].callback      = NULL;
+			i2c_channels[I2C2].read_callback = NULL;
 
-                        I2C3CONbits.I2CSIDL = 0;  // Module continues in Idle.
-                        I2C3CONbits.SCLREL  = 1;  // Release clock (Slave mode))
-                        I2C3CONbits.IPMIEN  = 0;  // Disable IPMI mode
-                        I2C3CONbits.A10M    = 0;  // 7 bit mode
-                        I2C3CONbits.DISSLW  = 1;  // Disable Slew rate.
-                        I2C3CONbits.SMEN    = 0;  // Disable SMBus thresholds
-                        I2C3CONbits.GCEN    = 0;  // Disable General call address
-                        I2C3CONbits.STREN   = 0;  // Disable clock stretching
-                        I2C3CONbits.ACKDT   = 0;  // Send /ACK to acknowledge
+                        I2C1BRG              = 0x0d;
 
-                        IFS5bits.MI2C3IF    = 0;  // Clear Master ISR Flag
-                        IFS5bits.SI2C3IF    = 0;  // Clear Slave ISR Flag
-                        IEC5bits.MI2C3IE    = 1;  // Enable Master Interrupts
-                        IEC5bits.SI2C3IE    = 1;  // Enable Slave Interrupts
+                        I2C2CONLbits.I2CSIDL = 0;  // Module continues in Idle.
+                        I2C2CONLbits.SCLREL  = 1;  // Release clock (Slave mode))
+                        I2C2CONLbits.A10M    = 0;  // 7 bit mode
+                        I2C2CONLbits.DISSLW  = 1;  // Disable Slew rate.
+                        I2C2CONLbits.SMEN    = 0;  // Disable SMBus thresholds
+                        I2C2CONLbits.GCEN    = 0;  // Disable General call address
+                        I2C2CONLbits.STREN   = 0;  // Disable clock stretching
+                        I2C2CONLbits.ACKDT   = 0;  // Send /ACK to acknowledge
 
-                        I2C3CONbits.I2CEN   = 1;
-                        I2C3CONbits.PEN     = 1;  // Send Stop
-                        current_state       = IDLE_STATE;
+			IFS10bits.I2C2BCIF   = 0;
+                        IFS3bits.MI2C2IF     = 0;  // Clear Master ISR Flag
+                        IFS3bits.SI2C2IF     = 0;  // Clear Slave ISR Flag
+                        IEC3bits.MI2C2IE     = 1;  // Enable Master Interrupts
+                        IEC3bits.SI2C2IE     = 1;  // Enable Slave Interrupts
+
+                        I2C2CONLbits.I2CEN   = 1;
+                        I2C2CONLbits.PEN     = 1;  // Send Stop
                         break;
-#endif // #if defined(__dsPIC33EP256MU806__) || defined (__PIC24FJ256GB106__)
-                default:
+#endif
+		default:
                         LOG_E("No such I2C\n\r");
                         return (-ERR_BAD_INPUT_PARAMETER);
                         break;
+		}
         }
         return (SUCCESS);
 }
 
 result_t i2c_tasks(void)
 {
+	uint8_t  i;
         result_t rc = SUCCESS;
 
-#if defined(SYS_I2C3)
-rc = error;
+	for (i = 0; i < NUM_I2C_CHANNELS; i++) {
+		rc = i2c_channels[i].error;
 
-        if(error < 0) {
-		LOG_E("i2c_tasks() Error\n\r")
-                if(i2c3_callback) {
-                        i2c3_callback(error);
-                        error = SUCCESS;
-                }
-        }
+		if(i2c_channels[i].error < 0) {
+			LOG_E("i2c_tasks(%d) Error\n\r", i)
+			if(i2c_channels[i].callback) {
+				i2c_channels[i].callback(i2c_channels[i].error);
+				/*
+				 * Clear the error condition
+				 */
+				i2c_channels[i].error = SUCCESS;
+			}
+		}
 
-	if(finished) {
-		i2c3_read_callback(SUCCESS, read_count);
-		finished           = 0;
-		i2c3_callback      = NULL;
-		i2c3_read_callback = NULL;
+		if(i2c_channels[i].finished) {
+			i2c_channels[i].read_callback(SUCCESS, i2c_channels[i].read_count);
+			i2c_channels[i].finished        = 0;
+			i2c_channels[i].callback        = NULL;
+			i2c_channels[i].read_callback   = NULL;
+		}
 	}
-#endif // defined(SYS_I2C3)
         return(rc);
 }
 
@@ -304,8 +345,9 @@ result_t i2c_start(enum i2c_channel chan, void (*p_callback)(result_t))
 
 	LOG_D("Start\n\r");
 	switch(chan) {
+#if defined (SYS_I2C1)
 	case I2C1:
-                i2c1_callback = p_callback;
+                i2c_channels[chan].callback = p_callback;
 
 //		if (count == 0) {
 //			count++;
@@ -314,20 +356,47 @@ result_t i2c_start(enum i2c_channel chan, void (*p_callback)(result_t))
 //			return(SUCCESS);
 //		}
 
-                if (I2C1STATbits.P && (current_state == IDLE_STATE)) {
+                if (I2C1_STOPPED && (i2c_channels[chan].state == IDLE_STATE)) {
 			LOG_D("Starting\n\r");
-                        current_state = STARTING_STATE;
-                        I2C1CONLbits.SEN = 1;
+                        i2c_channels[chan].state = STARTING_STATE;
+                        I2C1_START;
                 } else {
 			if (!I2C1_STOPPED) {
 				LOG_E("Not stopped\n\r");
 			}
-			if (current_state != IDLE_STATE) {
-				LOG_E("Bad state %d\n\r", current_state);
+			if (i2c_channels[chan].state != IDLE_STATE) {
+				LOG_E("Bad state %d\n\r", i2c_channels[chan].state);
 			}
                         return (-ERR_BAD_STATE);
                 }
 		break;
+#endif
+#if defined (SYS_I2C2)
+	case I2C2:
+                i2c_channels[chan].callback = p_callback;
+
+//		if (count == 0) {
+//			count++;
+//			LOG_D("Starting\n\r");
+  //                      I2C3CONbits.SEN = 1;
+//			return(SUCCESS);
+//		}
+
+                if (I2C2_STOPPED && (i2c_channels[chan].state == IDLE_STATE)) {
+			LOG_D("Starting\n\r");
+                        i2c_channels[chan].state = STARTING_STATE;
+                        I2C2_START;
+                } else {
+			if (!I2C1_STOPPED) {
+				LOG_E("Not stopped\n\r");
+			}
+			if (i2c_channels[chan].state != IDLE_STATE) {
+				LOG_E("Bad state %d\n\r", i2c_channels[chan].state);
+			}
+                        return (-ERR_BAD_STATE);
+                }
+		break;
+#endif
 #if defined(__dsPIC33EP256MU806__) || defined (__PIC24FJ256GB106__)
 	case I2C3:
                 i2c3_callback = p_callback;
@@ -428,18 +497,28 @@ result_t i2c_read(enum i2c_channel chan, uint8_t *p_rx_buf, uint16_t p_num_rx_by
         return(SUCCESS);
 }
 
-static void i2c3_send_next(void)
+static void i2c3_send_next(enum i2c_channel chan)
 {
-#if defined(SYS_I2C3)
-	if (sent < num_tx_bytes) {
-		current_state = TX_STATE;
-		I2C3TRN = *tx_buf++;
-		sent++;
+	if (i2c_channels[chan].sent < i2c_channels[chan].num_tx_bytes) {
+		i2c_channels[chan].state = TX_STATE;
+		switch(chan) {
+#if defined(SYS_I2C1)
+		case I2C1:
+			I2C1TRN = *i2c_channels[chan].tx_buf++;
+			break;
+#endif
+#if defined (SYS_I2C2)
+		case I2C2:
+			I2C2TRN = *i2c_channels[chan].tx_buf++;
+			break;
+#endif
+		default:
+			LOG_E("Bad input\n\r");
+		}
+		i2c_channels[chan].sent++;
 	} else {
-		i2c3_callback(SUCCESS);
+		i2c_channels[chan].callback(SUCCESS);
 	}
-#endif // #if defined(SYS_I2C3)
-
 }
 
 #endif // _SYS_I2C1 || SYS_I2S2 || SYS_I2S3

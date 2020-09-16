@@ -49,30 +49,38 @@
 /**
  * @brief UART Settings.
  */
-#define NUM_UARTS          2                   ///< Number of UARTS in the uC
-#define UART_1             0x00                ///< Index/Identifier used for UART 1
-#define UART_2             0x01                ///< Index/Identifier used for UART 2
+enum uart_channel {
+#ifdef SYS_UART1
+        UART_1,
+#endif
+#ifdef SYS_UART2
+        UART_2,
+#endif
+        NUM_UART_CHANNELS
+};
 
-#define U1_ENABLE          U1MODEbits.UARTEN   ///< UART 1 Enable SFR bit
+#if defined(SYS_UART1)
+  #define U1_ENABLE          U1MODEbits.UARTEN   ///< UART 1 Enable SFR bit
 
-#define U1_RX_ISR_FLAG     IFS0bits.U1RXIF     ///< UART 1 Recieve Interrupt Flag SFR Bit
-#define U1_RX_ISR_PRIOTITY IPC2bits.U1RXIP     ///< UART 1 Recieve Interrupt Priority SFR
-#define U1_RX_ISR_ENABLE   IEC0bits.U1RXIE     ///< UART 1 Recieve Interrupt Enable SFR Bit
+  #define U1_RX_ISR_FLAG     IFS0bits.U1RXIF     ///< UART 1 Recieve Interrupt Flag SFR Bit
+  #define U1_RX_ISR_PRIOTITY IPC2bits.U1RXIP     ///< UART 1 Recieve Interrupt Priority SFR
+  #define U1_RX_ISR_ENABLE   IEC0bits.U1RXIE     ///< UART 1 Recieve Interrupt Enable SFR Bit
 
-#define U1_TX_ISR_FLAG     IFS0bits.U1TXIF     ///< UART 1 Transmit Interrupt FLAG SFR Bit
-#define U1_TX_ISR_PRIOTITY IPC3bits.U1TXIP     ///< UART 1 Transmit Interrupt Priority SFR
-#define U1_TX_ISR_ENABLE   IEC0bits.U1TXIE     ///< UART 1 Transmit Interrupt Enable SFR Bit
+  #define U1_TX_ISR_FLAG     IFS0bits.U1TXIF     ///< UART 1 Transmit Interrupt FLAG SFR Bit
+  #define U1_TX_ISR_PRIOTITY IPC3bits.U1TXIP     ///< UART 1 Transmit Interrupt Priority SFR
+  #define U1_TX_ISR_ENABLE   IEC0bits.U1TXIE     ///< UART 1 Transmit Interrupt Enable SFR Bit
+#endif
+#if defined(SYS_UART2)
+  #define U2_ENABLE          U2MODEbits.UARTEN   ///< UART 2 Enable SFR bit
 
-#define U2_ENABLE          U2MODEbits.UARTEN   ///< UART 2 Enable SFR bit
+  #define U2_RX_ISR_FLAG     IFS1bits.U2RXIF     ///< UART 2 Recieve Interrupt Flag SFR Bit
+  #define U2_RX_ISR_PRIOTITY IPC7bits.U2RXIP     ///< UART 2 Recieve Interrupt Priority SFR
+  #define U2_RX_ISR_ENABLE   IEC1bits.U2RXIE     ///< UART 2 Recieve Interrupt Enable SFR Bit
 
-#define U2_RX_ISR_FLAG     IFS1bits.U2RXIF     ///< UART 2 Recieve Interrupt Flag SFR Bit
-#define U2_RX_ISR_PRIOTITY IPC7bits.U2RXIP     ///< UART 2 Recieve Interrupt Priority SFR
-#define U2_RX_ISR_ENABLE   IEC1bits.U2RXIE     ///< UART 2 Recieve Interrupt Enable SFR Bit
-
-#define U2_TX_ISR_FLAG     IFS1bits.U2TXIF     ///< UART 2 Transmit Interrupt FLAG SFR Bit
-#define U2_TX_ISR_PRIOTITY IPC7bits.U2TXIP     ///< UART 2 Transmit Interrupt Priority SFR
-#define U2_TX_ISR_ENABLE   IEC1bits.U2TXIE     ///< UART 2 Transmit Interrupt Enable SFR Bit
-
+  #define U2_TX_ISR_FLAG     IFS1bits.U2TXIF     ///< UART 2 Transmit Interrupt FLAG SFR Bit
+  #define U2_TX_ISR_PRIOTITY IPC7bits.U2TXIP     ///< UART 2 Transmit Interrupt Priority SFR
+  #define U2_TX_ISR_ENABLE   IEC1bits.U2TXIE     ///< UART 2 Transmit Interrupt Enable SFR Bit
+#endif
 /**
  * @brief UART Modes of operation bit field for the UxMODE SFR
  */
@@ -94,20 +102,22 @@
  *  01 = 8-bit data, even parity
  *  00 = 8-bit data, no parity
  */
-#define UARTEN_MASK      0x8000   ///< UART Enable BIT
-#define USIDL_MASK       0x2000   ///< Stop in Idle Mode bit
-#define IREN_MASK        0x1000   ///< IrDA Encoder and Decoder Enable bit
-#define RTSMD_MASK       0x0800   ///< Mode Selection for UxRTS Pin bit
-#define UEN1_MASK        0x0200
-#define UEN0_MASK        0x0100
-#define WAKE_MASK        0x0080   ///< Wake-up on Start Bit Detect During Sleep Mode Enable bit
-#define LPBACK_MASK      0x0040   ///< UARTx Loopback Mode Select bit
-#define ABAUD_MASK       0x0020   ///< Auto-Baud Enable bit
-#define RXINV_MASK       0x0010   ///< Receive Polarity Inversion bit
-#define BRGH_MASK        0x0008   ///< High Baud Rate Enable bit
-#define PDSEL1_MASK      0x0004 
-#define PDSEL0_MASK      0x0002
-#define STSEL_MASK       0x0001   ///< Stop Bit Selection bit
+#if defined(SYS_UART1) || defined (SYS_UART2)
+  #define UARTEN_MASK      0x8000   ///< UART Enable BIT
+  #define USIDL_MASK       0x2000   ///< Stop in Idle Mode bit
+  #define IREN_MASK        0x1000   ///< IrDA Encoder and Decoder Enable bit
+  #define RTSMD_MASK       0x0800   ///< Mode Selection for UxRTS Pin bit
+  #define UEN1_MASK        0x0200
+  #define UEN0_MASK        0x0100
+  #define WAKE_MASK        0x0080   ///< Wake-up on Start Bit Detect During Sleep Mode Enable bit
+  #define LPBACK_MASK      0x0040   ///< UARTx Loopback Mode Select bit
+  #define ABAUD_MASK       0x0020   ///< Auto-Baud Enable bit
+  #define RXINV_MASK       0x0010   ///< Receive Polarity Inversion bit
+  #define BRGH_MASK        0x0008   ///< High Baud Rate Enable bit
+  #define PDSEL1_MASK      0x0004 
+  #define PDSEL0_MASK      0x0002
+  #define STSEL_MASK       0x0001   ///< Stop Bit Selection bit
+#endif
 
 /*
  * I2C Channels

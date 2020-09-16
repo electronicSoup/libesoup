@@ -2,10 +2,10 @@
  * @file libesoup/core.c
  *
  * @author John Whitmore
- * 
+ *
  * @brief File containing the function to initialise the libesoup library
  *
- * Copyright 2017-2018 electronicSoup Limited
+ * Copyright 2017-2020 electronicSoup Limited
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 2 of the GNU Lesser General Public License
@@ -66,7 +66,7 @@ extern void   uart_init(void);
 
 #if defined(SYS_I2C1) || defined(SYS_I2C2) || defined(SYS_I2C3)
 extern result_t i2c_tasks(void);
-extern result_t i2c_init(enum i2c_channel);
+extern result_t i2c_init(void);
 #endif
 
 #ifdef SYS_RAND
@@ -108,7 +108,7 @@ extern void SYSTEM_Initialize(  SYSTEM_STATE SYSTEM_STATE_USB_START );
 
 /*
  * The Instruction Clock Frequency being used by the system.
- * 
+ *
  * SYS_CLOCK_FREQ is the frequency requested by libesoup_config.h but that
  * may not be possible, if invalid.
  */
@@ -129,9 +129,9 @@ result_t libesoup_init(void)
 #endif // SYS_SERIAL_LOGGING
 	rc = 0;
 #endif
-	
+
 	cpu_init();
-	
+
 	/*
 	 * Allow the clock to settle
 	 */
@@ -154,7 +154,7 @@ result_t libesoup_init(void)
 	hw_timer_init();
 	__asm__ ("CLRWDT");
 #endif
-	
+
 #ifdef SYS_SW_TIMERS
 	sw_timer_init();
 	__asm__ ("CLRWDT");
@@ -165,7 +165,7 @@ result_t libesoup_init(void)
 	RC_CHECK
 	__asm__ ("CLRWDT");
 #endif
-		
+
 #ifdef SYS_JOBS
 	jobs_init();
 	__asm__ ("CLRWDT");
@@ -176,14 +176,8 @@ result_t libesoup_init(void)
 	__asm__ ("CLRWDT");
 #endif
 
-#if defined(SYS_I2C1)
-	i2c_init(I2C1);
-#endif
-#if defined(SYS_I2C2)
-	i2c_init(I2C2);
-#endif
-#if defined(SYS_I2C3)
-	i2c_init(I2C3);
+#if defined(SYS_I2C1) || defined(SYS_I2C2) || defined(SYS_I2C3)
+	i2c_init();
 #endif
 
 #ifdef SYS_RAND

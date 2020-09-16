@@ -13,13 +13,14 @@
 //#define SYS_SERIAL_PORT_GndTxRx
 #define SYS_SERIAL_PORT_GndRxTx
 #define SYS_LOG_LEVEL LOG_DEBUG
-#define SYS_UART
+#define SYS_UART1
 #define SYS_SERIAL_LOGGING_BAUD           19200
 #define SYS_UART_TX_BUFFER_SIZE             512
 
 #endif // defined(SYS_SERIAL_LOGGING)
 
 #define SYS_I2C1
+#define SYS_I2C2
 #define SYS_SLV_24LC64
 
 /*

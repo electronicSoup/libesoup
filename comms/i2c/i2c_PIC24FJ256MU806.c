@@ -23,13 +23,13 @@
  *
  */
 #include "libesoup_config.h"
+#if defined(__PIC24FJ256MU806__) && (defined(SYS_I2C1) || defined(SYS_I2C2) || defined(SYS_I2C3))
 
 #define DEBUG_FILE
 #define TAG "I2C"
 
 #include "libesoup/logger/serial_log.h"
 
-#if defined(SYS_I2C1) || defined(SYS_I2C2) || defined(SYS_I2C3)
 
 static result_t error = SUCCESS;
 static uint8_t  finished = 0;
@@ -210,8 +210,7 @@ result_t i2c_init(enum i2c_channel chan)
 	LOG_D("i2c_init()\n\r");
         switch (chan) {
                 case I2C1:
-#if defined(__dsPIC33EP128GS702__)
-                        I2C1BRG             = 0x0d;
+                        I2C1BRG              = 0x0d;
 
                         I2C1CONLbits.I2CSIDL = 0;  // Module continues in Idle.
                         I2C1CONLbits.SCLREL  = 1;  // Release clock (Slave mode))
@@ -223,48 +222,19 @@ result_t i2c_init(enum i2c_channel chan)
                         I2C1CONLbits.ACKDT   = 0;  // Send /ACK to acknowledge
 
 			IFS10bits.I2C1BCIF   = 0;
-                        IFS1bits.MI2C1IF    = 0;  // Clear Master ISR Flag
-                        IFS1bits.SI2C1IF    = 0;  // Clear Slave ISR Flag
-                        IEC1bits.MI2C1IE    = 1;  // Enable Master Interrupts
-                        IEC1bits.SI2C1IE    = 1;  // Enable Slave Interrupts
+                        IFS1bits.MI2C1IF     = 0;  // Clear Master ISR Flag
+                        IFS1bits.SI2C1IF     = 0;  // Clear Slave ISR Flag
+                        IEC1bits.MI2C1IE     = 1;  // Enable Master Interrupts
+                        IEC1bits.SI2C1IE     = 1;  // Enable Slave Interrupts
 
                         I2C1CONLbits.I2CEN   = 1;
                         I2C1CONLbits.PEN     = 1;  // Send Stop
-                        current_state       = IDLE_STATE;
+                        current_state        = IDLE_STATE;
                         break;
-#else
-                        LOG_E("Not implemented\n\r");
-                        return(-ERR_NOT_CODED);
-                        break;
-#endif // #if defined(__dsPIC33EP128GS702__)
                 case I2C2:
                         LOG_E("Not implemented\n\r");
                         return(-ERR_NOT_CODED);
                         break;
-#if defined(__dsPIC33EP256MU806__) || defined (__PIC24FJ256GB106__)
-                case I2C3:
-                        I2C3BRG             = 0x0d;
-
-                        I2C3CONbits.I2CSIDL = 0;  // Module continues in Idle.
-                        I2C3CONbits.SCLREL  = 1;  // Release clock (Slave mode))
-                        I2C3CONbits.IPMIEN  = 0;  // Disable IPMI mode
-                        I2C3CONbits.A10M    = 0;  // 7 bit mode
-                        I2C3CONbits.DISSLW  = 1;  // Disable Slew rate.
-                        I2C3CONbits.SMEN    = 0;  // Disable SMBus thresholds
-                        I2C3CONbits.GCEN    = 0;  // Disable General call address
-                        I2C3CONbits.STREN   = 0;  // Disable clock stretching
-                        I2C3CONbits.ACKDT   = 0;  // Send /ACK to acknowledge
-
-                        IFS5bits.MI2C3IF    = 0;  // Clear Master ISR Flag
-                        IFS5bits.SI2C3IF    = 0;  // Clear Slave ISR Flag
-                        IEC5bits.MI2C3IE    = 1;  // Enable Master Interrupts
-                        IEC5bits.SI2C3IE    = 1;  // Enable Slave Interrupts
-
-                        I2C3CONbits.I2CEN   = 1;
-                        I2C3CONbits.PEN     = 1;  // Send Stop
-                        current_state       = IDLE_STATE;
-                        break;
-#endif // #if defined(__dsPIC33EP256MU806__) || defined (__PIC24FJ256GB106__)
                 default:
                         LOG_E("No such I2C\n\r");
                         return (-ERR_BAD_INPUT_PARAMETER);
