@@ -113,8 +113,13 @@
  * I2C Channels
  */
 enum i2c_channel {
+#ifdef SYS_I2C1
         I2C1,
-        I2C2
+#endif
+#ifdef SYS_I2C2
+        I2C2,
+#endif
+        NUM_I2C_CHANNELS
 };
 
 /**
