@@ -116,7 +116,7 @@ uint32_t sys_clock_freq;
 
 result_t libesoup_init(void)
 {
-	uint32_t loop;
+//	uint32_t loop;
 #ifdef XC16
 	result_t rc  __attribute__((unused)) = 0;
 #else
@@ -131,13 +131,6 @@ result_t libesoup_init(void)
 #endif
 
 	cpu_init();
-
-	/*
-	 * Allow the clock to settle
-	 */
-	for(loop = 0; loop < 0x100000; loop++) {
-                CLEAR_WDT
-	}
 
 #if defined(SYS_UART1) || defined(SYS_UART2) || defined(SYS_UART3) || defined(SYS_UART4)
 	uart_init();

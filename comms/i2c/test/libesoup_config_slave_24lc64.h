@@ -1,6 +1,8 @@
 #ifndef _LIBESOUP_CONFIG_H
 #define _LIBESOUP_CONFIG_H
 
+#define SYS_CLOCK_FREQ (7600000/2)
+
 //#define DEBUG_BUILD
 #define SYS_TEST_SLAVE_24LC64
         
@@ -21,11 +23,8 @@
 
 #define SYS_I2C1
 #define SYS_SLV_24LC64
-
-#define SYS_SPI1
-//#define SYS_SPI2
-//#define SYS_SPI3
-
+//#define SYS_TEST_MASTER_24LC64
+#define SYS_TEST_SLAVE_24LC64
 /*
  * Include a board file
  */

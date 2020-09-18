@@ -93,10 +93,10 @@ void __attribute__((__interrupt__, __no_auto_psv__)) _MI2C3Interrupt(void)
 {
 	uint8_t  rx_char;
 
-//	serial_printf("*%d*\n\r", current_state);
+	serial_printf("*%d*\n\r", current_state);
 	while (IFS5bits.MI2C3IF) {
 		IFS5bits.MI2C3IF    = 0;  // Clear Master ISR Flag
-//		serial_printf("+0x%x", I2C3STAT);
+		serial_printf("+0x%x", I2C3STAT);
 
                 if (I2C3_WRITE_COLLISION) {
                         LOG_E("IWCOL\n\r");
@@ -201,7 +201,7 @@ void __attribute__((__interrupt__, __no_auto_psv__)) _SI2C1Interrupt(void)
 #ifdef SYS_I2C3
 void __attribute__((__interrupt__, __no_auto_psv__)) _SI2C3Interrupt(void)
 {
-	serial_printf("S");
+	serial_printf("IS");
 }
 #endif
 
@@ -234,6 +234,28 @@ result_t i2c_init(enum i2c_channel chan)
                 case I2C2:
                         LOG_E("Not implemented\n\r");
                         return(-ERR_NOT_CODED);
+                        break;
+                case I2C3:
+                        I2C3BRG             = 0x0d;
+
+                        I2C3CONbits.I2CSIDL = 0;  // Module continues in Idle.
+                        I2C3CONbits.SCLREL  = 1;  // Release clock (Slave mode))
+                        I2C3CONbits.IPMIEN  = 0;  // Disable IPMI mode
+                        I2C3CONbits.A10M    = 0;  // 7 bit mode
+                        I2C3CONbits.DISSLW  = 1;  // Disable Slew rate.
+                        I2C3CONbits.SMEN    = 0;  // Disable SMBus thresholds
+                        I2C3CONbits.GCEN    = 0;  // Disable General call address
+                        I2C3CONbits.STREN   = 0;  // Disable clock stretching
+                        I2C3CONbits.ACKDT   = 0;  // Send /ACK to acknowledge
+
+                        IFS5bits.MI2C3IF    = 0;  // Clear Master ISR Flag
+                        IFS5bits.SI2C3IF    = 0;  // Clear Slave ISR Flag
+                        IEC5bits.MI2C3IE    = 1;  // Enable Master Interrupts
+                        IEC5bits.SI2C3IE    = 1;  // Enable Slave Interrupts
+
+                        I2C3CONbits.I2CEN   = 1;
+//                        I2C3CONbits.PEN     = 1;  // Send Stop
+                        current_state       = IDLE_STATE;
                         break;
                 default:
                         LOG_E("No such I2C\n\r");

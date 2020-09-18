@@ -68,7 +68,7 @@ static const char *TAG = "dsPIC33";
 //#pragma config FPWRT = PWR128           // Power-on Reset Timer Value Select bits (128ms)
 //#pragma config ALTI2C1 = OFF            // Alternate I2C pins for I2C1 (SDA1/SCK1 pins are selected as the I/O pins for I2C1)
 //
-//static void clock_init(void);
+static void clock_init(void);
 
 /*
  * Interrupts
@@ -89,16 +89,11 @@ void _ISR __attribute__((__no_auto_psv__)) _StackError(void)
 
 void cpu_init(void)
 {
-//        clock_init();
+        clock_init();
 
         INTCON2bits.GIE = ENABLED;
 }
 
-/*
- * The switch __dsPIC33EP256MU806__ is automatically set by the Microchip
- * build system, if that is the target device of the build.
- */
-#if 0
 static void clock_init(void)
 {
 	uint32_t fosc;             // See datasheet
@@ -116,7 +111,7 @@ static void clock_init(void)
 	 * NO PLL
          */
 	sys_clock_freq = SYS_CLOCK_FREQ;
-
+#if 0
         if(sys_clock_freq != (BRD_CRYSTAL_FREQ/2)) {
 		fosc = sys_clock_freq * 2;
 
@@ -199,28 +194,8 @@ static void clock_init(void)
                 // Wait for PLL to lock
                 while (OSCCONbits.LOCK!= 1);
         }
-#ifdef SYS_USB_HOST
-        /*
-         * Set up the Aux clock for USB
-         */
-        // Isaac_Sewell  http://www.microchip.com/forums/m1051260.aspx
-        // ACLKCON3 = 0x24C1;
-        // ACLKDIV3 = 0x7;
-        ACLKCON3bits.ENAPLL   = 0;     // APLL is disabled, the USB clock source is the input clock to the APLL
-        ACLKCON3bits.SELACLK  = 1;     // Primary PLL provides the source clock for auxiliary clock divider
-        ACLKCON3bits.AOSCMD   = 0;     // Auxiliary Oscillator disabled
-        ACLKCON3bits.ASRCSEL  = 1;     // Primary Oscillator is the clock source for APLL
-        ACLKCON3bits.FRCSEL   = 0;     // Auxiliary Oscillator or Primary Oscillator is the clock source for APLL (determined by ASRCSEL bit)
-        ACLKCON3bits.APLLPOST = 0b110; // Divided by 2
-        ACLKCON3bits.APLLPRE  = 0b011; // Divided by 4  // Different from Isacc 8MHz -> 16 MHz
-
-        ACLKDIV3bits.APLLDIV  = 0b111; // Divide by 24
-
-        ACLKCON3bits.ENAPLL = 1;
-        while (ACLKCON3bits.APLLCK != 1);
-#endif // SYS_USB_HOST
-}
 #endif
+}
 
 enum adc_pin get_adc_from_gpio(enum gpio_pin gpio_pin)
 {
