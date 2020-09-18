@@ -216,6 +216,7 @@ enum pwm_pin {
  * 
  * See Microchip document DS70005131
  */
+#define dsPIC33_INTERNAL_RC_PLL         0b001    ///< Internal RC with PLL
 #define dsPIC33_PRIMARY_OSCILLATOR      0b010    ///< Primary Oscillator without PLL
 #define dsPIC33_PRIMARY_OSCILLATOR_PLL  0b011    ///< Primary Oscillator with PLL
 

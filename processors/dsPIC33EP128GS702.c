@@ -96,106 +96,41 @@ void cpu_init(void)
 
 static void clock_init(void)
 {
-#if 0
-	uint32_t fosc;             // See datasheet
-	uint32_t fsys;             // See datasheet
+#if 1
         uint8_t  clock;
 	uint8_t  n1;
 	uint8_t  n2;
-	uint8_t  loop;
 	uint16_t m;
-	boolean  found = FALSE;
 #endif
         /*
          * There's a special case if the required clock frequency is 1/2 the
          * Crystal Frequency then we can simple use Primary Clock.
 	 * NO PLL
          */
-	sys_clock_freq = SYS_CLOCK_FREQ;
-#if 0
-        if(sys_clock_freq != (BRD_CRYSTAL_FREQ/2)) {
-		fosc = sys_clock_freq * 2;
+	sys_clock_freq = 59850000;
 
-		if((fosc < 15000000) || (fosc > 120000000)) {
-			sys_clock_freq = BRD_CRYSTAL_FREQ/2;
-			fosc = sys_clock_freq * 2;
-		}
+	/*
+	 * N1 = 4 divide by 4 so 7.6 MHz > 1.9 MHz
+	 * 1.9 MHz * m (63) = 119,700,000 Hz
+	 * 119,700,000 Hz / N2 (2) = 59,850,000Hz
+	 */
+	n1 = 4;
+        m  = 63;
+	n2 = 2;
 
-		/*
-	         * Assuming that we're only interested in Whole MHz frequencies choose
-	         * N1 so that Fplli is 1MHz
-	         */
-		n1 = BRD_CRYSTAL_FREQ / 1000000;
+	clock = dsPIC33_INTERNAL_RC_PLL;
+	__builtin_write_OSCCONH(clock);
 
-		/*
-	         * Now want a value for N2 which satisfies Fsys / N2 = requested Freq
-	         */
-		found = FALSE;
-		for(loop = 0; loop < 3; loop++) {
-			n2 = 2 << loop;
-			fsys = fosc * n2;
-
-			if((fsys >= 120000000) && (fsys <= 340000000)) {
-				found = TRUE;
-				break;
-			}
-		}
-
-		if(!found) {
-			sys_clock_freq = BRD_CRYSTAL_FREQ/2;
-		} else {
-			/*
-	                 * Finally we want a value for m which is fsys/fplli we've set N1
-	                 * to force fplli to be 1MHz so m is simple fsys/1MHz
-			 */
-			m = fsys / 1000000;
-		}
-	}
-
-        /*
-         * There's a special case if the required clock frequency is 1/2 the
-         * Crystal Frequency then we can simple use Primary Clock.
-	 * NO PLL
-         */
-        if(sys_clock_freq == (BRD_CRYSTAL_FREQ/2)) {
-                // Initiate Clock Switch to Primary Oscillator
-                clock = dsPIC33_PRIMARY_OSCILLATOR;
-                __builtin_write_OSCCONH(clock);
-        } else {
-                // Initiate Clock Switch to Primary Oscillator with PLL (NOSC=0b011)
-                clock = dsPIC33_PRIMARY_OSCILLATOR_PLL;
-                __builtin_write_OSCCONH(clock);
-
-                /*
-                 * N1 = CLKDIVbits.PLLPRE + 2
-                 * N2 = 2 * (CLKDIVbits.PLLPOST + 1)
-                 * M  = PLLFBDbits.PLLDIV + 2
-                 *
-                 * CLOCK = (CRYSTAL * M) / (N1 * N2)
-                 */
-                CLKDIVbits.PLLPRE  = n1 - 2;
-
-		if(n2 == 2) {
-			CLKDIVbits.PLLPOST = 0b00;
-		} else if (n2 == 4) {
-			CLKDIVbits.PLLPOST = 0b01;
-		} else if (n2 == 8) {
-			CLKDIVbits.PLLPOST = 0b11;
-		}
-
-                PLLFBDbits.PLLDIV  = m - 2;
-        }
+	CLKDIVbits.PLLPRE  = n1 - 2;
+	CLKDIVbits.PLLPOST = 0b00;
+	PLLFBDbits.PLLDIV  = m - 2;
 
         __builtin_write_OSCCONL(OSCCON | 0x01);
 
         // Wait for Clock switch to occur
         while (OSCCONbits.COSC!= clock);
 
-        if(sys_clock_freq != (BRD_CRYSTAL_FREQ/2)) {
-                // Wait for PLL to lock
-                while (OSCCONbits.LOCK!= 1);
-        }
-#endif
+	while (OSCCONbits.LOCK!= 1);
 }
 
 enum adc_pin get_adc_from_gpio(enum gpio_pin gpio_pin)
