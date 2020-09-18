@@ -115,7 +115,7 @@ static void clock_init(void)
 	 * 119,700,000 Hz / N2 (2) = 59,850,000Hz
 	 */
 	n1 = 4;
-        m  = 63;
+        m  = 126;
 	n2 = 2;
 
 	clock = dsPIC33_INTERNAL_RC_PLL;
