@@ -29,6 +29,7 @@
 #define TAG "I2C_EP128"
 
 #include "libesoup/logger/serial_log.h"
+#include "libesoup/gpio/gpio.h"
 #include "libesoup/comms/i2c/i2c.h"
 
 extern struct i2c_channel_data i2c_channels[NUM_I2C_CHANNELS];
@@ -198,12 +199,14 @@ result_t i2c_py_reserve(struct i2c_device *device)
 {
 	uint8_t chan;
 
-	LOG_D("i2c_py_reserve()\n\r");
+	LOG_D("i2c_py_reserve(%d)\n\r", device->channel);
 	chan = device->channel;
 
 	switch (chan) {
 #if defined(SYS_I2C1)
 	case I2C1:
+		gpio_set(RB6, GPIO_MODE_DIGITAL_INPUT, 0);
+		gpio_set(RB7, GPIO_MODE_DIGITAL_INPUT, 0);
 		I2C1BRG              = 0x0d;
 
 		I2C1CONLbits.I2CSIDL = 0;  // Module continues in Idle.

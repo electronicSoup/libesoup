@@ -66,6 +66,7 @@ result_t i2c_reserve(struct i2c_device *device)
 {
 	result_t rc;
 
+	LOG_D("i2c_reserve(%d)\n\r", device->channel)
 	if (!i2c_channels[device->channel].active) {
 		i2c_channels[device->channel].active        = TRUE;
 		i2c_channels[device->channel].active_device = device;
