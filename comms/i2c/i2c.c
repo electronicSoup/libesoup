@@ -77,10 +77,10 @@ void __attribute__((__interrupt__, __no_auto_psv__)) _MI2C3Interrupt(void)
 {
 	uint8_t  rx_char;
 
-//	serial_printf("*%d*\n\r", current_state);
+	serial_printf("*%d*\n\r", current_state);
 	while (IFS5bits.MI2C3IF) {
 		IFS5bits.MI2C3IF    = 0;  // Clear Master ISR Flag
-//		serial_printf("+0x%x", I2C3STAT);
+		serial_printf("+0x%x", I2C3STAT);
 
                 if (I2C3_WRITE_COLLISION) {
                         LOG_E("IWCOL\n\r");
@@ -176,7 +176,7 @@ void __attribute__((__interrupt__, __no_auto_psv__)) _MI2C3Interrupt(void)
 
 void __attribute__((__interrupt__, __no_auto_psv__)) _SI2C3Interrupt(void)
 {
-	serial_printf("S");
+	serial_printf("IS");
 }
 
 result_t i2c_init(enum i2c_channel chan)
@@ -210,7 +210,7 @@ result_t i2c_init(enum i2c_channel chan)
                         IEC5bits.SI2C3IE    = 1;  // Enable Slave Interrupts
 
                         I2C3CONbits.I2CEN   = 1;
-                        I2C3CONbits.PEN     = 1;  // Send Stop
+//                        I2C3CONbits.PEN     = 1;  // Send Stop
                         current_state       = IDLE_STATE;
                         break;
                 default:

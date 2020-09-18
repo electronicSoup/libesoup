@@ -2,7 +2,7 @@
  * @file libesoup/core.c
  *
  * @author John Whitmore
- * 
+ *
  * @brief File containing the function to initialise the libesoup library
  *
  * Copyright 2017-2018 electronicSoup Limited
@@ -108,7 +108,7 @@ extern void SYSTEM_Initialize(  SYSTEM_STATE SYSTEM_STATE_USB_START );
 
 /*
  * The Instruction Clock Frequency being used by the system.
- * 
+ *
  * SYS_CLOCK_FREQ is the frequency requested by libesoup_config.h but that
  * may not be possible, if invalid.
  */
@@ -129,15 +129,8 @@ result_t libesoup_init(void)
 #endif // SYS_SERIAL_LOGGING
 	rc = 0;
 #endif
-	
+
 	cpu_init();
-	
-	/*
-	 * Allow the clock to settle
-	 */
-	for(loop = 0; loop < 0x100000; loop++) {
-                CLEAR_WDT
-	}
 
 #ifdef SYS_UART
 	uart_init();
@@ -154,7 +147,7 @@ result_t libesoup_init(void)
 	hw_timer_init();
 	__asm__ ("CLRWDT");
 #endif
-	
+
 #ifdef SYS_SW_TIMERS
 	sw_timer_init();
 	__asm__ ("CLRWDT");
@@ -165,7 +158,7 @@ result_t libesoup_init(void)
 	RC_CHECK
 	__asm__ ("CLRWDT");
 #endif
-		
+
 #ifdef SYS_JOBS
 	jobs_init();
 	__asm__ ("CLRWDT");
