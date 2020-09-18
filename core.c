@@ -5,7 +5,7 @@
  *
  * @brief File containing the function to initialise the libesoup library
  *
- * Copyright 2017-2018 electronicSoup Limited
+ * Copyright 2017-2020 electronicSoup Limited
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 2 of the GNU Lesser General Public License
@@ -66,7 +66,7 @@ extern void   uart_init(void);
 
 #if defined(SYS_I2C1) || defined(SYS_I2C2) || defined(SYS_I2C3)
 extern result_t i2c_tasks(void);
-extern result_t i2c_init(enum i2c_channel);
+extern result_t i2c_init(void);
 #endif
 
 #ifdef SYS_RAND
@@ -169,14 +169,8 @@ result_t libesoup_init(void)
 	__asm__ ("CLRWDT");
 #endif
 
-#if defined(SYS_I2C1)
-	i2c_init(I2C1);
-#endif
-#if defined(SYS_I2C2)
-	i2c_init(I2C2);
-#endif
-#if defined(SYS_I2C3)
-	i2c_init(I2C3);
+#if defined(SYS_I2C1) || defined(SYS_I2C2) || defined(SYS_I2C3)
+	i2c_init();
 #endif
 
 #ifdef SYS_RAND

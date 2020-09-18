@@ -7,7 +7,7 @@
 
 #include "libesoup/logger/serial_log.h"
 #include "libesoup/comms/i2c/i2c.h"
-#include "libesoup/comms/i2c/slave_24LCxx.h"
+#include "libesoup/comms/i2c/devices/24lcxx/slave_24LCxx.h"
 
 #include "libesoup/comms/i2c/test/Spin_Fv-1_progs.h"
 

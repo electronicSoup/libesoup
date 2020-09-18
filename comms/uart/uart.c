@@ -2,10 +2,10 @@
  * @file libesoup/comms/uart/uart.c
  *
  * @author John Whitmore
- * 
+ *
  * @brief UART functionality for the electronicSoup Cinnamon Bun
  *
- * Copyright 2017-2019 electronicSoup Limited
+ * Copyright 2017-2020 electronicSoup Limited
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 2 of the GNU Lesser General Public License
@@ -31,7 +31,7 @@
 
 #include "libesoup_config.h"
 
-#ifdef SYS_UART
+#if defined(SYS_UART1) || defined(SYS_UART2)
 
 #ifdef SYS_SERIAL_LOGGING
 #define DEBUG_FILE
@@ -75,30 +75,30 @@ struct uart {
 	uint16_t               tx_count;
 } uart;
 
-struct uart uarts[NUM_UARTS];
+struct uart uarts[NUM_UART_CHANNELS];
 
 /*
  * Local static Function prototypes
  */
-static void     uart_tx_isr(uint8_t uindex);
+static void     uart_tx_isr(enum uart_channel channel);
 
-static result_t uart_set_rx_pin(uint8_t uindex, enum gpio_pin pin);
-static result_t uart_set_tx_pin(uint8_t uindex, enum gpio_pin pin);
+static result_t uart_set_rx_pin(enum uart_channel channel, enum gpio_pin pin);
+static result_t uart_set_tx_pin(enum uart_channel channel, enum gpio_pin pin);
 static result_t uart_set_uart_config(struct uart_data *udata);
-static result_t uart_putchar(uint8_t uindex, uint8_t ch);
+static result_t uart_putchar(enum uart_channel channel, uint8_t ch);
 
-static result_t tx_buffer_write(uint8_t uindex, char ch);
-static char     tx_buffer_read (uint8_t uindex);
+static result_t tx_buffer_write(enum uart_channel channel, char ch);
+static char     tx_buffer_read (enum uart_channel channel);
 
 /*
  * Returns the number of bytes still waiting to be loaded in HW TX Buffer.
  */
-static uint16_t load_tx_buffer(uint8_t uindex);
+static uint16_t load_tx_buffer(enum uart_channel channel);
 
 /*
  * Interrupt Service Routines
  */
-#if defined(__dsPIC33EP256MU806__) || defined (__PIC24FJ256GB106__)
+#if (defined(__dsPIC33EP256MU806__) || defined (__PIC24FJ256GB106__) || defined(__dsPIC33EP128GS702__)) && defined(SYS_UART1)
 void _ISR __attribute__((__no_auto_psv__)) _U1TXInterrupt(void)
 {
 	while(U1_TX_ISR_FLAG) {
@@ -106,9 +106,9 @@ void _ISR __attribute__((__no_auto_psv__)) _U1TXInterrupt(void)
 		U1_TX_ISR_FLAG = 0;
 	}
 }
-#endif // #if defined(__dsPIC33EP256MU806__) || defined (__PIC24FJ256GB106__)
+#endif // #if defined(__dsPIC33EP256MU806__) || defined (__PIC24FJ256GB106__) || defined(__dsPIC33EP128GS702__)
 
-#if defined(__dsPIC33EP256MU806__) || defined (__PIC24FJ256GB106__)
+#if (defined(__dsPIC33EP256MU806__) || defined (__PIC24FJ256GB106__) || defined(__dsPIC33EP128GS702__)) && defined(SYS_UART2)
 void _ISR __attribute__((__no_auto_psv__)) _U2TXInterrupt(void)
 {
 	while(U2_TX_ISR_FLAG) {
@@ -116,9 +116,9 @@ void _ISR __attribute__((__no_auto_psv__)) _U2TXInterrupt(void)
 		U2_TX_ISR_FLAG = 0;
 	}
 }
-#endif // #if defined(__dsPIC33EP256MU806__) || defined (__PIC24FJ256GB106__)
+#endif // #if defined(__dsPIC33EP256MU806__) || defined (__PIC24FJ256GB106__) || defined(__dsPIC33EP128GS702__)
 
-#if defined(__dsPIC33EP256MU806__) || defined (__PIC24FJ256GB106__)
+#if (defined(__dsPIC33EP256MU806__) || defined (__PIC24FJ256GB106__)) && defined(SYS_UART3)
 void _ISR __attribute__((__no_auto_psv__)) _U3TXInterrupt(void)
 {
 	while(U3_TX_ISR_FLAG) {
@@ -128,7 +128,7 @@ void _ISR __attribute__((__no_auto_psv__)) _U3TXInterrupt(void)
 }
 #endif // #if defined(__dsPIC33EP256MU806__) || defined (__PIC24FJ256GB106__)
 
-#if defined(__dsPIC33EP256MU806__) || defined (__PIC24FJ256GB106__)
+#if (defined(__dsPIC33EP256MU806__) || defined (__PIC24FJ256GB106__)) && defined(SYS_UART4)
 void _ISR __attribute__((__no_auto_psv__)) _U4TXInterrupt(void)
 {
 	while(U4_TX_ISR_FLAG) {
@@ -138,11 +138,11 @@ void _ISR __attribute__((__no_auto_psv__)) _U4TXInterrupt(void)
 }
 #endif // #if defined(__dsPIC33EP256MU806__) || defined (__PIC24FJ256GB106__)
 
-static void uart_tx_isr(uint8_t uindex)
+static void uart_tx_isr(enum uart_channel channel)
 {
  	result_t rc;
 
- 	if((uindex >= NUM_UARTS) || (uarts[uindex].status != UART_RESERVED) || (uarts[uindex].udata == NULL)) {
+ 	if((channel >= NUM_UART_CHANNELS) || (uarts[channel].status != UART_RESERVED) || (uarts[channel].udata == NULL)) {
  		// Todo - Possibly call global status handler with error?
 		LOG_E("UART Null in ISR!\n\r");
 		return;
@@ -151,16 +151,16 @@ static void uart_tx_isr(uint8_t uindex)
 	/*
 	 * If the uC TX buffer is not full load it from the SW tx buffer
 	 */
- 	rc = load_tx_buffer(uindex);
+ 	rc = load_tx_buffer(channel);
  	if(rc < 0) {
  		LOG_E("load_tx_buffer()!\n\r");
  		return;
  	}
  	if (rc == 0) {
-		switch(uindex) {
-#ifdef UART_1
+		switch(channel) {
+#if defined(SYS_UART1)
 		case UART_1:
-#if defined(__dsPIC33EP256MU806__) || defined (__PIC24FJ256GB106__)
+#if defined(__dsPIC33EP256MU806__) || defined (__PIC24FJ256GB106__) || defined(__dsPIC33EP128GS702__)
 			/*
 			 * Can't use U2STAbits.TRMT to detect when Tx Queue is empty
 			 * as it ain't reliable at all.
@@ -180,8 +180,8 @@ static void uart_tx_isr(uint8_t uindex)
 				/*
                                  * Inform the higher layer we're finished
                                  */
-				if(uarts[uindex].udata->tx_finished != NULL)
-					uarts[uindex].udata->tx_finished(uarts[uindex].udata);
+				if(uarts[channel].udata->tx_finished != NULL)
+					uarts[channel].udata->tx_finished(uarts[channel].udata);
 			} else {
 				/*
 				 * Interrupt when the last character is shifted out of the Transmit
@@ -192,8 +192,8 @@ static void uart_tx_isr(uint8_t uindex)
 			}
 #endif // MicroController Selection
 			break;
-#endif // UART_1
-#ifdef UART_2
+#endif // SYS_UART1
+#if defined(SYS_UART2)
 		case UART_2:
 			/*
 			 * Can't use U2STAbits.TRMT to detect when Tx Queue is empty
@@ -214,8 +214,8 @@ static void uart_tx_isr(uint8_t uindex)
 				/*
                                  * Inform the higher layer we're finished
                                  */
- 				if(uarts[uindex].udata->tx_finished != NULL) 
-                                        uarts[uindex].udata->tx_finished(uarts[uindex].udata);
+ 				if(uarts[channel].udata->tx_finished != NULL)
+                                        uarts[channel].udata->tx_finished(uarts[channel].udata);
 			} else {
 				/*
 				 * Interrupt when the last character is shifted out of the Transmit
@@ -225,8 +225,8 @@ static void uart_tx_isr(uint8_t uindex)
 				U2STAbits.UTXISEL0 = 1;
 			}
 			break;
-#endif // UART_2
-#ifdef UART_3
+#endif // SYS_UART2
+#if defined(SYS_UART3)
 		case UART_3:
 			/*
 			 * Can't use U2STAbits.TRMT to detect when Tx Queue is empty
@@ -247,8 +247,8 @@ static void uart_tx_isr(uint8_t uindex)
 				/*
                                  * Inform the higher layer we're finished
                                  */
- 				if(uarts[uindex].udata->tx_finished != NULL) 
-                                        uarts[uindex].udata->tx_finished(uarts[uindex].udata);
+ 				if(uarts[channel].udata->tx_finished != NULL)
+                                        uarts[channel].udata->tx_finished(uarts[channel].udata);
 			} else {
 				/*
 				 * Interrupt when the last character is shifted out of the Transmit
@@ -258,8 +258,8 @@ static void uart_tx_isr(uint8_t uindex)
 				U3STAbits.UTXISEL0 = 1;
 			}
 			break;
-#endif // UART_3
-#ifdef UART_4
+#endif // SYS_UART3
+#if defined(SYS_UART4)
 		case UART_4:
 			/*
 			 * Can't use U2STAbits.TRMT to detect when Tx Queue is empty
@@ -280,8 +280,8 @@ static void uart_tx_isr(uint8_t uindex)
 				/*
                                  * Inform the higher layer we're finished
                                  */
- 				if(uarts[uindex].udata->tx_finished != NULL) 
-                                        uarts[uindex].udata->tx_finished(uarts[uindex].udata);
+ 				if(uarts[channel].udata->tx_finished != NULL)
+                                        uarts[channel].udata->tx_finished(uarts[channel].udata);
 			} else {
 				/*
 				 * Interrupt when the last character is shifted out of the Transmit
@@ -302,7 +302,7 @@ static void uart_tx_isr(uint8_t uindex)
 /*
  * Receive Interrupt Service Routines
  */
-#if defined(__dsPIC33EP256MU806__) || defined (__PIC24FJ256GB106__)
+#if (defined(__dsPIC33EP256MU806__) || defined (__PIC24FJ256GB106__) || defined(__dsPIC33EP128GS702__)) && defined(SYS_UART1)
 void _ISR __attribute__((__no_auto_psv__)) _U1RXInterrupt(void)
 {
 	uint8_t ch;
@@ -322,9 +322,9 @@ void _ISR __attribute__((__no_auto_psv__)) _U1RXInterrupt(void)
 		uarts[UART_1].udata->process_rx_char(UART_1, ch);
 	}
 }
-#endif // #if defined(__dsPIC33EP256MU806__) || defined (__PIC24FJ256GB106__)
+#endif // #if defined(__dsPIC33EP256MU806__) || defined (__PIC24FJ256GB106__) || defined(__dsPIC33EP128GS702__)
 
-#if defined(__dsPIC33EP256MU806__) || defined (__PIC24FJ256GB106__)
+#if (defined(__dsPIC33EP256MU806__) || defined (__PIC24FJ256GB106__) || defined(__dsPIC33EP128GS702__)) && defined(SYS_UART2)
 void _ISR __attribute__((__no_auto_psv__)) _U2RXInterrupt(void)
 {
 	uint8_t ch;
@@ -345,9 +345,9 @@ void _ISR __attribute__((__no_auto_psv__)) _U2RXInterrupt(void)
 		}
 	}
 }
-#endif // #if defined(__dsPIC33EP256MU806__) || defined (__PIC24FJ256GB106__)
+#endif // #if defined(__dsPIC33EP256MU806__) || defined (__PIC24FJ256GB106__) || defined(__dsPIC33EP128GS702__)
 
-#if defined(__dsPIC33EP256MU806__) || defined (__PIC24FJ256GB106__)
+#if (defined(__dsPIC33EP256MU806__) || defined (__PIC24FJ256GB106__)) && defined(SYS_UART3)
 void _ISR __attribute__((__no_auto_psv__)) _U3RXInterrupt(void)
 {
 	uint8_t ch;
@@ -369,7 +369,7 @@ void _ISR __attribute__((__no_auto_psv__)) _U3RXInterrupt(void)
 }
 #endif // #if defined(__dsPIC33EP256MU806__) || defined (__PIC24FJ256GB106__)
 
-#if defined(__dsPIC33EP256MU806__) || defined (__PIC24FJ256GB106__)
+#if (defined(__dsPIC33EP256MU806__) || defined (__PIC24FJ256GB106__)) && defined(SYS_UART4)
 void _ISR __attribute__((__no_auto_psv__)) _U4RXInterrupt(void)
 {
 	uint8_t ch;
@@ -395,7 +395,7 @@ result_t uart_calculate_mode(uint16_t *mode, uint8_t databits, uint8_t parity, u
 {
 	*mode = 0x00;
 
-#if defined(__dsPIC33EP256MU806__) || defined (__PIC24FJ256GB106__)
+#if defined(__dsPIC33EP256MU806__) || defined (__PIC24FJ256GB106__) || defined(__dsPIC33EP128GS702__)
 	*mode |= UARTEN_MASK;
 
 	if (databits == UART_8_DATABITS) {
@@ -419,7 +419,7 @@ result_t uart_calculate_mode(uint16_t *mode, uint8_t databits, uint8_t parity, u
 	if (rx_idle_level == UART_IDLE_LOW) {
 		*mode |= RXINV_MASK;
 	}
-        
+
         /*
          * There's a different BAUD Rate formula for High or Low Baud rate.
          * Have to investigate and merge dsPIC33 and PIC24
@@ -432,7 +432,7 @@ result_t uart_calculate_mode(uint16_t *mode, uint8_t databits, uint8_t parity, u
          * RCSTA and BAUDCON registers
          */
         TXSTAbits.SYNC = DISABLED;  // Asynchronous Mode
-        
+
 	if (databits == UART_8_DATABITS) {
 		if (parity == UART_PARITY_EVEN) {
 //			*mode |= PDSEL0_MASK;
@@ -467,33 +467,33 @@ result_t uart_calculate_mode(uint16_t *mode, uint8_t databits, uint8_t parity, u
  */
 result_t uart_init(void)
 {
-	uint8_t uindex;
+	enum uart_channel channel;
 
-	for(uindex = UART_1; uindex < NUM_UARTS; uindex++) {
-		uarts[uindex].status = UART_FREE;
-		uarts[uindex].udata  = NULL;
+	for(channel = 0; channel < NUM_UART_CHANNELS; channel++) {
+		uarts[channel].status = UART_FREE;
+		uarts[channel].udata  = NULL;
 	}
-        
+
         return(0);
 }
 
 #ifdef SYS_TEST_BUILD
 result_t uart_tx_buffer_count(struct uart_data *udata)
 {
-	uint8_t  uindex;
+	enum uart_channel channel;
 
-	uindex = udata->uindex;
+	channel = udata->channel;
 
- 	if(uindex >= NUM_UARTS)
+ 	if(channel >= NUM_UART_CHANNELS)
  		return(-ERR_BAD_INPUT_PARAMETER);
- 
- 	if(uarts[uindex].status != UART_RESERVED)
+
+ 	if(uarts[channel].status != UART_RESERVED)
  		return(-ERR_BAD_INPUT_PARAMETER);
- 
- 	if(uarts[uindex].udata != udata) 
+
+ 	if(uarts[channel].udata != udata)
  		return(-ERR_BAD_INPUT_PARAMETER);
-        
-	return(uarts[uindex].tx_count);
+
+	return(uarts[channel].tx_count);
 }
 #endif // SYS_TEST_BUILD
 
@@ -506,19 +506,19 @@ result_t uart_reserve(struct uart_data *udata)
 	 * Find a free uart to use
 	 */
 	result_t  rc;
-	uint8_t   uindex;
+	enum uart_channel channel;
 
-	for(uindex = UART_1; uindex < NUM_UARTS; uindex++) {
-		if(uarts[uindex].status == UART_FREE) {
+	for(channel = 0; channel < NUM_UART_CHANNELS; channel++) {
+		if(uarts[channel].status == UART_FREE) {
 
- 			uarts[uindex].udata          = udata;           // Keep track of calling structure
- 			uarts[uindex].status         = UART_RESERVED;   // Mark the UART as reserved
+ 			uarts[channel].udata          = udata;           // Keep track of calling structure
+ 			uarts[channel].status         = UART_RESERVED;   // Mark the UART as reserved
 
- 			uarts[uindex].tx_write_index = 0;               // Reset the counters
-			uarts[uindex].tx_read_index  = 0;
-			uarts[uindex].tx_count       = 0;
+ 			uarts[channel].tx_write_index = 0;               // Reset the counters
+			uarts[channel].tx_read_index  = 0;
+			uarts[channel].tx_count       = 0;
 
- 			udata->uindex = uindex;                         // Store the uart index for future reference.
+ 			udata->channel = channel;                         // Store the uart channel being used, for future reference.
 
 			/*
 			 * Set up the Rx & Tx pins
@@ -527,19 +527,19 @@ result_t uart_reserve(struct uart_data *udata)
  			if ((udata->rx_pin == INVALID_GPIO_PIN) && (udata->tx_pin == INVALID_GPIO_PIN))
  				return(-ERR_BAD_INPUT_PARAMETER);
 			if (udata->rx_pin != INVALID_GPIO_PIN) {
-				rc = uart_set_rx_pin(uindex, udata->rx_pin);
+				rc = uart_set_rx_pin(channel, udata->rx_pin);
 				RC_CHECK
 			}
 
 			if (udata->tx_pin != INVALID_GPIO_PIN) {
-				rc = uart_set_tx_pin(uindex, udata->tx_pin);
+				rc = uart_set_tx_pin(channel, udata->tx_pin);
 				RC_CHECK
 			}
 
 			rc = uart_set_uart_config(udata);
                         RC_CHECK
 
-			return(uindex);
+			return(channel);
 		}
 	}
 
@@ -548,54 +548,54 @@ result_t uart_reserve(struct uart_data *udata)
 
 result_t uart_release(struct uart_data *udata)
 {
-	uint8_t  uindex;
+	enum uart_channel channel;
 
-	uindex = udata->uindex;
+	channel = udata->channel;
 
- 	if (  (uindex >= NUM_UARTS)
- 	    ||(uarts[uindex].status != UART_RESERVED)
-	    ||(uarts[uindex].udata != udata)) {
+ 	if (  (channel >= NUM_UART_CHANNELS)
+ 	    ||(uarts[channel].status != UART_RESERVED)
+	    ||(uarts[channel].udata != udata)) {
 		return(-ERR_BAD_INPUT_PARAMETER);
 	}
 
- 	udata->uindex            = UART_BAD; 
-	uarts[uindex].udata      = NULL;
-	uarts[uindex].status     = UART_FREE;
+ 	udata->channel            = UART_BAD;
+	uarts[channel].udata      = NULL;
+	uarts[channel].status     = UART_FREE;
 
-	switch (uindex) {
-#ifdef UART_1
+	switch (channel) {
+#if defined(SYS_UART1)
         case UART_1:
                 U1_ENABLE        = DISABLED;
                 U1_RX_ISR_ENABLE = DISABLED;
                 U1_TX_ISR_ENABLE = DISABLED;
                 break;
-#endif // UART_1
-#ifdef UART_2
+#endif // SYS_UART1
+#if defined(SYS_UART2)
         case UART_2:
                 U2_ENABLE        = DISABLED;
                 U2_RX_ISR_ENABLE = DISABLED;
                 U2_TX_ISR_ENABLE = DISABLED;
                 break;
-#endif // UART_2
-#ifdef UART_3
+#endif // SYS_UART2
+#if defined(UART_3)
         case UART_3:
                 U3_ENABLE        = DISABLED;
                 U3_RX_ISR_ENABLE = DISABLED;
                 U3_TX_ISR_ENABLE = DISABLED;
                 break;
-#endif // UART_3
-#ifdef UART_4
+#endif // SYS_UART3
+#if defined(UART_4)
         case UART_4:
                 U4_ENABLE        = DISABLED;
                 U4_RX_ISR_ENABLE = DISABLED;
                 U4_TX_ISR_ENABLE = DISABLED;
                 break;
-#endif // UART_4
+#endif // SYS_UART4
         default:
 		return(-ERR_BAD_INPUT_PARAMETER);
 	}
 
-	udata->uindex = UART_BAD;
+	udata->channel = UART_BAD;
 
 	return(SUCCESS);
 }
@@ -603,15 +603,15 @@ result_t uart_release(struct uart_data *udata)
 #ifdef SYS_TEST_BUILD
 result_t uart_test_rx_buffer(struct uart_data *udata, uint8_t *buffer, uint16_t len)
 {
-	uint8_t   uindex;
-	uint8_t  *ptr;
-        int16_t   count = 0;
+	enum uart_channel channel;
+	uint8_t          *ptr;
+        int16_t           count = 0;
 
-	uindex = udata->uindex;
+	channel = udata->channel;
 
- 	if(  (uindex >= NUM_UARTS)
-	   ||(uarts[uindex].status != UART_RESERVED)
-	   ||(uarts[uindex].udata != udata)
+ 	if(  (channel >= NUM_UART_CHANNELS)
+	   ||(uarts[channel].status != UART_RESERVED)
+	   ||(uarts[channel].udata != udata)
 	   ||(udata->rx_pin == INVALID_GPIO_PIN)) {
  		return(-ERR_BAD_INPUT_PARAMETER);
 	}
@@ -619,7 +619,7 @@ result_t uart_test_rx_buffer(struct uart_data *udata, uint8_t *buffer, uint16_t 
 	ptr = buffer;
 
 	while(len--) {
-		uarts[uindex].udata->process_rx_char(uindex, *ptr++);
+		uarts[channel].udata->process_rx_char(channel, *ptr++);
                 count++;
 	}
 
@@ -629,16 +629,16 @@ result_t uart_test_rx_buffer(struct uart_data *udata, uint8_t *buffer, uint16_t 
 
 result_t uart_tx_buffer(struct uart_data *udata, uint8_t *buffer, uint16_t len)
 {
-	uint8_t   uindex;
-	uint8_t  *ptr;
-	result_t  rc = 0;
-        int16_t   count = 0;
+	enum uart_channel channel;
+	uint8_t          *ptr;
+	result_t          rc = 0;
+        int16_t           count = 0;
 
-	uindex = udata->uindex;
+	channel = udata->channel;
 
- 	if(  (uindex >= NUM_UARTS)
-	   ||(uarts[uindex].status != UART_RESERVED)
-	   ||(uarts[uindex].udata != udata)
+ 	if(  (channel >= NUM_UART_CHANNELS)
+	   ||(uarts[channel].status != UART_RESERVED)
+	   ||(uarts[channel].udata != udata)
 	   ||(udata->tx_pin == INVALID_GPIO_PIN)) {
  		return(-ERR_BAD_INPUT_PARAMETER);
 	}
@@ -646,7 +646,7 @@ result_t uart_tx_buffer(struct uart_data *udata, uint8_t *buffer, uint16_t len)
 	ptr = buffer;
 
 	while(len--) {
-		rc = uart_putchar(uindex, *ptr++);
+		rc = uart_putchar(channel, *ptr++);
                 RC_CHECK
                 count++;
 	}
@@ -656,40 +656,40 @@ result_t uart_tx_buffer(struct uart_data *udata, uint8_t *buffer, uint16_t len)
 
 result_t uart_tx_char(struct uart_data *udata, char ch)
 {
-	uint8_t  uindex;
+	enum uart_channel channel;
 
-	uindex = udata->uindex;
+	channel = udata->channel;
 
- 	if(uindex >= NUM_UARTS)
+ 	if(channel >= NUM_UART_CHANNELS)
  		return(-ERR_BAD_INPUT_PARAMETER);
-        if(uarts[uindex].udata != udata) {
+        if(uarts[channel].udata != udata) {
 		return(-ERR_BAD_INPUT_PARAMETER);
 	}
 
-        return(uart_putchar(uindex, ch));
+        return(uart_putchar(channel, ch));
 }
 
-static result_t uart_putchar(uint8_t uindex, uint8_t ch)
+static result_t uart_putchar(enum uart_channel channel, uint8_t ch)
 {
- 	if(uindex >= NUM_UARTS)
+ 	if(channel >= NUM_UART_CHANNELS)
  		return(-ERR_BAD_INPUT_PARAMETER);
- 	if(uarts[uindex].status != UART_RESERVED)
- 		return(-ERR_BAD_INPUT_PARAMETER); 
- 	if(uarts[uindex].udata->tx_pin == INVALID_GPIO_PIN)
+ 	if(uarts[channel].status != UART_RESERVED)
+ 		return(-ERR_BAD_INPUT_PARAMETER);
+ 	if(uarts[channel].udata->tx_pin == INVALID_GPIO_PIN)
  		return(-ERR_BAD_INPUT_PARAMETER);
 	/*
 	 * If the Transmitter queue is currently empty turn on chip select.
 	 */
-	switch(uindex) {
-#ifdef UART_1
+	switch(channel) {
+#if defined(SYS_UART1)
 	case UART_1:
-#if defined(__dsPIC33EP256MU806__) || defined (__PIC24FJ256GB106__)
+#if defined(__dsPIC33EP256MU806__) || defined (__PIC24FJ256GB106__) || defined(__dsPIC33EP128GS702__)
 		/*
 		 * If either the TX Buffer is full OR there are already characters in
 		 * our SW Buffer then add to SW buffer
 		 */
-		if(U1STAbits.UTXBF || uarts[uindex].tx_count) {
-			if (uarts[uindex].tx_count == 0) {
+		if(U1STAbits.UTXBF || uarts[channel].tx_count) {
+			if (uarts[channel].tx_count == 0) {
 				/*
 				 * Interrupt when a character is transferred to the Transmit Shift
 				 * Register (TSR), and as a result, the transmit buffer becomes empty
@@ -698,32 +698,32 @@ static result_t uart_putchar(uint8_t uindex, uint8_t ch)
 				U1STAbits.UTXISEL0 = 0;
 			}
 
-			return(tx_buffer_write(uindex, ch));
+			return(tx_buffer_write(channel, ch));
 		} else {
 			U1TXREG = ch;
 		}
 #elif defined(__18F2680) || defined(__18F4585)
-		if((uarts[uindex].tx_count == 0) && PIR1bits.TXIF) {
+		if((uarts[channel].tx_count == 0) && PIR1bits.TXIF) {
 			TXREG = ch;
 			return;
 		}
 
 		PIE1bits.TXIE = ENABLED;
 
-		return(tx_buffer_write(uindex, ch));
+		return(tx_buffer_write(channel, ch));
 #endif // #if defined(__18F2680) || defined(__18F4585)
 #if !defined(__XC8)
 		break;
 #endif
-#endif // UART_1
-#ifdef UART_2
+#endif // SYS_UART1
+#if defined(SYS_UART2)
 	case UART_2:
 		/*
 		 * If either the TX Buffer is full OR there are already characters in
 		 * our SW Buffer then add to SW buffer
 		 */
-		if(U2STAbits.UTXBF || uarts[uindex].tx_count) {
-			if (uarts[uindex].tx_count == 0) {
+		if(U2STAbits.UTXBF || uarts[channel].tx_count) {
+			if (uarts[channel].tx_count == 0) {
 				/*
 				 * Interrupt when a character is transferred to the Transmit Shift
 				 * Register (TSR), and as a result, the transmit buffer becomes empty
@@ -732,20 +732,20 @@ static result_t uart_putchar(uint8_t uindex, uint8_t ch)
 				U2STAbits.UTXISEL0 = 0;
 			}
 
-			return(tx_buffer_write(uindex, ch));
+			return(tx_buffer_write(channel, ch));
 		} else {
 			U2TXREG = ch;
 		}
 		break;
-#endif // UART_2
-#ifdef UART_3
+#endif // SYS_UART2
+#if defined(SYS_UART3)
 	case UART_3:
 		/*
 		 * If either the TX Buffer is full OR there are already characters in
 		 * our SW Buffer then add to SW buffer
 		 */
-		if(U3STAbits.UTXBF || uarts[uindex].tx_count) {
-			if (uarts[uindex].tx_count == 0) {
+		if(U3STAbits.UTXBF || uarts[channel].tx_count) {
+			if (uarts[channel].tx_count == 0) {
 				/*
 				 * Interrupt when a character is transferred to the Transmit Shift
 				 * Register (TSR), and as a result, the transmit buffer becomes empty
@@ -754,20 +754,20 @@ static result_t uart_putchar(uint8_t uindex, uint8_t ch)
 				U3STAbits.UTXISEL0 = 0;
 			}
 
-			return(tx_buffer_write(uindex, ch));
+			return(tx_buffer_write(channel, ch));
 		} else {
 			U3TXREG = ch;
 		}
 		break;
-#endif // UART_3
-#ifdef UART_4
+#endif // SYS_UART3
+#if defined(UART4)
 	case UART_4:
 		/*
 		 * If either the TX Buffer is full OR there are already characters in
 		 * our SW Buffer then add to SW buffer
 		 */
-		if(U4STAbits.UTXBF || uarts[uindex].tx_count) {
-			if (uarts[uindex].tx_count == 0) {
+		if(U4STAbits.UTXBF || uarts[channel].tx_count) {
+			if (uarts[channel].tx_count == 0) {
 				/*
 				 * Interrupt when a character is transferred to the Transmit Shift
 				 * Register (TSR), and as a result, the transmit buffer becomes empty
@@ -776,7 +776,7 @@ static result_t uart_putchar(uint8_t uindex, uint8_t ch)
 				U4STAbits.UTXISEL0 = 0;
 			}
 
-			return(tx_buffer_write(uindex, ch));
+			return(tx_buffer_write(channel, ch));
 		} else {
 			U4TXREG = ch;
 		}
@@ -788,140 +788,192 @@ static result_t uart_putchar(uint8_t uindex, uint8_t ch)
 #endif // __XC8
 		break;
 	}
-	
+
 	return(0);
 }
 
-static result_t tx_buffer_write(uint8_t uindex, char ch)
+static result_t tx_buffer_write(enum uart_channel channel, char ch)
 {
 	uint16_t tmp;
 
 	/*
 	 * Todo - This potential buffer overflow should be handled
 	 *        Might change the function to return an error code
-	 */	
-	if(uarts[uindex].tx_count < SYS_UART_TX_BUFFER_SIZE) {
-		uarts[uindex].tx_buffer[uarts[uindex].tx_write_index] = ch;
+	 */
+	if(uarts[channel].tx_count < SYS_UART_TX_BUFFER_SIZE) {
+		uarts[channel].tx_buffer[uarts[channel].tx_write_index] = ch;
 
 		/*
                  * Compiler don't like following two lines in a oner
                  */
-		tmp = ++(uarts[uindex].tx_write_index) % SYS_UART_TX_BUFFER_SIZE;
-		uarts[uindex].tx_write_index = tmp;
-		uarts[uindex].tx_count++;
+		tmp = ++(uarts[channel].tx_write_index) % SYS_UART_TX_BUFFER_SIZE;
+		uarts[channel].tx_write_index = tmp;
+		uarts[channel].tx_count++;
 		return(0);
 	}
 
 	return(-ERR_BUFFER_OVERFLOW);
 }
 
-static char tx_buffer_read(uint8_t uindex)
+static char tx_buffer_read(enum uart_channel channel)
 {
 	uint16_t tmp;
 	char     ch = 0x00;
-	
-	if(uarts[uindex].tx_count > 0) {
-		ch = uarts[uindex].tx_buffer[uarts[uindex].tx_read_index];
+
+	if(uarts[channel].tx_count > 0) {
+		ch = uarts[channel].tx_buffer[uarts[channel].tx_read_index];
 		/*
 	         * Compiler don't like following two lines in a oner
 	         */
-		tmp = ++(uarts[uindex].tx_read_index) % SYS_UART_TX_BUFFER_SIZE;
-		uarts[uindex].tx_read_index = tmp;
-		uarts[uindex].tx_count--;
+		tmp = ++(uarts[channel].tx_read_index) % SYS_UART_TX_BUFFER_SIZE;
+		uarts[channel].tx_read_index = tmp;
+		uarts[channel].tx_count--;
 	}
 	return(ch);
 }
 
 #if defined(__dsPIC33EP256MU806__)
-static result_t uart_set_rx_pin(uint8_t uindex, enum gpio_pin pin)
+static result_t uart_set_rx_pin(enum uart_channel channel, enum gpio_pin pin)
 {
 	int16_t rc;
-	
+
 	rc = gpio_set(pin, GPIO_MODE_DIGITAL_INPUT, 0);
 	RC_CHECK
 
 	rc = set_peripheral_input(pin);
 	RC_CHECK
 
-	switch (uindex) {
+	switch (channel) {
+#if defined(SYS_UART1)
 	case UART_1:
 		PPS_I_UART_1_RX = rc;
 		break;
-
+#endif // SYS_UART1
+#if defined(SYS_UART2)
 	case UART_2:
 		PPS_I_UART_2_RX = rc;
 		break;
-
+#endif // SYS_UART2
+#if defined(SYS_UART3)
 	case UART_3:
 		PPS_I_UART_3_RX = rc;
 		break;
-
+#endif // SYS_UART3
+#if defined(SYS_UART4)
 	case UART_4:
 		PPS_I_UART_4_RX = rc;
 		break;
+#endif // SYS_UART4
+	default:
+		rc = -ERR_BAD_INPUT_PARAMETER;
+		break;
 	}
 	return(0);
+}
+#elif defined(__dsPIC33EP128GS702__)
+static result_t uart_set_rx_pin(enum uart_channel channel, enum gpio_pin pin)
+{
+	int16_t rc;
+
+	rc = gpio_set(pin, GPIO_MODE_DIGITAL_INPUT, 0);
+	RC_CHECK
+
+	rc = set_peripheral_input(pin);
+	RC_CHECK
+
+	rc = SUCCESS;
+
+	switch (channel) {
+#if defined(SYS_UART1)
+	case UART_1:
+		PPS_I_UART_1_RX = rc;
+		break;
+#endif // SYS_UART1
+#if defined(SYS_UART2)
+	case UART_2:
+		PPS_I_UART_2_RX = rc;
+		break;
+#endif // SYS_UART2
+	default:
+		rc = -ERR_BAD_INPUT_PARAMETER;
+		break;
+	}
+	return(rc);
 }
 #elif defined (__PIC24FJ256GB106__)
-static result_t uart_set_rx_pin(uint8_t uindex, enum gpio_pin pin)
+static result_t uart_set_rx_pin(uart_channel, enum gpio_pin pin)
 {
 	result_t rc;
-	
+
 	rc = gpio_set(pin, GPIO_MODE_DIGITAL_INPUT, 0);
 	RC_CHECK
 
 	rc = set_peripheral_input(pin);
 	RC_CHECK
 
-	switch (uindex) {
+	rc = SUCCESS;
+	switch (channel) {
+#if defined(SYS_UART1)
 	case UART_1:
 		PPS_I_UART_1_RX = rc;
 		break;
-
+#endif
+#if defined(SYS_UART2)
 	case UART_2:
 		PPS_I_UART_2_RX = rc;
 		break;
-
+#endif // SYS_UART2
+#if defined(SYS_UART3)
 	case UART_3:
 		PPS_I_UART_3_RX = rc;
 		break;
-
+#endif // SYS_UART3
+#if defined(SYS_UART4)
 	case UART_4:
 		PPS_I_UART_4_RX = rc;
 		break;
+#endif // SYS_UART4
+	default:
+		rc = -ERR_BAD_INPUT_PARAMETER;
+		break;
 	}
-	
-	return(0);
+
+	return(rc);
 }
 #elif defined(__18F2680) || defined(__18F4585)
-static result_t uart_set_rx_pin(uint8_t uindex, enum gpio_pin pin)
+static result_t uart_set_rx_pin(enum uart_channel channel, enum gpio_pin pin)
 {
 //        TRISCbits.TRISC7 = INPUT_PIN;
 }
 #endif // MicroContoller Selection
 
 #if defined(__dsPIC33EP256MU806__)
-static result_t uart_set_tx_pin(uint8_t uindex, enum gpio_pin pin)
+static result_t uart_set_tx_pin(enum uart_channel channel, enum gpio_pin pin)
 {
 	result_t rc;
 	uint16_t tx_function;
 
-	switch (uindex) {
+	switch (channel) {
+#if defined(SYS_UART1)
 	case UART_1:
 		tx_function = PPS_O_UART_1_TX;
 		break;
-
+#endif // SYS_UART1
+#if defined(SYS_UART2)
 	case UART_2:
 		tx_function = PPS_O_UART_2_TX;
 		break;
-
+#endif // SYS_UART2
+#if defined(SYS_UART3)
 	case UART_3:
 		tx_function = PPS_O_UART_3_TX;
 		break;
-
+#endif // SYS_UART3
+#if defined(SYS_UART4)
 	case UART_4:
 		tx_function = PPS_O_UART_4_TX;
 		break;
+#endif // SYS_UART4
 	default:
 		return(-ERR_BAD_INPUT_PARAMETER);
 		break;
@@ -933,33 +985,27 @@ static result_t uart_set_tx_pin(uint8_t uindex, enum gpio_pin pin)
 	rc = set_peripheral_output(pin, tx_function);
 	RC_CHECK;
 
-	return(0);
+	return(SUCCESS);
 }
-#elif defined (__PIC24FJ256GB106__)
-static result_t uart_set_tx_pin(uint8_t uindex, enum gpio_pin pin)
+#elif defined(__dsPIC33EP128GS702__)
+static result_t uart_set_tx_pin(enum uart_channel channel, enum gpio_pin pin)
 {
-	result_t   rc;
-	uint8_t    tx_function = 0x00;
+	result_t rc;
+	uint16_t tx_function;
 
-	switch (uindex) {
+	switch (channel) {
+#if defined(SYS_UART1)
 	case UART_1:
 		tx_function = PPS_O_UART_1_TX;
 		break;
-
+#endif // SYS_UART2
+#if defined(SYS_UART2)
 	case UART_2:
 		tx_function = PPS_O_UART_2_TX;
 		break;
-
-	case UART_3:
-		tx_function = PPS_O_UART_3_TX;
-		break;
-
-	case UART_4:
-		tx_function = PPS_O_UART_4_TX;
-		break;
-		
+#endif // SYS_UART2
 	default:
-		LOG_E("Bad input parameters\n\r");
+		return(-ERR_BAD_INPUT_PARAMETER);
 		break;
 	}
 
@@ -968,25 +1014,65 @@ static result_t uart_set_tx_pin(uint8_t uindex, enum gpio_pin pin)
 
 	rc = set_peripheral_output(pin, tx_function);
 	RC_CHECK;
-	
-	return(0);
+
+	return(SUCCESS);
+}
+#elif defined (__PIC24FJ256GB106__)
+static result_t uart_set_tx_pin(enum uart_channel channel, enum gpio_pin pin)
+{
+	result_t   rc;
+	uint8_t    tx_function = 0x00;
+
+	switch (channel) {
+#if defined(SYS_UART1)
+	case UART_1:
+		tx_function = PPS_O_UART_1_TX;
+		break;
+#endif // SYS_UART 1
+#if defined(SYS_UART2)
+	case UART_2:
+		tx_function = PPS_O_UART_2_TX;
+		break;
+#endif // SYS_UART2
+#if defined(SYS_UART3)
+	case UART_3:
+		tx_function = PPS_O_UART_3_TX;
+		break;
+#endif // SYS_UART3
+#if defined(SYS_UART4)
+	case UART_4:
+		tx_function = PPS_O_UART_4_TX;
+		break;
+#endif // SYS_UART4
+	default:
+		return(-ERR_BAD_INPUT_PARAMETER);
+		break;
+	}
+
+	rc = gpio_set(pin, GPIO_MODE_DIGITAL_OUTPUT, 1);
+	RC_CHECK;
+
+	rc = set_peripheral_output(pin, tx_function);
+	RC_CHECK;
+
+	return(SUCCESS);
 }
 #elif defined(__18F2680) || defined(__18F4585)
-static result_t uart_set_tx_pin(uint8_t uindex, enum gpio_pin pin)
+static result_t uart_set_tx_pin(enum uart_channel channel, enum gpio_pin pin)
 {
         TRISCbits.TRISC6 = GPIO_OUTPUT_PIN;
-	return(0);
+	return(SUCCESS);
 }
 #endif // MicroContoller Selection
 
-#if defined(__dsPIC33EP256MU806__) || defined (__PIC24FJ256GB106__)
+#if defined(__dsPIC33EP256MU806__) || defined (__PIC24FJ256GB106__) || defined(__dsPIC33EP128GS702__)
 static result_t uart_set_uart_config(struct uart_data *udata)
 {
-        uint8_t uindex;
-        
-        uindex = udata->uindex; 
-	switch (uindex) {
-#ifdef UART_1
+	enum uart_channel channel;
+
+        channel = udata->channel;
+	switch (channel) {
+#if defined(SYS_UART1)
 	case UART_1:
 		U1MODE = udata->uart_mode;
 
@@ -1000,9 +1086,9 @@ static result_t uart_set_uart_config(struct uart_data *udata)
 		/*
 		 * with BRGH = 0 Slow Speed Mode:
 		 *        Baudrate - between  sys_clock_freq /(16 * 65536) and sys_clock_freq / 16
-		 *                   For sys_clock_freq = 16,000,000 Min 15bps Max 1Mbps 
-		 *                   For sys_clock_freq =  4,000,000 Min 3bps Max 250Kbps 
-		 * 
+		 *                   For sys_clock_freq = 16,000,000 Min 15bps Max 1Mbps
+		 *                   For sys_clock_freq =  4,000,000 Min 3bps Max 250Kbps
+		 *
 		 *                   Desired Baud Rate = FCY/(16 (UxBRG + 1))
 		 *
 		 *                   UxBRG = ((FCY/Desired Baud Rate)/16) - 1
@@ -1011,8 +1097,8 @@ static result_t uart_set_uart_config(struct uart_data *udata)
 		 *
 		 *
 		 * with BRGH = 1 : sys_clock_freq /(4 * 65536) <= Baudrate <= sys_clock_freq / 4
-		 *                   For sys_clock_freq = 16,000,000 Min 61bps Max 4Mbps 
-		 *                   For sys_clock_freq =  4,000,000 Min 15bps Max 1Mbps 
+		 *                   For sys_clock_freq = 16,000,000 Min 61bps Max 4Mbps
+		 *                   For sys_clock_freq =  4,000,000 Min 15bps Max 1Mbps
 		 */
 		if(udata->uart_mode & BRGH_MASK) {
 			/*
@@ -1035,12 +1121,12 @@ static result_t uart_set_uart_config(struct uart_data *udata)
 		} else {
 			U1_RX_ISR_ENABLE   = DISABLED;
 		}
-		
+
 		if (udata->tx_pin != INVALID_GPIO_PIN) {
 			U1_TX_ISR_PRIOTITY = 0x07;
 			U1_TX_ISR_ENABLE   = ENABLED;
 			U1STAbits.UTXEN    = ENABLED;
-			
+
 		} else {
 			U1_TX_ISR_ENABLE   = DISABLED;
 			U1STAbits.UTXEN    = DISABLED;
@@ -1048,9 +1134,9 @@ static result_t uart_set_uart_config(struct uart_data *udata)
 
 		U1_ENABLE = ENABLED;
 		break;
-#endif // UART_1
+#endif // SYS_UART1
 
-#ifdef UART_2
+#if defined(SYS_UART2)
 	case UART_2:
 		U2MODE = udata->uart_mode;
 
@@ -1063,9 +1149,9 @@ static result_t uart_set_uart_config(struct uart_data *udata)
 		/*
 		 * with BRGH = 0 Slow Speed Mode:
 		 *        Baudrate - between  sys_clock_freq /(16 * 65536) and sys_clock_freq / 16
-		 *                   For sys_clock_freq = 16,000,000 Min 15bps Max 1Mbps 
-		 *                   For sys_clock_freq =  4,000,000 Min 3bps Max 250Kbps 
-		 * 
+		 *                   For sys_clock_freq = 16,000,000 Min 15bps Max 1Mbps
+		 *                   For sys_clock_freq =  4,000,000 Min 3bps Max 250Kbps
+		 *
 		 *                   Desired Baud Rate = FCY/(16 (UxBRG + 1))
 		 *
 		 *                   UxBRG = ((FCY/Desired Baud Rate)/16) - 1
@@ -1074,8 +1160,8 @@ static result_t uart_set_uart_config(struct uart_data *udata)
 		 *
 		 *
 		 * with BRGH = 1 : sys_clock_freq /(4 * 65536) <= Baudrate <= sys_clock_freq / 4
-		 *                   For sys_clock_freq = 16,000,000 Min 61bps Max 4Mbps 
-		 *                   For sys_clock_freq =  4,000,000 Min 15bps Max 1Mbps 
+		 *                   For sys_clock_freq = 16,000,000 Min 61bps Max 4Mbps
+		 *                   For sys_clock_freq =  4,000,000 Min 15bps Max 1Mbps
 		 */
 		if(udata->uart_mode & BRGH_MASK) {
 			/*
@@ -1096,12 +1182,12 @@ static result_t uart_set_uart_config(struct uart_data *udata)
 		} else {
 			U2_RX_ISR_ENABLE   = DISABLED;
 		}
-		
+
 		if (udata->tx_pin != INVALID_GPIO_PIN) {
 			U2_TX_ISR_PRIOTITY = 0x07;
 			U2_TX_ISR_ENABLE   = ENABLED;
 			U2STAbits.UTXEN    = ENABLED;
-			
+
 		} else {
 			U2_TX_ISR_ENABLE   = DISABLED;
 			U2STAbits.UTXEN    = DISABLED;
@@ -1109,8 +1195,8 @@ static result_t uart_set_uart_config(struct uart_data *udata)
 
 		U2_ENABLE                  = ENABLED;
 		break;
-#endif // UART_2
-#ifdef UART_3
+#endif // SYS_UART2
+#if defined(SYS_UART3)
 	case UART_3:
 		U3MODE = udata->uart_mode;
 
@@ -1123,9 +1209,9 @@ static result_t uart_set_uart_config(struct uart_data *udata)
 		/*
 		 * with BRGH = 0 Slow Speed Mode:
 		 *        Baudrate - between  sys_clock_freq /(16 * 65536) and sys_clock_freq / 16
-		 *                   For sys_clock_freq = 16,000,000 Min 15bps Max 1Mbps 
-		 *                   For sys_clock_freq =  4,000,000 Min 3bps Max 250Kbps 
-		 * 
+		 *                   For sys_clock_freq = 16,000,000 Min 15bps Max 1Mbps
+		 *                   For sys_clock_freq =  4,000,000 Min 3bps Max 250Kbps
+		 *
 		 *                   Desired Baud Rate = FCY/(16 (UxBRG + 1))
 		 *
 		 *                   UxBRG = ((FCY/Desired Baud Rate)/16) - 1
@@ -1134,8 +1220,8 @@ static result_t uart_set_uart_config(struct uart_data *udata)
 		 *
 		 *
 		 * with BRGH = 1 : sys_clock_freq /(4 * 65536) <= Baudrate <= sys_clock_freq / 4
-		 *                   For sys_clock_freq = 16,000,000 Min 61bps Max 4Mbps 
-		 *                   For sys_clock_freq =  4,000,000 Min 15bps Max 1Mbps 
+		 *                   For sys_clock_freq = 16,000,000 Min 61bps Max 4Mbps
+		 *                   For sys_clock_freq =  4,000,000 Min 15bps Max 1Mbps
 		 */
 		if(udata->uart_mode & BRGH_MASK) {
 			/*
@@ -1156,12 +1242,12 @@ static result_t uart_set_uart_config(struct uart_data *udata)
 		} else {
 			U3_RX_ISR_ENABLE   = DISABLED;
 		}
-		
+
 		if (udata->tx_pin != INVALID_GPIO_PIN) {
 			U3_TX_ISR_PRIOTITY = 0x07;
 			U3_TX_ISR_ENABLE   = ENABLED;
 			U3STAbits.UTXEN    = ENABLED;
-			
+
 		} else {
 			U3_TX_ISR_ENABLE   = DISABLED;
 			U3STAbits.UTXEN    = DISABLED;
@@ -1169,8 +1255,8 @@ static result_t uart_set_uart_config(struct uart_data *udata)
 
 		U3_ENABLE                  = ENABLED;
 		break;
-#endif // UART_3
-#ifdef UART_4
+#endif // SYS_UART3
+#if defined(SYS_UART4)
 	case UART_4:
 		U4MODE = udata->uart_mode;
 
@@ -1183,9 +1269,9 @@ static result_t uart_set_uart_config(struct uart_data *udata)
 		/*
 		 * with BRGH = 0 Slow Speed Mode:
 		 *        Baudrate - between  sys_clock_freq /(16 * 65536) and sys_clock_freq / 16
-		 *                   For sys_clock_freq = 16,000,000 Min 15bps Max 1Mbps 
-		 *                   For sys_clock_freq =  4,000,000 Min 3bps Max 250Kbps 
-		 * 
+		 *                   For sys_clock_freq = 16,000,000 Min 15bps Max 1Mbps
+		 *                   For sys_clock_freq =  4,000,000 Min 3bps Max 250Kbps
+		 *
 		 *                   Desired Baud Rate = FCY/(16 (UxBRG + 1))
 		 *
 		 *                   UxBRG = ((FCY/Desired Baud Rate)/16) - 1
@@ -1194,8 +1280,8 @@ static result_t uart_set_uart_config(struct uart_data *udata)
 		 *
 		 *
 		 * with BRGH = 1 : sys_clock_freq /(4 * 65536) <= Baudrate <= sys_clock_freq / 4
-		 *                   For sys_clock_freq = 16,000,000 Min 61bps Max 4Mbps 
-		 *                   For sys_clock_freq =  4,000,000 Min 15bps Max 1Mbps 
+		 *                   For sys_clock_freq = 16,000,000 Min 61bps Max 4Mbps
+		 *                   For sys_clock_freq =  4,000,000 Min 15bps Max 1Mbps
 		 */
 		if(udata->uart_mode & BRGH_MASK) {
 			/*
@@ -1216,12 +1302,12 @@ static result_t uart_set_uart_config(struct uart_data *udata)
 		} else {
 			U4_RX_ISR_ENABLE   = DISABLED;
 		}
-		
+
 		if (udata->tx_pin != INVALID_GPIO_PIN) {
 			U4_TX_ISR_PRIOTITY = 0x07;
 			U4_TX_ISR_ENABLE   = ENABLED;
 			U3STAbits.UTXEN    = ENABLED;
-			
+
 		} else {
 			U4_TX_ISR_ENABLE   = DISABLED;
 			U4STAbits.UTXEN    = DISABLED;
@@ -1229,12 +1315,11 @@ static result_t uart_set_uart_config(struct uart_data *udata)
 
 		U4_ENABLE                  = ENABLED;
 		break;
-#endif // UART_4
+#endif // SYS_UART4
 	default:
-		LOG_E("Bad UART passed\n\r");
  		return(-ERR_BAD_INPUT_PARAMETER);
 	}
-        return(0);
+        return(SUCCESS);
 }
 #endif  // defined(__dsPIC33EP256MU806__) || defined (__PIC24FJ256GB106__)
 
@@ -1276,76 +1361,77 @@ static void uart_set_uart_config(struct uart_data *udata)
 /*
  * Returns the number of bytes still waiting to be loaded in HW TX Buffer.
  */
-static uint16_t load_tx_buffer(uint8_t uindex)
+static uint16_t load_tx_buffer(enum uart_channel channel)
 {
-	switch (uindex) {
-#ifdef UART_1
+	switch (channel) {
+#if defined(SYS_UART1)
 	case UART_1:
-#if defined(__dsPIC33EP256MU806__) || defined (__PIC24FJ256GB106__)
+#if defined(__dsPIC33EP256MU806__) || defined (__PIC24FJ256GB106__) || defined(__dsPIC33EP128GS702__)
 		/*
 		 * If the TX buffer is not full load it from the circular buffer
 		 */
-		while ((!U1STAbits.UTXBF) && (uarts[uindex].tx_count)) {
-			U1TXREG = tx_buffer_read(uindex);
+		while ((!U1STAbits.UTXBF) && (uarts[channel].tx_count)) {
+			U1TXREG = tx_buffer_read(channel);
 		}
 
-		return(uarts[uindex].tx_count);
+		return(uarts[channel].tx_count);
 #elif defined(__18F2680) || defined(__18F4585)
 		/*
                  * The TXIF Interrupt is cleared by writing to TXREG it
                  * cannot be cleared by SW directly.
                  */
-		if(uarts[uindex].tx_count > 0) {
-			TXREG = tx_buffer_read(uindex);
+		if(uarts[channel].tx_count > 0) {
+			TXREG = tx_buffer_read(channel);
 		} else {
 			PIE1bits.TXIE = DISABLED;
 		}
-		return(uarts[uindex].tx_count);
+		return(uarts[channel].tx_count);
 #endif // MicroController selection
 #ifndef __XC8
 		break;
-#endif
-#endif // UART_1
-#ifdef UART_2
+#endif // __XC8
+#endif // SYS_UART1
+#if defined(SYS_UART2)
 	case UART_2:
 		/*
 		 * If the TX buffer is not full load it from the circular buffer
 		 */
-		while ((!U2STAbits.UTXBF) && (uarts[uindex].tx_count)) {
-			U2TXREG = tx_buffer_read(uindex);
+		while ((!U2STAbits.UTXBF) && (uarts[channel].tx_count)) {
+			U2TXREG = tx_buffer_read(channel);
 		}
 
-		return(uarts[uindex].tx_count);
+		return(uarts[channel].tx_count);
 		break;
-#endif // UART_2
-#ifdef UART_3
+#endif // SYS_UART2
+#if defined(SYS_UART3)
 	case UART_3:
 		/*
 		 * If the TX buffer is not full load it from the circular buffer
 		 */
-		while ((!U3STAbits.UTXBF) && (uarts[uindex].tx_count)) {
-			U3TXREG = tx_buffer_read(uindex);
+		while ((!U3STAbits.UTXBF) && (uarts[channel].tx_count)) {
+			U3TXREG = tx_buffer_read(channel);
 		}
 
-		return(uarts[uindex].tx_count);
+		return(uarts[channel].tx_count);
 		break;
-#endif // UART_3
-#ifdef UART_4
+#endif // SYS_UART3
+#if defined(SYS_UART4)
 	case UART_4:
 		/*
 		 * If the TX buffer is not full load it from the circular buffer
 		 */
-		while ((!U4STAbits.UTXBF) && (uarts[uindex].tx_count)) {
-			U4TXREG = tx_buffer_read(uindex);
+		while ((!U4STAbits.UTXBF) && (uarts[channel].tx_count)) {
+			U4TXREG = tx_buffer_read(channel);
 		}
 
-		return(uarts[uindex].tx_count);
+		return(uarts[channel].tx_count);
 		break;
-#endif // UART_4
+#endif // SYS_UART4
+	default:
+ 		return(-ERR_BAD_INPUT_PARAMETER);
+		break;
 	}
-
-	LOG_E("load_tx_buffer() Bad UART\n\r");
-	return(0);
+	return(SUCCESS);
 }
 
 #if defined(__18F2680) || defined(__18F4585)
@@ -1366,4 +1452,4 @@ void pic18f_uart_isr(void)
 }
 #endif // (__18F2680) || (__18F4585)
 
-#endif // SYS_UART
+#endif // defined(SYS_UART1) || defined(SYS_UART2)

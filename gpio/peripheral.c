@@ -2,7 +2,7 @@
  * @file libesoup/gpio/peripheral.c
  *
  * @author John Whitmore
- * 
+ *
  * Copyright 2018 electronicSoup Limited
  *
  * This program is free software; you can redistribute it and/or modify
@@ -26,8 +26,8 @@
 int16_t set_peripheral_input(enum gpio_pin pin)
 {
 	int16_t  ppin;
-	
-	switch(pin) {	
+
+	switch(pin) {
 	case RB0:
 #if defined(__dsPIC33EP256MU806__)
 		ppin = 32;
@@ -465,7 +465,79 @@ int16_t set_peripheral_input(enum gpio_pin pin)
 #error Uncoded Peripheral functions
 #endif
 		break;
-		
+
+	default:
+		ppin = -ERR_BAD_INPUT_PARAMETER;
+		break;
+	}
+	return(ppin);
+}
+#elif defined(__dsPIC33EP128GS702__)
+int16_t set_peripheral_input(enum gpio_pin pin)
+{
+	int16_t  ppin;
+
+	switch(pin) {
+	case RA0:
+		ppin = 16;
+		break;
+	case RA1:
+		ppin = 17;
+		break;
+	case RA2:
+		ppin = 18;
+		break;
+	case RA3:
+		ppin = 19;
+		break;
+	case RA4:
+		ppin = 20;
+		break;
+	case RB0:
+		ppin = 32;
+		break;
+	case RB1:
+		ppin = 33;
+		break;
+	case RB2:
+		ppin = 34;
+		break;
+	case RB3:
+		ppin = 35;
+		break;
+	case RB4:
+		ppin = 36;
+		break;
+	case RB5:
+		ppin = 37;
+		break;
+	case RB6:
+		ppin = 38;
+		break;
+	case RB7:
+		ppin = 39;
+		break;
+	case RB8:
+		ppin = 40;
+		break;
+	case RB9:
+		ppin = 41;
+		break;
+	case RB11:
+		ppin = 43;
+		break;
+	case RB12:
+		ppin = 44;
+		break;
+	case RB13:
+		ppin = 45;
+		break;
+	case RB14:
+		ppin = 46;
+		break;
+	case RB15:
+		ppin = 47;
+		break;
 	default:
 		ppin = -ERR_BAD_INPUT_PARAMETER;
 		break;
@@ -478,7 +550,7 @@ int16_t set_peripheral_input(enum gpio_pin pin)
 int16_t set_peripheral_output(enum gpio_pin pin, uint16_t function)
 {
 	result_t rc = 0;
-	
+
 	switch(pin) {
 	case RB0:
 #if defined(__dsPIC33EP256MU806__)
@@ -650,7 +722,7 @@ int16_t set_peripheral_output(enum gpio_pin pin, uint16_t function)
 #else
 #error Uncoded Peripheral functions
 #endif
-		break;		
+		break;
 	case RD8:
 #if defined(__dsPIC33EP256MU806__)
 		rc = -ERR_BAD_INPUT_PARAMETER;
@@ -785,7 +857,7 @@ int16_t set_peripheral_output(enum gpio_pin pin, uint16_t function)
 #else
 #error Uncoded Peripheral functions
 #endif
-		break;		
+		break;
 	case RG7:
 #if defined(__dsPIC33EP256MU806__)
 		rc = -ERR_BAD_INPUT_PARAMETER;
@@ -794,7 +866,7 @@ int16_t set_peripheral_output(enum gpio_pin pin, uint16_t function)
 #else
 #error Uncoded Peripheral functions
 #endif
-		break;		
+		break;
 	case RG8:
 #if defined(__dsPIC33EP256MU806__)
 		RPOR14bits.RP120R = function;
@@ -803,7 +875,7 @@ int16_t set_peripheral_output(enum gpio_pin pin, uint16_t function)
 #else
 #error Uncoded Peripheral functions
 #endif
-		break;		
+		break;
 	case RG9:
 #if defined(__dsPIC33EP256MU806__)
 		rc = -ERR_BAD_INPUT_PARAMETER;
@@ -812,12 +884,85 @@ int16_t set_peripheral_output(enum gpio_pin pin, uint16_t function)
 #else
 #error Uncoded Peripheral functions
 #endif
-		break;		
+		break;
 	default:
 		rc = -ERR_BAD_INPUT_PARAMETER;
 		break;
 	}
-	
+
+	return(rc);
+}
+#elif defined(__dsPIC33EP128GS702__)
+int16_t set_peripheral_output(enum gpio_pin pin, uint16_t function)
+{
+	result_t rc = 0;
+
+	switch(pin) {
+	case RA0:  // RP16
+		RPOR0bits.RP16R = function;
+		break;
+	case RA1:  // RP17
+		RPOR0bits.RP17R = function;
+		break;
+	case RA2:  // RP18
+		RPOR1bits.RP18R = function;
+		break;
+	case RA3:  // RP19
+		RPOR1bits.RP19R = function;
+		break;
+	case RA4:  // PR20
+		RPOR2bits.RP20R = function;
+		break;
+	case RB0:  // RP32
+		RPOR2bits.RP32R = function;
+		break;
+	case RB1:  // RP33
+		RPOR3bits.RP33R = function;
+		break;
+	case RB2:  // 34
+		RPOR3bits.RP34R = function;
+		break;
+	case RB3:  // 35
+		RPOR4bits.RP35R = function;
+		break;
+	case RB4:  // 36
+		RPOR4bits.RP36R = function;
+		break;
+	case RB5:  // 37
+		RPOR5bits.RP37R = function;
+		break;
+	case RB6:  // 38
+		RPOR5bits.RP38R = function;
+		break;
+	case RB7:  // 39
+		RPOR6bits.RP39R = function;
+		break;
+	case RB8:  // 40
+		RPOR6bits.RP40R = function;
+		break;
+	case RB9:  // 41
+		RPOR7bits.RP41R = function;
+		break;
+	case RB11: // 43
+		RPOR7bits.RP43R = function;
+		break;
+	case RB12: // 44
+		RPOR8bits.RP44R = function;
+		break;
+	case RB13: // 45
+		RPOR8bits.RP45R = function;
+		break;
+	case RB14: //46
+		RPOR9bits.RP46R = function;
+		break;
+	case RB15: //47
+		RPOR9bits.RP47R = function;
+		break;
+	default:
+		rc = -ERR_BAD_INPUT_PARAMETER;
+		break;
+	}
+
 	return(rc);
 }
 #endif // #if defined(__dsPIC33EP256MU806__) || defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__)
