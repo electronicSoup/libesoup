@@ -24,6 +24,7 @@
 #ifndef _ES_dsPIC33EP128GS702_H
 #define _ES_dsPIC33EP128GS702_H
 
+#include "libesoup_config.h"
 #include <xc.h>
 
 #define DISABLED    0   ///< Disable a uC Feature 

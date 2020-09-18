@@ -33,7 +33,7 @@
  * file defines the requested instruction clock frequency, which will be 
  * configured, as part of libesoup_init() on startup.
  */
-//#define BRD_CRYSTAL_FREQ 16000000
+#define BRD_CRYSTAL_FREQ 7600000
 
 /**
  * @brief Serial Logging pin configuration
