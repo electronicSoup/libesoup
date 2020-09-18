@@ -96,6 +96,7 @@ void cpu_init(void)
 
 static void clock_init(void)
 {
+#if 0
 	uint32_t fosc;             // See datasheet
 	uint32_t fsys;             // See datasheet
         uint8_t  clock;
@@ -104,7 +105,7 @@ static void clock_init(void)
 	uint8_t  loop;
 	uint16_t m;
 	boolean  found = FALSE;
-
+#endif
         /*
          * There's a special case if the required clock frequency is 1/2 the
          * Crystal Frequency then we can simple use Primary Clock.

@@ -22,9 +22,9 @@
 #endif // defined(SYS_SERIAL_LOGGING)
 
 #define SYS_I2C1
-#define SYS_SLV_24LC64
+#define SYS_SLV_24LCxx
 //#define SYS_TEST_MASTER_24LC64
-#define SYS_TEST_SLAVE_24LC64
+#define SYS_TEST_SLAVE_24LCxx
 /*
  * Include a board file
  */
