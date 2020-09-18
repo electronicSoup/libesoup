@@ -211,9 +211,14 @@ result_t i2c_py_reserve(struct i2c_device *device)
 		I2C1CONLbits.A10M    = 0;  // 7 bit mode
 		I2C1CONLbits.DISSLW  = 1;  // Disable Slew rate.
 		I2C1CONLbits.SMEN    = 0;  // Disable SMBus thresholds
-		I2C1CONLbits.GCEN    = 0;  // Disable General call address
+		I2C1CONLbits.GCEN    = 1;  // Enable General call address
 		I2C1CONLbits.STREN   = 0;  // Disable clock stretching
 		I2C1CONLbits.ACKDT   = 0;  // Send /ACK to acknowledge
+
+		I2C1CONHbits.SCIE    = 1;  // Enable Start ISR
+		I2C1CONHbits.PCIE    = 1;  // Enable Stop ISR
+		I2C1MSK           = 0xff;  // Don't care
+		I2C1ADD           = 0xa0;
 
 		IFS10bits.I2C1BCIF   = 0;
 		IFS1bits.MI2C1IF     = 0;  // Clear Master ISR Flag
@@ -222,7 +227,7 @@ result_t i2c_py_reserve(struct i2c_device *device)
 		IEC1bits.SI2C1IE     = 1;  // Enable Slave Interrupts
 
 		I2C1CONLbits.I2CEN   = 1;
-		I2C1CONLbits.PEN     = 1;  // Send Stop
+//		I2C1CONLbits.PEN     = 1;  // Send Stop
 		break;
 #endif
 #if defined(SYS_I2C2)
