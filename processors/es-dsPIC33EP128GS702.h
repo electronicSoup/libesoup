@@ -132,6 +132,22 @@ enum i2c_channel {
         NUM_I2C_CHANNELS
 };
 
+/*
+ * SPI Channels
+ */
+enum spi_channel {
+#ifdef SYS_SPI1
+        SPI1,
+#endif
+#ifdef SYS_SPI2
+        SPI2,
+#endif
+#ifdef SYS_SPI3
+        SPI3,
+#endif
+        NUM_SPI_CHANNELS
+};
+
 /**
  * @brief GPIO Pins available in the uC
  */

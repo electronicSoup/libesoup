@@ -20,8 +20,11 @@
 #endif // defined(SYS_SERIAL_LOGGING)
 
 #define SYS_I2C1
-#define SYS_I2C2
 #define SYS_SLV_24LC64
+
+#define SYS_SPI1
+//#define SYS_SPI2
+//#define SYS_SPI3
 
 /*
  * Include a board file

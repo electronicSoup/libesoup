@@ -48,7 +48,7 @@ extern void   sw_timer_init(void);
 extern void   timer_tick(void);
 #endif
 
-#ifdef SYS_UART
+#if defined(SYS_UART1) || defined(SYS_UART2) || defined(SYS_UART3) || defined(SYS_UART4)
 extern void   uart_init(void);
 #endif
 
@@ -60,8 +60,8 @@ extern void   uart_init(void);
 #include "libesoup/timers/rtc.h"
 #endif
 
-#ifdef SYS_SPI_BUS
-#include "libesoup/comms/spi/spi.h"
+#if defined(SYS_SPI1) || defined(SYS_SPI2) || defined(SYS_SPI3)
+extern result_t      spi_init(void);
 #endif
 
 #if defined(SYS_I2C1) || defined(SYS_I2C2) || defined(SYS_I2C3)
@@ -139,7 +139,7 @@ result_t libesoup_init(void)
                 CLEAR_WDT
 	}
 
-#ifdef SYS_UART
+#if defined(SYS_UART1) || defined(SYS_UART2) || defined(SYS_UART3) || defined(SYS_UART4)
 	uart_init();
 	__asm__ ("CLRWDT");
 #endif
@@ -171,7 +171,7 @@ result_t libesoup_init(void)
 	__asm__ ("CLRWDT");
 #endif
 
-#ifdef SYS_SPI_BUS
+#if defined(SYS_SPI1) || defined(SYS_SPI2) || defined(SYS_SPI3)
         spi_init();
 	__asm__ ("CLRWDT");
 #endif
