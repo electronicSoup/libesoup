@@ -184,7 +184,10 @@ void __attribute__((__interrupt__, __no_auto_psv__)) _MI2C2Interrupt(void)
 #ifdef SYS_I2C1
 void __attribute__((__interrupt__, __no_auto_psv__)) _SI2C1Interrupt(void)
 {
-	serial_printf("iS");
+	while (IFS1bits.SI2C1IF) {
+		IFS1bits.SI2C1IF    = 0;  // Clear Master ISR Flag
+		serial_printf("0x%x\n\r", I2C1STAT);
+	}
 }
 #endif
 
