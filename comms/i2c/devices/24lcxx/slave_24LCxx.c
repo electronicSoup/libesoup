@@ -38,6 +38,9 @@
  */
 //static void i2c3_send_next(enum i2c_channel);
 
+#define SDA1_PIN RB7
+#define SCL1_PIN RB6
+#if 0
 #define I2C1_STARTED         I2C1STATbits.S
 #define I2C1_STOPPED         I2C1STATbits.P
 #define I2C1_RBF             I2C1STATbits.RBF
@@ -57,22 +60,25 @@ static uint8_t  *program = LLRR;
 static uint16_t tx_index = 0;
 static uint16_t rx_count = 0;
 static uint16_t address  = 0;
-
+#endif
 void __attribute__((__interrupt__, __no_auto_psv__)) _MI2C1Interrupt(void)
 {
-	serial_printf("M*\n\r");
+	serial_printf("*M*\n\r");
 }
 
 void __attribute__((__interrupt__, __no_auto_psv__)) _SI2C1Interrupt(void)
 {
 	uint8_t  rx_byte;
 
-	serial_printf("S ");
-	while (IFS1bits.SI2C1IF) {
-		IFS1bits.SI2C1IF    = 0;  // Clear ISR Flag
+	serial_printf("*S* ");
+	while (IFS1bits.SI2C1IF) {    // || I2C1STATbits.S) {
+//	while (IFS1bits.SI2C1IF || I2C1STATbits.S) {
+		IFS1bits.SI2C1IF    = 0;
 		serial_printf(".");
-		if (I2C1_STOPPED) {
+		if (I2C1STATbits.P) {
 			serial_printf("!");
+			TRISBbits.TRISB7 = 1;
+#if 0
 			if (program == LLRR) {
 				program = LRRL;
 			} else {
@@ -81,39 +87,51 @@ void __attribute__((__interrupt__, __no_auto_psv__)) _SI2C1Interrupt(void)
 			tx_index = 0;
 			rx_count = 0;
 			address  = 0;
-		} else if (I2C1_STARTED) {
-			if(I2C1_RBF) {
-				serial_printf("r%d", rx_count);
+#endif
+		} else if (I2C1STATbits.S) {
+			if(I2C1STATbits.RBF) {
+//				serial_printf("R%d", rx_count);
+				serial_printf("R");
 				rx_byte = I2C1RCV;
+#if 0
 				if(rx_count == 0) {
-					serial_printf("z0x%x", rx_byte);
+					serial_printf("-0x%x", rx_byte);
 					rx_count++;
 				} else if(rx_count == 1) {
-					serial_printf("1-0x%x", rx_byte);
+					serial_printf("-0x%x", rx_byte);
 					address = rx_byte;
 					address = address << 8;
 					rx_count++;
 				} else if (rx_count == 2) {
-					serial_printf("2-0x%x", rx_byte);
+					serial_printf("-0x%x", rx_byte);
 					address |= rx_byte;
 					rx_count++;
-					serial_printf("A0x%x", address);
+					serial_printf(" A0x%x", address);
 				} else {
 					rx_count++;
 					serial_printf("D");
 				}
+#endif
 			}
+#if 1
+			if (I2C1STATbits.R_W) {
+				serial_printf("T");
+				TRISBbits.TRISB7 = 0;
+//				while(I2C1_READ && I2C1_STARTED) {
+//					if(I2C1_STARTED) {
+						while(I2C1STATbits.TBF);
+						serial_printf("\n\r");
+						I2C1TRN = 0x55; //*program++;
+//						serial_printf("+");
+						I2C1STATbits.TBF = 1;
+//					}
+//				}
+			}
+#endif
 
-			if (I2C1_READ) {
-				serial_printf("r");
-				if(!I2C1STATbits.TBF) {
-					I2C2TRN = *program++;
-					I2C1STATbits.TBF = 1;
-				}
-			}
 		}
 
-		if (I2C1_WRITE_COLLISION) {
+		if (I2C1STATbits.IWCOL) {
 			serial_printf("V");
 		}
 	}
@@ -127,10 +145,8 @@ void __attribute__((__interrupt__, __no_auto_psv__)) _I2C1BCInterrupt(void)
 
 result_t slave_24lcxx_init(void)
 {
-	LOG_D("reserve(%d)\n\r");
-
-	gpio_set(RB6, GPIO_MODE_DIGITAL_INPUT, 0);
-	gpio_set(RB7, GPIO_MODE_DIGITAL_INPUT, 0);
+	gpio_set(SCL1_PIN, GPIO_MODE_DIGITAL_INPUT, 0);
+	gpio_set(SDA1_PIN, GPIO_MODE_DIGITAL_INPUT, 0);
 	I2C1BRG              = 0x0d;
 
 	I2C1CONLbits.I2CSIDL = 0;  // Module continues in Idle.
@@ -156,7 +172,7 @@ result_t slave_24lcxx_init(void)
 	I2C1CONLbits.I2CEN   = 1;
 //		I2C1CONLbits.PEN     = 1;  // Send Stop
 
-	program = LLRR;
+//	program = LLRR;
 
         return (SUCCESS);
 }

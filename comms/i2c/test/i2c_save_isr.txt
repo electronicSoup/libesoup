@@ -36,3 +36,57 @@ D-SLV_24LCxx_TST:Entering main loop
 0x4e
 0x4e
 0x8056
+
+
+D-SLV_24LCxx_TST:Entering main loop
+*S* .
+*S* .R
+*S* .
+*S* .
+*S* .RT
+.T
+
+*S* .!
+*S* .T
+
+*S* .R
+*S* .
+*S* .RT
+.T
+
+*S* .T
+
+*S* .R
+*S* .T
+
+*S* .RT
+.T
+
+*S* .!
+*S* .T
+
+*S* .R
+*S* .
+*S* .RT
+.T
+
+*S* .T
+
+*S* .R
+*S* .T
+
+*S* .RT
+.T
+
+*S* .!
+
+
+D-SLV_24LCxx_TST:Entering main loop
+*S* .
+*S* .R
+*S* .
+*S* .
+*S* .RT
+.T
+
+*S* .!
