@@ -40,7 +40,7 @@
 
 #define I2C1_STARTED         I2C1STATbits.S
 #define I2C1_STOPPED         I2C1STATbits.P
-#define I2C1_BYTE_READ       I2C1STATbits.RBF
+#define I2C1_RBF             I2C1STATbits.RBF
 #define I2C1_TRANSMITTING    I2C1STATbits.TBF
 #define I2C1_WRITE_COLLISION I2C1STATbits.IWCOL
 #define I2C1_ACKSTAT         I2C1STATbits.ACKSTAT
@@ -67,8 +67,10 @@ void __attribute__((__interrupt__, __no_auto_psv__)) _SI2C1Interrupt(void)
 {
 	uint8_t  rx_byte;
 
-	serial_printf("S1* ");
+	serial_printf("S ");
 	while (IFS1bits.SI2C1IF) {
+		IFS1bits.SI2C1IF    = 0;  // Clear ISR Flag
+		serial_printf(".");
 		if (I2C1_STOPPED) {
 			serial_printf("!");
 			if (program == LLRR) {
@@ -80,16 +82,33 @@ void __attribute__((__interrupt__, __no_auto_psv__)) _SI2C1Interrupt(void)
 			rx_count = 0;
 			address  = 0;
 		} else if (I2C1_STARTED) {
-			if(I2C1_BYTE_READ) {
+			if(I2C1_RBF) {
+				serial_printf("r%d", rx_count);
 				rx_byte = I2C1RCV;
-				if(rx_count == 1) {
+				if(rx_count == 0) {
+					serial_printf("z0x%x", rx_byte);
+					rx_count++;
+				} else if(rx_count == 1) {
+					serial_printf("1-0x%x", rx_byte);
 					address = rx_byte;
 					address = address << 8;
 					rx_count++;
 				} else if (rx_count == 2) {
+					serial_printf("2-0x%x", rx_byte);
 					address |= rx_byte;
 					rx_count++;
 					serial_printf("A0x%x", address);
+				} else {
+					rx_count++;
+					serial_printf("D");
+				}
+			}
+
+			if (I2C1_READ) {
+				serial_printf("r");
+				if(!I2C1STATbits.TBF) {
+					I2C2TRN = *program++;
+					I2C1STATbits.TBF = 1;
 				}
 			}
 		}
@@ -97,11 +116,6 @@ void __attribute__((__interrupt__, __no_auto_psv__)) _SI2C1Interrupt(void)
 		if (I2C1_WRITE_COLLISION) {
 			serial_printf("V");
 		}
-
-		if (I2C1_READ) {
-			serial_printf("R");
-		}
-		IFS1bits.SI2C1IF    = 0;  // Clear Master ISR Flag
 	}
 	serial_printf("\n\r");
 }
