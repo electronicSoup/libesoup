@@ -50,7 +50,7 @@ struct i2c_channel_data {
         enum i2c_channel   channel;
 	uint8_t            active;
 	struct i2c_device *active_device;
-	enum state         state;
+	void             (*state)(enum i2c_channel, uint16_t);
 	result_t           error;
 	uint8_t            finished;
 	uint8_t            sent;

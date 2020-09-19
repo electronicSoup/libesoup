@@ -77,6 +77,7 @@ void __attribute__((__interrupt__, __no_auto_psv__)) _MI2C1Interrupt(void)
 {
 	uint8_t  rx_char;
 
+	serial_printf("M*\n\r");
 //	serial_printf("*%d*\n\r", current_state);
 	while (IFS1bits.MI2C1IF) {
 		IFS1bits.MI2C1IF    = 0;  // Clear Master ISR Flag
@@ -86,7 +87,7 @@ void __attribute__((__interrupt__, __no_auto_psv__)) _MI2C1Interrupt(void)
                         LOG_E("IWCOL\n\r");
                         i2c_channels[I2C1].error = -ERR_NOT_READY;
                 }
-
+#if 0
                 switch(i2c_channels[I2C1].state) {
 		case IDLE_STATE:
 			LOG_D("Idle State???\n\r");
@@ -171,6 +172,7 @@ void __attribute__((__interrupt__, __no_auto_psv__)) _MI2C1Interrupt(void)
 			LOG_D("Unknown State ???");
 			break;
                 }
+#endif
 	}
 }
 #endif
@@ -184,10 +186,16 @@ void __attribute__((__interrupt__, __no_auto_psv__)) _MI2C2Interrupt(void)
 #ifdef SYS_I2C1
 void __attribute__((__interrupt__, __no_auto_psv__)) _SI2C1Interrupt(void)
 {
-	while (IFS1bits.SI2C1IF) {
+	uint16_t stat_reg;
+
+	serial_printf("S1* ");
+	while (IFS1bits.SI2C1IF || I2C1STATbits.RBF) {
 		IFS1bits.SI2C1IF    = 0;  // Clear Master ISR Flag
-		serial_printf("0x%x\n\r", I2C1STAT);
+		stat_reg = I2C1STAT;
+		serial_printf("0x%x", stat_reg);
+		i2c_channels[I2C1].state(I2C1, stat_reg);
 	}
+	serial_printf(" O\n\r");
 }
 #endif
 
@@ -195,6 +203,13 @@ void __attribute__((__interrupt__, __no_auto_psv__)) _SI2C1Interrupt(void)
 void __attribute__((__interrupt__, __no_auto_psv__)) _SI2C2Interrupt(void)
 {
 	serial_printf("S");
+}
+#endif
+
+#ifdef SYS_I2C1
+void __attribute__((__interrupt__, __no_auto_psv__)) _I2C1BCInterrupt(void)
+{
+	LOG_D("B1* ")
 }
 #endif
 
@@ -292,6 +307,7 @@ result_t i2c_py_start(struct i2c_device *device)
 //	static uint8_t count = 0;
 
 	LOG_D("i2c_py_start\n\r");
+#if 0
 	switch(chan) {
 #if defined (SYS_I2C1)
 	case I2C1:
@@ -340,7 +356,7 @@ result_t i2c_py_start(struct i2c_device *device)
 		return (-ERR_BAD_INPUT_PARAMETER);
 		break;
 	}
-
+#endif
         return(SUCCESS);
 }
 
@@ -349,6 +365,7 @@ result_t i2c_py_restart(struct i2c_device *device)
 	enum i2c_channel chan = device->channel;
 
 	LOG_D("i2c_py_restart\n\r");
+#if 0
 	switch(chan) {
 #if defined(SYS_I2C1)
 	case I2C1:
@@ -366,6 +383,7 @@ result_t i2c_py_restart(struct i2c_device *device)
 		return (-ERR_BAD_INPUT_PARAMETER);
 		break;
 	}
+#endif
         return(SUCCESS);
 }
 
@@ -373,6 +391,7 @@ result_t i2c_py_stop(struct i2c_device *device)
 {
 	enum i2c_channel chan = device->channel;
 	LOG_D("i2c_py_stop\n\r");
+#if 0
 	switch(chan) {
 #if defined(SYS_I2C1)
 	case I2C1:
@@ -384,6 +403,7 @@ result_t i2c_py_stop(struct i2c_device *device)
 		return(-ERR_BAD_INPUT_PARAMETER);
 		break;
 	}
+#endif
         return(SUCCESS);
 }
 
@@ -424,6 +444,8 @@ result_t i2c_py_read(struct i2c_device *device, uint8_t *p_rx_buf, uint16_t p_nu
 
 static void i2c3_send_next(enum i2c_channel chan)
 {
+	LOG_E("CODE?");
+#if 0
 	if (i2c_channels[chan].sent < i2c_channels[chan].num_tx_bytes) {
 		i2c_channels[chan].state = TX_STATE;
 		switch(chan) {
@@ -444,6 +466,7 @@ static void i2c3_send_next(enum i2c_channel chan)
 	} else {
 		i2c_channels[chan].callback(SUCCESS);
 	}
+#endif
 }
 
 #endif // _SYS_I2C1 || SYS_I2S2 || SYS_I2S3

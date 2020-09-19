@@ -7,6 +7,12 @@
 #include "libesoup/logger/serial_log.h"
 #include "libesoup/comms/i2c/i2c.h"
 
+
+#define STAT_START_BIT     0x0008
+#define STAT_OVERFLOW_BIT  0x0040
+#define STAT_RBF_BIT       0x0002
+#define STAT_STOP_BIT      0x0010
+
 struct i2c_channel_data i2c_channels[NUM_I2C_CHANNELS];
 
 /*
@@ -20,6 +26,12 @@ extern result_t i2c_py_stop(struct i2c_device *device);
 extern result_t i2c_py_write(struct i2c_device *device);
 extern result_t i2c_py_read(struct i2c_device *device);
 
+/*
+ * State Funcitons
+ */
+void    idle(enum i2c_channel channel, uint16_t stat_reg);
+void started(enum i2c_channel channel, uint16_t stat_reg);
+
 result_t i2c_init(void)
 {
 	enum i2c_channel i;
@@ -29,6 +41,7 @@ result_t i2c_init(void)
 		i2c_channels[i].channel       = i;
 		i2c_channels[i].active        = FALSE;
 		i2c_channels[1].active_device = NULL;
+		i2c_channels[i].state         = idle;
 	}
 	return (SUCCESS);
 }
@@ -70,6 +83,7 @@ result_t i2c_reserve(struct i2c_device *device)
 	if (!i2c_channels[device->channel].active) {
 		i2c_channels[device->channel].active        = TRUE;
 		i2c_channels[device->channel].active_device = device;
+		i2c_channels[device->channel].state         = idle;
 
 		rc = i2c_py_reserve(device);
 		if (rc < 0) {
@@ -82,7 +96,6 @@ result_t i2c_reserve(struct i2c_device *device)
 			return(rc);
 		}
 
-		i2c_channels[device->channel].state         = IDLE_STATE;
 		i2c_channels[device->channel].error         = SUCCESS;
 		i2c_channels[device->channel].finished      = 0;
 		i2c_channels[device->channel].sent          = 0;
@@ -139,6 +152,72 @@ result_t i2c_read(struct i2c_device *device, uint8_t *rx_buf, uint16_t num_rx_by
 {
 	LOG_D("i2c_read()\n\r");
 	return(i2c_py_read(device));
+}
+
+/*
+ * State Funcitons
+ */
+void idle(enum i2c_channel channel, uint16_t stat_reg)
+{
+	serial_printf("I");
+
+	if (stat_reg & STAT_START_BIT) {
+		serial_printf("s");
+		i2c_channels[channel].state = started;
+	}
+	if (stat_reg & STAT_OVERFLOW_BIT) {
+		switch (channel) {
+#ifdef SYS_I2C1
+		case I2C1:
+			I2C1STATbits.I2COV = 0;
+			serial_printf("Ov");
+			break;
+#endif // SYS_I2C1
+		default:
+			LOG_E("Bad I2C Channel\n\r");
+			break;
+		}
+	}
+}
+
+void started(enum i2c_channel channel, uint16_t stat_reg)
+{
+	uint8_t rx_byte;
+
+	serial_printf("S");
+	if (stat_reg & STAT_RBF_BIT) {
+		serial_printf("r");
+		switch (channel) {
+#ifdef SYS_I2C1
+		case I2C1:
+			rx_byte = I2C1RCV;
+			serial_printf("0x%x\n\r", rx_byte);
+			break;
+#endif // SYS_I2C1
+		default:
+			LOG_E("Bad I2C Channel\n\r");
+			break;
+		}
+	}
+
+	if (stat_reg & STAT_STOP_BIT) {
+		serial_printf("E");
+		i2c_channels[channel].state = idle;
+	}
+
+	if (stat_reg & STAT_OVERFLOW_BIT) {
+		switch (channel) {
+#ifdef SYS_I2C1
+		case I2C1:
+			I2C1STATbits.I2COV = 0;
+			serial_printf("Ov");
+			break;
+#endif // SYS_I2C1
+		default:
+			LOG_E("Bad I2C Channel\n\r");
+			break;
+		}
+	}
 }
 
 #endif // SYS_I2C1 || SYS_I2C2 || SYS_I2C3
