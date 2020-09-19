@@ -9,15 +9,13 @@
 #include "libesoup/gpio/gpio.h"
 #include "libesoup/comms/i2c/devices/24lcxx/slave_24LCxx.h"
 
-#include "libesoup/comms/i2c/test/Spin_Fv-1_progs.h"
-
 int main(void)
 {
 	result_t rc;
 
 	rc = libesoup_init();
 
-	rc = i2c_24lcxx_init(I2C1);
+	rc = slave_24lcxx_init();
 	RC_CHECK_PRINT_CONT("24LCxx init failed\n\r");
 //	gpio_set(RA3, GPIO_MODE_DIGITAL_OUTPUT, 0);
 //	gpio_set(RA4, GPIO_MODE_DIGITAL_OUTPUT, 0);

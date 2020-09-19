@@ -6,7 +6,7 @@
 #ifdef SYS_SLV_24LCxx
 #include "libesoup/comms/i2c/i2c.h"
 
-extern result_t i2c_24lcxx_init(enum i2c_channel channel);
+extern result_t slave_24lcxx_init(void);
 
 #endif
 
