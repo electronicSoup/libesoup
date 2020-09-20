@@ -23,7 +23,7 @@
 /*
  * Only tested on the dsPIC33 so far
  */
-#if defined(__dsPIC33EP256MU806__)
+#if defined(__dsPIC33EP256MU806__) || defined(__dsPIC33EP128GS702__)
 
 typedef void (*change_notifier)(enum gpio_pin pin);
 

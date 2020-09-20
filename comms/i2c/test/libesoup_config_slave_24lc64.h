@@ -8,6 +8,12 @@
         
 #define SYS_TEST_BUILD
 
+//#define SYS_CHANGE_NOTIFICATION
+
+#ifdef SYS_CHANGE_NOTIFICATION
+  #define SYS_CHANGE_NOTIFICATION_MAX_PINS      5
+#endif
+
 #define SYS_SERIAL_LOGGING
 
 #if defined(SYS_SERIAL_LOGGING)

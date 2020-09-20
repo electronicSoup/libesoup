@@ -21,11 +21,11 @@
 #include "libesoup_config.h"
 
 #ifdef SYS_CHANGE_NOTIFICATION
-#if defined(__dsPIC33EP256MU806__)
+#if defined(__dsPIC33EP256MU806__) || defined(__dsPIC33EP128GS702__)
 
 #ifdef SYS_SERIAL_LOGGING
 #define DEBUG_FILE
-__attribute__((unused)) static const char *TAG = "CHANGE"; 
+__attribute__((unused)) static const char *TAG = "CHANGE";
 #include "libesoup/logger/serial_log.h"
 #ifndef SYS_LOG_LEVEL
 #error libesoup_config.h file should define SYS_LOG_LEVEL (see libesoup/examples/libesoup_config.h)
@@ -61,7 +61,7 @@ void __attribute__((__interrupt__, __no_auto_psv__)) _CNInterrupt(void)
 
 	for(loop = 0; loop < SYS_CHANGE_NOTIFICATION_MAX_PINS; loop++) {
 		if(pins[loop].monitored) {
-			
+
 			current_value = gpio_get(pins[loop].pin);
 			if(pins[loop].previous_value != current_value) {
 				pins[loop].previous_value = current_value;
@@ -79,7 +79,7 @@ result_t change_notifier_init()
 		pins[loop].monitored = FALSE;
 		pins[loop].notify    = (change_notifier)NULL;
 	}
-	
+
 	IEC1bits.CNIE = ENABLED;
 	return(0);
 }
@@ -114,6 +114,7 @@ result_t change_notifier_register(enum gpio_pin pin, change_notifier notifier)
 	return(-ERR_NO_RESOURCES);
 }
 
+#if defined(__dsPIC33EP256MU806__)
 static result_t enable_change(enum gpio_pin pin)
 {
 	result_t rc = 0;
@@ -278,11 +279,81 @@ static result_t enable_change(enum gpio_pin pin)
 	}
 	return(rc);
 }
+#elif defined(__dsPIC33EP128GS702__)
+static result_t enable_change(enum gpio_pin pin)
+{
+	result_t rc = 0;
+
+	switch(pin) {
+	case RB0:
+		CNENBbits.CNIEB0 = 1;
+		break;
+	case RB1:
+		CNENBbits.CNIEB1 = 1;
+		break;
+	case RB2:
+		CNENBbits.CNIEB2 = 1;
+		break;
+	case RB3:
+		CNENBbits.CNIEB3 = 1;
+		break;
+	case RB4:
+		CNENBbits.CNIEB4 = 1;
+		break;
+	case RB5:
+		CNENBbits.CNIEB5 = 1;
+		break;
+	case RB6:
+		CNENBbits.CNIEB6 = 1;
+		break;
+	case RB7:
+		CNENBbits.CNIEB7 = 1;
+		break;
+	case RB8:
+		CNENBbits.CNIEB8 = 1;
+		break;
+	case RB9:
+		CNENBbits.CNIEB9 = 1;
+		break;
+	case RB11:
+		CNENBbits.CNIEB11 = 1;
+		break;
+	case RB12:
+		CNENBbits.CNIEB12 = 1;
+		break;
+	case RB13:
+		CNENBbits.CNIEB13 = 1;
+		break;
+	case RB14:
+		CNENBbits.CNIEB14 = 1;
+		break;
+	case RB15:
+		CNENBbits.CNIEB15 = 1;
+		break;
+	case RC12:
+		CNENCbits.CNIEC12 = 1;
+		break;
+	case RC13:
+		CNENCbits.CNIEC13 = 1;
+		break;
+	case RC14:
+		CNENCbits.CNIEC14 = 1;
+		break;
+	case RC15:
+		CNENCbits.CNIEC15 = 1;
+		break;
+	default:
+		rc = -ERR_BAD_INPUT_PARAMETER;
+		break;
+	}
+	return(rc);
+}
+#endif
 
 result_t change_notifier_deregister(enum gpio_pin pin)
 {
 	uint16_t   loop;
-	
+
 	for(loop = 0; loop < SYS_CHANGE_NOTIFICATION_MAX_PINS; loop++) {
 		if(pins[loop].monitored && (pins[loop].pin == pin)) {
 			pins[loop].monitored = FALSE;
@@ -290,7 +361,7 @@ result_t change_notifier_deregister(enum gpio_pin pin)
 			return(disable_change(pin));
 		}
 	}
-	
+
 	return(-ERR_BAD_INPUT_PARAMETER);
 }
 

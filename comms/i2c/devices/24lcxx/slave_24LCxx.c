@@ -30,6 +30,94 @@
 #define TAG "I2C_EP128"
 
 #include "libesoup/logger/serial_log.h"
+
+#if 1
+void __attribute__((__interrupt__, __no_auto_psv__)) _MI2C1Interrupt(void)
+{
+	serial_printf("*M*\n\r");
+}
+
+void __attribute__((__interrupt__, __no_auto_psv__)) _SI2C1Interrupt(void)
+{
+    uint8_t  rx_byte;
+
+    serial_printf("*S* ");
+    while (IFS1bits.SI2C1IF) {    // || I2C1STATbits.S) {
+        IFS1bits.SI2C1IF    = 0;         // Clear the Flag
+        serial_printf(".");
+        if (I2C1STATbits.P) {
+            serial_printf("!");
+            TRISBbits.TRISB7 = 1;    // Change SDA1 to Input
+        } else if (I2C1STATbits.S) {
+
+            if(I2C1STATbits.RBF) {
+                serial_printf("R");
+                rx_byte = I2C1RCV;
+            }
+
+            if (I2C1STATbits.R_W) {
+                serial_printf("T");
+                TRISBbits.TRISB7 = 0;    // Change SDA1 to Output
+
+                while(I2C1STATbits.TBF);
+                serial_printf("\n\r");
+                I2C1TRN = 0x55; //*program++;
+                I2C1STATbits.TBF = 1;
+            }
+        }
+
+        if (I2C1STATbits.IWCOL) {
+            serial_printf("W");
+        }
+        if (I2C1STATbits.I2COV) {
+            serial_printf("V");
+        }
+    }
+    serial_printf("\n\r");
+}
+
+void __attribute__((__interrupt__, __no_auto_psv__)) _I2C1BCInterrupt(void)
+{
+	LOG_D("B1* ")
+}
+
+void slave_24lcxx_init(void)
+{
+    /*
+     * SDA1 and SCL1 Inputs with OpenDrain enabled
+     */
+    TRISBbits.TRISB6 = 1;
+    ODCBbits.ODCB6   = 1;
+    TRISBbits.TRISB7 = 1;
+    ODCBbits.ODCB7   = 1;
+
+    I2C1CONLbits.I2CSIDL = 0;  // Module continues in Idle.
+    I2C1CONLbits.SCLREL  = 1;  // Release clock (Slave mode))
+    I2C1CONLbits.A10M    = 0;  // 7 bit mode
+    I2C1CONLbits.DISSLW  = 1;  // Disable Slew rate.
+    I2C1CONLbits.SMEN    = 0;  // Disable SMBus thresholds
+    I2C1CONLbits.GCEN    = 1;  // Enable General call address
+    I2C1CONLbits.STREN   = 0;  // Disable clock stretching
+
+    I2C1CONHbits.SCIE    = 1;  // Enable Start ISR
+    I2C1CONHbits.PCIE    = 1;  // Enable Stop ISR
+
+    I2C1MSK           = 0xff;  // Don't care about address for moment
+    I2C1ADD           = 0xa0;
+
+    IFS1bits.MI2C1IF     = 0;  // Clear Master ISR Flag
+    IEC1bits.MI2C1IE     = 1;  // Enable Master Interrupts
+
+    IFS1bits.SI2C1IF     = 0;  // Clear Slave ISR Flag
+    IEC1bits.SI2C1IE     = 1;  // Enable Slave Interrupts
+
+    IFS10bits.I2C1BCIF   = 0;
+    IEC10bits.I2C1BCIE   = 1;
+
+    I2C1CONLbits.I2CEN   = 1;
+}
+#else
+
 #include "libesoup/gpio/gpio.h"
 #include "libesoup/comms/i2c/test/Spin_Fv-1_progs.h"
 
@@ -77,7 +165,7 @@ void __attribute__((__interrupt__, __no_auto_psv__)) _SI2C1Interrupt(void)
 		serial_printf(".");
 		if (I2C1STATbits.P) {
 			serial_printf("!");
-			TRISBbits.TRISB7 = 1;
+			TRISBbits.TRISB7 = 1;    // Change SDA1 to Input
 #if 0
 			if (program == LLRR) {
 				program = LRRL;
@@ -106,7 +194,7 @@ void __attribute__((__interrupt__, __no_auto_psv__)) _SI2C1Interrupt(void)
 					serial_printf("-0x%x", rx_byte);
 					address |= rx_byte;
 					rx_count++;
-					serial_printf(" A0x%x", address);
+			 		serial_printf(" A0x%x", address);
 				} else {
 					rx_count++;
 					serial_printf("D");
@@ -116,7 +204,8 @@ void __attribute__((__interrupt__, __no_auto_psv__)) _SI2C1Interrupt(void)
 #if 1
 			if (I2C1STATbits.R_W) {
 				serial_printf("T");
-				gpio_set(SDA1_PIN, GPIO_MODE_DIGITAL_OUTPUT || GPIO_MODE_OPENDRAIN_OUTPUT, 0);
+				TRISBbits.TRISB7 = 0;    // Change SDA1 to Output
+//				gpio_set(SDA1_PIN, GPIO_MODE_DIGITAL_OUTPUT || GPIO_MODE_OPENDRAIN_OUTPUT, 0);
 //				while(I2C1_READ && I2C1_STARTED) {
 //					if(I2C1_STARTED) {
 						while(I2C1STATbits.TBF);
@@ -132,6 +221,9 @@ void __attribute__((__interrupt__, __no_auto_psv__)) _SI2C1Interrupt(void)
 		}
 
 		if (I2C1STATbits.IWCOL) {
+			serial_printf("W");
+		}
+		if (I2C1STATbits.I2COV) {
 			serial_printf("V");
 		}
 	}
@@ -145,9 +237,13 @@ void __attribute__((__interrupt__, __no_auto_psv__)) _I2C1BCInterrupt(void)
 
 result_t slave_24lcxx_init(void)
 {
-	gpio_set(SCL1_PIN, GPIO_MODE_DIGITAL_INPUT || GPIO_MODE_OPENDRAIN_INPUT, 0);
-	gpio_set(SDA1_PIN, GPIO_MODE_DIGITAL_INPUT || GPIO_MODE_OPENDRAIN_INPUT, 0);
-	I2C1BRG              = 0x0d;
+	/*
+	 * SDA1 and SCL1 Inputs with OpenDrain enabled
+	 */
+	TRISBbits.TRISB6 = 1;
+	ODCBbits.ODCB6   = 1;
+	TRISBbits.TRISB7 = 1;
+	ODCBbits.ODCB7   = 1;
 
 	I2C1CONLbits.I2CSIDL = 0;  // Module continues in Idle.
 	I2C1CONLbits.SCLREL  = 1;  // Release clock (Slave mode))
@@ -156,18 +252,21 @@ result_t slave_24lcxx_init(void)
 	I2C1CONLbits.SMEN    = 0;  // Disable SMBus thresholds
 	I2C1CONLbits.GCEN    = 1;  // Enable General call address
 	I2C1CONLbits.STREN   = 0;  // Disable clock stretching
-	I2C1CONLbits.ACKDT   = 0;  // Send /ACK to acknowledge
 
 	I2C1CONHbits.SCIE    = 1;  // Enable Start ISR
 	I2C1CONHbits.PCIE    = 1;  // Enable Stop ISR
-	I2C1MSK           = 0xff;  // Don't care
+
+	I2C1MSK           = 0xff;  // Don't care about address for moment
 	I2C1ADD           = 0xa0;
 
-	IFS10bits.I2C1BCIF   = 0;
 	IFS1bits.MI2C1IF     = 0;  // Clear Master ISR Flag
-	IFS1bits.SI2C1IF     = 0;  // Clear Slave ISR Flag
 	IEC1bits.MI2C1IE     = 1;  // Enable Master Interrupts
+
+	IFS1bits.SI2C1IF     = 0;  // Clear Slave ISR Flag
 	IEC1bits.SI2C1IE     = 1;  // Enable Slave Interrupts
+
+	IFS10bits.I2C1BCIF   = 0;
+	IEC10bits.I2C1BCIE   = 1;
 
 	I2C1CONLbits.I2CEN   = 1;
 //		I2C1CONLbits.PEN     = 1;  // Send Stop
@@ -177,4 +276,5 @@ result_t slave_24lcxx_init(void)
         return (SUCCESS);
 }
 
+#endif //1
 #endif // SYS_SLV_24LC64
