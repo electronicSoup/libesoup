@@ -377,11 +377,13 @@ result_t gpio_set(enum gpio_pin pin, uint16_t mode, uint8_t value)
 		break;
 	case RB6:
 		ANSELBbits.ANSB6 = analog;
+		ODCBbits.ODCB6   = opendrain;
 		TRISBbits.TRISB6 = direction;
 		LATBbits.LATB6   = value;
 		break;
 	case RB7:
 		ANSELBbits.ANSB7 = analog;
+		ODCBbits.ODCB7   = opendrain;
 		TRISBbits.TRISB7 = direction;
 		LATBbits.LATB7   = value;
 		break;

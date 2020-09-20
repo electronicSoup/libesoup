@@ -116,7 +116,7 @@ void __attribute__((__interrupt__, __no_auto_psv__)) _SI2C1Interrupt(void)
 #if 1
 			if (I2C1STATbits.R_W) {
 				serial_printf("T");
-				TRISBbits.TRISB7 = 0;
+				gpio_set(SDA1_PIN, GPIO_MODE_DIGITAL_OUTPUT || GPIO_MODE_OPENDRAIN_OUTPUT, 0);
 //				while(I2C1_READ && I2C1_STARTED) {
 //					if(I2C1_STARTED) {
 						while(I2C1STATbits.TBF);
@@ -145,8 +145,8 @@ void __attribute__((__interrupt__, __no_auto_psv__)) _I2C1BCInterrupt(void)
 
 result_t slave_24lcxx_init(void)
 {
-	gpio_set(SCL1_PIN, GPIO_MODE_DIGITAL_INPUT, 0);
-	gpio_set(SDA1_PIN, GPIO_MODE_DIGITAL_INPUT, 0);
+	gpio_set(SCL1_PIN, GPIO_MODE_DIGITAL_INPUT || GPIO_MODE_OPENDRAIN_INPUT, 0);
+	gpio_set(SDA1_PIN, GPIO_MODE_DIGITAL_INPUT || GPIO_MODE_OPENDRAIN_INPUT, 0);
 	I2C1BRG              = 0x0d;
 
 	I2C1CONLbits.I2CSIDL = 0;  // Module continues in Idle.
