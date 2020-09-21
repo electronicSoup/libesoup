@@ -31,93 +31,6 @@
 
 #include "libesoup/logger/serial_log.h"
 
-#if 1
-void __attribute__((__interrupt__, __no_auto_psv__)) _MI2C1Interrupt(void)
-{
-	serial_printf("*M*\n\r");
-}
-
-void __attribute__((__interrupt__, __no_auto_psv__)) _SI2C1Interrupt(void)
-{
-    uint8_t  rx_byte;
-
-    serial_printf("*S* ");
-    while (IFS1bits.SI2C1IF) {    // || I2C1STATbits.S) {
-        IFS1bits.SI2C1IF    = 0;         // Clear the Flag
-        serial_printf(".");
-        if (I2C1STATbits.P) {
-            serial_printf("!");
-            TRISBbits.TRISB7 = 1;    // Change SDA1 to Input
-        } else if (I2C1STATbits.S) {
-
-            if(I2C1STATbits.RBF) {
-                serial_printf("R");
-                rx_byte = I2C1RCV;
-            }
-
-            if (I2C1STATbits.R_W) {
-                serial_printf("T");
-                TRISBbits.TRISB7 = 0;    // Change SDA1 to Output
-
-                while(I2C1STATbits.TBF);
-                serial_printf("\n\r");
-                I2C1TRN = 0x55; //*program++;
-                I2C1STATbits.TBF = 1;
-            }
-        }
-
-        if (I2C1STATbits.IWCOL) {
-            serial_printf("W");
-        }
-        if (I2C1STATbits.I2COV) {
-            serial_printf("V");
-        }
-    }
-    serial_printf("\n\r");
-}
-
-void __attribute__((__interrupt__, __no_auto_psv__)) _I2C1BCInterrupt(void)
-{
-	LOG_D("B1* ")
-}
-
-void slave_24lcxx_init(void)
-{
-    /*
-     * SDA1 and SCL1 Inputs with OpenDrain enabled
-     */
-    TRISBbits.TRISB6 = 1;
-    ODCBbits.ODCB6   = 1;
-    TRISBbits.TRISB7 = 1;
-    ODCBbits.ODCB7   = 1;
-
-    I2C1CONLbits.I2CSIDL = 0;  // Module continues in Idle.
-    I2C1CONLbits.SCLREL  = 1;  // Release clock (Slave mode))
-    I2C1CONLbits.A10M    = 0;  // 7 bit mode
-    I2C1CONLbits.DISSLW  = 1;  // Disable Slew rate.
-    I2C1CONLbits.SMEN    = 0;  // Disable SMBus thresholds
-    I2C1CONLbits.GCEN    = 1;  // Enable General call address
-    I2C1CONLbits.STREN   = 0;  // Disable clock stretching
-
-    I2C1CONHbits.SCIE    = 1;  // Enable Start ISR
-    I2C1CONHbits.PCIE    = 1;  // Enable Stop ISR
-
-    I2C1MSK           = 0xff;  // Don't care about address for moment
-    I2C1ADD           = 0xa0;
-
-    IFS1bits.MI2C1IF     = 0;  // Clear Master ISR Flag
-    IEC1bits.MI2C1IE     = 1;  // Enable Master Interrupts
-
-    IFS1bits.SI2C1IF     = 0;  // Clear Slave ISR Flag
-    IEC1bits.SI2C1IE     = 1;  // Enable Slave Interrupts
-
-    IFS10bits.I2C1BCIF   = 0;
-    IEC10bits.I2C1BCIE   = 1;
-
-    I2C1CONLbits.I2CEN   = 1;
-}
-#else
-
 #include "libesoup/gpio/gpio.h"
 #include "libesoup/comms/i2c/test/Spin_Fv-1_progs.h"
 
@@ -128,96 +41,36 @@ void slave_24lcxx_init(void)
 
 #define SDA1_PIN RB7
 #define SCL1_PIN RB6
-#if 0
-#define I2C1_STARTED         I2C1STATbits.S
-#define I2C1_STOPPED         I2C1STATbits.P
-#define I2C1_RBF             I2C1STATbits.RBF
-#define I2C1_TRANSMITTING    I2C1STATbits.TBF
-#define I2C1_WRITE_COLLISION I2C1STATbits.IWCOL
-#define I2C1_ACKSTAT         I2C1STATbits.ACKSTAT
-#define I2C1_READ            I2C1STATbits.R_W
+#define SDA2_PIN RB14
+#define SCL2_PIN RB15
 
-#define I2C1_START           I2C1CONLbits.SEN   = 1
-#define I2C1_STOP            I2C1CONLbits.PEN   = 1
-#define I2C1_RESTART         I2C1CONLbits.RSEN  = 1
-//#define I2C1_READ            I2C1CONLbits.RCEN  = 1
-#define I2C1_RX_ACK          I2C1CONLbits.ACKDT = 0; I2C1CONLbits.ACKEN =1
-#define I2C1_RX_NACK         I2C1CONLbits.ACKDT = 1; I2C1CONLbits.ACKEN =1
+//#define I2C1
+#define I2C2
 
-static uint8_t  *program = LLRR;
-static uint16_t tx_index = 0;
-static uint16_t rx_count = 0;
-static uint16_t address  = 0;
-#endif
+#ifdef I2C1
 void __attribute__((__interrupt__, __no_auto_psv__)) _MI2C1Interrupt(void)
 {
-	serial_printf("*M*\n\r");
+	serial_printf("*M1*\n\r");
 }
 
 void __attribute__((__interrupt__, __no_auto_psv__)) _SI2C1Interrupt(void)
 {
 	uint8_t  rx_byte;
 
-	serial_printf("*S* ");
-	while (IFS1bits.SI2C1IF) {    // || I2C1STATbits.S) {
-//	while (IFS1bits.SI2C1IF || I2C1STATbits.S) {
+	serial_printf("*S1* ");
+	while (IFS1bits.SI2C1IF) {
 		IFS1bits.SI2C1IF    = 0;
-		serial_printf(".");
 		if (I2C1STATbits.P) {
 			serial_printf("!");
-			TRISBbits.TRISB7 = 1;    // Change SDA1 to Input
-#if 0
-			if (program == LLRR) {
-				program = LRRL;
-			} else {
-				program = LLRR;
-			}
-			tx_index = 0;
-			rx_count = 0;
-			address  = 0;
-#endif
 		} else if (I2C1STATbits.S) {
 			if(I2C1STATbits.RBF) {
-//				serial_printf("R%d", rx_count);
-				serial_printf("R");
 				rx_byte = I2C1RCV;
-#if 0
-				if(rx_count == 0) {
-					serial_printf("-0x%x", rx_byte);
-					rx_count++;
-				} else if(rx_count == 1) {
-					serial_printf("-0x%x", rx_byte);
-					address = rx_byte;
-					address = address << 8;
-					rx_count++;
-				} else if (rx_count == 2) {
-					serial_printf("-0x%x", rx_byte);
-					address |= rx_byte;
-					rx_count++;
-			 		serial_printf(" A0x%x", address);
-				} else {
-					rx_count++;
-					serial_printf("D");
-				}
-#endif
 			}
-#if 1
 			if (I2C1STATbits.R_W) {
-				serial_printf("T");
-				TRISBbits.TRISB7 = 0;    // Change SDA1 to Output
-//				gpio_set(SDA1_PIN, GPIO_MODE_DIGITAL_OUTPUT || GPIO_MODE_OPENDRAIN_OUTPUT, 0);
-//				while(I2C1_READ && I2C1_STARTED) {
-//					if(I2C1_STARTED) {
-						while(I2C1STATbits.TBF);
-						serial_printf("\n\r");
-						I2C1TRN = 0x55; //*program++;
-//						serial_printf("+");
-						I2C1STATbits.TBF = 1;
-//					}
-//				}
+				while(I2C1STATbits.TBF);
+				I2C1TRN = 0x55; //*program++;
+				I2C1STATbits.TBF = 1;
 			}
-#endif
-
 		}
 
 		if (I2C1STATbits.IWCOL) {
@@ -227,19 +80,60 @@ void __attribute__((__interrupt__, __no_auto_psv__)) _SI2C1Interrupt(void)
 			serial_printf("V");
 		}
 	}
-	serial_printf("\n\r");
 }
 
 void __attribute__((__interrupt__, __no_auto_psv__)) _I2C1BCInterrupt(void)
 {
 	LOG_D("B1* ")
 }
+#elif defined(I2C2)
+void __attribute__((__interrupt__, __no_auto_psv__)) _MI2C2Interrupt(void)
+{
+	serial_printf("*M2*\n\r");
+}
+
+void __attribute__((__interrupt__, __no_auto_psv__)) _SI2C2Interrupt(void)
+{
+	uint8_t  rx_byte;
+
+	while (IFS3bits.SI2C2IF) {
+		IFS3bits.SI2C2IF    = 0;
+		if (I2C2STATbits.P) {
+			serial_printf("!");
+		} else if (I2C2STATbits.S) {
+			if(I2C2STATbits.RBF) {
+				rx_byte = I2C2RCV;
+			}
+			if (I2C2STATbits.R_W) {
+				TRISBbits.TRISB14 = 0;    // Change SDA1 to Output
+				while(I2C2STATbits.TBF);
+				I2C2TRN = 0x55;
+				I2C2STATbits.TBF = 1;
+			}
+		}
+
+		if (I2C2STATbits.IWCOL) {
+			serial_printf("W");
+		}
+		if (I2C2STATbits.I2COV) {
+			serial_printf("V");
+		}
+	}
+}
+
+void __attribute__((__interrupt__, __no_auto_psv__)) _I2C2BCInterrupt(void)
+{
+	LOG_D("B2* ")
+}
+#endif
 
 result_t slave_24lcxx_init(void)
 {
+	serial_printf("init()\n\r");
 	/*
 	 * SDA1 and SCL1 Inputs with OpenDrain enabled
 	 */
+#if defined(I2C1)
 	TRISBbits.TRISB6 = 1;
 	ODCBbits.ODCB6   = 1;
 	TRISBbits.TRISB7 = 1;
@@ -269,12 +163,38 @@ result_t slave_24lcxx_init(void)
 	IEC10bits.I2C1BCIE   = 1;
 
 	I2C1CONLbits.I2CEN   = 1;
-//		I2C1CONLbits.PEN     = 1;  // Send Stop
+#elif defined(I2C2)
+	TRISBbits.TRISB14 = 1;
+	ODCBbits.ODCB14   = 1;
+	TRISBbits.TRISB15 = 1;
+	ODCBbits.ODCB15   = 1;
 
-//	program = LLRR;
+	I2C2CONLbits.I2CSIDL = 0;  // Module continues in Idle.
+	I2C2CONLbits.SCLREL  = 1;  // Release clock (Slave mode))
+	I2C2CONLbits.A10M    = 0;  // 7 bit mode
+	I2C2CONLbits.DISSLW  = 1;  // Disable Slew rate.
+	I2C2CONLbits.SMEN    = 0;  // Disable SMBus thresholds
+	I2C2CONLbits.GCEN    = 1;  // Enable General call address
+	I2C2CONLbits.STREN   = 0;  // Disable clock stretching
 
+	I2C2CONHbits.SCIE    = 1;  // Enable Start ISR
+	I2C2CONHbits.PCIE    = 1;  // Enable Stop ISR
+
+	I2C2MSK           = 0xff;  // Don't care about address for moment
+	I2C2ADD           = 0xa0;
+
+	IFS3bits.MI2C2IF     = 0;  // Clear Master ISR Flag
+	IEC3bits.MI2C2IE     = 1;  // Enable Master Interrupts
+
+	IFS3bits.SI2C2IF     = 0;  // Clear Slave ISR Flag
+	IEC3bits.SI2C2IE     = 1;  // Enable Slave Interrupts
+
+	IFS10bits.I2C2BCIF   = 0;
+	IEC10bits.I2C2BCIE   = 1;
+
+	I2C2CONLbits.I2CEN   = 1;
+#endif
         return (SUCCESS);
 }
 
-#endif //1
 #endif // SYS_SLV_24LC64

@@ -55,6 +55,7 @@ int main(void)
 	LOG_D("Entering main loop\n\r");
 	while(1) {
 		libesoup_tasks();
+
 //		gpio_toggle_output(RA3);
 //		gpio_toggle_output(RA4);
 
