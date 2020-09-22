@@ -285,6 +285,21 @@ static result_t enable_change(enum gpio_pin pin)
 	result_t rc = 0;
 
 	switch(pin) {
+	case RA0:
+		CNENAbits.CNIEA0 = 1;
+		break;
+	case RA1:
+		CNENAbits.CNIEA1 = 1;
+		break;
+	case RA2:
+		CNENAbits.CNIEA2 = 1;
+		break;
+	case RA3:
+		CNENAbits.CNIEA3 = 1;
+		break;
+	case RA4:
+		CNENAbits.CNIEA4 = 1;
+		break;
 	case RB0:
 		CNENBbits.CNIEB0 = 1;
 		break;
@@ -330,18 +345,6 @@ static result_t enable_change(enum gpio_pin pin)
 	case RB15:
 		CNENBbits.CNIEB15 = 1;
 		break;
-	case RC12:
-		CNENCbits.CNIEC12 = 1;
-		break;
-	case RC13:
-		CNENCbits.CNIEC13 = 1;
-		break;
-	case RC14:
-		CNENCbits.CNIEC14 = 1;
-		break;
-	case RC15:
-		CNENCbits.CNIEC15 = 1;
-		break;
 	default:
 		rc = -ERR_BAD_INPUT_PARAMETER;
 		break;
@@ -365,6 +368,7 @@ result_t change_notifier_deregister(enum gpio_pin pin)
 	return(-ERR_BAD_INPUT_PARAMETER);
 }
 
+#if defined(__dsPIC33EP256MU806__)
 static result_t disable_change(enum gpio_pin pin)
 {
 	result_t rc = 0;
@@ -528,6 +532,79 @@ static result_t disable_change(enum gpio_pin pin)
 	}
 	return(rc);
 }
+#elif defined(__dsPIC33EP128GS702__)
+static result_t disable_change(enum gpio_pin pin)
+{
+	result_t rc = 0;
+
+	switch(pin) {
+	case RA0:
+		CNENAbits.CNIEA0 = 0;
+		break;
+	case RA1:
+		CNENAbits.CNIEA1 = 0;
+		break;
+	case RA2:
+		CNENAbits.CNIEA2 = 0;
+		break;
+	case RA3:
+		CNENAbits.CNIEA3 = 0;
+		break;
+	case RA4:
+		CNENAbits.CNIEA4 = 0;
+		break;
+	case RB0:
+		CNENBbits.CNIEB0 = 0;
+		break;
+	case RB1:
+		CNENBbits.CNIEB1 = 0;
+		break;
+	case RB2:
+		CNENBbits.CNIEB2 = 0;
+		break;
+	case RB3:
+		CNENBbits.CNIEB3 = 0;
+		break;
+	case RB4:
+		CNENBbits.CNIEB4 = 0;
+		break;
+	case RB5:
+		CNENBbits.CNIEB5 = 0;
+		break;
+	case RB6:
+		CNENBbits.CNIEB6 = 0;
+		break;
+	case RB7:
+		CNENBbits.CNIEB7 = 0;
+		break;
+	case RB8:
+		CNENBbits.CNIEB8 = 0;
+		break;
+	case RB9:
+		CNENBbits.CNIEB9 = 0;
+		break;
+	case RB11:
+		CNENBbits.CNIEB11 = 0;
+		break;
+	case RB12:
+		CNENBbits.CNIEB12 = 0;
+		break;
+	case RB13:
+		CNENBbits.CNIEB13 = 0;
+		break;
+	case RB14:
+		CNENBbits.CNIEB14 = 0;
+		break;
+	case RB15:
+		CNENBbits.CNIEB15 = 0;
+		break;
+	default:
+		rc = -ERR_BAD_INPUT_PARAMETER;
+		break;
+	}
+	return(rc);
+}
+#endif
 
 #endif // __dsPIC33EP256MU806__
 #endif // SYS_CHANGE_NOTIFICATION

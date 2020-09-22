@@ -8,7 +8,7 @@
         
 #define SYS_TEST_BUILD
 
-//#define SYS_CHANGE_NOTIFICATION
+#define SYS_CHANGE_NOTIFICATION
 
 #ifdef SYS_CHANGE_NOTIFICATION
   #define SYS_CHANGE_NOTIFICATION_MAX_PINS      5
@@ -27,10 +27,26 @@
 
 #endif // defined(SYS_SERIAL_LOGGING)
 
+
+#define  SYS_SW_TIMERS
+
+#ifdef SYS_SW_TIMERS
+  #define  SYS_HW_TIMERS
+  #define  SYS_NUMBER_OF_SW_TIMERS              5
+  #define  SYS_SW_TIMER_TICK_ms                 5
+#endif
+
 //#define SYS_I2C1
 #define SYS_SLV_24LCxx
 //#define SYS_TEST_MASTER_24LC64
 #define SYS_TEST_SLAVE_24LCxx
+
+/*
+ * SD Card switches
+ */
+#define SYS_SPI1
+#define SYS_SD_CARD
+
 /*
  * Include a board file
  */

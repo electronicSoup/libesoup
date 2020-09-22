@@ -1309,6 +1309,78 @@ result_t gpio_get(enum gpio_pin pin)
 
 	return(-ERR_BAD_INPUT_PARAMETER);
 }
+#elif defined(__dsPIC33EP128GS702__)
+result_t gpio_get(enum gpio_pin pin)
+{
+	result_t rc = SUCCESS;
+
+	switch(pin) {
+	case RA0:
+		return(PORTAbits.RA0);
+		break;
+	case RA1:
+		return(PORTAbits.RA1);
+		break;
+	case RA2:
+		return(PORTAbits.RA2);
+		break;
+	case RA3:
+		return(PORTAbits.RA3);
+		break;
+	case RA4:
+		return(PORTAbits.RA4);
+		break;
+	case RB0:
+		return(PORTBbits.RB0);
+		break;
+	case RB1:
+		return(PORTBbits.RB1);
+		break;
+	case RB2:
+		return(PORTBbits.RB2);
+		break;
+	case RB3:
+		return(PORTBbits.RB3);
+		break;
+	case RB4:
+		return(PORTBbits.RB4);
+		break;
+	case RB5:
+		return(PORTBbits.RB5);
+		break;
+	case RB6:
+		return(PORTBbits.RB6);
+		break;
+	case RB7:
+		return(PORTBbits.RB7);
+		break;
+	case RB8:
+		return(PORTBbits.RB8);
+		break;
+	case RB9:
+		return(PORTBbits.RB9);
+		break;
+	case RB11:
+		return(PORTBbits.RB11);
+		break;
+	case RB12:
+		return(PORTBbits.RB12);
+		break;
+	case RB13:
+		return(PORTBbits.RB13);
+		break;
+	case RB14:
+		return(PORTBbits.RB14);
+		break;
+	case RB15:
+		return(PORTBbits.RB15);
+		break;
+	default:
+		rc = -ERR_BAD_INPUT_PARAMETER;
+		break;
+	}
+	return(rc);
+}
 #endif // #if defined(__dsPIC33EP256MU806__) || defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__)
 
 #if defined(__18F4585)

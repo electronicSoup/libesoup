@@ -45,9 +45,27 @@ struct spi_io_channel {
 	enum gpio_pin cs;
 };
 
+enum tx_edge {
+        ACTIVE_TO_IDLE,
+        IDLE_TO_ACTIVE
+};
+
+enum clock_polarity {
+        IDLE_HIGHT,
+        IDLE_LOW
+};
+
+enum spi_mode {
+        MASTER,
+        SLAVE
+};
+
 struct spi_device {
 	enum spi_channel       channel;
 	struct spi_io_channel  io;
+        enum tx_edge           tx_edge;
+        enum clock_polarity    clock_polarity;
+        enum spi_mode          spi_mode;
 };
 
 extern result_t spi_reserve(struct spi_device *device);

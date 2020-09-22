@@ -42,6 +42,15 @@ __attribute__ ((unused)) static const char *TAG = "SPI";
 #include "libesoup/gpio/peripheral.h"
 #include "libesoup/comms/spi/spi.h"
 
+#if defined(__dsPIC33EP128GS702__)
+#define SPI_ENABLE_CS   SPI1CON1Lbits.SSEN  = 1;
+#define SPI_DISABLE_CS  SPI1CON1Lbits.SSEN  = 0;
+#else
+#define SPI_ENABLE_CS   SPI1CON1bits.SSEN  = 1;
+#define SPI_DISABLE_CS  SPI1CON1bits.SSEN  = 0;
+#endif
+
+
 struct spi_chan {
 	boolean                active;
 	struct spi_device     *active_device;
@@ -50,6 +59,23 @@ struct spi_chan {
 struct spi_chan channels[NUM_SPI_CHANNELS];
 
 static result_t	channel_init(enum spi_channel ch);
+
+
+#ifdef SYS_SPI1
+void __attribute__((__interrupt__, __no_auto_psv__)) _SPI1TXInterrupt(void)
+{
+	serial_printf("*SPI1_TX*\n\r");
+}
+#endif
+
+#ifdef SYS_SPI1
+void __attribute__((__interrupt__, __no_auto_psv__)) _SPI1RXInterrupt(void)
+{
+	serial_printf("*SPI1_RX*\n\r");
+}
+#endif
+
+
 
 result_t spi_init(void)
 {
@@ -164,9 +190,9 @@ static result_t	channel_init(enum spi_channel ch)
 		if (device->io.cs != INVALID_GPIO_PIN) {
 			rc = set_peripheral_output(device->io.mosi, PPS_O_SPI1SS);
 			RC_CHECK
-			SPI1CON1bits.SSEN  = 1;    // Use SPIs chip select!
+			SPI_ENABLE_CS;
 		} else {
-			SPI1CON1bits.SSEN  = 0;    // Don't use SPIs chip select it's external
+			SPI_DISABLE_CS;
 		}
 
 		rc = set_peripheral_output(device->io.sck,  PPS_O_SPI1CLK);
@@ -175,6 +201,7 @@ static result_t	channel_init(enum spi_channel ch)
 		/*
 	         * Init the SPI Config
 	         */
+#if defined(__dsPIC33EP256MU806___)
 		SPI1CON1bits.MSTEN = 1;   // Master mode
 		SPI1CON1bits.PPRE = 0x02;
 		SPI1CON1bits.SPRE = 0x07;
@@ -184,6 +211,30 @@ static result_t	channel_init(enum spi_channel ch)
 
 		SPI1CON2 = 0x00;
 		SPI1STATbits.SPIEN = 1;   // Enable the SPI
+#elif defined(__dsPIC33EP128GS702__)
+		SPI1CON1Lbits.MSTEN = 1;   // Master mode
+
+
+		SPI1BRGL = 0xff;
+
+		SPI1CON1bits.CKE = 0;
+		SPI1CON1bits.CKP = 1;
+
+		SPI1CON2 = 0x00;
+
+		SPI1IMSKL = 0xffff;   // Enable all ISRs for the moment
+		SPI1IMSKH = 0xffff;   // Enable all ISRs for the moment
+
+		SPI1STATLbits.SPIROV = 0;  // Clear overflow
+
+		IFS0bits.SPI1TXIF = 0;
+		IFS0bits.SPI1RXIF = 0;
+
+		IEC0bits.SPI1TXIE = 1;
+		IEC0bits.SPI1RXIE = 1;
+
+		SPI1CON1Lbits.SPIEN = 1;   // Enable the SPI
+#endif
 		break;
 #endif // SYS_SPI1
 #if defined(SYS_SPI2)
@@ -209,11 +260,19 @@ result_t spi_write_byte(struct spi_device *device, uint8_t write)
 
 	if (channels[channel].active_device == device) {
 		switch(channel) {
+#if defined(SYS_SPI1)
 		case SPI1:
+#if defined(__dsPIC33EP256MU806__)
 			SPI1BUF = write;
 			while (!SPI1STATbits.SPIRBF);
 			return(SPI1BUF);
+#elif defined(__dsPIC33EP128GS702__)
+			SPI1BUFL = write;
+			while (!SPI1STATLbits.SPIRBF);
+			return(SPI1BUFL);
+#endif // Micro-Controller
 			break;
+#endif // SYS_SPI1
 		default:
 			return(-ERR_BAD_INPUT_PARAMETER);
 			break;

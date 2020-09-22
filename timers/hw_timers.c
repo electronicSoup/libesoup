@@ -5,7 +5,7 @@
  *
  * @brief Hardware Timer functionality for the electronicSoup Cinnamon Bun
  *
- * Copyright 2017-2019 electronicSoup Limited
+ * Copyright 2017-2020 electronicSoup Limited
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 2 of the GNU Lesser General Public License
@@ -95,11 +95,11 @@ struct hw_timer_data {
  * Private array managing the hardware timers in the micro-controller. The size
  * is defined by the constant NUMBER_OF_TIMERS which should be defined in a
  * processor header file, located in libesoup/processors.
- * 
- * The processor header file should be included in a board header file 
+ *
+ * The processor header file should be included in a board header file
  * "libesoup/boards/..." which is included by the libesoup_config.h configuration header
  * file. So the libesoup_config.h file defines the board being used and the board file
- * defines the micro controller being used. The microcontroller ultimately 
+ * defines the micro controller being used. The microcontroller ultimately
  * dictates the number of hardware timers.
  */
 static struct hw_timer_data timers[NUMBER_HW_TIMERS];
@@ -126,7 +126,7 @@ void check_timer(timer_id timer);
  * for the expired timer. The check_timer() function does the main processing
  * for all expired timers.
  */
-#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__) || defined(__dsPIC33EP256MU806__)
+#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__) || defined(__dsPIC33EP256MU806__) || defined(__dsPIC33EP128GS702__)
 void __attribute__((__interrupt__, __no_auto_psv__)) _T1Interrupt(void)
 {
 	check_timer(TIMER_1);
@@ -139,7 +139,7 @@ void __attribute__((__interrupt__, __no_auto_psv__)) _T1Interrupt(void)
  * for the expired timer. The check_timer() function does the main processing
  * for all expired timers.
  */
-#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__) || defined(__dsPIC33EP256MU806__)
+#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__) || defined(__dsPIC33EP256MU806__) || defined(__dsPIC33EP128GS702__)
 void __attribute__((__interrupt__, __no_auto_psv__)) _T2Interrupt(void)
 {
 	check_timer(TIMER_2);
@@ -152,7 +152,7 @@ void __attribute__((__interrupt__, __no_auto_psv__)) _T2Interrupt(void)
  * for the expired timer. The check_timer() function does the main processing
  * for all expired timers.
  */
-#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__) || defined(__dsPIC33EP256MU806__)
+#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__) || defined(__dsPIC33EP256MU806__) || defined(__dsPIC33EP128GS702__)
 void __attribute__((__interrupt__, __no_auto_psv__)) _T3Interrupt(void)
 {
 	check_timer(TIMER_3);
@@ -165,7 +165,7 @@ void __attribute__((__interrupt__, __no_auto_psv__)) _T3Interrupt(void)
  * for the expired timer. The check_timer() function does the main processing
  * for all expired timers.
  */
-#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__) || defined(__dsPIC33EP256MU806__)
+#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__) || defined(__dsPIC33EP256MU806__) || defined(__dsPIC33EP128GS702__)
 void __attribute__((__interrupt__, __no_auto_psv__)) _T4Interrupt(void)
 {
 	check_timer(TIMER_4);
@@ -178,7 +178,7 @@ void __attribute__((__interrupt__, __no_auto_psv__)) _T4Interrupt(void)
  * for the expired timer. The check_timer() function does the main processing
  * for all expired timers.
  */
-#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__) || defined(__dsPIC33EP256MU806__)
+#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__) || defined(__dsPIC33EP256MU806__) || defined(__dsPIC33EP128GS702__)
 void __attribute__((__interrupt__, __no_auto_psv__)) _T5Interrupt(void)
 {
 	check_timer(TIMER_5);
@@ -257,7 +257,7 @@ void hw_timer_init(void)
 		timers[timer].remainder = 0;
 	}
 
-#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__) || defined(__dsPIC33EP256MU806__)
+#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__) || defined(__dsPIC33EP256MU806__) || defined(__dsPIC33EP128GS702__)
 	/*
 	 * Initialise the timers to 16 bit and their clock source
 	 */
@@ -269,16 +269,16 @@ void hw_timer_init(void)
 	T2CONbits.TCS = 0;      // Internal FOSC/2
         T2CONbits.TGATE = 0;
         IPC1bits.T2IP = 0x06;   // Higest Priority
-        
+
 	T3CONbits.TCS = 0;      // Internal FOSC/2
         T3CONbits.TGATE = 0;
         IPC2bits.T3IP = 0x06;   // Higest Priority
-        
+
 	T4CONbits.T32 = 0;      // 16 Bit Timer
 	T4CONbits.TCS = 0;      // Internal FOSC/2
         T4CONbits.TGATE = 0;
         IPC6bits.T4IP = 0x06;   // Higest Priority
-        
+
 	T5CONbits.TCS = 0;      // Internal FOSC/2
         T5CONbits.TGATE = 0;
         IPC7bits.T5IP = 0x06;   // Higest Priority
@@ -286,10 +286,10 @@ void hw_timer_init(void)
         T0CONbits.T08BIT = 0;         // 16 Bit timer
         T0CONbits.T0CS   = 0;         // Clock source Instruction Clock
 	T0CONbits.TMR0ON = DISABLED;  // Timer off for the moment
-        
+
         T1CONbits.TMR1CS = 0;         // Internal FOSC/4
         T1CONbits.TMR1ON = DISABLED;  // Timer off for the moment
-	
+
 	/*
 	 * PIC18F TImer 2 is an 8 bit timer?
 	 */
@@ -330,7 +330,7 @@ timer_id hw_timer_start(struct timer_req *request)
 	while(timer < NUMBER_HW_TIMERS) {
 		if(timers[timer].status == TIMER_UNUSED) {
 			if (request->type == stopwatch) {
-				return(start_stopwatch(timer, request));		
+				return(start_stopwatch(timer, request));
 			} else {
 				return(start_timer(timer, request));
 			}
@@ -370,7 +370,7 @@ timer_id hw_timer_pause(timer_id timer)
 	}
 
 	switch (timer) {
-#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__) || defined(__dsPIC33EP256MU806__)
+#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__) || defined(__dsPIC33EP256MU806__) || defined(__dsPIC33EP128GS702__)
         case TIMER_1:
                 TMR1 = 0x00;
                 IEC0bits.T1IE = 0;
@@ -378,7 +378,7 @@ timer_id hw_timer_pause(timer_id timer)
                 break;
 #endif
 
-#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__) || defined(__dsPIC33EP256MU806__)
+#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__) || defined(__dsPIC33EP256MU806__) || defined(__dsPIC33EP128GS702__)
         case TIMER_2:
                 TMR2 = 0x00;
                 IEC0bits.T2IE = 0;
@@ -386,7 +386,7 @@ timer_id hw_timer_pause(timer_id timer)
                 break;
 #endif
 
-#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__) || defined(__dsPIC33EP256MU806__)
+#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__) || defined(__dsPIC33EP256MU806__) || defined(__dsPIC33EP128GS702__)
         case TIMER_3:
                 TMR3 = 0x00;
                 IEC0bits.T3IE = 0;
@@ -394,7 +394,7 @@ timer_id hw_timer_pause(timer_id timer)
                 break;
 #endif
 
-#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__) || defined(__dsPIC33EP256MU806__)
+#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__) || defined(__dsPIC33EP256MU806__) || defined(__dsPIC33EP128GS702__)
         case TIMER_4:
                 TMR4 = 0x00;
                 IEC1bits.T4IE = 0;
@@ -402,7 +402,7 @@ timer_id hw_timer_pause(timer_id timer)
                 break;
 #endif
 
-#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__) || defined(__dsPIC33EP256MU806__)
+#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__) || defined(__dsPIC33EP256MU806__) || defined(__dsPIC33EP128GS702__)
         case TIMER_5:
                 TMR5 = 0x00;
                 IEC1bits.T5IE = 0;
@@ -434,31 +434,31 @@ result_t hw_timer_stop(timer_id timer, struct period *period)
 	}
 
 	switch (timer) {
-#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__) || defined(__dsPIC33EP256MU806__)
+#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__) || defined(__dsPIC33EP256MU806__) || defined(__dsPIC33EP128GS702__)
         case TIMER_1:
 		ticks = TMR1;
                 break;
 #endif
 
-#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__) || defined(__dsPIC33EP256MU806__)
+#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__) || defined(__dsPIC33EP256MU806__) || defined(__dsPIC33EP128GS702__)
         case TIMER_2:
 		ticks = TMR2;
                 break;
 #endif
 
-#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__) || defined(__dsPIC33EP256MU806__)
+#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__) || defined(__dsPIC33EP256MU806__) || defined(__dsPIC33EP128GS702__)
         case TIMER_3:
 		ticks = TMR3;
                 break;
 #endif
 
-#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__) || defined(__dsPIC33EP256MU806__)
+#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__) || defined(__dsPIC33EP256MU806__) || defined(__dsPIC33EP128GS702__)
         case TIMER_4:
 		ticks = TMR4;
                 break;
 #endif
 
-#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__) || defined(__dsPIC33EP256MU806__)
+#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__) || defined(__dsPIC33EP256MU806__) || defined(__dsPIC33EP128GS702__)
         case TIMER_5:
 		ticks = TMR5;
                 break;
@@ -538,7 +538,7 @@ result_t hw_timer_stop(timer_id timer, struct period *period)
 			period->duration = (uint32_t)duration_32;
 		}
 	} else {
-		period->duration = 0xffff;		
+		period->duration = 0xffff;
 	}
 	timers[timer].status = TIMER_UNUSED;
 	return(timer);
@@ -568,7 +568,7 @@ void hw_timer_cancel_all()
 {
 	timer_id timer;
 
-#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__) || defined(__dsPIC33EP256MU806__)
+#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__) || defined(__dsPIC33EP256MU806__) || defined(__dsPIC33EP128GS702__)
 	IEC0bits.T1IE = 0;
 	T1CONbits.TON = 0;
 
@@ -610,8 +610,8 @@ static timer_id start_timer(timer_id timer, struct timer_req *request)
 	         * starting a HW Timer.
 	         */
 		duration = request->period.duration;
-		
-#if defined(__dsPIC33EP256MU806__)
+
+#if defined(__dsPIC33EP256MU806__) || defined(__dsPIC33EP128GS702__)
 		if(request->period.duration > HW_TIMER_OVERHEAD) {
 			duration -= HW_TIMER_OVERHEAD;
 		} else {
@@ -627,7 +627,7 @@ static timer_id start_timer(timer_id timer, struct timer_req *request)
 		set_clock_divide(timer, 1);
 #if defined(__18F4585) || defined(__18F2680)
 		ticks = (uint32_t) ((uint32_t) (((uint32_t) sys_clock_freq / 4) / 1000000) * request->period.duration);
-#elif defined(__dsPIC33EP256MU806__)
+#elif defined(__dsPIC33EP256MU806__) || defined(__dsPIC33EP128GS702__)
 		ticks = (uint32_t) ((uint32_t) (((uint32_t) sys_clock_freq) / 1000000) * (duration));
 #endif // Target uC
                 break;
@@ -661,7 +661,7 @@ static timer_id start_timer(timer_id timer, struct timer_req *request)
 		}
 #else
                 /*
-                 * Divide by 256 so 
+                 * Divide by 256 so
                  * in 1 Second (sys_clock_freq/256) ticks
                  */
 		set_clock_divide(timer, 256);
@@ -745,7 +745,7 @@ static timer_id start_stopwatch(timer_id timer, struct timer_req *request)
 	case TIMER_2:
 		TMR2 = 0x00;
 		PR2 = 0xffff;
-                        
+
 		IEC0bits.T2IE = 1;
 		T2CONbits.TON = 1;
 		break;
@@ -753,7 +753,7 @@ static timer_id start_stopwatch(timer_id timer, struct timer_req *request)
 	case TIMER_3:
 		TMR3 = 0x00;
 		PR3 = 0xffff;
-                        
+
 		IEC0bits.T3IE = 1;
 		T3CONbits.TON = 1;
 		break;
@@ -833,8 +833,8 @@ static void set_clock_divide(timer_id timer, uint16_t clock_divide)
                 }
                 break;
 #endif
-                
-#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__) || defined(__dsPIC33EP256MU806__)
+
+#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__) || defined(__dsPIC33EP256MU806__) || defined(__dsPIC33EP128GS702__)
         case TIMER_1:
                 if(clock_divide == 1) {
                         T1CONbits.TCKPS1 = 0; // Divide by 1
@@ -854,7 +854,7 @@ static void set_clock_divide(timer_id timer, uint16_t clock_divide)
                 break;
 #endif
 
-#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__) || defined(__dsPIC33EP256MU806__)
+#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__) || defined(__dsPIC33EP256MU806__) || defined(__dsPIC33EP128GS702__)
         case TIMER_2:
                 if(clock_divide == 1) {
                         T2CONbits.TCKPS1 = 0; // Divide by 1
@@ -874,7 +874,7 @@ static void set_clock_divide(timer_id timer, uint16_t clock_divide)
                 break;
 #endif
 
-#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__) || defined(__dsPIC33EP256MU806__)
+#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__) || defined(__dsPIC33EP256MU806__) || defined(__dsPIC33EP128GS702__)
         case TIMER_3:
                 if(clock_divide == 1) {
                         T3CONbits.TCKPS1 = 0; // Divide by 1
@@ -894,7 +894,7 @@ static void set_clock_divide(timer_id timer, uint16_t clock_divide)
                 break;
 #endif
 
-#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__) || defined(__dsPIC33EP256MU806__)
+#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__) || defined(__dsPIC33EP256MU806__) || defined(__dsPIC33EP128GS702__)
         case TIMER_4:
                 if(clock_divide == 1) {
                         T4CONbits.TCKPS1 = 0; // Divide by 1
@@ -914,7 +914,7 @@ static void set_clock_divide(timer_id timer, uint16_t clock_divide)
                 break;
 #endif
 
-#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__) || defined(__dsPIC33EP256MU806__)
+#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__) || defined(__dsPIC33EP256MU806__) || defined(__dsPIC33EP128GS702__)
         case TIMER_5:
                 if(clock_divide == 1) {
                         T5CONbits.TCKPS1 = 0; // Divide by 1
@@ -944,7 +944,7 @@ static void set_clock_divide(timer_id timer, uint16_t clock_divide)
 /*
  * Not static as called from pic18f4585.c processor
  */
-#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__) || defined(__dsPIC33EP256MU806__)
+#if defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__) || defined(__dsPIC33EP256MU806__) || defined(__dsPIC33EP128GS702__)
 void check_timer(timer_id timer)
 {
 	expiry_function  expiry;
@@ -969,7 +969,7 @@ void check_timer(timer_id timer)
 			case TIMER_2:
 				TMR2 = 0x00;
 				PR2 = 0xffff;
-                        
+
 				IEC0bits.T2IE = 1;
 				T2CONbits.TON = 1;
 				break;
@@ -977,7 +977,7 @@ void check_timer(timer_id timer)
 			case TIMER_3:
 				TMR3 = 0x00;
 				PR3 = 0xffff;
-                        
+
 				IEC0bits.T3IE = 1;
 				T3CONbits.TON = 1;
 				break;

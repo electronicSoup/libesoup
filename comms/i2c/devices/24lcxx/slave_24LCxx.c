@@ -44,8 +44,8 @@
 #define SDA2_PIN RB14
 #define SCL2_PIN RB15
 
-//#define I2C1
-#define I2C2
+#define I2C1
+//#define I2C2
 
 #ifdef I2C1
 void __attribute__((__interrupt__, __no_auto_psv__)) _MI2C1Interrupt(void)
@@ -57,7 +57,6 @@ void __attribute__((__interrupt__, __no_auto_psv__)) _SI2C1Interrupt(void)
 {
 	uint8_t  rx_byte;
 
-	serial_printf("*S1* ");
 	while (IFS1bits.SI2C1IF) {
 		IFS1bits.SI2C1IF    = 0;
 		if (I2C1STATbits.P) {
@@ -68,7 +67,7 @@ void __attribute__((__interrupt__, __no_auto_psv__)) _SI2C1Interrupt(void)
 			}
 			if (I2C1STATbits.R_W) {
 				while(I2C1STATbits.TBF);
-				I2C1TRN = 0x55; //*program++;
+				I2C1TRN = 0x55;
 				I2C1STATbits.TBF = 1;
 			}
 		}
@@ -134,8 +133,10 @@ result_t slave_24lcxx_init(void)
 	 * SDA1 and SCL1 Inputs with OpenDrain enabled
 	 */
 #if defined(I2C1)
+	ANSELBbits.ANSB6 = 0;
 	TRISBbits.TRISB6 = 1;
 	ODCBbits.ODCB6   = 1;
+	ANSELBbits.ANSB7 = 0;
 	TRISBbits.TRISB7 = 1;
 	ODCBbits.ODCB7   = 1;
 

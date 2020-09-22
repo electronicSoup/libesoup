@@ -5,7 +5,7 @@
  *
  * @brief Software Timer API definitions and function prototypes
  *
- * Copyright 2017-2018 electronicSoup Limited
+ * Copyright 2017-2020 electronicSoup Limited
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 2 of the GNU Lesser General Public License
@@ -23,6 +23,7 @@
 #ifndef _SW_TIMERS_H
 #define _SW_TIMERS_H
 
+#include "libesoup_config.h"
 /*
  * This API Code is only included in a build if the configuration file
  * libesoup_config.h includes the definition SYS_SW_TIMERS
