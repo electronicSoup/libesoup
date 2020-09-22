@@ -44,8 +44,12 @@
 #define SDA2_PIN RB14
 #define SCL2_PIN RB15
 
-//#define I2C1
-#define I2C2
+#define I2C1
+//#define I2C2
+
+static uint8_t *program;
+static uint8_t  program_select;
+static uint16_t tx_count = 0;
 
 #ifdef I2C1
 void __attribute__((__interrupt__, __no_auto_psv__)) _MI2C1Interrupt(void)
@@ -57,19 +61,29 @@ void __attribute__((__interrupt__, __no_auto_psv__)) _SI2C1Interrupt(void)
 {
 	uint8_t  rx_byte;
 
-	serial_printf("*S1* ");
 	while (IFS1bits.SI2C1IF) {
 		IFS1bits.SI2C1IF    = 0;
 		if (I2C1STATbits.P) {
+			program        = LLRR;
+			tx_count       = 0;
+			program_select = 0;
 			serial_printf("!");
 		} else if (I2C1STATbits.S) {
+			if (!I2C1STATbits.TBF && tx_count < 512) {
+				tx_count++;
+				I2C1TRN = *program++;
+			}
 			if(I2C1STATbits.RBF) {
 				rx_byte = I2C1RCV;
 			}
 			if (I2C1STATbits.R_W) {
-				while(I2C1STATbits.TBF);
-				I2C1TRN = 0x55; //*program++;
-				I2C1STATbits.TBF = 1;
+				while (tx_count < 512) {
+					if (!I2C1STATbits.TBF) {
+						tx_count++;
+						I2C1TRN = *program++;
+					}
+				}
+				serial_printf("E");
 			}
 		}
 
@@ -130,12 +144,17 @@ void __attribute__((__interrupt__, __no_auto_psv__)) _I2C2BCInterrupt(void)
 result_t slave_24lcxx_init(void)
 {
 	serial_printf("init()\n\r");
+
+	program = LLRR;
+	program_select = 0;
 	/*
 	 * SDA1 and SCL1 Inputs with OpenDrain enabled
 	 */
 #if defined(I2C1)
+	ANSELBbits.ANSB6 = 0;
 	TRISBbits.TRISB6 = 1;
 	ODCBbits.ODCB6   = 1;
+	ANSELBbits.ANSB7 = 0;
 	TRISBbits.TRISB7 = 1;
 	ODCBbits.ODCB7   = 1;
 
@@ -150,8 +169,8 @@ result_t slave_24lcxx_init(void)
 	I2C1CONHbits.SCIE    = 1;  // Enable Start ISR
 	I2C1CONHbits.PCIE    = 1;  // Enable Stop ISR
 
-	I2C1MSK           = 0xff;  // Don't care about address for moment
-	I2C1ADD           = 0xa0;
+	I2C1MSK           = 0x00;  // Don't care about address for moment
+	I2C1ADD           = 0x50;
 
 	IFS1bits.MI2C1IF     = 0;  // Clear Master ISR Flag
 	IEC1bits.MI2C1IE     = 1;  // Enable Master Interrupts
