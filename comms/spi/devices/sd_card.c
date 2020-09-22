@@ -57,6 +57,7 @@ void test_expiry(timer_id timer, union sigval data)
 {
 	result_t rc;
 
+	LOG_D("test_expiry\n\r");
 	rc = spi_write_byte(&spi_device, 0x55);
 	RC_CHECK_PRINT_CONT("spi write failed\n\r");
 }
@@ -75,10 +76,10 @@ result_t sd_card_init(void)
 	rc = gpio_set(SD_CARD_SCK, GPIO_MODE_DIGITAL_OUTPUT, 0);
 	RC_CHECK;
 
-	rc = gpio_set(SD_CARD_MOSI, GPIO_MODE_DIGITAL_OUTPUT, 0);
+	rc = gpio_set(SD_CARD_MOSI, GPIO_MODE_DIGITAL_OUTPUT, 1);
 	RC_CHECK;
 
-	rc = gpio_set(SD_CARD_SS, GPIO_MODE_DIGITAL_OUTPUT,1);
+	rc = gpio_set(SD_CARD_SS, GPIO_MODE_DIGITAL_OUTPUT, 1);
 	RC_CHECK;
 
 	rc = gpio_set(SD_CARD_WRITE_P, GPIO_MODE_DIGITAL_INPUT, 0);

@@ -64,6 +64,7 @@ static result_t	channel_init(enum spi_channel ch);
 #ifdef SYS_SPI1
 void __attribute__((__interrupt__, __no_auto_psv__)) _SPI1TXInterrupt(void)
 {
+	IFS0bits.SPI1TXIF = 0;
 	serial_printf("*SPI1_TX*\n\r");
 }
 #endif
@@ -71,6 +72,7 @@ void __attribute__((__interrupt__, __no_auto_psv__)) _SPI1TXInterrupt(void)
 #ifdef SYS_SPI1
 void __attribute__((__interrupt__, __no_auto_psv__)) _SPI1RXInterrupt(void)
 {
+	IFS0bits.SPI1RXIF = 0;
 	serial_printf("*SPI1_RX*\n\r");
 }
 #endif

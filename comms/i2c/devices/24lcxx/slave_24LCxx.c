@@ -22,12 +22,14 @@
  *******************************************************************************
  *
  */
+#if 0
+
 #include "libesoup_config.h"
 
 #if defined(SYS_SLV_24LCxx) && defined(__dsPIC33EP128GS702__)
 
 #define DEBUG_FILE
-#define TAG "I2C_EP128"
+#define TAG "24LCxx"
 
 #include "libesoup/logger/serial_log.h"
 
@@ -217,3 +219,90 @@ result_t slave_24lcxx_init(void)
 }
 
 #endif // SYS_SLV_24LC64
+
+#endif //0
+
+#include <xc.h>
+
+#define SDA1_PIN RB7
+#define SCL1_PIN RB6
+
+void __attribute__((__interrupt__, __no_auto_psv__)) _MI2C1Interrupt(void)
+{
+//	serial_printf("*M1*\n\r");
+}
+
+void __attribute__((__interrupt__, __no_auto_psv__)) _SI2C1Interrupt(void)
+{
+	uint8_t  rx_byte;
+
+	while (IFS1bits.SI2C1IF) {
+		IFS1bits.SI2C1IF    = 0;
+		if (I2C1STATbits.P) {
+//			serial_printf("!");
+		} else if (I2C1STATbits.S) {
+			if(I2C1STATbits.RBF) {
+				rx_byte = I2C1RCV;
+			}
+			if (I2C1STATbits.R_W) {
+				while (I2C1STATbits.TBF);
+				I2C1TRN = 0x55;
+			}
+		}
+
+		if (I2C1STATbits.IWCOL) {
+//			serial_printf("W");
+		}
+		if (I2C1STATbits.I2COV) {
+//			serial_printf("V");
+		}
+	}
+}
+
+void __attribute__((__interrupt__, __no_auto_psv__)) _I2C1BCInterrupt(void)
+{
+//	serial_printf("B1* ");
+}
+
+void slave_24lcxx_init(void)
+{
+	/*
+	 * SDA1 and SCL1 Inputs with OpenDrain enabled
+	 */
+	ANSELBbits.ANSB6 = 0;
+	TRISBbits.TRISB6 = 1;
+	ODCBbits.ODCB6   = 1;
+	ANSELBbits.ANSB7 = 0;
+	TRISBbits.TRISB7 = 1;
+	ODCBbits.ODCB7   = 1;
+
+	I2C1CONLbits.I2CSIDL = 0;  // Module continues in Idle.
+	I2C1CONLbits.SCLREL  = 1;  // Release clock (Slave mode))
+	I2C1CONLbits.A10M    = 0;  // 7 bit mode
+	I2C1CONLbits.DISSLW  = 1;  // Disable Slew rate.
+	I2C1CONLbits.SMEN    = 0;  // Disable SMBus thresholds
+	I2C1CONLbits.GCEN    = 1;  // Enable General call address
+	I2C1CONLbits.STREN   = 0;  // Disable clock stretching
+
+	I2C1CONHbits.SCIE    = 1;  // Enable Start ISR
+	I2C1CONHbits.PCIE    = 1;  // Enable Stop ISR
+
+	I2C1MSK           = 0x00;  // Don't care about address for moment
+	I2C1ADD           = 0x50;
+
+	IFS1bits.MI2C1IF     = 0;  // Clear Master ISR Flag
+	IEC1bits.MI2C1IE     = 1;  // Enable Master Interrupts
+
+	IFS1bits.SI2C1IF     = 0;  // Clear Slave ISR Flag
+	IEC1bits.SI2C1IE     = 1;  // Enable Slave Interrupts
+
+	IFS10bits.I2C1BCIF   = 0;
+	IEC10bits.I2C1BCIE   = 1;
+
+	I2C1CONLbits.I2CEN   = 1;
+}
+
+int main(void)
+{
+	slave_24lcxx_init();
+}
