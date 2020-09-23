@@ -22,7 +22,9 @@
  *******************************************************************************
  *
  */
-#if 1
+#define BIT_BANG
+
+#if 0
 
 #include "libesoup_config.h"
 
@@ -220,8 +222,75 @@ result_t slave_24lcxx_init(void)
 
 #endif // SYS_SLV_24LC64
 
-#else //0
+#endif //0
 
+#ifdef BIT_BANG
+#include "libesoup_config.h"
+#include "libesoup/gpio/gpio.h"
+
+#define DEBUG_FILE
+#define TAG "24LCxx"
+
+#include "libesoup/logger/serial_log.h"
+
+#define SDA PORTBbits.RB7
+#define SCL PORTBbits.RB6
+
+#define SDA_PIN RB7
+#define SCL_PIN RB6
+
+result_t slave_24lcxx_init(void)
+{
+	uint8_t  i;
+	uint8_t  rx_byte;
+	result_t rc;
+
+	rc = gpio_set(SCL_PIN, GPIO_MODE_DIGITAL_INPUT, 0);
+	RC_CHECK;
+	rc = gpio_set(SDA_PIN, GPIO_MODE_DIGITAL_INPUT, 0);
+	RC_CHECK;
+
+	while (SDA && SCL);
+
+	if (!SDA && SCL) {
+		/*
+		 * STARTED
+		 * read First byte
+		 */
+		rx_byte = 0x00;
+
+		for (i = 0; i < 8; i++) {
+			while(SCL);
+			while(!SCL);
+			rx_byte = (rx_byte << 1) | SDA;
+		}
+
+		/*
+		 * Ack that byte
+		 */
+		while(SCL);
+		gpio_set(SDA_PIN, GPIO_MODE_DIGITAL_OUTPUT, 0);
+		while(!SCL);
+		while(SCL);
+		gpio_set(SDA_PIN, GPIO_MODE_DIGITAL_INPUT, 0);
+
+		return(rx_byte);
+
+		/*
+		 * Read byte
+		 */
+		if (rx_byte && 0x01) {
+			
+		}
+
+	} else {
+		return(-ERR_IM_A_TEAPOT);
+	}
+
+}
+#endif // BIT_BANG
+
+#ifdef MINIMAL
 #include <xc.h>
 
 #define SDA1_PIN RB7
