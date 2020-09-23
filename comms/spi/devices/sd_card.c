@@ -39,10 +39,6 @@
 
 #include "libesoup/comms/spi/spi.h"
 
-#if defined(TEST)
-#include "libesoup/timers/sw_timers.h"
-#endif // TEST
-
 /*
  * SD Card
  * Clk RB11
@@ -61,13 +57,7 @@
 #define SD_CARD_SS      RB14   // ORANGE  Idle low no activity
 #define SD_CARD_MISO    RA0    // YELLOW  Idle Hight no Activity
 
-struct spi_io_channel spi_io = {
-	SD_CARD_SCK,              // SCK
-	SD_CARD_MOSI,             // MOSI
-	SD_CARD_MISO,             // MISO
-	SD_CARD_SS                // CS
-};
-
+struct spi_io_channel spi_io;
 struct spi_device spi_device;
 
 #ifdef SYS_CHANGE_NOTIFICATION
@@ -77,39 +67,19 @@ void sd_card_detect(enum gpio_pin pin)
 }
 #endif
 
-#ifdef TEST
-void test_expiry(timer_id timer, union sigval data)
-{
-	result_t rc;
-
-	LOG_D("test_expiry\n\r");
-	rc = spi_write_byte(&spi_device, 0x55);
-	RC_CHECK_PRINT_CONT("spi write failed\n\r");
-
-	LOG_D("Read 0x%x\n\r", rc);
-}
-#endif // TEST
-
 result_t sd_card_init(void)
 {
+	uint8_t  i;
 	result_t rc;
-	struct timer_req timer_request;
 
 	LOG_D("sd_card_init()\n\r");
 
-#if 0
-	rc = gpio_set(SD_CARD_SCK, GPIO_MODE_DIGITAL_OUTPUT, 0);
+	rc = gpio_set(SD_CARD_SS, GPIO_MODE_DIGITAL_OUTPUT, 1);
 	RC_CHECK;
 
 	rc = gpio_set(SD_CARD_MOSI, GPIO_MODE_DIGITAL_OUTPUT, 1);
 	RC_CHECK;
 
-	rc = gpio_set(SD_CARD_SS, GPIO_MODE_DIGITAL_OUTPUT, 1);
-	RC_CHECK;
-
-	rc = gpio_set(SD_CARD_MISO, GPIO_MODE_DIGITAL_INPUT,0);
-	RC_CHECK;
-#endif
 	rc = gpio_set(SD_CARD_DETECT, GPIO_MODE_DIGITAL_INPUT, 0);
 	RC_CHECK;
 
@@ -120,21 +90,55 @@ result_t sd_card_init(void)
 	rc = change_notifier_register(SD_CARD_DETECT, sd_card_detect);
 #endif
 
+	for (i = 0; i < 200; i++) {
+		gpio_toggle_output(SD_CARD_SS);
+		Nop();
+		Nop();
+		Nop();
+		Nop();
+		Nop();
+		Nop();
+		Nop();
+		Nop();
+		Nop();
+		Nop();
+		Nop();
+		Nop();
+	}
+
+	spi_io.sck  = SD_CARD_SCK;              // SCK
+	spi_io.mosi = SD_CARD_MOSI,             // MOSI
+	spi_io.miso = SD_CARD_MISO;             // MISO
+	spi_io.cs   = INVALID_GPIO_PIN;          // CS
+
 	spi_device.io      = spi_io;
 
 	rc = spi_reserve(&spi_device);
 	LOG_D("Reserved SPI Channel %d\n\r", spi_device.channel);
 
-#ifdef TEST
-	timer_request.type            = single_shot_expiry;
-	timer_request.exp_fn          = test_expiry;
-	timer_request.period.units    = Seconds;
-	timer_request.period.duration = 10;
-	timer_request.data.sival_int  = 0;
+	Nop();
+	Nop();
+	Nop();
+	Nop();
 
-	rc = sw_timer_start(&timer_request);
-#endif
+	rc = gpio_set(SD_CARD_SS, GPIO_MODE_DIGITAL_OUTPUT, 0);
+	RC_CHECK;
 
+	rc = spi_write_byte(&spi_device, 0x40);
+	rc = spi_write_byte(&spi_device, 0x00);
+	rc = spi_write_byte(&spi_device, 0x00);
+	rc = spi_write_byte(&spi_device, 0x00);
+	rc = spi_write_byte(&spi_device, 0x00);
+	rc = spi_write_byte(&spi_device, 0x95);
+
+	Nop();
+	Nop();
+	Nop();
+	Nop();
+
+	rc = spi_write_byte(&spi_device, 0x00);
+
+	serial_printf("Response 0x%x\n\r", rc);
 	return(rc);
 }
 
