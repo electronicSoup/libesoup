@@ -32,10 +32,9 @@
 #define GPIO_MODE_DIGITAL_OUTPUT    0x02  ///< Digital output pin Mode
 #define GPIO_MODE_ANALOG_INPUT      0x04  ///< Analog input pin Mode
 #define GPIO_MODE_ANALOG_OUTPUT     0x08  ///< Analog output pin Mode
-#define GPIO_MODE_OPENDRAIN_INPUT   0x10  ///< Open Drain Input pin Mode
-#define GPIO_MODE_OPENDRAIN_OUTPUT  0x20  ///< Open Drain Output pin Mode
-#define GPIO_MODE_PULLUP            0x40  ///< Enable Pull up resistor on pin Mode
-#define GPIO_MODE_PULLDOWN          0x80  ///< Enable pull down resistor on pin Mode
+#define GPIO_MODE_OPENDRAIN         0x10  ///< Open Drain Input pin Mode
+#define GPIO_MODE_PULLUP            0x20  ///< Enable Pull up resistor on pin Mode
+#define GPIO_MODE_PULLDOWN          0x40  ///< Enable pull down resistor on pin Mode
 
 /**
  * @brief Set the mode of a GPIO Pin

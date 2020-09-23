@@ -239,16 +239,31 @@ result_t slave_24lcxx_init(void)
 #define SDA_PIN RB7
 #define SCL_PIN RB6
 
+#define SDA_INPUT  TRISBbits.TRISB7 = 1;
+#define SDA_OUTPUT TRISBbits.TRISB7 = 0;
+#define ACK TRISBbits.TRISB7 = 0; LATBbits.LATB7 = 0;
+
+#define TEST
+
 result_t slave_24lcxx_init(void)
 {
-	uint8_t  i;
+	uint8_t  bit_loop;
 	uint8_t  rx_byte;
+	uint8_t  tx_byte;
+	uint8_t  master_ack;
 	result_t rc;
 
-	rc = gpio_set(SCL_PIN, GPIO_MODE_DIGITAL_INPUT, 0);
-	RC_CHECK;
-	rc = gpio_set(SDA_PIN, GPIO_MODE_DIGITAL_INPUT, 0);
-	RC_CHECK;
+#ifdef TEST
+	gpio_set(RB13, GPIO_MODE_DIGITAL_OUTPUT, 1);
+#endif
+	ANSELBbits.ANSB6 = 0;
+	ANSELBbits.ANSB7 = 0;
+
+	ODCBbits.ODCB6   = 1;
+	ODCBbits.ODCB7   = 1;
+
+	TRISBbits.TRISB6 = 1;
+	TRISBbits.TRISB7 = 1;
 
 	while (SDA && SCL);
 
@@ -259,29 +274,185 @@ result_t slave_24lcxx_init(void)
 		 */
 		rx_byte = 0x00;
 
-		for (i = 0; i < 8; i++) {
-			while(SCL);
-			while(!SCL);
-			rx_byte = (rx_byte << 1) | SDA;
-		}
-
-		/*
-		 * Ack that byte
-		 */
 		while(SCL);
-		gpio_set(SDA_PIN, GPIO_MODE_DIGITAL_OUTPUT, 0);
+		while(!SCL);
+		rx_byte = (rx_byte << 1) | SDA;
+		while(SCL);
+		while(!SCL);
+		rx_byte = (rx_byte << 1) | SDA;
+		while(SCL);
+		while(!SCL);
+		rx_byte = (rx_byte << 1) | SDA;
+		while(SCL);
+		while(!SCL);
+		rx_byte = (rx_byte << 1) | SDA;
+		while(SCL);
+		while(!SCL);
+		rx_byte = (rx_byte << 1) | SDA;
+		while(SCL);
+		while(!SCL);
+		rx_byte = (rx_byte << 1) | SDA;
+		while(SCL);
+		while(!SCL);
+		rx_byte = (rx_byte << 1) | SDA;
+		while(SCL);
+		while(!SCL);
+		rx_byte = (rx_byte << 1) | SDA;
+		while(SCL);
+		ACK;
 		while(!SCL);
 		while(SCL);
-		gpio_set(SDA_PIN, GPIO_MODE_DIGITAL_INPUT, 0);
+		SDA_INPUT
 
-		return(rx_byte);
+		// 2nd Byte
+		rx_byte = 0x00;
 
-		/*
-		 * Read byte
-		 */
-		if (rx_byte && 0x01) {
-			
+		while(!SCL);
+		rx_byte = (rx_byte << 1) | SDA;
+		while(SCL);
+		while(!SCL);
+		rx_byte = (rx_byte << 1) | SDA;
+		while(SCL);
+		while(!SCL);
+		rx_byte = (rx_byte << 1) | SDA;
+		while(SCL);
+		while(!SCL);
+		rx_byte = (rx_byte << 1) | SDA;
+		while(SCL);
+		while(!SCL);
+		rx_byte = (rx_byte << 1) | SDA;
+		while(SCL);
+		while(!SCL);
+		rx_byte = (rx_byte << 1) | SDA;
+		while(SCL);
+		while(!SCL);
+		rx_byte = (rx_byte << 1) | SDA;
+		while(SCL);
+		while(!SCL);
+		rx_byte = (rx_byte << 1) | SDA;
+		while(SCL);
+		ACK;
+		while(!SCL);
+		while(SCL);
+		SDA_INPUT;
+
+		// 3rd Byte
+		rx_byte = 0x00;
+
+		while(!SCL);
+		rx_byte = (rx_byte << 1) | SDA;
+		while(SCL);
+		while(!SCL);
+		rx_byte = (rx_byte << 1) | SDA;
+		while(SCL);
+		while(!SCL);
+		rx_byte = (rx_byte << 1) | SDA;
+		while(SCL);
+		while(!SCL);
+		rx_byte = (rx_byte << 1) | SDA;
+		while(SCL);
+		while(!SCL);
+		rx_byte = (rx_byte << 1) | SDA;
+		while(SCL);
+		while(!SCL);
+		rx_byte = (rx_byte << 1) | SDA;
+		while(SCL);
+		while(!SCL);
+		rx_byte = (rx_byte << 1) | SDA;
+		while(SCL);
+		while(!SCL);
+		rx_byte = (rx_byte << 1) | SDA;
+		while(SCL);
+		ACK;
+		while(!SCL);
+		while(SCL);
+		SDA_INPUT;
+
+		// Need a restart
+		while(!(SDA && SCL) );
+
+		// Back to Idle so wait for start
+		while(SDA && SCL);
+
+		// Now 4th Byte
+		rx_byte = 0x00;
+		while(SCL);
+		while(!SCL);
+		rx_byte = (rx_byte << 1) | SDA;
+		while(SCL);
+		while(!SCL);
+		rx_byte = (rx_byte << 1) | SDA;
+		while(SCL);
+		while(!SCL);
+		rx_byte = (rx_byte << 1) | SDA;
+		while(SCL);
+		while(!SCL);
+		rx_byte = (rx_byte << 1) | SDA;
+		while(SCL);
+		while(!SCL);
+		rx_byte = (rx_byte << 1) | SDA;
+		while(SCL);
+		while(!SCL);
+		rx_byte = (rx_byte << 1) | SDA;
+		while(SCL);
+		while(!SCL);
+		rx_byte = (rx_byte << 1) | SDA;
+		while(SCL);
+		while(!SCL);
+		rx_byte = (rx_byte << 1) | SDA;
+		while(SCL);
+		ACK;
+		while(!SCL);
+		while(SCL);
+		SDA_INPUT;
+
+		SDA_OUTPUT;
+		tx_byte = 0x55;
+
+		master_ack = 1;
+		while (master_ack) {
+			SDA_OUTPUT;
+			LATBbits.LATB7 = 1;
+			tx_byte = tx_byte << 1;
+			while(!SCL);
+			while(SCL);
+			LATBbits.LATB7 = 1;
+			tx_byte = tx_byte << 1;
+			while(!SCL);
+			while(SCL);
+			LATBbits.LATB7 = 1;
+			tx_byte = tx_byte << 1;
+			while(!SCL);
+			while(SCL);
+			LATBbits.LATB7 = 1;
+			tx_byte = tx_byte << 1;
+			while(!SCL);
+			while(SCL);
+			LATBbits.LATB7 = 0;
+			tx_byte = tx_byte << 1;
+			while(!SCL);
+			while(SCL);
+			LATBbits.LATB7 = 0;
+			tx_byte = tx_byte << 1;
+			while(!SCL);
+			while(SCL);
+			LATBbits.LATB7 = 0;
+			tx_byte = tx_byte << 1;
+			while(!SCL);
+			while(SCL);
+			LATBbits.LATB7 = 0;
+			tx_byte = tx_byte << 1;
+			while(!SCL);
+			while(SCL);
+			SDA_INPUT;
+			while(!SCL);
+			while(SCL);
+			master_ack = !SDA;
 		}
+
+#ifdef TEST
+	gpio_set(RB13, GPIO_MODE_DIGITAL_OUTPUT, 0);
+#endif
 
 	} else {
 		return(-ERR_IM_A_TEAPOT);

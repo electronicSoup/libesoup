@@ -77,6 +77,9 @@ result_t sd_card_init(void)
 	rc = gpio_set(SD_CARD_SS, GPIO_MODE_DIGITAL_OUTPUT, 1);
 	RC_CHECK;
 
+	rc = gpio_set(SD_CARD_SCK, GPIO_MODE_DIGITAL_OUTPUT, 1);
+	RC_CHECK;
+
 	rc = gpio_set(SD_CARD_MOSI, GPIO_MODE_DIGITAL_OUTPUT, 1);
 	RC_CHECK;
 
@@ -91,7 +94,7 @@ result_t sd_card_init(void)
 #endif
 
 	for (i = 0; i < 200; i++) {
-		gpio_toggle_output(SD_CARD_SS);
+		gpio_toggle_output(SD_CARD_SCK);
 		Nop();
 		Nop();
 		Nop();
@@ -139,6 +142,8 @@ result_t sd_card_init(void)
 	rc = spi_write_byte(&spi_device, 0x00);
 
 	serial_printf("Response 0x%x\n\r", rc);
+	rc = gpio_set(SD_CARD_SS, GPIO_MODE_DIGITAL_OUTPUT, 1);
+	RC_CHECK;
 	return(rc);
 }
 
