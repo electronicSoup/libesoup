@@ -1,3 +1,27 @@
+/**
+ * @file libesoup/core.c
+ *
+ * @author John Whitmore
+ *
+ * @brief File containing SD Card API
+ *
+ * Copyright 2020 electronicSoup Limited
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the version 2 of the GNU Lesser General Public License
+ * as published by the Free Software Foundation
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program; if not, see <http://www.gnu.org/licenses/>.
+ *
+ *******************************************************************************
+ *
+ */
 #include "libesoup_config.h"
 
 #if defined(SYS_SD_CARD)
@@ -24,17 +48,18 @@
  * Clk RB11
  * WriteP  RB15
  * CMD RB13
- * DAT3 RB14
+ * DAT3/CD (SS) RB14
  * DAT0 RA0
  * DAT1 RA1
 
  */
 #define SD_CARD_DETECT  RB5
-#define SD_CARD_SCK     RB11
-#define SD_CARD_MOSI    RB13
-#define SD_CARD_SS      RB14
 #define SD_CARD_WRITE_P RB15
-#define SD_CARD_MISO    RA0
+
+#define SD_CARD_SCK     RB11   // GREY    Idle High Works
+#define SD_CARD_MOSI    RB13   // RED     Idle Low no activity
+#define SD_CARD_SS      RB14   // ORANGE  Idle low no activity
+#define SD_CARD_MISO    RA0    // YELLOW  Idle Hight no Activity
 
 struct spi_io_channel spi_io = {
 	SD_CARD_SCK,              // SCK
@@ -60,6 +85,8 @@ void test_expiry(timer_id timer, union sigval data)
 	LOG_D("test_expiry\n\r");
 	rc = spi_write_byte(&spi_device, 0x55);
 	RC_CHECK_PRINT_CONT("spi write failed\n\r");
+
+	LOG_D("Read 0x%x\n\r", rc);
 }
 #endif // TEST
 
@@ -70,9 +97,7 @@ result_t sd_card_init(void)
 
 	LOG_D("sd_card_init()\n\r");
 
-	rc = gpio_set(SD_CARD_DETECT, GPIO_MODE_DIGITAL_INPUT, 0);
-	RC_CHECK;
-
+#if 0
 	rc = gpio_set(SD_CARD_SCK, GPIO_MODE_DIGITAL_OUTPUT, 0);
 	RC_CHECK;
 
@@ -82,10 +107,13 @@ result_t sd_card_init(void)
 	rc = gpio_set(SD_CARD_SS, GPIO_MODE_DIGITAL_OUTPUT, 1);
 	RC_CHECK;
 
-	rc = gpio_set(SD_CARD_WRITE_P, GPIO_MODE_DIGITAL_INPUT, 0);
+	rc = gpio_set(SD_CARD_MISO, GPIO_MODE_DIGITAL_INPUT,0);
+	RC_CHECK;
+#endif
+	rc = gpio_set(SD_CARD_DETECT, GPIO_MODE_DIGITAL_INPUT, 0);
 	RC_CHECK;
 
-	rc = gpio_set(SD_CARD_MISO, GPIO_MODE_DIGITAL_INPUT,0);
+	rc = gpio_set(SD_CARD_WRITE_P, GPIO_MODE_DIGITAL_INPUT, 0);
 	RC_CHECK;
 
 #ifdef SYS_CHANGE_NOTIFICATION

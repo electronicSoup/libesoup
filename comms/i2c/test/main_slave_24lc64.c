@@ -24,10 +24,10 @@ int main(void)
 
 	rc = slave_24lcxx_init();
 	RC_CHECK_PRINT_CONT("24LCxx init failed\n\r");
-
+#ifdef SYS_SD_CARD
 	rc = sd_card_init();
 	RC_CHECK_PRINT_CONT("SD Card init failed\n\r");
-
+#endif
 //	gpio_set(RA4, GPIO_MODE_DIGITAL_OUTPUT, 0);
 	/*
 	 * RE5        3rd pin <-> Pin 7 of EEPROM WP

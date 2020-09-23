@@ -39,13 +39,13 @@
 //#define SYS_I2C1
 #define SYS_SLV_24LCxx
 //#define SYS_TEST_MASTER_24LC64
-//#define SYS_TEST_SLAVE_24LCxx
+#define SYS_TEST_SLAVE_24LCxx
 
 /*
  * SD Card switches
  */
-//#define SYS_SPI1
-//#define SYS_SD_CARD
+#define SYS_SPI1
+#define SYS_SD_CARD
 
 /*
  * Include a board file

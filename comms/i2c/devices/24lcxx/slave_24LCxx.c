@@ -22,7 +22,7 @@
  *******************************************************************************
  *
  */
-#if 0
+#if 1
 
 #include "libesoup_config.h"
 
@@ -220,7 +220,7 @@ result_t slave_24lcxx_init(void)
 
 #endif // SYS_SLV_24LC64
 
-#endif //0
+#else //0
 
 #include <xc.h>
 
@@ -305,4 +305,9 @@ void slave_24lcxx_init(void)
 int main(void)
 {
 	slave_24lcxx_init();
+
+	while(1) {
+		Nop();
+	}
 }
+#endif
