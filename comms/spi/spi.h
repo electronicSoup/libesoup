@@ -65,7 +65,6 @@ enum spi_mode {
 struct spi_device {
 	enum spi_channel       channel;
 	struct spi_io_channel  io;
-        enum tx_edge           tx_edge;
         enum clock_polarity    clock_polarity;
         enum spi_mode          spi_mode;
 	enum bus_mode          bus_mode;

@@ -22,10 +22,11 @@
  *******************************************************************************
  *
  */
-#define BIT_BANG
-//#define MINIMAL
+//#define BIT_BANG
+#define MINIMAL
+//#define MCP_I2C
 
-#if 0
+#ifdef MCP_I2C
 
 #include "libesoup_config.h"
 
@@ -519,8 +520,13 @@ void __attribute__((__interrupt__, __no_auto_psv__)) _SI2C1Interrupt(void)
 				rx_byte = I2C1RCV;
 			}
 			if (I2C1STATbits.R_W) {
-				while (I2C1STATbits.TBF);
-				I2C1TRN = 0x55;
+				if (I2C1STATbits.ACKTIM) {
+					while (I2C1STATbits.ACKTIM);
+					if (!I2C1STATbits.ACKSTAT) {
+						while (I2C1STATbits.TBF);
+						I2C1TRN = 0x55;
+					}
+				}
 			}
 		}
 
