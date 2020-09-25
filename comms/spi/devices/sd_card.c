@@ -132,6 +132,7 @@ result_t sd_card_init(void)
 	spi_io.cs   = INVALID_GPIO_PIN;          // CS
 
 	spi_device.io      = spi_io;
+	spi_device.bus_mod = bus_mode_2;
 
 	rc = spi_reserve(&spi_device);
 	LOG_D("Reserved SPI Channel %d\n\r", spi_device.channel);
