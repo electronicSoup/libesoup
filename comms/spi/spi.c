@@ -216,8 +216,28 @@ static result_t	channel_init(enum spi_channel ch)
 
 		SPI1BRGL = 0xff;
 
-		SPI1CON1bits.CKE = 0;
-		SPI1CON1bits.CKP = 1;
+		switch (device->bus_mode): {
+				case bus_mode_0:
+					SPI1CON1Lbits.CKP = 0;
+					SPI1CON1Lbits.SMP = 0;
+					break;
+					case bus_mode_1:
+					SPI1CON1Lbits.CKP = 0;
+					SPI1CON1Lbits.SMP = 1;
+						break;
+						case bus_mode_2:
+					SPI1CON1Lbits.CKP = 1;
+					SPI1CON1Lbits.SMP = 0;
+							break;
+							case bus_mode_3:
+					SPI1CON1Lbits.CKP = 1;
+					SPI1CON1Lbits.SMP = 1;
+								break;
+								default:
+									break;
+			}
+
+		SPI1CON1Lbits.CKE = 0;
 
 		SPI1CON2 = 0x00;
 
