@@ -23,6 +23,7 @@
  *
  */
 #define BIT_BANG
+//#define MINIMAL
 
 #if 0
 
@@ -247,11 +248,11 @@ result_t slave_24lcxx_init(void)
 
 result_t slave_24lcxx_init(void)
 {
-	uint8_t  bit_loop;
 	uint8_t  rx_byte;
 	uint8_t  tx_byte;
 	uint8_t  master_ack;
-	result_t rc;
+
+	INTERRUPTS_DISABLED;
 
 #ifdef TEST
 	gpio_set(RB13, GPIO_MODE_DIGITAL_OUTPUT, 1);
@@ -407,54 +408,87 @@ result_t slave_24lcxx_init(void)
 		SDA_INPUT;
 
 		SDA_OUTPUT;
-		tx_byte = 0x55;
 
 		master_ack = 1;
 		while (master_ack) {
+			tx_byte = 0x55;
 			SDA_OUTPUT;
-			LATBbits.LATB7 = 1;
+			if (tx_byte & 0x80) {
+				LATBbits.LATB7 = 1;
+			} else {
+				LATBbits.LATB7 = 0;
+			}
 			tx_byte = tx_byte << 1;
 			while(!SCL);
 			while(SCL);
-			LATBbits.LATB7 = 1;
+			if (tx_byte & 0x80) {
+				LATBbits.LATB7 = 1;
+			} else {
+				LATBbits.LATB7 = 0;
+			}
 			tx_byte = tx_byte << 1;
 			while(!SCL);
 			while(SCL);
-			LATBbits.LATB7 = 1;
+			if (tx_byte & 0x80) {
+				LATBbits.LATB7 = 1;
+			} else {
+				LATBbits.LATB7 = 0;
+			}
 			tx_byte = tx_byte << 1;
 			while(!SCL);
 			while(SCL);
-			LATBbits.LATB7 = 1;
+			if (tx_byte & 0x80) {
+				LATBbits.LATB7 = 1;
+			} else {
+				LATBbits.LATB7 = 0;
+			}
 			tx_byte = tx_byte << 1;
 			while(!SCL);
 			while(SCL);
-			LATBbits.LATB7 = 0;
+			if (tx_byte & 0x80) {
+				LATBbits.LATB7 = 1;
+			} else {
+				LATBbits.LATB7 = 0;
+			}
 			tx_byte = tx_byte << 1;
 			while(!SCL);
 			while(SCL);
-			LATBbits.LATB7 = 0;
+			if (tx_byte & 0x80) {
+				LATBbits.LATB7 = 1;
+			} else {
+				LATBbits.LATB7 = 0;
+			}
 			tx_byte = tx_byte << 1;
 			while(!SCL);
 			while(SCL);
-			LATBbits.LATB7 = 0;
+			if (tx_byte & 0x80) {
+				LATBbits.LATB7 = 1;
+			} else {
+				LATBbits.LATB7 = 0;
+			}
 			tx_byte = tx_byte << 1;
 			while(!SCL);
 			while(SCL);
-			LATBbits.LATB7 = 0;
+			if (tx_byte & 0x80) {
+				LATBbits.LATB7 = 1;
+			} else {
+				LATBbits.LATB7 = 0;
+			}
 			tx_byte = tx_byte << 1;
 			while(!SCL);
 			while(SCL);
 			SDA_INPUT;
 			while(!SCL);
-			while(SCL);
 			master_ack = !SDA;
+			while(SCL);
 		}
-
 #ifdef TEST
-	gpio_set(RB13, GPIO_MODE_DIGITAL_OUTPUT, 0);
+		gpio_set(RB13, GPIO_MODE_DIGITAL_OUTPUT, 0);
 #endif
-
+		INTERRUPTS_ENABLED;
+		return(SUCCESS);
 	} else {
+		INTERRUPTS_ENABLED;
 		return(-ERR_IM_A_TEAPOT);
 	}
 
