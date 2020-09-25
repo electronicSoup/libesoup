@@ -40,7 +40,7 @@
 #ifdef SYS_CHANGE_NOTIFICATION
 #include "libesoup/gpio/change_notification.h"
 #endif
-
+#include "libesoup/timers/hw_timers.h"
 #include "libesoup/comms/spi/spi.h"
 
 /*
@@ -69,12 +69,29 @@ struct  __attribute__ ((packed)) sd_card_command {
 	uint8_t     data[6];
 };
 
+static timer_id timer;
+static uint8_t  finished = 0;
 
 struct spi_io_channel spi_io;
 struct spi_device spi_device;
 
 static void init_command(struct sd_card_command *buffer, enum sd_cmd cmd);
 static void send_command(struct sd_card_command *buffer);
+
+void toggle(timer_id timer, union sigval data)
+{
+	struct period period;
+	static uint8_t count = 0;
+
+	count++;
+	gpio_toggle_output(SD_CARD_SCK);
+	if (count >= 100) {
+		hw_timer_stop(timer, &period);
+		gpio_set(SD_CARD_SS, GPIO_MODE_DIGITAL_OUTPUT, 1);
+		finished = 1;
+	}
+
+}
 
 #ifdef SYS_CHANGE_NOTIFICATION
 void sd_card_detect(enum gpio_pin pin)
@@ -87,7 +104,9 @@ result_t sd_card_init(void)
 {
 	uint8_t  i;
 	result_t rc;
+	struct   timer_req request;
 	struct   sd_card_command  cmd;
+
 
 	LOG_D("sd_card_init()\n\r");
 
@@ -110,21 +129,21 @@ result_t sd_card_init(void)
 	rc = change_notifier_register(SD_CARD_DETECT, sd_card_detect);
 #endif
 
-	for (i = 0; i < 200; i++) {
-		gpio_toggle_output(SD_CARD_SCK);
-		Nop();
-		Nop();
-		Nop();
-		Nop();
-		Nop();
-		Nop();
-		Nop();
-		Nop();
-		Nop();
-		Nop();
-		Nop();
-		Nop();
+	request.period.units = mSeconds;
+	request.period.duration = 1;
+	request.data.sival_int = 0;
+	request.type = repeat_expiry;
+	request.exp_fn = toggle;
+
+	rc = hw_timer_start(&request);
+	if (rc < 0) {
+		LOG_E("Failed to create HW Timer\n\r");
+		return(rc);
 	}
+	timer = (timer_id)rc;
+
+	while(!finished);
+	LOG_D("Finished preamble\n\r");
 
 	spi_io.sck  = SD_CARD_SCK;              // SCK
 	spi_io.mosi = SD_CARD_MOSI,             // MOSI
@@ -137,21 +156,12 @@ result_t sd_card_init(void)
 	rc = spi_reserve(&spi_device);
 	LOG_D("Reserved SPI Channel %d\n\r", spi_device.channel);
 
-	Nop();
-	Nop();
-	Nop();
-	Nop();
-
 	rc = gpio_set(SD_CARD_SS, GPIO_MODE_DIGITAL_OUTPUT, 0);
 	RC_CHECK;
 
 	init_command(&cmd, sd_reset);
 	send_command(&cmd);
 
-	Nop();
-	Nop();
-	Nop();
-	Nop();
 
 	for (i = 0; i < 10; i++) {
 		rc = spi_write_byte(&spi_device, 0x00);
@@ -173,13 +183,6 @@ static void init_command(struct sd_card_command *buffer, enum sd_cmd cmd)
 	buffer->data[2] = 0x00;
 	buffer->data[3] = 0x00;
 	buffer->data[4] = 0x00;
-
-//c = spi_write_byte(&spi_device, 0x40);
-//	rc = spi_write_byte(&spi_device, 0x00);
-///	rc = spi_write_byte(&spi_device, 0x00);
-//	rc = spi_write_byte(&spi_device, 0x00);
-//	rc = spi_write_byte(&spi_device, 0x00);
-//	rc = spi_write_byte(&spi_device, 0x95);
 }
 
 static void send_command(struct sd_card_command *cmd)

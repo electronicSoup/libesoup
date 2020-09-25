@@ -23,7 +23,7 @@
  *
  */
 //#define BIT_BANG
-#define MINIMAL
+//#define MINIMAL
 //#define MCP_I2C
 
 #ifdef MCP_I2C
