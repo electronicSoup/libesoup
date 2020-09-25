@@ -61,32 +61,20 @@
 #define SD_CARD_SS      RB14   // ORANGE  Idle low no activity
 #define SD_CARD_MISO    RA0    // YELLOW  Idle Hight no Activity
 
-#define SD_CMD_RESET    0x00;
+enum sd_cmd {
+	sd_reset = 0x00,
+};
 
 struct  __attribute__ ((packed)) sd_card_command {
-	union cmd {
-		struct cmd_byte {
-			uint8_t     msbit   : 1;
-			uint8_t     one     : 1;
-			uint8_t     command : 6;
-		};
-		uint8_t ms_byte;
-	};
-	uint8_t     data[4];
-	union crc {
-		struct crc_byte {
-			uint8_t     crc     : 7;
-			uint8_t     lsbit   : 1;
-		};
-		uint8_t ls_byte;
-	};
+	uint8_t     data[6];
 };
 
 
 struct spi_io_channel spi_io;
 struct spi_device spi_device;
 
-static void init_command(struct sd_card_command *cmd);
+static void init_command(struct sd_card_command *buffer, enum sd_cmd cmd);
+static void send_command(struct sd_card_command *buffer);
 
 #ifdef SYS_CHANGE_NOTIFICATION
 void sd_card_detect(enum gpio_pin pin)
@@ -156,41 +144,51 @@ result_t sd_card_init(void)
 	rc = gpio_set(SD_CARD_SS, GPIO_MODE_DIGITAL_OUTPUT, 0);
 	RC_CHECK;
 
-	init_command(&cmd);
-//	cmd command = SD_CMD_RESET;
+	init_command(&cmd, sd_reset);
 	send_command(&cmd);
 
-	rc = spi_write_byte(&spi_device, 0x40);
-	rc = spi_write_byte(&spi_device, 0x00);
-	rc = spi_write_byte(&spi_device, 0x00);
-	rc = spi_write_byte(&spi_device, 0x00);
-	rc = spi_write_byte(&spi_device, 0x00);
-	rc = spi_write_byte(&spi_device, 0x95);
-
 	Nop();
 	Nop();
 	Nop();
 	Nop();
 
-	rc = spi_write_byte(&spi_device, 0x00);
+	for (i = 0; i < 10; i++) {
+		rc = spi_write_byte(&spi_device, 0x00);
+	}
 
 	serial_printf("Response 0x%x\n\r", rc);
-	rc = gpio_set(SD_CARD_SS, GPIO_MODE_DIGITAL_OUTPUT, 1);
+//	rc = gpio_set(SD_CARD_SS, GPIO_MODE_DIGITAL_OUTPUT, 1);
 	RC_CHECK;
 	return(rc);
 }
 
-static void init_command(struct sd_card_command *cmd)
+static void init_command(struct sd_card_command *buffer, enum sd_cmd cmd)
 {
+	buffer->data[0] = (uint8_t)cmd;
+	buffer->data[0] = buffer->data[5] | 0x40;
+	buffer->data[5] = 0x95;
+
+	buffer->data[1] = 0x00;
+	buffer->data[2] = 0x00;
+	buffer->data[3] = 0x00;
+	buffer->data[4] = 0x00;
+
+//c = spi_write_byte(&spi_device, 0x40);
+//	rc = spi_write_byte(&spi_device, 0x00);
+///	rc = spi_write_byte(&spi_device, 0x00);
+//	rc = spi_write_byte(&spi_device, 0x00);
+//	rc = spi_write_byte(&spi_device, 0x00);
+//	rc = spi_write_byte(&spi_device, 0x95);
 }
 
-static 	send_command(struct sd_card_command *cmd);
+static void send_command(struct sd_card_command *cmd)
 {
-	rc = spi_write_byte(&spi_device, 0x40);
-	rc = spi_write_byte(&spi_device, 0x00);
-	rc = spi_write_byte(&spi_device, 0x00);
-	rc = spi_write_byte(&spi_device, 0x00);
-	rc = spi_write_byte(&spi_device, 0x00);
-	rc = spi_write_byte(&spi_device, 0x95);
+	result_t rc;
+	uint8_t  i;
+
+	LOG_D("send_command()\n\r");
+	for (i = 0; i < 6; i++) {
+		rc = spi_write_byte(&spi_device, cmd->data[i]);
+	}
 }
 #endif // SYS_SD_CARD

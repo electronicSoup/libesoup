@@ -32,13 +32,14 @@ int main(void)
 	struct timer_req request;
 
 	rc = libesoup_init();
-
+#ifdef SYS_SLV_24LCxx
 	rc = slave_24lcxx_init();
 	if (rc < 0) {
 		LOG_E("24LCxx init failed\n\r");
 	} else {
 		LOG_D("Returned 0x%x\n\r");
 	}
+#endif
 #ifdef SYS_SD_CARD
 	rc = sd_card_init();
 	RC_CHECK_PRINT_CONT("SD Card init failed\n\r");
