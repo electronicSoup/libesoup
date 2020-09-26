@@ -27,6 +27,7 @@
 #if defined(SYS_SD_CARD)
 
 extern result_t sd_card_init(void);
+extern result_t sd_card_read(uint16_t address);
 
 #endif // SYS_SD_CARD
 
