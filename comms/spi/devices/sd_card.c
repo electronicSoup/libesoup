@@ -74,6 +74,7 @@ struct  __attribute__ ((packed)) sd_card_command {
 
 static timer_id timer;
 static uint8_t  finished = 0;
+static struct   period           period;
 
 struct spi_io_channel spi_io;
 struct spi_device spi_device;
@@ -113,6 +114,9 @@ result_t sd_card_init(void)
 
 
 	LOG_D("sd_card_init()\n\r");
+
+	period.units    = uSeconds;
+	period.duration = 100;
 
 	rc = gpio_set(SD_CARD_SS, GPIO_MODE_DIGITAL_OUTPUT, 1);
 	RC_CHECK;
@@ -169,6 +173,7 @@ result_t sd_card_init(void)
 
 	rx_byte = 0xff;
 	while (rx_byte != 0x01) {
+		delay(&period);
 		rc = spi_write_byte(&spi_device, 0xff);
 		RC_CHECK;
 		rx_byte = (uint8_t)rc;
@@ -193,19 +198,15 @@ result_t sd_card_read(uint16_t address)
 	uint16_t i;
 	uint8_t  rx_byte;
 	struct   sd_card_command  cmd;
-	struct   period           period;
 
 	rc = gpio_set(SD_CARD_SS, GPIO_MODE_DIGITAL_OUTPUT, 0);
 
 	init_command(&cmd, sd_read);
 	send_command(&cmd);
 
-	period.units    = mSeconds;
-	period.duration = 1;
-	delay(&period);
-
 	rx_byte = 0xff;
 	while (rx_byte != 0xfe) {
+		delay(&period);
 		rc = spi_write_byte(&spi_device, 0xff);
 		RC_CHECK;
 		rx_byte = (uint8_t)rc;
@@ -239,6 +240,7 @@ static result_t set_block_size(uint16_t size)
 
 	rx_byte = 0xff;
 	while (rx_byte != 0xfe) {
+		delay(&period);
 		rc = spi_write_byte(&spi_device, 0xff);
 		RC_CHECK;
 		rx_byte = (uint8_t)rc;
