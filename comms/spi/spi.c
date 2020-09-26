@@ -237,6 +237,7 @@ static result_t	channel_init(enum spi_channel ch)
 			break;
 		}
 
+		SPI1BRGL = device->brg;
 		SPI1CON1Lbits.CKE = 0;
 
 		SPI1CON2 = 0x00;

@@ -68,6 +68,7 @@ struct spi_device {
         enum clock_polarity    clock_polarity;
         enum spi_mode          spi_mode;
 	enum bus_mode          bus_mode;
+	uint16_t               brg;
 };
 
 extern result_t spi_reserve(struct spi_device *device);

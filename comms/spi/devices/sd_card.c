@@ -85,9 +85,9 @@ void toggle(timer_id timer, union sigval data)
 
 	count++;
 	gpio_toggle_output(SD_CARD_SCK);
-	if (count >= 100) {
+	if (count >= 150) {
 		hw_timer_stop(timer, &period);
-		gpio_set(SD_CARD_SS, GPIO_MODE_DIGITAL_OUTPUT, 1);
+		gpio_set(SD_CARD_SCK, GPIO_MODE_DIGITAL_OUTPUT, 1);
 		finished = 1;
 	}
 
@@ -129,8 +129,8 @@ result_t sd_card_init(void)
 	rc = change_notifier_register(SD_CARD_DETECT, sd_card_detect);
 #endif
 
-	request.period.units = mSeconds;
-	request.period.duration = 1;
+	request.period.units = uSeconds;
+	request.period.duration = 5;
 	request.data.sival_int = 0;
 	request.type = repeat_expiry;
 	request.exp_fn = toggle;
@@ -151,7 +151,8 @@ result_t sd_card_init(void)
 	spi_io.cs   = INVALID_GPIO_PIN;          // CS
 
 	spi_device.io       = spi_io;
-	spi_device.bus_mode = bus_mode_2;
+	spi_device.bus_mode = bus_mode_1;   // 2x
+	spi_device.brg      = 256;
 
 	rc = spi_reserve(&spi_device);
 	LOG_D("Reserved SPI Channel %d\n\r", spi_device.channel);
@@ -163,9 +164,12 @@ result_t sd_card_init(void)
 	send_command(&cmd);
 
 
-	for (i = 0; i < 10; i++) {
-		rc = spi_write_byte(&spi_device, 0x00);
-	}
+	rc = spi_write_byte(&spi_device, 0x00);
+	rc = spi_write_byte(&spi_device, 0x00);
+	rc = spi_write_byte(&spi_device, 0x00);
+	rc = spi_write_byte(&spi_device, 0x00);
+	rc = spi_write_byte(&spi_device, 0x00);
+	rc = spi_write_byte(&spi_device, 0x00);
 
 	serial_printf("Response 0x%x\n\r", rc);
 //	rc = gpio_set(SD_CARD_SS, GPIO_MODE_DIGITAL_OUTPUT, 1);
@@ -176,7 +180,7 @@ result_t sd_card_init(void)
 static void init_command(struct sd_card_command *buffer, enum sd_cmd cmd)
 {
 	buffer->data[0] = (uint8_t)cmd;
-	buffer->data[0] = buffer->data[5] | 0x40;
+	buffer->data[0] = buffer->data[0] | 0x40;
 	buffer->data[5] = 0x95;
 
 	buffer->data[1] = 0x00;
@@ -190,7 +194,6 @@ static void send_command(struct sd_card_command *cmd)
 	result_t rc;
 	uint8_t  i;
 
-	LOG_D("send_command()\n\r");
 	for (i = 0; i < 6; i++) {
 		rc = spi_write_byte(&spi_device, cmd->data[i]);
 	}
