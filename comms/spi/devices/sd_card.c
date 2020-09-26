@@ -151,7 +151,7 @@ result_t sd_card_init(void)
 	spi_io.cs   = INVALID_GPIO_PIN;          // CS
 
 	spi_device.io       = spi_io;
-	spi_device.bus_mode = bus_mode_1;   // 2x
+	spi_device.bus_mode = bus_mode_3;   // 2x
 	spi_device.brg      = 256;
 
 	rc = spi_reserve(&spi_device);
@@ -165,7 +165,7 @@ result_t sd_card_init(void)
 
 	rx_byte = 0xff;
 	while (rx_byte != 0x01) {
-		rc = spi_write_byte(&spi_device, 0x00);
+		rc = spi_write_byte(&spi_device, 0xff);
 		RC_CHECK;
 		rx_byte = (uint8_t)rc;
 		serial_printf("rx 0x%x\n\r", rx_byte);
