@@ -63,6 +63,7 @@
 
 enum sd_cmd {
 	sd_reset = 0x00,
+	sd_read  = 0x11,
 };
 
 struct  __attribute__ ((packed)) sd_card_command {
@@ -151,7 +152,7 @@ result_t sd_card_init(void)
 	spi_io.cs   = INVALID_GPIO_PIN;          // CS
 
 	spi_device.io       = spi_io;
-	spi_device.bus_mode = bus_mode_1;   // 2x
+	spi_device.bus_mode = bus_mode_3;   // 2x
 	spi_device.brg      = 256;
 
 	rc = spi_reserve(&spi_device);
@@ -175,6 +176,38 @@ result_t sd_card_init(void)
 	rc = gpio_set(SD_CARD_SS, GPIO_MODE_DIGITAL_OUTPUT, 1);
 	RC_CHECK;
 	return(rc);
+}
+
+result_t sd_card_read(uint16_t address)
+{
+	result_t rc;
+	uint16_t i;
+	uint8_t  rx_byte;
+	struct   sd_card_command  cmd;
+
+	rc = gpio_set(SD_CARD_SS, GPIO_MODE_DIGITAL_OUTPUT, 0);
+
+	init_command(&cmd, sd_read);
+	send_command(&cmd);
+
+	rx_byte = 0xff;
+	while (rx_byte != 0xfe) {
+		rc = spi_write_byte(&spi_device, 0xff);
+		RC_CHECK;
+		rx_byte = (uint8_t)rc;
+		serial_printf("rx 0x%x\n\r", rx_byte);
+	}
+
+	for(i = 0; i < 520; i++) {
+		rc = spi_write_byte(&spi_device, 0xff);
+		RC_CHECK;
+		rx_byte = (uint8_t)rc;
+		serial_printf("rx 0x%x\n\r", rx_byte);
+	}
+	rc = gpio_set(SD_CARD_SS, GPIO_MODE_DIGITAL_OUTPUT, 1);
+	RC_CHECK;
+	return(rc);
+
 }
 
 static void init_command(struct sd_card_command *buffer, enum sd_cmd cmd)

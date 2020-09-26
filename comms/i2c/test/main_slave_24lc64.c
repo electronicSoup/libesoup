@@ -45,6 +45,8 @@ int main(void)
 #ifdef SYS_SD_CARD
 	rc = sd_card_init();
 	RC_CHECK_PRINT_CONT("SD Card init failed\n\r");
+
+	rc = sd_card_read(0x0000);
 #endif
 //	gpio_set(RA4, GPIO_MODE_DIGITAL_OUTPUT, 0);
 	/*
