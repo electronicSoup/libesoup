@@ -102,8 +102,8 @@ void sd_card_detect(enum gpio_pin pin)
 
 result_t sd_card_init(void)
 {
-	uint8_t  i;
 	result_t rc;
+	uint8_t  rx_byte;
 	struct   timer_req request;
 	struct   sd_card_command  cmd;
 
@@ -162,13 +162,15 @@ result_t sd_card_init(void)
 	init_command(&cmd, sd_reset);
 	send_command(&cmd);
 
-
-	for (i = 0; i < 10; i++) {
+	rx_byte = 0xff;
+	while ((rx_byte & 0x80) && (rx_byte & 0x01)) {
 		rc = spi_write_byte(&spi_device, 0x00);
+		RC_CHECK;
+		rx_byte = (uint8_t)rc;
 	}
 
 	serial_printf("Response 0x%x\n\r", rc);
-//	rc = gpio_set(SD_CARD_SS, GPIO_MODE_DIGITAL_OUTPUT, 1);
+	rc = gpio_set(SD_CARD_SS, GPIO_MODE_DIGITAL_OUTPUT, 1);
 	RC_CHECK;
 	return(rc);
 }
