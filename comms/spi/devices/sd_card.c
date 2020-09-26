@@ -164,10 +164,11 @@ result_t sd_card_init(void)
 	send_command(&cmd);
 
 	rx_byte = 0xff;
-	while ((rx_byte & 0x80) && (rx_byte & 0x01)) {
+	while (rx_byte != 0x01) {
 		rc = spi_write_byte(&spi_device, 0x00);
 		RC_CHECK;
 		rx_byte = (uint8_t)rc;
+		serial_printf("rx 0x%x\n\r", rx_byte);
 	}
 
 	serial_printf("Response 0x%x\n\r", rc);
