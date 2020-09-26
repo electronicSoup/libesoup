@@ -42,6 +42,7 @@
 #endif
 #include "libesoup/timers/hw_timers.h"
 #include "libesoup/comms/spi/spi.h"
+#include "libesoup/timers/delay.h"
 
 /*
  * SD Card
@@ -62,8 +63,9 @@
 #define SD_CARD_MISO    RA0    // YELLOW  Idle Hight no Activity
 
 enum sd_cmd {
-	sd_reset = 0x00,
-	sd_read  = 0x11,
+	sd_reset      = 0x00,
+	sd_block_size = 0x10,
+	sd_read       = 0x11,
 };
 
 struct  __attribute__ ((packed)) sd_card_command {
@@ -78,6 +80,7 @@ struct spi_device spi_device;
 
 static void init_command(struct sd_card_command *buffer, enum sd_cmd cmd);
 static void send_command(struct sd_card_command *buffer);
+static result_t set_block_size(uint16_t size);
 
 void toggle(timer_id timer, union sigval data)
 {
@@ -173,6 +176,12 @@ result_t sd_card_init(void)
 	}
 
 	serial_printf("Response 0x%x\n\r", rc);
+
+	/*
+	 * Set the block size to 512
+	 */
+	set_block_size(512);
+
 	rc = gpio_set(SD_CARD_SS, GPIO_MODE_DIGITAL_OUTPUT, 1);
 	RC_CHECK;
 	return(rc);
@@ -184,11 +193,16 @@ result_t sd_card_read(uint16_t address)
 	uint16_t i;
 	uint8_t  rx_byte;
 	struct   sd_card_command  cmd;
+	struct   period           period;
 
 	rc = gpio_set(SD_CARD_SS, GPIO_MODE_DIGITAL_OUTPUT, 0);
 
 	init_command(&cmd, sd_read);
 	send_command(&cmd);
+
+	period.units    = mSeconds;
+	period.duration = 1;
+	delay(&period);
 
 	rx_byte = 0xff;
 	while (rx_byte != 0xfe) {
@@ -208,6 +222,30 @@ result_t sd_card_read(uint16_t address)
 	RC_CHECK;
 	return(rc);
 
+}
+
+static result_t set_block_size(uint16_t size)
+{
+	result_t rc;
+	uint8_t  rx_byte;
+	struct   sd_card_command  cmd;
+
+	init_command(&cmd, sd_block_size);
+	cmd.data[1] = 0;
+	cmd.data[2] = 0;
+	cmd.data[3] = (uint8_t)((size >> 8) & 0xff);
+	cmd.data[4] = (uint8_t)(size & 0xff);
+	send_command(&cmd);
+
+	rx_byte = 0xff;
+	while (rx_byte != 0xfe) {
+		rc = spi_write_byte(&spi_device, 0xff);
+		RC_CHECK;
+		rx_byte = (uint8_t)rc;
+		serial_printf("rx 0x%x\n\r", rx_byte);
+	}
+
+	return(SUCCESS);
 }
 
 static void init_command(struct sd_card_command *buffer, enum sd_cmd cmd)
