@@ -214,35 +214,32 @@ static result_t	channel_init(enum spi_channel ch)
 		SPI1CON1Lbits.MSTEN = 1;   // Master mode
 		SPI1CON1Lbits.SMP   = 1;
 
-		SPI1BRGL = 0xff;
-
 		switch (device->bus_mode) {
 		case bus_mode_0:
 			serial_printf("SPI Mode 0\n\r");
 			SPI1CON1Lbits.CKP = 0;
-			SPI1CON1Lbits.SMP = 0;
+			SPI1CON1Lbits.CKE = 0;
 			break;
 		case bus_mode_1:
 			serial_printf("SPI Mode 1\n\r");
 			SPI1CON1Lbits.CKP = 0;
-			SPI1CON1Lbits.SMP = 1;
+			SPI1CON1Lbits.CKE = 1;
 			break;
 		case bus_mode_2:
 			serial_printf("SPI Mode 2\n\r");
 			SPI1CON1Lbits.CKP = 1;
-			SPI1CON1Lbits.SMP = 0;
+			SPI1CON1Lbits.CKE = 0;
 			break;
 		case bus_mode_3:
 			serial_printf("SPI Mode 3\n\r");
 			SPI1CON1Lbits.CKP = 1;
-			SPI1CON1Lbits.SMP = 1;
+			SPI1CON1Lbits.CKE = 1;
 			break;
 		default:
 			break;
 		}
 
 		SPI1BRGL = device->brg;
-		SPI1CON1Lbits.CKE = 0;
 
 		SPI1CON2 = 0x00;
 
