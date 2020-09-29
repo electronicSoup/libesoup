@@ -159,7 +159,7 @@ result_t sd_card_init(void)
 	spi_io.cs   = INVALID_GPIO_PIN;          // CS
 
 	spi_device.io       = spi_io;
-	spi_device.bus_mode = bus_mode_3;   // 2x
+	spi_device.bus_mode = bus_mode_0;   // 2x
 	spi_device.brg      = 256;
 
 	rc = spi_reserve(&spi_device);
@@ -167,6 +167,8 @@ result_t sd_card_init(void)
 
 	rc = gpio_set(SD_CARD_SS, GPIO_MODE_DIGITAL_OUTPUT, 0);
 	RC_CHECK;
+
+	delay(&period);
 
 	init_command(&cmd, sd_reset);
 	send_command(&cmd);
@@ -177,7 +179,9 @@ result_t sd_card_init(void)
 		rc = spi_write_byte(&spi_device, 0xff);
 		RC_CHECK;
 		rx_byte = (uint8_t)rc;
-		serial_printf("rx 0x%x\n\r", rx_byte);
+		if (rx_byte != 0xff) {
+			serial_printf("reset rx 0x%x\n\r", rx_byte);
+		}
 	}
 
 	serial_printf("Response 0x%x\n\r", rc);
@@ -185,6 +189,12 @@ result_t sd_card_init(void)
 	/*
 	 * Set the block size to 512
 	 */
+	rc = gpio_set(SD_CARD_SS, GPIO_MODE_DIGITAL_OUTPUT, 1);
+	RC_CHECK;
+	delay(&period);
+	rc = gpio_set(SD_CARD_SS, GPIO_MODE_DIGITAL_OUTPUT, 0);
+	RC_CHECK;
+
 	set_block_size(512);
 
 	rc = gpio_set(SD_CARD_SS, GPIO_MODE_DIGITAL_OUTPUT, 1);
@@ -194,6 +204,7 @@ result_t sd_card_init(void)
 
 result_t sd_card_read(uint16_t address)
 {
+	uint8_t  count = 0;
 	result_t rc;
 	uint16_t i;
 	uint8_t  rx_byte;
@@ -201,23 +212,40 @@ result_t sd_card_read(uint16_t address)
 
 	rc = gpio_set(SD_CARD_SS, GPIO_MODE_DIGITAL_OUTPUT, 0);
 
+	serial_printf("Attempt read\n\r");
 	init_command(&cmd, sd_read);
 	send_command(&cmd);
 
 	rx_byte = 0xff;
-	while (rx_byte != 0xfe) {
+	while ((rx_byte != 0x01) && (count < 10)) {
+		count++;
 		delay(&period);
 		rc = spi_write_byte(&spi_device, 0xff);
 		RC_CHECK;
 		rx_byte = (uint8_t)rc;
 		serial_printf("rx 0x%x\n\r", rx_byte);
 	}
+	if (count > 9) {
+		rc = gpio_set(SD_CARD_SS, GPIO_MODE_DIGITAL_OUTPUT, 1);
+		return(-ERR_GENERAL_ERROR);
+	}
 
+	rc = gpio_set(SD_CARD_SS, GPIO_MODE_DIGITAL_OUTPUT, 1);
+	delay(&period);
+	delay(&period);
+	delay(&period);
+	delay(&period);
+	delay(&period);
+	rc = gpio_set(SD_CARD_SS, GPIO_MODE_DIGITAL_OUTPUT, 0);
+	serial_printf("Flag?\n\r");
 	for(i = 0; i < 520; i++) {
+		delay(&period);
 		rc = spi_write_byte(&spi_device, 0xff);
 		RC_CHECK;
 		rx_byte = (uint8_t)rc;
-		serial_printf("rx 0x%x\n\r", rx_byte);
+		if(rx_byte != 0xff) {
+			serial_printf("rx 0x%x\n\r", rx_byte);
+		}
 	}
 	rc = gpio_set(SD_CARD_SS, GPIO_MODE_DIGITAL_OUTPUT, 1);
 	RC_CHECK;
@@ -227,6 +255,7 @@ result_t sd_card_read(uint16_t address)
 
 static result_t set_block_size(uint16_t size)
 {
+	uint8_t  count = 0;
 	result_t rc;
 	uint8_t  rx_byte;
 	struct   sd_card_command  cmd;
@@ -239,7 +268,8 @@ static result_t set_block_size(uint16_t size)
 	send_command(&cmd);
 
 	rx_byte = 0xff;
-	while (rx_byte != 0xfe) {
+	while ((rx_byte != 0xfe) && (count < 10)) {
+		count++;
 		delay(&period);
 		rc = spi_write_byte(&spi_device, 0xff);
 		RC_CHECK;

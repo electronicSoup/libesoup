@@ -212,24 +212,28 @@ static result_t	channel_init(enum spi_channel ch)
 		SPI1STATbits.SPIEN = 1;   // Enable the SPI
 #elif defined(__dsPIC33EP128GS702__)
 		SPI1CON1Lbits.MSTEN = 1;   // Master mode
-
+		SPI1CON1Lbits.SMP   = 1;
 
 		SPI1BRGL = 0xff;
 
 		switch (device->bus_mode) {
 		case bus_mode_0:
+			serial_printf("SPI Mode 0\n\r");
 			SPI1CON1Lbits.CKP = 0;
 			SPI1CON1Lbits.SMP = 0;
 			break;
 		case bus_mode_1:
+			serial_printf("SPI Mode 1\n\r");
 			SPI1CON1Lbits.CKP = 0;
 			SPI1CON1Lbits.SMP = 1;
 			break;
 		case bus_mode_2:
+			serial_printf("SPI Mode 2\n\r");
 			SPI1CON1Lbits.CKP = 1;
 			SPI1CON1Lbits.SMP = 0;
 			break;
 		case bus_mode_3:
+			serial_printf("SPI Mode 3\n\r");
 			SPI1CON1Lbits.CKP = 1;
 			SPI1CON1Lbits.SMP = 1;
 			break;
