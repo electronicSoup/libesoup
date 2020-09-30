@@ -211,8 +211,9 @@ static result_t	channel_init(enum spi_channel ch)
 		SPI1CON2 = 0x00;
 		SPI1STATbits.SPIEN = 1;   // Enable the SPI
 #elif defined(__dsPIC33EP128GS702__)
-		SPI1CON1Lbits.MSTEN = 1;   // Master mode
-		SPI1CON1Lbits.SMP   = 1;
+		SPI1CON1Lbits.MSTEN  = 1;   // Master mode
+		SPI1CON1Lbits.SMP    = 1;
+		SPI1CON1Lbits.ENHBUF = 1;   // Enable Enhanced buffer mode
 
 		switch (device->bus_mode) {
 		case bus_mode_0:
@@ -288,8 +289,9 @@ result_t spi_write_byte(struct spi_device *device, uint8_t write)
 			while (!SPI1STATbits.SPIRBF);
 			return(SPI1BUF);
 #elif defined(__dsPIC33EP128GS702__)
+			while (SPI1STATLbits.SPITBF);
 			SPI1BUFL = write;
-			while (!SPI1STATLbits.SPIRBF);
+			while (SPI1STATLbits.SPIRBE);
 			return(SPI1BUFL);
 #endif // Micro-Controller
 			break;
