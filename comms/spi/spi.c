@@ -212,8 +212,8 @@ static result_t	channel_init(enum spi_channel ch)
 		SPI1STATbits.SPIEN = 1;   // Enable the SPI
 #elif defined(__dsPIC33EP128GS702__)
 		SPI1CON1Lbits.MSTEN  = 1;   // Master mode
-		SPI1CON1Lbits.SMP    = 1;
-		SPI1CON1Lbits.ENHBUF = 1;   // Enable Enhanced buffer mode
+		SPI1CON1Lbits.SMP    = 0;
+//		SPI1CON1Lbits.ENHBUF = 1;   // Enable Enhanced buffer mode
 
 		switch (device->bus_mode) {
 		case bus_mode_0:
@@ -243,18 +243,20 @@ static result_t	channel_init(enum spi_channel ch)
 		SPI1BRGL = device->brg;
 
 		SPI1CON2 = 0x00;
-
+#if defined(SPI_ISR)
 		SPI1IMSKL = 0xffff;   // Enable all ISRs for the moment
 		SPI1IMSKH = 0xffff;   // Enable all ISRs for the moment
 
-		SPI1STATLbits.SPIROV = 0;  // Clear overflow
+//		SPI1STATLbits.SPIROV = 0;  // Clear overflow
+		SPI1STATL = 0;             // Clear the whole register
 
 		IFS0bits.SPI1TXIF = 0;
 		IFS0bits.SPI1RXIF = 0;
 
 		IEC0bits.SPI1TXIE = 1;
 		IEC0bits.SPI1RXIE = 1;
-
+#endif // SPI_ISR
+		SPI1STATL = 0;             // Clear the whole register
 		SPI1CON1Lbits.SPIEN = 1;   // Enable the SPI
 #endif
 		break;
@@ -276,6 +278,7 @@ static result_t	channel_init(enum spi_channel ch)
 
 result_t spi_write_byte(struct spi_device *device, uint8_t write)
 {
+	uint8_t          clear;
 	enum spi_channel channel;
 
 	channel = device->channel;
@@ -291,7 +294,39 @@ result_t spi_write_byte(struct spi_device *device, uint8_t write)
 #elif defined(__dsPIC33EP128GS702__)
 			while (SPI1STATLbits.SPITBF);
 			SPI1BUFL = write;
-			while (SPI1STATLbits.SPIRBE);
+			while(!SPI1STATLbits.SPIRBF);
+			clear = SPI1BUFL;
+			serial_printf("C10x%x\n\r", clear);
+			return(clear);
+#endif // Micro-Controller
+			break;
+#endif // SYS_SPI1
+		default:
+			return(-ERR_BAD_INPUT_PARAMETER);
+			break;
+		}
+	}
+	return(-ERR_BAD_INPUT_PARAMETER);
+}
+
+result_t spi_read_byte(struct spi_device *device)
+{
+	uint8_t          clear;
+	enum spi_channel channel;
+
+	channel = device->channel;
+
+	if (channels[channel].active_device == device) {
+		switch(channel) {
+#if defined(SYS_SPI1)
+		case SPI1:
+#if defined(__dsPIC33EP128GS702__)
+			while (SPI1STATLbits.SPITBF);
+			while(SPI1STATLbits.SPIRBF) {
+				serial_printf("C20x%x\n\r", clear);
+			}
+			SPI1BUFL = 0xff;
+			while(!SPI1STATLbits.SPIRBF);
 			return(SPI1BUFL);
 #endif // Micro-Controller
 			break;

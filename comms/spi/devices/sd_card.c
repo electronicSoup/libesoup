@@ -176,7 +176,7 @@ result_t sd_card_init(void)
 	rx_byte = 0xff;
 	while (rx_byte != 0x01) {
 		delay(&period);
-		rc = spi_write_byte(&spi_device, 0xff);
+		rc = spi_read_byte(&spi_device, 0xff);
 		RC_CHECK;
 		rx_byte = (uint8_t)rc;
 		if (rx_byte != 0xff) {
@@ -220,7 +220,7 @@ result_t sd_card_read(uint16_t address)
 	while ((rx_byte != 0x01) && (count < 10)) {
 		count++;
 		delay(&period);
-		rc = spi_write_byte(&spi_device, 0xff);
+		rc = spi_read_byte(&spi_device);
 		RC_CHECK;
 		rx_byte = (uint8_t)rc;
 		serial_printf("rx 0x%x\n\r", rx_byte);
