@@ -86,6 +86,8 @@ extern result_t spi_release(struct spi_device *device);
  */
 extern result_t spi_write_byte(struct spi_device *device, uint8_t write);
 
+extern result_t spi_read_byte(struct spi_device *device);
+
 #endif // #ifdef SYS_SPI_BUS
 
 #endif // _SPI_H

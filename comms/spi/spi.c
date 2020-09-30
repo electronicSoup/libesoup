@@ -44,15 +44,17 @@ __attribute__ ((unused)) static const char *TAG = "SPI";
 #include "libesoup/comms/spi/spi.h"
 
 #if defined(__dsPIC33EP128GS702__)
-#define SPI_ENABLE_CS       SPI1CON1Hbits.MSSEN = 1;
-#define SPI_DISABLE_CS      SPI1CON1Hbits.MSSEN = 0;
+#define SPI_ENABLE_CS       SPI1CON1Hbits.MSSEN  = 1;
+#define SPI_DISABLE_CS      SPI1CON1Hbits.MSSEN  = 0;
 #define SPI1_ENABLE_MISO    SPI1CON1Lbits.DISSDI = 0;
 #define SPI1_DISABLE_MISO   SPI1CON1Lbits.DISSDI = 1;
-#define SPI1_ENABLE_MOSI    SPI1CON1Lbits.DISSDI = 0;
-#define SPI1_DISABLE_MOSI   SPI1CON1Lbits.DISSDI = 1;
-#else
-#define SPI_ENABLE_CS   SPI1CON1bits.SSEN  = 1;
-#define SPI_DISABLE_CS  SPI1CON1bits.SSEN  = 0;
+#define SPI1_ENABLE_MOSI    SPI1CON1Lbits.DISSDO = 0;
+#define SPI1_DISABLE_MOSI   SPI1CON1Lbits.DISSDO = 1;
+#elif defined(__dsPIC33EP256MU806__)
+#define SPI_ENABLE_CS       SPI1CON1bits.SSEN   = 1;
+#define SPI_DISABLE_CS      SPI1CON1bits.SSEN   = 0;
+#define SPI1_ENABLE_MOSI    SPI1CON1bits.DISSDO = 0;
+#define SPI1_DISABLE_MOSI   SPI1CON1bits.DISSDO = 1;
 #endif
 
 
@@ -65,7 +67,7 @@ struct spi_chan channels[NUM_SPI_CHANNELS];
 
 static result_t	channel_init(enum spi_channel ch);
 
-
+#if defined(__dsPIC33EP128GS702__)
 #ifdef SYS_SPI1
 void __attribute__((__interrupt__, __no_auto_psv__)) _SPI1TXInterrupt(void)
 {
@@ -81,7 +83,7 @@ void __attribute__((__interrupt__, __no_auto_psv__)) _SPI1RXInterrupt(void)
 	serial_printf("*SPI1_RX* H0x%x:L0x%x\n\r", SPI1STATH, SPI1STATL);
 }
 #endif
-
+#endif // uC Selection
 
 
 result_t spi_init(void)
@@ -170,7 +172,8 @@ static result_t	channel_init(enum spi_channel ch)
 	 */
 	switch(ch) {
 #if defined(SYS_SPI1)
-	case SPI1:
+	case SPI_1:
+#if defined(__dsPIC33EP128GS702__)
 		if (device->io.miso != INVALID_GPIO_PIN) {
 			rc = set_peripheral_input(device->io.miso);
 			RC_CHECK;
@@ -179,6 +182,15 @@ static result_t	channel_init(enum spi_channel ch)
 		} else {
 			SPI1_DISABLE_MISO;
 		}
+#elif defined(__dsPIC33EP256MU806__)
+		if (device->io.miso != INVALID_GPIO_PIN) {
+			rc = set_peripheral_input(device->io.miso);
+			RC_CHECK;
+			PPS_I_SPI_1_DI = rc;
+		} else {
+			return(-ERR_BAD_INPUT_PARAMETER);
+		}
+#endif
 		if (device->io.mosi != INVALID_GPIO_PIN) {
 			rc = set_peripheral_output(device->io.mosi, PPS_O_SPI1DO);
 			RC_CHECK
@@ -202,11 +214,33 @@ static result_t	channel_init(enum spi_channel ch)
 	         */
 #if defined(__dsPIC33EP256MU806___)
 		SPI1CON1bits.MSTEN = 1;   // Master mode
-		SPI1CON1bits.PPRE = 0x02;
-		SPI1CON1bits.SPRE = 0x07;
+		SPI1CON1bits.PPRE  = 0x02;
+		SPI1CON1bits.SPRE  = 0x07;
 
-		SPI1CON1bits.CKE = 0;
-		SPI1CON1bits.CKP = 1;
+		switch (device->bus_mode) {
+		case bus_mode_0:
+			serial_printf("SPI Mode 0\n\r");
+			SPI1CON1bits.CKP = 0;
+			SPI1CON1bits.CKE = 0;
+			break;
+		case bus_mode_1:
+			serial_printf("SPI Mode 1\n\r");
+			SPI1CON1bits.CKP = 0;
+			SPI1CON1bits.CKE = 1;
+			break;
+		case bus_mode_2:
+			serial_printf("SPI Mode 2\n\r");
+			SPI1CON1bits.CKP = 1;
+			SPI1CON1bits.CKE = 0;
+			break;
+		case bus_mode_3:
+			serial_printf("SPI Mode 3\n\r");
+			SPI1CON1bits.CKP = 1;
+			SPI1CON1bits.CKE = 1;
+			break;
+		default:
+			break;
+		}
 
 		SPI1CON2 = 0x00;
 		SPI1STATbits.SPIEN = 1;   // Enable the SPI
@@ -258,15 +292,15 @@ static result_t	channel_init(enum spi_channel ch)
 #endif // SPI_ISR
 		SPI1STATL = 0;             // Clear the whole register
 		SPI1CON1Lbits.SPIEN = 1;   // Enable the SPI
-#endif
+#endif // Uc
 		break;
 #endif // SYS_SPI1
 #if defined(SYS_SPI2)
-	case SPI2:
+	case SPI_2:
 		break;
 #endif // SYS_SPI2
 #if defined(SYS_SPI3)
-	case SPI3:
+	case SPI_3:
 		break;
 #endif // SYS_SPI3
 	default:
@@ -286,7 +320,7 @@ result_t spi_write_byte(struct spi_device *device, uint8_t write)
 	if (channels[channel].active_device == device) {
 		switch(channel) {
 #if defined(SYS_SPI1)
-		case SPI1:
+		case SPI_1:
 #if defined(__dsPIC33EP256MU806__)
 			SPI1BUF = write;
 			while (!SPI1STATbits.SPIRBF);
@@ -319,7 +353,7 @@ result_t spi_read_byte(struct spi_device *device)
 	if (channels[channel].active_device == device) {
 		switch(channel) {
 #if defined(SYS_SPI1)
-		case SPI1:
+		case SPI_1:
 #if defined(__dsPIC33EP128GS702__)
 			while (SPI1STATLbits.SPITBF);
 			while(SPI1STATLbits.SPIRBF) {

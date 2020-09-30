@@ -93,11 +93,21 @@
 /**
  * @brief UART Settings.
  */
-#define NUM_UARTS          4                   ///< Number of UARTS in the uC
-#define UART_1             0x00                ///< Index/Identifier used for UART 1
-#define UART_2             0x01                ///< Index/Identifier used for UART 2
-#define UART_3             0x02                ///< Index/Identifier used for UART 3
-#define UART_4             0x03                ///< Index/Identifier used for UART 4
+enum uart_channel {
+#ifdef SYS_UART1
+        UART_1,
+#endif
+#ifdef SYS_UART2
+        UART_2,
+#endif
+#ifdef SYS_UART3
+        UART_3,
+#endif
+#ifdef SYS_UART4
+        UART_4,
+#endif
+        NUM_UART_CHANNELS
+};
 
 #define U1_ENABLE          U1MODEbits.UARTEN   ///< UART 1 Enable SFR bit
 
@@ -174,6 +184,35 @@
 #define PDSEL1_MASK      0x0004 
 #define PDSEL0_MASK      0x0002
 #define STSEL_MASK       0x0001   ///< Stop Bit Selection bit
+
+/*
+ * I2C Channels
+ */
+enum i2c_channel {
+#ifdef SYS_I2C1
+        I2C_1,
+#endif
+#ifdef SYS_I2C2
+        I2C_2,
+#endif
+        NUM_I2C_CHANNELS
+};
+
+/*
+ * SPI Channels
+ */
+enum spi_channel {
+#ifdef SYS_SPI1
+        SPI_1,
+#endif
+#ifdef SYS_SPI2
+        SPI_2,
+#endif
+#ifdef SYS_SPI3
+        SPI3,
+#endif
+        NUM_SPI_CHANNELS
+};
 
 /**
  * @brief GPIO Pins available in the uC

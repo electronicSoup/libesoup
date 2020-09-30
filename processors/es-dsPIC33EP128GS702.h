@@ -126,10 +126,10 @@ enum uart_channel {
  * I2C Channels
  */
 enum i2c_channel {
-#ifdef SYS_I2C1
+#ifdef SYS_I2C_1
         I2C1,
 #endif
-#ifdef SYS_I2C2
+#ifdef SYS_I2C_2
         I2C2,
 #endif
         NUM_I2C_CHANNELS
@@ -140,13 +140,13 @@ enum i2c_channel {
  */
 enum spi_channel {
 #ifdef SYS_SPI1
-        SPI1,
+        SPI_1,
 #endif
 #ifdef SYS_SPI2
-        SPI2,
+        SPI_2,
 #endif
 #ifdef SYS_SPI3
-        SPI3,
+        SPI_3,
 #endif
         NUM_SPI_CHANNELS
 };

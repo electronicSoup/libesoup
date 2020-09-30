@@ -1,7 +1,11 @@
 #ifndef _LIBESOUP_CONFIG_H
 #define _LIBESOUP_CONFIG_H
 
+#if defined(__dsPIC33EP128GS702__)
 #define SYS_CLOCK_FREQ (7600000/2)
+#elif defined(__dsPIC33EP256MU806__)
+#define SYS_CLOCK_FREQ 60000000
+#endif
 
 //#define DEBUG_BUILD
 #define SYS_TEST_SLAVE_24LC64
@@ -50,8 +54,11 @@
 /*
  * Include a board file
  */
+#if defined(__dsPIC33EP128GS702__)
 #include "libesoup/boards/stereo_guitar.h"
-
+#elif defined(__dsPIC33EP256MU806__)
+#include "libesoup/boards/cinnamonBun/dsPIC33/cb-dsPIC33EP256MU806.h"
+#endif
 /*
  *******************************************************************************
  *
@@ -59,5 +66,35 @@
  *
  *******************************************************************************
  */
+
+#if defined(__dsPIC33EP128GS702__)
+/*
+ * SD Card
+ * Clk RB11
+ * WriteP  RB15
+ * CMD RB13
+ * DAT3/CD (SS) RB14
+ * DAT0 RA0
+ * DAT1 RA1
+
+ */
+#define SD_CARD_DETECT  RB5
+#define SD_CARD_WRITE_P RB15
+
+#define SD_CARD_SCK     RB11   // GREY    Idle High Works
+#define SD_CARD_MOSI    RB13   // RED     Idle Low no activity
+#define SD_CARD_SS      RB14   // ORANGE  Idle low no activity
+#define SD_CARD_MISO    RA0    // YELLOW  Idle Hight no Activity
+
+#elif defined(__dsPIC33EP256MU806__)
+
+#define SD_CARD_DETECT  RD0
+#define SD_CARD_WRITE_P RD1
+
+#define SD_CARD_SCK     RD3   // GREY    Idle High Works
+#define SD_CARD_MOSI    RD4   // RED     Idle Low no activity
+#define SD_CARD_SS      RD5   // ORANGE  Idle low no activity
+#define SD_CARD_MISO    RD2    // YELLOW  Idle Hight no Activity
+#endif
 
 #endif // _LIBESOUP_CONFIG_H

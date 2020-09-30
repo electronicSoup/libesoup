@@ -85,6 +85,8 @@ void _ISR __attribute__((__no_auto_psv__)) _StackError(void)
 
 void cpu_init(void)
 {
+	uint32_t loop;
+
         clock_init();
 
         INTCON2bits.GIE = ENABLED;

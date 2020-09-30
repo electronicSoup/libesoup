@@ -44,23 +44,6 @@
 #include "libesoup/comms/spi/spi.h"
 #include "libesoup/timers/delay.h"
 
-/*
- * SD Card
- * Clk RB11
- * WriteP  RB15
- * CMD RB13
- * DAT3/CD (SS) RB14
- * DAT0 RA0
- * DAT1 RA1
-
- */
-#define SD_CARD_DETECT  RB5
-#define SD_CARD_WRITE_P RB15
-
-#define SD_CARD_SCK     RB11   // GREY    Idle High Works
-#define SD_CARD_MOSI    RB13   // RED     Idle Low no activity
-#define SD_CARD_SS      RB14   // ORANGE  Idle low no activity
-#define SD_CARD_MISO    RA0    // YELLOW  Idle Hight no Activity
 
 enum sd_cmd {
 	sd_reset      = 0x00,
@@ -83,6 +66,7 @@ static void init_command(struct sd_card_command *buffer, enum sd_cmd cmd);
 static void send_command(struct sd_card_command *buffer);
 static result_t set_block_size(uint16_t size);
 
+#if 0
 void toggle(timer_id timer, union sigval data)
 {
 	struct period period;
@@ -97,6 +81,7 @@ void toggle(timer_id timer, union sigval data)
 	}
 
 }
+#endif
 
 #ifdef SYS_CHANGE_NOTIFICATION
 void sd_card_detect(enum gpio_pin pin)
@@ -109,6 +94,7 @@ result_t sd_card_init(void)
 {
 	result_t rc;
 	uint8_t  rx_byte;
+	uint8_t  loop;
 	struct   timer_req request;
 	struct   sd_card_command  cmd;
 
@@ -136,7 +122,7 @@ result_t sd_card_init(void)
 #ifdef SYS_CHANGE_NOTIFICATION
 	rc = change_notifier_register(SD_CARD_DETECT, sd_card_detect);
 #endif
-
+#if 0
 	request.period.units = uSeconds;
 	request.period.duration = 5;
 	request.data.sival_int = 0;
@@ -152,7 +138,7 @@ result_t sd_card_init(void)
 
 	while(!finished);
 	LOG_D("Finished preamble\n\r");
-
+#endif
 	spi_io.sck  = SD_CARD_SCK;              // SCK
 	spi_io.mosi = SD_CARD_MOSI,             // MOSI
 	spi_io.miso = SD_CARD_MISO;             // MISO
@@ -165,6 +151,10 @@ result_t sd_card_init(void)
 	rc = spi_reserve(&spi_device);
 	LOG_D("Reserved SPI Channel %d\n\r", spi_device.channel);
 
+	for (loop = 0; loop < 10; loop++) {
+		rc = spi_read_byte(&spi_device, 0xff);
+	}
+
 	rc = gpio_set(SD_CARD_SS, GPIO_MODE_DIGITAL_OUTPUT, 0);
 	RC_CHECK;
 
@@ -173,10 +163,11 @@ result_t sd_card_init(void)
 	init_command(&cmd, sd_reset);
 	send_command(&cmd);
 
+
 	rx_byte = 0xff;
 	while (rx_byte != 0x01) {
 		delay(&period);
-		rc = spi_read_byte(&spi_device, 0xff);
+		rc = spi_read_byte(&spi_device);
 		RC_CHECK;
 		rx_byte = (uint8_t)rc;
 		if (rx_byte != 0xff) {

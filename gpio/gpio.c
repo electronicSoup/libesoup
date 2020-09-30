@@ -53,7 +53,7 @@ result_t gpio_set(enum gpio_pin pin, uint16_t mode, uint8_t value)
 	if((mode & GPIO_MODE_DIGITAL_INPUT) || (mode & GPIO_MODE_ANALOG_INPUT)) direction = 0b1;
 
 	opendrain = 0b0;
-	if((mode & GPIO_MODE_OPENDRAIN_INPUT) || (mode & GPIO_MODE_OPENDRAIN_OUTPUT)) opendrain = 0b1;
+	if(mode & GPIO_MODE_OPENDRAIN) opendrain = 0b1;
 
 	switch(pin) {
 	case RB0:
