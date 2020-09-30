@@ -39,5 +39,7 @@
  * passed in is shorter then it can safely obtain.
 */
 extern result_t delay(struct period *period);
+extern result_t delay_mS(uint16_t duration);
+extern result_t delay_uS(uint16_t duration);
 
 /**}@*/ 

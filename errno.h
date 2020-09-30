@@ -157,6 +157,7 @@ typedef int16_t result_t;
 #define ERR_NOT_MASTER             20
 #define ERR_NOT_SLAVE              21
 #define ERR_BAD_STATE              22
+#define ERR_INVALID_RESPONSE       23
 #define ERR_IM_A_TEAPOT           418
 
 #endif // _ERRNO_H

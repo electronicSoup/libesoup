@@ -47,6 +47,7 @@
 
 enum sd_cmd {
 	sd_reset      = 0x00,
+	sd_init       = 0x01,
 	sd_block_size = 0x10,
 	sd_read       = 0x11,
 };
@@ -93,6 +94,7 @@ void sd_card_detect(enum gpio_pin pin)
 result_t sd_card_init(void)
 {
 	result_t rc;
+	uint8_t  resp_loop;
 	uint8_t  rx_byte;
 	uint8_t  loop;
 	struct   timer_req request;
@@ -149,10 +151,11 @@ result_t sd_card_init(void)
 	spi_device.brg      = 256;
 
 	rc = spi_reserve(&spi_device);
+	RC_CHECK_PRINT_CONT("Failed to reserve\n\r");
 	LOG_D("Reserved SPI Channel %d\n\r", spi_device.channel);
 
-	for (loop = 0; loop < 10; loop++) {
-		rc = spi_read_byte(&spi_device, 0xff);
+	for (loop = 0; loop < 20; loop++) {
+		rc = spi_write_byte(&spi_device, 0xff);
 	}
 
 	rc = gpio_set(SD_CARD_SS, GPIO_MODE_DIGITAL_OUTPUT, 0);
@@ -163,20 +166,41 @@ result_t sd_card_init(void)
 	init_command(&cmd, sd_reset);
 	send_command(&cmd);
 
-
 	rx_byte = 0xff;
-	while (rx_byte != 0x01) {
+	while (rx_byte == 0xff) {
 		delay(&period);
 		rc = spi_read_byte(&spi_device);
 		RC_CHECK;
 		rx_byte = (uint8_t)rc;
+		serial_printf("rx 0x%x\n\r", rx_byte);
 		if (rx_byte != 0xff) {
 			serial_printf("reset rx 0x%x\n\r", rx_byte);
 		}
 	}
+	if (rx_byte != 0x01) {
+		LOG_E("Invalid Response\n\r");
+		return(-ERR_INVALID_RESPONSE);
+	}
+
+	serial_printf("Reset complete\n\r");
+	init_command(&cmd, sd_init);
+	while (rx_byte != 0x00) {
+		delay_mS(5);
+		send_command(&cmd);
+
+		for (resp_loop = 0; ((resp_loop < 3) && (rx_byte != 0x00)); resp_loop++) {
+			rc = spi_read_byte(&spi_device);
+			RC_CHECK;
+			rx_byte = (uint8_t)rc;
+			if (rx_byte != 0xff) {
+				serial_printf("reset rx 0x%x\n\r", rx_byte);
+			}
+		}
+	}
+	serial_printf("Initialised\n\r");
 
 	serial_printf("Response 0x%x\n\r", rc);
-
+#if 0
 	/*
 	 * Set the block size to 512
 	 */
@@ -187,7 +211,7 @@ result_t sd_card_init(void)
 	RC_CHECK;
 
 	set_block_size(512);
-
+#endif
 	rc = gpio_set(SD_CARD_SS, GPIO_MODE_DIGITAL_OUTPUT, 1);
 	RC_CHECK;
 	return(rc);
@@ -291,5 +315,6 @@ static void send_command(struct sd_card_command *cmd)
 	for (i = 0; i < 6; i++) {
 		rc = spi_write_byte(&spi_device, cmd->data[i]);
 	}
+	rc = spi_write_byte(&spi_device, 0xff);
 }
 #endif // SYS_SD_CARD

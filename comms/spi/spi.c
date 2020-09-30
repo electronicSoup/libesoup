@@ -212,10 +212,11 @@ static result_t	channel_init(enum spi_channel ch)
 		/*
 	         * Init the SPI Config
 	         */
-#if defined(__dsPIC33EP256MU806___)
+#if defined(__dsPIC33EP256MU806__)
 		SPI1CON1bits.MSTEN = 1;   // Master mode
-		SPI1CON1bits.PPRE  = 0x02;
-		SPI1CON1bits.SPRE  = 0x07;
+		SPI1CON1bits.PPRE  = 0x00;
+		SPI1CON1bits.SPRE  = 0x05;
+		SPI1CON1bits.SMP   = 1;
 
 		switch (device->bus_mode) {
 		case bus_mode_0:
@@ -330,7 +331,9 @@ result_t spi_write_byte(struct spi_device *device, uint8_t write)
 			SPI1BUFL = write;
 			while(!SPI1STATLbits.SPIRBF);
 			clear = SPI1BUFL;
-			serial_printf("C10x%x\n\r", clear);
+			if (clear != 0xff) {
+				serial_printf("C10x%x\n\r", clear);
+			}
 			return(clear);
 #endif // Micro-Controller
 			break;
@@ -354,9 +357,20 @@ result_t spi_read_byte(struct spi_device *device)
 		switch(channel) {
 #if defined(SYS_SPI1)
 		case SPI_1:
-#if defined(__dsPIC33EP128GS702__)
+#if defined(__dsPIC33EP256MU806__)
+			// Wait for Tx Buffer to clear
+			while (SPI1STATbits.SPITBF);
+			while(SPI1STATbits.SPIRBF) {
+				clear = SPI1BUF;
+				serial_printf("C20x%x\n\r", clear);
+			}
+			SPI1BUF = 0xff;
+			while (!SPI1STATbits.SPIRBF);
+			return(SPI1BUF);
+#elif defined(__dsPIC33EP128GS702__)
 			while (SPI1STATLbits.SPITBF);
 			while(SPI1STATLbits.SPIRBF) {
+				clear = SPI1BUFL;
 				serial_printf("C20x%x\n\r", clear);
 			}
 			SPI1BUFL = 0xff;
