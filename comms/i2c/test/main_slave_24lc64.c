@@ -47,7 +47,7 @@ int main(void)
 	if (rc < 0) {
 		LOG_E("SD Card init failed\n\r");
 	} else {
-		rc = sd_card_read(0x0000);
+//		rc = sd_card_read(0x0000);
 	}
 #endif
 //	gpio_set(RA4, GPIO_MODE_DIGITAL_OUTPUT, 0);

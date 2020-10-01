@@ -191,7 +191,7 @@ result_t sd_card_init(void)
 		rc = spi_read_byte(&spi_device);
 		RC_CHECK;
 		rx_byte = (uint8_t)rc;
-		serial_printf("reset rx 0x%x\n\r", rx_byte);
+		serial_printf("V8 rx 0x%x\n\r", rx_byte);
 	}
 	rc = gpio_set(SD_CARD_SS, GPIO_MODE_DIGITAL_OUTPUT, 1);
 	serial_printf("Initialised\n\r");
