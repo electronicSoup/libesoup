@@ -104,7 +104,6 @@ void flush(void)
 result_t sd_card_init(void)
 {
 	result_t rc;
-	uint8_t  resp_loop;
 	uint8_t  rx_byte;
 	uint8_t  flush_byte;
 	uint8_t  loop;
@@ -324,7 +323,6 @@ result_t sd_card_read(uint16_t address)
 
 static result_t set_block_size(uint16_t size)
 {
-	uint8_t  count = 0;
 	result_t rc;
 	uint8_t  rx_byte;
 	struct   sd_card_command  cmd;

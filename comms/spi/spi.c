@@ -313,7 +313,6 @@ static result_t	channel_init(enum spi_channel ch)
 
 result_t spi_write_byte(struct spi_device *device, uint8_t write)
 {
-	uint8_t          clear;
 	enum spi_channel channel;
 
 	channel = device->channel;
