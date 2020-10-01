@@ -89,7 +89,7 @@ result_t delay(struct period *period)
 
 result_t delay_mS(uint16_t duration)
 {
-	struct period *period = {mSeconds, duration};
+	struct period period = {mSeconds, duration};
 
 	delay(&period);
 	return(SUCCESS);
@@ -97,7 +97,7 @@ result_t delay_mS(uint16_t duration)
 
 result_t delay_uS(uint16_t duration)
 {
-	struct period *period = {uSeconds, duration};
+	struct period period = {uSeconds, duration};
 
 	delay(&period);
 	return(SUCCESS);

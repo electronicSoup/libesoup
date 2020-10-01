@@ -57,10 +57,6 @@ struct  __attribute__ ((packed)) sd_card_command {
 	uint8_t     data[6];
 };
 
-static timer_id timer;
-static uint8_t  finished = 0;
-static struct   period           period;
-
 struct spi_io_channel spi_io;
 struct spi_device spi_device;
 
@@ -98,14 +94,10 @@ result_t sd_card_init(void)
 	uint8_t  resp_loop;
 	uint8_t  rx_byte;
 	uint8_t  loop;
-	struct   timer_req request;
 	struct   sd_card_command  cmd;
 
 
 	LOG_D("sd_card_init()\n\r");
-
-	period.units    = uSeconds;
-	period.duration = 100;
 
 	rc = gpio_set(SD_CARD_SS, GPIO_MODE_DIGITAL_OUTPUT, 1);
 	RC_CHECK;
@@ -162,14 +154,14 @@ result_t sd_card_init(void)
 		rc = spi_write_byte(&spi_device, 0xff);
 	}
 
-	delay(&period);
+	delay_uS(100);
 
 	init_command(&cmd, sd_reset);
 	send_command(&cmd);
 
 	rx_byte = 0xff;
 	while (rx_byte == 0xff) {
-		delay(&period);
+		delay_uS(100);
 		rc = spi_read_byte(&spi_device);
 		RC_CHECK;
 		rx_byte = (uint8_t)rc;
@@ -184,20 +176,24 @@ result_t sd_card_init(void)
 	}
 
 	serial_printf("Reset complete\n\r");
+	rc = gpio_set(SD_CARD_SS, GPIO_MODE_DIGITAL_OUTPUT, 1);
+	RC_CHECK;
+	delay_mS(1);
+	rc = gpio_set(SD_CARD_SS, GPIO_MODE_DIGITAL_OUTPUT, 0);
+	RC_CHECK;
+	// Pg 105 R7 Response 133
 	init_command(&cmd, sd_cmd8);
-	while (rx_byte != 0x00) {
-		delay_mS(5);
-		send_command(&cmd);
+	cmd.data[3] = 0x01;
+	send_command(&cmd);
 
-		for (resp_loop = 0; ((resp_loop < 3) && (rx_byte != 0x00)); resp_loop++) {
-			rc = spi_read_byte(&spi_device);
-			RC_CHECK;
-			rx_byte = (uint8_t)rc;
-			if (rx_byte != 0xff) {
-				serial_printf("reset rx 0x%x\n\r", rx_byte);
-			}
-		}
+	// 6 Response bytes
+	for (resp_loop = 0; ((resp_loop < 6) && (rx_byte != 0x00)); resp_loop++) {
+		rc = spi_read_byte(&spi_device);
+		RC_CHECK;
+		rx_byte = (uint8_t)rc;
+		serial_printf("reset rx 0x%x\n\r", rx_byte);
 	}
+	rc = gpio_set(SD_CARD_SS, GPIO_MODE_DIGITAL_OUTPUT, 1);
 	serial_printf("Initialised\n\r");
 
 	serial_printf("Response 0x%x\n\r", rc);
@@ -235,7 +231,7 @@ result_t sd_card_read(uint16_t address)
 	rx_byte = 0xff;
 	while ((rx_byte != 0x01) && (count < 10)) {
 		count++;
-		delay(&period);
+		delay_uS(20);
 		rc = spi_read_byte(&spi_device);
 		RC_CHECK;
 		rx_byte = (uint8_t)rc;
@@ -247,15 +243,11 @@ result_t sd_card_read(uint16_t address)
 	}
 
 	rc = gpio_set(SD_CARD_SS, GPIO_MODE_DIGITAL_OUTPUT, 1);
-	delay(&period);
-	delay(&period);
-	delay(&period);
-	delay(&period);
-	delay(&period);
+	delay_mS(5);
 	rc = gpio_set(SD_CARD_SS, GPIO_MODE_DIGITAL_OUTPUT, 0);
 	serial_printf("Flag?\n\r");
 	for(i = 0; i < 520; i++) {
-		delay(&period);
+		delay_uS(20);
 		rc = spi_write_byte(&spi_device, 0xff);
 		RC_CHECK;
 		rx_byte = (uint8_t)rc;
@@ -286,7 +278,7 @@ static result_t set_block_size(uint16_t size)
 	rx_byte = 0xff;
 	while ((rx_byte != 0xfe) && (count < 10)) {
 		count++;
-		delay(&period);
+		delay_uS(20);
 		rc = spi_write_byte(&spi_device, 0xff);
 		RC_CHECK;
 		rx_byte = (uint8_t)rc;
