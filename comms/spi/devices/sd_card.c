@@ -5,7 +5,7 @@
  *
  * @brief File containing SD Card API
  *
- * SD Card SPI Protocol http://alumni.cs.ucr.edu/~amitra/sdcard/Additional/sdcard_appnote_foust.pdf
+ * SD Card SPI Protocol https://openlabpro.com/guide/interfacing-microcontrollers-with-sd-card/
  *
  * Note to self must look into http://elm-chan.org/fsw/ff/00index_e.html
  *
