@@ -175,6 +175,8 @@ result_t sd_card_init(void)
 		return(-ERR_INVALID_RESPONSE);
 	}
 
+	rc = spi_write_byte(&spi_device, 0xff);
+
 	serial_printf("Reset complete\n\r");
 	rc = gpio_set(SD_CARD_SS, GPIO_MODE_DIGITAL_OUTPUT, 1);
 	RC_CHECK;
