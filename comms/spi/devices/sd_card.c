@@ -93,6 +93,7 @@ result_t sd_card_init(void)
 	result_t rc;
 	uint8_t  resp_loop;
 	uint8_t  rx_byte;
+	uint8_t  flush_byte;
 	uint8_t  loop;
 	struct   sd_card_command  cmd;
 
@@ -175,7 +176,10 @@ result_t sd_card_init(void)
 		return(-ERR_INVALID_RESPONSE);
 	}
 
-	rc = spi_write_byte(&spi_device, 0xff);
+	do {
+		rc = spi_write_byte(&spi_device, 0xff);
+		flush_byte = (uint8_t)rc;
+	} while (flush_byte != 0xff);
 
 	serial_printf("Reset complete\n\r");
 	rc = gpio_set(SD_CARD_SS, GPIO_MODE_DIGITAL_OUTPUT, 1);
@@ -187,34 +191,80 @@ result_t sd_card_init(void)
 	init_command(&cmd, sd_cmd8);
 	cmd.data[3] = 0x01;
 	cmd.data[4] = 0xAA;
+	cmd.data[5] = 0x87;
 	send_command(&cmd);
 
-	// 6 Response bytes
-	for (resp_loop = 0; ((resp_loop < 6) && (rx_byte != 0x00)); resp_loop++) {
+	rx_byte = 0xff;
+
+	rc = spi_read_byte(&spi_device);
+	RC_CHECK;
+	rx_byte = (uint8_t)rc;
+
+	if (rx_byte == 0x01) {
+		for (resp_loop = 0; (resp_loop < 6); resp_loop++) {
+			rc = spi_read_byte(&spi_device);
+			RC_CHECK;
+			rx_byte = (uint8_t)rc;
+			serial_printf("V8 rx 0x%x\n\r", rx_byte);
+		}
+	} else {
+		rc = gpio_set(SD_CARD_SS, GPIO_MODE_DIGITAL_OUTPUT, 1);
+		LOG_E("Invalid CMD8 Response\n\r");
+		return(-ERR_INVALID_RESPONSE);
+	}
+
+	// Flush
+	do {
+		rc = spi_write_byte(&spi_device, 0xff);
+		flush_byte = (uint8_t)rc;
+	} while (flush_byte != 0xff);
+
+	rc = gpio_set(SD_CARD_SS, GPIO_MODE_DIGITAL_OUTPUT, 1);
+
+	serial_printf("Initialised\n\r");
+
+	delay_mS(1);
+	serial_printf("Response 0x%x\n\r", rc);
+
+
+	init_command(&cmd, sd_init);
+
+	rc = gpio_set(SD_CARD_SS, GPIO_MODE_DIGITAL_OUTPUT, 0);
+	send_command(&cmd);
+	delay_uS(10);
+	rc = spi_read_byte(&spi_device);
+	RC_CHECK;
+	rx_byte = (uint8_t)rc;
+
+	// Flush
+	do {
+		rc = spi_write_byte(&spi_device, 0xff);
+		flush_byte = (uint8_t)rc;
+	} while (flush_byte != 0xff);
+
+	rc = gpio_set(SD_CARD_SS, GPIO_MODE_DIGITAL_OUTPUT, 1);
+
+	while (rx_byte != 0x00) {
+		delay_mS(100);
+		rc = gpio_set(SD_CARD_SS, GPIO_MODE_DIGITAL_OUTPUT, 0);
+		send_command(&cmd);
+		delay_uS(10);
 		rc = spi_read_byte(&spi_device);
 		RC_CHECK;
 		rx_byte = (uint8_t)rc;
-		serial_printf("V8 rx 0x%x\n\r", rx_byte);
+
+		// Flush
+		do {
+			rc = spi_write_byte(&spi_device, 0xff);
+			flush_byte = (uint8_t)rc;
+		} while (flush_byte != 0xff);
+		
+		rc = gpio_set(SD_CARD_SS, GPIO_MODE_DIGITAL_OUTPUT, 1);
 	}
-	rc = gpio_set(SD_CARD_SS, GPIO_MODE_DIGITAL_OUTPUT, 1);
 	serial_printf("Initialised\n\r");
 
 	serial_printf("Response 0x%x\n\r", rc);
 #if 0
-	init_command(&cmd, sd_init);
-	send_command(&cmd);
-
-	// 6 Response bytes
-	for (resp_loop = 0; ((resp_loop < 6) && (rx_byte != 0x00)); resp_loop++) {
-		rc = spi_read_byte(&spi_device);
-		RC_CHECK;
-		rx_byte = (uint8_t)rc;
-		serial_printf("V8 rx 0x%x\n\r", rx_byte);
-	}
-	rc = gpio_set(SD_CARD_SS, GPIO_MODE_DIGITAL_OUTPUT, 1);
-	serial_printf("Initialised\n\r");
-
-	serial_printf("Response 0x%x\n\r", rc);
 
 	/*
 	 * Set the block size to 512
