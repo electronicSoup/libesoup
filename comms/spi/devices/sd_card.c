@@ -186,6 +186,7 @@ result_t sd_card_init(void)
 	// Pg 105 R7 Response 133
 	init_command(&cmd, sd_cmd8);
 	cmd.data[3] = 0x01;
+	cmd.data[4] = 0xAA;
 	send_command(&cmd);
 
 	// 6 Response bytes
@@ -200,6 +201,21 @@ result_t sd_card_init(void)
 
 	serial_printf("Response 0x%x\n\r", rc);
 #if 0
+	init_command(&cmd, sd_init);
+	send_command(&cmd);
+
+	// 6 Response bytes
+	for (resp_loop = 0; ((resp_loop < 6) && (rx_byte != 0x00)); resp_loop++) {
+		rc = spi_read_byte(&spi_device);
+		RC_CHECK;
+		rx_byte = (uint8_t)rc;
+		serial_printf("V8 rx 0x%x\n\r", rx_byte);
+	}
+	rc = gpio_set(SD_CARD_SS, GPIO_MODE_DIGITAL_OUTPUT, 1);
+	serial_printf("Initialised\n\r");
+
+	serial_printf("Response 0x%x\n\r", rc);
+
 	/*
 	 * Set the block size to 512
 	 */
