@@ -48,6 +48,7 @@
 enum sd_cmd {
 	sd_reset      = 0x00,
 	sd_init       = 0x01,
+	sd_cmd8       = 0x08,
 	sd_block_size = 0x10,
 	sd_read       = 0x11,
 };
@@ -183,7 +184,7 @@ result_t sd_card_init(void)
 	}
 
 	serial_printf("Reset complete\n\r");
-	init_command(&cmd, sd_init);
+	init_command(&cmd, sd_cmd8);
 	while (rx_byte != 0x00) {
 		delay_mS(5);
 		send_command(&cmd);
