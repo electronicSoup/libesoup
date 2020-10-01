@@ -246,6 +246,8 @@ result_t sd_card_init(void)
 			flush_byte = (uint8_t)rc;
 		} while (flush_byte != 0xff);
 
+		delay_uS(10);
+
 		init_command(&cmd, sd_cmd41);
 		send_command(&cmd);
 		delay_uS(10);
@@ -257,10 +259,10 @@ result_t sd_card_init(void)
 				rx_byte = 0x00;
 			}
 		} while (flush_byte != 0xff);
+		rc = gpio_set(SD_CARD_SS, GPIO_MODE_DIGITAL_OUTPUT, 1);
 
 		if(rx_byte != 0x00) delay_mS(100);
 	}
-	rc = gpio_set(SD_CARD_SS, GPIO_MODE_DIGITAL_OUTPUT, 1);
 #endif
 	serial_printf("Initialised\n\r");
 
