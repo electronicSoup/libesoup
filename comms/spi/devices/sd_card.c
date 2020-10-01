@@ -300,26 +300,24 @@ result_t sd_card_read(uint16_t address)
 		rc = gpio_set(SD_CARD_SS, GPIO_MODE_DIGITAL_OUTPUT, 1);
 		return(-ERR_GENERAL_ERROR);
 	}
-	flush();
 
 	serial_printf("Count %d\n\r", count);
-	rc = gpio_set(SD_CARD_SS, GPIO_MODE_DIGITAL_OUTPUT, 1);
-#if 0
-	delay_mS(5);
-	rc = gpio_set(SD_CARD_SS, GPIO_MODE_DIGITAL_OUTPUT, 0);
-	serial_printf("Flag?\n\r");
+
+	do {
+		rc = spi_read_byte(&spi_device);
+		RC_CHECK;
+		rx_byte = (uint8_t)rc;
+	} while (rx_byte != 0xFE);
+
 	for(i = 0; i < 520; i++) {
-		delay_uS(20);
 		rc = spi_write_byte(&spi_device, 0xff);
 		RC_CHECK;
 		rx_byte = (uint8_t)rc;
-		if(rx_byte != 0xff) {
-			serial_printf("rx 0x%x\n\r", rx_byte);
-		}
 	}
+	flush();
 	rc = gpio_set(SD_CARD_SS, GPIO_MODE_DIGITAL_OUTPUT, 1);
 	RC_CHECK;
-#endif
+
 	return(rc);
 
 }
