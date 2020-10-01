@@ -154,12 +154,12 @@ result_t sd_card_init(void)
 	RC_CHECK_PRINT_CONT("Failed to reserve\n\r");
 	LOG_D("Reserved SPI Channel %d\n\r", spi_device.channel);
 
+	rc = gpio_set(SD_CARD_SS, GPIO_MODE_DIGITAL_OUTPUT, 0);
+	RC_CHECK;
+
 	for (loop = 0; loop < 20; loop++) {
 		rc = spi_write_byte(&spi_device, 0xff);
 	}
-
-	rc = gpio_set(SD_CARD_SS, GPIO_MODE_DIGITAL_OUTPUT, 0);
-	RC_CHECK;
 
 	delay(&period);
 
