@@ -288,7 +288,7 @@ result_t sd_card_read(uint16_t address)
 	send_command(&cmd);
 
 	rx_byte = 0xff;
-	while ((rx_byte != 0x01) && (count < 10)) {
+	while ((rx_byte != 0x00) && (count < 10)) {
 		count++;
 		delay_uS(20);
 		rc = spi_read_byte(&spi_device);
@@ -300,8 +300,11 @@ result_t sd_card_read(uint16_t address)
 		rc = gpio_set(SD_CARD_SS, GPIO_MODE_DIGITAL_OUTPUT, 1);
 		return(-ERR_GENERAL_ERROR);
 	}
+	flush();
 
+	serial_printf("Count %d\n\r", count);
 	rc = gpio_set(SD_CARD_SS, GPIO_MODE_DIGITAL_OUTPUT, 1);
+#if 0
 	delay_mS(5);
 	rc = gpio_set(SD_CARD_SS, GPIO_MODE_DIGITAL_OUTPUT, 0);
 	serial_printf("Flag?\n\r");
@@ -316,6 +319,7 @@ result_t sd_card_read(uint16_t address)
 	}
 	rc = gpio_set(SD_CARD_SS, GPIO_MODE_DIGITAL_OUTPUT, 1);
 	RC_CHECK;
+#endif
 	return(rc);
 
 }
