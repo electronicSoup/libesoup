@@ -51,6 +51,8 @@ enum sd_cmd {
 	sd_cmd8       = 0x08,
 	sd_block_size = 0x10,
 	sd_read       = 0x11,
+	sd_cmd41      = 0x29,
+	sd_cmd55      = 0x37,
 };
 
 struct  __attribute__ ((packed)) sd_card_command {
@@ -219,14 +221,7 @@ result_t sd_card_init(void)
 	delay_mS(1);
 	serial_printf("Response 0x%x\n\r", rc);
 
-
-	init_command(&cmd, sd_init);
-
-	rc = gpio_set(SD_CARD_SS, GPIO_MODE_DIGITAL_OUTPUT, 0);
-	send_command(&cmd);
-	delay_uS(10);
-	rc = spi_read_byte(&spi_device);
-	RC_CHECK;
+#if SD_INIT
 	rx_byte = (uint8_t)rc;
 
 	while (rx_byte != 0x00) {
@@ -236,6 +231,37 @@ result_t sd_card_init(void)
 		rx_byte = (uint8_t)rc;
 	}
 	rc = gpio_set(SD_CARD_SS, GPIO_MODE_DIGITAL_OUTPUT, 1);
+#else // try cmd55 ACMD41
+	rx_byte = 0xff;
+
+	while (rx_byte != 0x00) {
+		init_command(&cmd, sd_cmd55);
+
+		rc = gpio_set(SD_CARD_SS, GPIO_MODE_DIGITAL_OUTPUT, 0);
+		send_command(&cmd);
+		delay_uS(10);
+		// Flush
+		do {
+			rc = spi_write_byte(&spi_device, 0xff);
+			flush_byte = (uint8_t)rc;
+		} while (flush_byte != 0xff);
+
+		init_command(&cmd, sd_cmd41);
+		send_command(&cmd);
+		delay_uS(10);
+		// Flush
+		do {
+			rc = spi_write_byte(&spi_device, 0xff);
+			flush_byte = (uint8_t)rc;
+			if (flush_byte == 0x00) {
+				rx_byte = 0x00;
+			}
+		} while (flush_byte != 0xff);
+
+		if(rx_byte != 0x00) delay_mS(100);
+	}
+	rc = gpio_set(SD_CARD_SS, GPIO_MODE_DIGITAL_OUTPUT, 1);
+#endif
 	serial_printf("Initialised\n\r");
 
 	serial_printf("Response 0x%x\n\r", rc);
