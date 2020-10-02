@@ -1,15 +1,23 @@
 #include "libesoup_config.h"
 
-#include "source/ff.h"
-#include "source/diskio.h"
+#include "libesoup/fileio/ff14/source/ff.h"
+#include "libesoup/fileio/ff14/source/diskio.h"
 
 #define DEBUG_FILE
 #define TAG "FILE"
 #include "libesoup/logger/serial_log.h"
 
+#if defined(SYS_SD_CARD)
+#include "libesoup/comms/spi/devices/sd_card.h"
+#endif // SYS_SD_CARD
+
 DSTATUS disk_initialize (BYTE pdrv)
 {
+	result_t rc;
+
 	LOG_D("%s\n\r", __func__);
+	rc = sd_card_init();
+	RC_CHECK_PRINT_CONT("Failed to init SD Card\n\r");
 	return(0);
 }
 
@@ -22,5 +30,8 @@ DSTATUS disk_status (BYTE pdrv)
 DRESULT disk_read (BYTE pdrv, BYTE* buff, LBA_t sector, UINT count)
 {
 	LOG_D("%s\n\r", __func__);
+#ifdef SYS_SD_CARD
+//	rc = sd_card_read(0x0000);
+#endif
 	return (RES_OK);
 }

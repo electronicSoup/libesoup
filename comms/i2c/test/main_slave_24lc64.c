@@ -12,12 +12,6 @@
 #endif
 #include "libesoup/comms/i2c/devices/24lcxx/slave_24LCxx.h"
 
-#if defined(SYS_SD_CARD)
-#include "libesoup/comms/spi/devices/sd_card.h"
-
-
-#endif // SYS_SD_CARD
-
 #include "libesoup/timers/sw_timers.h"
 
 static uint32_t count = 0;
@@ -40,15 +34,6 @@ int main(void)
 		LOG_E("24LCxx init failed\n\r");
 	} else {
 		LOG_D("Returned 0x%x\n\r");
-	}
-#endif
-#ifdef SYS_SD_CARD
-	rc = sd_card_init();
-	if (rc < 0) {
-		LOG_E("SD Card init failed\n\r");
-	} else {
-		serial_printf("Read a block\n\r");
-		rc = sd_card_read(0x0000);
 	}
 #endif
 //	gpio_set(RA4, GPIO_MODE_DIGITAL_OUTPUT, 0);
