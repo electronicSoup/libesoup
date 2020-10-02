@@ -23,7 +23,7 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  *
  */
-#if defined(__dsPIC33EP128GS702__)  // Platform specific code so only used for the dsPIC33EP256MU806
+#if defined(__dsPIC33EP256GP502__)  // Platform specific code
 
 #include "libesoup_config.h"
 
@@ -33,4 +33,4 @@ result_t board_init(void)
 {
 	return(SUCCESS);
 }
-#endif // __dsPIC33EP128GS702__
+#endif // uC

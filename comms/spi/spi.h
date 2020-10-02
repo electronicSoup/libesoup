@@ -63,14 +63,24 @@ enum spi_mode {
 };
 
 struct spi_device {
-	enum spi_channel       channel;
+	enum spi_chan_id       chan_id;
 	struct spi_io_channel  io;
+        struct spi_chan       *pChan;
         enum clock_polarity    clock_polarity;
         enum spi_mode          spi_mode;
 	enum bus_mode          bus_mode;
 	uint16_t               brg;
 };
 
+struct spi_chan {
+	boolean                active;
+	struct spi_device     *active_device;
+};
+
+
+/*
+ * API Functions
+ */
 extern result_t spi_reserve(struct spi_device *device);
 extern result_t spi_release(struct spi_device *device);
 

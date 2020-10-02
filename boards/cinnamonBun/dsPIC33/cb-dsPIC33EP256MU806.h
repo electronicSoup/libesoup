@@ -28,7 +28,7 @@
 #ifndef _CB_dsPIC33EP256MU806_H
 #define _CB_dsPIC33EP256MU806_H
 
-#include "libesoup/processors/es-dsPIC33EP256MU806.h"
+#include "libesoup/processors/dsPIC33/es-dsPIC33EP256MU806.h"
 
 /**
  * @brief Crystal Frequency of the Hardware Device.

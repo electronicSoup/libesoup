@@ -62,8 +62,8 @@ struct  __attribute__ ((packed)) sd_card_command {
 struct spi_io_channel spi_io;
 struct spi_device spi_device;
 
-static void init_command(struct sd_card_command *buffer, enum sd_cmd cmd);
-static void send_command(struct sd_card_command *buffer);
+static void     init_command(struct sd_card_command *buffer, enum sd_cmd cmd);
+static void     send_command(struct sd_card_command *buffer);
 static result_t set_block_size(uint16_t size);
 
 #if 0
@@ -158,7 +158,7 @@ result_t sd_card_init(void)
 
 	rc = spi_reserve(&spi_device);
 	RC_CHECK_PRINT_CONT("Failed to reserve\n\r");
-	LOG_D("Reserved SPI Channel %d\n\r", spi_device.channel);
+	LOG_D("Reserved SPI Channel %d\n\r", spi_device.chan_id);
 
 	rc = gpio_set(SD_CARD_SS, GPIO_MODE_DIGITAL_OUTPUT, 0);
 	RC_CHECK;

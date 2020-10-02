@@ -21,7 +21,7 @@
 #include "libesoup_config.h"
 
 #ifdef SYS_CHANGE_NOTIFICATION
-#if defined(__dsPIC33EP256MU806__) || defined(__dsPIC33EP128GS702__)
+#if defined(__dsPIC33EP256MU806__) || defined(__dsPIC33EP128GS702__) || defined(__dsPIC33EP256GP502__)
 
 #ifdef SYS_SERIAL_LOGGING
 #define DEBUG_FILE
@@ -351,6 +351,81 @@ static result_t enable_change(enum gpio_pin pin)
 	}
 	return(rc);
 }
+#elif defined(__dsPIC33EP256GP502__)
+static result_t enable_change(enum gpio_pin pin)
+{
+	result_t rc = 0;
+
+	switch(pin) {
+	case RA0:
+		CNENAbits.CNIEA0 = 1;
+		break;
+	case RA1:
+		CNENAbits.CNIEA1 = 1;
+		break;
+	case RA2:
+		CNENAbits.CNIEA2 = 1;
+		break;
+	case RA3:
+		CNENAbits.CNIEA3 = 1;
+		break;
+	case RA4:
+		CNENAbits.CNIEA4 = 1;
+		break;
+	case RB0:
+		CNENBbits.CNIEB0 = 1;
+		break;
+	case RB1:
+		CNENBbits.CNIEB1 = 1;
+		break;
+	case RB2:
+		CNENBbits.CNIEB2 = 1;
+		break;
+	case RB3:
+		CNENBbits.CNIEB3 = 1;
+		break;
+	case RB4:
+		CNENBbits.CNIEB4 = 1;
+		break;
+	case RB5:
+		CNENBbits.CNIEB5 = 1;
+		break;
+	case RB6:
+		CNENBbits.CNIEB6 = 1;
+		break;
+	case RB7:
+		CNENBbits.CNIEB7 = 1;
+		break;
+	case RB8:
+		CNENBbits.CNIEB8 = 1;
+		break;
+	case RB9:
+		CNENBbits.CNIEB9 = 1;
+		break;
+	case RB10:
+		CNENBbits.CNIEB11 = 1;
+		break;
+	case RB11:
+		CNENBbits.CNIEB11 = 1;
+		break;
+	case RB12:
+		CNENBbits.CNIEB12 = 1;
+		break;
+	case RB13:
+		CNENBbits.CNIEB13 = 1;
+		break;
+	case RB14:
+		CNENBbits.CNIEB14 = 1;
+		break;
+	case RB15:
+		CNENBbits.CNIEB15 = 1;
+		break;
+	default:
+		rc = -ERR_BAD_INPUT_PARAMETER;
+		break;
+	}
+	return(rc);
+}
 #endif
 
 result_t change_notifier_deregister(enum gpio_pin pin)
@@ -584,6 +659,81 @@ static result_t disable_change(enum gpio_pin pin)
 		CNENBbits.CNIEB9 = 0;
 		break;
 	case RB11:
+		CNENBbits.CNIEB11 = 0;
+		break;
+	case RB12:
+		CNENBbits.CNIEB12 = 0;
+		break;
+	case RB13:
+		CNENBbits.CNIEB13 = 0;
+		break;
+	case RB14:
+		CNENBbits.CNIEB14 = 0;
+		break;
+	case RB15:
+		CNENBbits.CNIEB15 = 0;
+		break;
+	default:
+		rc = -ERR_BAD_INPUT_PARAMETER;
+		break;
+	}
+	return(rc);
+}
+#elif defined(__dsPIC33EP256GP502__)
+static result_t disable_change(enum gpio_pin pin)
+{
+	result_t rc = 0;
+
+	switch(pin) {
+	case RA0:
+		CNENAbits.CNIEA0 = 0;
+		break;
+	case RA1:
+		CNENAbits.CNIEA1 = 0;
+		break;
+	case RA2:
+		CNENAbits.CNIEA2 = 0;
+		break;
+	case RA3:
+		CNENAbits.CNIEA3 = 0;
+		break;
+	case RA4:
+		CNENAbits.CNIEA4 = 0;
+		break;
+	case RB0:
+		CNENBbits.CNIEB0 = 0;
+		break;
+	case RB1:
+		CNENBbits.CNIEB1 = 0;
+		break;
+	case RB2:
+		CNENBbits.CNIEB2 = 0;
+		break;
+	case RB3:
+		CNENBbits.CNIEB3 = 0;
+		break;
+	case RB4:
+		CNENBbits.CNIEB4 = 0;
+		break;
+	case RB5:
+		CNENBbits.CNIEB5 = 0;
+		break;
+	case RB6:
+		CNENBbits.CNIEB6 = 0;
+		break;
+	case RB7:
+		CNENBbits.CNIEB7 = 0;
+		break;
+	case RB8:
+		CNENBbits.CNIEB8 = 0;
+		break;
+	case RB9:
+		CNENBbits.CNIEB9 = 0;
+		break;
+	case RB11:
+		CNENBbits.CNIEB11 = 0;
+		break;
+	case RB10:
 		CNENBbits.CNIEB11 = 0;
 		break;
 	case RB12:

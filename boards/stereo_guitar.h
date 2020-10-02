@@ -23,8 +23,14 @@
 #ifndef _STEREO_GUITAR_H
 #define _STEREO_GUITAR_H
 
-#include "libesoup/processors/es-dsPIC33EP128GS702.h"
-
+/*
+ * Change to dsPIC33EP256GP502 due to memory constraints (FAT FS)
+ */
+#if defined(__dsPIC33EP256GP502__)
+#include "libesoup/processors/dsPIC33/es-dsPIC33EP256GP502.h"
+#elif defined(__dsPIC33EP128GS702__)
+#include "libesoup/processors/dsPIC33/es-dsPIC33EP128GS702.h"
+#endif
 /**
  * @brief Crystal Frequency of the Hardware Device.
  *

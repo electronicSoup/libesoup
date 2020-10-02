@@ -125,7 +125,7 @@ enum uart_channel {
 /*
  * I2C Channels
  */
-enum i2c_channel {
+enum i2c_chan_id {
 #ifdef SYS_I2C_1
         I2C1,
 #endif
@@ -138,7 +138,7 @@ enum i2c_channel {
 /*
  * SPI Channels
  */
-enum spi_channel {
+enum spi_chan_id {
 #ifdef SYS_SPI1
         SPI_1,
 #endif
@@ -150,6 +150,13 @@ enum spi_channel {
 #endif
         NUM_SPI_CHANNELS
 };
+
+#define SPI_ENABLE_CS       SPI1CON1Hbits.MSSEN  = 1;
+#define SPI_DISABLE_CS      SPI1CON1Hbits.MSSEN  = 0;
+#define SPI1_ENABLE_MISO    SPI1CON1Lbits.DISSDI = 0;
+#define SPI1_DISABLE_MISO   SPI1CON1Lbits.DISSDI = 1;
+#define SPI1_ENABLE_MOSI    SPI1CON1Lbits.DISSDO = 0;
+#define SPI1_DISABLE_MOSI   SPI1CON1Lbits.DISSDO = 1;
 
 /**
  * @brief GPIO Pins available in the uC

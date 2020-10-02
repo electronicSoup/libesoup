@@ -98,7 +98,8 @@ static uint16_t load_tx_buffer(enum uart_channel channel);
 /*
  * Interrupt Service Routines
  */
-#if (defined(__dsPIC33EP256MU806__) || defined (__PIC24FJ256GB106__) || defined(__dsPIC33EP128GS702__)) && defined(SYS_UART1)
+#if defined(SYS_UART1)
+#if (defined(__dsPIC33EP256MU806__) || defined (__PIC24FJ256GB106__) || defined(__dsPIC33EP128GS702__)) && defined(SYS_UART1) || defined(__dsPIC33EP256GP502__)
 void _ISR __attribute__((__no_auto_psv__)) _U1TXInterrupt(void)
 {
 	while(U1_TX_ISR_FLAG) {
@@ -107,8 +108,10 @@ void _ISR __attribute__((__no_auto_psv__)) _U1TXInterrupt(void)
 	}
 }
 #endif // #if defined(__dsPIC33EP256MU806__) || defined (__PIC24FJ256GB106__) || defined(__dsPIC33EP128GS702__)
+#endif // defined(SYS_UART1)
 
-#if (defined(__dsPIC33EP256MU806__) || defined (__PIC24FJ256GB106__) || defined(__dsPIC33EP128GS702__)) && defined(SYS_UART2)
+#if defined(SYS_UART2)
+#if (defined(__dsPIC33EP256MU806__) || defined (__PIC24FJ256GB106__) || defined(__dsPIC33EP128GS702__)) && defined(SYS_UART2) || defined(__dsPIC33EP256GP502__)
 void _ISR __attribute__((__no_auto_psv__)) _U2TXInterrupt(void)
 {
 	while(U2_TX_ISR_FLAG) {
@@ -117,6 +120,7 @@ void _ISR __attribute__((__no_auto_psv__)) _U2TXInterrupt(void)
 	}
 }
 #endif // #if defined(__dsPIC33EP256MU806__) || defined (__PIC24FJ256GB106__) || defined(__dsPIC33EP128GS702__)
+#endif // SYS_UART_2
 
 #if (defined(__dsPIC33EP256MU806__) || defined (__PIC24FJ256GB106__)) && defined(SYS_UART3)
 void _ISR __attribute__((__no_auto_psv__)) _U3TXInterrupt(void)
@@ -160,7 +164,6 @@ static void uart_tx_isr(enum uart_channel channel)
 		switch(channel) {
 #if defined(SYS_UART1)
 		case UART_1:
-#if defined(__dsPIC33EP256MU806__) || defined (__PIC24FJ256GB106__) || defined(__dsPIC33EP128GS702__)
 			/*
 			 * Can't use U2STAbits.TRMT to detect when Tx Queue is empty
 			 * as it ain't reliable at all.
@@ -190,7 +193,6 @@ static void uart_tx_isr(enum uart_channel channel)
 				U1STAbits.UTXISEL1 = 0;
 				U1STAbits.UTXISEL0 = 1;
 			}
-#endif // MicroController Selection
 			break;
 #endif // SYS_UART1
 #if defined(SYS_UART2)
@@ -302,7 +304,8 @@ static void uart_tx_isr(enum uart_channel channel)
 /*
  * Receive Interrupt Service Routines
  */
-#if (defined(__dsPIC33EP256MU806__) || defined (__PIC24FJ256GB106__) || defined(__dsPIC33EP128GS702__)) && defined(SYS_UART1)
+//#if (defined(__dsPIC33EP256MU806__) || defined (__PIC24FJ256GB106__) || defined(__dsPIC33EP128GS702__)) &&
+#if defined(SYS_UART1)
 void _ISR __attribute__((__no_auto_psv__)) _U1RXInterrupt(void)
 {
 	uint8_t ch;
@@ -324,7 +327,8 @@ void _ISR __attribute__((__no_auto_psv__)) _U1RXInterrupt(void)
 }
 #endif // #if defined(__dsPIC33EP256MU806__) || defined (__PIC24FJ256GB106__) || defined(__dsPIC33EP128GS702__)
 
-#if (defined(__dsPIC33EP256MU806__) || defined (__PIC24FJ256GB106__) || defined(__dsPIC33EP128GS702__)) && defined(SYS_UART2)
+//#if (defined(__dsPIC33EP256MU806__) || defined (__PIC24FJ256GB106__) || defined(__dsPIC33EP128GS702__)) &&
+#if defined(SYS_UART2)
 void _ISR __attribute__((__no_auto_psv__)) _U2RXInterrupt(void)
 {
 	uint8_t ch;
@@ -347,7 +351,8 @@ void _ISR __attribute__((__no_auto_psv__)) _U2RXInterrupt(void)
 }
 #endif // #if defined(__dsPIC33EP256MU806__) || defined (__PIC24FJ256GB106__) || defined(__dsPIC33EP128GS702__)
 
-#if (defined(__dsPIC33EP256MU806__) || defined (__PIC24FJ256GB106__)) && defined(SYS_UART3)
+//#if (defined(__dsPIC33EP256MU806__) || defined (__PIC24FJ256GB106__)) &&
+#if defined(SYS_UART3)
 void _ISR __attribute__((__no_auto_psv__)) _U3RXInterrupt(void)
 {
 	uint8_t ch;
@@ -369,7 +374,8 @@ void _ISR __attribute__((__no_auto_psv__)) _U3RXInterrupt(void)
 }
 #endif // #if defined(__dsPIC33EP256MU806__) || defined (__PIC24FJ256GB106__)
 
-#if (defined(__dsPIC33EP256MU806__) || defined (__PIC24FJ256GB106__)) && defined(SYS_UART4)
+//#if (defined(__dsPIC33EP256MU806__) || defined (__PIC24FJ256GB106__)) &&
+#if defined(SYS_UART4)
 void _ISR __attribute__((__no_auto_psv__)) _U4RXInterrupt(void)
 {
 	uint8_t ch;
@@ -395,7 +401,7 @@ result_t uart_calculate_mode(uint16_t *mode, uint8_t databits, uint8_t parity, u
 {
 	*mode = 0x00;
 
-#if defined(__dsPIC33EP256MU806__) || defined (__PIC24FJ256GB106__) || defined(__dsPIC33EP128GS702__)
+#if defined(__dsPIC33EP256MU806__) || defined (__PIC24FJ256GB106__) || defined(__dsPIC33EP128GS702__) || defined(__dsPIC33EP256GP502__)
 	*mode |= UARTEN_MASK;
 
 	if (databits == UART_8_DATABITS) {
@@ -683,7 +689,7 @@ static result_t uart_putchar(enum uart_channel channel, uint8_t ch)
 	switch(channel) {
 #if defined(SYS_UART1)
 	case UART_1:
-#if defined(__dsPIC33EP256MU806__) || defined (__PIC24FJ256GB106__) || defined(__dsPIC33EP128GS702__)
+#if defined(__dsPIC33EP256MU806__) || defined (__PIC24FJ256GB106__) || defined(__dsPIC33EP128GS702__) || defined(__dsPIC33EP256GP502__)
 		/*
 		 * If either the TX Buffer is full OR there are already characters in
 		 * our SW Buffer then add to SW buffer
@@ -870,7 +876,7 @@ static result_t uart_set_rx_pin(enum uart_channel channel, enum gpio_pin pin)
 	}
 	return(0);
 }
-#elif defined(__dsPIC33EP128GS702__)
+#elif defined(__dsPIC33EP128GS702__) || defined(__dsPIC33EP256GP502__)
 static result_t uart_set_rx_pin(enum uart_channel channel, enum gpio_pin pin)
 {
 	int16_t rc;
@@ -987,7 +993,7 @@ static result_t uart_set_tx_pin(enum uart_channel channel, enum gpio_pin pin)
 
 	return(SUCCESS);
 }
-#elif defined(__dsPIC33EP128GS702__)
+#elif defined(__dsPIC33EP128GS702__) || defined(__dsPIC33EP256GP502__)
 static result_t uart_set_tx_pin(enum uart_channel channel, enum gpio_pin pin)
 {
 	result_t rc;
@@ -1065,7 +1071,7 @@ static result_t uart_set_tx_pin(enum uart_channel channel, enum gpio_pin pin)
 }
 #endif // MicroContoller Selection
 
-#if defined(__dsPIC33EP256MU806__) || defined (__PIC24FJ256GB106__) || defined(__dsPIC33EP128GS702__)
+#if defined(__dsPIC33EP256MU806__) || defined (__PIC24FJ256GB106__) || defined(__dsPIC33EP128GS702__) || defined(__dsPIC33EP256GP502__)
 static result_t uart_set_uart_config(struct uart_data *udata)
 {
 	enum uart_channel channel;
@@ -1366,7 +1372,7 @@ static uint16_t load_tx_buffer(enum uart_channel channel)
 	switch (channel) {
 #if defined(SYS_UART1)
 	case UART_1:
-#if defined(__dsPIC33EP256MU806__) || defined (__PIC24FJ256GB106__) || defined(__dsPIC33EP128GS702__)
+#if defined(__dsPIC33EP256MU806__) || defined (__PIC24FJ256GB106__) || defined(__dsPIC33EP128GS702__) || defined(__dsPIC33EP256GP502__)
 		/*
 		 * If the TX buffer is not full load it from the circular buffer
 		 */
