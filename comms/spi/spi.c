@@ -313,6 +313,10 @@ static result_t	channel_init(enum spi_channel ch)
 
 result_t spi_write_byte(struct spi_device *device, uint8_t write)
 {
+#if defined(__dsPIC33EP128GS702__)
+	uint8_t clear;
+#endif
+
 	enum spi_channel channel;
 
 	channel = device->channel;
