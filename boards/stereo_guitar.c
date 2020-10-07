@@ -5,7 +5,7 @@
  *
  * @brief Board specific code for the Stereo Guitar project.
  *
- * The file contains the implementation of the board_init() function which 
+ * The file contains the implementation of the board_init() function which
  * will be called as part of the library initialisation via libesoup_init()
  *
  * Copyright 2020 electronicSoup Limited
@@ -23,7 +23,7 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  *
  */
-#if defined(__dsPIC33EP256GP502__)  // Platform specific code
+#if defined(__dsPIC33EP256GP502__)  || defined(__dsPIC33EP128GS702__)// Platform specific code
 
 #include "libesoup_config.h"
 

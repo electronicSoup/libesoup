@@ -23,7 +23,7 @@
  *
  */
 //#define BIT_BANG
-//#define MINIMAL
+#define MINIMAL
 //#define MCP_I2C
 
 #ifdef MCP_I2C
@@ -498,43 +498,51 @@ result_t slave_24lcxx_init(void)
 
 #ifdef MINIMAL
 #include <xc.h>
+#include "libesoup_config.h"
+#include "libesoup/logger/serial_log.h"
 
 #define SDA1_PIN RB7
 #define SCL1_PIN RB6
 
 void __attribute__((__interrupt__, __no_auto_psv__)) _MI2C1Interrupt(void)
 {
-//	serial_printf("*M1*\n\r");
+	serial_printf("*M1*\n\r");
 }
 
 void __attribute__((__interrupt__, __no_auto_psv__)) _SI2C1Interrupt(void)
 {
+	static uint8_t started = 0;
 	uint8_t  rx_byte;
 
 	while (IFS1bits.SI2C1IF) {
 		IFS1bits.SI2C1IF    = 0;
 		if (I2C1STATbits.P) {
-//			serial_printf("!");
+			serial_printf("!");
+			started = 0;
 		} else if (I2C1STATbits.S) {
+			if(!started) {
+//				serial_printf("S\n\r");
+				started = 1;
+			}
+
 			if(I2C1STATbits.RBF) {
 				rx_byte = I2C1RCV;
 			}
-			if (I2C1STATbits.R_W) {
-				if (I2C1STATbits.ACKTIM) {
-					while (I2C1STATbits.ACKTIM);
-					if (!I2C1STATbits.ACKSTAT) {
-						while (I2C1STATbits.TBF);
-						I2C1TRN = 0x55;
-					}
+			if (I2C1STATbits.ACKTIM) {
+				LATBbits.LATB8 = 1;
+				while (I2C1STATbits.ACKTIM);
+				if (!I2C1STATbits.ACKSTAT) {
+					while (I2C1STATbits.TBF);
+					I2C1TRN = 0x55;
 				}
 			}
 		}
 
 		if (I2C1STATbits.IWCOL) {
-//			serial_printf("W");
+			serial_printf("W");
 		}
 		if (I2C1STATbits.I2COV) {
-//			serial_printf("V");
+			serial_printf("V");
 		}
 	}
 }
@@ -551,10 +559,13 @@ void slave_24lcxx_init(void)
 	 */
 	ANSELBbits.ANSB6 = 0;
 	TRISBbits.TRISB6 = 1;
-	ODCBbits.ODCB6   = 1;
+//	ODCBbits.ODCB6   = 1;
 	ANSELBbits.ANSB7 = 0;
 	TRISBbits.TRISB7 = 1;
 	ODCBbits.ODCB7   = 1;
+
+	// Test Pin
+	TRISBbits.TRISB8 = 0;
 
 	I2C1CONLbits.I2CSIDL = 0;  // Module continues in Idle.
 	I2C1CONLbits.SCLREL  = 1;  // Release clock (Slave mode))
@@ -584,10 +595,12 @@ void slave_24lcxx_init(void)
 
 int main(void)
 {
+	libesoup_init();
 	slave_24lcxx_init();
 
+	serial_printf("Minimal\n\r");
 	while(1) {
-		Nop();
+		libesoup_tasks();
 	}
 }
 #endif

@@ -7,7 +7,7 @@
 #define SYS_CLOCK_FREQ 60000000
 #endif
 
-#define FAT_FS_TEST_MAIN
+//#define FAT_FS_TEST_MAIN
         
 #define SYS_TEST_BUILD
 
@@ -42,8 +42,8 @@
 /*
  * SD Card switches
  */
-#define SYS_SPI1
-#define SYS_SD_CARD
+//#define SYS_SPI1
+//#define SYS_SD_CARD
 
 /*
  * Include a board file
