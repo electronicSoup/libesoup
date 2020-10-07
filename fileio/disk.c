@@ -1,5 +1,7 @@
 #include "libesoup_config.h"
 
+#ifdef SYS_FAT_FS
+
 #include "libesoup/fileio/ff14/source/ff.h"
 #include "libesoup/fileio/ff14/source/diskio.h"
 
@@ -35,3 +37,5 @@ DRESULT disk_read (BYTE pdrv, BYTE* buff, LBA_t sector, UINT count)
 #endif
 	return (RES_OK);
 }
+
+#endif // SYS_FAT_FS
