@@ -1,4 +1,6 @@
-
+/*
+ * file:///home/john/MPLABXProjects/I2C.X/src/libesoup/fileio/ff14/documents/doc/appnote.html
+ */
 #include "libesoup_config.h"
 
 #ifdef FAT_FS_TEST_MAIN
@@ -95,6 +97,9 @@ int main (void)
 
 	disk_initialize((BYTE)p1);
 
+	/*
+	 * http://elm-chan.org/fsw/ff/doc/open.html
+	 */
 	res = f_open (&file, "00.bin", FF_FS_READONLY);
 	serial_printf("Result %d\n\r", res);
 
