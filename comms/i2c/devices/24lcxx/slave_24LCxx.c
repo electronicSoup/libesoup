@@ -501,9 +501,13 @@ result_t slave_24lcxx_init(void)
 #include "libesoup_config.h"
 #include "libesoup/logger/serial_log.h"
 
+#if defined(__dsPIC33EP128GS702__)
 #define SDA1_PIN RB7
 #define SCL1_PIN RB6
-
+#elif defined(__dsPIC33EP256GP502__)
+#define SDA1_PIN RB9
+#define SCL1_PIN RB8
+#endif
 void __attribute__((__interrupt__, __no_auto_psv__)) _MI2C1Interrupt(void)
 {
 	serial_printf("*M1*\n\r");
@@ -528,6 +532,7 @@ void __attribute__((__interrupt__, __no_auto_psv__)) _SI2C1Interrupt(void)
 			if(I2C1STATbits.RBF) {
 				rx_byte = I2C1RCV;
 			}
+#if defined(__dsPIC33EP128GS702__)
 			if (I2C1STATbits.ACKTIM) {
 				LATBbits.LATB8 = 1;
 				while (I2C1STATbits.ACKTIM);
@@ -536,6 +541,7 @@ void __attribute__((__interrupt__, __no_auto_psv__)) _SI2C1Interrupt(void)
 					I2C1TRN = 0x55;
 				}
 			}
+#endif // __dsPIC33EP128GS702__
 		}
 
 		if (I2C1STATbits.IWCOL) {
@@ -552,6 +558,7 @@ void __attribute__((__interrupt__, __no_auto_psv__)) _I2C1BCInterrupt(void)
 //	serial_printf("B1* ");
 }
 
+#if defined(__dsPIC33EP128GS702__)
 void slave_24lcxx_init(void)
 {
 	/*
@@ -592,12 +599,49 @@ void slave_24lcxx_init(void)
 
 	I2C1CONLbits.I2CEN   = 1;
 }
+#elif defined(__dsPIC33EP256GP502__)
+void slave_24lcxx_init(void)
+{
+	/*
+	 * SDA1 and SCL1 Inputs with OpenDrain enabled
+	 */
+	ANSELBbits.ANSB8 = 0;
+	TRISBbits.TRISB8 = 1;
+
+	TRISBbits.TRISB9 = 1;
+	ODCBbits.ODCB9   = 1; // Open Drain
+
+	// Test Pin
+	TRISAbits.TRISA0 = 0;
+
+	I2C1CONbits.I2CSIDL = 0;  // Module continues in Idle.
+	I2C1CONbits.SCLREL  = 1;  // Release clock (Slave mode))
+	I2C1CONbits.A10M    = 0;  // 7 bit mode
+	I2C1CONbits.DISSLW  = 1;  // Disable Slew rate.
+	I2C1CONbits.SMEN    = 0;  // Disable SMBus thresholds
+	I2C1CONbits.GCEN    = 1;  // Enable General call address
+	I2C1CONbits.STREN   = 0;  // Disable clock stretching
+
+	I2C1MSK           = 0x00;  // Don't care about address for moment
+	I2C1ADD           = 0x50;
+
+	IFS1bits.MI2C1IF     = 0;  // Clear Master ISR Flag
+	IEC1bits.MI2C1IE     = 1;  // Enable Master Interrupts
+
+	IFS1bits.SI2C1IF     = 0;  // Clear Slave ISR Flag
+	IEC1bits.SI2C1IE     = 1;  // Enable Slave Interrupts
+
+	I2C1CONbits.I2CEN   = 1;
+}
+#endif
 
 int main(void)
 {
 	libesoup_init();
 	slave_24lcxx_init();
 
+	LATAbits.LATA0 = 1;
+	
 	serial_printf("Minimal\n\r");
 	while(1) {
 		libesoup_tasks();
