@@ -1,5 +1,6 @@
 /*
  * file:///home/john/MPLABXProjects/I2C.X/src/libesoup/fileio/ff14/documents/doc/appnote.html
+ * http://elm-chan.org/fsw/ff/00index_e.html
  */
 #include "libesoup_config.h"
 
@@ -79,6 +80,71 @@ FRESULT scan_files (
 }
 #endif
 
+static void fat_error(FRESULT result)
+{
+	switch (result) {
+	case FR_OK:
+		serial_printf("FR_OK\n\r");
+		break;
+	case FR_DISK_ERR:
+		serial_printf("FR_DISK_ERR\n\r");
+		break;
+	case FR_INT_ERR:
+		serial_printf("FR_INT_ERR\n\r");
+		break;
+	case FR_NOT_READY:
+		serial_printf("FR_NOT_READY\n\r");
+		break;
+	case FR_NO_FILE:
+		serial_printf("FR_NO_FILE\n\r");
+		break;
+	case FR_NO_PATH:
+		serial_printf("FR_NO_PATH\n\r");
+		break;
+	case FR_INVALID_NAME:
+		serial_printf("FR_INVALID_NAME\n\r");
+		break;
+	case FR_DENIED:
+		serial_printf("FR_DENIED\n\r");
+		break;
+	case FR_EXIST:
+		serial_printf("FR_EXIST\n\r");
+		break;
+	case FR_INVALID_OBJECT:
+		serial_printf("FR_INVALID_OBJECT\n\r");
+		break;
+	case FR_WRITE_PROTECTED:
+		serial_printf("FR_WRITE_PROTECTED\n\r");
+		break;
+	case FR_INVALID_DRIVE:
+		serial_printf("FR_INVALID_DRIVE\n\r");
+		break;
+	case FR_NOT_ENABLED:
+		serial_printf("FR_NOT_ENABLED\n\r");
+		break;
+	case FR_NO_FILESYSTEM:
+		serial_printf("FR_NO_FILESYSTEM\n\r");
+		break;
+	case FR_MKFS_ABORTED:
+		serial_printf("FR_MKFS_ABORTED\n\r");
+		break;
+	case FR_TIMEOUT:
+		serial_printf("FR_TIMEOUT\n\r");
+		break;
+	case FR_LOCKED:
+		serial_printf("FR_LOCKED\n\r");
+		break;
+	case FR_NOT_ENOUGH_CORE:
+		serial_printf("FR_NOT_ENOUGH_CORE\n\r");
+		break;
+	case FR_TOO_MANY_OPEN_FILES:
+		serial_printf("FR_TOO_MANY_OPEN_FILES\n\r");
+		break;
+	case FR_INVALID_PARAMETER:
+		serial_printf("FR_INVALID_PARAMETER\n\r");
+		break;
+	}
+}
 
 int main (void)
 {
@@ -89,7 +155,7 @@ int main (void)
 	UINT s1, s2, cnt;
 	DWORD ofs = 0, sect = 0;
 	FRESULT res;
-	FATFS *fs;				/* Pointer to file system object */
+	FATFS fs;				/* Pointer to file system object */
 	DIR dir;				/* Directory object */
 	FIL file;
 
@@ -99,15 +165,21 @@ int main (void)
 	disk_initialize((BYTE)p1);
 
 	/*
+	 * http://elm-chan.org/fsw/ff/doc/mount.html
+	 */
+	res = f_mount(&fs, "", 1);
+	fat_error(res);
+
+	while(1) {
+		libesoup_tasks();
+	}
+	/*
 	 * http://elm-chan.org/fsw/ff/doc/open.html
 	 */
 	serial_printf("Attempt to open file\n\r");
 	res = f_open (&file, "00.bin", FF_FS_READONLY);
 	serial_printf("Opened Result %d\n\r", res);
 
-	while(1) {
-		libesoup_tasks();
-	}
 #if 0
 	for (;;) {
 		xputc('>');
