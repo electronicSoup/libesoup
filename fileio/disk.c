@@ -31,7 +31,7 @@ DSTATUS disk_status (BYTE pdrv)
 
 DRESULT disk_read (BYTE pdrv, BYTE* buff, LBA_t sector, UINT count)
 {
-	LOG_D("disk_read %s\n\r", __func__);
+	LOG_D("%s %d sector 0x%x, count %d\n\r", __func__, pdrv, sector, count);
 #ifdef SYS_SD_CARD
 //	rc = sd_card_read(0x0000);
 #endif

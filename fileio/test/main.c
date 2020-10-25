@@ -161,14 +161,12 @@ int main (void)
 
 	libesoup_init();
 
-	LOG_D("Init disk\n\r");
-	disk_initialize((BYTE)p1);
-
 	/*
 	 * http://elm-chan.org/fsw/ff/doc/mount.html
 	 */
 	serial_printf("Mount Drive\n\r");
 	res = f_mount(&fs, "", 1);
+	serial_printf("Result ");
 	fat_error(res);
 
 	if (res != FR_OK) {
