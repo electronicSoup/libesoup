@@ -25,6 +25,7 @@
 #include "libesoup_config.h"
 #include "libesoup/comms/spi/spi.h"
 #include "libesoup/gpio/gpio.h"
+#include "libesoup/gpio/peripheral.h"
 #include "libesoup/logger/serial_log.h"
 
 /*
@@ -32,7 +33,7 @@
  */
 result_t channel_init(struct spi_chan *chan)
 {
-//	result_t           rc;
+	result_t           rc;
 	struct spi_device *device;
 
 	device = chan->active_device;
@@ -104,9 +105,73 @@ result_t channel_init(struct spi_chan *chan)
 #endif // SYS_SPI1
 #if defined(SYS_SPI2)
 	case SPI_2:
+		/*
+		 * Set up periphearl pins
+		 */
+		if (device->io.miso != INVALID_GPIO_PIN) {
+			rc = set_peripheral_input(device->io.miso);
+			RC_CHECK;
+			PPS_I_SPI_2_DI = rc;
+//			SPI2_ENABLE_MISO;
+		} else {
+//			SPI2_DISABLE_MISO;
+		}
+		if (device->io.mosi != INVALID_GPIO_PIN) {
+			rc = set_peripheral_output(device->io.mosi, PPS_O_SPI2DO);
+			RC_CHECK
+			SPI2_ENABLE_MOSI;
+		} else {
+			SPI2_DISABLE_MOSI;
+		}
+		if (device->io.cs != INVALID_GPIO_PIN) {
+			rc = set_peripheral_output(device->io.cs, PPS_O_SPI2SS);
+			RC_CHECK
+			SPI2_ENABLE_SS;
+		} else {
+			SPI2_DISABLE_SS;
+		}
+
+		rc = set_peripheral_output(device->io.sck,  PPS_O_SPI2CLK);
+		RC_CHECK
+
+
+		/*
+	         * Init the SPI Config
+	         */
+		SPI2CON1bits.MSTEN = 1;   // Master mode
+		SPI2CON1bits.PPRE  = 0x00;
+		SPI2CON1bits.SPRE  = 0x05;
+		SPI2CON1bits.SMP   = 1;
+
+		switch (device->bus_mode) {
+		case bus_mode_0:
+			serial_printf("SPI Mode 0\n\r");
+			SPI2CON1bits.CKP = 0;
+			SPI2CON1bits.CKE = 0;
+			break;
+		case bus_mode_1:
+			serial_printf("SPI Mode 1\n\r");
+			SPI2CON1bits.CKP = 0;
+			SPI2CON1bits.CKE = 1;
+			break;
+		case bus_mode_2:
+			serial_printf("SPI Mode 2\n\r");
+			SPI2CON1bits.CKP = 1;
+			SPI2CON1bits.CKE = 0;
+			break;
+		case bus_mode_3:
+			serial_printf("SPI Mode 3\n\r");
+			SPI2CON1bits.CKP = 1;
+			SPI2CON1bits.CKE = 1;
+			break;
+		default:
+			break;
+		}
+
+		SPI2CON2 = 0x00;
+		SPI2STATbits.SPIEN = 1;   // Enable the SPI
 		break;
 #endif // SYS_SPI2
-		break;
 	default:
 		return(-ERR_BAD_INPUT_PARAMETER);
 	}

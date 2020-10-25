@@ -150,6 +150,11 @@ enum spi_chan_id {
 #endif
 #ifdef SYS_SPI2
         SPI_2,
+
+        #define SPI2_ENABLE_SS      SPI2CON1bits.SSEN  = 1;
+        #define SPI2_DISABLE_SS     SPI2CON1bits.SSEN  = 0;
+        #define SPI2_ENABLE_MOSI    SPI2CON1bits.DISSDO = 0;
+        #define SPI2_DISABLE_MOSI   SPI2CON1bits.DISSDO = 1;
 #endif
         NUM_SPI_CHANNELS
 };
@@ -217,6 +222,9 @@ enum pwm_pin {
 #define SECONDARY_OSCILLATOR            OSCCONbits.LPOSCEN   ///< Secondary Oscillator enable SFR Bit
 
 
+/**
+ * @brief Peripheral Input functions
+ */
 #define PPS_I_EX_INT_1      RPINR0bits.INT1      ///< External Interrupt 1
 #define PPS_I_EX_INT_2      RPINR1bits.INT2      ///< External Interrupt 2
 #define PPS_I_T2CK          RPINR3bits.T2CK      ///< Timer 2 clock input source
