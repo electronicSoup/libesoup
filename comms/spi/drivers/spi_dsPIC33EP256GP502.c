@@ -139,8 +139,12 @@ result_t channel_init(struct spi_chan *chan)
 	         * Init the SPI Config
 	         */
 		SPI2CON1bits.MSTEN = 1;   // Master mode
+		// (0,5) 615KHz
+		// (0,4) 470KHz
+		// (0,3) 363KHz
+		// (0,2) 307KHz
 		SPI2CON1bits.PPRE  = 0x00;
-		SPI2CON1bits.SPRE  = 0x05;
+		SPI2CON1bits.SPRE  = 0x02;
 		SPI2CON1bits.SMP   = 1;
 
 		switch (device->bus_mode) {
@@ -193,6 +197,13 @@ result_t spi_write_byte(struct spi_device *device, uint8_t write)
 		return(SPI1BUF);
 		break;
 #endif // SYS_SPI1
+#if defined(SYS_SPI2)
+	case SPI_2:
+		SPI2BUF = write;
+		while (!SPI2STATbits.SPIRBF);
+		return(SPI2BUF);
+		break;
+#endif // SYS_SPI1
 	default:
 		return(-ERR_BAD_INPUT_PARAMETER);
 		break;
@@ -202,7 +213,7 @@ result_t spi_write_byte(struct spi_device *device, uint8_t write)
 
 result_t spi_read_byte(struct spi_device *device)
 {
-//	uint8_t           clear;
+	uint8_t           clear;
 	enum spi_chan_id  channel;
 
 	channel = device->chan_id;
@@ -214,11 +225,24 @@ result_t spi_read_byte(struct spi_device *device)
 		while (SPI1STATbits.SPITBF);
 		while(SPI1STATbits.SPIRBF) {
 			clear = SPI1BUF;
-			serial_printf("C20x%x\n\r", clear);
+//			serial_printf("C20x%x\n\r", clear);
 		}
 		SPI1BUF = 0xff;
 		while (!SPI1STATbits.SPIRBF);
 		return(SPI1BUF);
+		break;
+#endif // SYS_SPI1
+#if defined(SYS_SPI2)
+	case SPI_2:
+		// Wait for Tx Buffer to clear
+		while (SPI2STATbits.SPITBF) ;
+		while(SPI2STATbits.SPIRBF) {
+			clear = SPI2BUF;
+//			serial_printf("C20x%x\n\r", clear);
+		}
+		SPI2BUF = 0xff;
+		while (!SPI2STATbits.SPIRBF) ;
+		return(SPI2BUF);
 		break;
 #endif // SYS_SPI1
 	default:

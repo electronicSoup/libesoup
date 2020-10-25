@@ -95,13 +95,15 @@ int main (void)
 
 	libesoup_init();
 
+	LOG_D("Init disk\n\r");
 	disk_initialize((BYTE)p1);
 
 	/*
 	 * http://elm-chan.org/fsw/ff/doc/open.html
 	 */
+	serial_printf("Attempt to open file\n\r");
 	res = f_open (&file, "00.bin", FF_FS_READONLY);
-	serial_printf("Result %d\n\r", res);
+	serial_printf("Opened Result %d\n\r", res);
 
 	while(1) {
 		libesoup_tasks();

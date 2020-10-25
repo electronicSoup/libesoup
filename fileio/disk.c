@@ -6,7 +6,7 @@
 #include "libesoup/fileio/ff14/source/diskio.h"
 
 #define DEBUG_FILE
-#define TAG "FILE"
+#define TAG "DISK"
 #include "libesoup/logger/serial_log.h"
 
 #if defined(SYS_SD_CARD)
@@ -25,13 +25,13 @@ DSTATUS disk_initialize (BYTE pdrv)
 
 DSTATUS disk_status (BYTE pdrv)
 {
-	LOG_D("%s\n\r", __func__);
+	LOG_D("disk_status %s\n\r", __func__);
 	return(0);
 }
 
 DRESULT disk_read (BYTE pdrv, BYTE* buff, LBA_t sector, UINT count)
 {
-	LOG_D("%s\n\r", __func__);
+	LOG_D("disk_read %s\n\r", __func__);
 #ifdef SYS_SD_CARD
 //	rc = sd_card_read(0x0000);
 #endif

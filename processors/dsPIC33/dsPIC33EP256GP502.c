@@ -97,7 +97,7 @@ static void clock_init(void)
          * Crystal Frequency then we can simple use Primary Clock.
 	 * NO PLL
          */
-	sys_clock_freq = 59850000;
+	sys_clock_freq = 58038750;
 
 	/*
 	 * N1 = 4 divide by 4 so 7.6 MHz > 1.9 MHz
@@ -307,7 +307,7 @@ int16_t set_peripheral_output(enum gpio_pin pin, uint16_t function)
 		RPOR3bits.RP41R = function;
 		break;
 	case RB10: // 42
-		RPOR4bits.RP43R = function;
+		RPOR4bits.RP42R = function;
 		break;
 	case RB11: // 43
 		RPOR4bits.RP43R = function;

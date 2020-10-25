@@ -130,23 +130,6 @@ result_t sd_card_init(void)
 #ifdef SYS_CHANGE_NOTIFICATION
 	rc = change_notifier_register(SD_CARD_DETECT, sd_card_detect);
 #endif
-#if 0
-	request.period.units = uSeconds;
-	request.period.duration = 5;
-	request.data.sival_int = 0;
-	request.type = repeat_expiry;
-	request.exp_fn = toggle;
-
-	rc = hw_timer_start(&request);
-	if (rc < 0) {
-		LOG_E("Failed to create HW Timer\n\r");
-		return(rc);
-	}
-	timer = (timer_id)rc;
-
-	while(!finished);
-	LOG_D("Finished preamble\n\r");
-#endif
 	spi_io.sck  = SD_CARD_SCK;              // SCK
 	spi_io.mosi = SD_CARD_MOSI,             // MOSI
 	spi_io.miso = SD_CARD_MISO;             // MISO
@@ -178,7 +161,6 @@ result_t sd_card_init(void)
 		rc = spi_read_byte(&spi_device);
 		RC_CHECK;
 		rx_byte = (uint8_t)rc;
-		serial_printf("rx 0x%x\n\r", rx_byte);
 		if (rx_byte != 0xff) {
 			serial_printf("reset rx 0x%x\n\r", rx_byte);
 		}

@@ -49,7 +49,7 @@ extern result_t channel_init(struct spi_chan *);
 
 struct spi_chan channels[NUM_SPI_CHANNELS];
 
-#if defined(__dsPIC33EP128GS702__)
+//#if defined(__dsPIC33EP128GS702__)
 #ifdef SYS_SPI1
 void __attribute__((__interrupt__, __no_auto_psv__)) _SPI1TXInterrupt(void)
 {
@@ -65,7 +65,7 @@ void __attribute__((__interrupt__, __no_auto_psv__)) _SPI1RXInterrupt(void)
 	serial_printf("*SPI1_RX* H0x%x:L0x%x\n\r", SPI1STATH, SPI1STATL);
 }
 #endif
-#endif // uC Selection
+//#endif // uC Selection
 
 
 result_t spi_init(void)

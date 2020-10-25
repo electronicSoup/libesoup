@@ -34,7 +34,7 @@
  * file defines the requested instruction clock frequency, which will be 
  * configured, as part of libesoup_init() on startup.
  */
-#define BRD_CRYSTAL_FREQ 7600000
+#define BRD_CRYSTAL_FREQ 7370000
 
 /**
  * @brief Serial Logging pin configuration
@@ -48,11 +48,11 @@
  */
 #ifdef SYS_SERIAL_LOGGING
 #if defined(SYS_SERIAL_PORT_GndTxRx)
-        #define BRD_SERIAL_LOGGING_TX_PIN  RB4
-        #define BRD_SERIAL_LOGGING_RX_PIN  RA4
-#elif defined(SYS_SERIAL_PORT_GndRxTx)
         #define BRD_SERIAL_LOGGING_TX_PIN  RA4
         #define BRD_SERIAL_LOGGING_RX_PIN  RB4
+#elif defined(SYS_SERIAL_PORT_GndRxTx)
+        #define BRD_SERIAL_LOGGING_TX_PIN  RB4
+        #define BRD_SERIAL_LOGGING_RX_PIN  RA4
 #else
 #error Serial Logging pin orientation not defined!
 #endif
@@ -69,7 +69,7 @@
 #define SD_CARD_SCK     RB10   // GREY    Idle High Works
 #define SD_CARD_MOSI    RB11   // RED     Idle Low no activity
 #define SD_CARD_SS      RB15   // ORANGE  Idle low no activity
-#define SD_CARD_MISO    RB13    // YELLOW  Idle Hight no Activity
+#define SD_CARD_MISO    RB14    // YELLOW  Idle Hight no Activity
 #define SD_CARD_DETECT  RB6     // Not connected as yet
 #define SD_CARD_WRITE_P RB7     // Not connected as yet
 

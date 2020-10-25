@@ -1,8 +1,10 @@
 #ifndef _LIBESOUP_CONFIG_H
 #define _LIBESOUP_CONFIG_H
 
-#if defined(__dsPIC33EP128GS702__) || defined(__dsPIC33EP256GP502__)
+#if defined(__dsPIC33EP128GS702__)
 #define SYS_CLOCK_FREQ (7600000/2)
+#elif defined(__dsPIC33EP256GP502__)
+#define SYS_CLOCK_FREQ (7370000/2)
 #elif defined(__dsPIC33EP256MU806__)
 #define SYS_CLOCK_FREQ 60000000
 #endif
