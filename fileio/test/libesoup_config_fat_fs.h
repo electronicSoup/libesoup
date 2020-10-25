@@ -42,14 +42,24 @@
 /*
  * SD Card switches
  */
+#if defined(__dsPIC33EP128GS702__)
 //#define SYS_SPI1
-//#define SYS_SD_CARD
+#elif defined(__dsPIC33EP256GP502__)
+#define SYS_SPI2
+#endif
+#define SYS_SD_CARD
+#define SYS_FAT_FS
+
+//#define I2C_TEST_MAIN
+#define FAT_FS_TEST_MAIN
 
 /*
  * Include a board file
  */
-#if defined(__dsPIC33EP128GS702__) || defined(__dsPIC33EP256GP502__)
-#include "libesoup/boards/stereo_guitar.h"
+#if defined(__dsPIC33EP128GS702__)
+#include "libesoup/boards/stereo_guitar/stereo_guitar_dsPIC33EP128GS702.h"
+#elif defined(__dsPIC33EP256GP502__)
+#include "libesoup/boards/stereo_guitar/stereo_guitar_dsPIC33EP256GP502.h"
 #elif defined(__dsPIC33EP256MU806__)
 #include "libesoup/boards/cinnamonBun/dsPIC33/cb-dsPIC33EP256MU806.h"
 #endif
@@ -62,25 +72,6 @@
  */
 
 #if defined(__dsPIC33EP128GS702__)
-/*
- * SD Card
- * Clk RB11
- * WriteP  RB15
- * CMD RB13
- * DAT3/CD (SS) RB14
- * DAT0 RA0
- * DAT1 RA1
-
- */
-#define SD_CARD_DETECT  RB5
-#define SD_CARD_WRITE_P RB15
-
-#define SD_CARD_SCK     RB11   // GREY    Idle High Works
-#define SD_CARD_MOSI    RB13   // RED     Idle Low no activity
-#define SD_CARD_SS      RB14   // ORANGE  Idle low no activity
-#define SD_CARD_MISO    RA0    // YELLOW  Idle Hight no Activity
-
-#elif defined(__dsPIC33EP256GP502__)
 /*
  * SD Card
  * Clk RB11

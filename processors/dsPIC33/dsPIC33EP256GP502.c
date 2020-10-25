@@ -319,7 +319,7 @@ int16_t set_peripheral_output(enum gpio_pin pin, uint16_t function)
 
 	return(rc);
 }
-
+#if 0
 result_t gpio_set(enum gpio_pin pin, uint16_t mode, uint8_t value)
 {
 	uint8_t  direction;
@@ -435,7 +435,9 @@ result_t gpio_set(enum gpio_pin pin, uint16_t mode, uint8_t value)
 
 	return(0);
 }
+#endif
 
+#if 0
 result_t gpio_get(enum gpio_pin pin)
 {
 	result_t rc = SUCCESS;
@@ -510,6 +512,6 @@ result_t gpio_get(enum gpio_pin pin)
 	}
 	return(rc);
 }
-
+#endif
 
 #endif // defined(__dsPIC33E256GP502__)

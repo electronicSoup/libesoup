@@ -553,10 +553,12 @@ void __attribute__((__interrupt__, __no_auto_psv__)) _SI2C1Interrupt(void)
 	}
 }
 
+#if defined(__dsPIC33EP128GS702__)
 void __attribute__((__interrupt__, __no_auto_psv__)) _I2C1BCInterrupt(void)
 {
 //	serial_printf("B1* ");
 }
+#endif
 
 #if defined(__dsPIC33EP128GS702__)
 void slave_24lcxx_init(void)
@@ -635,16 +637,19 @@ void slave_24lcxx_init(void)
 }
 #endif
 
+#if defined I2C_TEST_MAIN
 int main(void)
 {
 	libesoup_init();
 	slave_24lcxx_init();
 
+#if defined(__dsPIC33EP256GP502__)
 	LATAbits.LATA0 = 1;
-	
+#endif
 	serial_printf("Minimal\n\r");
 	while(1) {
 		libesoup_tasks();
 	}
 }
+#endif // I2C_TEST_MAIN
 #endif

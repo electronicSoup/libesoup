@@ -32,7 +32,7 @@
  */
 result_t channel_init(struct spi_chan *chan)
 {
-	result_t           rc;
+//	result_t           rc;
 	struct spi_device *device;
 
 	device = chan->active_device;
@@ -137,7 +137,7 @@ result_t spi_write_byte(struct spi_device *device, uint8_t write)
 
 result_t spi_read_byte(struct spi_device *device)
 {
-	uint8_t           clear;
+//	uint8_t           clear;
 	enum spi_chan_id  channel;
 
 	channel = device->chan_id;

@@ -1,5 +1,5 @@
 /**
- * @file libesoup/boards/stereo_guitar.c
+ * @file libesoup/boards/stereo_guitar/stereo_guitar_dsPIC33EP128GS702.c
  *
  * @author John Whitmore
  *
@@ -23,7 +23,7 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  *
  */
-#if defined(__dsPIC33EP256GP502__)  || defined(__dsPIC33EP128GS702__)// Platform specific code
+#if defined(__dsPIC33EP128GS702__)// Platform specific code
 
 #include "libesoup_config.h"
 

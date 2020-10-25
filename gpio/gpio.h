@@ -18,6 +18,7 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  *
  */
+#include "libesoup_config.h"
 
 #define GPIO_OUTPUT_PIN  0   ///< value used to set a GPIO pin as an Output pin
 #define GPIO_INPUT_PIN   1   ///< value used to set a GPIO pin as an Output pin
