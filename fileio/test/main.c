@@ -167,19 +167,24 @@ int main (void)
 	/*
 	 * http://elm-chan.org/fsw/ff/doc/mount.html
 	 */
+	serial_printf("Mount Drive\n\r");
 	res = f_mount(&fs, "", 1);
+	fat_error(res);
+
+	if (res != FR_OK) {
+		while (1);
+	}
+
+	/*
+	 * http://elm-chan.org/fsw/ff/doc/open.html
+	 */
+	serial_printf("Open file\n\r");
+	res = f_open (&file, "00.bin", FF_FS_READONLY);
 	fat_error(res);
 
 	while(1) {
 		libesoup_tasks();
 	}
-	/*
-	 * http://elm-chan.org/fsw/ff/doc/open.html
-	 */
-	serial_printf("Attempt to open file\n\r");
-	res = f_open (&file, "00.bin", FF_FS_READONLY);
-	serial_printf("Opened Result %d\n\r", res);
-
 #if 0
 	for (;;) {
 		xputc('>');
