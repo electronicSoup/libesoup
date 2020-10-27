@@ -39,7 +39,9 @@ DRESULT disk_read (BYTE pdrv, BYTE* buff, LBA_t sector, UINT count)
 {
 	result_t rc;
 	LOG_D("%s %d sector 0x%x, count %d\n\r", __func__, pdrv, sector, count);
-	rc = gpio_set(RA0, GPIO_MODE_DIGITAL_OUTPUT, 0);
+#ifdef SYS_TEST_BUILD
+//	rc = gpio_set(RA0, GPIO_MODE_DIGITAL_OUTPUT, 0);
+#endif
 #ifdef SYS_SD_CARD
 	rc = sd_card_read(sector, buff);
 #endif

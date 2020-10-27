@@ -28,7 +28,7 @@
 #define SYS_LOG_LEVEL LOG_DEBUG
 #define SYS_UART1
 #define SYS_SERIAL_LOGGING_BAUD           19200
-#define SYS_UART_TX_BUFFER_SIZE            2048
+#define SYS_UART_TX_BUFFER_SIZE            3072
 
 #endif // defined(SYS_SERIAL_LOGGING)
 
