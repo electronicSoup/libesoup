@@ -313,6 +313,8 @@ result_t sd_card_read(uint16_t address, uint8_t *buffer)
 	}
 	serial_printf("\n\rDone\n\r");
 #endif
+	delay_mS(100);
+
 	return(SUCCESS);
 }
 
