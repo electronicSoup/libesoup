@@ -254,17 +254,19 @@ result_t sd_card_init(void)
 	return(rc);
 }
 
-result_t sd_card_read(uint16_t address, uint8_t *buffer, uint16_t *count)
+result_t sd_card_read(uint16_t address, uint8_t *buffer)
 {
 	uint8_t  retry = 0;
 	result_t rc;
 	uint16_t i;
+	uint8_t *ptr;
 	uint8_t  rx_byte;
 	struct   sd_card_command  cmd;
 
 	rc = gpio_set(SD_CARD_SS, GPIO_MODE_DIGITAL_OUTPUT, 0);
 
 	serial_printf("Attempt read\n\r");
+	ptr = buffer;
 	init_command(&cmd, sd_read);
 	send_command(&cmd);
 
@@ -282,8 +284,6 @@ result_t sd_card_read(uint16_t address, uint8_t *buffer, uint16_t *count)
 		return(-ERR_GENERAL_ERROR);
 	}
 
-	serial_printf("Count %d\n\r", retry);
-
 	do {
 		rc = spi_read_byte(&spi_device);
 		RC_CHECK;
@@ -293,18 +293,18 @@ result_t sd_card_read(uint16_t address, uint8_t *buffer, uint16_t *count)
 	for(i = 0; i < 520; i++) {
 		rc = spi_read_byte(&spi_device);
 		RC_CHECK;
-		rx_byte = (uint8_t)rc;
-		*buffer++ = rx_byte;
-		*count++;
+		*ptr++ = (uint8_t)rc;
 	}
 	flush();
 	rc = gpio_set(SD_CARD_SS, GPIO_MODE_DIGITAL_OUTPUT, 1);
 	RC_CHECK;
 
-	LOG_D("Read %d bytes\n\r", *count);
-
+	ptr = buffer;
+	for(i = 0; i < 512; i++) {
+		serial_printf("0x%x,", *ptr++);
+	}
+	serial_printf("\n\r");
 	return(rc);
-
 }
 
 static result_t set_block_size(uint16_t size)

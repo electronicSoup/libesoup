@@ -32,13 +32,16 @@ DSTATUS disk_status (BYTE pdrv)
 	return(0);
 }
 
+/*
+ * http://elm-chan.org/fsw/ff/doc/dread.html
+ */
 DRESULT disk_read (BYTE pdrv, BYTE* buff, LBA_t sector, UINT count)
 {
 	result_t rc;
 	LOG_D("%s %d sector 0x%x, count %d\n\r", __func__, pdrv, sector, count);
 	rc = gpio_set(RA0, GPIO_MODE_DIGITAL_OUTPUT, 0);
 #ifdef SYS_SD_CARD
-	rc = sd_card_read(sector, buff, &count);
+	rc = sd_card_read(sector, buff);
 #endif
 	return (RES_OK);
 }
