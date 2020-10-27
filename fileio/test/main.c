@@ -5,8 +5,10 @@
 #include "libesoup_config.h"
 
 #ifdef FAT_FS_TEST_MAIN
+
 #include "libesoup/fileio/ff14/source/ff.h"
 #include "libesoup/fileio/ff14/source/diskio.h"
+#include "libesoup/gpio/gpio.h"
 
 #define DEBUG_FILE
 #define TAG "FAT_FS"
@@ -148,6 +150,7 @@ static void fat_error(FRESULT result)
 
 int main (void)
 {
+	result_t rc;
 	char *ptr, *ptr2;
 	long p1, p2, p3;
 	BYTE b, drv = 0;
@@ -160,6 +163,8 @@ int main (void)
 	FIL file;
 
 	libesoup_init();
+
+	rc = gpio_set(RA0, GPIO_MODE_DIGITAL_OUTPUT, 1);
 
 	/*
 	 * http://elm-chan.org/fsw/ff/doc/mount.html
