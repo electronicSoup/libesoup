@@ -254,7 +254,7 @@ result_t sd_card_init(void)
 	return(rc);
 }
 
-result_t sd_card_read(uint16_t address, uint8_t *buffer)
+result_t sd_card_read(uint32_t address, uint8_t *buffer)
 {
 	uint8_t  retry = 0;
 	result_t rc;
