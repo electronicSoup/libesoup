@@ -254,7 +254,7 @@ result_t sd_card_init(void)
 	return(rc);
 }
 
-result_t sd_card_read(uint32_t address, uint8_t *buffer)
+result_t sd_card_read(uint32_t sector, uint8_t *buffer)
 {
 	uint8_t  retry = 0;
 	result_t rc;
@@ -266,9 +266,14 @@ result_t sd_card_read(uint32_t address, uint8_t *buffer)
 
 	rc = gpio_set(SD_CARD_SS, GPIO_MODE_DIGITAL_OUTPUT, 0);
 
-	serial_printf("Attempt read\n\r");
+	serial_printf("Attempt read sector 0x%lx\n\r", sector);
 	ptr = buffer;
 	init_command(&cmd, sd_read);
+	cmd.data[1] = (sector >> 24) & 0xff;
+	cmd.data[2] = (sector >> 16) & 0xff;
+	cmd.data[3] = (sector >> 8) & 0xff;
+	cmd.data[1] = sector & 0xff;
+
 	send_command(&cmd);
 
 	rx_byte = 0xff;
@@ -291,7 +296,7 @@ result_t sd_card_read(uint32_t address, uint8_t *buffer)
 		rx_byte = (uint8_t)rc;
 	} while (rx_byte != 0xFE);
 
-	for(i = 0; i < 520; i++) {
+	for(i = 0; i < 512; i++) {
 		rc = spi_read_byte(&spi_device);
 		RC_CHECK;
 		*ptr++ = (uint8_t)rc;
@@ -303,7 +308,7 @@ result_t sd_card_read(uint32_t address, uint8_t *buffer)
 	new_line = 0;
 	ptr = buffer;
 
-	for(i = 0; i < 512; i++) {
+	for(i = 0; i < 32; i++) {
 		serial_printf("0x%x,", *ptr++);
 		new_line++;
 		if(++new_line == 16) {
@@ -312,8 +317,8 @@ result_t sd_card_read(uint32_t address, uint8_t *buffer)
 		}
 	}
 	serial_printf("\n\rDone\n\r");
-#endif
 	delay_mS(100);
+#endif
 
 	return(SUCCESS);
 }

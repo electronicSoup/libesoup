@@ -104,7 +104,7 @@ static uint16_t load_tx_buffer(enum uart_channel channel);
 void _ISR __attribute__((__no_auto_psv__)) _U1TXInterrupt(void)
 {
 #ifdef SYS_TEST_BUILD
-	gpio_toggle_output(RA0);
+//	gpio_toggle_output(RA0);
 #endif
 	while(U1_TX_ISR_FLAG) {
 		uart_tx_isr(UART_1);

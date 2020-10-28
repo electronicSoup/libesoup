@@ -28,6 +28,38 @@
 #include "libesoup/gpio/peripheral.h"
 #include "libesoup/logger/serial_log.h"
 
+#if 1
+#if defined(SYS_SPI1)
+void __attribute__((__interrupt__, __no_auto_psv__)) _SPI1TXInterrupt(void)
+{
+	IFS0bits.SPI1TXIF = 0;
+	serial_printf("*SPI1_TX* H0x%x:L0x%x\n\r", SPI1STATH, SPI1STATL);
+}
+#endif
+
+#if defined(SYS_SPI1)
+void __attribute__((__interrupt__, __no_auto_psv__)) _SPI1RXInterrupt(void)
+{
+	IFS0bits.SPI1RXIF = 0;
+	serial_printf("*SPI1_RX* H0x%x:L0x%x\n\r", SPI1STATH, SPI1STATL);
+}
+#endif
+
+#if defined(SYS_SPI2)
+void __attribute__((__interrupt__, __no_auto_psv__)) _SPI2TXInterrupt(void)
+{
+	serial_printf("*SPI2_TX*\n\r");
+}
+#endif
+
+#if defined(SYS_SPI2)
+void __attribute__((__interrupt__, __no_auto_psv__)) _SPI2RXInterrupt(void)
+{
+	serial_printf("*SPI1_RX*\n\r");
+}
+#endif
+#endif // 0
+
 /*
  * Function to initialise the Peripheral pins of spi channel
  */
