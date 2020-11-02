@@ -28,7 +28,7 @@
 #include "libesoup/gpio/peripheral.h"
 #include "libesoup/logger/serial_log.h"
 
-#if 1
+#if 0
 #if defined(SYS_SPI1)
 void __attribute__((__interrupt__, __no_auto_psv__)) _SPI1TXInterrupt(void)
 {
@@ -48,14 +48,14 @@ void __attribute__((__interrupt__, __no_auto_psv__)) _SPI1RXInterrupt(void)
 #if defined(SYS_SPI2)
 void __attribute__((__interrupt__, __no_auto_psv__)) _SPI2TXInterrupt(void)
 {
-	serial_printf("*SPI2_TX*\n\r");
+//	serial_printf("*SPI2_TX*\n\r");
 }
 #endif
 
 #if defined(SYS_SPI2)
 void __attribute__((__interrupt__, __no_auto_psv__)) _SPI2RXInterrupt(void)
 {
-	serial_printf("*SPI1_RX*\n\r");
+//	serial_printf("*SPI1_RX*\n\r");
 }
 #endif
 #endif // 0
@@ -171,32 +171,38 @@ result_t channel_init(struct spi_chan *chan)
 	         * Init the SPI Config
 	         */
 		SPI2CON1bits.MSTEN = 1;   // Master mode
+		// (Pre, Sec)
 		// (0,5) 615KHz
 		// (0,4) 470KHz
 		// (0,3) 363KHz
 		// (0,2) 307KHz
+		// (0,1) 250KHz
+		// (0,0) 235KHz
+
+		// reduced system clock speed
+		// (0,0) 111KHz
 		SPI2CON1bits.PPRE  = 0x00;
-		SPI2CON1bits.SPRE  = 0x02;
+		SPI2CON1bits.SPRE  = 0x00;
 		SPI2CON1bits.SMP   = 1;
 
 		switch (device->bus_mode) {
 		case bus_mode_0:
-			serial_printf("SPI Mode 0\n\r");
+//			serial_printf("SPI Mode 0\n\r");
 			SPI2CON1bits.CKP = 0;
 			SPI2CON1bits.CKE = 0;
 			break;
 		case bus_mode_1:
-			serial_printf("SPI Mode 1\n\r");
+//			serial_printf("SPI Mode 1\n\r");
 			SPI2CON1bits.CKP = 0;
 			SPI2CON1bits.CKE = 1;
 			break;
 		case bus_mode_2:
-			serial_printf("SPI Mode 2\n\r");
+//			serial_printf("SPI Mode 2\n\r");
 			SPI2CON1bits.CKP = 1;
 			SPI2CON1bits.CKE = 0;
 			break;
 		case bus_mode_3:
-			serial_printf("SPI Mode 3\n\r");
+//			serial_printf("SPI Mode 3\n\r");
 			SPI2CON1bits.CKP = 1;
 			SPI2CON1bits.CKE = 1;
 			break;

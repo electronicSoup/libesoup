@@ -81,7 +81,7 @@ FRESULT scan_files (
 	return res;
 }
 #endif
-
+#if 0
 static void fat_error(FRESULT result)
 {
 	switch (result) {
@@ -147,7 +147,7 @@ static void fat_error(FRESULT result)
 		break;
 	}
 }
-
+#endif
 int main (void)
 {
 	result_t rc;
@@ -161,29 +161,34 @@ int main (void)
 	FATFS fs;				/* Pointer to file system object */
 	DIR dir;				/* Directory object */
 	FIL file;
-
-	libesoup_init();
+	DSTATUS status;
 
 	rc = gpio_set(RA0, GPIO_MODE_DIGITAL_OUTPUT, 1);
+	libesoup_init();
+
+	rc = gpio_set(RA0, GPIO_MODE_DIGITAL_OUTPUT, 0);
 
 	/*
 	 * http://elm-chan.org/fsw/ff/doc/mount.html
 	 */
-	serial_printf("Mount Drive\n\r");
-	res = f_mount(&fs, "", 1);
-	serial_printf("Result ");
-	fat_error(res);
+//	serial_printf("Mount Drive\n\r");
+	status = disk_initialize(0);
+//	serial_printf("Status %d\n\r", status);
+	while(1);
+//	res = f_mount(&fs, "", 1);
+//	serial_printf("Result ");
+//	fat_error(res);
 
-	if (res != FR_OK) {
-		while (1);
-	}
+//	if (res != FR_OK) {
+//		while (1);
+//	}
 
 	/*
 	 * http://elm-chan.org/fsw/ff/doc/open.html
 	 */
-	serial_printf("Open file\n\r");
+//	serial_printf("Open file\n\r");
 	res = f_open (&file, "00.bin", FF_FS_READONLY);
-	fat_error(res);
+//	fat_error(res);
 
 	while(1) {
 		libesoup_tasks();

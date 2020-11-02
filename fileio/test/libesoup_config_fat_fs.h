@@ -19,7 +19,7 @@
   #define SYS_CHANGE_NOTIFICATION_MAX_PINS      5
 #endif
 
-#define SYS_SERIAL_LOGGING
+//#define SYS_SERIAL_LOGGING
 
 #if defined(SYS_SERIAL_LOGGING)
 
@@ -28,7 +28,7 @@
 #define SYS_LOG_LEVEL LOG_DEBUG
 #define SYS_UART1
 #define SYS_SERIAL_LOGGING_BAUD           19200
-#define SYS_UART_TX_BUFFER_SIZE            3072
+#define SYS_UART_TX_BUFFER_SIZE            1024 //3072
 
 #endif // defined(SYS_SERIAL_LOGGING)
 

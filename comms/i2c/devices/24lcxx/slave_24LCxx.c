@@ -510,7 +510,7 @@ result_t slave_24lcxx_init(void)
 #endif
 void __attribute__((__interrupt__, __no_auto_psv__)) _MI2C1Interrupt(void)
 {
-	serial_printf("*M1*\n\r");
+//	serial_printf("*M1*\n\r");
 }
 
 void __attribute__((__interrupt__, __no_auto_psv__)) _SI2C1Interrupt(void)
@@ -521,7 +521,7 @@ void __attribute__((__interrupt__, __no_auto_psv__)) _SI2C1Interrupt(void)
 	while (IFS1bits.SI2C1IF) {
 		IFS1bits.SI2C1IF    = 0;
 		if (I2C1STATbits.P) {
-			serial_printf("!");
+//			serial_printf("!");
 			started = 0;
 		} else if (I2C1STATbits.S) {
 			if(!started) {
@@ -545,10 +545,10 @@ void __attribute__((__interrupt__, __no_auto_psv__)) _SI2C1Interrupt(void)
 		}
 
 		if (I2C1STATbits.IWCOL) {
-			serial_printf("W");
+//			serial_printf("W");
 		}
 		if (I2C1STATbits.I2COV) {
-			serial_printf("V");
+//			serial_printf("V");
 		}
 	}
 }
