@@ -1,3 +1,5 @@
+
+// http://read.pudn.com/downloads77/ebook/294884/FAT32%20Spec%20(SDA%20Contribution).pdf
 #include "libesoup_config.h"
 
 #ifdef SYS_FAT_FS
