@@ -20,7 +20,7 @@
 //#define SYS_SERIAL_PORT_GndTxRx
 #define SYS_SERIAL_PORT_GndRxTx
 #define SYS_LOG_LEVEL LOG_DEBUG
-#define SYS_UART
+#define SYS_UART1
 #define SYS_SERIAL_LOGGING_BAUD           19200
 #define SYS_UART_TX_BUFFER_SIZE            (2 * 1024)
 
@@ -28,6 +28,8 @@
 
 #define SYS_I2C3
 #define SYS_24LC64
+
+#define SYS_TEST_MASTER_24LC64
 
 /*
  * Include a board file

@@ -131,6 +131,7 @@ result_t libesoup_init(void)
 #endif
 
 	cpu_init();
+	CLEAR_WDT
 
 #if defined(SYS_UART1) || defined(SYS_UART2) || defined(SYS_UART3) || defined(SYS_UART4)
 	uart_init();
@@ -171,31 +172,37 @@ result_t libesoup_init(void)
 
 #if defined(SYS_I2C1) || defined(SYS_I2C2) || defined(SYS_I2C3)
 	i2c_init();
+	CLEAR_WDT
 #endif
 
 #ifdef SYS_RAND
 	random_init();
 	__asm__ ("CLRWDT");
+	CLEAR_WDT
 #endif
 
 #ifdef SYS_CHANGE_NOTIFICATION
 	rc = change_notifier_init();
 	RC_CHECK
 	__asm__ ("CLRWDT");
+	CLEAR_WDT
 #endif // SYS_CHANGE_NOTIFICATION
 
 #ifdef SYS_ADC
 	adc_init();
+	CLEAR_WDT
 #endif
 
 #ifdef SYS_PWM
 	rc =  pwm_init();
 #endif
+	CLEAR_WDT
 
 #ifdef SYS_MODBUS
 	rc = modbus_init();
 	RC_CHECK
 #endif
+	CLEAR_WDT
 
 #ifdef SYS_USB_KEYBOARD
 	SYSTEM_Initialize( SYSTEM_STATE_USB_START );
@@ -228,5 +235,6 @@ result_t libesoup_tasks(void)
 #if defined(SYS_I2C1) || defined(SYS_I2C2) || defined(SYS_I2C3)
         rc = i2c_tasks();
 #endif
+	CLEAR_WDT
 	return(rc);
 }

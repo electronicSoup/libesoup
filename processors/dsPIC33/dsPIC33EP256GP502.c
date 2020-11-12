@@ -80,8 +80,9 @@ void _ISR __attribute__((__no_auto_psv__)) _StackError(void)
 void cpu_init(void)
 {
         clock_init();
+	CLEAR_WDT
 
-        INTCON2bits.GIE = ENABLED;
+//        INTCON2bits.GIE = ENABLED;
 }
 
 static void clock_init(void)
@@ -99,15 +100,16 @@ static void clock_init(void)
          */
 
 	/*
-	 * N1 = 4 divide by 4 so 7.37 MHz > 1,842,500 Hz
-	 * 1,842,500 Hz * m (43) = 79,227,500 Hz
-	 * 79,227,500 Hz / N2 (2) = 39,613,750 Hz
+	 * N1 = 4
+	 * n2 - 2
+	 * m = ((60,000,000 × 2) × 4) ÷ 7,370,000
+	 * m = 65
 	 */
 	n1 = 4;
-        m  = 63;
+        m  = 65;
 	n2 = 2;
 
-	sys_clock_freq = ((BRD_CRYSTAL_FREQ / n1) * 63) / n2;  // 58038750;
+	sys_clock_freq = ((BRD_CRYSTAL_FREQ / n1) * m) / n2;  // 59,881,250
 
 	clock = dsPIC33_INTERNAL_RC_PLL;
 	__builtin_write_OSCCONH(clock);

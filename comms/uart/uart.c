@@ -911,7 +911,7 @@ static result_t uart_set_rx_pin(enum uart_channel channel, enum gpio_pin pin)
 	return(rc);
 }
 #elif defined (__PIC24FJ256GB106__)
-static result_t uart_set_rx_pin(uart_channel, enum gpio_pin pin)
+static result_t uart_set_rx_pin(enum uart_channel channel, enum gpio_pin pin)
 {
 	result_t rc;
 

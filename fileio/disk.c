@@ -45,6 +45,9 @@ DSTATUS disk_status (BYTE pdrv)
 DRESULT disk_read (BYTE pdrv, BYTE* buff, LBA_t sector, UINT count)
 {
 	result_t rc;
+	BYTE    *ptr;
+
+	ptr = buff;
 	LOG_D("%s drive %d sector 0x%lx, count %d\n\r", __func__, pdrv, sector, count);
 
 	if (initialised) {
@@ -54,6 +57,7 @@ DRESULT disk_read (BYTE pdrv, BYTE* buff, LBA_t sector, UINT count)
 #ifdef SYS_SD_CARD
 		rc = sd_card_read(sector, buff);
 #endif
+		LOG_D("First Byte 0x%x last byte 0x%x\n\r", ptr[0], ptr[519]);
 	} else {
 		LOG_W("Disk not initialised\n\r");
 	}

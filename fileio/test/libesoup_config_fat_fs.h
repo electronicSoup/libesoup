@@ -11,7 +11,7 @@
 
 //#define FAT_FS_TEST_MAIN
 
-#define SYS_TEST_BUILD
+//#define SYS_TEST_BUILD
 
 #define SYS_CHANGE_NOTIFICATION
 
@@ -19,7 +19,7 @@
   #define SYS_CHANGE_NOTIFICATION_MAX_PINS      5
 #endif
 
-//#define SYS_SERIAL_LOGGING
+#define SYS_SERIAL_LOGGING
 
 #if defined(SYS_SERIAL_LOGGING)
 

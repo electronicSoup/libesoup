@@ -21,8 +21,10 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-#if defined(__dsPIC33EP256GP502__)
 #include "libesoup_config.h"
+
+#if defined(__dsPIC33EP256GP502__) && (defined(SYS_SPI1) || defined(SYS_SPI2))
+
 #include "libesoup/comms/spi/spi.h"
 #include "libesoup/gpio/gpio.h"
 #include "libesoup/gpio/peripheral.h"
@@ -74,20 +76,20 @@ result_t channel_init(struct spi_chan *chan)
 	 * Setup GPIO pins
 	 */
 	if (device->io.miso != INVALID_GPIO_PIN) {
-		gpio_set(device->io.miso, GPIO_MODE_DIGITAL_INPUT, 0);
+		gpio_set(device->io.miso, GPIO_MODE_DIGITAL_INPUT, 1);
 	}
 
 	if (device->io.mosi != INVALID_GPIO_PIN) {
-		gpio_set(device->io.mosi, GPIO_MODE_DIGITAL_OUTPUT, 0);
+		gpio_set(device->io.mosi, GPIO_MODE_DIGITAL_OUTPUT, 1);
 	}
 
 	/*
 	 * Have to have a clock pin.
 	 */
-	gpio_set(device->io.sck,  GPIO_MODE_DIGITAL_OUTPUT, 0);
+	gpio_set(device->io.sck,  GPIO_MODE_DIGITAL_OUTPUT, 1);
 
 	if (device->io.cs != INVALID_GPIO_PIN) {
-		gpio_set(device->io.cs,  GPIO_MODE_DIGITAL_OUTPUT, 0);
+		gpio_set(device->io.cs,  GPIO_MODE_DIGITAL_OUTPUT, 1);
 	}
 
 	/*
@@ -172,17 +174,15 @@ result_t channel_init(struct spi_chan *chan)
 	         */
 		SPI2CON1bits.MSTEN = 1;   // Master mode
 		// (Pre, Sec)
-		// (0,5) 615KHz
-		// (0,4) 470KHz
-		// (0,3) 363KHz
-		// (0,2) 307KHz
-		// (0,1) 250KHz
-		// (0,0) 235KHz
+		// (0,5) 615/2 KHz
+		// (0,4) 470/2 KHz
+		// (0,3) 363/2 KHz
+		// (0,2) 307/2 KHz
+		// (0,1) 250/2 KHz
+		// (0,0) 235/2 KHz
 
-		// reduced system clock speed
-		// (0,0) 111KHz
 		SPI2CON1bits.PPRE  = 0x00;
-		SPI2CON1bits.SPRE  = 0x00;
+		SPI2CON1bits.SPRE  = 0x05;
 		SPI2CON1bits.SMP   = 1;
 
 		switch (device->bus_mode) {
