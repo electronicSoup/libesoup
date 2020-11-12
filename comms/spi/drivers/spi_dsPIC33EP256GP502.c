@@ -21,14 +21,16 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-#if defined(__dsPIC33EP256GP502__)
 #include "libesoup_config.h"
+
+#if defined(__dsPIC33EP256GP502__) && (defined(SYS_SPI1) || defined(SYS_SPI2))
+
 #include "libesoup/comms/spi/spi.h"
 #include "libesoup/gpio/gpio.h"
 #include "libesoup/gpio/peripheral.h"
 #include "libesoup/logger/serial_log.h"
 
-#if 1
+#if 0
 #if defined(SYS_SPI1)
 void __attribute__((__interrupt__, __no_auto_psv__)) _SPI1TXInterrupt(void)
 {
@@ -48,14 +50,14 @@ void __attribute__((__interrupt__, __no_auto_psv__)) _SPI1RXInterrupt(void)
 #if defined(SYS_SPI2)
 void __attribute__((__interrupt__, __no_auto_psv__)) _SPI2TXInterrupt(void)
 {
-	serial_printf("*SPI2_TX*\n\r");
+//	serial_printf("*SPI2_TX*\n\r");
 }
 #endif
 
 #if defined(SYS_SPI2)
 void __attribute__((__interrupt__, __no_auto_psv__)) _SPI2RXInterrupt(void)
 {
-	serial_printf("*SPI1_RX*\n\r");
+//	serial_printf("*SPI1_RX*\n\r");
 }
 #endif
 #endif // 0
@@ -74,20 +76,20 @@ result_t channel_init(struct spi_chan *chan)
 	 * Setup GPIO pins
 	 */
 	if (device->io.miso != INVALID_GPIO_PIN) {
-		gpio_set(device->io.miso, GPIO_MODE_DIGITAL_INPUT, 0);
+		gpio_set(device->io.miso, GPIO_MODE_DIGITAL_INPUT, 1);
 	}
 
 	if (device->io.mosi != INVALID_GPIO_PIN) {
-		gpio_set(device->io.mosi, GPIO_MODE_DIGITAL_OUTPUT, 0);
+		gpio_set(device->io.mosi, GPIO_MODE_DIGITAL_OUTPUT, 1);
 	}
 
 	/*
 	 * Have to have a clock pin.
 	 */
-	gpio_set(device->io.sck,  GPIO_MODE_DIGITAL_OUTPUT, 0);
+	gpio_set(device->io.sck,  GPIO_MODE_DIGITAL_OUTPUT, 1);
 
 	if (device->io.cs != INVALID_GPIO_PIN) {
-		gpio_set(device->io.cs,  GPIO_MODE_DIGITAL_OUTPUT, 0);
+		gpio_set(device->io.cs,  GPIO_MODE_DIGITAL_OUTPUT, 1);
 	}
 
 	/*
@@ -171,32 +173,36 @@ result_t channel_init(struct spi_chan *chan)
 	         * Init the SPI Config
 	         */
 		SPI2CON1bits.MSTEN = 1;   // Master mode
-		// (0,5) 615KHz
-		// (0,4) 470KHz
-		// (0,3) 363KHz
-		// (0,2) 307KHz
+		// (Pre, Sec)
+		// (0,5) 615/2 KHz
+		// (0,4) 470/2 KHz
+		// (0,3) 363/2 KHz
+		// (0,2) 307/2 KHz
+		// (0,1) 250/2 KHz
+		// (0,0) 235/2 KHz
+
 		SPI2CON1bits.PPRE  = 0x00;
-		SPI2CON1bits.SPRE  = 0x02;
+		SPI2CON1bits.SPRE  = 0x05;
 		SPI2CON1bits.SMP   = 1;
 
 		switch (device->bus_mode) {
 		case bus_mode_0:
-			serial_printf("SPI Mode 0\n\r");
+//			serial_printf("SPI Mode 0\n\r");
 			SPI2CON1bits.CKP = 0;
 			SPI2CON1bits.CKE = 0;
 			break;
 		case bus_mode_1:
-			serial_printf("SPI Mode 1\n\r");
+//			serial_printf("SPI Mode 1\n\r");
 			SPI2CON1bits.CKP = 0;
 			SPI2CON1bits.CKE = 1;
 			break;
 		case bus_mode_2:
-			serial_printf("SPI Mode 2\n\r");
+//			serial_printf("SPI Mode 2\n\r");
 			SPI2CON1bits.CKP = 1;
 			SPI2CON1bits.CKE = 0;
 			break;
 		case bus_mode_3:
-			serial_printf("SPI Mode 3\n\r");
+//			serial_printf("SPI Mode 3\n\r");
 			SPI2CON1bits.CKP = 1;
 			SPI2CON1bits.CKE = 1;
 			break;

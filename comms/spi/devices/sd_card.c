@@ -136,14 +136,14 @@ result_t sd_card_init(void)
 	spi_io.cs   = INVALID_GPIO_PIN;          // CS
 
 	spi_device.io       = spi_io;
-	spi_device.bus_mode = bus_mode_0;   // 2x
+	spi_device.bus_mode = bus_mode_1; //0;   // 2x
 	spi_device.brg      = 256;
 
 	rc = spi_reserve(&spi_device);
 	RC_CHECK_PRINT_CONT("Failed to reserve\n\r");
 	LOG_D("Reserved SPI Channel %d\n\r", spi_device.chan_id);
 
-	rc = gpio_set(SD_CARD_SS, GPIO_MODE_DIGITAL_OUTPUT, 0);
+	rc = gpio_set(SD_CARD_SS, GPIO_MODE_DIGITAL_OUTPUT, 1);
 	RC_CHECK;
 
 	for (loop = 0; loop < 20; loop++) {
@@ -151,6 +151,9 @@ result_t sd_card_init(void)
 	}
 
 	delay_uS(100);
+
+	rc = gpio_set(SD_CARD_SS, GPIO_MODE_DIGITAL_OUTPUT, 0);
+	RC_CHECK;
 
 	init_command(&cmd, sd_reset);
 	send_command(&cmd);
@@ -162,7 +165,7 @@ result_t sd_card_init(void)
 		RC_CHECK;
 		rx_byte = (uint8_t)rc;
 		if (rx_byte != 0xff) {
-			serial_printf("reset rx 0x%x\n\r", rx_byte);
+//			serial_printf("reset rx 0x%x\n\r", rx_byte);
 		}
 	}
 	if (rx_byte != 0x01) {
@@ -171,7 +174,7 @@ result_t sd_card_init(void)
 	}
 	flush();
 
-	serial_printf("Reset complete\n\r");
+//	serial_printf("Reset complete\n\r");
 	rc = gpio_set(SD_CARD_SS, GPIO_MODE_DIGITAL_OUTPUT, 1);
 	RC_CHECK;
 	delay_mS(1);
@@ -200,10 +203,10 @@ result_t sd_card_init(void)
 
 	rc = gpio_set(SD_CARD_SS, GPIO_MODE_DIGITAL_OUTPUT, 1);
 
-	serial_printf("Initialised\n\r");
+//	serial_printf("Initialised\n\r");
 
 	delay_mS(1);
-	serial_printf("Response 0x%x\n\r", rc);
+//	serial_printf("Response 0x%x\n\r", rc);
 
 #if SD_INIT
 	rx_byte = (uint8_t)rc;
@@ -262,17 +265,19 @@ result_t sd_card_read(uint32_t sector, uint8_t *buffer)
 	uint8_t  new_line;
 	uint8_t *ptr;
 	uint8_t  rx_byte;
+	uint32_t address;
 	struct   sd_card_command  cmd;
 
 	rc = gpio_set(SD_CARD_SS, GPIO_MODE_DIGITAL_OUTPUT, 0);
 
-	serial_printf("Attempt read sector 0x%lx\n\r", sector);
+//	serial_printf("Attempt read sector 0x%lx\n\r", sector);
 	ptr = buffer;
+	address = sector * 512; // Block size
 	init_command(&cmd, sd_read);
-	cmd.data[1] = (sector >> 24) & 0xff;
-	cmd.data[2] = (sector >> 16) & 0xff;
-	cmd.data[3] = (sector >> 8) & 0xff;
-	cmd.data[1] = sector & 0xff;
+	cmd.data[1] = (address >> 24) & 0xff;
+	cmd.data[2] = (address >> 16) & 0xff;
+	cmd.data[3] = (address>> 8) & 0xff;
+	cmd.data[1] = address & 0xff;
 
 	send_command(&cmd);
 
@@ -299,12 +304,13 @@ result_t sd_card_read(uint32_t sector, uint8_t *buffer)
 	for(i = 0; i < 512; i++) {
 		rc = spi_read_byte(&spi_device);
 		RC_CHECK;
-		*ptr++ = (uint8_t)rc;
+		*buffer++ = (uint8_t)rc;
 	}
+	LOG_D("Read First Byte 0x%lx:0x%x Last Byte 0x%lx:0x%x\n\r", address, *ptr, address+512, ptr[511]);
 	flush();
 	rc = gpio_set(SD_CARD_SS, GPIO_MODE_DIGITAL_OUTPUT, 1);
 	RC_CHECK;
-#if 1
+#if 0
 	new_line = 0;
 	ptr = buffer;
 

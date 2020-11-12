@@ -23,12 +23,13 @@
  *
  */
 #include "libesoup_config.h"
-#if defined(__PIC24FJ256MU806__) && (defined(SYS_I2C1) || defined(SYS_I2C2) || defined(SYS_I2C3))
+#if defined(__PIC24FJ256GB106__) && (defined(SYS_I2C1) || defined(SYS_I2C2) || defined(SYS_I2C3))
 
 #define DEBUG_FILE
 #define TAG "I2C"
 
 #include "libesoup/logger/serial_log.h"
+#include "i2c.h"
 
 
 static result_t error = SUCCESS;
@@ -51,17 +52,6 @@ static void (*i2c3_read_callback)(result_t, uint8_t) = NULL;
  * Prototype
  */
 static void i2c3_send_next();
-
-enum state {
-        IDLE_STATE,
-        STARTING_STATE,
-        STARTED_STATE,
-        TX_STATE,
-        RESTARTING_STATE,
-        RX_STATE,
-	RX_DONE_STATE,
-        STOPPING_STATE
-};
 
 static enum state current_state;
 
@@ -205,10 +195,11 @@ void __attribute__((__interrupt__, __no_auto_psv__)) _SI2C3Interrupt(void)
 }
 #endif
 
-result_t i2c_init(enum i2c_channel chan)
+result_t i2c_py_reserve(struct i2c_device *device)
 {
-	LOG_D("i2c_init()\n\r");
-        switch (chan) {
+	LOG_D("i2c_py_reserve()\n\r");
+        switch (device->channel) {
+#if defined(SYS_I2C1)
                 case I2C1:
                         I2C1BRG              = 0x0d;
 
@@ -231,10 +222,14 @@ result_t i2c_init(enum i2c_channel chan)
                         I2C1CONLbits.PEN     = 1;  // Send Stop
                         current_state        = IDLE_STATE;
                         break;
+#endif
+#if defined(SYS_I2C2)
                 case I2C2:
                         LOG_E("Not implemented\n\r");
                         return(-ERR_NOT_CODED);
                         break;
+#endif
+#if defined(SYS_I2C3)
                 case I2C3:
                         I2C3BRG             = 0x0d;
 
@@ -254,9 +249,10 @@ result_t i2c_init(enum i2c_channel chan)
                         IEC5bits.SI2C3IE    = 1;  // Enable Slave Interrupts
 
                         I2C3CONbits.I2CEN   = 1;
-//                        I2C3CONbits.PEN     = 1;  // Send Stop
+                        I2C3CONbits.PEN     = 1;  // Send Stop
                         current_state       = IDLE_STATE;
                         break;
+#endif
                 default:
                         LOG_E("No such I2C\n\r");
                         return (-ERR_BAD_INPUT_PARAMETER);
@@ -265,6 +261,13 @@ result_t i2c_init(enum i2c_channel chan)
         return (SUCCESS);
 }
 
+result_t i2c_py_release(struct i2c_device *device)
+{
+	LOG_D("i2c_py_release\n\r");
+	return(SUCCESS);
+}
+
+#if 0
 result_t i2c_tasks(void)
 {
         result_t rc = SUCCESS;
@@ -289,22 +292,19 @@ rc = error;
 #endif // defined(SYS_I2C3)
         return(rc);
 }
+#endif
 
-result_t i2c_start(enum i2c_channel chan, void (*p_callback)(result_t))
+result_t i2c_py_start(struct i2c_device *device)
 {
+	enum i2c_channel chan = device->channel;
 //	static uint8_t count = 0;
 
-	LOG_D("Start\n\r");
-	switch(chan) {
-	case I2C1:
-                i2c1_callback = p_callback;
+	LOG_D("i2c_py_start(channel %d)\n\r", chan);
 
-//		if (count == 0) {
-//			count++;
-//			LOG_D("Starting\n\r");
-  //                      I2C3CONbits.SEN = 1;
-//			return(SUCCESS);
-//		}
+	switch(chan) {
+#if defined(SYS_I2C1)
+	case I2C1:
+//                i2c1_callback = p_callback;
 
                 if (I2C1STATbits.P && (current_state == IDLE_STATE)) {
 			LOG_D("Starting\n\r");
@@ -320,17 +320,15 @@ result_t i2c_start(enum i2c_channel chan, void (*p_callback)(result_t))
                         return (-ERR_BAD_STATE);
                 }
 		break;
-#if defined(__dsPIC33EP256MU806__) || defined (__PIC24FJ256GB106__)
+#endif
+#if defined(SYS_I2C3)
 	case I2C3:
-                i2c3_callback = p_callback;
+//                i2c3_callback = p_callback;
 
-//		if (count == 0) {
-//			count++;
-//			LOG_D("Starting\n\r");
-  //                      I2C3CONbits.SEN = 1;
-//			return(SUCCESS);
-//		}
-
+		if (current_state == IDLE_STATE) {
+			LOG_D("IDLE_STATE\n\r");
+		}
+		LOG_D("I2C3STAT 0x%x\n\r", I2C3STATbits);
                 if (I2C3STATbits.P && (current_state == IDLE_STATE)) {
 			LOG_D("Starting\n\r");
                         current_state = STARTING_STATE;
@@ -345,7 +343,7 @@ result_t i2c_start(enum i2c_channel chan, void (*p_callback)(result_t))
                         return (-ERR_BAD_STATE);
                 }
 		break;
-#endif // #if defined(__dsPIC33EP256MU806__) || defined (__PIC24FJ256GB106__)
+#endif
 	default:
 		return (-ERR_BAD_INPUT_PARAMETER);
 		break;
@@ -354,12 +352,15 @@ result_t i2c_start(enum i2c_channel chan, void (*p_callback)(result_t))
         return(SUCCESS);
 }
 
-result_t i2c_restart(enum i2c_channel chan, void (*p_callback)(result_t))
+result_t i2c_py_restart(struct i2c_device *device)
 {
-	LOG_D("Restart\n\r");
+	enum i2c_channel chan = device->channel;
+
+	LOG_D("i2c_py_restart\n\r");
+#if 0
 #if defined(SYS_I2C3)
         if (chan == I2C3) {
-                i2c3_callback = p_callback;
+  //              i2c3_callback = p_callback;
 		if (I2C3_STARTED) {
 			current_state = RESTARTING_STATE;
 			I2C3_RESTART;
@@ -370,24 +371,29 @@ result_t i2c_restart(enum i2c_channel chan, void (*p_callback)(result_t))
 		}
         }
 #endif // defined(SYS_I2C3)
+#endif // 0
         return(SUCCESS);
 }
 
-result_t i2c_stop(enum i2c_channel chan)
+result_t i2c_py_stop(struct i2c_device *device)
 {
-	LOG_D("Stop\n\r");
+	enum i2c_channel chan = device->channel;
+	LOG_D("i2c_py_stop\n\r");
+#if 0
 #if defined(SYS_I2C3)
 	current_state = STOPPING_STATE;
         if (chan == I2C3) {
 		I2C3_STOP;
         }
 #endif // defined(SYS_I2C3)
+#endif
         return(SUCCESS);
 }
 
-result_t i2c_write(enum i2c_channel chan, uint8_t *p_tx_buf, uint8_t p_num_tx_bytes, void (*p_callback)(result_t))
+result_t i2c_py_write(struct i2c_device *device, uint8_t *p_tx_buf, uint8_t p_num_tx_bytes, void (*p_callback)(result_t))
 {
-	LOG_D("i2c_write()\n\r");
+	LOG_D("i2c_py_write()\n\r");
+#if 0
 #if defined(SYS_I2C3)
 	i2c3_callback      = p_callback;
 	if (current_state == STARTED_STATE) {
@@ -403,12 +409,14 @@ result_t i2c_write(enum i2c_channel chan, uint8_t *p_tx_buf, uint8_t p_num_tx_by
 		return(-ERR_BAD_STATE);
 	}
 #endif // defined(SYS_I2C3)
+#endif
 	return(SUCCESS);
 }
 
-result_t i2c_read(enum i2c_channel chan, uint8_t *p_rx_buf, uint16_t p_num_rx_bytes, void (*p_callback)(result_t, uint8_t))
+result_t i2c_py_read(struct i2c_device *device, uint8_t *p_rx_buf, uint16_t p_num_rx_bytes, void (*p_callback)(result_t, uint8_t))
 {
-	LOG_D("i2c_read()\n\r");
+	LOG_D("i2c_py_read()\n\r");
+#if 0
 #if defined(SYS_I2C3)
 	i2c3_read_callback   = p_callback;
 	rx_buf               = p_rx_buf;
@@ -417,11 +425,14 @@ result_t i2c_read(enum i2c_channel chan, uint8_t *p_rx_buf, uint16_t p_num_rx_by
 	read_count           = 0;
 	I2C3_READ;
 #endif // #if defined(SYS_I2C3)
+#endif
         return(SUCCESS);
 }
 
-static void i2c3_send_next(void)
+static void i2c3_send_next(enum i2c_channel chan)
 {
+	LOG_E("i23c_py_send_next CODE?");
+#if 0
 #if defined(SYS_I2C3)
 	if (sent < num_tx_bytes) {
 		current_state = TX_STATE;
@@ -431,7 +442,7 @@ static void i2c3_send_next(void)
 		i2c3_callback(SUCCESS);
 	}
 #endif // #if defined(SYS_I2C3)
-
+#endif
 }
 
 #endif // _SYS_I2C1 || SYS_I2S2 || SYS_I2S3

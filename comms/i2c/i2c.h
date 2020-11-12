@@ -3,7 +3,7 @@
  *
  * @author John Whitmore
  * 
- * @brief  API Interface to I2C. Initial PIC24FJ256GB106
+ * @brief  API Interface to I2C.
  *
  * Copyright 2020 electronicSoup Limited
  *

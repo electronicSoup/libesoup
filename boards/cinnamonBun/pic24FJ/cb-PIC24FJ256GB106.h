@@ -24,7 +24,7 @@
 #ifndef _CB_PIC24FJ256GB106_H
 #define _CB_PIC24FJ256GB106_H
 
-#include "libesoup/processors/es-PIC24FJ256GB106.h"
+#include "libesoup/processors/pic24/es-PIC24FJ256GB106.h"
 
 /**
  * @brief Crystal Frequency of the Hardware Device.

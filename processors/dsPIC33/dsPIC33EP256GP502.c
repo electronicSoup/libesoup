@@ -80,8 +80,9 @@ void _ISR __attribute__((__no_auto_psv__)) _StackError(void)
 void cpu_init(void)
 {
         clock_init();
+	CLEAR_WDT
 
-        INTCON2bits.GIE = ENABLED;
+//        INTCON2bits.GIE = ENABLED;
 }
 
 static void clock_init(void)
@@ -97,22 +98,24 @@ static void clock_init(void)
          * Crystal Frequency then we can simple use Primary Clock.
 	 * NO PLL
          */
-	sys_clock_freq = 58038750;
 
 	/*
-	 * N1 = 4 divide by 4 so 7.6 MHz > 1.9 MHz
-	 * 1.9 MHz * m (63) = 119,700,000 Hz
-	 * 119,700,000 Hz / N2 (2) = 59,850,000Hz
+	 * N1 = 4
+	 * n2 - 2
+	 * m = ((60,000,000 × 2) × 4) ÷ 7,370,000
+	 * m = 65
 	 */
 	n1 = 4;
-        m  = 126;
+        m  = 65;
 	n2 = 2;
+
+	sys_clock_freq = ((BRD_CRYSTAL_FREQ / n1) * m) / n2;  // 59,881,250
 
 	clock = dsPIC33_INTERNAL_RC_PLL;
 	__builtin_write_OSCCONH(clock);
 
 	CLKDIVbits.PLLPRE  = n1 - 2;
-	CLKDIVbits.PLLPOST = 0b00;
+	CLKDIVbits.PLLPOST = 0b00;   // n2
 	PLLFBDbits.PLLDIV  = m - 2;
 
         __builtin_write_OSCCONL(OSCCON | 0x01);

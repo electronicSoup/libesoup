@@ -182,7 +182,7 @@ void idle(enum i2c_channel channel, uint16_t stat_reg)
 
 void started(enum i2c_channel channel, uint16_t stat_reg)
 {
-	uint8_t rx_byte;
+//	uint8_t rx_byte;
 
 	serial_printf("S");
 	if (stat_reg & STAT_RBF_BIT) {

@@ -100,7 +100,7 @@ static uint16_t load_tx_buffer(enum uart_channel channel);
  * Interrupt Service Routines
  */
 #if defined(SYS_UART1)
-#if (defined(__dsPIC33EP256MU806__) || defined (__PIC24FJ256GB106__) || defined(__dsPIC33EP128GS702__)) && defined(SYS_UART1) || defined(__dsPIC33EP256GP502__)
+#if (defined(__dsPIC33EP256MU806__) || defined (__PIC24FJ256GB106__) || defined(__dsPIC33EP128GS702__)) || defined(__dsPIC33EP256GP502__) && defined(SYS_UART1)
 void _ISR __attribute__((__no_auto_psv__)) _U1TXInterrupt(void)
 {
 #ifdef SYS_TEST_BUILD
@@ -911,7 +911,7 @@ static result_t uart_set_rx_pin(enum uart_channel channel, enum gpio_pin pin)
 	return(rc);
 }
 #elif defined (__PIC24FJ256GB106__)
-static result_t uart_set_rx_pin(uart_channel, enum gpio_pin pin)
+static result_t uart_set_rx_pin(enum uart_channel channel, enum gpio_pin pin)
 {
 	result_t rc;
 

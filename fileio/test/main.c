@@ -1,4 +1,6 @@
 /*
+ * libesoup_config.h libesoup/fileio/test/libesoup_config_fat_fs.h
+ *
  * file:///home/john/MPLABXProjects/I2C.X/src/libesoup/fileio/ff14/documents/doc/appnote.html
  * http://elm-chan.org/fsw/ff/00index_e.html
  */
@@ -161,22 +163,30 @@ int main (void)
 	FATFS fs;				/* Pointer to file system object */
 	DIR dir;				/* Directory object */
 	FIL file;
+	DSTATUS status;
+	uint16_t rcon;
 
-	libesoup_init();
+	rcon = RCON;
 
 	rc = gpio_set(RA0, GPIO_MODE_DIGITAL_OUTPUT, 1);
+	libesoup_init();
+
+	serial_printf("RXON 0x%x\n\r", rcon);
 
 	/*
 	 * http://elm-chan.org/fsw/ff/doc/mount.html
 	 */
-	serial_printf("Mount Drive\n\r");
+//	serial_printf("Mount Drive\n\r");
+//	status = disk_initialize(0);
+//	serial_printf("Status %d\n\r", status);
+//	while(1);
 	res = f_mount(&fs, "", 1);
 	serial_printf("Result ");
 	fat_error(res);
 
-	if (res != FR_OK) {
-		while (1);
-	}
+//	if (res != FR_OK) {
+//		while (1);
+//	}
 
 	/*
 	 * http://elm-chan.org/fsw/ff/doc/open.html

@@ -297,7 +297,7 @@ result_t i2c_py_reserve(struct i2c_device *device)
 
 result_t i2c_py_release(struct i2c_device *device)
 {
-	LOG_D("i2c_py_reserve\n\r");
+	LOG_D("i2c_py_release\n\r");
 	return(SUCCESS);
 }
 
@@ -442,7 +442,7 @@ result_t i2c_py_read(struct i2c_device *device, uint8_t *p_rx_buf, uint16_t p_nu
         return(SUCCESS);
 }
 
-static void i2c3_send_next(enum i2c_channel chan)
+static void i2c_py_send_next(enum i2c_channel chan)
 {
 	LOG_E("CODE?");
 #if 0

@@ -58,11 +58,21 @@
 /**
  * @brief UART Settings.
  */
-#define NUM_UARTS           4  ///< Number of UARTs in the uC
-#define UART_1              0  ///< Index/Identifier for UART 1
-#define UART_2              1  ///< Index/Identifier for UART 2
-#define UART_3              2  ///< Index/Identifier for UART 3
-#define UART_4              3  ///< Index/Identifier for UART 4
+enum uart_channel {
+#if defined(SYS_UART1)
+        UART_1,
+#endif
+#if defined(SYS_UART2)
+        UART_2,
+#endif
+#if defined(SYS_UART_3)
+        UART_3,
+#endif
+#if defined(SYS_UART_4)
+        UART_4,
+#endif
+        NUM_UART_CHANNELS
+};
 
 #define U1_ENABLE          U1MODEbits.UARTEN   ///< UART 1 Enable SFR bit
 
@@ -108,9 +118,16 @@
  * I2C Channels
  */
 enum i2c_channel {
+#if defined(SYS_I2C1)
         I2C1,
+#endif
+#if defined(SYS_I2C2)
         I2C2,
-        I2C3
+#endif
+#if defined(SYS_I2C3)
+        I2C3,
+#endif
+	NUM_I2C_CHANNELS
 };
 
 /**
