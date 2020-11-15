@@ -16,6 +16,7 @@
 #define TAG "FAT_FS"
 #include "libesoup/logger/serial_log.h"
 #include "libesoup/comms/spi/devices/sd_card.h"
+#include "libesoup/timers/sw_timers.h"
 
 DWORD AccSize;			/* Work register for fs command */
 WORD AccFiles, AccDirs;
@@ -27,9 +28,33 @@ FATFS FatFs;			/* File system object */
 FIL File[2];			/* File objects */
 BYTE Buff[4096];		/* Working buffer */
 
-
+static uint8_t  bank_a[32][128 *4];
+static uint8_t  llrr_buffer[128 * 4];
+static uint8_t  lrrl_buffer[128 * 4];
 /*--------------------------------------------------------------------------*/
 /* Monitor                                                                  */
+
+/*
+ * Print the contents of a program on a timer so as not to kill serial
+ */
+#if TEST_PRINT_PROGRAM
+static uint16_t  print_loop = 0;
+static timer_id  print_timer;
+
+void print(timer_id timer, union sigval data)
+{
+	if(print_loop < 512) {
+		serial_printf("%x\n\r", llrr_buffer[print_loop]);
+		print_loop++;
+	}
+
+	if(print_loop == 512) {
+		sw_timer_cancel(&print_timer);
+		serial_printf("done\n\r");
+	}
+
+}
+#endif
 
 #if 0
 static
@@ -165,6 +190,10 @@ int main (void)
 	FIL file;
 	DSTATUS status;
 	uint16_t rcon;
+	uint16_t bytes_read;
+#if TEST_PRINT_PROGRAM
+	struct timer_req timer_req;
+#endif
 
 	rcon = RCON;
 
@@ -172,6 +201,7 @@ int main (void)
 	libesoup_init();
 
 	serial_printf("RXON 0x%x\n\r", rcon);
+	libesoup_tasks();
 
 	/*
 	 * http://elm-chan.org/fsw/ff/doc/mount.html
@@ -181,8 +211,13 @@ int main (void)
 //	serial_printf("Status %d\n\r", status);
 //	while(1);
 	res = f_mount(&fs, "", 1);
-	serial_printf("Result ");
-	fat_error(res);
+	if (res != FR_OK) {
+		serial_printf("Result ");
+		fat_error(res);
+		while(1) {
+			libesoup_tasks();
+		}
+	}
 
 //	if (res != FR_OK) {
 //		while (1);
@@ -192,8 +227,38 @@ int main (void)
 	 * http://elm-chan.org/fsw/ff/doc/open.html
 	 */
 	serial_printf("Open file\n\r");
-	res = f_open (&file, "00.bin", FF_FS_READONLY);
-	fat_error(res);
+	res = f_open (&file, "llrr.bin", FF_FS_READONLY);
+	if (res != FR_OK) {
+		serial_printf("Result ");
+		fat_error(res);
+		while(1) {
+			libesoup_tasks();
+		}
+	}
+
+	/*
+	 * http://elm-chan.org/fsw/ff/doc/read.html
+	 */
+	serial_printf("Read the file\n\r");
+	res = f_read(&file, llrr_buffer, 128*4, &bytes_read);
+	if (res != FR_OK) {
+		serial_printf("Result ");
+		fat_error(res);
+		while(1) {
+			libesoup_tasks();
+		}
+	}
+	serial_printf("Read %d bytes\n\r", bytes_read);
+
+#if TEST_PRINT_PROGRAM
+	timer_req.period.units    = Seconds;
+	timer_req.period.duration = 1;
+	timer_req.exp_fn          = print;
+	timer_req.type            = repeat_expiry;
+	timer_req.data.sival_int  = 0;
+
+	print_timer = sw_timer_start(&timer_req);
+#endif
 
 	while(1) {
 		libesoup_tasks();
