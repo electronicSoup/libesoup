@@ -52,6 +52,8 @@
 #define SYS_SD_CARD
 #define SYS_FAT_FS
 
+#define SYS_I2C_1
+
 //#define I2C_TEST_MAIN
 #define FAT_FS_TEST_MAIN
 

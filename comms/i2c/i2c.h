@@ -27,7 +27,7 @@
 
 #include "libesoup_config.h"
 
-#if defined (SYS_I2C1) || defined (SYS_I2C2) || defined (SYS_I2C3)
+#if defined (SYS_I2C_1) || defined (SYS_I2C_2) || defined (SYS_I2C_3)
 
 
 enum state {
@@ -42,15 +42,15 @@ enum state {
 };
 
 struct i2c_device {
-        enum i2c_channel  channel;
+        enum i2c_chan_id  channel;
         void            (*callback)(result_t);
 };
 
 struct i2c_channel_data {
-        enum i2c_channel   channel;
+        enum i2c_chan_id   channel;
 	uint8_t            active;
 	struct i2c_device *active_device;
-	void             (*state)(enum i2c_channel, uint16_t);
+	void             (*state)(enum i2c_chan_id, uint16_t);
 	result_t           error;
 	uint8_t            finished;
 	uint8_t            sent;

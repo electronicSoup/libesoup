@@ -1,6 +1,6 @@
 #include "libesoup_config.h"
 
-#if defined(SYS_I2C1) || defined(SYS_I2C2) || defined(SYS_I2C3)
+#if defined(SYS_I2C_1) || defined(SYS_I2C_2) || defined(SYS_I2C_3)
 
 #define DEBUG_FILE
 #define TAG "I2C"
@@ -29,12 +29,12 @@ extern result_t i2c_py_read(struct i2c_device *device);
 /*
  * State Funcitons
  */
-void    idle(enum i2c_channel channel, uint16_t stat_reg);
-void started(enum i2c_channel channel, uint16_t stat_reg);
+void    idle(enum i2c_chan_id channel, uint16_t stat_reg);
+void started(enum i2c_chan_id channel, uint16_t stat_reg);
 
 result_t i2c_init(void)
 {
-	enum i2c_channel i;
+	enum i2c_chan_id i;
 	LOG_D("i2c_init()\n\r");
 
 	for(i = 0; i < NUM_I2C_CHANNELS; i++) {
@@ -157,7 +157,7 @@ result_t i2c_read(struct i2c_device *device, uint8_t *rx_buf, uint16_t num_rx_by
 /*
  * State Funcitons
  */
-void idle(enum i2c_channel channel, uint16_t stat_reg)
+void idle(enum i2c_chan_id channel, uint16_t stat_reg)
 {
 	serial_printf("I");
 
@@ -180,7 +180,7 @@ void idle(enum i2c_channel channel, uint16_t stat_reg)
 	}
 }
 
-void started(enum i2c_channel channel, uint16_t stat_reg)
+void started(enum i2c_chan_id channel, uint16_t stat_reg)
 {
 //	uint8_t rx_byte;
 
