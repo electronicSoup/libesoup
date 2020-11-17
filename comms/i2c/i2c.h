@@ -43,6 +43,8 @@ enum state {
 
 struct i2c_device {
         enum i2c_chan_id  channel;
+        enum gpio_pin     scl_pin;
+        enum gpio_pin     sda_pin;
         void            (*callback)(result_t);
 };
 
