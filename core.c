@@ -170,7 +170,7 @@ result_t libesoup_init(void)
 	__asm__ ("CLRWDT");
 #endif
 
-#if defined(SYS_I2C1) || defined(SYS_I2C2) || defined(SYS_I2C3)
+#if defined(SYS_I2C_1) || defined(SYS_I2C_2) || defined(SYS_I2C_3)
 	i2c_init();
 	CLEAR_WDT
 #endif
