@@ -53,6 +53,7 @@
 #define SYS_FAT_FS
 
 #define SYS_I2C_1
+#define SYS_SLV_24LCxx
 
 //#define I2C_TEST_MAIN
 #define FAT_FS_TEST_MAIN
