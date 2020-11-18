@@ -64,7 +64,7 @@ extern void   uart_init(void);
 extern result_t      spi_init(void);
 #endif
 
-#if defined(SYS_I2C1) || defined(SYS_I2C2) || defined(SYS_I2C3)
+#if defined(SYS_I2C_1) || defined(SYS_I2C_2) || defined(SYS_I2C_3)
 extern result_t i2c_tasks(void);
 extern result_t i2c_init(void);
 #endif
