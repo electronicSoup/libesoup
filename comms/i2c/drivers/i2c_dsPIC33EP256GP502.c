@@ -26,7 +26,7 @@
 #if defined(__dsPIC33EP256GP502__) && (defined(SYS_I2C_1) || defined(SYS_I2C_2))
 
 #define DEBUG_FILE
-#define TAG "I2C_EP128"
+#define TAG "dsPIC33EP256GP502-I2C"
 
 #include "libesoup/logger/serial_log.h"
 #include "libesoup/gpio/gpio.h"
@@ -79,6 +79,7 @@ void __attribute__((__interrupt__, __no_auto_psv__)) _MI2C1Interrupt(void)
 
 	serial_printf("M*\n\r");
 //	serial_printf("*%d*\n\r", current_state);
+#if 0
 	while (IFS1bits.MI2C1IF) {
 		IFS1bits.MI2C1IF    = 0;  // Clear Master ISR Flag
 //		serial_printf("+0x%x", I2C3STAT);
@@ -87,7 +88,6 @@ void __attribute__((__interrupt__, __no_auto_psv__)) _MI2C1Interrupt(void)
                         LOG_E("IWCOL\n\r");
                         i2c_channels[I2C1].error = -ERR_NOT_READY;
                 }
-#if 0
                 switch(i2c_channels[I2C1].state) {
 		case IDLE_STATE:
 			LOG_D("Idle State???\n\r");
@@ -172,8 +172,8 @@ void __attribute__((__interrupt__, __no_auto_psv__)) _MI2C1Interrupt(void)
 			LOG_D("Unknown State ???");
 			break;
                 }
-#endif
 	}
+#endif // 0
 }
 #endif
 
@@ -189,6 +189,7 @@ void __attribute__((__interrupt__, __no_auto_psv__)) _SI2C1Interrupt(void)
 	uint16_t stat_reg;
 
 	serial_printf("S1* ");
+#if 0
 	while (IFS1bits.SI2C1IF || I2C1STATbits.RBF) {
 		IFS1bits.SI2C1IF    = 0;  // Clear Master ISR Flag
 		stat_reg = I2C1STAT;
@@ -196,6 +197,7 @@ void __attribute__((__interrupt__, __no_auto_psv__)) _SI2C1Interrupt(void)
 		i2c_channels[I2C1].state(I2C1, stat_reg);
 	}
 	serial_printf(" O\n\r");
+#endif // 0
 }
 #endif
 
@@ -223,8 +225,17 @@ result_t i2c_py_reserve(struct i2c_device *device)
 	switch (chan) {
 #if defined(SYS_I2C_1)
 	case I2C1:
-		gpio_set(RB6, GPIO_MODE_DIGITAL_INPUT, 0);
-		gpio_set(RB7, GPIO_MODE_DIGITAL_INPUT, 0);
+		/*
+		 * uC has fixed pins RB8 & RB9
+		 */
+		if ((device->sda_pin != RB9) || (device->scl_pin != RB8)) {
+			return(ERR_BAD_INPUT_PARAMETER);
+		}
+
+		gpio_set(device->sda_pin, GPIO_MODE_DIGITAL_INPUT | GPIO_MODE_OPENDRAIN, 0);
+		gpio_set(device->scl_pin, GPIO_MODE_DIGITAL_INPUT | GPIO_MODE_OPENDRAIN, 0);
+
+#if 0
 		I2C1BRG              = 0x0d;
 
 		I2C1CONLbits.I2CSIDL = 0;  // Module continues in Idle.
@@ -241,13 +252,13 @@ result_t i2c_py_reserve(struct i2c_device *device)
 		I2C1MSK           = 0xff;  // Don't care
 		I2C1ADD           = 0xa0;
 
-		IFS10bits.I2C1BCIF   = 0;
+#endif //0
 		IFS1bits.MI2C1IF     = 0;  // Clear Master ISR Flag
 		IFS1bits.SI2C1IF     = 0;  // Clear Slave ISR Flag
 		IEC1bits.MI2C1IE     = 1;  // Enable Master Interrupts
 		IEC1bits.SI2C1IE     = 1;  // Enable Slave Interrupts
 
-		I2C1CONLbits.I2CEN   = 1;
+		I2C1CONbits.I2CEN    = 1;
 //		I2C1CONLbits.PEN     = 1;  // Send Stop
 		break;
 #endif

@@ -17,6 +17,8 @@
 #include "libesoup/logger/serial_log.h"
 #include "libesoup/comms/spi/devices/sd_card.h"
 #include "libesoup/timers/sw_timers.h"
+#include "libesoup/comms/i2c/devices/24lcxx/slave_24LCxx.h"
+#include "libesoup/comms/i2c/i2c.h"
 
 DWORD AccSize;			/* Work register for fs command */
 WORD AccFiles, AccDirs;
@@ -191,6 +193,8 @@ int main (void)
 	DSTATUS status;
 	uint16_t rcon;
 	uint16_t bytes_read;
+
+	struct i2c_device i2c_device;
 #if TEST_PRINT_PROGRAM
 	struct timer_req timer_req;
 #endif
@@ -259,6 +263,12 @@ int main (void)
 
 	print_timer = sw_timer_start(&timer_req);
 #endif
+
+	i2c_device.channel = I2C1;
+	i2c_device.scl_pin = RB8;
+	i2c_device.sda_pin = RB9;
+
+	rc = slave_24lcxx(&i2c_device, llrr_buffer, 128 * 4);
 
 	while(1) {
 		libesoup_tasks();
