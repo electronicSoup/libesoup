@@ -2,10 +2,10 @@
  * @file libesoup/core.c
  *
  * @author John Whitmore
- * 
+ *
  * @brief File containing the function to initialise the libesoup library
  *
- * Copyright 2017-2018 electronicSoup Limited
+ * Copyright 2017-2020 electronicSoup Limited
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 2 of the GNU Lesser General Public License
@@ -48,7 +48,7 @@ extern void   sw_timer_init(void);
 extern void   timer_tick(void);
 #endif
 
-#ifdef SYS_UART
+#if defined(SYS_UART1) || defined(SYS_UART2) || defined(SYS_UART3) || defined(SYS_UART4)
 extern void   uart_init(void);
 #endif
 
@@ -60,13 +60,13 @@ extern void   uart_init(void);
 #include "libesoup/timers/rtc.h"
 #endif
 
-#ifdef SYS_SPI_BUS
-#include "libesoup/comms/spi/spi.h"
+#if defined(SYS_SPI1) || defined(SYS_SPI2) || defined(SYS_SPI3)
+extern result_t      spi_init(void);
 #endif
 
-#if defined(SYS_I2C1) || defined(SYS_I2C2) || defined(SYS_I2C3)
+#if defined(SYS_I2C_1) || defined(SYS_I2C_2) || defined(SYS_I2C_3)
 extern result_t i2c_tasks(void);
-extern result_t i2c_init(enum i2c_channel);
+extern result_t i2c_init(void);
 #endif
 
 #ifdef SYS_RAND
@@ -108,7 +108,7 @@ extern void SYSTEM_Initialize(  SYSTEM_STATE SYSTEM_STATE_USB_START );
 
 /*
  * The Instruction Clock Frequency being used by the system.
- * 
+ *
  * SYS_CLOCK_FREQ is the frequency requested by libesoup_config.h but that
  * may not be possible, if invalid.
  */
@@ -116,7 +116,7 @@ uint32_t sys_clock_freq;
 
 result_t libesoup_init(void)
 {
-	uint32_t loop;
+//	uint32_t loop;
 #ifdef XC16
 	result_t rc  __attribute__((unused)) = 0;
 #else
@@ -129,17 +129,11 @@ result_t libesoup_init(void)
 #endif // SYS_SERIAL_LOGGING
 	rc = 0;
 #endif
-	
-	cpu_init();
-	
-	/*
-	 * Allow the clock to settle
-	 */
-	for(loop = 0; loop < 0x100000; loop++) {
-                CLEAR_WDT
-	}
 
-#ifdef SYS_UART
+	cpu_init();
+	CLEAR_WDT
+
+#if defined(SYS_UART1) || defined(SYS_UART2) || defined(SYS_UART3) || defined(SYS_UART4)
 	uart_init();
 	__asm__ ("CLRWDT");
 #endif
@@ -154,7 +148,7 @@ result_t libesoup_init(void)
 	hw_timer_init();
 	__asm__ ("CLRWDT");
 #endif
-	
+
 #ifdef SYS_SW_TIMERS
 	sw_timer_init();
 	__asm__ ("CLRWDT");
@@ -165,50 +159,50 @@ result_t libesoup_init(void)
 	RC_CHECK
 	__asm__ ("CLRWDT");
 #endif
-		
+
 #ifdef SYS_JOBS
 	jobs_init();
 	__asm__ ("CLRWDT");
 #endif
 
-#ifdef SYS_SPI_BUS
+#if defined(SYS_SPI1) || defined(SYS_SPI2) || defined(SYS_SPI3)
         spi_init();
 	__asm__ ("CLRWDT");
 #endif
 
-#if defined(SYS_I2C1)
-	i2c_init(I2C1);
-#endif
-#if defined(SYS_I2C2)
-	i2c_init(I2C2);
-#endif
-#if defined(SYS_I2C3)
-	i2c_init(I2C3);
+#if defined(SYS_I2C_1) || defined(SYS_I2C_2) || defined(SYS_I2C_3)
+	i2c_init();
+	CLEAR_WDT
 #endif
 
 #ifdef SYS_RAND
 	random_init();
 	__asm__ ("CLRWDT");
+	CLEAR_WDT
 #endif
 
 #ifdef SYS_CHANGE_NOTIFICATION
 	rc = change_notifier_init();
 	RC_CHECK
 	__asm__ ("CLRWDT");
+	CLEAR_WDT
 #endif // SYS_CHANGE_NOTIFICATION
 
 #ifdef SYS_ADC
 	adc_init();
+	CLEAR_WDT
 #endif
 
 #ifdef SYS_PWM
 	rc =  pwm_init();
 #endif
+	CLEAR_WDT
 
 #ifdef SYS_MODBUS
 	rc = modbus_init();
 	RC_CHECK
 #endif
+	CLEAR_WDT
 
 #ifdef SYS_USB_KEYBOARD
 	SYSTEM_Initialize( SYSTEM_STATE_USB_START );
@@ -241,5 +235,6 @@ result_t libesoup_tasks(void)
 #if defined(SYS_I2C1) || defined(SYS_I2C2) || defined(SYS_I2C3)
         rc = i2c_tasks();
 #endif
+	CLEAR_WDT
 	return(rc);
 }

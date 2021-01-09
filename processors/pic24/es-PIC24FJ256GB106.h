@@ -1,9 +1,10 @@
 /**
- * @file libesoup/processors/es-dsPIC33EP256MU806.h
+ *
+ * @file libesoup/processors/es-PIC24FJ256GB106.h
  *
  * @author John Whitmore
  *
- * @brief Definitions for the dsPIC33EP256MU806 micro-controller
+ * @brief Microcontroller specific definitions for the PIC24FJ256GB106. 
  *
  * Copyright 2017-2018 electronicSoup Limited
  *
@@ -21,83 +22,57 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-#ifndef _ES_dsPIC33EP256MU806_H
-#define _ES_dsPIC33EP256MU806_H
+#ifndef _ES_PIC24FJ256GB106_H
+#define _ES_PIC24FJ256GB106_H
 
 #include <xc.h>
 
+//#define RCON_WDTO   (1 << 4)
+
 #define DISABLED    0   ///< Disable a uC Feature 
-#define ENABLED     1   ///< Enable a uC Feature
+#define ENABLED     1   ///< Enable a uC Feature 
 
-#define OFF         0   ///< Turn off a uC Feature
-#define ON          1   ///< Turn on a uC Feature
-
-#define INTERRUPTS_DISABLED    INTCON2bits.GIE = 0; ///< Disable uC Interrupts
-#define INTERRUPTS_ENABLED     INTCON2bits.GIE = 1; ///< Enable uC Interrups
 
 /**
- * @brief Hardware timers in the dsPIC33EP256MU806 uC
+ * @brief Enabling & Disabling Interrupts
+ * 
+ * Not sure about this method but it seems all that's available.
  */
-#define TIMER_1                0     ///< Index for HW Timer 1 in the system
-#define TIMER_2                1     ///< Index for HW Timer 2 in the system
-#define TIMER_3                2     ///< Index for HW Timer 3 in the system
-#define TIMER_4                3     ///< Index for HW Timer 4 in the system
-#define TIMER_5                4     ///< Index for HW Timer 5 in the system
+#define INTERRUPTS_DISABLED    SRbits.IPL = 0b111;    ///< Disable uC Interrupts
+#define INTERRUPTS_ENABLED     SRbits.IPL = 0b000;    ///< Enable uC Interrupts
 
-#define NUMBER_HW_TIMERS       5     ///< Number of HW Timers in the system
-
-#ifdef SYS_RTC
-/*
- * Real Time Clock / Calendar Module
+/**
+ * @brief Identifers for the hardware timers in the pic24FG256GB106
+ * 
+ * These identifiers are used in libesoup/timers/hw_timers.c when managing the 
+ * timers in the micro-controller. Different micro-controllers will use
+ * different numbering, perhaps starting a timer 0.
  */
-#define DATETIME_WRITE  __builtin_write_RTCWEN();
-#define DATETIME_LOCK   RCFGCALbits.RTCWREN = DISABLED;
-
-/*
- * According to Microchip DS70584 RTCWREN has to be set to change RTCEN
- */
-#define RTCC_ON    __builtin_write_RTCWEN();    \
-                   RCFGCALbits.RTCEN = ENABLED;     \
- 	               RCFGCALbits.RTCWREN = DISABLED; 
-
-#define RTCC_OFF   __builtin_write_RTCWEN();    \
-                   RCFGCALbits.RTCEN = DISABLED;    \
-	               RCFGCALbits.RTCWREN = DISABLED;
-
-#define VALUE_POINTER   RCFGCALbits.RTCPTR
-
-#define RTC_ALARM_EVERY_HALF_SECOND  0b0000
-#define RTC_ALARM_EVERY_SECOND       0b0001
-#define RTC_ALARM_EVERY_TEN_SECONDS  0b0010
-#define RTC_ALARM_EVERY_MINUTE       0b0011
-#define RTC_ALARM_EVERY_TEN_MINUTES  0b0100
-#define RTC_ALARM_EVERY_TEN_HOUR     0b0101
-#define RTC_ALARM_EVERY_TEN_DAY      0b0110
-#define RTC_ALARM_EVERY_TEN_WEEK     0b0111
-#define RTC_ALARM_EVERY_TEN_MONTH    0b1000
-#define RTC_ALARM_EVERY_TEN_YEAR     0b1001
-
-#define ALARM_ON	    ALCFGRPTbits.ALRMEN = ENABLED;
-#define ALARM_OFF	    ALCFGRPTbits.ALRMEN = DISABLED;
-#define ALARM_POINTER   ALCFGRPTbits.ALRMPTR
-#define ALARM_CHIME     ALCFGRPTbits.CHIME
-#define ALARM_REPEAT    ALCFGRPTbits.ARPT
-
-#define RTCC_ISR_FLAG     IFS3bits.RTCIF
-#define RTCC_ISR_PRIOTITY IPC15bits.RTCIP
-#define RTCC_ISR_ENABLE   IEC3bits.RTCIE
-
-#define RTCC_PIN          RCFGCALbits.RTCOE
-#endif // SYS_RTC
+#define NUMBER_HW_TIMERS  5   ///< Total number of Hardware Timers in the uC
+#define TIMER_1           0   ///< Index/Identifier for HW Timer 1
+#define TIMER_2           1   ///< Index/Identifier for HW Timer 2
+#define TIMER_3           2   ///< Index/Identifier for HW Timer 3
+#define TIMER_4           3   ///< Index/Identifier for HW Timer 4
+#define TIMER_5           4   ///< Index/Identifier for HW Timer 5
 
 /**
  * @brief UART Settings.
  */
-#define NUM_UARTS          4                   ///< Number of UARTS in the uC
-#define UART_1             0x00                ///< Index/Identifier used for UART 1
-#define UART_2             0x01                ///< Index/Identifier used for UART 2
-#define UART_3             0x02                ///< Index/Identifier used for UART 3
-#define UART_4             0x03                ///< Index/Identifier used for UART 4
+enum uart_channel {
+#if defined(SYS_UART1)
+        UART_1,
+#endif
+#if defined(SYS_UART2)
+        UART_2,
+#endif
+#if defined(SYS_UART_3)
+        UART_3,
+#endif
+#if defined(SYS_UART_4)
+        UART_4,
+#endif
+        NUM_UART_CHANNELS
+};
 
 #define U1_ENABLE          U1MODEbits.UARTEN   ///< UART 1 Enable SFR bit
 
@@ -126,7 +101,7 @@
 #define U3_RX_ISR_ENABLE   IEC5bits.U3RXIE     ///< UART 3 Recieve Interrupt Enable SFR Bit
 
 #define U3_TX_ISR_FLAG     IFS5bits.U3TXIF     ///< UART 3 Transmit Interrupt FLAG SFR Bit
-#define U3_TX_ISR_PRIOTITY IPC20bits.U3TXIP    ///< UART 3 Transmit Interrupt Priority SFR
+#define U3_TX_ISR_PRIOTITY IPC20bits.U3RXIP    ///< UART 3 Transmit Interrupt Priority SFR
 #define U3_TX_ISR_ENABLE   IEC5bits.U3TXIE     ///< UART 3 Transmit Interrupt Enable SFR Bit
 
 #define U4_ENABLE          U4MODEbits.UARTEN   ///< UART 4 Enable SFR bit
@@ -136,8 +111,24 @@
 #define U4_RX_ISR_ENABLE   IEC5bits.U4RXIE     ///< UART 4 Recieve Interrupt Enable SFR Bit
 
 #define U4_TX_ISR_FLAG     IFS5bits.U4TXIF     ///< UART 4 Transmit Interrupt FLAG SFR Bit
-#define U4_TX_ISR_PRIOTITY IPC22bits.U4TXIP    ///< UART 4 Transmit Interrupt Priority SFR
+#define U4_TX_ISR_PRIOTITY IPC22bits.U4RXIP    ///< UART 4 Transmit Interrupt Priority SFR
 #define U4_TX_ISR_ENABLE   IEC5bits.U4TXIE     ///< UART 4 Transmit Interrupt Enable SFR Bit
+
+/*
+ * I2C Channels
+ */
+enum i2c_channel {
+#if defined(SYS_I2C1)
+        I2C1,
+#endif
+#if defined(SYS_I2C2)
+        I2C2,
+#endif
+#if defined(SYS_I2C3)
+        I2C3,
+#endif
+	NUM_I2C_CHANNELS
+};
 
 /**
  * @brief UART Modes of operation bit field for the UxMODE SFR
@@ -171,10 +162,15 @@
 #define ABAUD_MASK       0x0020   ///< Auto-Baud Enable bit
 #define RXINV_MASK       0x0010   ///< Receive Polarity Inversion bit
 #define BRGH_MASK        0x0008   ///< High Baud Rate Enable bit
-#define PDSEL1_MASK      0x0004 
+#define PDSEL1_MASK      0x0004
 #define PDSEL0_MASK      0x0002
 #define STSEL_MASK       0x0001   ///< Stop Bit Selection bit
 
+
+
+/*
+ * 
+ */
 /**
  * @brief GPIO Pins available in the uC
  */
@@ -239,56 +235,6 @@ enum gpio_pin {
 	INVALID_GPIO_PIN = 0xff,     ///< Dummy Value used to represent no GPIO Pin
 };
 
-/**
- * @brief ADC Pins available in the uC
- */
-enum adc_pin {
-	AN0,
-        AN1,
-	AN2,
-	AN3,
-	AN4,
-	AN5,
-	AN6,
-	AN7,
-	AN8,
-	AN9,
-	AN10,
-	AN11,
-	AN12,
-	AN13,
-	AN14,
-	AN15,
-
-	INVALID_ADC_PIN = 0xff,     ///< Dummy Value used to represent no GPIO Pin
-};
-
-/**
- * @brief PWM Pins available in the uC
- */
-enum pwm_pin {
-	PWM1L,
-	PWM1H,
-	PWM2L,
-	PWM2H,
-	PWM3L,
-	PWM3H,
-	PWM4L,
-	PWM4H,
-
-	INVALID_PWM_PIN = 0xff,     ///< Dummy Value used to represent no GPIO Pin
-};
-
-/**
- * @brief uC Clock Sources:
- * 
- * See Microchip document DS70005131
- */
-#define dsPIC33_PRIMARY_OSCILLATOR      0b010    ///< Primary Oscillator without PLL
-#define dsPIC33_PRIMARY_OSCILLATOR_PLL  0b011    ///< Primary Oscillator with PLL
-
-#define SECONDARY_OSCILLATOR            OSCCONbits.LPOSCEN   ///< Secondary Oscillator enable SFR Bit
-
 /*
  * Flash parameters
  */
@@ -296,9 +242,9 @@ enum pwm_pin {
  * @def   FLASH_PAGE_SIZE
  * @brief The size of Flash memory Pages.
  *
- * The Flash page size is 1024 Instructions, which is 3072 as each instruction
+ * The Flash page size is 512 Instructions, which is 1536 as each instruction
  * is 3 Bytes. But the Flash is addressed in Words so the length given here is
- * 0x800 (1024 * 2).
+ * 0x400 (512 * 2).
  *
  * Flash memory is erased on a Page by page basis.
  *
@@ -308,9 +254,9 @@ enum pwm_pin {
  * @def   FLASH_NUM_INSTRUCTION_PER_ROW
  * @brief Flash is written row by row. This is the Row size of Flash Memory
  */
-#define FLASH_PAGE_SIZE                0x800
+#define FLASH_PAGE_SIZE                0x400
 #define FLASH_LAST_ADDRESS             0x2ABF9
-#define FLASH_NUM_INSTRUCTION_PER_ROW  128
+#define FLASH_NUM_INSTRUCTION_PER_ROW  64
 
 /**
  * @def   FLASH_FIRMWARE_START_ADDRESS
@@ -343,10 +289,5 @@ enum pwm_pin {
  * @brief micro-controller specific initialisation code
  */
 extern void cpu_init(void);
-extern enum adc_pin  get_adc_from_gpio(enum gpio_pin);
-extern enum gpio_pin get_gpio_from_adc(enum adc_pin);
 
-extern enum pwm_pin get_pwm_from_gpio(enum gpio_pin gpio_pin);
-extern enum gpio_pin get_gpio_from_pwm(enum pwm_pin pwm_pin);
-
-#endif // _ES_dsPIC33EP256MU806_H
+#endif // _ES_PIC24FJ256GB106_H

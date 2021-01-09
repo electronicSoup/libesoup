@@ -2,7 +2,7 @@
  * @file libesoup/timers/sw_timers.c
  *
  * @author John Whitmore
- * 
+ *
  * @brief Timer functionalty for the electronicSoup Cinnamon Bun
  *
  * Copyright 2017-2019 electronicSoup Limited
@@ -21,28 +21,28 @@
  *
  *******************************************************************************
  *
- * This file contains the code for creating timers on an electronicSoup 
- * Cinnaom Bun. The API for creating and canceling timers is modeled on the 
- * timers API used in Linux so that source code can be compiled for both the 
+ * This file contains the code for creating timers on an electronicSoup
+ * Cinnaom Bun. The API for creating and canceling timers is modeled on the
+ * timers API used in Linux so that source code can be compiled for both the
  * Cinnamon Bun and Linux based systems.
  *
  * The timer tick is set using the First Timer Interrupt on the PIC24FJ256GB106
  * this timer is setup by the init function and the ISR for Timer_1 then
  * triggers the regular checking of the active timers.
  *
- * Linux refers to the interval of time as Jiffies where as in this code it's 
+ * Linux refers to the interval of time as Jiffies where as in this code it's
  * refered to as a "tick". This tick interval is defined in the core.h file
- * by the SYS_SW_TICK_ms Macro and is currently set to 5 milli Second. 
+ * by the SYS_SW_TICK_ms Macro and is currently set to 5 milli Second.
  *
  * Two macros can be used to calculate the Ticks required for a timer.
- * 
+ *
  * SECONDS_TO_TICKS(s)
  * MILLI_SECONDS_TO_TICKS(ms)
- * 
- * Both of these utilities should be used for portability, just in case the 
+ *
+ * Both of these utilities should be used for portability, just in case the
  * timer tick period is changed.
  *
- * The libesoup/examples directory contains an example main.c named 
+ * The libesoup/examples directory contains an example main.c named
  * main_sw_timers.c
  *
  */
@@ -119,9 +119,9 @@ typedef struct {
 /*
  * The Cinnamon Bun maintains a table of timers which can be activated
  * by the calling code. The SYS_NUMBER_OF_SW_TIMERS, defined in your libesoup_config.h
- * file defines how many timers the code maintains. 
+ * file defines how many timers the code maintains.
  *
- * If your project uses a limited number of know timers then you can set 
+ * If your project uses a limited number of know timers then you can set
  * SYS_NUMBER_OF_SW_TIMERS to a known value.
  */
 #if defined(XC16) || defined(__XC8)
@@ -138,8 +138,8 @@ static uint16_t calculate_ticks(struct timer_req *request);
 static void calculate_expiry_count(timer_id timer, uint16_t ticks);
 
 /*
- * Timer_1 ISR. To keep ISR short it simply restarts TIMER_1 and sets 
- * the variable "timer_tick" which is should be regularly checked by 
+ * Timer_1 ISR. To keep ISR short it simply restarts TIMER_1 and sets
+ * the variable "timer_tick" which is should be regularly checked by
  * the main control loop of your project by calling the CHECK_TIMERS()
  * macro.
  */
@@ -153,8 +153,8 @@ static void hw_expiry_function(timer_id timer, union sigval data)
 /*
  * void sw_timer_init(void)
  *
- * Function to initialise the data structures for timers and start 
- * Timer_1 of the PIC 
+ * Function to initialise the data structures for timers and start
+ * Timer_1 of the PIC
  *
  */
 void sw_timer_init(void)
@@ -179,7 +179,7 @@ void sw_timer_init(void)
 	hw_timer_req.type = repeat_expiry;
 	hw_timer_req.exp_fn = hw_expiry_function;
 	hw_timer_req.data = data;
-	
+
 	hw_timer = hw_timer_start(&hw_timer_req);
 	hw_timer_paused = FALSE;
 //#endif //__PIC24FJ256GB106__
@@ -243,7 +243,7 @@ void timer_tick(void)
 				/*
 				 * timer expired so call expiry function.
 				 */
-                                LOG_D("Expiry timer %d\n\r", loop);
+//                                LOG_D("Expiry timer %d\n\r", loop);
 				function = timers[loop].request.exp_fn;
 				data = timers[loop].request.data;
 				function(loop, data);
@@ -255,7 +255,7 @@ void timer_tick(void)
 				} else if(timers[loop].request.type == repeat_expiry) {
 					ticks = calculate_ticks(&timers[loop].request);
 					calculate_expiry_count(loop, ticks);
-				}				
+				}
 			}
 		}
 	}
@@ -323,7 +323,7 @@ timer_id sw_timer_start(struct timer_req *request)
 	timer_id  loop;
 
 	ticks = calculate_ticks(request);
-	
+
 	/*
 	 * Find the First empty timer
 	 */
@@ -363,7 +363,7 @@ timer_id sw_timer_start(struct timer_req *request)
 	int ret;
 
 	action.sigev_notify = SIGEV_THREAD;
-	action.sigev_notify_function = (void (*)(union sigval))function; 
+	action.sigev_notify_function = (void (*)(union sigval))function;
 	action.sigev_notify_attributes = NULL;
 	action.sigev_value = data;
 
@@ -373,7 +373,7 @@ timer_id sw_timer_start(struct timer_req *request)
 		LOG_E("Error can't create timer\n\r");
 		return(-ERR_GENERAL_ERROR);
 	}
-//	LOG_D("Setting time to %d Seconds %d nano Seonds\n\r", 
+//	LOG_D("Setting time to %d Seconds %d nano Seonds\n\r",
 	its.it_value.tv_sec = (ticks * SYS_SW_TIMER_TICK_ms) / 1000;
 	its.it_value.tv_nsec = (ticks * SYS_SW_TIMER_TICK_ms) % 1000 * 1000000;
 	its.it_interval.tv_sec = 0;
@@ -463,7 +463,7 @@ static uint16_t calculate_ticks(struct timer_req *request)
 	} else if (request->period.units == Seconds) {
 		return(request->period.duration * (1000 / SYS_SW_TIMER_TICK_ms));
 	}
-	
+
 	return(0);   // Clears a compiler warning
 }
 

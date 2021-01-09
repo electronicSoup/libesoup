@@ -6,7 +6,7 @@
  *
  * SPI Interface functions for the electronicSoup Cinnamon Bun
  *
- * Copyright 2017-2018 electronicSoup Limited
+ * Copyright 2017-2020 electronicSoup Limited
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the version 2 of the GNU Lesser General Public License
@@ -26,7 +26,7 @@
 
 #include "libesoup_config.h"
 
-#ifdef SYS_SPI_BUS
+#if defined(SYS_SPI1) || defined(SYS_SPI2) || defined(SYS_SPI3)
 
 /**
  * @def   SPI_ANY_CHANNEL
@@ -42,42 +42,47 @@ struct spi_io_channel {
 	enum gpio_pin sck;
 	enum gpio_pin mosi;
 	enum gpio_pin miso;
+	enum gpio_pin cs;
 };
 
-/**
- * @brief Function to initialse the SPI Data structures
- * @return result, negative on error.
+enum bus_mode {
+	bus_mode_0,
+	bus_mode_1,
+	bus_mode_2,
+	bus_mode_3
+};
+
+enum clock_polarity {
+        IDLE_HIGHT,
+        IDLE_LOW
+};
+
+enum spi_mode {
+        MASTER,
+        SLAVE
+};
+
+struct spi_device {
+	enum spi_chan_id       chan_id;
+	struct spi_io_channel  io;
+        struct spi_chan       *pChan;
+        enum clock_polarity    clock_polarity;
+        enum spi_mode          spi_mode;
+	enum bus_mode          bus_mode;
+	uint16_t               brg;
+};
+
+struct spi_chan {
+	boolean                active;
+	struct spi_device     *active_device;
+};
+
+
+/*
+ * API Functions
  */
-extern result_t      spi_init(void);
-
-/**
- * @brief  Function to reserve an SPI channel and specify PINS used
- * @param  ch channel to be used or SPI_ANY_CHANNEL if no preference
- * @param  spi_io_channel * pointer to sturcture specifing pins used.
- * @return result (negative on error) 
- */
-extern result_t      spi_channel_init(uint8_t ch, struct spi_io_channel *);
-
-/**
- * @brief  Function to specify a device on an SPI Channel
- * @param  ch SPI Channel 
- * @return result_t 
- */
-extern result_t      spi_device_init(uint8_t ch);
-
-/**
- * @brief function to lock SPI channel for a device
- * @param device_id device locking the SPI Channel
- * @return result_t negative on error.
- */ 
-extern result_t      spi_lock(uint8_t device_id);
-
-/**
- * @brief function to unlock SPI channel for a device
- * @param device_id device unlocking the SPI Channel
- * @return result_t negative on error.
- */ 
-extern result_t      spi_unlock(uint8_t device_id);
+extern result_t spi_reserve(struct spi_device *device);
+extern result_t spi_release(struct spi_device *device);
 
 /**
  * @brief  Function to write a byte to an SPI device
@@ -89,7 +94,9 @@ extern result_t      spi_unlock(uint8_t device_id);
  * @param  byte the data byte to be transmitted
  * @return result byte read from the device or negative on error
  */
-extern result_t      spi_write_byte(uint8_t device_id, uint8_t byte);
+extern result_t spi_write_byte(struct spi_device *device, uint8_t write);
+
+extern result_t spi_read_byte(struct spi_device *device);
 
 #endif // #ifdef SYS_SPI_BUS
 

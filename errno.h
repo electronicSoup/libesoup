@@ -34,10 +34,6 @@
 #include <stdint.h>
 #include "libesoup_config.h"
 
-#ifdef DEBUG_BUILD
-extern char *error_text(result_t);
-#endif
-
 /**
  * @typedef  result_t
  * @brief    Return type from API function call. Negative on error condition
@@ -46,6 +42,10 @@ extern char *error_text(result_t);
  * code.
  */
 typedef int16_t result_t;
+
+#ifdef DEBUG_BUILD
+extern char *error_text(result_t);
+#endif
 
 /**
  * @def      RC_CHECK
@@ -157,6 +157,7 @@ typedef int16_t result_t;
 #define ERR_NOT_MASTER             20
 #define ERR_NOT_SLAVE              21
 #define ERR_BAD_STATE              22
+#define ERR_INVALID_RESPONSE       23
 #define ERR_IM_A_TEAPOT           418
 
 #endif // _ERRNO_H

@@ -3,7 +3,7 @@
  *
  * @author John Whitmore
  * 
- * @brief  API Interface to I2C. Initial PIC24FJ256GB106
+ * @brief  API Interface to I2C.
  *
  * Copyright 2020 electronicSoup Limited
  *
@@ -22,13 +22,59 @@
  *******************************************************************************
  *
  */
-#if defined (SYS_I2C1) || defined (SYS_I2C2) || defined (SYS_I2C3)
+#ifndef I2C_H_
+#define I2C_H_
 
-extern result_t i2c_start(enum i2c_channel chan, void (*callback)(result_t));
-extern result_t i2c_restart(enum i2c_channel chan, void (*callback)(result_t));
-extern result_t i2c_stop(enum i2c_channel chan);
+#include "libesoup_config.h"
 
-extern result_t i2c_write(enum i2c_channel chan, uint8_t *tx_buf, uint8_t num_tx_bytes, void (*callback)(result_t));
-extern result_t i2c_read(enum i2c_channel chan, uint8_t *rx_buf, uint16_t num_rx_bytes, void (*callback)(result_t));
+#if defined (SYS_I2C_1) || defined (SYS_I2C_2) || defined (SYS_I2C_3)
+
+
+enum state {
+        IDLE_STATE,
+        STARTING_STATE,
+        STARTED_STATE,
+        TX_STATE,
+        RESTARTING_STATE,
+        RX_STATE,
+	RX_DONE_STATE,
+        STOPPING_STATE
+};
+
+struct i2c_device {
+        enum i2c_chan_id  channel;
+        enum gpio_pin     scl_pin;
+        enum gpio_pin     sda_pin;
+        void            (*callback)(result_t);
+};
+
+struct i2c_channel_data {
+        enum i2c_chan_id   channel;
+	uint8_t            active;
+	struct i2c_device *active_device;
+	void             (*state)(enum i2c_chan_id, uint16_t);
+	result_t           error;
+	uint8_t            finished;
+	uint8_t            sent;
+	uint8_t           *tx_buf;
+	uint8_t            num_tx_bytes;
+	uint8_t           *rx_buf;
+	uint16_t           num_rx_bytes;
+	uint8_t            read_count;
+	void             (*callback)(result_t);
+	void             (*read_callback)(result_t, uint8_t);
+};
+
+extern result_t i2c_reserve(struct i2c_device *device);
+extern result_t i2c_release(struct i2c_device *device);
+
+extern result_t i2c_start(struct i2c_device *device);
+extern result_t i2c_restart(struct i2c_device *device);
+extern result_t i2c_stop(struct i2c_device *device);
+
+extern result_t i2c_write(struct i2c_device *device, uint8_t *tx_buf, uint8_t num_tx_bytes, void (*callback)(result_t));
+extern result_t i2c_read(struct i2c_device *device, uint8_t *rx_buf, uint16_t num_rx_bytes, void (*callback)(result_t));
 
 #endif // SYS_I2C
+
+#endif //  _I2C_H_

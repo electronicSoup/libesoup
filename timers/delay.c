@@ -87,4 +87,20 @@ result_t delay(struct period *period)
 	return(0);
 }
 
+result_t delay_mS(uint16_t duration)
+{
+	struct period period = {mSeconds, duration};
+
+	delay(&period);
+	return(SUCCESS);
+}
+
+result_t delay_uS(uint16_t duration)
+{
+	struct period period = {uSeconds, duration};
+
+	delay(&period);
+	return(SUCCESS);
+}
+
 #endif // #ifdef SYS_HW_TIMERS

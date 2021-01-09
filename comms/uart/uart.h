@@ -31,7 +31,7 @@
 
 #include "libesoup_config.h"
 
-#ifdef SYS_UART
+#if defined(SYS_UART1) || defined(SYS_UART2) || defined(SYS_UART3) || defined(SYS_UART4)
 
 #include "libesoup/gpio/gpio.h"
 #include "libesoup/gpio/peripheral.h"
@@ -67,7 +67,7 @@
 struct uart_data {
 	enum gpio_pin      tx_pin;                               ///< GPIO Pin for transmit (Possibly INVALID_GPIO_PIN)
 	enum gpio_pin      rx_pin;                               ///< GPIO Pin for receive  (Possibly INVALID_GPIO_PIN)
-	uint8_t            uindex;                               ///< Uart identifier (populated by libesoup code)
+	enum uart_channel  channel;                              ///< Uart channel being used (populated by libesoup code)
 	uint16_t           uart_mode;                            ///< Mode bits for the connection (calculated with call to uart_calculate_mode() passing required serial parameters)
 	uint32_t           baud;                                 ///< Baud rate for the connection
 	void               (*tx_finished)(struct uart_data *);               ///< Callback - transmission has finished (Possibly NULL)

@@ -1,6 +1,14 @@
+/*
+ * libesoup_conffig.h libesoup/comms/i2c/test/main_master_24lc64.c
+ *
+ * Circuit wired using:
+ * RE7 SDA3
+ * RD6 SCL3
+ */
+
 #include "libesoup_config.h"
 
-#ifdef SYS_TEST_24LC64
+#ifdef SYS_TEST_MASTER_24LC64
 
 #define DEBUG_FILE
 #define TAG "24LC64_TST"
@@ -8,7 +16,7 @@
 #include "libesoup/logger/serial_log.h"
 #include "libesoup/gpio/gpio.h"
 #include "libesoup/comms/i2c/i2c.h"
-#include "libesoup/comms/i2c/mc24LC64.h"
+#include "libesoup/comms/i2c/devices/24lcxx/master_24LCxx.h"
 #include "libesoup/timers/sw_timers.h"
 
 #define PROGRAM_SIZE   128 //4*128
@@ -49,8 +57,7 @@ static void expiry(timer_id timer  __attribute__((unused)), union sigval data __
 {
 	result_t rc;
 
-//	gpio_set(RE5, GPIO_MODE_DIGITAL_OUTPUT, ~gpio_get(RE5));
-        rc = mc24lc64_read(I2C3, 0x00, ADDRESS, PROGRAM_SIZE, buffer, callback_24lc64);
+	rc = mc24lc64_read(I2C3, 0x00, ADDRESS, PROGRAM_SIZE, buffer, callback_24lc64);
 	if (rc < 0) {
 		LOG_E("failed to read - %s\n\r", error_text(rc));
 	}
@@ -70,10 +77,10 @@ int main(void)
 	 * RE7 / SDA3 1st pin <-> Pin 5 of EEPROM SDA
 	 */
 
-	gpio_set(RE5, GPIO_MODE_DIGITAL_OUTPUT, 0);
+	gpio_set(RE5, GPIO_MODE_DIGITAL_OUTPUT, 1);
 
 	request.period.units    = Seconds;
-	request.period.duration = 10;
+	request.period.duration = 5;
 //	request.type            = repeat_expiry;
 	request.type            = single_shot_expiry;
 	request.exp_fn          = expiry;

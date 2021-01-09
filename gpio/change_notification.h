@@ -23,13 +23,9 @@
 /*
  * Only tested on the dsPIC33 so far
  */
-#if defined(__dsPIC33EP256MU806__)
-
 typedef void (*change_notifier)(enum gpio_pin pin);
 
 extern result_t change_notifier_register(enum gpio_pin pin, change_notifier notifier);
 extern result_t change_notifier_deregister(enum gpio_pin pin);
-
-#endif // #if defined(__dsPIC33EP256MU806__)
 
 #endif  // SYS_CHANGE_NOTIFICATION
