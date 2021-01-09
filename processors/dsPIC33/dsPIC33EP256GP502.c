@@ -82,7 +82,7 @@ void cpu_init(void)
         clock_init();
 	CLEAR_WDT
 
-//        INTCON2bits.GIE = ENABLED;
+        INTCON2bits.GIE = ENABLED;
 }
 
 static void clock_init(void)
