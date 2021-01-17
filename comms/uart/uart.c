@@ -85,7 +85,11 @@ static void     uart_tx_isr(enum uart_channel channel);
 
 static result_t uart_set_rx_pin(enum uart_channel channel, enum gpio_pin pin);
 static result_t uart_set_tx_pin(enum uart_channel channel, enum gpio_pin pin);
+#if defined(__dsPIC33EP256MU806__) || defined (__PIC24FJ256GB106__) || defined(__dsPIC33EP128GS702__)
 static result_t uart_set_uart_config(struct uart_data *udata);
+#else
+extern result_t uart_set_uart_config(struct uart_data *udata);
+#endif
 static result_t uart_putchar(enum uart_channel channel, uint8_t ch);
 
 static result_t tx_buffer_write(enum uart_channel channel, char ch);
@@ -318,7 +322,6 @@ void _ISR __attribute__((__no_auto_psv__)) _U1RXInterrupt(void)
 
 	asm ("CLRWDT");
 
-        LOG_D("U1RX\n\r");
 	if (U1STAbits.OERR) {
 		LOG_E("RX Buffer overrun\n\r");
 		U1STAbits.OERR = 0;   /* Clear the error flag */
@@ -520,7 +523,6 @@ result_t uart_reserve(struct uart_data *udata)
 
 	for(channel = 0; channel < NUM_UART_CHANNELS; channel++) {
 		if(uarts[channel].status == UART_FREE) {
-
  			uarts[channel].udata          = udata;           // Keep track of calling structure
  			uarts[channel].status         = UART_RESERVED;   // Mark the UART as reserved
 
@@ -534,11 +536,14 @@ result_t uart_reserve(struct uart_data *udata)
 			 * Set up the Rx & Tx pins
 > 			 * Bit strange to have neither Rx or Tx pin return error
 			 */
- 			if ((udata->rx_pin == INVALID_GPIO_PIN) && (udata->tx_pin == INVALID_GPIO_PIN))
+ 			if ((udata->rx_pin == INVALID_GPIO_PIN) && (udata->tx_pin == INVALID_GPIO_PIN)) {
  				return(-ERR_BAD_INPUT_PARAMETER);
+			}
 			if (udata->rx_pin != INVALID_GPIO_PIN) {
 				rc = uart_set_rx_pin(channel, udata->rx_pin);
-				RC_CHECK
+				if (rc < 0) {
+					return(rc);
+				}
 			}
 
 			if (udata->tx_pin != INVALID_GPIO_PIN) {
@@ -547,7 +552,9 @@ result_t uart_reserve(struct uart_data *udata)
 			}
 
 			rc = uart_set_uart_config(udata);
-                        RC_CHECK
+                        if (rc < 0) {
+				return(rc);
+			}
 
 			return(channel);
 		}
@@ -891,8 +898,6 @@ static result_t uart_set_rx_pin(enum uart_channel channel, enum gpio_pin pin)
 	rc = set_peripheral_input(pin);
 	RC_CHECK
 
-	rc = SUCCESS;
-
 	switch (channel) {
 #if defined(SYS_UART1)
 	case UART_1:
@@ -908,7 +913,7 @@ static result_t uart_set_rx_pin(enum uart_channel channel, enum gpio_pin pin)
 		rc = -ERR_BAD_INPUT_PARAMETER;
 		break;
 	}
-	return(rc);
+	return(SUCCESS);
 }
 #elif defined (__PIC24FJ256GB106__)
 static result_t uart_set_rx_pin(enum uart_channel channel, enum gpio_pin pin)
@@ -1075,7 +1080,7 @@ static result_t uart_set_tx_pin(enum uart_channel channel, enum gpio_pin pin)
 }
 #endif // MicroContoller Selection
 
-#if defined(__dsPIC33EP256MU806__) || defined (__PIC24FJ256GB106__) || defined(__dsPIC33EP128GS702__) || defined(__dsPIC33EP256GP502__)
+#if defined(__dsPIC33EP256MU806__) || defined (__PIC24FJ256GB106__) || defined(__dsPIC33EP128GS702__)
 static result_t uart_set_uart_config(struct uart_data *udata)
 {
 	enum uart_channel channel;
