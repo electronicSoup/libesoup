@@ -30,6 +30,10 @@ static const char *TAG = "dsPIC33";
 #include "libesoup/errno.h"
 #include "libesoup/gpio/gpio.h"
 
+#if defined(SYS_UART1) || defined(SYS_UART2)
+#include "libesoup/comms/uart/uart.h"
+#endif
+
 /*
  * Check required libesoup_config.h defines are found
  */
@@ -106,10 +110,11 @@ static void clock_init(void)
 	 * m = 65
 	 */
 	n1 = 4;
-        m  = 65;
+        m  = 64;
 	n2 = 2;
 
 	sys_clock_freq = ((BRD_CRYSTAL_FREQ / n1) * m) / n2;  // 59,881,250
+//	sys_clock_freq = ((BRD_CRYSTAL_FREQ / 1) * 16) / 2;  // 59,881,250
 
 	clock = dsPIC33_INTERNAL_RC_PLL;
 	__builtin_write_OSCCONH(clock);
@@ -322,6 +327,146 @@ int16_t set_peripheral_output(enum gpio_pin pin, uint16_t function)
 
 	return(rc);
 }
+
+#if defined(SYS_UART1) || defined(SYS_UART2)
+result_t uart_set_uart_config(struct uart_data *udata)
+{
+	enum uart_channel channel;
+
+        channel = udata->channel;
+	switch (channel) {
+#if defined(SYS_UART1)
+	case UART_1:
+		U1MODE = udata->uart_mode;
+
+		/*
+		 * Interrupt when a character is transferred to the Transmit Shift
+		 * Register (TSR), and as a result, the transmit buffer becomes empty
+		 */
+		U1STAbits.UTXISEL1 = 1;
+		U1STAbits.UTXISEL0 = 0;
+
+		/*
+		 * with BRGH = 0 Slow Speed Mode:
+		 *        Baudrate - between  sys_clock_freq /(16 * 65536) and sys_clock_freq / 16
+		 *                   For sys_clock_freq = 16,000,000 Min 15bps Max 1Mbps
+		 *                   For sys_clock_freq =  4,000,000 Min 3bps Max 250Kbps
+		 *
+		 *                   Desired Baud Rate = FCY/(16 (UxBRG + 1))
+		 *
+		 *                   UxBRG = ((FCY/Desired Baud Rate)/16) - 1
+		 *
+		 *                   UxBRG = ((CLOCK / BAUD)/16) -1
+		 *
+		 *
+		 * with BRGH = 1 : sys_clock_freq /(4 * 65536) <= Baudrate <= sys_clock_freq / 4
+		 *                   For sys_clock_freq = 16,000,000 Min 61bps Max 4Mbps
+		 *                   For sys_clock_freq =  4,000,000 Min 15bps Max 1Mbps
+		 */
+		if(udata->uart_mode & BRGH_MASK) {
+			/*
+			 * Hight Speed Mode:
+			 */
+			U1BRG = (uint16_t)((uint32_t)((uint32_t)((uint32_t)sys_clock_freq / 2) / (uint32_t)udata->baud) / 4) - 1;
+		} else {
+			/*
+			 * Standard Mode:
+			 */
+			U1BRG = (uint16_t)((uint32_t)((uint32_t)((uint32_t)sys_clock_freq / 2) / (uint32_t)udata->baud) / 16) - 1;
+		}
+
+		U1_RX_ISR_FLAG             = 0;
+		U1_TX_ISR_FLAG             = 0;
+
+		if (udata->rx_pin != INVALID_GPIO_PIN) {
+                        U1STAbits.URXISEL  = 0b00;
+			U1_RX_ISR_ENABLE   = ENABLED;
+		} else {
+			U1_RX_ISR_ENABLE   = DISABLED;
+		}
+
+		if (udata->tx_pin != INVALID_GPIO_PIN) {
+			U1_TX_ISR_PRIOTITY = 0x07;
+			U1_TX_ISR_ENABLE   = ENABLED;
+			U1STAbits.UTXEN    = ENABLED;
+
+		} else {
+			U1_TX_ISR_ENABLE   = DISABLED;
+			U1STAbits.UTXEN    = DISABLED;
+		}
+
+		U1_ENABLE = ENABLED;
+		break;
+#endif // SYS_UART1
+
+#if defined(SYS_UART2)
+	case UART_2:
+		U2MODE = udata->uart_mode;
+
+		/*
+		 * Interrupt when a character is transferred to the Transmit Shift
+		 * Register (TSR), and as a result, the transmit buffer becomes empty
+		 */
+		U2STAbits.URXISEL = 0b10;
+
+		/*
+		 * with BRGH = 0 Slow Speed Mode:
+		 *        Baudrate - between  sys_clock_freq /(16 * 65536) and sys_clock_freq / 16
+		 *                   For sys_clock_freq = 16,000,000 Min 15bps Max 1Mbps
+		 *                   For sys_clock_freq =  4,000,000 Min 3bps Max 250Kbps
+		 *
+		 *                   Desired Baud Rate = FCY/(16 (UxBRG + 1))
+		 *
+		 *                   UxBRG = ((FCY/Desired Baud Rate)/16) - 1
+		 *
+		 *                   UxBRG = ((CLOCK / BAUD)/16) -1
+		 *
+		 *
+		 * with BRGH = 1 : sys_clock_freq /(4 * 65536) <= Baudrate <= sys_clock_freq / 4
+		 *                   For sys_clock_freq = 16,000,000 Min 61bps Max 4Mbps
+		 *                   For sys_clock_freq =  4,000,000 Min 15bps Max 1Mbps
+		 */
+		if(udata->uart_mode & BRGH_MASK) {
+			/*
+			 * Hight Speed Mode:
+			 */
+			U2BRG = (uint16_t)((uint32_t)((uint32_t)((uint32_t)sys_clock_freq / 2) / (uint32_t)udata->baud) / 4) - 1;
+		} else {
+			/*
+			 * Standard Mode:
+			 */
+			U2BRG = (uint16_t)((uint32_t)((uint32_t)((uint32_t)sys_clock_freq / 2) / (uint32_t)udata->baud) / 16) - 1;
+		}
+
+
+		if (udata->rx_pin != INVALID_GPIO_PIN) {
+			LOG_D("Enable Rx ISR\n\r");
+                        U2STAbits.URXISEL  = 0b00;
+			U2_RX_ISR_ENABLE   = ENABLED;
+		} else {
+			U2_RX_ISR_ENABLE   = DISABLED;
+		}
+
+		if (udata->tx_pin != INVALID_GPIO_PIN) {
+			U2_TX_ISR_PRIOTITY = 0x07;
+			U2_TX_ISR_ENABLE   = ENABLED;
+			U2STAbits.UTXEN    = ENABLED;
+
+		} else {
+			U2_TX_ISR_ENABLE   = DISABLED;
+			U2STAbits.UTXEN    = DISABLED;
+		}
+
+		U2_ENABLE                  = ENABLED;
+		break;
+#endif // SYS_UART2
+	default:
+ 		return(-ERR_BAD_INPUT_PARAMETER);
+	}
+        return(SUCCESS);
+}
+#endif //#if defined(SYS_UART1) || defined(SYS_UART2)
+
 #if 0
 result_t gpio_set(enum gpio_pin pin, uint16_t mode, uint8_t value)
 {
