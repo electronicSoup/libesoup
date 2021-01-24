@@ -106,6 +106,14 @@ extern result_t usb_keyboard_tasks(void);
 extern void SYSTEM_Initialize(  SYSTEM_STATE SYSTEM_STATE_USB_START );
 #endif
 
+#ifdef SYS_MIDI_RX
+extern void midi_init(void);
+#endif
+
+#ifdef SYS_LOOPER
+extern result_t loppers_init(void);
+#endif // SYS_LOOPER
+
 /*
  * The Instruction Clock Frequency being used by the system.
  *
@@ -210,6 +218,12 @@ result_t libesoup_init(void)
 	USBDeviceInit();
 	USBDeviceAttach();
 #endif
+#ifdef SYS_MIDI_RX
+	midi_init();
+#endif
+#ifdef SYS_LOOPER
+	rc = loppers_init();
+#endif // SYS_LOOPER
 	CLEAR_WDT
 	return(board_init());
 }
