@@ -262,7 +262,7 @@ result_t sd_card_read(uint32_t sector, uint8_t *buffer)
 	uint8_t  retry = 0;
 	result_t rc;
 	uint16_t i;
-	uint8_t  new_line;
+//	uint8_t  new_line;
 	uint8_t *ptr;
 	uint8_t  rx_byte;
 	uint32_t address;

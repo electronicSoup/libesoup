@@ -31,6 +31,7 @@
 #include "libesoup/logger/serial_log.h"
 #include "libesoup/gpio/gpio.h"
 #include "libesoup/comms/i2c/i2c.h"
+#include "libesoup/timers/delay.h"
 
 extern struct i2c_channel_data i2c_channels[NUM_I2C_CHANNELS];
 
@@ -38,7 +39,6 @@ extern struct i2c_channel_data i2c_channels[NUM_I2C_CHANNELS];
 /*
  * Prototype
  */
-static void i2c3_send_next(enum i2c_chan_id);
 
 #if defined(SYS_I2C_1)
 #define I2C1_STARTED         I2C1STATbits.S
@@ -75,7 +75,7 @@ static void i2c3_send_next(enum i2c_chan_id);
 #ifdef SYS_I2C_1
 void __attribute__((__interrupt__, __no_auto_psv__)) _MI2C1Interrupt(void)
 {
-	uint8_t  rx_char;
+//	uint8_t  rx_char;
 
 	serial_printf("M*\n\r");
 //	serial_printf("*%d*\n\r", current_state);
@@ -186,9 +186,14 @@ void __attribute__((__interrupt__, __no_auto_psv__)) _MI2C2Interrupt(void)
 #ifdef SYS_I2C_1
 void __attribute__((__interrupt__, __no_auto_psv__)) _SI2C1Interrupt(void)
 {
-	uint16_t stat_reg;
+//	uint16_t stat_reg;
 
-	serial_printf("S1* ");
+	gpio_set(RB13, GPIO_MODE_DIGITAL_OUTPUT, 0);
+
+	serial_printf("S1* 0x%x\n\r", I2C1ADD);
+	while(1) {
+		Nop();
+	}
 #if 0
 	while (IFS1bits.SI2C1IF || I2C1STATbits.RBF) {
 		IFS1bits.SI2C1IF    = 0;  // Clear Master ISR Flag
@@ -208,13 +213,7 @@ void __attribute__((__interrupt__, __no_auto_psv__)) _SI2C2Interrupt(void)
 }
 #endif
 
-#ifdef SYS_I2C_1
-void __attribute__((__interrupt__, __no_auto_psv__)) _I2C1BCInterrupt(void)
-{
-	LOG_D("B1* ")
-}
-#endif
-
+#if 0
 result_t i2c_py_reserve(struct i2c_device *device)
 {
 	uint8_t chan;
@@ -305,6 +304,62 @@ result_t i2c_py_reserve(struct i2c_device *device)
 	}
         return (SUCCESS);
 }
+#else
+result_t i2c_py_reserve(struct i2c_device *device)
+{
+	result_t          rc;
+	struct period     period;
+	period.units    = mSeconds;
+	period.duration = 500;
+
+	/*
+	 * Set out watch pin high
+	 */
+	TRISBbits.TRISB13 = 0;
+	LATBbits.LATB13 = 1;
+
+	/*
+	 * Pin RB8 is Clock, set input/Open Drian
+	 */
+	ODCBbits.ODCB8   = 1;
+ 	TRISBbits.TRISB8 = 1;
+
+	/*
+	 * Pin RB9 is out Data pin SDA, Set input/Open Drain
+	 */
+	ODCBbits.ODCB9   = 1;
+	TRISBbits.TRISB9 = 1;
+
+	/*
+	 * Enable I2C1 Interrupts
+	 */
+	IFS1bits.MI2C1IF     = 0;   // Clear Master ISR Flag
+	IFS1bits.SI2C1IF     = 0;   // Clear Slave ISR Flag
+	IEC1bits.MI2C1IE     = 1;   // Enable Master Interrupts
+	IEC1bits.SI2C1IE     = 1;   // Enable Slave Interrupts
+        INTCON2bits.GIE      = 1;   // Global Interrup Enable
+
+	I2C1ADD              = 0x00; // I2C Address
+
+	I2C1CONbits.I2CEN    = 1;   // Enable the I2C
+
+	/*
+	 * Pin RB2 is our EEPROM Trigger. trigger read with positive edge
+	 */
+ 	TRISBbits.TRISB2 = 0;
+
+	while(1) {
+		LOG_D("I2C1ADD:0x%x\n\r", I2C1ADD);
+		rc = delay(&period);
+		LATBbits.LATB2    = 0;
+		rc = delay(&period);
+		LATBbits.LATB2    = 1;
+		I2C1CONbits.I2CEN = 0;            // Disable the I2C
+		I2C1ADD           = I2C1ADD + 1;
+		I2C1CONbits.I2CEN = 1;            // Enable the I2C
+	}
+}
+#endif
 
 result_t i2c_py_release(struct i2c_device *device)
 {
@@ -314,7 +369,7 @@ result_t i2c_py_release(struct i2c_device *device)
 
 result_t i2c_py_start(struct i2c_device *device)
 {
-	enum i2c_chan_id chan = device->channel;
+//	enum i2c_chan_id chan = device->channel;
 //	static uint8_t count = 0;
 
 	LOG_D("i2c_py_start\n\r");
@@ -373,7 +428,7 @@ result_t i2c_py_start(struct i2c_device *device)
 
 result_t i2c_py_restart(struct i2c_device *device)
 {
-	enum i2c_chan_id chan = device->channel;
+//	enum i2c_chan_id chan = device->channel;
 
 	LOG_D("i2c_py_restart\n\r");
 #if 0
@@ -400,7 +455,7 @@ result_t i2c_py_restart(struct i2c_device *device)
 
 result_t i2c_py_stop(struct i2c_device *device)
 {
-	enum i2c_chan_id chan = device->channel;
+//	enum i2c_chan_id chan = device->channel;
 	LOG_D("i2c_py_stop\n\r");
 #if 0
 	switch(chan) {
