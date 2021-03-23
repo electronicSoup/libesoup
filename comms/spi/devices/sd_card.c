@@ -150,7 +150,7 @@ result_t sd_card_init(void)
 		rc = spi_write_byte(&spi_device, 0xff);
 	}
 
-	delay_uS(100);
+	delay_uS(200);
 
 	rc = gpio_set(SD_CARD_SS, GPIO_MODE_DIGITAL_OUTPUT, 0);
 	RC_CHECK;
@@ -160,7 +160,7 @@ result_t sd_card_init(void)
 
 	rx_byte = 0xff;
 	while (rx_byte == 0xff) {
-		delay_uS(100);
+		delay_uS(200);
 		rc = spi_read_byte(&spi_device);
 		RC_CHECK;
 		rx_byte = (uint8_t)rc;
@@ -227,14 +227,14 @@ result_t sd_card_init(void)
 
 		rc = gpio_set(SD_CARD_SS, GPIO_MODE_DIGITAL_OUTPUT, 0);
 		send_command(&cmd);
-		delay_uS(10);
+		delay_uS(50);    // was 10
 		flush();
 
-		delay_uS(10);
+		delay_uS(50);
 
 		init_command(&cmd, sd_cmd41);
 		send_command(&cmd);
-		delay_uS(10);
+		delay_uS(50);
 
 		do {
 			rc = spi_write_byte(&spi_device, 0xff);
@@ -284,7 +284,7 @@ result_t sd_card_read(uint32_t sector, uint8_t *buffer)
 	rx_byte = 0xff;
 	while ((rx_byte != 0x00) && (retry < 10)) {
 		retry++;
-		delay_uS(20);
+		delay_uS(50);   // was 20
 		rc = spi_read_byte(&spi_device);
 		RC_CHECK;
 		rx_byte = (uint8_t)rc;

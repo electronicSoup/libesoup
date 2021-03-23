@@ -95,6 +95,7 @@ result_t delay_mS(uint16_t duration)
 	return(SUCCESS);
 }
 
+#if !defined(__dsPIC33EP256GP502__)
 result_t delay_uS(uint16_t duration)
 {
 	struct period period = {uSeconds, duration};
@@ -102,5 +103,5 @@ result_t delay_uS(uint16_t duration)
 	delay(&period);
 	return(SUCCESS);
 }
-
+#endif // __dsPIC33EP256GP502__
 #endif // #ifdef SYS_HW_TIMERS

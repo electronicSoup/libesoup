@@ -34,6 +34,11 @@ static const char *TAG = "dsPIC33";
 #include "libesoup/comms/uart/uart.h"
 #endif
 
+#if defined (SYS_HW_TIMERS)
+#include "libesoup/timers/time.h"
+#include "libesoup/timers/delay.h"
+#endif
+
 /*
  * Check required libesoup_config.h defines are found
  */
@@ -467,199 +472,137 @@ result_t uart_set_uart_config(struct uart_data *udata)
 }
 #endif //#if defined(SYS_UART1) || defined(SYS_UART2)
 
-#if 0
-result_t gpio_set(enum gpio_pin pin, uint16_t mode, uint8_t value)
+#if defined (SYS_HW_TIMERS)
+result_t __attribute__((optimize(0))) delay_uS(uint16_t duration)
 {
-	uint8_t  direction;
-	uint8_t  analog;
-	uint8_t  opendrain;
+	struct period period;
 
-	analog = 0b0;
-	if((mode & GPIO_MODE_ANALOG_INPUT) || (mode & GPIO_MODE_ANALOG_OUTPUT)) analog = 0b1;
+	if (duration < 5) {
+		return(SUCCESS);
+	}
 
-	direction = 0b0;
-	if((mode & GPIO_MODE_DIGITAL_INPUT) || (mode & GPIO_MODE_ANALOG_INPUT)) direction = 0b1;
+	if (duration == 5) {
+		asm("nop");
+		asm("nop");
+		asm("nop");
+		asm("nop");
+		asm("nop");
+		asm("nop");
+		asm("nop");
+		asm("nop");
+		asm("nop");
+		asm("nop");
+		asm("nop");
+		asm("nop");
+		asm("nop");
+		asm("nop");
+		return(SUCCESS);
+	}
 
-	opendrain = 0b0;
-	if(mode & GPIO_MODE_OPENDRAIN) opendrain = 0b1;
+	if (duration == 10) {
+		asm("nop");
+		asm("nop");
+		asm("nop");
+		asm("nop");
+		asm("nop");
+		asm("nop");
+		asm("nop");
+		asm("nop");
+		asm("nop");
+		asm("nop");
+		asm("nop");
+		asm("nop");
+		asm("nop");
+		asm("nop");
 
-	switch(pin) {
-	case RA0:
-		ANSELAbits.ANSA0 = analog;
-		TRISAbits.TRISA0 = direction;
-		LATAbits.LATA0   = value;
-		break;
-	case RA1:
-		ANSELAbits.ANSA1 = analog;
-		TRISAbits.TRISA1 = direction;
-		LATAbits.LATA1   = value;
-		break;
-	case RA2:
-		TRISAbits.TRISA2 = direction;
-		LATAbits.LATA2   = value;
-		break;
-	case RA3:
-		TRISAbits.TRISA3 = direction;
-		LATAbits.LATA3   = value;
-		break;
-	case RA4:
-		TRISAbits.TRISA4 = direction;
-		LATAbits.LATA4   = value;
-		break;
-	case RB0:
-		ANSELBbits.ANSB0 = analog;
-		TRISBbits.TRISB0 = direction;
-		LATBbits.LATB0   = value;
-		break;
-	case RB1:
-		ANSELBbits.ANSB1 = analog;
-		TRISBbits.TRISB1 = direction;
-		LATBbits.LATB1   = value;
-		break;
-	case RB2:
-		ANSELBbits.ANSB2 = analog;
-		TRISBbits.TRISB2 = direction;
-		LATBbits.LATB2   = value;
-		break;
-	case RB3:
-		ANSELBbits.ANSB3 = analog;
-		TRISBbits.TRISB3 = direction;
-		LATBbits.LATB3   = value;
-		break;
-	case RB4:
-		TRISBbits.TRISB4 = direction;
-		LATBbits.LATB4   = value;
-		break;
-	case RB5:
-		TRISBbits.TRISB5 = direction;
-		LATBbits.LATB5   = value;
-		break;
-	case RB6:
-		ODCBbits.ODCB6   = opendrain;
-		TRISBbits.TRISB6 = direction;
-		LATBbits.LATB6   = value;
-		break;
-	case RB7:
-		ODCBbits.ODCB7   = opendrain;
-		TRISBbits.TRISB7 = direction;
-		LATBbits.LATB7   = value;
-		break;
-	case RB8:
-		TRISBbits.TRISB8 = direction;
-		LATBbits.LATB8   = value;
-		break;
-	case RB9:
-		TRISBbits.TRISB9 = direction;
-		LATBbits.LATB9   = value;
-		break;
-	case RB10:
-		TRISBbits.TRISB10 = direction;
-		LATBbits.LATB10   = value;
-		break;
-	case RB11:
-		TRISBbits.TRISB11 = direction;
-		LATBbits.LATB11   = value;
-		break;
-	case RB12:
-		TRISBbits.TRISB12 = direction;
-		LATBbits.LATB12   = value;
-		break;
-	case RB13:
-		TRISBbits.TRISB13 = direction;
-		LATBbits.LATB13   = value;
-		break;
-	case RB14:
-		TRISBbits.TRISB14 = direction;
-		LATBbits.LATB14   = value;
-		break;
-	case RB15:
-		TRISBbits.TRISB15 = direction;
-		LATBbits.LATB15   = value;
-		break;
+		asm("nop");
+		asm("nop");
+		asm("nop");
+		asm("nop");
+		asm("nop");
+		asm("nop");
+		asm("nop");
+		asm("nop");
+		asm("nop");
+		asm("nop");
+		asm("nop");
+		asm("nop");
+		asm("nop");
+		asm("nop");
+		return(SUCCESS);
+	}
+
+	period.units 	= uSeconds;
+	period.duration = duration;
+	delay(&period);
+	return(SUCCESS);
+}
+
+uint32_t uc_calculate(struct period *period, uint16_t *clk_divisor)
+{
+	uint16_t duration;
+
+	switch(period->units) {
+	case uSeconds:
+		*clk_divisor = 1;
+
+		/*
+	         * If the duration is uSeconds compensate for the Instruction overhead of
+	         * starting a HW Timer.
+	         */
+		duration = period->duration;
+
+		if(duration == 25) {
+			return(85);
+		}
+		if(duration == 50) {
+			return(818);
+		}
+		if(duration == 100) {
+			return(2285);
+		}
+		if(period->duration > HW_TIMER_OVERHEAD) {
+			duration -= HW_TIMER_OVERHEAD;
+		} else {
+			/*
+			 * The delay passed in is too small to accurately calculate
+			 * The calculations depend on sys_clock_freq and multiply and
+			 * divide calculations will cost more then the timer.
+			 * Roll it by hand!
+			 */
+			return(-ERR_RANGE_ERROR);
+		}
+		return((uint32_t) ((uint32_t) (((uint32_t) sys_clock_freq) / 1000000) * (duration)));
+                break;
+
+	case mSeconds:
+		*clk_divisor = 64;
+
+		if (period->duration == 1) {
+			return(451);
+		}
+		if (period->duration == 5) {
+			return(2293);
+		}
+		if (period->duration == 10) {
+			return(4592);
+		}
+		return((uint32_t) ((uint32_t) ((uint32_t) ((uint32_t) sys_clock_freq) / 128000 ) * period->duration));
+                break;
+
+	case Seconds:
+		*clk_divisor = 64;
+		return ((uint32_t) ((uint32_t) (((uint32_t) sys_clock_freq / 4) / 64) * period->duration));
+                break;
+
 	default:
+		LOG_E("Bad duration Units for Hardware Timer\n\r");
 		return(-ERR_BAD_INPUT_PARAMETER);
-		break;
 	}
 
-	return(0);
 }
-#endif
 
-#if 0
-result_t gpio_get(enum gpio_pin pin)
-{
-	result_t rc = SUCCESS;
+#endif // (SYS_HW_TIMERS)
 
-	switch(pin) {
-	case RA0:
-		return(PORTAbits.RA0);
-		break;
-	case RA1:
-		return(PORTAbits.RA1);
-		break;
-	case RA2:
-		return(PORTAbits.RA2);
-		break;
-	case RA3:
-		return(PORTAbits.RA3);
-		break;
-	case RA4:
-		return(PORTAbits.RA4);
-		break;
-	case RB0:
-		return(PORTBbits.RB0);
-		break;
-	case RB1:
-		return(PORTBbits.RB1);
-		break;
-	case RB2:
-		return(PORTBbits.RB2);
-		break;
-	case RB3:
-		return(PORTBbits.RB3);
-		break;
-	case RB4:
-		return(PORTBbits.RB4);
-		break;
-	case RB5:
-		return(PORTBbits.RB5);
-		break;
-	case RB6:
-		return(PORTBbits.RB6);
-		break;
-	case RB7:
-		return(PORTBbits.RB7);
-		break;
-	case RB8:
-		return(PORTBbits.RB8);
-		break;
-	case RB9:
-		return(PORTBbits.RB9);
-		break;
-	case RB10:
-		return(PORTBbits.RB10);
-		break;
-	case RB11:
-		return(PORTBbits.RB11);
-		break;
-	case RB12:
-		return(PORTBbits.RB12);
-		break;
-	case RB13:
-		return(PORTBbits.RB13);
-		break;
-	case RB14:
-		return(PORTBbits.RB14);
-		break;
-	case RB15:
-		return(PORTBbits.RB15);
-		break;
-	default:
-		rc = -ERR_BAD_INPUT_PARAMETER;
-		break;
-	}
-	return(rc);
-}
-#endif
 
 #endif // defined(__dsPIC33E256GP502__)

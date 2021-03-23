@@ -67,6 +67,10 @@ static const char *TAG = "HW_TIMERS";
 #elif defined(__18F4585)
 #endif
 
+#if defined(__dsPIC33EP256GP502__)
+extern uint32_t	uc_calculate(struct period *period, uint16_t *clk_divisor);
+#endif
+
 /*
  * constants:
  */
@@ -597,12 +601,17 @@ static timer_id start_timer(timer_id timer, struct timer_req *request)
 {
 	uint32_t ticks = 0;
 	uint16_t duration;
+	uint16_t clk_divisor;
 
 	if(timer >= NUMBER_HW_TIMERS) {
                 LOG_E("Bad time passed to start_timer(0x%x)\n\r", timer);
                 return(-ERR_BAD_INPUT_PARAMETER);
         }
 
+#if defined(__dsPIC33EP256GP502__)
+	ticks = uc_calculate(&request->period, &clk_divisor);
+	set_clock_divide(timer, clk_divisor);
+#else
 	switch(request->period.units) {
 	case uSeconds:
 		/*
@@ -644,7 +653,11 @@ static timer_id start_timer(timer_id timer, struct timer_req *request)
                  *              = sys_clock_freq / 64 * 1,000
                  */
 		set_clock_divide(timer, 64);
+#if defined(__dsPIC33EP256GP502__)
+		ticks = (uint32_t)( ((uint32_t) ((uint32_t) ((uint32_t) sys_clock_freq) / 2) / 64000 ) * request->period.duration);
+#else
 		ticks = (uint32_t) ((uint32_t) (((uint32_t) sys_clock_freq) / 64000 ) * request->period.duration);
+#endif // defined(__dsPIC33EP256GP502__)
 #endif
                 break;
 
@@ -676,7 +689,7 @@ static timer_id start_timer(timer_id timer, struct timer_req *request)
 		break;
 #endif
 	}
-
+#endif // __dsPIC33EP256GP502__
 	if(ticks > 0) {
 		timers[timer].status                   = TIMER_RUNNING;
 		timers[timer].request.type             = request->type;
@@ -849,7 +862,7 @@ static void set_clock_divide(timer_id timer, uint16_t clock_divide)
                         T1CONbits.TCKPS1 = 1; // Divide by 256
                         T1CONbits.TCKPS0 = 1;
                 } else {
-                        LOG_E("Bad clock divider!\n\r");
+                        LOG_E("Bad clock divider! %d\n\r", clock_divide);
                 }
                 break;
 #endif

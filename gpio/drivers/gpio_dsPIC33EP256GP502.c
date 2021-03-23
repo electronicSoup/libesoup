@@ -39,116 +39,116 @@ result_t gpio_set(enum gpio_pin pin, uint16_t mode, uint8_t value)
 
 	switch(pin) {
 	case RA0:
+		LATAbits.LATA0   = value;
 		ANSELAbits.ANSA0 = analog;
 		ODCAbits.ODCA0   = opendrain;
 		TRISAbits.TRISA0 = direction;
-		LATAbits.LATA0   = value;
 		break;
 	case RA1:
+		LATAbits.LATA1   = value;
 		ANSELAbits.ANSA1 = analog;
 		ODCAbits.ODCA1   = opendrain;
 		TRISAbits.TRISA1 = direction;
-		LATAbits.LATA1   = value;
 		break;
 	case RA2:
+		LATAbits.LATA2   = value;
 		TRISAbits.TRISA2 = direction;
 		ODCAbits.ODCA2   = opendrain;
-		LATAbits.LATA2   = value;
 		break;
 	case RA3:
+		LATAbits.LATA3   = value;
 		TRISAbits.TRISA3 = direction;
 		ODCAbits.ODCA3   = opendrain;
-		LATAbits.LATA3   = value;
 		break;
 	case RA4:
+		LATAbits.LATA4   = value;
 		TRISAbits.TRISA4 = direction;
 		ODCAbits.ODCA4   = opendrain;
-		LATAbits.LATA4   = value;
 		break;
 	case RB0:
+		LATBbits.LATB0   = value;
 		ANSELBbits.ANSB0 = analog;
 		ODCBbits.ODCB0   = opendrain;
 		TRISBbits.TRISB0 = direction;
-		LATBbits.LATB0   = value;
 		break;
 	case RB1:
+		LATBbits.LATB1   = value;
 		ANSELBbits.ANSB1 = analog;
 		ODCBbits.ODCB1   = opendrain;
 		TRISBbits.TRISB1 = direction;
-		LATBbits.LATB1   = value;
 		break;
 	case RB2:
+		LATBbits.LATB2   = value;
 		ANSELBbits.ANSB2 = analog;
 		ODCBbits.ODCB2   = opendrain;
 		TRISBbits.TRISB2 = direction;
-		LATBbits.LATB2   = value;
 		break;
 	case RB3:
+		LATBbits.LATB3   = value;
 		ANSELBbits.ANSB3 = analog;
 		ODCBbits.ODCB3   = opendrain;
 		TRISBbits.TRISB3 = direction;
-		LATBbits.LATB3   = value;
 		break;
 	case RB4:
+		LATBbits.LATB4   = value;
 		ODCBbits.ODCB4   = opendrain;
 		TRISBbits.TRISB4 = direction;
-		LATBbits.LATB4   = value;
 		break;
 	case RB5:
+		LATBbits.LATB5   = value;
 		ODCBbits.ODCB5   = opendrain;
 		TRISBbits.TRISB5 = direction;
-		LATBbits.LATB5   = value;
 		break;
 	case RB6:
+		LATBbits.LATB6   = value;
 		ODCBbits.ODCB6   = opendrain;
 		TRISBbits.TRISB6 = direction;
-		LATBbits.LATB6   = value;
 		break;
 	case RB7:
+		LATBbits.LATB7   = value;
 		ODCBbits.ODCB7   = opendrain;
 		TRISBbits.TRISB7 = direction;
-		LATBbits.LATB7   = value;
 		break;
 	case RB8:
+		LATBbits.LATB8   = value;
 		ANSELBbits.ANSB8 = analog;
 		ODCBbits.ODCB8   = opendrain;
 		TRISBbits.TRISB8 = direction;
-		LATBbits.LATB8   = value;
 		break;
 	case RB9:
+		LATBbits.LATB9   = value;
 		ODCBbits.ODCB9   = opendrain;
 		TRISBbits.TRISB9 = direction;
-		LATBbits.LATB9   = value;
 		break;
 	case RB10:
+		LATBbits.LATB10   = value;
 		ODCBbits.ODCB10   = opendrain;
 		TRISBbits.TRISB10 = direction;
-		LATBbits.LATB10   = value;
 		break;
 	case RB11:
+		LATBbits.LATB11   = value;
 		ODCBbits.ODCB11   = opendrain;
 		TRISBbits.TRISB11 = direction;
-		LATBbits.LATB11   = value;
 		break;
 	case RB12:
+		LATBbits.LATB12   = value;
 		ODCBbits.ODCB12   = opendrain;
 		TRISBbits.TRISB12 = direction;
-		LATBbits.LATB12   = value;
 		break;
 	case RB13:
+		LATBbits.LATB13   = value;
 		ODCBbits.ODCB13   = opendrain;
 		TRISBbits.TRISB13 = direction;
-		LATBbits.LATB13   = value;
 		break;
 	case RB14:
+		LATBbits.LATB14   = value;
 		ODCBbits.ODCB14   = opendrain;
 		TRISBbits.TRISB14 = direction;
-		LATBbits.LATB14   = value;
 		break;
 	case RB15:
+		LATBbits.LATB15   = value;
 		ODCBbits.ODCB15   = opendrain;
 		TRISBbits.TRISB15 = direction;
-		LATBbits.LATB15   = value;
 		break;
 	default:
 		return(-ERR_BAD_INPUT_PARAMETER);

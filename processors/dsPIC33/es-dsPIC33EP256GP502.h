@@ -50,7 +50,7 @@
 
 #define NUMBER_HW_TIMERS       5     ///< Number of HW Timers in the system
 
-#define HW_TIMER_OVERHEAD 0
+#define HW_TIMER_OVERHEAD      30
 
 /**
  * @brief UART Settings.
