@@ -2,7 +2,7 @@
  * libesoup/examples/modbus_main.c
  *
  * An example main.c file for the MODBUS
- * 
+ *
  * The code is used in the example MPLAB-X project:
  * libesoup/examples/projects/microchip/BareBones.X
  *
@@ -24,6 +24,7 @@
  *
  */
 #include "libesoup_config.h"
+#ifdef SYS_EXAMPLE_MODBUS
 
 #define DEBUG_FILE
 static const char *TAG = "MAIN";
@@ -95,3 +96,5 @@ void modbus_rx_frame(uint8_t *msg, uint8_t size, void *data)
         LOG_D("modbus_rx_frame(%s)\n\r", string);
 #endif
 }
+
+#endif // SYS_EXAMPLE_MODBUS

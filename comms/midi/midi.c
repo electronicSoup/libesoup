@@ -35,11 +35,12 @@
 #include "libesoup/comms/uart/uart.h"
 #include "libesoup/comms/midi/midi.h"
 
+#if defined(SYS_MIDI_TX) || defined(SYS_MIDI_RX)
+
 #define DEBUG_FILE
 static const char *TAG = "MIDI";
 #include "libesoup/logger/serial_log.h"
 
-#if defined(SYS_MIDI_TX) || defined(SYS_MIDI_RX)
 static struct uart_data midi_uart;
 
 #ifdef MIDI_TX

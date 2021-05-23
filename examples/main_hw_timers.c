@@ -2,8 +2,8 @@
  * @file libesoup/examples/main_hw_timers.c
  *
  * @author John Whitmore
- * 
- * Example main.c file to demonstrate Hardware timers. 
+ *
+ * Example main.c file to demonstrate Hardware timers.
  *
  * Core definitions required by electronicSoup Code Library
  *
@@ -23,6 +23,7 @@
  *
  */
 #include "libesoup_config.h"
+#ifdef SYS_EXAMPLE_HW_TIMERS
 
 #include "libesoup/gpio/gpio.h"
 #include "libesoup/gpio/peripheral.h"
@@ -57,7 +58,7 @@ int main(void)
         }
 
         /*
-         * 
+         *
          */
 #if defined(__dsPIC33EP256MU806__)
 	rc = gpio_set(RD3, GPIO_MODE_DIGITAL_OUTPUT, 0);
@@ -76,7 +77,7 @@ int main(void)
 
 	/*
 	 * Documentation:
-	 * 
+	 *
 	 * dsPIC33 @ 60M 500uS timer gives 504uS  Delta  4uS
 	 * dsPIC33 @ 30M 500uS timer gives 504uS  Delta  4uS
 	 * dsPIC33 @  8M 500uS timer gives 508uS  Delta  8uS
@@ -85,11 +86,11 @@ int main(void)
 	request.period.duration       = 20;
 
 	/*
-	 * pic18F4585 or more specifically XC8 compiler doesn't do 
+	 * pic18F4585 or more specifically XC8 compiler doesn't do
 	 * recursion so not repeating timers, single_shot only
 	 */
 #if defined(__18F4585)
-	request.type           = single_shot_expiry;	
+	request.type           = single_shot_expiry;
 #elif defined(HW_TIMER_REPEAT)
 	request.type           = repeat_expiry;
 #else
@@ -115,12 +116,12 @@ int main(void)
 		Nop();
         }
 #endif
-	
+
         while(1) {
 #ifdef DELAY_TEST
 		/*
 	         * Documentation:
-	         * 
+	         *
 		 * The delay routine will return ERR_RANGE_ERROR if the duration
 		 * passed in is shorter then it can safely obtain.
 	         */
@@ -158,3 +159,4 @@ void exp_func(timer_id timer, union sigval data)
 	LATCbits.LATC7 = 0;
 #endif
 }
+#endif // SYS_EXAMPLE_HW_TIMERS

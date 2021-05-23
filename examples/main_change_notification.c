@@ -16,9 +16,8 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  *
  */
-
-
 #include "libesoup_config.h"
+#ifdef SYS_EXAMPLE_CHANGE_NOTIFICATION
 
 #define DEBUG_FILE
 static const char *TAG = "Main";
@@ -34,7 +33,7 @@ void change_notification(enum gpio_pin pin)
 int main(void)
 {
 	result_t         rc;
-        
+
 	rc = libesoup_init();
 	if(rc < 0) {
 		LOG_E("libesoup_init()\n\r");
@@ -52,3 +51,5 @@ int main(void)
         }
         return 0;
 }
+
+#endif // SYS_EXAMPLE_CHANGE_NOTIFICATION

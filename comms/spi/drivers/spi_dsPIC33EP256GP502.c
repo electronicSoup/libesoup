@@ -67,7 +67,7 @@ void __attribute__((__interrupt__, __no_auto_psv__)) _SPI2RXInterrupt(void)
  */
 result_t channel_init(struct spi_chan *chan)
 {
-	result_t           rc;
+//	result_t           rc;
 	struct spi_device *device;
 
 	device = chan->active_device;

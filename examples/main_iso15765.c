@@ -21,6 +21,7 @@
 //#define TX_NODE
 
 #include "libesoup_config.h"
+#ifdef SYS_EXAMPLE_ISO15765
 
 #include <stdlib.h>
 
@@ -71,7 +72,7 @@ int main(void)
 	period.units    = mSeconds;
 	period.duration = 500;
 	delay(&period);
-	
+
 	LOG_D("************************\n\r");
 	LOG_D("***   CAN Bus Node   ***\n\r");
 	LOG_D("***   %ldMHz         ***\n\r", sys_clock_freq);
@@ -81,7 +82,7 @@ int main(void)
 	/*
 	 * A Layer 3 noded address of 0xff is the ISO11783 Broadcast address so
 	 * it should not be used as a Layer 3 address. If the can_init() function
-	 * is passed this L3 address it will randomly select an address and 
+	 * is passed this L3 address it will randomly select an address and
 	 * attempt to register that address on the network
 	 */
 	rc = can_init(baud_250K, BROADCAST_NODE_ADDRESS, system_status_handler, normal);  // Includes L3 Address
@@ -103,7 +104,7 @@ int main(void)
 	request.type = repeat;
 	request.exp_fn = expiry;
 	request.data.sival_int = 0x00;
-	
+
 	timer = sw_timer_start(&request);
 	if(timer < 0) {
 		LOG_E("Failed to start SW Timer\n\r");
@@ -202,3 +203,4 @@ static void frame_handler(can_frame *frame)
 {
 	LOG_D("handle(0x%lx)\n\r", frame->can_id);
 }
+#endif // SYS_EXAMPLE_ISO15765

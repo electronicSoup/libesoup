@@ -19,6 +19,7 @@
  *
  */
 #include "libesoup_config.h"
+#ifdef SYS_EXAMPLE_CAN_BAREBONES
 
 #ifdef SYS_SERIAL_LOGGING
 #define DEBUG_FILE
@@ -65,7 +66,7 @@ int main(void)
 	RC_CHECK_STOP
 	rc = change_notifier_register(RD2, rd2_change);
 	RC_CHECK_STOP
-	
+
  	rc = can_init(baud_250K, NULL, normal);
 	RC_CHECK_STOP
 
@@ -84,3 +85,4 @@ int main(void)
 		libesoup_tasks();
 	}
 }
+#endif // SYS_EXAMPLE_CAN_BAREBONES

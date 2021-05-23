@@ -24,6 +24,7 @@
  */
 
 #include "libesoup_config.h"
+#ifdef SYS_EXAMPLE_SW_TIMERS
 
 #include "libesoup/timers/delay.h"
 #include "libesoup/gpio/gpio.h"
@@ -51,22 +52,22 @@ int main(void)
 	period.units     = Seconds;
 	period.duration  = 5;
 	delay(&period);
-	
+
 	request.period.units    = Seconds;
 	request.period.duration = 30;
 	request.type            = single_shot_expiry;
 	request.exp_fn          = expiry;
 	request.data.sival_int  = 0;
-	
-#if defined(__dsPIC33EP256MU806__)	
+
+#if defined(__dsPIC33EP256MU806__)
 	LATDbits.LATD3 = 1;
 #endif
         timer = sw_timer_start(&request);
-        
+
         if(timer < 0) {
 		// Error Condition
         }
-        
+
         while(1) {
 		libesoup_tasks();
         }
@@ -80,7 +81,8 @@ static void expiry(timer_id timer, union sigval data)
 #endif
 {
 	// Timer has expired
-#if defined(__dsPIC33EP256MU806__)	
+#if defined(__dsPIC33EP256MU806__)
 	LATDbits.LATD3 = 0;
 #endif
 }
+#endif // SYS_EXAMPLE_SW_TIMERS

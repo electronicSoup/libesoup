@@ -2,8 +2,8 @@
  * @file libesoup/examples/main_jobs.c
  *
  * @author John Whitmore
- * 
- * Example main.c file to demonstrate jobs. 
+ *
+ * Example main.c file to demonstrate jobs.
  *
  * Copyright 2017-2018 electronicSoup Limited
  *
@@ -21,6 +21,7 @@
  *
  */
 #include "libesoup_config.h"
+#ifdef SYS_EXAMPLE_JOBS
 
 #include "libesoup/jobs/jobs.h"
 
@@ -39,3 +40,4 @@ int main(void)
         }
         return 0;
 }
+#endif // SYS_EXAMPLE_JOBS

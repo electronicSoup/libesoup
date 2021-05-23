@@ -19,6 +19,7 @@
  *
  */
 #include "libesoup_config.h"
+#ifdef SYS_EXAMPLE_LORA
 
 #include "libesoup/comms/uart/uart.h"
 
@@ -37,7 +38,7 @@ static void expiry(timer_id timer, union sigval);
 /*
  *
  */
-int main() 
+int main()
 {
         result_t         rc;
 #ifdef SYS_SW_TIMERS
@@ -70,15 +71,15 @@ int main()
 	request.type            = repeat_expiry;
 	request.exp_fn          = expiry;
 	request.data.sival_int  = 0x00;
-	
+
 	timer = sw_timer_start(&request);
 	if(rc < 0) {
 #if (defined(SYS_SERIAL_LOGGING) && (SYS_LOG_LEVEL <= LOG_ERROR))
 		LOG_E("Failed to start SW Timer\n\r");
-#endif		
+#endif
 	}
-#endif	
-	
+#endif
+
         while(1) {
 		libesoup_tasks();
         }
@@ -94,6 +95,7 @@ static void expiry(timer_id timer, union sigval data)
 {
 #if (defined(SYS_SERIAL_LOGGING) && defined(DEBUG_FILE) && (SYS_LOG_LEVEL <= LOG_DEBUG))
         LOG_D("Expiry\n\r");
-#endif	
+#endif
 }
 #endif // SYS_SW_TIMERS
+#endif // SYS_EXAMPLE_LORA

@@ -1,7 +1,9 @@
+#include "libesoup_config.h"
+#ifdef SYS_EXAMPLE_USB_ONE_KEY_KEYBOARD
+
 #define DEBUG_FILE
 #define TAG  "OKK_Main"
 
-#include "libesoup_config.h"
 #include "libesoup/logger/serial_log.h"
 #include "libesoup/gpio/gpio.h"
 #include "libesoup/gpio/change_notification.h"
@@ -22,7 +24,7 @@ void bounce_expiry(timer_id timer, union sigval data)
 	uint8_t new_port_d = PORTD;
 
 	bounce_timer = BAD_TIMER_ID;
-	
+
 	if ((port_d & 0x01) != (new_port_d & 0x01)) {
 		port_d = new_port_d;
 
@@ -30,7 +32,7 @@ void bounce_expiry(timer_id timer, union sigval data)
 			ticks_0 = current_system_ticks();
 		} else {
 			ticks_diff = current_system_ticks() - ticks_0;
-			
+
 			if (ticks_diff > 100) {
 				send_key(44, TRUE);
 				LOG_D("Long - %d\n\r", ticks_diff);
@@ -40,7 +42,7 @@ void bounce_expiry(timer_id timer, union sigval data)
 			}
 		}
 	}
-	
+
 }
 
 void rd0_change(enum gpio_pin pin) {
@@ -51,7 +53,7 @@ void rd0_change(enum gpio_pin pin) {
 int main(void)
 {
 	result_t rc;
-	
+
 	rc = libesoup_init();
 
 	port_d                             = PORTD;
@@ -63,10 +65,12 @@ int main(void)
 	bounce_tmr_request.exp_fn          = bounce_expiry;
 
 	rc = gpio_set(RD0, GPIO_MODE_DIGITAL_INPUT, 0);
-	rc = change_notifier_register(RD0, rd0_change);	
+	rc = change_notifier_register(RD0, rd0_change);
 	LOG_D("Entering main Loop\n\r");
 	while(1) {
 		libesoup_tasks();
 	}
 	return(0);
 }
+
+#endif // SYS_EXAMPLE_USB_ONE_KEY_KEYBOARD

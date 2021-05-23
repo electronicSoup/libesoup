@@ -2,8 +2,8 @@
  * @file libesoup/examples/main_rtc.c
  *
  * @author John Whitmore
- * 
- * \brief Example main.c file to demonstrate Real Time Clock API. 
+ *
+ * \brief Example main.c file to demonstrate Real Time Clock API.
  *
  * Core definitions required by electronicSoup Code Library
  *
@@ -22,13 +22,14 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  *
  */
-#define DEBUG_FILE
+#include "libesoup_config.h"
+#ifdef SYS_EXAMPLE_RTC
 
 #define SET_ALARM
 
-#include "libesoup_config.h"
-
 #ifdef SYS_SERIAL_LOGGING
+#define DEBUG_FILE
+
 static const char *TAG ="RTC_MAIN";
 #include "libesoup/logger/serial_log.h"
 #endif // SYS_SERIAL_LOGGING
@@ -54,10 +55,10 @@ int main(void)
 #ifdef SYS_SERIAL_LOGGING
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
 		LOG_E("Failed to initialise libesoup!\n\r");
-#endif 
+#endif
 #endif // SYS_SERIAL_LOGGING
 	}
-	
+
 	/*
 	 * To test the RTC Module read the current datetime and log it,
 	 * is serial logging is enabled
@@ -68,11 +69,11 @@ int main(void)
 #ifdef SYS_SERIAL_LOGGING
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
 		LOG_E("Failed to read RTCC Datetime\n\r");
-#endif 
+#endif
 #endif // SYS_SERIAL_LOGGING
 	}
 #endif // SYS_HW_RTC
-	
+
 #ifdef SYS_SERIAL_LOGGING
 	rtc_print_datetime(&datetime);
 #endif // SYS_SERIAL_LOGGING
@@ -92,18 +93,18 @@ int main(void)
 			Nop();
 		}
 	}
-	
+
 #ifdef SYS_HW_RTC
 	rc = rtc_get_datetime(&datetime);
 	if(rc != SUCCESS) {
 #ifdef SYS_SERIAL_LOGGING
 #if (SYS_LOG_LEVEL <= LOG_ERROR)
 		LOG_E("Failed to read RTCC Datetime\n\r");
-#endif 
+#endif
 #endif // SYS_SERIAL_LOGGING
 	}
 #endif // SYS_HW_RTC
-	
+
 #ifdef SYS_SERIAL_LOGGING
 	LOG_D("Time %d%d:%d%d\n\r", datetime.minute_ten, datetime.minute_one, datetime.second_ten, datetime.second_one);
 #endif // SYS_SERIAL_LOGGING
@@ -118,3 +119,5 @@ void fn(timer_id timer, union sigval data)
 	LOG_D("Expiry\n\r");
 #endif // SYS_SERIAL_LOGGING
 }
+
+#endif // SYS_EXAMPLE_RTC

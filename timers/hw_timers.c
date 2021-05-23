@@ -600,7 +600,9 @@ void hw_timer_cancel_all()
 static timer_id start_timer(timer_id timer, struct timer_req *request)
 {
 	uint32_t ticks = 0;
+#ifndef __dsPIC33EP256GP502__
 	uint16_t duration;
+#endif
 	uint16_t clk_divisor;
 
 	if(timer >= NUMBER_HW_TIMERS) {

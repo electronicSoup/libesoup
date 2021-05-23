@@ -2,7 +2,7 @@
  * @file libesoup/examples/main_serial_logging.c
  *
  * @author John Whitmore
- * 
+ *
  * @brief Example main.c file for using serial logging.
  *
  * Copyright 2017-2019 electronicSoup Limited
@@ -20,6 +20,7 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 #include "libesoup_config.h"
+#ifdef SYS_EXAMPLE_SERIAL_LOGGING
 
 #include "libesoup/comms/uart/uart.h"
 
@@ -38,7 +39,7 @@ static void expiry(timer_id timer, union sigval);
 /*
  *
  */
-int main() 
+int main()
 {
         result_t      rc;
         uint8_t       x = 0x12;
@@ -85,13 +86,13 @@ int main()
 	request.type            = repeat_expiry;
 	request.exp_fn          = expiry;
 	request.data.sival_int  = 0x00;
-	
+
 	timer = sw_timer_start(&request);
 	if(timer < 0) {
 		LOG_E("Failed to start SW Timer\n\r");
 	}
-#endif	
-	
+#endif
+
         while(1) {
 		libesoup_tasks();
         }
@@ -114,12 +115,13 @@ static void expiry(timer_id timer, union sigval data)
 		LOG_D("Expiry - 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,\n\r");
 	}
 
-#ifdef XC16	
+#ifdef XC16
 #ifdef SYS_TEST_BUILD
         serial_printf("%d\n\r", serial_buffer_count());
 #endif
 #endif  // XC16
-	
+
 	count++;
 }
 #endif // SYS_SW_TIMERS
+#endif // SYS_EXAMPLE_SERIAL_LOGGING

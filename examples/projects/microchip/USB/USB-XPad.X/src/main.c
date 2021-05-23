@@ -2,7 +2,7 @@
  * @file libesoup/examples/projects/microchip/USB/USB-Xpad/src/main.c
  *
  * @author John Whitmore
- * 
+ *
  * @brief An example main.c file for using USB Host to communicate with a
  *        Logitech XPad game controller.
  *
@@ -26,6 +26,7 @@
  * AN1140 and AN1141
  */
 #include "libesoup_config.h"
+#ifdef SYS_EXAMPLE_USB_XPAD
 
 #define DEBUG_FILE
 static const char *TAG = "MAIN";
@@ -47,11 +48,11 @@ static const char *TAG = "MAIN";
 int main(void)
 {
 	result_t rc;
-	
+
 	asm("CLRWDT");
 	TRISDbits.TRISD0 = GPIO_OUTPUT_PIN;
 	LATDbits.LATD0   = 0;
-	
+
 	TRISDbits.TRISD1 = GPIO_OUTPUT_PIN;
 	LATDbits.LATD1   = 0;
 
@@ -67,7 +68,7 @@ int main(void)
 		LATDbits.LATD0   = 1;
 		while(1);
 	}
-		
+
 	LOG_D("************************\n\r");
 	LOG_D("***    USB Gamepad   ***\n\r");
 	LOG_D("************************\n\r");
@@ -124,11 +125,11 @@ bool USB_ApplicationEventHandler( uint8_t address, USB_EVENT event, void *data, 
                 case EVENT_UNSUPPORTED_DEVICE:
 			LOG_D("EVENT_UNSUPPORTED_DEVICE\n\r");
                         break;
-                        
+
                 case EVENT_CANNOT_ENUMERATE:
 			LOG_D("EVENT_CANNOT_ENUMERATE\n\r");
                         break;
-                        
+
 		default:
 			LOG_E("Default case 0x%x!\n\r", event);
 			break;
@@ -136,3 +137,4 @@ bool USB_ApplicationEventHandler( uint8_t address, USB_EVENT event, void *data, 
 	return FALSE;
 }
 #endif
+#endif // SYS_EXAMPLE_USB_XPAD

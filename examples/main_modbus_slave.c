@@ -19,6 +19,7 @@
  *
  */
 #include "libesoup_config.h"
+#ifdef SYS_EXAMPLE_MODBUS_SLAVE
 
 #include "libesoup/errno.h"
 #include "libesoup/timers/delay.h"
@@ -44,7 +45,7 @@ static uint8_t                 modbus_chan_idle;
 void tx_finished(struct uart_data *uart)
 {
 	result_t rc;
-	
+
 	rc = gpio_set(SN65HVD72D_TX_ENABLE, GPIO_MODE_DIGITAL_OUTPUT, SN65HVD72D_RECEIVE);
 	RC_CHECK_STOP
 }
@@ -204,13 +205,13 @@ int main()
 	RC_CHECK_STOP
 
 	modbus_chan_idle = FALSE;
-	
+
 	rc = gpio_set(SN65HVD72D_TX, GPIO_MODE_DIGITAL_OUTPUT, 0);
 	RC_CHECK_STOP
-		
+
 	rc = gpio_set(SN65HVD72D_TX_ENABLE, GPIO_MODE_DIGITAL_OUTPUT, SN65HVD72D_RECEIVE);
 	RC_CHECK_STOP
-		
+
 	rc = gpio_set(SN65HVD72D_RX, GPIO_MODE_DIGITAL_INPUT, 0);
 	RC_CHECK_STOP
 
@@ -235,9 +236,10 @@ int main()
 	RC_CHECK_STOP
 
 	LOG_D("Entering main loop\n\r");
-	
+
 	while(1) {
 		libesoup_tasks();
 		Nop();
 	}
 }
+#endif // SYS_EXAMPLE_MODBUS_SLAVE

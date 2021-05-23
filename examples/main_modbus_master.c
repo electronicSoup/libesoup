@@ -19,6 +19,7 @@
  *
  */
 #include "libesoup_config.h"
+#ifdef SYS_EXAMPLE_MODBUS_MASTER
 
 #include "libesoup/errno.h"
 #include "libesoup/timers/delay.h"
@@ -90,7 +91,7 @@ void exp_fn(timer_id timer, union sigval data)
 void tx_finished(struct uart_data *uart)
 {
 	result_t rc;
-	
+
 	rc = gpio_set(SN65HVD72D_TX_ENABLE, GPIO_MODE_DIGITAL_OUTPUT, SN65HVD72D_RECEIVE);
 	RC_CHECK_STOP
 }
@@ -111,13 +112,13 @@ int main()
 	RC_CHECK_STOP
 
 	modbus_chan_idle = FALSE;
-	
+
 	rc = gpio_set(SN65HVD72D_TX, GPIO_MODE_DIGITAL_OUTPUT, 0);
 	RC_CHECK_STOP
-		
+
 	rc = gpio_set(SN65HVD72D_TX_ENABLE, GPIO_MODE_DIGITAL_OUTPUT, SN65HVD72D_RECEIVE);
 	RC_CHECK_STOP
-		
+
 	rc = gpio_set(SN65HVD72D_RX, GPIO_MODE_DIGITAL_INPUT, 0);
 	RC_CHECK_STOP
 
@@ -134,7 +135,7 @@ int main()
 	app_data.uart_data.rx_pin            = SN65HVD72D_RX;
 	app_data.uart_data.tx_finished       = tx_finished;
 	app_data.uart_data.baud              = 9600;                // Nice relaxed baud rate
-	
+
 	/*
 	 * Reserve a UART channel for our use
 	 */
@@ -145,13 +146,15 @@ int main()
 	request.period.duration = 30;
 	request.type            = repeat_expiry;
 	request.exp_fn          = exp_fn;
-	
+
 	rc = sw_timer_start(&request);
 
 	LOG_D("Entering main loop\n\r");
-	
+
 	while(1) {
 		libesoup_tasks();
 		Nop();
 	}
 }
+
+#endif // SYS_EXAMPLE_MODBUS_MASTER

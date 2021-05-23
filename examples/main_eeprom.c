@@ -3,7 +3,7 @@
  * @file libesoup/utils/eeprom.c
  *
  * @author John Whitmore
- * 
+ *
  * Copyright 2017-2019 electronicSoup Limited
  *
  * This program is free software; you can redistribute it and/or modify
@@ -20,6 +20,7 @@
  *
 */
 #include "libesoup_config.h"
+#ifdef SYS_EXAMPLE_EEPROM
 
 #ifdef SYS_SERIAL_LOGGING
 #define DEBUG_FILE
@@ -65,17 +66,17 @@ int main(void)
 
 	eeprom_address = 0;
 	eeprom_test_rd = 0;
-	
+
 	timer_request.period.units = Seconds;
 	timer_request.period.duration = 1;
 	timer_request.type = repeat_expiry;
 	timer_request.data.sival_int = 0;
 	timer_request.exp_fn = exp_func;
-	
+
 	rc = sw_timer_start(&timer_request);
 	RC_CHECK
 	timer = (uint8_t)rc;
-	
+
 	LOG_D("Entering main loop\n\r");
 
         while(1) {
@@ -111,4 +112,6 @@ void exp_func(timer_id timer, union sigval data)
 		if(eeprom_address == BRD_EEPROM_MAX_ADDRESS) eeprom_address = 0;
 		eeprom_test_rd = 0;
 	}
-}	
+}
+
+#endif // SYS_EXAMPLE_EEPROM

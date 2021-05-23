@@ -1,8 +1,8 @@
 /**
  * @file:   libesoup/examples/main_uart_rx.c
- * 
+ *
  * @author John Whitmore
- * 
+ *
  * @brief Example main to test UART receive functionality
  *
  * Copyright 2018 electronicSoup Limited
@@ -21,6 +21,7 @@
  *
  */
 #include "libesoup_config.h"
+#ifdef SYS_EXAMPLE_UART_RX
 
 #include "libesoup/gpio/gpio.h"
 #include "libesoup/timers/delay.h"
@@ -55,19 +56,19 @@ int main(void)
 	 * Before anything else have to initialise the library
 	 */
 	rc = libesoup_init();
-	
+
 	LOG_D("UART TX\n\r");
 	/*
 	 * Set our GPIO Pins for the test board
 	 */
-#if defined(__dsPIC33EP256MU806__)	
+#if defined(__dsPIC33EP256MU806__)
 	rc = gpio_set(RD0, GPIO_MODE_DIGITAL_OUTPUT, 0);
 	rc = gpio_set(RD1, GPIO_MODE_DIGITAL_OUTPUT, 0);
 	rc = gpio_set(RD2, GPIO_MODE_DIGITAL_INPUT, 0);
 	rc = gpio_set(RD3, GPIO_MODE_DIGITAL_OUTPUT, 0);
 	rc = gpio_set(RD4, GPIO_MODE_DIGITAL_INPUT, 0);
 #endif
-	
+
 	/*
 	 * First calculate the mode bits, given the ubitquious 8N1 configuration
 	 */
@@ -79,10 +80,10 @@ int main(void)
 	}
 
 	/*
-	 * Now fill in the struct uart_data structure with the required 
+	 * Now fill in the struct uart_data structure with the required
 	 * configuration
 	 */
-#if defined(__dsPIC33EP256MU806__)	
+#if defined(__dsPIC33EP256MU806__)
 	uart.tx_pin = RD3;
 	uart.rx_pin = RG8;
 #elif defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__)
@@ -94,7 +95,7 @@ int main(void)
 #endif
 	uart.baud = 19200;
 	uart.process_rx_char = rx_char;
-	
+
 	/*
 	 * Reserve a UART channel for our use
 	 */
@@ -126,3 +127,4 @@ int main(void)
         }
         return(0);
 }
+#endif // SYS_EXAMPLE_UART_RX

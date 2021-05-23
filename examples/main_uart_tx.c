@@ -1,8 +1,8 @@
 /**
  * @file:   libesoup/examples/main_uart_tx.c
- * 
+ *
  * @author John Whitmore
- * 
+ *
  * @brief Example main to test UART functionality
  *
  * Copyright 2017-2018 electronicSoup Limited
@@ -21,6 +21,7 @@
  *
  */
 #include "libesoup_config.h"
+#ifdef SYS_EXAMPLE_UART
 
 #include "libesoup/gpio/gpio.h"
 #include "libesoup/timers/delay.h"
@@ -40,18 +41,18 @@ int main(void)
 	 * Before anything else have to initialise the library
 	 */
 	rc = libesoup_init();
-	
+
 	/*
 	 * Set our GPIO Pins for the test board
 	 */
-#if defined(__dsPIC33EP256MU806__)	
+#if defined(__dsPIC33EP256MU806__)
 	rc = gpio_set(RD0, GPIO_MODE_DIGITAL_OUTPUT, 0);
 	rc = gpio_set(RD1, GPIO_MODE_DIGITAL_OUTPUT, 0);
 	rc = gpio_set(RD2, GPIO_MODE_DIGITAL_INPUT, 0);
 	rc = gpio_set(RD3, GPIO_MODE_DIGITAL_OUTPUT, 0);
 	rc = gpio_set(RD4, GPIO_MODE_DIGITAL_INPUT, 0);
 #endif
-	
+
 	/*
 	 * First calculate the mode bits, given the ubitquious 8N1 configuration
 	 */
@@ -63,10 +64,10 @@ int main(void)
 	}
 
 	/*
-	 * Now fill in the struct uart_data structure with the required 
+	 * Now fill in the struct uart_data structure with the required
 	 * configuration
 	 */
-#if defined(__dsPIC33EP256MU806__)	
+#if defined(__dsPIC33EP256MU806__)
 	uart.tx_pin = RD3;
 	uart.rx_pin = INVALID_GPIO_PIN;
 #elif defined(__PIC24FJ256GB106__) || defined(__PIC24FJ64GB106__)
@@ -78,7 +79,7 @@ int main(void)
 #endif
 	uart.baud = 9600;                // Nice relaxed baud rate
 	uart.tx_finished = tx_finished;  // Call back to be called when transmission finished
-	
+
 	/*
 	 * Reserve a UART channel for our use
 	 */
@@ -122,6 +123,8 @@ static void tx_finished(void *data)
 	rc =  uart_release(&uart);
 	if(rc < 0) {
 		LATDbits.LATD0 = 1;
-	}	
+	}
 	return;
 }
+
+#endif // SYS_EXAMPLE_UART

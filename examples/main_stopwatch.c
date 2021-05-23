@@ -28,8 +28,8 @@
  *
  * The associated project is located in examples/projects/microchip/IR_Remote.X
  */
-
 #include "libesoup_config.h"
+#ifdef SYS_EXAMPLE_STOPWATCH
 
 //#define DEBUG
 
@@ -117,7 +117,7 @@ static void awaiting_end_of_initial_start_pulse(void)
 {
 	struct timer_req  sw_timer_req;
 	/*
-	 * Assume we're going back to the idle state unless we get a 
+	 * Assume we're going back to the idle state unless we get a
 	 * good start pulse
 	 */
 	current_state = idle_state;
@@ -132,7 +132,7 @@ static void awaiting_end_of_initial_start_pulse(void)
 			sw_timer_req.exp_fn               = end_of_byte_expiry;
 			sw_timer_req.data.sival_int       = 0;
 			eob_timer                         = sw_timer_start(&sw_timer_req);
-			
+
 			num_bits                          = 0;
 		} else {
 			LOG_E("Start bit %d?\n\r", period.duration);
@@ -174,7 +174,7 @@ static void awaiting_start_of_end_pulse(void)
 		}
 
 		if ( num_bits > 8 ) {
-			LOG_E("Received %d bits\n\r", num_bits)			
+			LOG_E("Received %d bits\n\r", num_bits)
 		}
 		current_state = awaiting_end_of_end_pulse;
 	}
@@ -223,7 +223,7 @@ int main(void)
 
         while(1) {
 		if (atomic > 1) {
-			LOG_E("Atomic Overflow\n\r");			
+			LOG_E("Atomic Overflow\n\r");
 		}
 		while (atomic) {
 			if (current_state) {
@@ -236,3 +236,4 @@ int main(void)
         }
         return 0;
 }
+#endif // SYS_EXAMPLE_STOPWATCH
